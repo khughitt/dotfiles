@@ -1,0 +1,2 @@
+#!/bin/bash
+sleep 3 && gnome-terminal --window-with-profile=DesktopConsole --title=DesktopConsole

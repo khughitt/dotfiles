@@ -1,0 +1,289 @@
+#!/usr/bin/python3
+#
+# TODO: //Keith 2012/08/07
+# 1) Include tasks that are past due
+# 2) Stylize tasks *slightly* differently based on priority and due date, e.g
+#     for tasks that are past due, make bold.. use different color shades or
+#     icons to indicate priorities?
+# 3) Include due date (today, yesterday, etc) in list
+# 4) Clean-up code
+#
+#revisions:
+#
+# 19/02/2009:
+#    Now allo comma separated list of dates to process, i.e. if you pass
+#    0,1,2 it will display tasks for today, tomrrow, and the day after.
+#
+# 30/01/2009:
+#    use optparse to parse options, add blacklist/whitelist option, 
+#    i.e. show all but your 'Foo' list or only show your 'Foo' list.
+#    
+#
+# ======================================================================
+# Copyright (C) 2009 Lucas David-Roesler <roesler.lucas@gmail.com>
+# Time-stamp: Tue January 20, 2009
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+# ======================================================================
+#
+# This script accesses takes in the username, password, and a date then
+# retrieves # and outputs the tasks due on that date from the users account at 
+# http://www.rememberthemilk.com . The date can be input as Today, Tomorrow, or
+# as an integer: 0 = Today, 1 = Tomorrow, 2 = Today + 2 days, etc.  
+#
+# This is intended to be used with conky: http://conky.sourceforge.net/ .
+#
+# Note that the username and password are not encrypted or obfruscated in any way.
+#
+# Currently any task that has a due date of never or an empty due date is
+# treated as due today. The thought is that those tasks are meant to be constant
+# reminders and therefore always displayed. In the future this may be given an
+# option. 
+
+import sys
+import urllib.request
+from optparse import OptionParser
+from datetime import datetime, date, time, timedelta
+from xml.dom.minidom import parse, parseString
+
+RTM = 'https://www.rememberthemilk.com/atom/'
+#whitelist = []
+#blacklist = []
+#titlecolor = ''
+#listcolor = ''
+
+
+# options
+usage = "usage: %prog [options] uname pass list_date "
+parser = OptionParser(usage)
+parser.set_defaults(whitelist=[],blacklist=[],titlecolor='',listcolor='')
+parser.add_option("-w","--whitelist", action="append",type='string',dest="whitelist",
+                  help='Display only the tasks from specific lists. This option requires a separate instance for each list you want displayed. i.e. if you want to display only your inbox and your personal list use: \
+                  conkyRTM.py -w Inbox -w Personal uname pass list_date')
+
+parser.add_option("-b","--blacklist", action="append",type='string',dest="blacklist",
+                  help="Exclude tasks from particular lists. This option works the same way as the whitelist: \
+                  conkyRTM.py -b Inbox -b Personal uname pass list_date \
+                  would display all tasks EXCEPT those from your Inbox or your Personal list.")
+
+parser.add_option("-t","--titlecolor",type="string",dest="titlecolor",default='',
+                  help="For use with Conky.  Specify the color for the title.")
+
+parser.add_option("-l","--listcolor",type="string",dest="listcolor",default='',
+                  help="For use with Conky.  Specify the color for the list.")
+
+
+(options, args) = parser.parse_args()
+
+
+
+if len(args) != 3:
+    parser.error("incorrect number of arguments")
+
+# format listcolor for conky
+if len(options.listcolor)>0:
+    listcolor = '${' + options.listcolor + '}'
+else:
+    listcolor = options.listcolor
+    
+# format titlecolor for conky
+if len(options.titlecolor)>0:
+    titlecolor = '${' + options.titlecolor + '}'
+else:
+    titlecolor = options.titlecolor
+
+# convenient names for the options
+blacklist = options.blacklist
+whitelist = options.whitelist
+
+
+
+#required arguments
+uname = args[0]
+password = args[1]
+list_date = args[2]
+
+
+def get_feed():
+    '''The method to do HTTPBasicAuthentication'''
+    
+    link = RTM + uname
+    
+    # Create an OpenerDirector with support for Basic HTTP Authentication...
+    auth_handler = urllib.request.HTTPBasicAuthHandler()
+    auth_handler.add_password(realm= 'RememberTheMilk Atom Feed',
+                              uri= 'https://www.rememberthemilk.com/',
+                              user= uname,
+                              passwd= password)
+    opener = urllib.request.build_opener(auth_handler)
+    # ...and install it globally so it can be used with urlopen.
+    urllib.request.install_opener(opener)
+    response = urllib.request.urlopen(link)
+    feed = response.read() 
+    response.close()
+    return feed
+
+def getText(node):
+    rc = ""
+    for child in node.childNodes:
+        if child.nodeType == child.TEXT_NODE:
+            rc = rc + child.data
+    return rc
+    
+def task_info(parsed,i):
+    
+    
+    tasklist = parsed.getElementsByTagName('entry')
+    
+    task = tasklist[i]
+
+    # Arbitrary date in the future
+    future_date = datetime(2100, 1, 1)
+    
+    # get task title
+    task_title = task.getElementsByTagName('title')
+    title = getText(task_title[0])
+    
+    # get task contents
+    contents_list = task.getElementsByTagName('content')
+    task_contents = contents_list[0].getElementsByTagName('span')
+    for span in task_contents:
+        class_name = span.attributes['class']
+        if class_name.value == 'rtm_due_value':
+            date_raw = getText(span)
+            try:
+                date_parsed = datetime.strptime(date_raw, "%a %d %b %y")
+            except ValueError:
+                try:
+                    date_parsed = datetime.strptime(date_raw, "%a %d %b %y at %I:%M%p")
+                except ValueError:
+                    # treat tasks without a due date as due today?
+                    #date_parsed = datetime.today()
+
+                    # treat tasks without a due date as due in
+                    date_parsed = future_date
+            task_due = date_parsed.date()
+        if class_name.value == 'rtm_priority_value':
+            task_priority = getText(span)
+        if class_name.value == 'rtm_time_estimate_value':
+            task_time = getText(span)
+        if class_name.value == 'rtm_tags_value':
+            task_tags = getText(span)
+        if class_name.value == 'rtm_location_value':
+            task_location = getText(span)
+        if class_name.value == 'rtm_postponed_value':
+            task_postponed = getText(span)
+        if class_name.value == 'rtm_list_value':
+            task_in_list = getText(span)
+    
+    # create dictionary with task info       
+    task_info = {}
+    task_info['title'] = title
+    task_info['due'] = task_due
+    task_info['priority'] = task_priority
+    task_info['time'] = task_time
+    task_info['tags'] = task_tags
+    task_info['location'] = task_location
+    task_info['postponed'] = task_postponed
+    task_info['list'] = task_in_list
+    
+    return task_info
+     
+def convert_date(time):
+    
+    one_day = timedelta(days=1)
+    today = date.today()
+    tomorrow = today + one_day
+
+    if time == 'today':
+        day = today
+    elif time == 'tomorrow':
+        day = tomorrow
+    else:
+        day = today + (int(time) * one_day)
+    return day
+    
+def get_tasks(feed, time, blacklist, whitelist):
+    
+    dom = parseString(feed)
+    
+    num_task = len(dom.getElementsByTagName('entry'))
+    
+    task_list = []
+    
+    # Run through all the task and grab the ones 
+    # that match the desired due date.
+    
+    for m in range(0,num_task):
+        
+        task = task_info(dom,m) 
+        
+        # I used this line for testing
+        # print(task['title'] + ' ' + str(task['due']) + ' ' + str(time))
+        
+        # if there is a whitelist grab only those tasks
+        if len(whitelist)>0:
+            whitelist = set(whitelist)
+            if task['list'] in whitelist:
+                  if str(task['due']) == str(time):
+                    task_list.append(task)
+                
+        # if there is a blacklist only grab those tasks
+        elif len(blacklist)>0:
+            remove = (str(task['list']) in set(blacklist))
+            if remove == False:
+              if str(task['due']) == str(time):
+                task_list.append(task)
+            
+        # if there is no whitelist or blacklist then just grab everything for 
+        # the desired day
+        else:
+            if str(task['due']) == str(time):
+                task_list.append(task)
+            
+    return task_list
+    
+    
+if __name__ == "__main__":
+    
+    # Do auth and then get the feed.  
+    
+    # Sometimes there is garbage added to the beginning and end of the rss feed.
+    # To remove it uncomment the next line:
+    #
+    # taskfeed = get_feed()[6:-8]
+	#
+	# and comment the following line:
+	#
+    taskfeed = get_feed()
+	
+	# if you are having issues, then you may need to adjust the [6:-8]  so that
+	# only the garbage is being stripped out.
+    
+    emptylist = []
+    
+    days = list_date.split(',')
+    for day in days:
+
+        day = convert_date(day.lower())
+    
+        if day == date.today():
+            time_title = 'Today'
+        elif day == date.today()+timedelta(days=1):
+            time_title = 'Tomorrow'
+        else:
+            time_title = 'on ' + day.strftime('%a, %b %d')
+    
+        # Parse the feed and get grab the tasks with the desired due date.
+        # Returns a list of tasks, the tasks are dictionary objects which contains
+        # the task information.
+        tasklist = get_tasks(taskfeed,day,blacklist,whitelist) 
+    
+        #print(' '+titlecolor+'Tasks Due ' + time_title + ':')
+
+        for task in tasklist:
+            print('    '+ listcolor + '' +task['title'])
+        if tasklist == emptylist:
+            print('    '+listcolor+'Nothing Due')
+    

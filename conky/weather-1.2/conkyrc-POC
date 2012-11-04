@@ -1,0 +1,346 @@
+##################################
+## VinDSL | rev. 11-11-28 01:19 ##
+##################################
+##   Google Weather API POC     ##
+##################################
+
+## ¡PLEASE READ THE FINE PRINT! ##
+
+####
+## Development Platforms (current)
+#
+#  Ubuntu 10.10 'Maverick Meerkat' (GNOME 2.28 - Conky 1.8.0)
+#  Ubuntu 12.04 'Precise Pangolin' (GNOME-SHELL - UNITY 2D/3D - Conky 1.8.1)
+#  Screen Resolution: 1280x1024x24 (DELL UltraSharp 1907FP)
+
+####
+## Prerequisites (required)
+#
+#  conky-all 1.8.0 or 1.8.1
+#  cURL - Command Line Tool
+#  xsltproc - Command Line Tool
+#  UTF-8 Compatible Text Editor
+
+####
+## Installed fonts (required)
+#
+#  ConkyWeather  (Stanko Metodiev - included in Conky distro)
+#  ConkyWindNESW (Stanko Metodiev - included in Conky distro)
+#  Cut Outs for 3D FX (Fonts & Things)
+#  Droid Font Family (Google Android SDK)
+#  KR A Round (Kat's Fun Fonts)
+#  Moon Phases (Curtis Clark)
+#  OpenLogos (Icoma)
+#  PizzaDude Bullets (Jakob Fischer)
+#  Radio Space (Iconian Fonts)
+#  StyleBats (Vinterstille)
+#  Ubuntu Font Family (Canonical Ltd)
+#  Ubuntu Title Bold (Paulo Silva - not included in link below)
+#  Weather (Jonathan Macagba)
+# 
+## Tips n' Tricks from Mr. Peachy, djyoung4, and 42dorian (Thanks!)
+## Most necessary fonts can be downloaded here: http://ompldr.org/vOHdoag
+## Unzip the fonts into your font folder, for example: /home/username/.fonts
+## Run this command in a terminal (rebuilds font cache file): sudo fc-cache -fv
+
+####
+## Use XFT? Required to Force UTF8 (see below)
+#
+use_xft yes
+xftfont DroidSans:size=8.75
+xftalpha 0.1
+
+####
+## Force UTF8? Requires XFT (see above)
+## Displays degree symbol, instead of Â°, etc.
+#
+override_utf8_locale yes
+
+####
+## This buffer is used for text, single lines, output from $exec, and other variables.
+## Increasing the text buffer size (too high) will drastically reduce Conky's performance.
+## Decreasing the size (too low) will truncate content and cause strange display output.
+## Standard text buffer size is 256 bytes (cannot be less). Adjust YOUR buffer wisely!
+#
+text_buffer_size 640
+
+####
+## Daemonize Conky, aka 'fork to background'.
+#
+background yes
+
+####
+## Update interval in seconds.
+#
+update_interval 2.0
+
+####
+## The number of times Conky will update before quitting.
+## Zero makes Conky run forever.
+#
+total_run_times 0
+
+####
+## Create own window in instead of using desktop?
+#
+own_window yes
+own_window_transparent yes
+own_window_type normal
+own_window_class conky-semi
+own_window_hints undecorated,below,sticky,skip_taskbar,skip_pager
+####
+## Some distros also require the following 2 lines.
+#
+own_window_argb_visual yes
+own_window_argb_value 255
+
+####
+## Force images to redraw when they change.
+#
+imlib_cache_size 0
+
+####
+## Use double buffering? Reduces flicker.
+#
+double_buffer yes
+
+####
+## Draw shades?
+#
+draw_shades yes
+default_shade_color 292421
+
+####
+## Draw outlines?
+#
+draw_outline no
+
+####
+## Draw borders around text?
+#
+draw_borders no
+
+####
+## Draw borders around graphs?
+#
+draw_graph_borders no
+
+####
+## Print text to stdout?
+## Print text in console?
+#
+out_to_ncurses no
+out_to_console no
+
+####
+## Text alignment.
+#
+alignment top_right
+
+####
+## Minimum size of the text area.
+## Syntax: minimum_size [width] [height]
+#
+minimum_size 240 1394
+
+####
+## Maximum width of the text area.
+## Syntax: maximum_width [width]
+#
+maximum_width 240
+
+####
+## Gap between text and screen borders.
+#
+gap_x 6	  ## Left / Right
+gap_y 32  ## Top / Bottom
+
+####
+## Shorten MiB/GiB to M/G in stats.
+#
+short_units yes
+
+####
+## Pad % symbol spacing after numbers.
+#
+pad_percents 0
+
+####
+## Pad spacing between text and borders.
+#
+border_inner_margin 4
+
+####
+## Limit the length of names in "Top Processes".
+#
+top_name_width 10
+
+####
+## Subtract file system -/+buffers/cache from used memory?
+## Set to yes, to produce meaningful physical memory stats.
+#
+no_buffers yes
+
+####
+## Set to yes, if you want all text to be in UPPERCASE.
+#
+uppercase no
+
+####
+## Number of cpu samples to average.
+## Set to 1 to disable averaging.
+#
+cpu_avg_samples 2
+
+####
+## Number of net samples to average.
+## Set to 1 to disable averaging.
+#
+net_avg_samples 2
+
+####
+## Add spaces to keep things from moving around?
+## Only affects certain objects.
+#
+use_spacer right
+
+####
+## My colors (suit yourself)
+#
+color0 White		#FFFFFF
+color1 Ivory		#FFFFF0
+color2 Ivory2		#EEEEE0
+color3 Ivory3		#CDCDC1
+color4 Tan1		#FFA54F
+color5 Tan2		#EE9A49
+color6 Gray		#7E7E7E
+color7 AntiqueWhite4	#8B8378
+color8 DimGray		#696969
+color9 Tomato		#FF6347
+
+#####
+## Load Lua for shading (optional)
+## Set the path to your script here.
+#
+lua_load ~/.conky/draw_bg.lua
+lua_draw_hook_pre draw_bg
+
+####
+## Load Lua for bargraphs (required)
+## Set the path to your script here.
+#
+lua_load ~/.conky/bargraph_small.lua
+lua_draw_hook_post main_bars
+
+TEXT
+##################################
+##             LOGO             ##
+##################################
+## Uncomment for hard-coded ID (static)
+${voffset -33}${font OpenLogos:size=103}${color2}v${font}${voffset -76}${goto 179}${font UbuntuTitleBold:size=19.6}${color4}1${offset 1}2${offset 1}.${offset 0}0${offset 0}4${font}
+####
+## Uncomment for soft-coded ID (dynamic)
+# ${voffset -33}${font OpenLogos:size=103}${color2}v${font}${voffset -76}${goto 179}${font UbuntuTitleBold:size=19.6}${color4}${pre_exec cat /etc/*release | grep 'RELEASE' | awk -F'=' '{print $2}'}${font}
+####
+## Additional ID (branch version, code name, release date, etc.)
+${voffset -1}${goto 186}${font Ubuntu-B:size=8.1}${color4}pre-alpha${font}
+##################################
+##            SYSTEM            ##
+##################################
+${voffset 7}${font DroidSans:bold:size=8.25}${color4}SYSTEM${offset 8}${color8}${voffset -2}${hr 2}${font}
+# ${voffset 4}${font OpenLogos:size=10}${color2}u${voffset -4}${font DroidSans:size=8.6}${color3}${offset 5}${pre_exec lsb_release -sd || cat /etc/*release}${font}
+${voffset 2}${offset -2}${font OpenLogos:size=12}${color2}Z${voffset -4}${font DroidSans:size=8.6}${color3}${offset 3}${sysname}${offset 3}${kernel}${alignr}${font DroidSans:size=8.3}${machine}${font}
+${voffset 2}${font StyleBats:size=10}${color2}d${voffset -2}${font DroidSans:size=8.6}${color3}${offset 5}nVidia GeForce 7600 GT${alignr}${font DroidSans:size=8.3}${pre_exec dpkg --status nvidia-current | grep Version | cut -f 1 -d '-' | sed 's/[^.,0-9]//g'}${font}
+${voffset 2}${font StyleBats:size=10}${color2}A${voffset -1}${font DroidSans:size=8.6}${color3}${offset 5}Intel${offset 3}P4${offset 3}Extreme${offset 3}Edition${alignr 1}${font DroidSans:size=8.3}${freq_g cpu0}${offset 1}GHz${font}
+${voffset 2}${font StyleBats:size=10}${color2}q${voffset -1}${font DroidSans:size=8.6}${color3}${offset 5}System${offset 3}Uptime${alignr}${font DroidSans:size=8.3}${uptime_short}${font}
+##################################
+##          PROCESSORS          ##
+##################################
+${voffset 4}${font DroidSans:bold:size=8}${color4}PROCESSORS${offset 8}${color8}${voffset -2}${hr 2}${font}
+${voffset 4}${font StyleBats:size=9.9}${color2}k${voffset -2}${font DroidSansFallback:size=8.39}${color3}${offset 2}CPU1${offset 5}${font DroidSans:size=8.3}${cpu cpu1}%${font}
+${voffset 2}${font StyleBats:size=9.9}${color2}k${voffset -2}${font DroidSansFallback:size=8.39}${color3}${offset 2}CPU2${offset 5}${font DroidSans:size=8.3}${cpu cpu2}%${font}
+##################################
+##            MEMORY            ##
+##################################
+${voffset 5}${font DroidSans:bold:size=8}${color4}MEMORY${offset 8}${color8}${voffset -2}${hr 2}${font}
+${voffset 4}${font StyleBats:size=10}${color2}l${voffset -2}${font DroidSansFallback:size=8.3}${color3}${offset 3}RAM${goto 97}${font DroidSans:size=8.3}${mem}${goto 133}/${offset 5}${memmax}${alignr}${memperc}%${font}
+##################################
+##             HDD              ##
+##################################
+${voffset 15}${font DroidSans:bold:size=8}${color4}HDD${offset 8}${color8}${voffset -2}${hr 2}${font}
+${voffset 6}${font StyleBats:size=9.9}${color2}x${voffset -2}${font DroidSansFallback:size=8.3}${color3}${offset 4}ROOT${goto 95}${font DroidSans:size=8.3}${fs_used /}${goto 133}/${offset 5}${fs_size /}${alignr}${fs_free_perc /}%${font}
+${voffset 15}${font StyleBats:size=9.9}${color2}x${voffset -2}${font DroidSansFallback:size=8.3}${color3}${offset 4}HOME${goto 95}${font DroidSans:size=8.3}${fs_used /home}${goto 133}/${offset 5}${fs_size /home}${alignr}${fs_free_perc /home}%${font}
+${voffset 15}${font StyleBats:size=9.9}${color2}4${voffset -2}${font DroidSansFallback:size=8.3}${color3}${offset 4}SWAP${goto 95}${font DroidSans:size=8.3}${swap}${goto 133}/${offset 5}${swapmax}${alignr}${swapperc}%${font}
+##################################
+##         TOP PROCESSES        ##
+##################################
+${voffset 15}${font DroidSans:bold:size=8}${color4}TOP PROCESSES${offset 8}${color8}${voffset -2}${hr 2}${font}
+${voffset 6}${font StyleBats:size=10}${color1}h${voffset -1}${font DroidSans:size=8.65}${color3}${offset 5}${top_mem name 1}${goto 120}${font DroidSans:size=8.3}${top_mem mem_res 1}${alignr}${top_mem mem 1}%${font}
+${voffset 1}${font StyleBats:size=10}${color1}h${voffset -1}${font DroidSans:size=8.65}${color3}${offset 5}${top_mem name 2}${goto 120}${font DroidSans:size=8.3}${top_mem mem_res 2}${alignr}${top_mem mem 2}%${font}
+${voffset 1}${font StyleBats:size=10}${color1}h${voffset -1}${font DroidSans:size=8.65}${color3}${offset 5}${top_mem name 3}${goto 120}${font DroidSans:size=8.3}${top_mem mem_res 3}${alignr}${top_mem mem 3}%${font}
+# ${voffset 1}${font StyleBats:size=10}${color1}h${voffset -1}${font DroidSans:size=8.65}${color3}${offset 5}${top_mem name 4}${goto 120}${font DroidSans:size=8.3}${top_mem mem_res 4}${alignr}${top_mem mem 4}%${font}
+# ${voffset 1}${font StyleBats:size=10}${color1}h${voffset -1}${font DroidSans:size=8.65}${color3}${offset 5}${top_mem name 5}${goto 120}${font DroidSans:size=8.3}${top_mem mem_res 5}${alignr}${top_mem mem 5}%${font}
+# ${voffset 1}${font StyleBats:size=10}${color1}h${voffset -1}${font DroidSans:size=8.65}${color3}${offset 5}${top_mem name 6}${goto 120}${font DroidSans:size=8.3}${top_mem mem_res 6}${alignr}${top_mem mem 6}%${font}
+##################################
+##           NETWORK            ##
+##################################
+${voffset 4}${font DroidSans:bold:size=8}${color4}NETWORK${offset 8}${color8}${voffset -2}${hr 2}${font}
+${voffset 4}${font PizzaDudeBullets:size=9.5}${color6}T${font DroidSans:size=8.65}${color3}${offset 5}Download${goto 120}${font DroidSans:size=8.3}${totaldown eth0}${alignr}${font DroidSans:size=8.3}${downspeed eth0}${font}
+${voffset 0}${font PizzaDudeBullets:size=9.5}${color6}N${font DroidSans:size=8.65}${color3}${offset 5}Upload${goto 120}${font DroidSans:size=8.3}${totalup eth0}${alignr}${font DroidSans:size=8.3}${upspeed eth0}${font}
+${voffset 4}${font PizzaDudeBullets:size=9.5}${color6}a${font DroidSans:size=8.65}${color3}${offset 5}Private${offset 3}IP${goto 123}${font DroidSansFallback:size=8.5}LAN${alignr}${font DroidSans:size=8.3}${addr eth0}${font}
+${voffset 0}${font PizzaDudeBullets:size=9.5}${color6}a${font DroidSans:size=8.65}${color3}${offset 5}Public${offset 7}IP${goto 121}${font DroidSansFallback:size=8.5}WAN${alignr}${font DroidSans:size=8.3}Demo Mode${font}
+# ${execi 1800 wget -q -O - checkip.dyndns.org | sed -e 's/[^[:digit:]\|.]//g'}${font}
+# ${voffset 4}${font PizzaDudeBullets:size=9.5}${color6}T${font DroidSans:size=8.65}${color3}${offset 5}Down${alignr}${font DroidSans:size=8.3}${downspeed eth0}${font}
+# ${voffset 0}${font PizzaDudeBullets:size=9.5}${color6}N${font DroidSans:size=8.65}${color3}${offset 5}Up${alignr}${font DroidSans:size=8.3}${upspeed eth0}${font}
+##################################
+##     WEATHER (Imperial)       ##
+##################################
+# ${voffset 4}${font DroidSans:bold:size=8.25}${color4}WEATHER${offset 8}${color8}${voffset -2}${hr 2}${font}
+# ${voffset -55}${font RadioSpace:size=34}${color3}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" ctbi}${font}${voffset -28}${goto 33}${font Weather:size=42}${color3}y${font}
+# ${voffset -38}${font Ubuntu:size=8.63}${color5}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" ctti}${font}
+# ${voffset -39}${font KRARound:size=36}${color3}${goto 195}I${font}
+# ${voffset 6}${font Ubuntu:size=23}${color5}${alignc -2}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" ccb}${font}
+# ${voffset 8}${font DroidSansFallback:size=8.63}${color3}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ"}${font}
+# ${voffset -57}${font ConkyWeather:size=48}${color6}${alignc -55}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" cp}${font}
+# ${voffset 6}${font DroidSansMono:bold:size=8.62}${color4}${offset 40}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" dl}${font}
+# ${voffset 0}${font ConkyWeather:size=37.9}${color3}${offset 26}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" fcp}${font}
+# ${voffset 0}${font DroidSansFallback:bold:size=8.62}${color4}${offset 28}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" fcti}${font}
+##################################
+##      WEATHER (Metric)        ##
+##################################
+${voffset 4}${font DroidSans:bold:size=8.25}${color4}WEATHER${offset 8}${color8}${voffset -2}${hr 2}${font}
+${voffset -55}${font RadioSpace:size=34}${color3}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" ctbm}${font}${voffset -28}${goto 33}${font Weather:size=42}${color3}y${font}
+${voffset -38}${font Ubuntu:size=8.63}${color5}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" cttm}${font}
+${voffset -39}${font KRARound:size=36}${color3}${goto 195}I${font}
+${voffset 6}${font Ubuntu:size=23}${color5}${alignc -2}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" ccb}${font}
+${voffset 8}${font DroidSansFallback:size=8.63}${color3}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ"}${font}
+${voffset -57}${font ConkyWeather:size=48}${color6}${alignc -55}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" cp}${font}
+${voffset 6}${font DroidSansMono:bold:size=8.62}${color4}${offset 40}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" dl}${font}
+${voffset 0}${font ConkyWeather:size=37.9}${color3}${offset 26}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" fcp}${font}
+${voffset 0}${font DroidSansFallback:bold:size=8.62}${color4}${offset 35}${execi 1800 /home/vindsl/.conky/weather/weather.sh "Scottsdale,AZ" fctm}${font}
+##################################
+##             TIME             ##
+##################################
+${voffset 4}${font DroidSans:bold:size=8}${color4}TIME${offset 8}${color8}${voffset -2}${hr 2}${font}
+${voffset -4}${font RadioSpace:size=32}${color3}${if_match ${time %l}<=9}${alignc 7}${time %l:%M%p}${else}${if_match ${time %l}>=10}${alignc -1}${time %l:%M%p}${endif}${endif}${font}
+##################################
+##      CALENDAR (5-Line)       ##
+##################################
+${voffset 4}${font DroidSans:bold:size=8}${color4}DATE${offset 8}${color8}${voffset -2}${hr 2}${font}
+${voffset 15}${font DroidSansMono:size=7.55}${color3}${alignc 60}${time %A}${font}
+${voffset -4}${font DroidSansFallback:bold:size=18}${if_match ${time %e}<=9}${color5}${alignc 65}${time %e}${font}${else}${if_match ${time %e}>=10}${color5}${alignc 60}${time %e}${endif}${endif}${font}
+${voffset 0}${font DroidSansMono:size=7.55}${color3}${alignc 60}${time %B}${font}
+${voffset 0}${font DroidSansMono:size=7.6}${color3}${alignc 60}${time %Y}${font}
+${voffset -83}${font CutOutsFor3DFX:size=67}${color8}${alignc 99}2${font}
+####
+## Uncomment for Conky 1.8.0 (use mono fonts only)
+# ${voffset -83}${font DroidSansMono:size=7.55}${color3}${execpi 60 VinDSL_Cal_9=`date +%-d`; cal -h | sed -e 's/\r//g' -e 's/^/ /g' -e '1d' -e s/^/"\$\{offset 100"\}/ -e 's/\<'"$VinDSL_Cal_9"'\>/${color4}&${color3}/'}
+####
+## Uncomment for Conky 1.8.1 (use mono fonts only)
+${voffset -64}${offset 100}${font DroidSansMono:size=7.55}${color3}${execpi 60 VinDSL_Cal_9=`date +%-d`; cal -h | sed -e 's/\r//g' -e 's/^/ /g' -e '1d' -e 's/\<'"$VinDSL_Cal_9"'\>/${color4}&${color3}/'}
+##################################
+##    BANSHEE (Experimental)    ##
+##################################
+${if_running banshee}
+${voffset 0}${font DroidSans:bold:size=7.75}${color4}BANSHEE${offset 8}${color8}${voffset -2}${hr 2}${font}
+${voffset 4}${font DroidSans:size=8.25}${color3}${if_match "${execpi 2 expr length "`/usr/bin/banshee --query-title --no-present | cut -f1- -d " "`"}" >= "48"}${alignr 15}${scroll 38 4* ${execi 2 banshee --query-title --no-present | cut -f2- -d " "}}${font}${else}${alignc}${execi 2 banshee --query-title --no-present | cut -f2- -d " "}${font}${endif}${endif}

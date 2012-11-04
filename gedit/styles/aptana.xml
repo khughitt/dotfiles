@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<style-scheme id="aptana" _name="aptana" version="1.0">
+  <author>SamDee</author>
+  <_description>Aptana colors</_description>
+
+  <!-- Palette (font: use Monospace 10px) -->
+  <color name="bgnormal"      value="#ffffff"/>
+	<color name="bgcurrentline" value="#E8F2FE"/>
+	<color name="bgselection" 	value="#4E719B"/>
+	<color name="fontnormal"    value="#444444"/>
+  <color name="fontspecial"   value="#528900"/>
+  <color name="fontelement"   value="#a31650"/>
+  <color name="fontattribute"   value="#FF0000"/>
+  <color name="fontattributevalue"   value="#0000FF"/>
+  <color name="fontselection" value="#ffffff"/>
+	<color name="fontcomment" 	value="#008000"/> 
+
+  <!-- Global Settings -->
+  <style name="text"                        foreground="fontnormal" background="bgnormal"/>
+  <style name="selection"                   foreground="fontselection" background="bgselection"/>
+  <style name="cursor"                      foreground="fontnormal"/>
+  <style name="current-line"                background="bgcurrentline"/>
+  <style name="line-numbers"                foreground="fontnormal" background="bgnormal"/>
+
+  <!-- Bracket Matching -->
+  <style name="bracket-match"               foreground="fontnormal" background="bgcurrentline" bold="true"/>
+
+  <!-- Search Matching -->
+  <style name="search-match"                foreground="fontspecial" background="bgselection"/>
+
+  <!-- Comments -->
+  <style name="def:comment"                 foreground="fontcomment"/>
+  <style name="def:shebang"                 foreground="fontcomment" bold="true"/>
+  <style name="def:doc-comment-element"     italic="true"/>
+
+  <!-- Constants (attribute values) -->
+  <style name="def:constant"                foreground="fontattributevalue" bold="true"/>
+  <style name="def:string"                  foreground="fontattributevalue"/>
+  <style name="def:special-char"            foreground="fontattributevalue"/>
+  <style name="def:special-constant"        foreground="fontattributevalue"/>
+  <style name="def:floating-point"          foreground="fontattributevalue"/>
+
+  <!-- Identifiers (elements/tags) -->
+  <style name="def:identifier"              foreground="fontelement"/>
+
+  <!-- Statements -->
+  <style name="def:statement"               foreground="fontspecial" bold="true"/>
+
+  <!-- Types (attributes) -->
+  <style name="def:type"                    foreground="fontattribute"/> 
+
+  <!-- Others -->
+  <style name="def:preprocessor"            foreground="fontspecial"/>
+  <style name="def:error"                   foreground="fontspecial" bold="true"/>
+
+</style-scheme>

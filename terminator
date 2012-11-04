@@ -1,0 +1,33 @@
+[global_config]
+  enabled_plugins = CustomCommandsMenu, TestPlugin, TerminalShot, LaunchpadCodeURLHandler, APTURLHandler, LaunchpadBugURLHandler
+  title_transmit_bg_color = "#548ca8"
+[keybindings]
+  switch_to_tab_5 = <Alt>5
+  new_window = <Ctrl>N
+  switch_to_tab_4 = <Alt>4
+  close_term = <Ctrl>Q
+  switch_to_tab_2 = <Alt>2
+  switch_to_tab_3 = <Alt>3
+  switch_to_tab_1 = <Alt>1
+  new_tab = <Ctrl>T
+[profiles]
+  [[default]]
+    palette = "#303030:#bf5c5c:#6d9e3f:#b58858:#6095c5:#ac7bde:#3ba275:#cfcfcf:#929e00:#c94242:#a3d572:#efbd8b:#98cbfe:#e5b0ff:#75daa9:#ffffff"
+    background_darkness = 0.75
+    scrollback_lines = 1024
+    background_type = transparent
+    use_system_font = False
+    foreground_color = "#e6e6e6"
+    scroll_on_output = False
+    font = Terminus 15
+    background_color = "#0c0c0c"
+[layouts]
+  [[default]]
+    [[[child1]]]
+      type = Terminal
+      parent = window0
+      profile = default
+    [[[window0]]]
+      type = Window
+      parent = ""
+[plugins]

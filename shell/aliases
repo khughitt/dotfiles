@@ -1,0 +1,24 @@
+#
+# Aliases
+#
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+alias bs='bzr status'
+
+alias ap='sudo apt-get update && sudo apt-get dist-upgrade'
+alias pacman='pacman-color'
+alias pc='sudo pacman -Syu'
+
+alias open='xdg-open'
+alias del='mv -t ~/.local/share/Trash/files --backup=t'
+alias wtf="watch -n 1 w -hs"
+alias wth="ps uxa | less"
+alias da='date "+%A, %B %d, %Y [%T]"'
+alias du1='du --max-depth=1'
+alias pg='ps -Af | grep $1'
+
+alias openports='netstat --all --numeric --programs --inet'
+alias apache_nc="ps -def | grep apache2 | grep -v grep | wc -l"
+alias apache_cm="ps -ylC apache2 --sort:rss"
