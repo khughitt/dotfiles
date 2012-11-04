@@ -1,1 +1,65 @@
-/home/keith/Dropbox/software/conky-vocab/conky_vocab.py
+#!/usr/bin/env python2
+#-*- coding:utf-8 -*-
+"""Conky random vocabulary words
+
+@TODO: deal with extra commas in english definition
+"""
+import sys
+import os
+import random
+
+def main(args):
+    vocab = []
+    
+    # Parse file
+    filepath = os.path.expanduser(args[1])
+    if not os.path.exists(filepath):
+        print("Invalid input path specified")
+        sys.exit()
+
+    # @TODO: add support for loading directory of files
+    file_ = open(filepath, 'r')
+
+    i = 0
+
+    for line in file_:
+        parts = [x.strip() for x in line.split(",")]
+        
+        # Skip comments, grouping, and newlines
+        if line.startswith(("#", "[", "\n")):
+            continue
+
+        # Lines with related words start with a space
+        elif line.startswith(" ") and len(parts) >= 3:
+            vocab[i - 1][3].append(parts)
+        else:
+            parts.append([])
+            vocab.append(parts)
+            i = i + 1
+
+    # Choose random word to display
+    n = random.randint(0, len(vocab) - 1)
+
+    # Print random vocab word
+    #print("\t".join(vocab[n][0:2]))
+    #for x in vocab[n][3]:
+    #    print ("|-" + "\t".join(x))
+    
+    # Convert numeric tone marks
+    from cjklib.reading import ReadingFactory
+    rf = ReadingFactory()
+    pinyin = rf.convert(vocab[n][1], 'Pinyin', 'Pinyin', sourceOptions={'toneMarkType': 'numbers'})
+    
+    # Conky support
+    #print(repr(pinyin))
+    #print pinyin
+    pinyin = unicode(pinyin).encode("utf-8")
+    #print(repr(pinyin))
+    
+    # Prink vocab conky snippet
+    print("${font Microsoft YaHei:size=120}${color4}%s${font}" % vocab[n][0])
+    print("${voffset -110}${font Microsoft YaHei:size=16}${color2}%s${font}" % pinyin)
+    print("${voffset -320}${font Microsoft YaHei:size=16}${color5}%s${font}" % vocab[n][2])
+
+if __name__ == "__main__":
+    main(sys.argv)
