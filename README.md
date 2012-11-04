@@ -25,7 +25,7 @@ users, the plugins are also available on the [Arch User Repository (AUR)](https:
 Screenshot
 ----------
 
-![desktop screenshot](https://raw.github.com/khughitt/dotfiles/master/.screenshot/screenshot.png)
+![desktop screenshot](https://raw.github.com/khughitt/dotfiles/master/misc/screenshot.png)
 
 Current setup:
 
