@@ -5,6 +5,9 @@
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
+# PATH
+PATH=$PATH:~/bin
+
 # History
 setopt HIST_IGNORE_DUPS
 
@@ -21,9 +24,6 @@ source $ZSH/oh-my-zsh.sh
 
 # Disable auto correction
 unsetopt correct_all
-
-# PATH
-export PATH=$PATH:~/bin
 
 # Suffix aliases
 alias -s doc=lowriter
