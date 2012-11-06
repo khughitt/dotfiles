@@ -19,7 +19,7 @@ HISTSIZE=1000
 HISTFILESIZE=2000
 
 # PATH
-export PATH=$PATH:~/bin
+export PATH=$HOME/bin:$PATH
 
 # Prompt
 PS1='\[\033[00;36m\]\u@\h \[\033[01;36m\]\W \$ \[\033[00m\]'
