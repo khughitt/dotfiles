@@ -1,12 +1,18 @@
 options(showWarnCalls=T, showErrorCalls=T)
 options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 
+# TEMP WORK-AROUND 2012/11/08
+# http://stackoverflow.com/questions/13235100/empty-plot-in-r
+setHook(packageEvent("grDevices", "onLoad"),
+        function(...) grDevices::X11.options(width=8, height=8, 
+                                             xpos=0, pointsize=10, 
+                                             type="nbcairo"))
 # Syntax highlighting
 library('colorout')
 setOutputColors256(
-    normal = 100,
-    number = 98,
-    negnum = 215,
+    normal = 40,
+    number = 177,
+    negnum = 211, #212,
     string = 85,
     const = 35,
     stderror = 203,

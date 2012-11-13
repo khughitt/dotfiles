@@ -1,30 +1,88 @@
+" ---------------------------------------------------------------------------
 " General
-set nocompatible    " disable vi compatibility enchancements
-set showmatch       " highlight correspods character
-set cursorline      " highlight current line
-set nomodeline      "
-filetype indent on  " indent based on filetype
-set ruler           " show the cursor position all the time
-set backspace=indent,eol,start " more powerful backspacing
+" ---------------------------------------------------------------------------
+set nocompatible     " disable vi compatibility enchancements
+set history=1000     " number of command history
+set isk+=_,$,@,%,#,- " none word dividers
+set showmatch        " highlight correspods character
+set cursorline       " highlight current line
+set modeline         " make sure modeline support is enabled
+filetype indent on   " indent based on filetype
 
-" Indentation
-set tabstop=4 shiftwidth=4 softtabstop=4 " set tab width
-set expandtab   " use space instead of tab
-set smartindent " use smart indent
-set history=100 " number of command history
+" ----------------------------------------------------------------------------
+"   Highlight Trailing Whitespace
+" ----------------------------------------------------------------------------
 
-" Appearance
+set list listchars=trail:.,tab:>.
+highlight SpecialKey ctermfg=DarkGray ctermbg=Black
+
+" ----------------------------------------------------------------------------
+"  Backups
+" ----------------------------------------------------------------------------
+
+set nobackup                           " do not keep backups after close
+set nowritebackup                      " do not keep a backup while working
+set noswapfile                         " don't keep swp files either
+set backupdir=$HOME/.vim/backup        " store backups under ~/.vim/backup
+set backupcopy=yes                     " keep attributes of original file
+set backupskip=/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*
+set directory=~/.vim/swap,~/tmp,.      " keep swp files under ~/.vim/swap
+
+" ----------------------------------------------------------------------------
+"  UI
+" ----------------------------------------------------------------------------
+set ruler                  " show the cursor position all the time
+set noshowcmd              " don't display incomplete commands
+set nolazyredraw           " turn off lazy redraw
+set number                 " line numbers
+set ch=2                   " command line height
+set backspace=2            " allow backspacing over everything in insert mode
+set whichwrap+=<,>,h,l,[,] " backspace and cursor keys wrap to
+set shortmess=filtIoOA     " shorten messages
+set report=0               " tell us about changes
+set nostartofline          " don't jump to the start of line when scrolling
+
+" ----------------------------------------------------------------------------
+" Visual Cues
+" ----------------------------------------------------------------------------
+set showmatch              " brackets/braces that is
+set mat=5                  " duration to show matching brace (1/10 sec)
+set incsearch              " do incremental searching
+set laststatus=2           " always show the status line
+set ignorecase             " ignore case when searching
+set visualbell             " no thank you
+
+" ----------------------------------------------------------------------------
+" Text Formatting
+" ----------------------------------------------------------------------------
+
+set autoindent             " automatic indent new lines
+set smartindent            " be smart about it
+set nowrap                 " do not wrap lines
+set softtabstop=4          " tab width
+set shiftwidth=4           " 
+set tabstop=4
+set expandtab              " use space instead of tab
+set expandtab              " expand tabs to spaces
+set nosmarttab             " no tabs
+set formatoptions+=n       " support for numbered/bullet lists
+set virtualedit=block      " allow virtual edit in visual block ..
+
+
+" ---------------------------------------------------------------------------
+"  Appearance
+" ---------------------------------------------------------------------------
 set t_Co=256
 if has("gui_running")
     " theme
     set background=dark
-    colorscheme torte
+    colorscheme jellybeans
     " Make shift-insert work like in Xterm
     map <S-Insert> <MiddleMouse>
     map! <S-Insert> <MiddleMouse>
 
 else
-    colorscheme delek
+    colorscheme jellybeans
 endif
 
 " We know xterm-debian is a color terminal
@@ -37,6 +95,15 @@ endif
 if has("syntax")
   syntax on
 endif
+
+" ---------------------------------------------------------------------------
+"  Strip all trailing whitespace in file
+" ---------------------------------------------------------------------------
+
+function! StripWhitespace ()
+    exec ':%s/ \+$//gc'
+endfunction
+map ,s :call StripWhitespace ()<CR>
 
 " Search
 set wrapscan   " search wrap around the end of the file
