@@ -3,3 +3,5 @@
 	name = Keith Hughitt
 [color]
 	ui = true
+[core]
+	excludesfile = /home/keith/.gitignore_global

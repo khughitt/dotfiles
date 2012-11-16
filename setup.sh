@@ -31,7 +31,7 @@ fi
 ln_s ${PWD}/terminator ~/.config/terminator/config
 
 # Everything else
-for path in "devilspie" "conky" "conkyrc" "gitconfig" "Rprofile" "vim" "vimrc" "Xdefaults"; do
+for path in "devilspie" "conky" "conkyrc" "gitconfig", "gitignore_global", "Rprofile" "vim" "vimrc" "Xdefaults"; do
     ln_s ${PWD}/${path} ~/.${path}
 done
 

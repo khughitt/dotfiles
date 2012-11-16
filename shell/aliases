@@ -11,6 +11,9 @@ alias ap='sudo apt-get update && sudo apt-get dist-upgrade'
 alias pacman='pacman-color'
 alias pc='sudo pacman -Syu'
 
+alias ipython='ipython2'
+alias qpython='ipython2 qtconsole --colors=linux --pylab'
+
 alias open='xdg-open'
 alias del='mv -t ~/.local/share/Trash/files --backup=t'
 alias wtf="watch -n 1 w -hs"
