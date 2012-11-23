@@ -30,6 +30,22 @@ if [ ! -e ~/.config/terminator ]; then
 fi
 ln_s ${PWD}/terminator ~/.config/terminator/config
 
+# IPython
+if [! -e $XDG_CONFIG_HOME/ipython]; then
+    ipython profile create
+    
+    for filename in "ipython_config.py" "ipython_notebook_config.py" "ipython_qtconsole_config.py"; do
+        SOURCE=${PWD}/ipython/${filename}
+        DEST=$XDG_CONFIG_HOME/ipython/profile_default/${filename}
+        
+        rm $DEST
+        ln_s $SOURCE $DEST
+
+    cp ${PWD}/ipython/autojump_ipython.py $XDG_CONFIG_HOME/ipython/profile_default/startup
+else
+    echo "[SKIPPING] Ipython (already exists...)"
+fi
+
 # Everything else
 for path in "devilspie" "conky" "conkyrc" "gitconfig", "gitignore_global", "Rprofile" "vim" "vimrc" "Xdefaults"; do
     ln_s ${PWD}/${path} ~/.${path}
