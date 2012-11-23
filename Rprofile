@@ -43,9 +43,6 @@ setOutputColors256(
 cd <- setwd
 pwd <- getwd
 
-# Use last(x) instead of x[length(x)], works on matrices too
-last <- function(x) { tail(x, n = 1) }
-
 # Default HISTORY file
 if (Sys.getenv("R_HISTFILE") == "") {
   Sys.setenv(R_HISTFILE=file.path("~", ".Rhistory"))
