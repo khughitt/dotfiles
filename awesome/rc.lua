@@ -1,6 +1,6 @@
 ------------------------------------
 -- AwesomeWM 3.5rc1 config        --
--- based on: github.com/tdy/dots/ --
+-- Based on: github.com/tdy/dots/ --
 ------------------------------------
 
 local gears = require("gears")
@@ -285,8 +285,8 @@ globalkeys = awful.util.table.join(
   -- Layout manipulation
   awful.key({ modkey, "Shift" }, "j", function () awful.client.swap.byidx( 1) end),
   awful.key({ modkey, "Shift" }, "k", function () awful.client.swap.byidx(-1) end),
-  awful.key({ modkey, }, "Tab", function () awful.screen.focus_relative( 1) end),
   awful.key({ modkey, "Shift" }, "Tab", function () awful.screen.focus_relative(-1) end),
+  awful.key({ modkey, }, "Tab", function () awful.screen.focus_relative( 1) end),
   awful.key({ modkey, }, "u", awful.client.urgent.jumpto),
   awful.key({ modkey, }, "p", function() menubar.show() end),
   
@@ -299,14 +299,38 @@ globalkeys = awful.util.table.join(
   awful.key({ modkey, }, "h", function () awful.tag.incmwfact(-0.05) end),
   awful.key({ modkey, }, "k", function () awful.client.incwfact( 0.03) end),
   awful.key({ modkey, }, "j", function () awful.client.incwfact(-0.03) end),
+  awful.key({ modkey, }, "space", function () awful.layout.inc(layouts, 1) end),
   awful.key({ modkey, "Shift" }, "h", function () awful.tag.incnmaster( 1) end),
   awful.key({ modkey, "Shift" }, "l", function () awful.tag.incnmaster(-1) end),
   awful.key({ modkey, "Control" }, "h", function () awful.tag.incncol( 1) end),
   awful.key({ modkey, "Control" }, "l", function () awful.tag.incncol(-1) end),
-  awful.key({ modkey, }, "space", function () awful.layout.inc(layouts, 1) end),
   awful.key({ modkey, "Shift" }, "space", function () awful.layout.inc(layouts, -1) end),
-
   awful.key({ modkey, "Control" }, "n", awful.client.restore),
+
+  -- Lock screen
+  awful.key({ modkey }, "F12", function () awful.util.spawn("xlock") end),
+  awful.key({ "Control" }, "l", function () awful.util.spawn("xlock") end),
+  
+  -- Multimedia keys
+  awful.key({ }, "XF86MonBrightnessDown", function ()
+    awful.util.spawn("xbacklight -dec 15") end),
+  awful.key({ }, "XF86MonBrightnessUp", function ()
+      awful.util.spawn("xbacklight -inc 15") end),
+  awful.key({ }, "XF86AudioRaiseVolume", function ()
+    awful.util.spawn("pamixer --increase 3") end),
+  awful.key({ }, "XF86AudioLowerVolume", function ()
+    awful.util.spawn("pamixer --decrease 3") end),
+  awful.key({ }, "XF86AudioMute", function ()
+    awful.util.spawn("pamixer --toggle-mute") end),
+  awful.key({ }, "XF86Display", function()
+    awful.util.spawn("toggle-display.sh") end),
+  awful.key({ }, "XF86Sleep", function()
+    awful.util.spawn("sudo pm-suspend") end),
+  awful.key({ modkey }, ",", function ()
+    awful.util.spawn("xbacklight -dec 10") end),
+  awful.key({ modkey }, ".", function ()
+    awful.util.spawn("xbacklight -inc 10") end),
+
 
   -- Prompt
   awful.key({ altkey }, "F2", function () mypromptbox[mouse.screen]:run() end),
@@ -544,3 +568,9 @@ client.connect_signal("manage", function (c, startup)
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
+
+-- Autostart
+awful.util.spawn_with_shell("nm-applet")
+awful.util.spawn_with_shell("redshift -l 37.052328:-78.662109")
+awful.util.spawn_with_shell("dropboxd")
+
