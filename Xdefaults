@@ -15,13 +15,31 @@ Xft.hintstyle: hintslight
 !!
 !! URxvt
 !!
+URxvt.depth: 32
+URxvt.background: [45]#000000
 URxvt*scrollBar:	false
 URxvt*visualBell: 	false
 URxvt*urlLauncher: 	chromium
-URxvt*geometry: 	90x20
+!URxvt*geometry: 	90x20
+URxvt*font: xft:Bitstream Vera Sans Mono:pixelsize=16:antialias=true:hinting=true
+URxvt*boldFont: xft:Bitstream Vera Sans Mono:bold:pixelsize=16:antialias=true:hinting=true
+URxvt.iconFile: /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
+URxvt.perl-ext-common: default,clipboard,vtwheel,font-size
 
-URxvt*font: xft:monospace:pixelsize=22
-URxvt*boldFont: xft:monospace:bold:pixelsize=22
+!! Font-size adjustments
+URxvt.keysym.C-Up:     perl:font-size:increase
+URxvt.keysym.C-Down:   perl:font-size:decrease
+URxvt.keysym.C-S-Up:   perl:font-size:incglobal
+URxvt.keysym.C-S-Down: perl:font-size:decglobal
+
+!!
+!! Xterm
+!!
+xterm*faceName: Bitstream Vera Sans Mono:pixelsize=16
+
+!*VT100.colorBDMode:     true
+!*VT100.colorULMode:     true
+!*VT100.veryBoldColors: 6
 
 !!
 !! colors (invisibone - modified by null)

@@ -21,6 +21,10 @@
     scroll_on_output = False
     font = Terminus 15
     background_color = "#0c0c0c"
+  [[black]]
+    use_system_font = False
+    font = Terminus Bold 18
+    foreground_color = "#ffffff"
 [layouts]
   [[default]]
     [[[child1]]]

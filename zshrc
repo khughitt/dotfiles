@@ -5,6 +5,19 @@
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
+# Use Xresrouces to set TTY colors
+if [ "$TERM" = "linux" ]; then
+    _SEDCMD='s/.*\*\.color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
+    for i in $(sed -n "$_SEDCMD" $HOME/.Xresources | \
+               awk '$1 < 16 {printf "\\e]P%X%s", $1, $2}'); do
+        echo -en "$i"
+    done
+    clear
+fi
+
+# Terminal
+TERM=rxvt-unicode
+
 # PATH
 PATH=$PATH:~/bin
 
@@ -41,6 +54,12 @@ for file in ~/.shell/{aliases,aliases_private,exports}; do
 done
 unset file
 
+# Urxvt keybindings
+if [[ "${TERM}" == "rxvt-unicode" ]]
+then
+    source ~/.shell/key_bindings
+fi
+
 # Quick history searches (can also use ctrl + R)
 function h {
     history | grep $1
@@ -49,3 +68,14 @@ function h {
 # Banner
 figlet `hostname` | lolcat
 
+# Font-size adjustment
+function fs {
+    printf '\33]50;xft:Bitstream Vera Sans Mono:pixelsize=%d:antialias=true:hinting=true\007' $1
+}
+
+
+export PERL_LOCAL_LIB_ROOT="/home/keith/perl5";
+export PERL_MB_OPT="--install_base /home/keith/perl5";
+export PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5";
+export PERL5LIB="/home/keith/perl5/lib/perl5/x86_64-linux-thread-multi:/home/keith/perl5/lib/perl5";
+export PATH="/home/keith/perl5/bin:$PATH";
