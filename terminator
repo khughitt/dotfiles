@@ -15,16 +15,15 @@
   [[default]]
     scrollbar_position = hidden
     palette = "#303030:#bf5c5c:#6d9e3f:#b58858:#6095c5:#ac7bde:#3ba275:#cfcfcf:#929e00:#c94242:#a3d572:#efbd8b:#98cbfe:#e5b0ff:#75daa9:#ffffff"
-    copy_on_selection = True
-    background_darkness = 0.75
+    font = Ubuntu Mono 15
+    background_darkness = 0.52
     scrollback_lines = 2048
     background_type = transparent
     use_system_font = False
     foreground_color = "#e6e6e6"
     scroll_on_output = False
     show_titlebar = False
-    font = Terminus 15
-    background_color = "#0c0c0c"
+    copy_on_selection = True
   [[black]]
     use_system_font = False
     font = Terminus Bold 18

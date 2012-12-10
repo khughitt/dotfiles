@@ -21,8 +21,8 @@ URxvt*scrollBar:	false
 URxvt*visualBell: 	false
 URxvt*urlLauncher: 	chromium
 !URxvt*geometry: 	90x20
-URxvt*font: xft:Bitstream Vera Sans Mono:pixelsize=16:antialias=true:hinting=true
-URxvt*boldFont: xft:Bitstream Vera Sans Mono:bold:pixelsize=16:antialias=true:hinting=true
+URxvt*font: xft:ubuntu mono:pixelsize=16:antialias=true:hinting=true
+URxvt*boldFont: xft:ubuntu mono:bold:pixelsize=16:antialias=true:hinting=true
 URxvt.iconFile: /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
 URxvt.perl-ext-common: default,clipboard,vtwheel,font-size
 
@@ -35,7 +35,7 @@ URxvt.keysym.C-S-Down: perl:font-size:decglobal
 !!
 !! Xterm
 !!
-xterm*faceName: Bitstream Vera Sans Mono:pixelsize=16
+xterm*faceName: Ubuntu Mono:pixelsize=18
 
 !*VT100.colorBDMode:     true
 !*VT100.colorULMode:     true

@@ -311,11 +311,11 @@ vicious.register(mpdwidget, vicious.widgets.mpd, function (widget, args)
   local f = io.popen("pgrep pianobar")
 
   if f:read("*line") then
-    f = io.popen("cat /home/tim/.config/pianobar/isplaying")
+    f = io.popen("cat " .. os.getenv("HOME") .. "/.config/pianobar/isplaying")
     play_or_pause = f:read("*line")
 
     -- Current song
-    f = io.popen("cat /home/tim/.config/pianobar/nowplaying")
+    f = io.popen("cat " .. os.getenv("HOME") .. "/.config/pianobar/nowplaying")
     text = f:read("*line"):match("(.*)")
 
     -- Awaiting song

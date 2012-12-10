@@ -45,7 +45,7 @@ end
 terminal = "urxvt"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
-pianobar_cmd = os.getenv("HOME") .. "bin/control-pianobar.sh "
+pianobar_cmd = os.getenv("HOME") .. ".config/pianobar/control-pianobar.sh "
 pianobar_toggle   = pianobar_cmd .. "p"
 pianobar_next     = pianobar_cmd .. "n"
 pianobar_like     = pianobar_cmd .. "l"
@@ -109,7 +109,7 @@ end
 tags = {}
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    tags[s] = awful.tag({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }, s, layouts[1])
+    tags[s] = awful.tag({ 1, 2, 3, 4 }, s, layouts[1])
 end
 -- }}}
 
@@ -203,15 +203,15 @@ for s = 1, screen.count() do
   local right_wibox = wibox.layout.fixed.horizontal()
   right_wibox:add(space)
   if s == 1 then right_wibox:add(wibox.widget.systray()) end
+  right_wibox:add(volicon)
+  right_wibox:add(volpct)
+  right_wibox:add(volspace)
   right_wibox:add(mpdicon)
   right_wibox:add(mpdwidget)
   right_wibox:add(pacicon)
   right_wibox:add(pacwidget)
   right_wibox:add(baticon)
   right_wibox:add(batpct)
-  right_wibox:add(volicon)
-  right_wibox:add(volpct)
-  right_wibox:add(volspace)
   right_wibox:add(mytextclock)
 
   local wibox_layout = wibox.layout.align.horizontal()
@@ -314,22 +314,23 @@ globalkeys = awful.util.table.join(
   awful.key({ }, "XF86MonBrightnessDown", function ()
     awful.util.spawn("xbacklight -dec 15") end),
   awful.key({ }, "XF86MonBrightnessUp", function ()
-      awful.util.spawn("xbacklight -inc 15") end),
+    awful.util.spawn("xbacklight -inc 15") end),
   awful.key({ }, "XF86AudioRaiseVolume", function ()
-    awful.util.spawn("pamixer --increase 3") end),
+    awful.util.spawn_with_shell("pamixer --increase 3") end),
   awful.key({ }, "XF86AudioLowerVolume", function ()
-    awful.util.spawn("pamixer --decrease 3") end),
+    awful.util.spawn_with_shell("pamixer --decrease 3") end),
   awful.key({ }, "XF86AudioMute", function ()
-    awful.util.spawn("pamixer --toggle-mute") end),
+    awful.util.spawn_with_shell("pamixer --toggle-mute") end),
   awful.key({ }, "XF86Display", function()
-    awful.util.spawn("toggle-display.sh") end),
+    awful.util.spawn_with_shell("toggle-display.sh") end),
   awful.key({ }, "XF86Sleep", function()
     awful.util.spawn("sudo pm-suspend") end),
+  awful.key({ }, "XF86TouchpadToggle", function ()
+    awful.util.spawn_with_shell("tptoggle") end),
   awful.key({ modkey }, ",", function ()
-    awful.util.spawn("xbacklight -dec 10") end),
+    awful.util.spawn_with_shell("xbacklight -dec 10") end),
   awful.key({ modkey }, ".", function ()
-    awful.util.spawn("xbacklight -inc 10") end),
-
+    awful.util.spawn_with_shell("xbacklight -inc 10") end),
 
   -- Prompt
   awful.key({ altkey }, "F2", function () mypromptbox[mouse.screen]:run() end),
