@@ -116,6 +116,7 @@ nohlsearch     " avoid highlighting when reloading vimrc
 " Python
 autocmd BufRead,BufNewFile *.py syntax on
 autocmd BufRead,BufNewFile *.py set ai
+map <F2> :w\|!python %<CR>
 
 " Ruby
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
