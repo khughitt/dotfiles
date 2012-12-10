@@ -1,0 +1,6 @@
+#!/bin/bash
+#
+# Toggles touchpad on/off
+# http://cannibalcandy.wordpress.com/2011/02/10/21/
+#
+/usr/bin/synclient TouchpadOff=`expr $(synclient -l | grep TouchpadOff | grep -o .$) = 0`
