@@ -1,6 +1,7 @@
 [global_config]
   enabled_plugins = CustomCommandsMenu, TestPlugin, TerminalShot, LaunchpadCodeURLHandler, APTURLHandler, LaunchpadBugURLHandler
   title_transmit_bg_color = "#548ca8"
+  borderless = True
 [keybindings]
   switch_to_tab_5 = <Alt>5
   new_window = <Ctrl>N
@@ -12,13 +13,16 @@
   new_tab = <Ctrl>T
 [profiles]
   [[default]]
+    scrollbar_position = hidden
     palette = "#303030:#bf5c5c:#6d9e3f:#b58858:#6095c5:#ac7bde:#3ba275:#cfcfcf:#929e00:#c94242:#a3d572:#efbd8b:#98cbfe:#e5b0ff:#75daa9:#ffffff"
+    copy_on_selection = True
     background_darkness = 0.75
-    scrollback_lines = 1024
+    scrollback_lines = 2048
     background_type = transparent
     use_system_font = False
     foreground_color = "#e6e6e6"
     scroll_on_output = False
+    show_titlebar = False
     font = Terminus 15
     background_color = "#0c0c0c"
   [[black]]

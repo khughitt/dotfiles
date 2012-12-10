@@ -8,8 +8,8 @@ local awful = require("awful")
 
 -- {{{ Main
 theme = {}
-theme.wallpaper = awful.util.getdir("config") .. "/themes/dust/Galaxy3.jpg"
-theme.font = "ubuntu mono 18"
+theme.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/wallpaper672898.png"
+theme.font = "ubuntu mono 16"
 -- }}}
 
 -- {{{ Colors
