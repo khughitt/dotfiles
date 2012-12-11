@@ -7,3 +7,5 @@
 	excludesfile = /home/keith/.gitignore_global
 [diff]
 	external = git-meld
+[push]
+	default = simple
