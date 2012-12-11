@@ -1,4 +1,12 @@
 " ---------------------------------------------------------------------------
+" Vim Configuration
+" 
+" Much of the awesome functionality and settings in this file has come from
+" other dotfile on Github, and also from http://amix.dk/vim/vimrc.html.
+"
+" ---------------------------------------------------------------------------
+
+" ---------------------------------------------------------------------------
 " General
 " ---------------------------------------------------------------------------
 set nocompatible     " disable vi compatibility enchancements
@@ -7,7 +15,16 @@ set isk+=_,$,@,%,#,- " none word dividers
 set showmatch        " highlight correspods character
 set cursorline       " highlight current line
 set modeline         " make sure modeline support is enabled
+set noerrorbells     " quiet, please
 filetype indent on   " indent based on filetype
+
+" With a map leader it's possible to do extra key combinations
+" like <leader>w saves the current file
+let mapleader = ","
+let g:mapleader = ","
+
+" Fast save
+nmap <leader>w :w!<cr>
 
 " ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
@@ -31,16 +48,19 @@ set directory=~/.vim/swap,~/tmp,.      " keep swp files under ~/.vim/swap
 " ----------------------------------------------------------------------------
 "  UI
 " ----------------------------------------------------------------------------
-set ruler                  " show the cursor position all the time
-set noshowcmd              " don't display incomplete commands
-set nolazyredraw           " turn off lazy redraw
-set number                 " line numbers
-set ch=2                   " command line height
-set backspace=2            " allow backspacing over everything in insert mode
-set whichwrap+=<,>,h,l,[,] " backspace and cursor keys wrap to
-set shortmess=filtIoOA     " shorten messages
-set report=0               " tell us about changes
-set nostartofline          " don't jump to the start of line when scrolling
+set so=7                    " stop scrolling when we get seven lines within top or bottom
+set wildmenu                " enable wildmenu (easy buffer switching, etc)
+set wildignore=*.o,*~,*.pyc " ignore compiled files
+set ruler                   " show the cursor position all the time
+set noshowcmd               " don't display incomplete commands
+set nolazyredraw            " turn off lazy redraw
+set number                  " line numbers
+set ch=2                    " command line height
+set backspace=2             " allow backspacing over everything in insert mode
+set whichwrap+=<,>,h,l,[,]  " backspace and cursor keys wrap to
+set shortmess=filtIoOA      " shorten messages
+set report=0                " tell us about changes
+set nostartofline           " don't jump to the start of line when scrolling
 
 " ----------------------------------------------------------------------------
 " Visual Cues
@@ -50,7 +70,7 @@ set mat=5                  " duration to show matching brace (1/10 sec)
 set incsearch              " do incremental searching
 set laststatus=2           " always show the status line
 set ignorecase             " ignore case when searching
-set visualbell             " no thank you
+set novisualbell             " no thank you
 
 " ----------------------------------------------------------------------------
 " Text Formatting
@@ -67,10 +87,64 @@ set expandtab              " expand tabs to spaces
 set nosmarttab             " no tabs
 set formatoptions+=n       " support for numbered/bullet lists
 set virtualedit=block      " allow virtual edit in visual block ..
+set encoding=utf8          " UTF-8 by default
 
+" ----------------------------------------------------------------------------
+" Moving around, tabs, windows and buffers
+" ----------------------------------------------------------------------------
+
+" Treat long lines as break lines (useful when moving around in them)
+map j gj
+map k gk
+
+" Map <Space> to / (search) and Ctrl-<Space> to ? (backwards search)
+map <space> /
+map <c-space> ?
+
+" Smart way to move between windows
+map <C-j> <C-W>j
+map <C-k> <C-W>k
+map <C-h> <C-W>h
+map <C-l> <C-W>l
+
+" Close the current buffer
+map <leader>bd :Bclose<cr>
+
+" Close all the buffers
+map <leader>ba :1,1000 bd!<cr>
+
+" Useful mappings for managing tabs
+map <leader>tn :tabnew<cr>
+map <leader>to :tabonly<cr>
+map <leader>tc :tabclose<cr>
+map <leader>tm :tabmove
+
+" Opens a new tab with the current buffer's path
+" Super useful when editing files in the same directory
+map <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
+
+" Switch CWD to the directory of the open buffer
+map <leader>cd :cd %:p:h<cr>:pwd<cr>
+
+" Specify the behavior when switching between buffers 
+try
+      set switchbuf=useopen,usetab,newtab
+        set stal=2
+    catch
+endtry
+
+" Return to last edit position when opening files
+autocmd BufReadPost *
+     \ if line("'\"") > 0 && line("'\"") <= line("$") |
+     \   exe "normal! g`\"" |
+     \ endif
+
+" Remember info about open buffers on close
+set viminfo^=%
 
 " ---------------------------------------------------------------------------
 "  Appearance
+
 " ---------------------------------------------------------------------------
 set t_Co=256
 if has("gui_running")
@@ -85,16 +159,20 @@ else
     colorscheme jellybeans
 endif
 
-" We know xterm-debian is a color terminal
-"if &term =~ "xterm-debian" || &term =~ "xterm-xfree86"
-"  set t_Co=16
-"  set t_Sf=[3%dm
-"  set t_Sb=[4%dm
-"endif
-
 if has("syntax")
   syntax on
 endif
+
+" Format the status line
+set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l
+
+" Returns true if paste mode is enabled
+function! HasPaste()
+    if &paste
+            return 'PASTE MODE  '
+    en
+    return ''
+endfunction
 
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
