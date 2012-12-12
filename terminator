@@ -1,6 +1,7 @@
 [global_config]
   enabled_plugins = CustomCommandsMenu, TestPlugin, TerminalShot, LaunchpadCodeURLHandler, APTURLHandler, LaunchpadBugURLHandler
   title_transmit_bg_color = "#548ca8"
+  dbus = True
   borderless = True
 [keybindings]
   zoom_in = <Ctrl>equal
