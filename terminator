@@ -3,6 +3,8 @@
   title_transmit_bg_color = "#548ca8"
   borderless = True
 [keybindings]
+  zoom_in = <Ctrl>equal
+  zoom_out = <Ctrl>minus
   switch_to_tab_5 = <Alt>5
   new_window = <Ctrl>N
   switch_to_tab_4 = <Alt>4
@@ -17,7 +19,7 @@
     palette = "#303030:#bf5c5c:#6d9e3f:#b58858:#6095c5:#ac7bde:#3ba275:#cfcfcf:#929e00:#c94242:#a3d572:#efbd8b:#98cbfe:#e5b0ff:#75daa9:#ffffff"
     font = Ubuntu Mono 15
     background_darkness = 0.52
-    scrollback_lines = 2048
+    scrollback_lines = 4096
     background_type = transparent
     use_system_font = False
     foreground_color = "#e6e6e6"
