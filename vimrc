@@ -88,6 +88,7 @@ set nosmarttab             " no tabs
 set formatoptions+=n       " support for numbered/bullet lists
 set virtualedit=block      " allow virtual edit in visual block ..
 set encoding=utf8          " UTF-8 by default
+set pastetoggle=<F2>       " quickly toggle paste mode before pasting text
 
 " ----------------------------------------------------------------------------
 " Moving around, tabs, windows and buffers
@@ -194,7 +195,7 @@ nohlsearch     " avoid highlighting when reloading vimrc
 " Python
 autocmd BufRead,BufNewFile *.py syntax on
 autocmd BufRead,BufNewFile *.py set ai
-map <F2> :w\|!python %<CR>
+map <F8> :w\|!python %<CR>
 
 " Ruby
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
