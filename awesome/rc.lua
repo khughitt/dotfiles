@@ -43,7 +43,7 @@ end
 
 -- {{{ Variables
 -- terminal = "urxvt"
-terminal = "xterm"
+terminal = "terminator"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
 pianobar_cmd = os.getenv("HOME") .. ".config/pianobar/control-pianobar.sh "
@@ -96,6 +96,9 @@ naughty.config.defaults.border_color = beautiful.border_tooltip
 naughty.config.defaults.border_width = 2
 naughty.config.defaults.hover_timeout = nil
 -- }}}
+
+-- Fonts
+awesome.font = "ubuntu 16"
 
 -- {{{ Wallpaper
 if beautiful.wallpaper then
