@@ -42,7 +42,8 @@ end
 -- }}}
 
 -- {{{ Variables
-terminal = "urxvt"
+-- terminal = "urxvt"
+terminal = "xterm"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
 pianobar_cmd = os.getenv("HOME") .. ".config/pianobar/control-pianobar.sh "

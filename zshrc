@@ -15,8 +15,8 @@ if [ "$TERM" = "linux" ]; then
     clear
 fi
 
-# Terminal
-TERM=rxvt-unicode
+#Terminal
+#TERM=rxvt-unicode
 
 # PATH
 PATH=$PATH:~/bin
@@ -50,7 +50,7 @@ alias -s com=chromium
 
 # Additional shell settings (aliases, exports)
 for file in ~/.shell/{aliases,aliases_private,exports}; do
-	[ -r "$file" ] && source "$file"
+    [ -r "$file" ] && source "$file"
 done
 unset file
 
@@ -67,12 +67,6 @@ function h {
 
 # Banner
 figlet `hostname` | lolcat
-
-# Font-size adjustment
-function fs {
-    printf '\33]50;xft:Bitstream Vera Sans Mono:pixelsize=%d:antialias=true:hinting=true\007' $1
-}
-
 
 export PERL_LOCAL_LIB_ROOT="/home/keith/perl5";
 export PERL_MB_OPT="--install_base /home/keith/perl5";
