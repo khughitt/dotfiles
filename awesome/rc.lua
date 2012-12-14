@@ -67,14 +67,14 @@ local layouts =
 {
   awful.layout.suit.floating,
   awful.layout.suit.tile,
-  awful.layout.suit.tile.left,
+  --awful.layout.suit.tile.left,
   awful.layout.suit.tile.bottom,
-  awful.layout.suit.tile.top,
+  --awful.layout.suit.tile.top,
   awful.layout.suit.fair,
   awful.layout.suit.fair.horizontal,
-  awful.layout.suit.spiral,
-  awful.layout.suit.spiral.dwindle,
-  awful.layout.suit.max,
+  --awful.layout.suit.spiral,
+  --awful.layout.suit.spiral.dwindle,
+  --awful.layout.suit.max,
   awful.layout.suit.max.fullscreen,
   awful.layout.suit.magnifier
 }
@@ -87,7 +87,7 @@ naughty.config.defaults.position = "top_right"
 naughty.config.defaults.margin = 8
 naughty.config.defaults.gap = 1
 naughty.config.defaults.ontop = true
-naughty.config.defaults.font = "Monaco 18"
+naughty.config.defaults.font = "Sergo UI 18"
 naughty.config.defaults.icon = nil
 naughty.config.defaults.icon_size = 256
 naughty.config.defaults.fg = beautiful.fg_tooltip
@@ -98,7 +98,7 @@ naughty.config.defaults.hover_timeout = nil
 -- }}}
 
 -- Fonts
-awesome.font = "ubuntu 16"
+awesome.font = "ubuntu 17"
 
 -- {{{ Wallpaper
 if beautiful.wallpaper then
@@ -275,6 +275,11 @@ globalkeys = awful.util.table.join(
   awful.key({ modkey, }, "Right", awful.tag.viewnext ),
   awful.key({ modkey, }, "Escape", awful.tag.history.restore),
 
+  awful.key({ modkey, }, "j",
+    function ()
+      awful.client.focus.byidx( 1)
+      if client.focus then client.focus:raise() end
+    end),
   awful.key({ altkey, }, "Tab",
     function ()
       awful.client.focus.byidx( 1)
@@ -293,7 +298,7 @@ globalkeys = awful.util.table.join(
   awful.key({ modkey, }, "Tab", function () awful.screen.focus_relative( 1) end),
   awful.key({ modkey, }, "u", awful.client.urgent.jumpto),
   awful.key({ modkey, }, "p", function() menubar.show() end),
-  
+
   -- Standard program
   awful.key({ modkey, }, "Return", function () awful.util.spawn(terminal) end),
   awful.key({ modkey, "Control" }, "r", awesome.restart),
@@ -301,8 +306,8 @@ globalkeys = awful.util.table.join(
 
   awful.key({ modkey, }, "l", function () awful.tag.incmwfact( 0.05) end),
   awful.key({ modkey, }, "h", function () awful.tag.incmwfact(-0.05) end),
-  awful.key({ modkey, }, "k", function () awful.client.incwfact( 0.03) end),
-  awful.key({ modkey, }, "j", function () awful.client.incwfact(-0.03) end),
+  --awful.key({ modkey, }, "k", function () awful.client.incwfact( 0.03) end),
+  --awful.key({ modkey, }, "j", function () awful.client.incwfact(-0.03) end),
   awful.key({ modkey, }, "space", function () awful.layout.inc(layouts, 1) end),
   awful.key({ modkey, "Shift" }, "h", function () awful.tag.incnmaster( 1) end),
   awful.key({ modkey, "Shift" }, "l", function () awful.tag.incnmaster(-1) end),
@@ -386,40 +391,9 @@ globalkeys = awful.util.table.join(
     end),
   awful.key({ modkey }, "\\", function ()
       awful.util.spawn_with_shell(pianobar_playing)
-    end),
-  -- }}}
-
-  -- {{{ Tag 0
-  awful.key({ modkey }, 0,
-    function ()
-      local screen = mouse.screen
-      if tags[screen][10].selected then
-        awful.tag.history.restore(screen)
-      elseif tags[screen][10] then
-        awful.tag.viewonly(tags[screen][10])
-      end
-    end),
-  awful.key({ modkey, "Control" }, 0,
-    function ()
-      local screen = mouse.screen
-      if tags[screen][10] then
-        tags[screen][10].selected = not tags[screen][10].selected
-      end
-    end),
-  awful.key({ modkey, "Shift" }, 0,
-    function ()
-      if client.focus and tags[client.focus.screen][10] then
-        awful.client.movetotag(tags[client.focus.screen][10])
-      end
-    end),
-  awful.key({ modkey, "Control", "Shift" }, 0,
-    function ()
-      if client.focus and tags[client.focus.screen][10] then
-        awful.client.toggletag(tags[client.focus.screen][10])
-      end
     end)
-  -- }}}
 )
+  -- }}}
 
 clientkeys = awful.util.table.join(
   awful.key({ modkey, }, "f", function (c) c.fullscreen = not c.fullscreen end),
@@ -591,8 +565,6 @@ function run_once(prg,arg_string,pname,screen)
 end
 
 --run_once("xscreensaver","-no-splash")
---run_once("pidgin",nil,nil,2)
---run_once("wicd-client",nil,"/usr/bin/python2 -O /usr/share/wicd/gtk/wicd-client.py")
 run_once("nm-applet")
 run_once("redshift -l 37.052328:-78.662109")
 run_once("dropboxd")
