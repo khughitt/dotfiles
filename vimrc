@@ -17,11 +17,16 @@ set cursorline       " highlight current line
 set modeline         " make sure modeline support is enabled
 set noerrorbells     " quiet, please
 filetype indent on   " indent based on filetype
+filetype plugin on   " enable filetype-specific plugin loading
+
+" Omnicompletion
+set ofu=syntaxcomplete#Complete
 
 " With a map leader it's possible to do extra key combinations
 " like <leader>w saves the current file
-let mapleader = ","
-let g:mapleader = ","
+let maplocalleader = ","
+let mapleader = ";"
+let g:mapleader = ";"
 
 " Fast save
 nmap <leader>w :w!<cr>
@@ -70,7 +75,10 @@ set mat=5                  " duration to show matching brace (1/10 sec)
 set incsearch              " do incremental searching
 set laststatus=2           " always show the status line
 set ignorecase             " ignore case when searching
-set novisualbell             " no thank you
+set novisualbell           " no thank you
+
+let marksCloseWhenSelected = 0
+let showmarks_include="abcdefghijklmnopqrstuvwxyz"
 
 " ----------------------------------------------------------------------------
 " Text Formatting
@@ -197,6 +205,20 @@ nohlsearch     " avoid highlighting when reloading vimrc
 autocmd BufRead,BufNewFile *.py syntax on
 autocmd BufRead,BufNewFile *.py set ai
 map <F8> :w\|!python %<CR>
+
+" R
+let vimrplugin_objbr_place = "console,right"
+if $DISPLAY != ""
+    let vimrplugin_openpdf = 1
+    let vimrplugin_openhtml = 1
+endif
+if has("gui_running")
+    inoremap <C-Space> <C-x><C-o>
+else
+    inoremap <Nul> <C-x><C-o>
+endif
+vmap <Space> <Plug>RDSendSelection
+nmap <Space> <Plug>RDSendLine
 
 " Ruby
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2

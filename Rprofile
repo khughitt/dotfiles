@@ -1,3 +1,6 @@
+#
+# R Configuration
+#
 options(showWarnCalls=T, showErrorCalls=T)
 options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 
@@ -7,28 +10,23 @@ setHook(packageEvent("grDevices", "onLoad"),
         function(...) grDevices::X11.options(width=8, height=8, 
                                              xpos=0, pointsize=10, 
                                              type="nbcairo"))
-# Syntax highlighting
-library('colorout')
-setOutputColors256(
-    normal = 40,
-    number = 177,
-    negnum = 211, #212,
-    string = 85,
-    const = 35,
-    stderror = 203,
-    error = c(1, 0, 1), 
-    warn = c(1, 0, 100)
-)
+# interactive mode
+if (interactive()) {
+    library(setwidth)    # updates output width when terminal is resized
+    library(vicom)       # better vim suport
 
-#setOutputColors256(
-#    normal = 40,
-#    number = 214,
-#    string = 85,
-#    const = 35,
-#    stderror = 45,
-#    error = c(1, 0, 1), 
-#    warn = c(1, 0, 100)
-#)
+    library('colorout')  # syntax highlighting
+    setOutputColors256(
+        normal = 40,
+        number = 177,
+        negnum = 211, #212,
+        string = 85,
+        const = 35,
+        stderror = 203,
+        error = c(1, 0, 1), 
+        warn = c(1, 0, 100)
+    )
+}
 
 # On quit
 .Last <- function() {
