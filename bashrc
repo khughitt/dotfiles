@@ -2,6 +2,9 @@
 # Bash configuration
 #
 
+# PATH
+export PATH=$HOME/bin:$PATH
+
 # If not running interactively, don't do anything
 # [] is an "if" statement
 # -z returns True if the length of the string is zero
@@ -17,9 +20,6 @@ shopt -s histappend checkwinsize autocd globstar checkjobs dirspell
 HISTCONTROL=$HISTCONTROL${HISTCONTROL+,}ignoredups:ignorespace
 HISTSIZE=1000
 HISTFILESIZE=2000
-
-# PATH
-export PATH=$HOME/bin:$PATH
 
 # Prompt
 PS1='\[\033[00;36m\]\u@\h \[\033[01;36m\]\W \$ \[\033[00m\]'

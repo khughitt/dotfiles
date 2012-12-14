@@ -13,7 +13,7 @@ setHook(packageEvent("grDevices", "onLoad"),
 # interactive mode
 if (interactive()) {
     library(setwidth)    # updates output width when terminal is resized
-    library(vicom)       # better vim suport
+    library(vimcom)       # better vim suport
 
     library('colorout')  # syntax highlighting
     setOutputColors256(

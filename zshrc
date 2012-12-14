@@ -2,7 +2,10 @@
 # Z shell Settings
 #
 
-# If not running interactively, don't do anything
+# PATH
+PATH=$PATH:~/bin
+
+# Stop here in non-interactive mode
 [ -z "$PS1" ] && return
 
 # Use Xresrouces to set TTY colors
@@ -17,9 +20,6 @@ fi
 
 #Terminal
 #TERM=rxvt-unicode
-
-# PATH
-PATH=$PATH:~/bin
 
 # History
 setopt HIST_IGNORE_DUPS
@@ -68,8 +68,8 @@ function h {
 # Banner
 figlet `hostname` | lolcat
 
-export PERL_LOCAL_LIB_ROOT="/home/keith/perl5";
-export PERL_MB_OPT="--install_base /home/keith/perl5";
-export PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5";
-export PERL5LIB="/home/keith/perl5/lib/perl5/x86_64-linux-thread-multi:/home/keith/perl5/lib/perl5";
-export PATH="/home/keith/perl5/bin:$PATH";
+#export PERL_LOCAL_LIB_ROOT="/home/keith/perl5";
+#export PERL_MB_OPT="--install_base /home/keith/perl5";
+#export PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5";
+#export PERL5LIB="/home/keith/perl5/lib/perl5/x86_64-linux-thread-multi:/home/keith/perl5/lib/perl5";
+#export PATH="/home/keith/perl5/bin:$PATH";
