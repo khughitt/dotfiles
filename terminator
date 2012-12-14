@@ -18,7 +18,7 @@
   [[default]]
     scrollbar_position = hidden
     palette = "#303030:#bf5c5c:#6d9e3f:#b58858:#6095c5:#ac7bde:#3ba275:#cfcfcf:#929e00:#c94242:#a3d572:#efbd8b:#98cbfe:#e5b0ff:#75daa9:#ffffff"
-    font = Droid Sans Mono 17
+    font = Droid Sans Mono 16
     background_darkness = 0.52
     scrollback_lines = 4096
     background_type = transparent

@@ -179,10 +179,11 @@ endfunction
 "  Strip all trailing whitespace in file
 " ---------------------------------------------------------------------------
 
-function! StripWhitespace ()
-    exec ':%s/ \+$//gc'
-endfunction
-map ,s :call StripWhitespace ()<CR>
+"function! StripWhitespace ()
+"    exec ':%s/ \+$//gc'
+"endfunction
+"map ,s :call StripWhitespace ()<CR>
+autocmd FileType py,php,js,rb autocmd BufWritePre <buffer> :%s/\s\+$//e
 
 " Search
 set wrapscan   " search wrap around the end of the file

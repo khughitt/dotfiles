@@ -46,7 +46,7 @@ end
 terminal = "terminator"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
-pianobar_cmd = os.getenv("HOME") .. ".config/pianobar/control-pianobar.sh "
+pianobar_cmd = os.getenv("HOME") .. "/.config/pianobar/control-pianobar.sh "
 pianobar_toggle   = pianobar_cmd .. "p"
 pianobar_next     = pianobar_cmd .. "n"
 pianobar_like     = pianobar_cmd .. "l"
@@ -330,7 +330,7 @@ globalkeys = awful.util.table.join(
   awful.key({ }, "XF86Sleep", function()
     awful.util.spawn("sudo pm-suspend") end),
   awful.key({ }, "XF86TouchpadToggle", function ()
-    awful.util.spawn_with_shell("tptoggle") end),
+    awful.util.spawn(os.getenv("HOME") .. "/bin/tptoggle") end),
   awful.key({ modkey }, ",", function ()
     awful.util.spawn_with_shell("xbacklight -dec 10") end),
   awful.key({ modkey }, ".", function ()
