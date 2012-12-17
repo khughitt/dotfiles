@@ -2,6 +2,7 @@
 # R Configuration
 #
 options(showWarnCalls=T, showErrorCalls=T)
+options(max.print=10E3)
 options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 
 # TEMP WORK-AROUND 2012/11/08

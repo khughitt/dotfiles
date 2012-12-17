@@ -356,6 +356,12 @@ globalkeys = awful.util.table.join(
   awful.key({ modkey }, "r", function() menubar.show() end),
 
   -- {{{ Pianobar
+  awful.key({ modkey, "Shift" }, ",", function ()
+      awful.util.spawn_with_shell(pianobar_history)
+    end),
+  awful.key({ modkey, "Shift" }, ".", function ()
+      awful.util.spawn_with_shell(pianobar_next)
+    end),
   awful.key({ modkey }, "XF86AudioPrev", function ()
       awful.util.spawn_with_shell(pianobar_history)
     end),
