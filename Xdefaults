@@ -34,11 +34,8 @@ URxvt.keysym.C-S-Down: perl:font-size:decglobal
 !!
 !! Xterm
 !!
-!xterm*faceName: Droid Sans Mono:pixelsize=24
-!xterm*font:     -misc-fixed-medium-r-normal--18-120-100-100-c-90-iso10646-1
-!xterm*wideFont: -misc-fixed-medium-r-normal-ja-18-120-100-100-c-180-iso10646-1
-!xterm*faceName: monospace:pixelsize=16
-xterm*faceName:monospace:pixelsize=20
+xterm*faceName: xft:monospace:size=16
+xterm*faceNameDoublesize: xft:Microsoft YaHei:size=16
 xterm*dynamicColors: true
 xterm*utf8: 2
 
