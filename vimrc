@@ -171,6 +171,16 @@ if has("syntax")
   syntax on
 endif
 
+" Obvious-mode colors
+" http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
+let g:obviousModeInsertHi = 'term=reverse ctermbg=167 guibg=#d75f5f'         " IndianRed
+let g:obviousModeCmdWinHi = 'term=reverse ctermbg=33 guibg=#0087ff'          " DodgerBlue1
+let g:obviousModeModifiedCurrentHi = 'term=reverse ctermbg=35 guibg=#00af5f' " SpringGreen3
+let g:obviousModeModifiedNonCurrentHi = 'term=reverse ctermbg=35 guibg=#00af5f'
+let g:obviousModeModifiedVertSplitHi = 'term=reverse ctermfg=33 ctermbg=35 guifg=darkblue guibg=#00af5f'
+
+"SpringGreen3 ctermfg=35 guifg=#00af5f
+
 " Format the status line
 " set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l
 
