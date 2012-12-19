@@ -34,10 +34,8 @@ URxvt.keysym.C-S-Down: perl:font-size:decglobal
 !!
 !! Xterm
 !!
-xterm*faceName: xft:monospace:size=16
-xterm*faceNameDoublesize: xft:Microsoft YaHei:size=16
-xterm*dynamicColors: true
-xterm*utf8: 2
+XTerm*faceName: xft:monospace:size=16
+XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=16
 
 !*VT100.colorBDMode:     true
 !*VT100.colorULMode:     true
