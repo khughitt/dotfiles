@@ -76,6 +76,7 @@ set incsearch              " do incremental searching
 set laststatus=2           " always show the status line
 set ignorecase             " ignore case when searching
 set novisualbell           " no thank you
+set colorcolumn=80         " show right margin
 
 let marksCloseWhenSelected = 0
 let showmarks_include="abcdefghijklmnopqrstuvwxyz"
@@ -178,6 +179,9 @@ let g:obviousModeCmdWinHi = 'term=reverse ctermbg=33 guibg=#0087ff'          " D
 let g:obviousModeModifiedCurrentHi = 'term=reverse ctermbg=35 guibg=#00af5f' " SpringGreen3
 let g:obviousModeModifiedNonCurrentHi = 'term=reverse ctermbg=35 guibg=#00af5f'
 let g:obviousModeModifiedVertSplitHi = 'term=reverse ctermfg=33 ctermbg=35 guifg=darkblue guibg=#00af5f'
+
+" Matching parens style
+hi MatchParen cterm=bold ctermbg=none ctermfg=red
 
 "SpringGreen3 ctermfg=35 guifg=#00af5f
 
