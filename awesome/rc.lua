@@ -16,7 +16,7 @@ local vicious = require("vicious")
 local wi = require("wi")
 
 -- Compositing
-awful.util.spawn_with_shell("xcompmgr -cF &")
+-- awful.util.spawn_with_shell("xcompmgr -cF &")
 
 -- {{{ Error handling
 -- Startup
@@ -130,7 +130,7 @@ mylauncher:buttons(awful.util.table.join(
 menubar.utils.terminal = terminal
 
 -- Clock
-mytextclock = awful.widget.textclock("<span color='" .. beautiful.fg_em .. "'>%a %m/%d</span> @ %I:%M %p")
+mytextclock = awful.widget.textclock(" <span color='" .. beautiful.fg_em .. "'>%a %m/%d</span> @ %I:%M %p")
 
 -- {{{ Wiboxes
 mywibox = {}
@@ -195,13 +195,13 @@ for s = 1, screen.count() do
   mytasklist[s] = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, mytasklist.buttons)
 
   -- Wibox
-  mywibox[s] = awful.wibox({ position = "top", height = 24, screen = s })
+  mywibox[s] = awful.wibox({ position = "top", height = 26, screen = s })
 
   local left_wibox = wibox.layout.fixed.horizontal()
   left_wibox:add(mytaglist[s])
   left_wibox:add(space)
-  left_wibox:add(mypromptbox[s])
   left_wibox:add(mylayoutbox[s])
+  left_wibox:add(mypromptbox[s])
   left_wibox:add(space)
 
   local right_wibox = wibox.layout.fixed.horizontal()
@@ -414,6 +414,7 @@ globalkeys = awful.util.table.join(
 clientkeys = awful.util.table.join(
   awful.key({ modkey, }, "f", function (c) c.fullscreen = not c.fullscreen end),
   awful.key({ modkey, "Shift" }, "c", function (c) c:kill() end),
+  awful.key({ "Control" }, "q", function (c) c:kill() end),
   awful.key({ modkey, "Control" }, "space", awful.client.floating.toggle ),
   awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
   awful.key({ modkey, }, "o", awful.client.movetoscreen ),
