@@ -30,7 +30,7 @@ ZSH_THEME="bira-mod"
 CASE_SENSITIVE="true"
 
 # Plugins
-plugins=(archlinux autojump git zsh-syntax-highlighting)
+plugins=(archlinux autojump git)
 
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
