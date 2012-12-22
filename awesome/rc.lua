@@ -46,6 +46,10 @@ end
 terminal = "terminator"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
+files = "nautilus"
+browser = "chromium"
+
+-- pianobar
 pianobar_cmd = os.getenv("HOME") .. "/.config/pianobar/control-pianobar.sh "
 pianobar_toggle   = pianobar_cmd .. "p"
 pianobar_next     = pianobar_cmd .. "n"
@@ -80,6 +84,13 @@ local layouts =
 }
 -- }}}
 
+-- {{{ Tags
+tags = {
+  names = {'www', 'code', 'term', 'doc'},
+  layout = {layouts[1], layouts[2], layouts[2], layouts[2]}
+}
+-- }}}
+
 -- {{{ Naughty presets
 naughty.config.defaults.timeout = 5
 naughty.config.defaults.screen = 1
@@ -108,14 +119,6 @@ if beautiful.wallpaper then
 end
 -- }}}
 
--- {{{ Tags
--- Define a tag table which hold all screen tags.
-tags = {}
-for s = 1, screen.count() do
-    -- Each screen has its own tag table.
-    tags[s] = awful.tag({ 1, 2, 3, 4 }, s, layouts[1])
-end
--- }}}
 
 -- {{{ Shutdown
 mylauncher = wibox.widget.imagebox()
