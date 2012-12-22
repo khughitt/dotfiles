@@ -7,10 +7,11 @@ Xcursor.theme: XcursorAero
 !! xft
 !!
 Xft.dpi: 96
-Xft.antialias: true 
-Xft.rgba: rgb 
-Xft.hinting: true 
+Xft.antialias: true
+Xft.hinting: true
 Xft.hintstyle: hintslight
+Xft.lcdfilter:lcdfilterlcddefault
+Xft.rgba: rgb
 
 !!
 !! URxvt
