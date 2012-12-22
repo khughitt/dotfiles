@@ -89,6 +89,10 @@ tags = {
   names = {'www', 'code', 'term', 'doc'},
   layout = {layouts[1], layouts[2], layouts[2], layouts[2]}
 }
+for s = 1, screen.count() do
+    -- Each screen has its own tag table.
+    tags[s] = awful.tag(tags.names, s, tags.layout)
+end
 -- }}}
 
 -- {{{ Naughty presets
@@ -124,8 +128,9 @@ end
 mylauncher = wibox.widget.imagebox()
 mylauncher:set_image(beautiful.awesome_icon)
 mylauncher:buttons(awful.util.table.join(
-  awful.button({ }, 1, function () awful.util.spawn_with_shell("reboot.sh") end),
-  awful.button({ modkey }, 1, function () awful.util.spawn_with_shell("shutdown.sh") end)
+  awful.button({ }, 1, function () awful.util.spawn('xlock') end),
+  awful.button({ modkey }, 1, function () awful.util.spawn_with_shell("sudo reboot") end),
+  awful.button({ modkey }, 3, function () awful.util.spawn_with_shell("systemctl poweroff") end)
 ))
 -- }}}
 
@@ -241,6 +246,8 @@ for s = 1, screen.count() do
   left_graphbox:add(cpupct1)
   left_graphbox:add(cpugraph2)
   left_graphbox:add(cpupct2)
+  left_graphbox:add(cpugraph3)
+  left_graphbox:add(cpupct3)
   left_graphbox:add(tab)
   left_graphbox:add(memused)
   left_graphbox:add(membar)
@@ -487,20 +494,18 @@ root.keys(globalkeys)
 awful.rules.rules = {
   -- All clients will match this rule.
   { rule = { },
-    properties = { border_width = beautiful.border_width,
+     properties = { border_width = beautiful.border_width,
      border_color = beautiful.border_normal,
      focus = awful.client.focus.filter,
      keys = clientkeys,
      buttons = clientbuttons } },
-  { rule = { class = "MPlayer" },
-      properties = { floating = true } },
-  { rule = { class = "pinentry" },
-    properties = { floating = true } },
-  { rule = { class = "gimp" },
-    properties = { floating = true } },
--- Set Firefox to always map on tags number 2 of screen 1.
-    -- { rule = { class = "Firefox" },
-    --   properties = { tag = tags[1][2] } },
+  { rule = { class = "MPlayer" }, properties = { floating = true } },
+  { rule = { class = "pinentry" }, properties = { floating = true } },
+  { rule = { class = "gimp" }, properties = { floating = true } },
+  { rule = { class = "Chromium" },
+    properties = { tag = tags[1][1], switchtotag=true } },
+  { rule = { class = "mendeleydesktop.x86_64" },
+    properties = { tag = tags[1][4], switchtotag=true } },
   -- Fullscreen flash
   { rule = { class = "Exe"}, properties = {floating = true} }
 }
@@ -584,9 +589,8 @@ function run_once(prg,arg_string,pname,screen)
     end
 end
 
---run_once("xscreensaver","-no-splash")
 run_once("nm-applet")
 run_once("redshift -l 37.052328:-78.662109")
 run_once("dropboxd")
-run_once("tptoggle")
+run_once("$USER/bin/tptoggle")
 

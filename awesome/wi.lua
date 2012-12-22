@@ -103,6 +103,28 @@ cpupct2 = wibox.widget.textbox()
 cpupct2.fit = function (box,w,h) local w,h = wibox.widget.textbox.fit(box,w,h) return math.max(pctwidth,w),h end
 vicious.register(cpupct2, vicious.widgets.cpu, "$4%", 2)
 
+-- Core 3 graph
+cpugraph3 = awful.widget.graph()
+cpugraph3:set_width(graphwidth):set_height(graphheight)
+cpugraph3:set_border_color(nil)
+cpugraph3:set_border_color(beautiful.bg_widget)
+cpugraph3:set_background_color(beautiful.bg_widget)
+cpugraph3:set_color({
+  type = "linear",
+  from = { 0, graphheight },
+  to = { 0, 0 },
+  stops = {
+    { 0, beautiful.fg_widget },
+    { 0.25, beautiful.fg_center_widget },
+    { 1, beautiful.fg_end_widget }
+  }})
+vicious.register(cpugraph3, vicious.widgets.cpu, "$5")
+
+-- Core 3 %
+cpupct3 = wibox.widget.textbox()
+cpupct3.fit = function (box,w,h) local w,h = wibox.widget.textbox.fit(box,w,h) return math.max(pctwidth,w),h end
+vicious.register(cpupct3, vicious.widgets.cpu, "$5%", 2)
+
 -- }}}
 
 -- {{{ MEMORY
