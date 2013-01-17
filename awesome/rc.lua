@@ -128,7 +128,7 @@ end
 mylauncher = wibox.widget.imagebox()
 mylauncher:set_image(beautiful.awesome_icon)
 mylauncher:buttons(awful.util.table.join(
-  awful.button({ }, 1, function () awful.util.spawn('xlock') end),
+  awful.button({ }, 1, function () awful.util.spawn('xlock -mode blank') end),
   awful.button({ modkey }, 1, function () awful.util.spawn_with_shell("sudo reboot") end),
   awful.button({ modkey }, 3, function () awful.util.spawn_with_shell("systemctl poweroff") end)
 ))
@@ -203,7 +203,7 @@ for s = 1, screen.count() do
   mytasklist[s] = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, mytasklist.buttons)
 
   -- Wibox
-  mywibox[s] = awful.wibox({ position = "top", height = 26, screen = s })
+  mywibox[s] = awful.wibox({ position = "top", height = 27, screen = s })
 
   local left_wibox = wibox.layout.fixed.horizontal()
   left_wibox:add(mytaglist[s])
@@ -337,7 +337,7 @@ globalkeys = awful.util.table.join(
   awful.key({ modkey, "Control" }, "n", awful.client.restore),
 
   -- Lock screen
-  awful.key({ modkey }, "F12", function () awful.util.spawn("xlock") end),
+  awful.key({ modkey }, "F12", function () awful.util.spawn("xlock -mode blank") end),
   
   -- Multimedia keys
   awful.key({ }, "XF86MonBrightnessDown", function ()
@@ -504,10 +504,12 @@ awful.rules.rules = {
   { rule = { class = "gimp" }, properties = { floating = true } },
   { rule = { class = "Chromium" },
     properties = { tag = tags[1][1], switchtotag=true } },
-  { rule = { class = "mendeleydesktop.x86_64" },
+  { rule = { name = "Mendeley Desktop" },
     properties = { tag = tags[1][4], switchtotag=true } },
   -- Fullscreen flash
-  { rule = { class = "Exe"}, properties = {floating = true} }
+  { rule = { class = "Exe"}, properties = {floating = true} },
+  -- RCommander view data
+  { rule = { class = "Toplevel" }, properties = {floating = true} }
 }
 -- }}}
 
@@ -589,8 +591,13 @@ function run_once(prg,arg_string,pname,screen)
     end
 end
 
-run_once("nm-applet")
+-- Startup Applications
+run_once("nm-applet &")
+run_once("start-pulseaudio-x11")
+run_once("gnome-sound-applet &")
+run_once("gnome-screensaver")
 run_once("redshift -l 37.052328:-78.662109")
+run_once("/home/keith/bin/tptoggle")
 run_once("dropboxd")
-run_once("$USER/bin/tptoggle")
+run_once("wmname LG3D")
 

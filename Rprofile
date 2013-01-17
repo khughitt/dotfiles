@@ -7,10 +7,12 @@ options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 
 # TEMP WORK-AROUND 2012/11/08
 # http://stackoverflow.com/questions/13235100/empty-plot-in-r
-setHook(packageEvent("grDevices", "onLoad"),
-        function(...) grDevices::X11.options(width=8, height=8, 
-                                             xpos=0, pointsize=10, 
-                                             type="nbcairo"))
+#setHook(packageEvent("grDevices", "onLoad"),
+#        function(...) grDevices::X11.options(width=8, height=8, 
+#                                             xpos=0, pointsize=10, 
+#                                             type="nbcairo"))
+#X11.options(type="Xlib")
+
 # interactive mode
 if (interactive()) {
     library(setwidth)    # updates output width when terminal is resized
