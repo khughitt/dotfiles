@@ -94,6 +94,7 @@ set tabstop=4
 set expandtab              " use space instead of tab
 set expandtab              " expand tabs to spaces
 set nosmarttab             " no tabs
+set nofoldenable           " disable folding
 set formatoptions+=n       " support for numbered/bullet lists
 set virtualedit=block      " allow virtual edit in visual block ..
 set encoding=utf8          " UTF-8 by default
