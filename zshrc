@@ -3,7 +3,7 @@
 #
 
 # PATH
-PATH=$PATH:~/bin
+PATH=$HOME/bin:$PATH
 
 # Stop here in non-interactive mode
 [ -z "$PS1" ] && return
@@ -21,16 +21,19 @@ fi
 #Terminal
 #TERM=rxvt-unicode
 
+# Autojump
+[[ -s ~/.autojump/etc/profile.d/autojump.sh ]] && . ~/.autojump/etc/profile.d/autojump.sh
+
 # History
 setopt HIST_IGNORE_DUPS
 
 # Oh-my-zsh settings
 ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="bira-mod"
+ZSH_THEME="cloud"
 CASE_SENSITIVE="true"
 
 # Plugins
-plugins=(archlinux autojump git)
+plugins=(autojump git)
 
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
@@ -73,3 +76,4 @@ figlet `hostname` | lolcat
 #export PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5";
 #export PERL5LIB="/home/keith/perl5/lib/perl5/x86_64-linux-thread-multi:/home/keith/perl5/lib/perl5";
 #export PATH="/home/keith/perl5/bin:$PATH";
+
