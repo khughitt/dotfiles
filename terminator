@@ -5,13 +5,13 @@
 [keybindings]
   zoom_in = <Ctrl>equal
   zoom_out = <Ctrl>minus
-  switch_to_tab_5 = <Alt>5
+  switch_to_tab_5 = <Primary><Alt>5
   new_window = <Ctrl>N
-  switch_to_tab_4 = <Alt>4
+  switch_to_tab_4 = <Primary><Alt>4
   close_term = <Ctrl>Q
-  switch_to_tab_2 = <Alt>2
-  switch_to_tab_3 = <Alt>3
-  switch_to_tab_1 = <Alt>1
+  switch_to_tab_2 = <Primary><Alt>2
+  switch_to_tab_3 = <Primary><Alt>3
+  switch_to_tab_1 = <Primary><Alt>1
   new_tab = <Ctrl>T
 [profiles]
   [[default]]
