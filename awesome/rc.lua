@@ -339,10 +339,6 @@ globalkeys = awful.util.table.join(
   -- Lock screen
   awful.key({ modkey }, "F12", function () awful.util.spawn("xlock -mode blank") end),
 
-  -- Pomodoro timer
-  awful.key({ modkey            }, "a", pomodoro.toggle),
-  awful.key({ modkey, "Shift"   }, "a", pomodoro.finish),
-
   -- Multimedia keys
   awful.key({ }, "XF86MonBrightnessDown", function ()
     awful.util.spawn("xbacklight -dec 15") end),
@@ -460,7 +456,7 @@ for i = 1, keynumber do
         local screen = mouse.screen
         if tags[screen][i].selected then
           awful.tag.history.restore(screen)
-        elseif tags[screen][i] then
+    elseif tags[screen][i] then
           awful.tag.viewonly(tags[screen][i])
         end
       end),
@@ -577,41 +573,6 @@ client.connect_signal("manage", function (c, startup)
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
-
--- Awmodoro
-require("awmodoro")
-pomowibox = awful.wibox({ position = "top", screen = 1, height=4})
-pomowibox.visible = false
-
-pomodoro = awmodoro.new({
-    minutes             = 25,
-    do_notify           = false,
-    active_bg_color     = '#313131',
-    paused_bg_color     = '#7746D7',
-    gradient_colors     = { '#9CEF6C', '#FFE473', '#FF7D73' },
---  color               = '#AECF96', -- gradient_colors has precedence
-    width               = pomowibox.width,
-    height              = pomowibox.height,
-
-    begin_callback = function()
-        for s = 1, screen.count() do
-            -- change below if necessary
-            mywibox[s].visible = false
-        end
-        pomowibox.visible = true
-    end,
-
-    finish_callback = function()
-        for s = 1, screen.count() do
-            -- change below if necessary
-            mywibox[s].visible = true
-        end
-        pomowibox.visible = false
-    end})
-
-pomowibox.widgets = {
-    pomodoro.widget,
-}
 
 
 -- Autostart
