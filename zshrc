@@ -29,6 +29,9 @@ ZSH=$HOME/.oh-my-zsh
 ZSH_THEME="bira-mod"
 CASE_SENSITIVE="true"
 
+# Local settings
+[ -e ~/.zshlocal ] && source ~/.zshlocal
+
 # Plugins
 plugins=(archlinux autojump git)
 
@@ -49,7 +52,7 @@ alias -s com=chromium
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # Additional shell settings (aliases, exports)
-for file in ~/.shell/{aliases,aliases_private,exports}; do
+for file in ~/.shell/{aliases,private,exports}; do
     [ -r "$file" ] && source "$file"
 done
 unset file
