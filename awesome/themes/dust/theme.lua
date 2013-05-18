@@ -8,7 +8,7 @@ local awful = require("awful")
 
 -- {{{ Main
 theme = {}
-theme.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/baroque_wallpaper_3-wallpaper-1920x1080.jpg"
+theme.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/Luetin.jpg"
 theme.font = "ubuntu mono 16"
 -- }}}
 
