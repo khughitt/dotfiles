@@ -4,7 +4,7 @@ local awful = require("awful")
 awful.rules = require("awful.rules")
 require("awful.autofocus")
 
--- Widget and layout library
+-- Widgets and layout library
 local wibox = require("wibox")
 
 -- Theme handling library
@@ -43,6 +43,9 @@ end
 -- Themes define colours, icons, and wallpapers
 local cfg_dir = awful.util.getdir("config") 
 beautiful.init(cfg_dir .. "/themes/niceandclean/theme.lua")
+
+-- Custom widgets
+local wi = require("wi")
 
 -- This is used later as the default terminal and editor to run.
 terminal = "terminator"
@@ -197,6 +200,9 @@ for s = 1, screen.count() do
     -- Widgets that are aligned to the right
     local right_layout = wibox.layout.fixed.horizontal()
     if s == 1 then right_layout:add(wibox.widget.systray()) end
+    right_layout:add(volicon)
+    right_layout:add(volpct)
+    right_layout:add(volspace)
     right_layout:add(mytextclock)
     right_layout:add(mylayoutbox[s])
 
