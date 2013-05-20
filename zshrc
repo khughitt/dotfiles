@@ -68,6 +68,11 @@ function h {
     history | grep $1
 }
 
+# Syntax highlighting with less
+function src {
+    /usr/bin/src-hilite-lesspipe.sh "$1" | less -R
+}
+
 # Banner
 figlet `hostname` | lolcat
 

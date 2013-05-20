@@ -5,6 +5,7 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 
+alias grep='grep --color=always'
 alias bs='bzr status'
 
 alias ap='sudo apt-get update && sudo apt-get dist-upgrade'
