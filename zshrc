@@ -26,7 +26,8 @@ setopt HIST_IGNORE_DUPS
 
 # Oh-my-zsh settings
 ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="bira-mod"
+#ZSH_THEME="bira-mod"
+ZSH_THEME="agnoster"
 CASE_SENSITIVE="true"
 
 # Local settings
