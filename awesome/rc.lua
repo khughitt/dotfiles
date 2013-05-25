@@ -235,7 +235,7 @@ for s = 1, screen.count() do
 
     mywibox[s]:set_widget(layout)
 -- Graphbox
-  mygraphbox[s] = awful.wibox({ position = "bottom", height = 16, screen = s })
+  mygraphbox[s] = awful.wibox({ position = "bottom", height = 20, screen = s })
 
   local left_graphbox = wibox.layout.fixed.horizontal()
   left_graphbox:add(space)

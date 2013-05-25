@@ -54,12 +54,19 @@ theme.bg_focus      = "#d8d8d8"
 theme.bg_urgent     = "#d02e54"
 theme.bg_minimize   = "#444444"
 theme.bg_em         = "#66ff33"
+theme.bg_tooltip    = theme.fg_em
+theme.bg_systray            = theme.fg_tooltip
+theme.bg_widget     = "#2a2a2a"
 
 theme.fg_normal     = "#cccccc"
 theme.fg_focus      = "#000000"
 theme.fg_urgent     = "#ffffff"
 theme.fg_minimize   = "#ffffff"
+theme.fg_tooltip    = "#1a1a1a"
 theme.fg_em         = "#66ff33"
+theme.fg_widget     = theme.bg_focus
+theme.fg_center_widget = "#636363"
+theme.fg_end_widget    = theme.fg_tooltip
 
 theme.border_width  = "2"
 theme.border_normal = "#747474"
