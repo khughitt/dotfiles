@@ -62,7 +62,8 @@ ln_s ${PWD}/awesome ${XDG_CONFIG_HOME}/awesome
 cp -r ${PWD}/gedit/styles ${XDG_CONFIG_HOME}/gedit/
 
 # Everything else
-for path in "devilspie" "conky" "conkyrc" "gitconfig" "gitignore_global" "Rprofile" "Renviron" "vim" "vimrc" "Xresources"; do
+for path in "devilspie" "conky" "conkyrc" "gitconfig" "gitignore_global" 
+            "gtkrc-2.0" "Rprofile" "Renviron" "vim" "vimrc" "Xresources"; do
     ln_s ${PWD}/${path} ~/.${path}
 done
 
