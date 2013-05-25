@@ -1,181 +1,132 @@
--- niceandclean, awesome3 theme, by Blazeix, based off of ghost1227's openbox theme.
+-- niceandclean, awesome3 theme, by Blazeix, 
+-- based off of ghost1227's openbox theme.
+-- modified to include some dust theme settings
 
---{{{ Main
 local awful = require("awful")
-awful.util = require("awful.util")
 
+-- {{{ Helpers
+function hometheme(path) return awful.util.getdir("config") .. "/themes/niceandclean" .. path end
+function hometags(path) return hometheme("/taglist") .. path end
+function homelayouts(path) return hometheme("/layouts") .. path end
+function homewidgets(path) return hometheme("/widgets") .. path end
+function hometp(path) return hometheme("/tp") .. path end
+
+function systheme(path) return "/usr/share/awesome/themes/default" .. path end
+function systitle(path) return systheme("/titlebar") .. path end
+-- }}}
+
+-- {{ Main
 theme = {}
-
-home          = os.getenv("HOME")
-config        = awful.util.getdir("config")
-shared        = "/usr/share/awesome"
-if not awful.util.file_readable(shared .. "/icons/awesome16.png") then
-    shared    = "/usr/share/local/awesome"
-end
-sharedicons   = shared .. "/icons"
-sharedthemes  = shared .. "/themes"
-themes        = config .. "/themes"
-themename     = "/niceandclean"
-if not awful.util.file_readable(themes .. themename .. "/theme.lua") then
-	themes = sharedthemes
-end
-themedir = themes .. themename
-
-wallpaper1    = themedir .. "/background.jpg"
-wallpaper2    = themedir .. "/background.png"
-wallpaper3    = sharedthemes .. "/zenburn/zenburn-background.png"
-wallpaper4    = sharedthemes .. "/default/background.png"
-wpscript      = home .. "/.wallpaper"
-wpscript2     = themedir .. "/niceandclean.sh"
-
-if awful.util.file_readable(wpscript2) then
-	theme.wallpaper_cmd = { "sh " .. wpscript2 }
-elseif awful.util.file_readable(wallpaper1) then
-	theme.wallpaper = wallpaper1
-elseif awful.util.file_readable(wallpaper2) then
-	theme.wallpaper = wallpaper2
-elseif awful.util.file_readable(wpscript) then
-	theme.wallpaper_cmd = { "sh " .. wpscript }
-elseif awful.util.file_readable(wallpaper3) then
-	theme.wallpaper = wallpaper3
-else
-	theme.wallpaper = wallpaper4
-end
-
-if awful.util.file_readable(config .. "/vain/init.lua") then
-    theme.useless_gap_width  = "3"
-end
---}}}
-
 theme.font          = "sans 8"
+theme.menu_height           = 15
+theme.menu_width            = 100
+-- }}}
 
-theme.bg_normal     = "#222222"
-theme.bg_focus      = "#d8d8d8"
-theme.bg_urgent     = "#d02e54"
-theme.bg_minimize   = "#444444"
-theme.bg_em         = "#66ff33"
-theme.bg_tooltip    = theme.fg_em
-theme.bg_systray            = theme.fg_tooltip
-theme.bg_widget     = "#2a2a2a"
-
+-- {{{ Colors
 theme.fg_normal     = "#cccccc"
 theme.fg_focus      = "#000000"
 theme.fg_urgent     = "#ffffff"
-theme.fg_minimize   = "#ffffff"
 theme.fg_tooltip    = "#1a1a1a"
 theme.fg_em         = "#66ff33"
-theme.fg_widget     = theme.bg_focus
+--theme.fg_widget     = theme.bg_focus
+theme.fg_widget      = "#d8d8d8"
 theme.fg_center_widget = "#636363"
 theme.fg_end_widget    = theme.fg_tooltip
 
-theme.border_width  = "2"
+theme.bg_normal     = theme.fg_tooltip
+theme.bg_focus      = "#d8d8d8"
+theme.bg_urgent     = "#d02e54"
+theme.bg_tooltip    = theme.fg_em
+theme.bg_em         = "#66ff33"
+theme.bg_systray    = theme.fg_tooltip
+theme.bg_widget     = "#2a2a2a"
+
+theme.border_width  = 2
 theme.border_normal = "#747474"
---theme.border_focus  = "#535d6c"
-theme.border_marked = "#91231c"
 theme.border_focus  = "#ce2c51"
+theme.border_marked = "#91231c"
+theme.border_tooltip        = "#444444"
+theme.border_widget         = "#3f3f3f"
 
--- There are other variable sets
--- overriding the default one when
--- defined, the sets are:
--- [taglist|tasklist]_[bg|fg]_[focus|urgent]
--- titlebar_[bg|fg]_[normal|focus]
--- tooltip_[font|opacity|fg_color|bg_color|border_width|border_color]
--- mouse_finder_[color|timeout|animate_timeout|radius|factor]
--- Example:
---theme.taglist_bg_focus = "#ff0000"
+theme.titlebar_bg_focus     = theme.border_widget
+theme.titlebar_bg_normal    = theme.border_widget
 
--- Display the taglist squares
-theme.taglist_squares_sel = themedir .. "/taglist/squarefw.png"
-theme.taglist_squares_unsel = themedir .. "/taglist/squarew.png"
-
-theme.tasklist_floating_icon = themedir .. "/tasklist/floatingw_grey.png"
-
--- Variables set for theming the menu:
--- menu_[bg|fg]_[normal|focus]
--- menu_[border_color|border_width]
-theme.menu_submenu_icon = themedir .. "/submenu.png"
-theme.menu_height = "15"
-theme.menu_width  = "110"
-theme.menu_border_width = "0"
-
--- You can add as many variables as
--- you wish and access them by using
--- beautiful.variable in your rc.lua
---theme.bg_widget = "#cc0000"
-
--- Define the image to load
-theme.titlebar_close_button_normal = themedir .. "/titlebar/close_normal.png"
-theme.titlebar_close_button_focus = themedir .. "/titlebar/close_focus.png"
-
-theme.titlebar_ontop_button_normal_inactive = themedir .. "/titlebar/ontop_normal_inactive.png"
-theme.titlebar_ontop_button_focus_inactive = themedir .. "/titlebar/ontop_focus_inactive.png"
-theme.titlebar_ontop_button_normal_active = themedir .. "/titlebar/ontop_normal_active.png"
-theme.titlebar_ontop_button_focus_active = themedir .. "/titlebar/ontop_focus_active.png"
-
-theme.titlebar_sticky_button_normal_inactive = themedir .. "/titlebar/sticky_normal_inactive.png"
-theme.titlebar_sticky_button_focus_inactive = themedir .. "/titlebar/sticky_focus_inactive.png"
-theme.titlebar_sticky_button_normal_active = themedir .. "/titlebar/sticky_normal_active.png"
-theme.titlebar_sticky_button_focus_active = themedir .. "/titlebar/sticky_focus_active.png"
-
-theme.titlebar_floating_button_normal_inactive = themedir .. "/titlebar/floating_normal_inactive.png"
-theme.titlebar_floating_button_focus_inactive = themedir .. "/titlebar/floating_focus_inactive.png"
-theme.titlebar_floating_button_normal_active = themedir .. "/titlebar/floating_normal_active.png"
-theme.titlebar_floating_button_focus_active = themedir .. "/titlebar/floating_focus_active.png"
-
-theme.titlebar_maximized_button_normal_inactive = themedir .. "/titlebar/maximized_normal_inactive.png"
-theme.titlebar_maximized_button_focus_inactive = themedir .. "/titlebar/maximized_focus_inactive.png"
-theme.titlebar_maximized_button_normal_active = themedir .. "/titlebar/maximized_normal_active.png"
-theme.titlebar_maximized_button_focus_active = themedir .. "/titlebar/maximized_focus_active.png"
-
--- You can use your own layout icons like this:
-theme.layout_fairh = themedir .. "/layouts/fairhw.png"
-theme.layout_fairv = themedir .. "/layouts/fairvw.png"
-theme.layout_floating = themedir .. "/layouts/floatingw.png"
-theme.layout_magnifier = themedir .. "/layouts/magnifierw.png"
-theme.layout_max = themedir .. "/layouts/maxw.png"
-theme.layout_fullscreen = themedir .. "/layouts/fullscreenw.png"
-theme.layout_tilebottom = themedir .. "/layouts/tilebottomw.png"
-theme.layout_tileleft = themedir .. "/layouts/tileleftw.png"
-theme.layout_tile = themedir .. "/layouts/tilew.png"
-theme.layout_tiletop = themedir .. "/layouts/tiletopw.png"
-theme.layout_spiral = themedir .. "/layouts/spiralw.png"
-theme.layout_dwindle = themedir .. "/layouts/dwindlew.png"
-
-theme.awesome_icon = themedir .. "/awesome16.png"
-
--- {{{ Widgets
-theme.widget_disk = awful.util.getdir("config") .. "/themes/dust/widgets/disk.png"
-theme.widget_cpu = awful.util.getdir("config") .. "/themes/dust/widgets/cpu.png"
-theme.widget_ac = awful.util.getdir("config") .. "/themes/dust/widgets/ac.png"
-theme.widget_acblink = awful.util.getdir("config") .. "/themes/dust/widgets/acblink.png"
-theme.widget_blank = awful.util.getdir("config") .. "/themes/dust/widgets/blank.png"
-theme.widget_batfull = awful.util.getdir("config") .. "/themes/dust/widgets/batfull.png"
-theme.widget_batmed = awful.util.getdir("config") .. "/themes/dust/widgets/batmed.png"
-theme.widget_batlow = awful.util.getdir("config") .. "/themes/dust/widgets/batlow.png"
-theme.widget_batempty = awful.util.getdir("config") .. "/themes/dust/widgets/batempty.png"
-theme.widget_vol = awful.util.getdir("config") .. "/themes/dust/widgets/vol.png"
-theme.widget_mute = awful.util.getdir("config") .. "/themes/dust/widgets/mute.png"
-theme.widget_pac = awful.util.getdir("config") .. "/themes/dust/widgets/pac.png"
-theme.widget_pacnew = awful.util.getdir("config") .. "/themes/dust/widgets/pacnew.png"
-theme.widget_mail = awful.util.getdir("config") .. "/themes/dust/widgets/mail.png"
-theme.widget_mailnew = awful.util.getdir("config") .. "/themes/dust/widgets/mailnew.png"
-theme.widget_temp = awful.util.getdir("config") .. "/themes/dust/widgets/temp.png"
-theme.widget_tempwarn = awful.util.getdir("config") .. "/themes/dust/widgets/tempwarm.png"
-theme.widget_temphot = awful.util.getdir("config") .. "/themes/dust/widgets/temphot.png"
-theme.widget_wifi = awful.util.getdir("config") .. "/themes/dust/widgets/wifi.png"
-theme.widget_nowifi = awful.util.getdir("config") .. "/themes/dust/widgets/nowifi.png"
-theme.widget_mpd = awful.util.getdir("config") .. "/themes/dust/widgets/mpd.png"
-theme.widget_play = awful.util.getdir("config") .. "/themes/dust/widgets/play.png"
-theme.widget_pause = awful.util.getdir("config") .. "/themes/dust/widgets/pause.png"
-theme.widget_ram = awful.util.getdir("config") .. "/themes/dust/widgets/ram.png"
-
-theme.widget_mem = awful.util.getdir("config") .. "/themes/dust/tp/ram.png"
-theme.widget_swap = awful.util.getdir("config") .. "/themes/dust/tp/swap.png"
-theme.widget_fs = awful.util.getdir("config") .. "/themes/dust/tp/fs_01.png"
-theme.widget_fs2 = awful.util.getdir("config") .. "/themes/dust/tp/fs_02.png"
-theme.widget_up = awful.util.getdir("config") .. "/themes/dust/tp/up.png"
-theme.widget_down = awful.util.getdir("config") .. "/themes/dust/tp/down.png"
+theme.mouse_finder_color    = "#cc9393"
 -- }}}
 
+-- {{{ Icons
+theme.taglist_squares_sel   = hometags("/squaref.png")
+theme.taglist_squares_unsel = hometags("/square.png")
+
+theme.awesome_icon =        hometheme("/awesome16.png")
+theme.menu_submenu_icon     = systheme("/submenu.png")
+
+theme.layout_tile           = homelayouts("/tilew.png")
+theme.layout_tileleft       = homelayouts("/tileleftw.png")
+theme.layout_tilebottom     = homelayouts("/tilebottomw.png")
+theme.layout_tiletop        = homelayouts("/tiletopw.png")
+theme.layout_fairv          = homelayouts("/fairvw.png")
+theme.layout_fairh          = homelayouts("/fairhw.png")
+theme.layout_spiral         = homelayouts("/spiralw.png")
+theme.layout_dwindle        = homelayouts("/dwindlew.png")
+theme.layout_max            = homelayouts("/maxw.png")
+theme.layout_fullscreen     = homelayouts("/fullscreenw.png")
+theme.layout_magnifier      = homelayouts("/magnifierw.png")
+theme.layout_floating       = homelayouts("/floatingw.png")
+
+theme.widget_disk           = homewidgets("/disk.png")
+theme.widget_cpu            = homewidgets("/cpu.png")
+theme.widget_ac             = homewidgets("/ac.png")
+theme.widget_acblink        = homewidgets("/acblink.png")
+theme.widget_blank          = homewidgets("/blank.png")
+theme.widget_batfull        = homewidgets("/batfull.png")
+theme.widget_batmed         = homewidgets("/batmed.png")
+theme.widget_batlow         = homewidgets("/batlow.png")
+theme.widget_batempty       = homewidgets("/batempty.png")
+theme.widget_vol            = homewidgets("/vol.png")
+theme.widget_mute           = homewidgets("/mute.png")
+theme.widget_pac            = homewidgets("/pac.png")
+theme.widget_pacnew         = homewidgets("/pacnew.png")
+theme.widget_mail           = homewidgets("/mail.png")
+theme.widget_mailnew        = homewidgets("/mailnew.png")
+theme.widget_temp           = homewidgets("/temp.png")
+theme.widget_tempwarn       = homewidgets("/tempwarm.png")
+theme.widget_temphot        = homewidgets("/temphot.png")
+theme.widget_wifi           = homewidgets("/wifi.png")
+theme.widget_nowifi         = homewidgets("/nowifi.png")
+theme.widget_mpd            = homewidgets("/mpd.png")
+theme.widget_play           = homewidgets("/play.png")
+theme.widget_pause          = homewidgets("/pause.png")
+theme.widget_ram            = homewidgets("/ram.png")
+
+theme.widget_mem            = hometp("/ram.png")
+theme.widget_swap           = hometp("/swap.png")
+theme.widget_fs             = hometp("/fs_01.png")
+theme.widget_fs2            = hometp("/fs_02.png")
+theme.widget_up             = hometp("/up.png")
+theme.widget_down           = hometp("/down.png")
+
+theme.titlebar_close_button_focus               = systitle("/close_focus.png")
+theme.titlebar_close_button_normal              = systitle("/close_normal.png")
+
+theme.titlebar_ontop_button_focus_active        = systitle("/ontop_focus_active.png")
+theme.titlebar_ontop_button_normal_active       = systitle("/ontop_normal_active.png")
+theme.titlebar_ontop_button_focus_inactive      = systitle("/ontop_focus_inactive.png")
+theme.titlebar_ontop_button_normal_inactive     = systitle("/ontop_normal_inactive.png")
+
+theme.titlebar_sticky_button_focus_active       = systitle("/sticky_focus_active.png")
+theme.titlebar_sticky_button_normal_active      = systitle("/sticky_normal_active.png")
+theme.titlebar_sticky_button_focus_inactive     = systitle("/sticky_focus_inactive.png")
+theme.titlebar_sticky_button_normal_inactive    = systitle("/sticky_normal_inactive.png")
+
+theme.titlebar_floating_button_focus_active     = systitle("/floating_focus_active.png")
+theme.titlebar_floating_button_normal_active    = systitle("/floating_normal_active.png")
+theme.titlebar_floating_button_focus_inactive   = systitle("/floating_focus_inactive.png")
+theme.titlebar_floating_button_normal_inactive  = systitle("/floating_normal_inactive.png")
+
+theme.titlebar_maximized_button_focus_active    = systitle("/maximized_focus_active.png")
+theme.titlebar_maximized_button_normal_active   = systitle("/maximized_normal_active.png")
+theme.titlebar_maximized_button_focus_inactive  = systitle("/maximized_focus_inactive.png")
+theme.titlebar_maximized_button_normal_inactive = systitle("/maximized_normal_inactive.png")
 
 return theme

@@ -568,9 +568,9 @@ end
 -- Startup Applications
 run_once("nm-applet")
 run_once("start-pulseaudio-x11")
-run_once("gnome-sound-applet")
+--run_once("gnome-sound-applet")
 run_once("gnome-screensaver")
-run_once("tptoggle")
+run_once(os.getenv("HOME") .. "/bin/tptoggle")
 run_once("dropboxd")
 run_once("wmname LG3D")
 
