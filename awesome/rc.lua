@@ -1,4 +1,7 @@
--- Standard awesome library
+----------------------------------
+-- AwesomeWM 3.5.1 config       --
+-- Based on github.com/tdy/dots --
+----------------------------------
 local gears = require("gears")
 local awful = require("awful")
 awful.rules = require("awful.rules")
@@ -9,10 +12,11 @@ local wibox = require("wibox")
 
 -- Theme handling library
 local beautiful = require("beautiful")
-
--- Notification library
+beautiful.init(awful.util.getdir("config") .. "/themes/niceandclean/theme.lua")
 local naughty = require("naughty")
 local menubar = require("menubar")
+local vicious = require("vicious")
+local wi = require("wi")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -41,11 +45,6 @@ end
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
-local cfg_dir = awful.util.getdir("config") 
-beautiful.init(cfg_dir .. "/themes/niceandclean/theme.lua")
-
--- Custom widgets
-local wi = require("wi")
 
 -- This is used later as the default terminal and editor to run.
 terminal = "terminator"
@@ -75,6 +74,23 @@ local layouts =
     awful.layout.suit.max.fullscreen,
     awful.layout.suit.magnifier
 }
+-- }}}
+
+-- {{{ Naughty presets
+naughty.config.defaults.timeout = 5
+naughty.config.defaults.screen = 1
+naughty.config.defaults.position = "top_right"
+naughty.config.defaults.margin = 8
+naughty.config.defaults.gap = 1
+naughty.config.defaults.ontop = true
+naughty.config.defaults.font = "Sergo UI 18"
+naughty.config.defaults.icon = nil
+naughty.config.defaults.icon_size = 256
+naughty.config.defaults.fg = beautiful.fg_tooltip
+naughty.config.defaults.bg = beautiful.bg_tooltip
+naughty.config.defaults.border_color = beautiful.border_tooltip
+naughty.config.defaults.border_width = 2
+naughty.config.defaults.hover_timeout = nil
 -- }}}
 
 -- {{{ Wallpaper
@@ -123,8 +139,13 @@ menubar.utils.terminal = terminal -- Set the terminal for applications that requ
 -- Create a textclock widget
 mytextclock = awful.widget.textclock()
 
+-- Clock
+mytextclock = awful.widget.textclock("<span color='" .. beautiful.fg_em ..
+  "'>%a %m/%d</span> @ %I:%M %p")
+
 -- Create a wibox for each screen and add it
 mywibox = {}
+mygraphbox = {}
 mypromptbox = {}
 mylayoutbox = {}
 mytaglist = {}
@@ -213,6 +234,46 @@ for s = 1, screen.count() do
     layout:set_right(right_layout)
 
     mywibox[s]:set_widget(layout)
+-- Graphbox
+  mygraphbox[s] = awful.wibox({ position = "bottom", height = 16, screen = s })
+
+  local left_graphbox = wibox.layout.fixed.horizontal()
+  left_graphbox:add(space)
+  left_graphbox:add(cpufreq)
+  left_graphbox:add(cpugraph0)
+  left_graphbox:add(cpupct0)
+  left_graphbox:add(cpugraph1)
+  left_graphbox:add(cpupct1)
+  left_graphbox:add(cpugraph2)
+  left_graphbox:add(cpupct2)
+  left_graphbox:add(tab)
+  left_graphbox:add(memused)
+  left_graphbox:add(membar)
+  left_graphbox:add(mempct)
+  left_graphbox:add(tab)
+  left_graphbox:add(rootfsused)
+  left_graphbox:add(rootfsbar)
+  left_graphbox:add(rootfspct)
+  left_graphbox:add(tab)
+  left_graphbox:add(txwidget)
+  left_graphbox:add(txgraph)
+  left_graphbox:add(txwidget)
+  left_graphbox:add(tab)
+  left_graphbox:add(rxwidget)
+  left_graphbox:add(rxgraph)
+  left_graphbox:add(rxwidget)
+
+  local right_graphbox = wibox.layout.fixed.horizontal()
+  right_graphbox:add(weather)
+  right_graphbox:add(space)
+  right_graphbox:add(mytextclock)
+  right_graphbox:add(space)
+
+  local graphbox_layout = wibox.layout.align.horizontal()
+  graphbox_layout:set_left(left_graphbox)
+  graphbox_layout:set_right(right_graphbox)
+
+  mygraphbox[s]:set_widget(graphbox_layout)
 end
 -- }}}
 
@@ -242,7 +303,18 @@ globalkeys = awful.util.table.join(
             awful.client.focus.byidx(-1)
             if client.focus then client.focus:raise() end
         end),
+  awful.key({ altkey, }, "Tab",
+    function ()
+      awful.client.focus.byidx( 1)
+      if client.focus then client.focus:raise() end
+    end),
+  awful.key({ modkey, "Shift" }, "Tab",
+    function ()
+      awful.client.focus.byidx(-1)
+      if client.focus then client.focus:raise() end
+    end),
     awful.key({ modkey,           }, "w", function () mymainmenu:show() end),
+
 
     -- Layout manipulation
     awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end),
@@ -274,6 +346,31 @@ globalkeys = awful.util.table.join(
 
     awful.key({ modkey, "Control" }, "n", awful.client.restore),
 
+  -- Lock screen
+  awful.key({ modkey }, "F12", function () awful.util.spawn("xlock -mode blank") end),
+
+  -- Multimedia keys
+  awful.key({ }, "XF86MonBrightnessDown", function ()
+    awful.util.spawn("xbacklight -dec 15") end),
+  awful.key({ }, "XF86MonBrightnessUp", function ()
+    awful.util.spawn("xbacklight -inc 15") end),
+  awful.key({ }, "XF86AudioRaiseVolume", function ()
+    awful.util.spawn_with_shell("pamixer --increase 3") end),
+  awful.key({ }, "XF86AudioLowerVolume", function ()
+    awful.util.spawn_with_shell("pamixer --decrease 3") end),
+  awful.key({ }, "XF86AudioMute", function ()
+    awful.util.spawn_with_shell("pamixer --toggle-mute") end),
+  awful.key({ }, "XF86Display", function()
+    awful.util.spawn_with_shell("toggle-display.sh") end),
+  awful.key({ }, "XF86Sleep", function()
+    awful.util.spawn("sudo pm-suspend") end),
+  awful.key({ }, "XF86TouchpadToggle", function ()
+    awful.util.spawn(os.getenv("HOME") .. "/bin/tptoggle") end),
+  awful.key({ modkey }, ",", function ()
+    awful.util.spawn_with_shell("xbacklight -dec 10") end),
+  awful.key({ modkey }, ".", function ()
+    awful.util.spawn_with_shell("xbacklight -inc 10") end),
+
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
 
@@ -287,6 +384,7 @@ globalkeys = awful.util.table.join(
     -- Menubar
     awful.key({ modkey }, "p", function() menubar.show() end)
 )
+  -- }}}
 
 clientkeys = awful.util.table.join(
     awful.key({ modkey,           }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
