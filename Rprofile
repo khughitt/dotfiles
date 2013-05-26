@@ -5,20 +5,12 @@ options(showWarnCalls=T, showErrorCalls=T)
 options(max.print=10E3)
 options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 
-# TEMP WORK-AROUND 2012/11/08
-# http://stackoverflow.com/questions/13235100/empty-plot-in-r
-#setHook(packageEvent("grDevices", "onLoad"),
-#        function(...) grDevices::X11.options(width=8, height=8, 
-#                                             xpos=0, pointsize=10, 
-#                                             type="nbcairo"))
-#X11.options(type="Xlib")
-
 # interactive mode
-if (interactive()) {
-    library(setwidth)    # updates output width when terminal is resized
+if (interactive() && Sys.getenv('TERM') != '') {
+    library(setwidth)     # updates output width when terminal is resized
     library(vimcom)       # better vim suport
 
-    library('colorout')  # syntax highlighting
+    library('colorout')   # syntax highlighting
     setOutputColors256(
         normal = 40,
         number = 177,
