@@ -8,8 +8,15 @@ PATH=$PATH:~/bin
 # Stop here in non-interactive mode
 [ -z "$PS1" ] && return
 
-# Use Xresrouces to set TTY colors
+# Check if in virtual console
 if [ "$TERM" = "linux" ]; then
+    vconsole=true
+else
+    vconsole=false
+fi
+
+# Use Xresrouces to set TTY colors
+if $vconsole; then
     _SEDCMD='s/.*\*\.color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
     for i in $(sed -n "$_SEDCMD" $HOME/.Xresources | \
                awk '$1 < 16 {printf "\\e]P%X%s", $1, $2}'); do
@@ -73,11 +80,8 @@ function src {
     /usr/bin/src-hilite-lesspipe.sh "$1" | less -R
 }
 
-# Banner
-figlet `hostname` | lolcat
+# Hostname
+if [ "$vconsole" = false ]; then
+    figlet `hostname` | lolcat
+fi
 
-#export PERL_LOCAL_LIB_ROOT="/home/keith/perl5";
-#export PERL_MB_OPT="--install_base /home/keith/perl5";
-#export PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5";
-#export PERL5LIB="/home/keith/perl5/lib/perl5/x86_64-linux-thread-multi:/home/keith/perl5/lib/perl5";
-#export PATH="/home/keith/perl5/bin:$PATH";
