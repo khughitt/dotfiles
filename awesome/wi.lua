@@ -201,12 +201,12 @@ txgraph:set_color({
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
     { 1, beautiful.fg_end_widget } } })
-vicious.register(txgraph, vicious.widgets.net, "${eth0 up_kb}")
+vicious.register(txgraph, vicious.widgets.net, "${wlan0 up_kb}")
 
 -- TX total
 txwidget = wibox.widget.textbox()
 vicious.register(txwidget, vicious.widgets.net,
-  "<span color='" .. beautiful.fg_em .. "'>tx</span>${eth0 tx_mb}MB", 19)
+  "<span color='" .. beautiful.fg_em .. "'>tx</span>${wlan0 tx_mb}MB", 19)
 
 -- TX speed
 txwidget = wibox.widget.textbox()
@@ -215,7 +215,7 @@ txwidget.fit =
     local w, h = wibox.widget.textbox.fit(box, w, h)
     return math.max(netwidth, w), h
   end
-vicious.register(txwidget, vicious.widgets.net, "${eth0 up_kb}", 2)
+vicious.register(txwidget, vicious.widgets.net, "${wlan0 up_kb}", 2)
 
 -- RX graph
 rxgraph = awful.widget.graph()
@@ -230,12 +230,12 @@ rxgraph:set_color({
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
     { 1, beautiful.fg_end_widget } } })
-vicious.register(rxgraph, vicious.widgets.net, "${eth0 down_kb}")
+vicious.register(rxgraph, vicious.widgets.net, "${wlan0 down_kb}")
 
 -- RX total
 rxwidget = wibox.widget.textbox()
 vicious.register(rxwidget, vicious.widgets.net,
-  "<span color='" .. beautiful.fg_em .. "'>rx</span>${eth0 rx_mb}MB", 17)
+  "<span color='" .. beautiful.fg_em .. "'>rx</span>${wlan0 rx_mb}MB", 17)
 
 -- RX speed
 rxwidget = wibox.widget.textbox()
@@ -244,7 +244,7 @@ rxwidget.fit =
     local w, h = wibox.widget.textbox.fit(box, w, h)
     return math.max(netwidth, w), h
   end
-vicious.register(rxwidget, vicious.widgets.net, "${eth0 down_kb}", 2)
+vicious.register(rxwidget, vicious.widgets.net, "${wlan0 down_kb}", 2)
 -- }}}
 
 -- {{{ Weather
