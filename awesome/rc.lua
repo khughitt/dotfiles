@@ -66,13 +66,13 @@ local layouts =
 {
     awful.layout.suit.floating,
     awful.layout.suit.tile,
-    awful.layout.suit.tile.left,
+    --awful.layout.suit.tile.left,
     awful.layout.suit.tile.bottom,
-    awful.layout.suit.tile.top,
-    awful.layout.suit.fair,
-    awful.layout.suit.fair.horizontal,
+    --awful.layout.suit.tile.top,
+    --awful.layout.suit.fair,
+    --awful.layout.suit.fair.horizontal,
     awful.layout.suit.max.fullscreen,
-    awful.layout.suit.magnifier
+    --awful.layout.suit.magnifier
 }
 -- }}}
 
@@ -83,7 +83,7 @@ naughty.config.defaults.position = "top_right"
 naughty.config.defaults.margin = 8
 naughty.config.defaults.gap = 1
 naughty.config.defaults.ontop = true
-naughty.config.defaults.font = "Sergo UI 18"
+naughty.config.defaults.font = "Sergo UI 12"
 naughty.config.defaults.icon = nil
 naughty.config.defaults.icon_size = 256
 naughty.config.defaults.fg = beautiful.fg_tooltip
@@ -225,6 +225,7 @@ for s = 1, screen.count() do
     right_layout:add(volpct)
     right_layout:add(volspace)
     right_layout:add(mytextclock)
+    right_layout:add(space)
     right_layout:add(mylayoutbox[s])
 
     -- Now bring it all together (with the tasklist in the middle)
@@ -254,19 +255,17 @@ for s = 1, screen.count() do
   left_graphbox:add(rootfsused)
   left_graphbox:add(rootfsbar)
   left_graphbox:add(rootfspct)
-  left_graphbox:add(tab)
-  left_graphbox:add(txwidget)
-  left_graphbox:add(txgraph)
-  left_graphbox:add(txwidget)
-  left_graphbox:add(tab)
-  left_graphbox:add(rxwidget)
-  left_graphbox:add(rxgraph)
-  left_graphbox:add(rxwidget)
+  --left_graphbox:add(tab)
+  --left_graphbox:add(txwidget)
+  --left_graphbox:add(txgraph)
+  --left_graphbox:add(txwidget)
+  --left_graphbox:add(tab)
+  --left_graphbox:add(rxwidget)
+  --left_graphbox:add(rxgraph)
+  --left_graphbox:add(rxwidget)
 
   local right_graphbox = wibox.layout.fixed.horizontal()
   right_graphbox:add(weather)
-  right_graphbox:add(space)
-  right_graphbox:add(mytextclock)
   right_graphbox:add(space)
 
   local graphbox_layout = wibox.layout.align.horizontal()
@@ -322,13 +321,13 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control" }, "j", function () awful.screen.focus_relative( 1) end),
     awful.key({ modkey, "Control" }, "k", function () awful.screen.focus_relative(-1) end),
     awful.key({ modkey,           }, "u", awful.client.urgent.jumpto),
-    awful.key({ altkey,           }, "Tab",
-        function ()
-            awful.client.focus.history.previous()
-            if client.focus then
-                client.focus:raise()
-            end
-        end),
+    --awful.key({ altkey,           }, "Tab",
+    --    function ()
+    --        awful.client.focus.history.previous()
+    --        if client.focus then
+    --            client.focus:raise()
+    --        end
+    --    end),
 
     -- Standard program
     awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
@@ -373,6 +372,7 @@ globalkeys = awful.util.table.join(
 
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
+    awful.key({ altkey },            "F2",     function () mypromptbox[mouse.screen]:run() end),
 
     awful.key({ modkey }, "x",
               function ()
@@ -389,6 +389,7 @@ globalkeys = awful.util.table.join(
 clientkeys = awful.util.table.join(
     awful.key({ modkey,           }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
     awful.key({ modkey, "Shift"   }, "c",      function (c) c:kill()                         end),
+    awful.key({ altkey,           }, "F4",      function (c) c:kill()                         end),
     awful.key({ modkey, "Control" }, "space",  awful.client.floating.toggle                     ),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
     awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
@@ -568,9 +569,8 @@ end
 -- Startup Applications
 run_once("nm-applet")
 run_once("start-pulseaudio-x11")
---run_once("gnome-sound-applet")
 run_once("gnome-screensaver")
 run_once(os.getenv("HOME") .. "/bin/tptoggle")
-run_once("dropboxd")
+run_once("dropboxd", "", "/opt/dropbox/dropbox")
 run_once("wmname LG3D")
 

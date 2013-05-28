@@ -40,7 +40,7 @@ CASE_SENSITIVE="true"
 [ -e ~/.zshlocal ] && source ~/.zshlocal
 
 # Plugins
-plugins=(archlinux autojump git)
+[ -z "$plugins" ] && plugins=(archlinux autojump git)
 
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
@@ -80,8 +80,11 @@ function src {
     /usr/bin/src-hilite-lesspipe.sh "$1" | less -R
 }
 
+# cw
+export PATH="/usr/lib/cw:$PATH"
+
 # Hostname
 if [ "$vconsole" = false ]; then
-    figlet `hostname` | lolcat
+    figlet `hostname -s` | lolcat
 fi
 
