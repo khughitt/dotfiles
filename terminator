@@ -2,6 +2,7 @@
   enabled_plugins = CustomCommandsMenu, TestPlugin, TerminalShot, LaunchpadCodeURLHandler, APTURLHandler, LaunchpadBugURLHandler
   title_transmit_bg_color = "#d02e54"
   dbus = True
+  inactive_color_offset = 0.84
 [keybindings]
   zoom_in = <Ctrl>equal
   zoom_out = <Ctrl>minus
