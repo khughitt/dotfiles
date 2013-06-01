@@ -63,6 +63,9 @@ ln_s ${PWD}/awesome ${XDG_CONFIG_HOME}/awesome
 # Gedit
 cp -r ${PWD}/gedit/styles ${XDG_CONFIG_HOME}/gedit/
 
+# Gtk 3.0
+ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
+
 # Everything else
 for path in "devilspie" "conky" "conkyrc" "gitconfig" "gitignore_global" 
             "gtkrc-2.0" "Rprofile" "Renviron" "vim" "vimrc" "Xresources"; do
