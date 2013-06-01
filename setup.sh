@@ -51,6 +51,8 @@ if [ ! -e $XDG_CONFIG_HOME/ipython ]; then
         rm -r $DEST
         ln_s ${filepath} $DEST
     done
+
+    # Todo: update default color scheme to Linux
 else
     echo "[SKIPPING] Ipython (already exists...)"
 fi
@@ -68,4 +70,5 @@ for path in "devilspie" "conky" "conkyrc" "gitconfig" "gitignore_global"
 done
 
 echo "Done!"
+echo "Don't forget to install any necessary fonts, icons, etc."
 
