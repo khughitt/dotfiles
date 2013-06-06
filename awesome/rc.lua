@@ -94,7 +94,7 @@ naughty.config.defaults.hover_timeout = nil
 -- }}}
 
 -- {{{ Wallpaper
-beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/Luetin.jpg"
+beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/blackwood_1920x1200.jpg"
 if beautiful.wallpaper then
     for s = 1, screen.count() do
         gears.wallpaper.maximized(beautiful.wallpaper, s, true)

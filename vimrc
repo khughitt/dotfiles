@@ -86,7 +86,9 @@ let showmarks_include="abcdefghijklmnopqrstuvwxyz"
 " ----------------------------------------------------------------------------
 
 set autoindent             " automatic indent new lines
-set smartindent            " be smart about it
+"disablign smart-indent: may be preventing comments from indenting?
+"http://stackoverflow.com/questions/191201/indenting-comments-to-match-code-in-vim
+"set smartindent            " be smart about it 
 set nowrap                 " do not wrap lines
 set softtabstop=4          " tab width
 set shiftwidth=4           " 
