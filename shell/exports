@@ -6,6 +6,7 @@ export JAVA_FONTS=/usr/share/fonts/TTF
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel'
 export GTK_IM_MODULE=ibus
 export XMODIFIERS=@im=ibus
+export XDG_CONFIG_HOME="$HOME/.config"
 export QT_IM_MODULE=ibus
 export TRITRYP=/usr/local/db/TriTrypDB/current
 
