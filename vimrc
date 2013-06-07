@@ -111,8 +111,8 @@ map j gj
 map k gk
 
 " Map <Space> to / (search) and Ctrl-<Space> to ? (backwards search)
-map <space> /
-map <c-space> ?
+" map <space> /
+" map <c-space> ?
 
 " Smart way to move between windows
 map <C-j> <C-W>j
@@ -138,6 +138,9 @@ map <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
 
 " Switch CWD to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>:pwd<cr>
+
+" Insert a single character using the space key
+nmap <space> i <esc>r
 
 " Specify the behavior when switching between buffers 
 try
@@ -266,7 +269,7 @@ else
     inoremap <Nul> <C-x><C-o>
 endif
 vmap <Space> <Plug>RDSendSelection
-nmap <Space> <Plug>RDSendLine
+"nmap <Space> <Plug>RDSendLine
 
 " Ruby
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
