@@ -12,14 +12,14 @@ if (interactive() && Sys.getenv('TERM') != '') {
 
     library('colorout')   # syntax highlighting
     setOutputColors256(
-        normal = 40,
-        number = 177,
-        negnum = 211, #212,
-        string = 85,
-        const = 35,
-        stderror = 203,
-        error = c(1, 0, 1), 
-        warn = c(1, 0, 100)
+        normal = 15,
+        number = 12,
+        negnum = 9,
+        string = 10,
+        const  = 13,
+        stderror = 120,
+        error = c(1, 0, 1),
+        warn = 5
     )
 }
 
