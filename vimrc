@@ -16,6 +16,7 @@ set showmatch        " highlight correspods character
 set cursorline       " highlight current line
 set modeline         " make sure modeline support is enabled
 set noerrorbells     " quiet, please
+set nofoldenable     " disable folding
 filetype indent on   " indent based on filetype
 filetype plugin on   " enable filetype-specific plugin loading
 
@@ -96,7 +97,6 @@ set tabstop=4
 set expandtab              " use space instead of tab
 set expandtab              " expand tabs to spaces
 set nosmarttab             " no tabs
-set nofoldenable           " disable folding
 set formatoptions+=n       " support for numbered/bullet lists
 set virtualedit=block      " allow virtual edit in visual block ..
 set encoding=utf8          " UTF-8 by default
@@ -213,32 +213,6 @@ endfunction
 autocmd FileType py,php,js,rb autocmd BufWritePre <buffer> :%s/\s\+$//e
 
 " ---------------------------------------------------------------------------
-"  Tab completion
-" ---------------------------------------------------------------------------
-"function! Smart_TabComplete()
-"  let line = getline('.')                         " current line
-"
-"  let substr = strpart(line, -1, col('.')+1)      " from the start of the current
-"                                                  " line to one character right
-"                                                  " of the cursor
-"  let substr = matchstr(substr, "[^ \t]*$")       " word till cursor
-"  if (strlen(substr)==0)                          " nothing to match on empty string
-"    return "\<tab>"
-"  endif
-"  let has_period = match(substr, '\.') != -1      " position of period, if any
-"  let has_slash = match(substr, '\/') != -1       " position of slash, if any
-"  if (!has_period && !has_slash)
-"    return "\<C-X>\<C-P>"                         " existing text matching
-"  elseif ( has_slash )
-"    return "\<C-X>\<C-F>"                         " file matching
-"  else
-"    return "\<C-X>\<C-O>"                         " plugin matching
-"  endif
-"endfunction
-"
-"inoremap <tab> <c-r>=Smart_TabComplete()<CR>
-
-" ---------------------------------------------------------------------------
 "  Search Options
 " ---------------------------------------------------------------------------
 set wrapscan   " search wrap around the end of the file
@@ -274,3 +248,5 @@ vmap <Space> <Plug>RDSendSelection
 " Ruby
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 
+" Markdown
+au BufRead,BufNewFile *.md set filetype=markdown nofoldenable
