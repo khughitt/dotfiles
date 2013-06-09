@@ -167,13 +167,13 @@ let g:hybrid_use_Xresources = 1
 if has("gui_running")
     " theme
     set background=dark
-    colorscheme jellybeans
+    colorscheme hybrid
     " Make shift-insert work like in Xterm
     map <S-Insert> <MiddleMouse>
     map! <S-Insert> <MiddleMouse>
 
 else
-    colorscheme hybrid "colorscheme jellybeans
+    colorscheme hybrid
 endif
 
 if has("syntax")
