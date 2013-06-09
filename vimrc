@@ -162,6 +162,8 @@ set viminfo^=%
 "  Appearance
 " ---------------------------------------------------------------------------
 set t_Co=256
+let g:hybrid_use_Xresources = 1
+
 if has("gui_running")
     " theme
     set background=dark
@@ -171,7 +173,7 @@ if has("gui_running")
     map! <S-Insert> <MiddleMouse>
 
 else
-    colorscheme jellybeans
+    colorscheme hybrid "colorscheme jellybeans
 endif
 
 if has("syntax")
