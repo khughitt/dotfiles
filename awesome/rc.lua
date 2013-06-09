@@ -247,6 +247,8 @@ for s = 1, screen.count() do
   left_graphbox:add(cpupct1)
   left_graphbox:add(cpugraph2)
   left_graphbox:add(cpupct2)
+  left_graphbox:add(cpugraph3)
+  left_graphbox:add(cpupct3)
   left_graphbox:add(tab)
   left_graphbox:add(memused)
   left_graphbox:add(membar)
@@ -461,7 +463,8 @@ awful.rules.rules = {
      border_color = beautiful.border_normal,
      focus = awful.client.focus.filter,
      keys = clientkeys,
-     buttons = clientbuttons } },
+     buttons = clientbuttons,
+     size_hints_honor = false } },
   { rule = { class = "MPlayer" }, properties = { floating = true } },
   { rule = { class = "pinentry" }, properties = { floating = true } },
   { rule = { class = "gimp" }, properties = { floating = true } },
