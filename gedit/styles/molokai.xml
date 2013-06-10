@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<style-scheme id="molokai" name="Molokai" version="1.0">
+	<author/>
+	<_description>
+		Port of the Molokai Text Mate Theme to GTKSourceView. 
+	</_description>
+	<style foreground="#AE81FF" name="def:boolean"/>
+	<style foreground="#AE81FF" name="def:number"/>
+	<style foreground="#E6DB74" name="def:string"/>
+	<style bold="true" foreground="#AE81FF" name="def:constant"/>
+	<style background="#F8F8F0" foreground="#000000" name="cursor"/>
+	<style background="#13354A" name="diff:added-line"/>
+	<style background="#4C4745" foreground="#89807D" name="diff:changed-line"/>
+	<style background="#1E0010" foreground="#960050" name="diff:removed-line"/>
+	<style background="#1E0010" foreground="#960050" name="def:error"/>
+	<style foreground="#A6E22E" name="def:function"/>
+	<style foreground="#FD971F" name="def:identifier"/>
+	<style bold="true" foreground="#F92672" name="def:keyword"/>
+	<style background="#FD971F" bold="true" foreground="#000000" name="bracket-match"/>
+	<style foreground="#A6E22E" name="def:preprocessor"/>
+	<style background="#455354" foreground="#FFFFFF" name="search-match"/>
+	<style background="#bg" foreground="#66D9EF" italic="true" name="def:specials"/>
+	<style bold="true" foreground="#F92672" name="def:statement"/>
+	<style foreground="#66D9EF" name="def:type"/>
+	<style background="#272822" foreground="#F8F8F2" name="text"/>
+	<style foreground="#75715E" name="def:comment"/>
+	<style background="#3E3D32" name="current-line"/>
+	<style background="#272822" foreground="#F8F8F2" name="text"/>
+	<style foreground="#465457" name="def:comment"/>
+	<style background="#3e3d32" name="current-line"/>
+	<style background="#3b3a32" foreground="#bcbca7" name="line-numbers"/>
+</style-scheme>
+
