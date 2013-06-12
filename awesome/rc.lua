@@ -71,7 +71,7 @@ local layouts =
     --awful.layout.suit.tile.top,
     --awful.layout.suit.fair,
     --awful.layout.suit.fair.horizontal,
-    awful.layout.suit.max.fullscreen,
+    --awful.layout.suit.max.fullscreen,
     --awful.layout.suit.magnifier
 }
 -- }}}
@@ -94,7 +94,8 @@ naughty.config.defaults.hover_timeout = nil
 -- }}}
 
 -- {{{ Wallpaper
-beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/blackwood_1920x1200.jpg"
+--beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/blackwood_1920x1200.jpg"
+beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/Luetin_1920.jpg"
 if beautiful.wallpaper then
     for s = 1, screen.count() do
         gears.wallpaper.maximized(beautiful.wallpaper, s, true)
@@ -257,14 +258,6 @@ for s = 1, screen.count() do
   left_graphbox:add(rootfsused)
   left_graphbox:add(rootfsbar)
   left_graphbox:add(rootfspct)
-  --left_graphbox:add(tab)
-  --left_graphbox:add(txwidget)
-  --left_graphbox:add(txgraph)
-  --left_graphbox:add(txwidget)
-  --left_graphbox:add(tab)
-  --left_graphbox:add(rxwidget)
-  --left_graphbox:add(rxgraph)
-  --left_graphbox:add(rxwidget)
 
   local right_graphbox = wibox.layout.fixed.horizontal()
   right_graphbox:add(weather)
@@ -472,6 +465,8 @@ awful.rules.rules = {
     properties = { tag = tags[1][1], switchtotag=true } },
   { rule = { name = "Mendeley Desktop" },
     properties = { tag = tags[1][4], switchtotag=true } },
+--  { rule = { name ~= "LibreOffice Impress", class = "LibreOffice"},
+--    properties = { tag = tags[2][1] } },
   -- Fullscreen flash
   { rule = { class = "Exe"}, properties = {floating = true} },
   -- RCommander view data
