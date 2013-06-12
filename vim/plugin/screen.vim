@@ -14,7 +14,7 @@
 " }}}
 "
 " License: {{{
-"   Copyright (c) 2009 - 2011
+"   Copyright (c) 2009 - 2013
 "   All rights reserved.
 "
 "   Redistribution and use of this software in source and binary forms, with
@@ -58,8 +58,15 @@ set cpo&vim
   let g:ScreenShellCmd = ''
 
   if !exists('g:ScreenImpl')
-    let g:ScreenImpl = 'GnuScreen'
-    "let g:ScreenImpl = 'Tmux'
+    if executable('tmux')
+      let g:ScreenImpl = 'Tmux'
+    else
+      let g:ScreenImpl = 'GnuScreen'
+    endif
+  endif
+
+  if !exists('g:ScreenShellScreenInitArgs')
+    let g:ScreenShellScreenInitArgs = ''
   endif
 
   if !exists('g:ScreenShellTmuxInitArgs')
@@ -116,45 +123,59 @@ set cpo&vim
     let g:ScreenShellExpandTabs = 0
   endif
 
-" }}}
-
-" Commands {{{
-
-  if !exists(':ScreenShell')
-    " unfortunately, to reap the benefits of an autoload scripts, we can't
-    " call this, but instead have to copy the commands inline.
-    "call screen#ScreenShellCommands()
-
-    command -nargs=? -complete=shellcmd ScreenShell
-      \ :call screen#ScreenShell('<args>', 'horizontal')
-    command -nargs=? -complete=customlist,screen#CommandCompleteScreenSessions
-      \ ScreenShellAttach :call screen#ScreenShellAttach('<args>')
-
-    if !has('gui_running') &&
-     \ !g:ScreenShellExternal &&
-     \ (g:ScreenImpl == 'Tmux' || g:ScreenShellGnuScreenVerticalSupport != '')
-      command -nargs=? -complete=shellcmd ScreenShellVertical
-        \ :call screen#ScreenShell('<args>', 'vertical')
-    endif
+  " List of lines to be sent before (prefix) and after (suffix) the content
+  " sent by each call of :ScreenSend.
+  if !exists('g:ScreenShellSendPrefix')
+    let g:ScreenShellSendPrefix = ''
+  endif
+  if !exists('g:ScreenShellSendSuffix')
+    let g:ScreenShellSendSuffix = ''
   endif
 
 " }}}
 
 " Autocmds {{{
 
-  " while nice for vim screen window titles, this can kind of screw things up
-  " since when exiting vim there could now be more than one screen window with
-  " the title 'shell'.
-  "if expand('$TERM') =~ '^screen'
-  "  augroup vim_screen
-  "    autocmd!
-  "    autocmd VimEnter,BufWinEnter,WinEnter *
-  "      \ exec "silent! !echo -ne '\\ek" . expand('%:t') . "\\e\\\\'"
-  "    autocmd VimLeave * exec "silent! !echo -ne '\\ekshell\\e\\\\'"
-  "  augroup END
-  "endif
+  augroup ScreenShellExit
+    autocmd User * call screen#ExitCleanup()
+  augroup END
 
 " }}}
+
+function! ScreenShellCommands() " {{{
+  let supports_vertical =
+    \ !has('gui_running') &&
+    \ !g:ScreenShellExternal &&
+    \ (g:ScreenImpl == 'Tmux' || g:ScreenShellGnuScreenVerticalSupport != '')
+
+  if !screen#CmdDefined(':ScreenShell')
+    command -nargs=? -complete=customlist,screen#CommandCompleteScreenSessions
+      \ ScreenShellAttach :call screen#ScreenShellAttach('<args>')
+
+    if supports_vertical
+      command -nargs=? -complete=shellcmd -bang ScreenShell
+        \ :call screen#ScreenShell('<args>', '<bang>')
+
+      " retained solely for backwards compatability since 3rd party scripts
+      " may make use of this.
+      command -nargs=? -complete=shellcmd ScreenShellVertical
+        \ :call screen#ScreenShell('<args>', '!')
+    else
+      command -nargs=? -complete=shellcmd ScreenShell
+        \ :call screen#ScreenShell('<args>')
+    endif
+  endif
+
+  if !screen#CmdDefined(':IPython')
+    if supports_vertical
+      command -bang IPython :call screen#IPython('<bang>')
+    else
+      command IPython :call screen#IPython()
+    endif
+  endif
+endfunction " }}}
+
+call ScreenShellCommands()
 
 let &cpo = s:save_cpo
 

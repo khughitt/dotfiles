@@ -1,7 +1,7 @@
 " Author: Eric Van Dewoestine <ervandew@gmail.com>
 "
 " License: {{{
-"   Copyright (c) 2009 - 2011
+"   Copyright (c) 2009 - 2013
 "   All rights reserved.
 "
 "   Redistribution and use of this software in source and binary forms, with
@@ -46,32 +46,22 @@ set cpo&vim
     let s:terminals = ['Terminal.app']
   else
     let s:terminals = [
-        \ 'gnome-terminal', 'konsole',
+        \ 'x-terminal-emulator',
+        \ 'gnome-terminal', 'konsole', 'lxterminal', 'xfce4-terminal', 'terminal',
         \ 'urxvt', 'multi-aterm', 'aterm', 'mrxvt', 'rxvt',
-        \ 'xterm',
+        \ 'terminator', 'xterm',
       \ ]
   endif
 
 " }}}
 
-" ScreenShellCommands() {{{
-function! screen#ScreenShellCommands()
-  command -nargs=? -complete=shellcmd ScreenShell
-    \ :call screen#ScreenShell('<args>', 'horizontal')
-  command -nargs=? -complete=customlist,screen#CommandCompleteScreenSessions
-    \ ScreenShellAttach :call screen#ScreenShellAttach('<args>')
+function! screen#ScreenShell(cmd, ...) " {{{
+  " Open a split shell.
+  " Optional args:
+  "   orientation (or <bang> from: command -bang)
+  "     - 'horizontal' or '': open a horizontal split
+  "     - 'vertical' or '!':  open a vertical split
 
-  if !has('gui_running') &&
-   \ !g:ScreenShellExternal &&
-   \ (g:ScreenImpl == 'Tmux' || g:ScreenShellGnuScreenVerticalSupport != '')
-    command -nargs=? -complete=shellcmd ScreenShellVertical
-      \ :call screen#ScreenShell('<args>', 'vertical')
-  endif
-endfunction " }}}
-
-" ScreenShell(cmd, orientation) {{{
-" Open a split shell.
-function! screen#ScreenShell(cmd, orientation)
   if g:ScreenImpl !~ '^\(GnuScreen\|Tmux\)$'
     echohl WarningMsg
     echom 'Unsupported g:ScreenImpl value "' . g:ScreenImpl . '".  ' .
@@ -84,7 +74,10 @@ function! screen#ScreenShell(cmd, orientation)
     return
   endif
 
-  let s:orientation = a:orientation
+  let s:orientation = 'horizontal'
+  if a:0 && (a:1 == '!' || a:1 == 'vertical')
+    let s:orientation = 'vertical'
+  endif
 
   " Specifies a name to be supplied to vim's --servername arg when invoked in
   " a new screen session.
@@ -101,7 +94,7 @@ function! screen#ScreenShell(cmd, orientation)
       \ g:ScreenImpl =~ 'GnuScreen\|Tmux' &&
       \ !has('gui_running') &&
       \ !exists('g:ScreenShellBootstrapped') &&
-      \ expand('$TERM') !~ '^screen'
+      \ !s:InScreenSession()
 
     " if using an external shell without the need to set the vim servername,
     " then don't bootstrap
@@ -124,9 +117,9 @@ function! screen#ScreenShell(cmd, orientation)
   endtry
 endfunction " }}}
 
-" ScreenShellAttach(session) {{{
-" Attach to an existing screen session.
-function! screen#ScreenShellAttach(session)
+function! screen#ScreenShellAttach(session) " {{{
+  " Attach to an existing screen session.
+
   if !s:screen{g:ScreenImpl}.isValid()
     return
   endif
@@ -134,7 +127,7 @@ function! screen#ScreenShellAttach(session)
   let g:ScreenShellSession = s:screen{g:ScreenImpl}.attachSession(a:session)
 
   if g:ScreenShellSession != '0'
-    if !exists(':ScreenSend')
+    if !screen#CmdDefined(':ScreenSend')
       command -nargs=0 -range=% ScreenSend :call <SID>ScreenSend(<line1>, <line2>)
       let g:ScreenShellSend = s:ScreenSendFuncRef()
       let g:ScreenShellFocus = s:ScreenFocusFuncRef()
@@ -147,9 +140,7 @@ function! screen#ScreenShellAttach(session)
   endif
 endfunction " }}}
 
-" s:ScreenBootstrap(cmd) {{{
-" Bootstrap a new screen session.
-function! s:ScreenBootstrap(cmd)
+function! s:ScreenBootstrap(cmd) " {{{
   try
     let g:ScreenShellBootstrapped = 1
     let g:ScreenShellSession = s:screen{g:ScreenImpl}.newSessionName()
@@ -176,12 +167,12 @@ function! s:ScreenBootstrap(cmd)
     endif
 
     " support for taglist
-    if exists(':TlistSessionSave') &&
+    if screen#CmdDefined(':TlistSessionSave') &&
      \ exists('g:TagList_title') &&
-     \ bufwinnr(g:TagList_title)
+     \ bufwinnr(g:TagList_title) != -1
       let g:ScreenShellTaglistSession = sessionfile . '.taglist'
       exec 'TlistSessionSave ' . g:ScreenShellTaglistSession
-      exec 'silent! !echo "Tlist | TlistSessionLoad ' .
+      exec 'silent! !echo "TlistSessionLoad ' .
         \ g:ScreenShellTaglistSession . '" >> "' . sessionfile . '"'
     endif
 
@@ -219,6 +210,13 @@ function! s:ScreenBootstrap(cmd)
 
     call s:screen{g:ScreenImpl}.bootstrap(server, sessionfile, a:cmd)
   finally
+    let g:ScreenShellActive = 0
+    let g:ScreenShellCmd = ''
+    try
+      doautoall ScreenShellExit User
+    catch /E216/
+    endtry
+
     redraw!
 
     unlet g:ScreenShellBootstrapped
@@ -276,9 +274,7 @@ function! s:ScreenBootstrap(cmd)
   endtry
 endfunction " }}}
 
-" s:ScreenInit(cmd) {{{
-" Initialize the current screen session.
-function! s:ScreenInit(cmd)
+function! s:ScreenInit(cmd) " {{{
   let g:ScreenShellWindow = 'screenshell'
   " use a portion of the command as the title, if supplied
   "if a:cmd != '' && a:cmd !~ '^\s*vim\>'
@@ -290,7 +286,7 @@ function! s:ScreenInit(cmd)
   if g:ScreenImpl =~ 'GnuScreen\|Tmux'
     " when already running in a screen session, never use an external shell
     let external = !exists('g:ScreenShellBootstrapped') &&
-          \ expand('$TERM') =~ '^screen' ? 0 : g:ScreenShellExternal
+      \ s:InScreenSession() ? 0 : g:ScreenShellExternal
     " w/ gvim always use an external shell
     let external = has('gui_running') ? 1 : external
   endif
@@ -360,12 +356,12 @@ function! s:ScreenInit(cmd)
   endif
 
   if v:shell_error
-    if exists(':ScreenQuit')
+    if screen#CmdDefined(':ScreenQuit')
       delcommand ScreenQuit
     endif
     echoerr result
   else
-    if !exists(':ScreenSend')
+    if !screen#CmdDefined(':ScreenSend')
       command -nargs=0 -range=% ScreenSend :call <SID>ScreenSend(<line1>, <line2>)
       exec "command -nargs=0 ScreenQuit :call <SID>ScreenQuit('" . owner . "', 0)"
       if g:ScreenShellQuitOnVimExit
@@ -380,8 +376,13 @@ function! s:ScreenInit(cmd)
       " remove :ScreenShell command to avoid accidentally calling it again.
       delcommand ScreenShell
       delcommand ScreenShellAttach
-      if exists(':ScreenShellVertical')
+      if screen#CmdDefined(':ScreenShellVertical')
         delcommand ScreenShellVertical
+      endif
+
+      if g:ScreenImpl == 'Tmux'
+        command -nargs=? -complete=shellcmd ScreenShellReopen
+          \ :call <SID>ScreenShellReopen('<args>')
       endif
 
       " Hook for creating keybindings (or similar)
@@ -395,9 +396,15 @@ function! s:ScreenInit(cmd)
   endif
 endfunction " }}}
 
-" s:ScreenSend(string or list<string> or line1, line2) {{{
-" Send lines to the screen shell.
-function! s:ScreenSend(...)
+function! s:ScreenShellReopen(cmd) " {{{
+    if !s:screen{g:ScreenImpl}.exists()
+      call s:ScreenInit(a:cmd)
+    endif
+endfun " }}}
+
+function! s:ScreenSend(...) " {{{
+  " args: string or list<string> or line1, line2
+
   if a:0 == 1
     let argtype = type(a:1)
     if argtype == 1
@@ -417,18 +424,17 @@ function! s:ScreenSend(...)
     let lines = getline(a:1, a:2)
     let mode = visualmode(1)
     if mode != '' && line("'<") == a:1
+      let start = col("'<") - 1
+      let end = col("'>") - 1
       if mode == "v"
-        let start = col("'<") - 1
-        let end = col("'>") - 1
         " slice in end before start in case the selection is only one line
         let lines[-1] = lines[-1][: end]
         let lines[0] = lines[0][start :]
       elseif mode == "\<c-v>"
-        let start = col("'<")
-        if col("'>") < start
-          let start = col("'>")
+        if end < start
+          let [end, start] = [start, end]
         endif
-        let start = start - 1
+        call map(lines, 'v:val[: end]')
         call map(lines, 'v:val[start :]')
       endif
     endif
@@ -447,6 +453,13 @@ function! s:ScreenSend(...)
     call map(lines, 'substitute(v:val, "\\t", expanded, "g")')
   endif
 
+  if len(g:ScreenShellSendPrefix)
+    let lines = split(g:ScreenShellSendPrefix, '\n') + lines
+  endif
+  if len(g:ScreenShellSendSuffix)
+    let lines += split(g:ScreenShellSendSuffix, '\n')
+  endif
+
   let result = s:screen{g:ScreenImpl}.send(lines)
 
   if v:shell_error
@@ -454,8 +467,7 @@ function! s:ScreenSend(...)
   endif
 endfunction " }}}
 
-" s:ScreenFocus() {{{
-function! s:ScreenFocus()
+function! s:ScreenFocus() " {{{
   let result = s:screen{g:ScreenImpl}.focus()
 
   if v:shell_error
@@ -463,22 +475,17 @@ function! s:ScreenFocus()
   endif
 endfun " }}}
 
-" s:ScreenSendFuncRef() {{{
-function! s:ScreenSendFuncRef()
+function! s:ScreenSendFuncRef() " {{{
   let sid = matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_ScreenSendFuncRef$')
   return function(printf('<SNR>%s_ScreenSend', sid))
 endfun " }}}
 
-" s:ScreenFocusFuncRef() {{{
-function! s:ScreenFocusFuncRef()
+function! s:ScreenFocusFuncRef() " {{{
   let sid = matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_ScreenFocusFuncRef$')
   return function(printf('<SNR>%s_ScreenFocus', sid))
 endfun " }}}
 
-" s:ScreenQuit(owner, onleave) {{{
-" Quit the current screen session (short cut to manually quiting vim and
-" closing all screen windows.
-function! s:ScreenQuit(owner, onleave)
+function! s:ScreenQuit(owner, onleave) " {{{
   if exists('g:ScreenShellBootstrapped')
     if !a:onleave
       wa
@@ -493,9 +500,12 @@ function! s:ScreenQuit(owner, onleave)
       let bufnum = bufnum + 1
     endwhile
   else
-    call screen#ScreenShellCommands()
+    call ScreenShellCommands()
     delcommand ScreenQuit
     delcommand ScreenSend
+    if screen#CmdDefined(':ScreenShellReopen')
+      delcommand ScreenShellReopen
+    endif
     unlet g:ScreenShellSend
     unlet g:ScreenShellFocus
     augroup screen_shell
@@ -520,7 +530,9 @@ function! s:ScreenQuit(owner, onleave)
     let result = s:screen{g:ScreenImpl}.close(a:owner)
   endif
 
-  unlet g:ScreenShellTmuxPane
+  if exists('g:ScreenShellTmuxPane')
+    unlet g:ScreenShellTmuxPane
+  endif
 
   if v:shell_error
     if result !~ 'No screen session found'
@@ -529,9 +541,7 @@ function! s:ScreenQuit(owner, onleave)
   endif
 endfunction " }}}
 
-" s:ScreenCmdName(cmd) {{{
-" Generate a name for the given command.
-function! s:ScreenCmdName(cmd)
+function! s:ScreenCmdName(cmd) " {{{
   let cmd = substitute(a:cmd, '^\s*\(\S\+\)\s.*', '\1', '')
   " if the command is a path to one, use the tail of the path
   if cmd =~ '/'
@@ -540,12 +550,19 @@ function! s:ScreenCmdName(cmd)
   return cmd
 endfunction " }}}
 
-" s:StartTerminal(command) {{{
-function! s:StartTerminal(command)
+function! s:StartTerminal(command) " {{{
   let terminal = s:GetTerminal()
   if !s:ValidTerminal(terminal)
     echoerr 'Unable to find a terminal, please set g:ScreenShellTerminal'
     return
+  endif
+
+  " for x-terminal-emulator on debian/ubuntu, determine the actual target
+  if terminal == 'x-terminal-emulator'
+    let value = system('readlink -f "$(which x-terminal-emulator)"')
+    if value !~ '^\s*$'
+      let terminal = fnamemodify(value, ':t:r')
+    endif
   endif
 
   " handle using cygwin bash
@@ -564,22 +581,19 @@ function! s:StartTerminal(command)
     let result = ''
     exec s:MacGuiCmd(a:command, terminal)
 
-  " gnome-terminal needs quotes around the screen call, but konsole and
-  " rxvt based terms (urxvt, aterm, mrxvt, etc.) don't work properly with
-  " quotes.  xterm seems content either way, so we'll treat gnome-terminal
-  " as the odd ball here.
-  elseif terminal == 'gnome-terminal'
+  " gnome-terminal, terminal (from xfce), and terminator need quotes around
+  " the screen call, but konsole and rxvt based terms (urxvt, aterm, mrxvt,
+  " etc.), and most others that I've tested don't work properly with quotes.
+  elseif terminal =~ '\<\(gnome-terminal\|\(xfce4-\)\?terminal\|terminator\)\>'
     let result = system(terminal . ' -e "' . a:command . '" &')
-
   else
     let result = system(terminal . ' -e ' . a:command . ' &')
   endif
+
   return result
 endfunction " }}}
 
-" s:GetScreenSessions() {{{
-" Gets a list of screen [session, state] pairs.
-function! s:GetScreenSessions()
+function! s:GetScreenSessions() " {{{
   let results = split(system('screen -wipe'), "\n")
   call filter(results, 'v:val =~ "(\\w\\+)"')
   call map(results, '[' .
@@ -588,8 +602,7 @@ function! s:GetScreenSessions()
   return results
 endfunction " }}}
 
-" s:GetSize() {{{
-function! s:GetSize()
+function! s:GetSize() " {{{
   if s:orientation == 'vertical'
     let size = g:ScreenShellWidth
     let sizefunc = 'winwidth'
@@ -604,9 +617,7 @@ function! s:GetSize()
   return size
 endfunction " }}}
 
-" s:GetTerminal() {{{
-" Generate a name for the given command.
-function! s:GetTerminal()
+function! s:GetTerminal() " {{{
   if g:ScreenShellTerminal == ''
     for term in s:terminals
       if s:ValidTerminal(term)
@@ -618,8 +629,13 @@ function! s:GetTerminal()
   return g:ScreenShellTerminal
 endfunction " }}}
 
-" s:ValidTerminal(term) {{{
-function! s:ValidTerminal(term)
+function! s:InScreenSession() " {{{
+  return
+    \ expand('$TERM') =~ '^screen' ||
+    \ (g:ScreenImpl == 'Tmux' && expand('$TMUX') !~ '^\(\$TMUX\|\)$')
+endfunction " }}}
+
+function! s:ValidTerminal(term) " {{{
   if a:term == ''
     return 0
   endif
@@ -640,8 +656,7 @@ function! s:ValidTerminal(term)
   return executable(a:term)
 endfunction " }}}
 
-" s:MacGuiCmd(cmd, term) {{{
-function! s:MacGuiCmd(cmd, term)
+function! s:MacGuiCmd(cmd, term) " {{{
   if a:term != '0'
     return 'silent !osascript -e "tell application \"' . a:term .
       \ '\"" -e "do script \"' . a:cmd . '\"" -e "end tell"'
@@ -651,8 +666,40 @@ function! s:MacGuiCmd(cmd, term)
   return 'silent !osascript -e "do shell script \"' . cmd . '\""'
 endfunction " }}}
 
-" CommandCompleteScreenSessions(argLead, cmdLine, cursorPos) {{{
-function! screen#CommandCompleteScreenSessions(argLead, cmdLine, cursorPos)
+function! screen#CmdDefined(cmd) " {{{
+  return exists(a:cmd) == 2
+endfunction " }}}
+
+function! screen#ExitCleanup() " {{{
+  if exists('g:ScreenShellActive') && g:ScreenShellActive
+    return
+  endif
+
+  if exists('g:ScreenShellSendVarsRestore')
+    if exists('g:ScreenShellSendPrefixOld')
+      let g:ScreenShellSendPrefix = g:ScreenShellSendPrefixOld
+      unlet g:ScreenShellSendPrefixOld
+    endif
+    if exists('g:ScreenShellSendSuffixOld')
+      let g:ScreenShellSendSuffix = g:ScreenShellSendSuffixOld
+      unlet g:ScreenShellSendSuffixOld
+    endif
+    unlet g:ScreenShellSendVarsRestore
+  endif
+endfunction " }}}
+
+function! screen#IPython(...) " {{{
+  let bang = a:0 ? a:1 : ''
+  let g:ScreenShellSendPrefixOld = g:ScreenShellSendPrefix
+  let g:ScreenShellSendSuffixOld = g:ScreenShellSendSuffix
+  let g:ScreenShellSendPrefix = '%cpaste'
+  let g:ScreenShellSendSuffix = '--'
+  let g:ScreenShellSendVarsRestore = 1
+
+  exec 'ScreenShell' . bang . ' /usr/bin/ipython'
+endfunction " }}}
+
+function! screen#CommandCompleteScreenSessions(argLead, cmdLine, cursorPos) " {{{
   let cmdLine = strpart(a:cmdLine, 0, a:cursorPos)
   let cmdTail = strpart(a:cmdLine, a:cursorPos)
   let argLead = substitute(a:argLead, cmdTail . '$', '', '')
@@ -730,6 +777,7 @@ endfunction " }}}
 function s:screenGnuScreen.bootstrap(server, sessionfile, cmd) dict " {{{
   let vertical = s:orientation == 'vertical' ? 'Vertical' : ''
   exec 'silent! !screen -S ' . g:ScreenShellSession .
+    \ g:ScreenShellScreenInitArgs .
     \ ' vim ' . a:server .
     \ '-c "silent source ' . escape(a:sessionfile, ' ') . '" ' .
     \ '-c "ScreenShell' . vertical . ' ' . a:cmd . '"'
@@ -740,7 +788,7 @@ function s:screenGnuScreen.newSessionName() dict " {{{
 endfunction " }}}
 
 function s:screenGnuScreen.newTerminal() dict " {{{
-  return s:StartTerminal('screen -S ' . g:ScreenShellSession)
+  return s:StartTerminal('screen -S ' . g:ScreenShellSession . g:ScreenShellScreenInitArgs)
 endfunction " }}}
 
 function s:screenGnuScreen.newTerminalMulti() dict " {{{
@@ -748,7 +796,7 @@ function s:screenGnuScreen.newTerminalMulti() dict " {{{
 endfunction " }}}
 
 function s:screenGnuScreen.newTerminalResume() dict " {{{
-  return s:StartTerminal('screen -r ' . g:ScreenShellSession)
+  return s:StartTerminal('screen -r ' . g:ScreenShellSession . g:ScreenShellScreenInitArgs)
 endfunction " }}}
 
 function s:screenGnuScreen.newWindow(focus) dict " {{{
@@ -965,7 +1013,8 @@ function s:screenTmux.send(value) dict " {{{
   call writefile(lines, tmp)
   try
     let result = self.focus()
-    if v:shell_error
+
+    if v:shell_error || (type(result) == 0 && result == 0)
       return result
     endif
     let result = self.exec(printf(
@@ -1003,7 +1052,16 @@ function s:screenTmux.focus() dict " {{{
   endif
 
   if !g:ScreenShellExternal
-    let result = self.exec('select-pane -t ' . g:ScreenShellTmuxPane)
+    let panes = []
+    let result = self.exec('list-panes')
+    let panes = filter(
+      \ split(result, "\n"),
+      \ 'v:val =~ " ' . g:ScreenShellTmuxPane . '\\>"')
+    if len(panes)
+      let result = self.exec('select-pane -t ' . g:ScreenShellTmuxPane)
+    else
+      return 0
+    endif
   endif
   return result
 endfunction " }}}
@@ -1014,10 +1072,18 @@ endfunction " }}}
 
 function s:screenTmux.close(type) dict " {{{
   let result = self.focus()
-  if v:shell_error
+  if v:shell_error || (type(result) == 0 && result == 0)
     return result
   endif
   return self.exec('kill-pane')
+endfunction " }}}
+
+function s:screenTmux.exists() dict " {{{
+  let result = self.exec('list-panes')
+  let panes = filter(
+    \ split(result, "\n"),
+    \ 'v:val =~ " ' . g:ScreenShellTmuxPane . '\\>"')
+  return len(panes)
 endfunction " }}}
 
 function s:screenTmux.exec(cmd) dict " {{{
@@ -1030,7 +1096,7 @@ function s:screenTmux.exec(cmd) dict " {{{
 
   " hack to account for apparent bug in tmux when redirecting stdout to a file
   " when attempting to list windows
-  if cmd =~ 'list-windows'
+  if cmd =~ 'list-\(windows\|panes\)'
     let cmd .= ' | cat'
   endif
 
@@ -1040,7 +1106,7 @@ endfunction " }}}
 let s:screenConque = {}
 
 function s:screenConque.isValid() dict " {{{
-  if !exists(':ConqueTerm')
+  if !screen#CmdDefined(':ConqueTerm')
     echoerr 'The conque plugin does not appear to be loaded'
     return 0
   endif

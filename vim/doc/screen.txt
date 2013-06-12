@@ -13,7 +13,9 @@ Screen Usage                         |screen-usage|
   :ScreenShell                       |screen-shell|
   :ScreenShellAttach                 |screen-shellattach|
   :ScreenSend                        |screen-send|
+  :ScreenShellReopen                 |screen-shellreopen|
   :ScreenQuit                        |screen-quit|
+  :IPython                           |screen-ipython|
 Screen Options                       |screen-options|
   Terminal muliplexer                |screen-impl|
   Shell height                       |screen-shellheight|
@@ -21,6 +23,8 @@ Screen Options                       |screen-options|
   External shell                     |screen-externalshell|
   Server name                        |screen-servername|
   Terminal                           |screen-terminal|
+  Expand Tabs                        |screen-expandtabs|
+  Send Prefix/Suffix                 |screen-sendprefix|
 Custom mappings                      |screen-mappings|
 Script integration                   |screen-scriptintegration|
 Gotchas                              |screen-gotchas|
@@ -99,18 +103,22 @@ Below is a comprehensive list of the commands which screen.vim provides:
        shell.
        Ex. :ScreenShell ipython
 
-:ScreenShellVertical [cmd]     *screen-shell-vertical* *:ScreenShellVertical*
+:ScreenShell! [cmd]                 *screen-shell-vertical* *:ScreenShell!*
+  Note: unavailable in gvim or if you are using gnu screen without
+        |g:ScreenShellGnuScreenVerticalSupport| set.
   Just like |:ScreenShell| but when creating the split region for the shell, a
-  vertical split is used instead of the default horizontal split.  Supported
+  vertical split is used instead of the default horizontal split. Supported
   via tmux by default, but gnu screen requires the vertical split patch
   (http://fungi.yuggoth.org/vsp4s/) or the unreleased screen 4.1 code and you
   must explicitly enable support for gnu screen vertical splitting in
   screen.vim by adding the following to your vimrc, indicating whether you are
   using a patched gnu screen or the 4.1 code base:
+
+  *g:ScreenShellGnuScreenVerticalSupport*
+
     let g:ScreenShellGnuScreenVerticalSupport = 'patch'
       or
     let g:ScreenShellGnuScreenVerticalSupport = 'native'
-
 
 :ScreenShellAttach [session]        *screen-shellattach* *:ScreenShellAttach*
   Sets the necessary internal variables to allow :ScreenSend invocations to
@@ -127,11 +135,18 @@ Below is a comprehensive list of the commands which screen.vim provides:
   variable, which when non 0, will set the title on the currently focused gnu
   screen window and target it for all send commands.
 
-:ScreenSend
+:ScreenShellReopen                  *screen-shellreopen* *:ScreenShellReopen*
+  If you've started a shell using |:ScreenShell| or |:ScreenShellVertical| and
+  exit that shell manually (^D, $ exit, etc) without running |:ScreenQuit|, then
+  :ScreenShellReopen will re-open that shell again for you.
+
+  Note: Currently only available when using tmux.
+
+:ScreenSend                         *screen-send* *:ScreenSend*
   Send the visual selection or the entire buffer contents to the running gnu
   screen shell window.
 
-:ScreenQuit
+:ScreenQuit                         *screen-quit* *:ScreenQuit*
   Save all currently modified vim buffers and quit gnu screen, returning you
   to your previous vim instance running outside of gnu screen
 
@@ -141,6 +156,15 @@ Below is a comprehensive list of the commands which screen.vim provides:
     :ScreenShell, then exiting vim will quit the gnu screen session as
     well (configurable via g:ScreenShellQuitOnVimExit).
 
+:IPython                         *screen-ipython* *:IPython*
+  Command which starts the screen shell with ipython running in it taking care
+  of setting |g:ScreenShellSendPrefix| and |g:ScreenShellSendSuffix| properly
+  to handle ipython's auto indent support.
+
+:IPython!                        *screen-ipython-vertical* *:IPython!*
+  Note: unavailable in gvim or if you are using gnu screen without
+        |g:ScreenShellGnuScreenVerticalSupport| set.
+  Same as |:IPython|, but open a vertically split shell.
 
 -----------------------------------------------------------------------------
 Screen Options                              *screen-options*
@@ -157,6 +181,15 @@ g:ScreenImpl (default value: 'GnuScreen')
 This sets the name of the terminal multiplexer you want to use.  Support
 values include 'GnuScreen' or 'Tmux'.
 
+Note: There are also 2 additional variables that allow you to specify any
+options you would like to be passed to your terminal muliplexer of choice:
+
+*g:ScreenShellScreenInitArgs*
+*g:ScreenShellTmuxInitArgs*
+
+Example which starts tmux with 256 color support: >
+  let g:ScreenShellTmuxInitArgs = '-2'
+>
 
 Shell height                                *screen-shellheight*
                                             *g:ScreenShellHeight*
@@ -240,6 +273,18 @@ tabs as an attempt to perform completion resulting in the text sent not
 performing the function you intended.  As a work around, you can set this
 setting to a non 0 value resulting in all tabs being expanded to spaces before
 sending the text to screen/tmux.
+
+
+Send Prefix/Suffix                          *screen-sendprefix*
+                                            *g:ScreenShellSendPrefix*
+                                            *g:ScreenShellSendSuffix*
+
+g:ScreenShellSendPrefix (default value: '')
+g:ScreenShellSendSuffix (default value: '')
+
+When sending text from vim to an external program, these variables can be used
+to prepend/append lines to that content. The value must be a string which will
+be split into a list on any \n chars.
 
 -----------------------------------------------------------------------------
 Custom Mappings                             *screen-mappings*
