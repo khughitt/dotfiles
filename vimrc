@@ -60,11 +60,11 @@ set directory=~/.vim/swap,~/tmp,.      " keep swp files under ~/.vim/swap
 set so=7                    " stop scrolling when we get seven lines within top or bottom
 set wildmenu                " enable wildmenu (easy buffer switching, etc)
 set wildignore=*.o,*~,*.pyc " ignore compiled files
-set ruler                   " show the cursor position all the time
+"set ruler                   " show the cursor position all the time
 set noshowcmd               " don't display incomplete commands
 set nolazyredraw            " turn off lazy redraw
 set number                  " line numbers
-set ch=2                    " command line height
+"set ch=2                    " command line height
 set backspace=2             " allow backspacing over everything in insert mode
 set whichwrap+=<,>,h,l,[,]  " backspace and cursor keys wrap to
 set shortmess=filtIoOA      " shorten messages
@@ -97,7 +97,6 @@ set nowrap                 " do not wrap lines
 set softtabstop=4          " tab width
 set shiftwidth=4           " 
 set tabstop=4
-set expandtab              " use space instead of tab
 set expandtab              " expand tabs to spaces
 set nosmarttab             " no tabs
 set formatoptions+=n       " support for numbered/bullet lists
@@ -186,18 +185,10 @@ endif
 " Matching parens style
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
 
-"SpringGreen3 ctermfg=35 guifg=#00af5f
-
-" Format the status line
-" set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l
-
-" Returns true if paste mode is enabled
-function! HasPaste()
-    if &paste
-            return 'PASTE MODE  '
-    en
-    return ''
-endfunction
+" ---------------------------------------------------------------------------
+"  Powerline
+" ---------------------------------------------------------------------------
+let g:Powerline_symbols = 'fancy'
 
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
