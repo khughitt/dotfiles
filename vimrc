@@ -144,7 +144,7 @@ nmap <space> i <esc>r
 
 " Specify the behavior when switching between buffers 
 try
-      set switchbuf=useopen,usetab,newtab
+    set switchbuf=useopen,usetab,newtab
         set stal=2
     catch
 endtry

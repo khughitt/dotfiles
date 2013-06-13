@@ -9,8 +9,8 @@ options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 if (interactive() && Sys.getenv('TERM') != '') {
     library(setwidth)     # updates output width when terminal is resized
     library(vimcom)       # better vim suport
-
     library('colorout')   # syntax highlighting
+
     setOutputColors256(
         normal = 15,
         number = 12,
