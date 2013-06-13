@@ -160,6 +160,9 @@ autocmd BufReadPost *
 " Remember info about open buffers on close
 set viminfo^=%
 
+" tmux mouse support
+set mouse=a
+
 " ---------------------------------------------------------------------------
 "  Appearance
 " ---------------------------------------------------------------------------
