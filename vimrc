@@ -234,6 +234,9 @@ else
     inoremap <Nul> <C-x><C-o>
 endif
 vmap <Space> <Plug>RDSendSelection
+"vmap <C-@> <Plug>RDSendLine
+
+nmap <C-@> :echo 'Current time is ' . strftime('%c')<CR>
 "nmap <Space> <Plug>RDSendLine
 
 " Ruby

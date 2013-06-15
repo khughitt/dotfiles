@@ -279,6 +279,9 @@ root.buttons(awful.util.table.join(
 ))
 -- }}}
 
+-- Determine number of tags
+num_tags = #tags['names']
+
 -- {{{ Key bindings
 globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
@@ -287,6 +290,37 @@ globalkeys = awful.util.table.join(
     awful.key({ altkey, "Control" }, "Right",  awful.tag.viewnext       ),
     awful.key({ modkey,           }, "Escape", awful.tag.history.restore),
 
+    -- Gnome shell shortcuts
+    awful.key({ altkey, "Control", "Shift"}, "Left",
+        function ()
+            local i = awful.tag.getidx() - 1
+
+            if i == 0 then
+                i = num_tags
+            end
+
+            local tag = awful.tag.gettags(client.focus.screen)[i]
+            if client.focus and tag then
+                awful.client.movetotag(tag)
+                awful.tag.viewonly(tag)
+            end
+        end),
+    awful.key({ altkey, "Control", "Shift"}, "Right",
+        function ()
+            local i = awful.tag.getidx() + 1
+
+            if i == num_tags + 1 then
+                i = 1
+            end
+
+            local tag = awful.tag.gettags(client.focus.screen)[i]
+            if client.focus and tag then
+                awful.client.movetotag(tag)
+                awful.tag.viewonly(tag)
+            end
+        end),
+
+    -- Other bindings
     awful.key({ modkey,           }, "j",
         function ()
             awful.client.focus.byidx( 1)
