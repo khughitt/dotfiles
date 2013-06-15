@@ -14,3 +14,6 @@ setxkbmap -option terminate:ctrl_alt_bksp
 
 # load Xresources
 xrdb -merge ~/.Xresources
+
+# Awesome
+exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr
