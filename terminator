@@ -1,9 +1,10 @@
 [global_config]
   title_hide_sizetext = True
-  title_transmit_bg_color = "#d02e54"
   dbus = True
-  inactive_color_offset = 0.84
+  focus = mouse
   enabled_plugins = TerminalShot,
+  title_transmit_bg_color = "#cc2d52"
+  inactive_color_offset = 0.84
 [keybindings]
   zoom_in = <Ctrl>equal
   zoom_out = <Ctrl>minus
@@ -19,22 +20,23 @@
   [[default]]
     scrollbar_position = hidden
     palette = "#282a2e:#a54242:#8c9440:#de935f:#5f819d:#85678f:#5e8d87:#707880:#373b41:#cc6666:#b5bd68:#f0c674:#81a2be:#b294bb:#8abeb7:#ffffff"
-    #palette = "#303030:#bf5c5c:#6d9e3f:#b58858:#6095c5:#ac7bde:#3ba275:#cfcfcf:#929e00:#c94242:#a3d572:#efbd8b:#98cbfe:#e5b0ff:#75daa9:#ffffff"
-    font = DejaVu Sans Mono 12
+    font = DejaVu Sans Mono 13
     background_image = None
     background_darkness = 0.72
     scrollback_lines = 4096
     background_type = transparent
     use_system_font = False
-    foreground_color = "#e6e6e6"
+    foreground_color = "#ffffff"
     scroll_on_output = False
     icon_bell = False
     copy_on_selection = True
-  [[black]]
+  [[alternate]]
     use_system_font = False
-    font = Terminus Bold 18
+    font = Ubuntu Mono 12
     background_image = None
-    foreground_color = "#ffffff"
+    foreground_color = "#e53c00"
+    icon_bell = False
+    copy_on_selection = True
 [layouts]
   [[default]]
     [[[child1]]]
