@@ -428,6 +428,7 @@ for i = 1, 9 do
                       local tag = awful.tag.gettags(client.focus.screen)[i]
                       if client.focus and tag then
                           awful.client.movetotag(tag)
+                          awful.tag.viewonly(tag)
                      end
                   end),
         awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
