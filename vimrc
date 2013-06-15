@@ -224,6 +224,8 @@ map <F8> :w\|!python %<CR>
 
 " R
 let vimrplugin_objbr_place = "console,right"
+let vimrplugin_assign = 0
+
 if $DISPLAY != ""
     let vimrplugin_openpdf = 1
     let vimrplugin_openhtml = 1
@@ -236,7 +238,7 @@ endif
 vmap <Space> <Plug>RDSendSelection
 "vmap <C-@> <Plug>RDSendLine
 
-nmap <C-@> :echo 'Current time is ' . strftime('%c')<CR>
+nmap <C-M> :echo 'Current time is ' . strftime('%c')<CR>
 "nmap <Space> <Plug>RDSendLine
 
 " Ruby
