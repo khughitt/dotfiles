@@ -11,11 +11,12 @@ Xcursor.theme: XcursorAero
 !!
 !! xft
 !!
-Xft.dpi: 96
+Xft.autohint: false
+Xft.dpi: 
 Xft.antialias: true
 Xft.hinting: true
-Xft.hintstyle: hintslight
-Xft.lcdfilter:lcdfilterlcddefault
+Xft.hintstyle: hintfull
+Xft.lcdfilter: lcddefault
 Xft.rgba: rgb
 
 !!
@@ -26,8 +27,8 @@ URxvt.background: [45]#000000
 URxvt*scrollBar:	false
 URxvt*visualBell: 	false
 URxvt*urlLauncher: 	chromium
-URxvt*font: xft:droid sans mono:pixelsize=20:antialias=true:hinting=true
-URxvt*boldFont: xft:droid sans mono:bold:pixelsize=20:antialias=true:hinting=true
+URxvt.font:xft:dejavu sans mono:medium:size=14
+URxvt.boldFont:xft:dejavu sans mono:medium:size=14
 URxvt.iconFile: /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
 URxvt.perl-ext-common: default,clipboard,vtwheel,font-size
 
@@ -42,6 +43,6 @@ URxvt.keysym.C-S-Down: perl:font-size:decglobal
 !!
 XTerm*termName: xterm-256color
 XTerm*locale:   true
-XTerm*faceName: xft:monospace:size=16
-XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=16
+xterm*faceName: dejavu sans mono:pixelsize=16
+!XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=14
 
