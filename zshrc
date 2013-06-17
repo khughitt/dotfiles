@@ -34,7 +34,7 @@ if $vconsole; then
 fi
 
 #Terminal
-#TERM=rxvt-unicode
+#TERM=rxvt-unicode-256color
 
 # History
 setopt HIST_IGNORE_DUPS
@@ -65,7 +65,7 @@ done
 unset file
 
 # Urxvt keybindings
-if [[ "${TERM}" == "rxvt-unicode" ]]
+if [[ "${TERM}" == rxvt-unicode* ]]
 then
     source ~/.shell/key_bindings
 fi
@@ -79,9 +79,6 @@ function h {
 function src {
     /usr/bin/src-hilite-lesspipe.sh "$1" | less -R
 }
-
-# cw
-export PATH="/usr/lib/cw:$PATH"
 
 # Hostname
 if [ "$vconsole" = false ]; then
