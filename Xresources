@@ -28,16 +28,16 @@ URxvt*scrollBar:   false
 URxvt*visualBell:  false
 URxvt*urlLauncher: chromium
 URxvt*termName:    rxvt-256color
-URxvt.font:        xft:dejavu sans mono:medium:size=12
-URxvt.boldFont:    xft:dejavu sans mono:medium:size=12
+URxvt*font:        xft:dejavu sans mono for powerline:regular:size=12
+URxvt*boldFont:    xft:dejavu sans mono for powerline:bold:size=12
 URxvt.iconFile:    /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
 URxvt.perl-ext-common: default,clipboard,vtwheel,font-size
 
 !! Font-size adjustments
-URxvt.keysym.C-Up:     perl:font-size:increase
-URxvt.keysym.C-Down:   perl:font-size:decrease
-URxvt.keysym.C-S-Up:   perl:font-size:incglobal
-URxvt.keysym.C-S-Down: perl:font-size:decglobal
+URxvt.keysym.C-equal:   perl:font-size:increase
+URxvt.keysym.C-minus:   perl:font-size:decrease
+URxvt.keysym.C-S-equal: perl:font-size:incglobal
+URxvt.keysym.C-S-minus: perl:font-size:decglobal
 
 !!
 !! Xterm
