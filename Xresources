@@ -22,12 +22,12 @@ Xft.rgba:      rgb
 !!
 !! URxvt
 !!
-URxvt*termName:    rxvt-256color
 URxvt.depth:       32
 URxvt.background:  [60]#000000
 URxvt*scrollBar:   false
 URxvt*visualBell:  false
 URxvt*urlLauncher: chromium
+URxvt*termName:    rxvt-256color
 URxvt.font:        xft:dejavu sans mono:medium:size=12
 URxvt.boldFont:    xft:dejavu sans mono:medium:size=12
 URxvt.iconFile:    /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png

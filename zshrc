@@ -65,7 +65,7 @@ done
 unset file
 
 # Urxvt keybindings
-if [[ "${TERM}" == rxvt-unicode* ]]
+if [[ "${TERM}" == rxvt-* ]]
 then
     source ~/.shell/key_bindings
 fi

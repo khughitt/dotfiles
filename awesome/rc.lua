@@ -47,7 +47,7 @@ end
 -- Themes define colours, icons, and wallpapers
 
 -- This is used later as the default terminal and editor to run.
-terminal = "terminator"
+terminal = "urxvt"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
 files = "nautilus"
@@ -94,8 +94,7 @@ naughty.config.defaults.hover_timeout = nil
 -- }}}
 
 -- {{{ Wallpaper
---beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/blackwood_1920x1200.jpg"
-beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/Backgrounds/Luetin_1920.jpg"
+beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/Luetin_1920.jpg"
 if beautiful.wallpaper then
     for s = 1, screen.count() do
         gears.wallpaper.maximized(beautiful.wallpaper, s, true)
