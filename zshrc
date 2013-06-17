@@ -40,7 +40,7 @@ fi
 setopt HIST_IGNORE_DUPS
 
 # Plugins
-[ -z "$plugins" ] && plugins=(archlinux autojump git)
+[ -z "$plugins" ] && plugins=(archlinux autojump git systemd web-search)
 
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
