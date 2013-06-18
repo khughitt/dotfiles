@@ -239,10 +239,9 @@ else
     inoremap <Nul> <C-x><C-o>
 endif
 vmap <Space> <Plug>RDSendSelection
-"vmap <C-@> <Plug>RDSendLine
-
-nmap <C-M> :echo 'Current time is ' . strftime('%c')<CR>
-"nmap <Space> <Plug>RDSendLine
+vmap <C-M> <Plug>RDSendSelection
+nmap <C-M> <Plug>RDSendLine
+nmap <C-A-c> <Plug>RDSendChunk
 
 " Ruby
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
