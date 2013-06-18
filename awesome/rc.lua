@@ -10,6 +10,9 @@ require("awful.autofocus")
 -- Widgets and layout library
 local wibox = require("wibox")
 
+-- awesome-client support
+require("awful.remote")
+
 -- Theme handling library
 local beautiful = require("beautiful")
 beautiful.init(awful.util.getdir("config") .. "/themes/niceandclean/theme.lua")
@@ -65,8 +68,8 @@ altkey = "Mod1"
 local layouts =
 {
     awful.layout.suit.floating,
-    awful.layout.suit.tile,
-    --awful.layout.suit.tile.left,
+    --awful.layout.suit.tile,
+    awful.layout.suit.tile.left,
     awful.layout.suit.tile.bottom,
     --awful.layout.suit.tile.top,
     --awful.layout.suit.fair,
@@ -410,7 +413,10 @@ globalkeys = awful.util.table.join(
                   awful.util.getdir("cache") .. "/history_eval")
               end),
     -- Menubar
-    awful.key({ modkey }, "p", function() menubar.show() end)
+    -- awful.key({ modkey }, "p", function() menubar.show() end)
+    awful.key({ modkey }, "p", function () 
+        awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
+    end)
 )
   -- }}}
 
@@ -602,6 +608,7 @@ end
 run_once("nm-applet")
 run_once("start-pulseaudio-x11")
 run_once("gnome-screensaver")
+run_once("urxvtd")
 run_once(os.getenv("HOME") .. "/bin/tptoggle")
 run_once("dropboxd", "", "/opt/dropbox/dropbox")
 run_once("wmname LG3D")

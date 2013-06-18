@@ -1,0 +1,50 @@
+## | InterobangRC
+## |
+## | Lines starting with a # are ignored as comments, but this file is
+## | not processed by a shell interpreter.
+
+#font        fixed
+#font        -*-terminus-medium-r-normal--14-140-72-72-c-*-*-*
+#font        -*-fixed-medium-r-normal--14-*-*-*-*-*-iso8859-1
+font        -*-droid sans mono-medium-r-*-*-14-*-*-*-*-*-*-*
+geometry     top
+#geometry    960x16+480+532
+foreground   #68B0E0
+background   #000000
+#border      #FFFFFF
+bangchar     !
+#show        options
+#options     #242424    #48E084    #484848    #64FFAA
+
+# | BANGS & TAB COMPLETION
+# | The first listed bang is the default
+# | TAB(bangname) defines completion for that bang and must be *after*
+# |     the bang definition
+# | TAB() defines the default tab completion
+
+!term       urxvtc -e %s
+!web        luakit %s
+!pdf        llpp %s
+!man        urxvtc -e man %s
+!g          chromium https://www.google.com/search?q=%s
+!archbbs    luakit https://duckduckgo.com/?q=%s%%20site%%3Abbs.archlinux.org
+!archwiki   luakit https://duckduckgo.com/?q=%s%%20site%%3Awiki.archlinux.org
+!calc       echo "interrobang ignored \"%s\""
+!?          echo "interrobang ignored \"%s\""
+#!fav       %s
+#!net       <your network tool here>
+
+TAB()        compgen -P "%s" -cf %s
+
+# | Optional "complex" completer
+# |     adds spaces after commands and slashes after urls and escapes
+# |     parentheses and square brackets
+#TAB()       compgen -P "%s" -fc %s | sort -u | while read s; do s=${s/\(/\\(}; s=${s/\)/\\)}; s=${s/\[/\\[}; s=${s/\]/\\]}; [[ -d ${s##* } ]] && echo "$s/" || echo "$s "; done
+#TAB(term)   completion for terminal commands
+#TAB(pdf)    compgen -P "%s" -f ~/doc/pdfs/%s
+TAB(calc)    S1="%s%s"; S2="${S1/\!calc/}"; echo "!calc $(echo $S2 | bc -l)"
+TAB(?)       ignore="%s%s"; grep -o -E "^\![[:alnum:]]+" ~/.interrobangrc
+#TAB(fav)    pre="%s"; grep "%s" ~/.myprograms | while read match; do echo "${pre}${match}"; done
+#TAB(net)    <complete network names with available essids>
+
+
