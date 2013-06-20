@@ -1,13 +1,11 @@
-
-<!-- saved from url=(0072)https://raw.github.com/yearofmoo/Vim-Darkmate/master/colors/darkmate.vim -->
-<html slick-uniqueid="3"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script type="text/javascript" src="chrome-extension://bfbmjmiodbnnpllbbbfblcplfjjepjdn/js/injected.js"></script><style type="text/css"></style><style type="text/css"></style></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">"
+"
 " Vim Darkmate Theme (darkmate.vim)
 "
 " Copyright (C) 2011 YearOfMoo
-" Author: Matias Niemelä &lt;matias@yearofmoo.com&gt;
+" Author: Matias Niemelä <matias@yearofmoo.com>
 "
 " Note: Based on the original darkmate theme for gedit
-" by Luigi Maselli &lt;luigix_@t_gmail_com&gt;
+" by Luigi Maselli <luigix_@t_gmail_com>
 "
 " This library is free software; you can redistribute it and/or
 " modify it under the terms of the GNU Library General Public
@@ -152,4 +150,3 @@ hi phpIdentifier        guifg=#00c900 ctermfg=2                   gui=none
 hi xmlTag               guifg=#bb66ff ctermfg=42                  gui=none
 hi xmlTagName           guifg=#bb66ff ctermfg=42                  gui=none
 hi xmlEndTag            guifg=#bb66ff ctermfg=42                  gui=none
-</pre></body><style type="text/css">embed[type*="application/x-shockwave-flash"],embed[src*=".swf"],object[type*="application/x-shockwave-flash"],object[codetype*="application/x-shockwave-flash"],object[src*=".swf"],object[codebase*="swflash.cab"],object[classid*="D27CDB6E-AE6D-11cf-96B8-444553540000"],object[classid*="d27cdb6e-ae6d-11cf-96b8-444553540000"],object[classid*="D27CDB6E-AE6D-11cf-96B8-444553540000"]{	display: none !important;}</style></html>

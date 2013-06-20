@@ -10,7 +10,7 @@
 " General
 " ---------------------------------------------------------------------------
 set nocompatible     " disable vi compatibility enchancements
-set history=1000     " number of command history
+set history=5000     " number of command history
 set isk+=_,$,@,%,#,- " none word dividers
 set showmatch        " highlight correspods character
 set cursorline       " highlight current line
@@ -170,18 +170,18 @@ if $TERM != 'linux'
     set t_Co=256
 endif
 
-let g:hybrid_use_Xresources = 1
+" let g:hybrid_use_Xresources = 1
 
 if has("gui_running")
     " theme
     set background=dark
-    colorscheme hybrid
+    colorscheme jellybeans
     " Make shift-insert work like in Xterm
     map <S-Insert> <MiddleMouse>
     map! <S-Insert> <MiddleMouse>
 
 else
-    colorscheme hybrid
+    colorscheme jellybeans
 endif
 
 if has("syntax")
@@ -247,4 +247,6 @@ nmap <C-A-c> <Plug>RDSendChunk
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 
 " Markdown
-au BufRead,BufNewFile *.md set filetype=markdown nofoldenable
+autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable 
+autocmd FileType markdown colorscheme hybrid-light
+
