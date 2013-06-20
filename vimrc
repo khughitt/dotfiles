@@ -174,14 +174,15 @@ endif
 
 if has("gui_running")
     " theme
-    set background=dark
     colorscheme jellybeans
+    "set background=dark
     " Make shift-insert work like in Xterm
     map <S-Insert> <MiddleMouse>
     map! <S-Insert> <MiddleMouse>
 
 else
     colorscheme jellybeans
+    "set background=dark
 endif
 
 if has("syntax")
@@ -247,6 +248,6 @@ nmap <C-A-c> <Plug>RDSendChunk
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 
 " Markdown
-autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable 
+autocmd BufRead,BufNewFile *.md set filetype=markdown background=light nofoldenable
 autocmd FileType markdown colorscheme hybrid-light
 

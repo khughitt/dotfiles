@@ -1,8 +1,9 @@
 [global_config]
+  enabled_plugins = TerminalShot,
   title_hide_sizetext = True
   dbus = True
   focus = mouse
-  enabled_plugins = TerminalShot,
+  borderless = True
   title_transmit_bg_color = "#cc2d52"
   inactive_color_offset = 0.84
 [keybindings]
@@ -20,7 +21,7 @@
   [[default]]
     scrollbar_position = hidden
     palette = "#282a2e:#a54242:#8c9440:#de935f:#5f819d:#85678f:#5e8d87:#707880:#373b41:#cc6666:#b5bd68:#f0c674:#81a2be:#b294bb:#8abeb7:#ffffff"
-    font = DejaVu Sans Mono 13
+    font = DejaVu Sans Mono for Powerline 13
     background_image = None
     background_darkness = 0.72
     scrollback_lines = 4096

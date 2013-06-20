@@ -72,7 +72,7 @@ local layouts =
     awful.layout.suit.tile.left,
     awful.layout.suit.tile.bottom,
     --awful.layout.suit.tile.top,
-    --awful.layout.suit.fair,
+    awful.layout.suit.fair,
     --awful.layout.suit.fair.horizontal,
     --awful.layout.suit.max.fullscreen,
     --awful.layout.suit.magnifier
@@ -108,8 +108,8 @@ end
 -- {{{ Tags
 -- Define a tag table which hold all screen tags.
 tags = {
-  names = {'www', 'code', 'term', 'doc', 'music'},
-  layout = {layouts[1], layouts[3], layouts[3], layouts[2], layouts[2]}
+  names = {'term', 'www', 'code', 'doc', 'misc'},
+  layout = {layouts[3], layouts[1], layouts[3], layouts[2], layouts[2]}
 }
 for s = 1, screen.count() do
     -- Each screen has its own tag table.

@@ -64,6 +64,9 @@ for file in ~/.shell/{aliases,private,exports}; do
 done
 unset file
 
+# Disable scroll lock
+stty -ixon
+
 # Urxvt keybindings
 if [[ "${TERM}" == rxvt-* ]]
 then
@@ -82,6 +85,6 @@ function src {
 
 # Hostname
 if [ "$vconsole" = false ]; then
-    figlet `hostname -s` | lolcat
+    hostname | cut -d'.' -f1 | figlet | lolcat
 fi
 
