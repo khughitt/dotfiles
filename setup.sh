@@ -70,7 +70,7 @@ ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 
 # Everything else
-for path in "conky" "conkyrc" "dircolors" "gitconfig" "gitignore_global" 
+for path in "conky" "conkyrc" "dir_colors" "gitconfig" "gitignore_global" 
             "gtkrc-2.0" "Rprofile" "Renviron" "tmux.conf"
             "vim" "vimrc" "xinitrc" "Xresources"; do
     ln_s ${PWD}/${path} ~/.${path}
