@@ -6,7 +6,7 @@ Xcursor.theme: XcursorAero
 !!
 !! Colour Scheme
 !!
-#include ".config/termcolors/hybrid"
+#include "/home/keith/.config/termcolors/hybrid"
 
 !!
 !! xft
