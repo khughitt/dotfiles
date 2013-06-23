@@ -47,8 +47,7 @@ autocomp 1
 
 # Prepend most used commands, followed by bash completion results.
 # the second awk command removes duplicate lines while preserving order.
-HIST=~/.interrobang_history
-TAB() (pre="%s"; str="%s"; grep "$str" $HIST | sort | uniq -c | sort -r | awk '{print $2}'; compgen -P "$pre" -cf $str) | awk ' !x[$0]++' | head -5
+TAB() pre="%s"; str="%s"; [[ -z "$pre" ]] && (grep "$str" ~/.interrobang_history | sort | uniq -c | sort -r | awk '{print $2}'; compgen -P "$pre" -cf $str) | awk ' !x[$0]++' | head -5
 
 # | Optional "complex" completer
 # |     adds spaces after commands and slashes after urls and escapes
