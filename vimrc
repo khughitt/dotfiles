@@ -141,9 +141,6 @@ map <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
 " Switch CWD to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>:pwd<cr>
 
-" Insert a single character using the space key
-nmap <space> i <esc>r
-
 " Specify the behavior when switching between buffers 
 try
     set switchbuf=useopen,usetab,newtab

@@ -502,7 +502,7 @@ awful.rules.rules = {
   { rule = { class = "pinentry" }, properties = { floating = true } },
   { rule = { class = "gimp" }, properties = { floating = true } },
   { rule = { class = "Chromium" },
-    properties = { tag = tags[1][1], switchtotag=true } },
+    properties = { tag = tags[1][2], switchtotag=true } },
   { rule = { name = "Mendeley Desktop" },
     properties = { tag = tags[1][4], switchtotag=true } },
 --  { rule = { name ~= "LibreOffice Impress", class = "LibreOffice"},
