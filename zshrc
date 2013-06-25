@@ -85,6 +85,6 @@ function src {
 
 # Hostname
 if [ "$vconsole" = false ]; then
-    hostname | cut -d'.' -f1 | figlet | lolcat
+    hostname | cut -d'.' -f1 | figlet | lolcat -S 26
 fi
 

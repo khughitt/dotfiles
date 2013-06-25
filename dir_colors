@@ -65,27 +65,27 @@ TERM xterm-debian
 # 30=black 31=red 32=green 33=yellow 34=blue 35=magenta 36=cyan 37=white
 # Background color codes:
 # 40=black 41=red 42=green 43=yellow 44=blue 45=magenta 46=cyan 47=white
-#NORMAL 00 # no color code at all
-#FILE 00 # regular file: use no color at all
-RESET 0 # reset to "normal" color
-DIR 01;34 # directory
-LINK 01;36 # symbolic link. (If you set this to 'target' instead of a
-# numerical value, the color is as for the file pointed to.)
-MULTIHARDLINK 00 # regular file with more than one link
-FIFO 40;33 # pipe
-SOCK 01;35 # socket
-DOOR 01;35 # door
-BLK 40;33;01 # block device driver
-CHR 40;33;01 # character device driver
-ORPHAN 40;31;01 # symlink to nonexistent file, or non-stat'able file
-SETUID 37;41 # file that is setuid (u+s)
-SETGID 30;43 # file that is setgid (g+s)
-CAPABILITY 30;41 # file with capability
+
+#NORMAL 00                  # no color code at all
+#FILE 00                    # regular file: use no color at all
+RESET 0                     # reset to "normal" color
+DIR 01;34                   # directory
+LINK 01;35                  # symbolic link. (If you set this to 'target' instead of a
+                            # numerical value, the color is as for the file pointed to.)
+MULTIHARDLINK 00            # regular file with more than one link
+FIFO 40;33                  # pipe
+SOCK 01;35                  # socket
+DOOR 01;35                  # door
+BLK 40;33;01                # block device driver
+CHR 40;33;01                # character device driver
+ORPHAN 40;31;01             # symlink to nonexistent file, or non-stat'able file
+SETUID 37;41                # file that is setuid (u+s)
+SETGID 30;43                # file that is setgid (g+s)
+CAPABILITY 30;41            # file with capability
 STICKY_OTHER_WRITABLE 01;34 # dir that is sticky and other-writable (+t,o+w)
-OTHER_WRITABLE 01;34 # dir that is other-writable (o+w) and not sticky
-STICKY 37;44 # dir with the sticky bit set (+t) and not other-writable
-# This is for files with execute permission:
-EXEC 01;32
+OTHER_WRITABLE 01;34        # dir that is other-writable (o+w) and not sticky
+STICKY 37;44                # dir with the sticky bit set (+t) and not other-writable
+EXEC 01;32                  # This is for files with execute permission
 
 # archives or compressed (bright red)
 .tar 01;31
@@ -172,24 +172,37 @@ EXEC 01;32
 .ogv 01;35
 .ogx 01;35
 
-# audio formats
-.aac 00;36
-.au 00;36
-.flac 00;36
-.mid 00;36
-.midi 00;36
-.mka 00;36
-.mod 00;36
-.mp3 00;36
-.mpc 00;36
-.ogg 00;36
-.ra 00;36
-.wav 00;36
+# audio formats (green)
+.aac 00;32
+.au 00;33
+.flac 00;32
+.mid 00;32
+.midi 00;32
+.mka 00;32
+.mod 00;32
+.mp3 00;32
+.mpc 00;32
+.ogg 00;32
+.ra 00;32
+.wav 00;32
 # http://wiki.xiph.org/index.php/MIME_Types_and_File_Extensions
-.axa 00;36
-.oga 00;36
-.spx 00;36
-.xspf 00;36
+.axa 00;32
+.oga 00;32
+.spx 00;32
+.xspf 00;32
+
+# movies (green)
+.avi               01;32
+.flc               01;32
+.fli               01;32
+.flv               01;32
+.mkv               01;32
+.m4v               01;32
+.mp4               01;32
+.mov               01;32
+.mpg               01;32
+.mpeg              01;32
+.ogv               01;32
 
 # code
 .C    01;36
@@ -201,6 +214,8 @@ EXEC 01;32
 .h    01;36
 .hpp  01;36
 .hxx  01;36
+.js   01;36
+.pl   01;36
 .py   01;36
 .r    01;36
 .rmd  01;36
@@ -210,3 +225,41 @@ EXEC 01;32
 .sh   01;36
 .vim  01;36
 
+# config files
+.bashrc         00;31
+.bash_history   00;31
+.bash_logout    00;31
+.bash_profile   00;31
+.conf           00;31
+.dir_colors     00;31
+.gtk-bookmarks  00;31
+.gtkrc-2.0      00;31
+.ini            00;31
+.julia_history  00;31
+.lesshst        00;31
+.mysql_history  00;31
+.profile        00;31
+.rc             00;31
+.recently_used  00;31
+.Rhistory       00;31
+.vimrc          00;31
+.xinitrc        00;33
+.Xauthority     01;33
+.Xclients       01;33
+.Xresources     01;33
+.yaourtrc       01;33
+.zsh_history    00;31
+.zshrc          00;31
+.interrobang_history 00;31
+
+# documents
+.md             00;33
+.xml            00;35
+.txt            00;32
+
+# other
+.git            00;36
+.gitignore      00;36
+.log            00;33
+.pacnew         00;31
+.RData          01;31
