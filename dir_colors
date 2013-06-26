@@ -253,6 +253,11 @@ EXEC 01;32                  # This is for files with execute permission
 .interrobang_history 00;31
 
 # documents
+.pdf            01;31
+.doc            00;31
+.docx           00;31
+.ppt            00;31
+.pptx           00;31
 .md             00;33
 .xml            00;35
 .txt            00;32
