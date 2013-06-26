@@ -72,7 +72,7 @@ ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 # Everything else
 for path in "conky" "conkyrc" "dir_colors" "gitconfig" "gitignore_global" 
             "gtkrc-2.0" "Rprofile" "Renviron" "tmux.conf"
-            "vim" "vimrc" "xinitrc" "Xresources"; do
+            "vim" "vimrc" "xinitrc" "xmodmaprc" "Xresources"; do
     ln_s ${PWD}/${path} ~/.${path}
 done
 

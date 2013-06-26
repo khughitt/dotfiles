@@ -50,7 +50,7 @@ end
 -- Themes define colours, icons, and wallpapers
 
 -- This is used later as the default terminal and editor to run.
-terminal = "urxvt"
+terminal = "urxvtc"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
 files = "nautilus"
@@ -609,6 +609,7 @@ run_once("nm-applet")
 run_once("start-pulseaudio-x11")
 run_once("gnome-screensaver")
 run_once("urxvtd")
+run_once("xmodmap ~/.xmodmaprc")
 run_once(os.getenv("HOME") .. "/bin/tptoggle")
 run_once("dropboxd", "", "/opt/dropbox/dropbox")
 run_once("wmname LG3D")
