@@ -29,14 +29,23 @@ URxvt*scrollTtyOutput:   false
 URxvt*scrollWithBuffer:  true
 URxvt*scrollTtyKeypress: true
 URxvt*visualBell:        false
-URxvt*urlLauncher:       chromium
-URxvt.matcher.button:    1
 URxvt.colorUL:           #81A2BE
 URxvt*termName:          rxvt-256color
 URxvt*font:              xft:dejavu sans mono for powerline:regular:size=12
 URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:size=12
 URxvt.iconFile:          /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
-URxvt.perl-ext-common:   default,matcher,clipboard,vtwheel,font-size,
+
+!! Extensions
+URxvt.perl-ext-common:   default,matcher,clipboard,vtwheel,font-size
+
+!! URL launcher
+URxvt*urlLauncher:       chromium
+URxvt.matcher.button:    1
+
+!! Clipboard
+URxvt.keysym.M-c:      perl:clipboard:copy
+URxvt.keysym.M-v:      perl:clipboard:paste
+URxvt.keysym.M-C-v:    perl:clipboard:paste_escaped
 
 !! Font-size adjustments
 URxvt.keysym.C-equal:   perl:font-size:increase
