@@ -412,11 +412,11 @@ vicious.register(volpct, vicious.widgets.volume, "$1%", nil, "Master")
 -- Buttons
 volicon:buttons(awful.util.table.join(
   awful.button({ }, 1,
-    function() awful.util.spawn("amixer -q set Master toggle", false) end),
+    function() awful.util.spawn("pamixer --toggle-mute", false) end),
   awful.button({ }, 4,
-    function() awful.util.spawn("amixer -q set Master 3+% unmute", false) end),
+    function() awful.util.spawn("pamixer --increase 3", false) end),
   awful.button({ }, 5,
-    function() awful.util.spawn("amixer -q set Master 3-% unmute", false) end)))
+    function() awful.util.spawn("pamixer --decrease 3", false) end)))
 volpct:buttons(volicon:buttons())
 volspace:buttons(volicon:buttons())
 -- }}}
