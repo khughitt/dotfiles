@@ -83,6 +83,17 @@ function src {
     /usr/bin/src-hilite-lesspipe.sh "$1" | less -R
 }
 
+# Audio info (TODO: move to separate functions file)
+function ai {
+    artist=$(soxi $1 | grep "Artist=" | sed s/Artist=//)
+    track=$(soxi $1 | grep "Title=" | sed s/Title=//)
+    year=$(soxi $1 | grep "Year=" | sed s/Year=//)
+
+    bpm=$(sox $1 -t raw -r 44100 -e float -c 1 - 2> /dev/null | bpm)
+
+    printf "%s - %s (%s) bpm: %s\n" $artist $track $year $bpm
+}
+
 # Hostname
 if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 26
