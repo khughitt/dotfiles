@@ -10,8 +10,7 @@ geometry     top
 foreground   #68B0E0
 background   #000000
 bangchar     :
-run_hook     cmd="%s"; echo $cmd >> ~/.interrobang_history; $cmd
-
+run_hook     cmd="%s"; ($cmd && echo $cmd >> ~/iinterrobang_history) || (notify-send "Error: command not found"; XMODIFIERS='' interrobang)
 
 ## | SHOW OPTIONS IN THE BAR?
 ## | options = colors: fg bg selfg selbg
