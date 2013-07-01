@@ -85,13 +85,16 @@ function src {
 
 # Audio info (TODO: move to separate functions file)
 function ai {
-    artist=$(soxi $1 | grep "Artist=" | sed s/Artist=//)
-    track=$(soxi $1 | grep "Title=" | sed s/Title=//)
-    year=$(soxi $1 | grep "Year=" | sed s/Year=//)
+    artist=$(soxi $1 | grep --color=never "Artist=" | sed s/Artist=//)
+    track=$(soxi $1 | grep --color=never "Title=" | sed s/Title=//)
+    year=$(soxi $1 | grep --color=never "Year=" | sed s/Year=//)
 
     bpm=$(sox $1 -t raw -r 44100 -e float -c 1 - 2> /dev/null | bpm)
 
     printf "%s - %s (%s) bpm: %s\n" $artist $track $year $bpm
+
+    spectrogram=$(echo $1 | sed s/.mp3/_spectrogram.png/)
+    sox $1 -n remix 1 spectrogram -l -t "${artist} - ${title} (${bpm})" -x 1920 -o $spectrogram
 }
 
 # Hostname
