@@ -11,7 +11,7 @@ geometry     top
 foreground   #cf4f88
 background   #000000
 bangchar     :
-run_hook     cmd="%s"; ($cmd && echo $cmd >> ~/.interrobang_history) || (notify-send "Error: command not found"; XMODIFIERS='' interrobang)
+run_hook     PATH=$PATH:/home/keith/bin; cmd="%s"; ($cmd && echo $cmd >> ~/.interrobang_history) || (notify-send "Error: command not found"; XMODIFIERS='' interrobang)
 
 ## | SHOW OPTIONS IN THE BAR?
 ## | options = colors: fg bg selfg selbg
@@ -50,7 +50,7 @@ autocomp 1
 # Prepend most used commands, followed by bash completion results.
 # the second awk command removes duplicate lines while preserving order.
 #TAB() pre="%s"; str="%s"; [[ -z "$pre" ]] && (grep "$str" ~/.interrobang_history | sort | uniq -c | sort -r | awk '{print $2}'; compgen -P "$pre" -cf $str) | awk ' !x[$0]++' | head -5
-TAB() pre="%s"; str="%s"; [[ -z "$pre" ]] && (grep "$str" ~/.interrobang_history | sort | uniq -c | sort -r | awk '{print $2}'; percontation "$pre" $str) | awk ' !x[$0]++' | head -5
+TAB() pre="%s"; str="%s"; [[ -z "$pre" ]] && (grep "$str" ~/.interrobang_history | sort | uniq -c | sort -r | awk '{print $2}'; PATH=$PATH:/home/keith/bin percontation "$pre" $str) | awk ' !x[$0]++' | head -5
 #TAB()percontation "%s" %s
 
 # | Optional "complex" completer
