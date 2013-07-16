@@ -40,4 +40,5 @@ pwd <- getwd
 if (Sys.getenv("R_HISTFILE") == "") {
   Sys.setenv(R_HISTFILE=file.path("~", ".Rhistory"))
 }
+Sys.setenv(R_HISTSIZE=5000)
 

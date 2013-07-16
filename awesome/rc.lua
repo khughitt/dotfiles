@@ -229,6 +229,9 @@ for s = 1, screen.count() do
     right_layout:add(volspace)
     right_layout:add(mytextclock)
     right_layout:add(space)
+    right_layout:add(baticon)
+    right_layout:add(batpct)
+    right_layout:add(space)
     right_layout:add(mylayoutbox[s])
 
     -- Now bring it all together (with the tasklist in the middle)
@@ -505,8 +508,10 @@ awful.rules.rules = {
     properties = { tag = tags[1][2], switchtotag=true } },
   { rule = { name = "Mendeley Desktop" },
     properties = { tag = tags[1][4], switchtotag=true } },
---  { rule = { name ~= "LibreOffice Impress", class = "LibreOffice"},
---    properties = { tag = tags[2][1] } },
+
+  -- Cytoscape
+  { rule = { class = "sun-awt-X11-XFramePeer" }, properties = { floating =  true } },
+  { rule = { name  = "cytoscape.sh" }, properties = { focus = false } },
   -- Fullscreen flash
   { rule = { class = "Exe"}, properties = {floating = true} },
   -- RCommander view data
@@ -606,7 +611,6 @@ end
 
 -- Startup Applications
 run_once("nm-applet")
-run_once("start-pulseaudio-x11")
 run_once("gnome-screensaver")
 run_once("xmodmap ~/.xmodmaprc")
 run_once(os.getenv("HOME") .. "/bin/tptoggle")
