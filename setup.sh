@@ -69,6 +69,9 @@ ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 # Xresources themes
 ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 
+# Byobu
+ln -s ${PWD}/byobu/keybindings.tmux ~/.byobu/
+
 # Everything else
 for path in "conky" "conkyrc" "dir_colors" "gitconfig" "gitignore_global" 
             "gtkrc-2.0" "Rprofile" "Renviron" "tmux.conf"
