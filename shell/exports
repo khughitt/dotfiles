@@ -1,8 +1,8 @@
 # Environmental variables
 export EDITOR=vim
 export R_HISTFILE=~/.Rhistory
-export JAVA_HOME=/usr/lib/jvm/java-7-openjdk/
-export JAVA_FONTS=/usr/share/fonts/TTF
+export JAVA_HOME=/opt/java
+export JAVA_FONTS=/usr/share/fo:nts/TTF
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel'
 export GTK_IM_MODULE=ibus
 export XMODIFIERS=@im=ibus

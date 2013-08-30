@@ -396,7 +396,7 @@ globalkeys = awful.util.table.join(
   awful.key({ }, "XF86Display", function()
     awful.util.spawn_with_shell("toggle-display.sh") end),
   awful.key({ }, "XF86Sleep", function()
-    awful.util.spawn("sudo pm-suspend") end),
+    awful.util.spawn("systemctl suspend") end),
   awful.key({ }, "XF86TouchpadToggle", function ()
     awful.util.spawn(os.getenv("HOME") .. "/bin/tptoggle") end),
   awful.key({ modkey }, ",", function ()
