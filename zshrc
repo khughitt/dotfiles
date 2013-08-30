@@ -3,7 +3,7 @@
 #
 
 # PATH
-PATH=$PATH:~/bin
+PATH=$PATH:/opt/java/jre/bin:~/bin
 
 # Stop here in non-interactive mode
 [ -z "$PS1" ] && return
