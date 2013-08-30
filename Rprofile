@@ -6,7 +6,7 @@ options(max.print=10E3)
 options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 
 # interactive mode
-if (interactive() && Sys.getenv('TERM') != '') {
+if (interactive() && !Sys.getenv('TERM')  %in% c('', 'linux')) {
     library(setwidth)     # updates output width when terminal is resized
     library(vimcom)       # better vim suport
     library('colorout')   # syntax highlighting
@@ -31,10 +31,6 @@ if (interactive() && Sys.getenv('TERM') != '') {
         try(savehistory(Sys.getenv("R_HISTFILE")))
     }
 }
-
-# Aliases
-cd <- setwd
-pwd <- getwd
 
 # Default HISTORY file
 if (Sys.getenv("R_HISTFILE") == "") {
