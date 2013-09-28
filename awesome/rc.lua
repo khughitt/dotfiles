@@ -109,7 +109,7 @@ end
 -- Define a tag table which hold all screen tags.
 tags = {
   names = {'term', 'www', 'code', 'doc', 'misc'},
-  layout = {layouts[3], layouts[1], layouts[3], layouts[2], layouts[2]}
+  layout = {layouts[2], layouts[2], layouts[3], layouts[2], layouts[4]}
 }
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
