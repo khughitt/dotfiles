@@ -4,6 +4,7 @@
 options(showWarnCalls=T, showErrorCalls=T)
 options(max.print=10E3)
 options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
+options(menu.graphics=F)
 
 # interactive mode
 if (interactive() && !Sys.getenv('TERM')  %in% c('', 'linux')) {
