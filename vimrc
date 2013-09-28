@@ -202,7 +202,7 @@ let g:Powerline_symbols = 'fancy'
 "    exec ':%s/ \+$//gc'
 "endfunction
 "map ,s :call StripWhitespace ()<CR>
-autocmd FileType py,php,js,rb,r,rmd autocmd BufWritePre <buffer> :%s/\s\+$//e
+autocmd FileType py,php,js,rb,r autocmd BufWritePre <buffer> :%s/\s\+$//e
 
 " ---------------------------------------------------------------------------
 "  Search Options
