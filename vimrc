@@ -225,6 +225,7 @@ map <F8> :w\|!python %<CR>
 
 " R
 let vimrplugin_objbr_place = "console,right"
+let vimrplugin_term = "urxvt"
 let vimrplugin_assign = 0
 
 if $DISPLAY != ""
