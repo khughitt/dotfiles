@@ -25,10 +25,14 @@ def main():
     # Otherwise parse XML
     tree.parse(input_file)
 
+    # Print CD label
+    label = unquote(tree.find('label').text)
+    print ("%s\n%s" % (label, "=" * len(label)))
+
     songs = tree.getiterator("audio")
 
     # Iterate through songs and print info
-    for song in songs:
+    for i, song in enumerate(songs):
         # BPM
         filepath = unquote(unquote(song.find("uri").text).replace('file://', ''))
         ps = subprocess.Popen(["sox", filepath, "-t", "raw", "-r", "44100", 
@@ -39,11 +43,18 @@ def main():
         bpm = output.decode().strip()
 
         # Title and artist
-        artist = unquote(song.find("artist").text)
-        title = unquote(song.find("title").text)
+        track_info = ""
+
+        artist = unquote(song.findtext("artist", ""))
+        title = unquote(song.findtext("title", ""))
+
+        if len(artist) > 0:
+            track_info = "%s - %s" % (artist, title)
+        else:
+            track_info = title
 
         # Output song info
-        print("%s - %s (**%s**)" % (artist, title, bpm))
+        print("%d. %s (**%s**)" % (i + 1, track_info, bpm))
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
