@@ -43,13 +43,15 @@ fi
 ln_s ${PWD}/terminator ~/.config/terminator/config
 
 # IPython
-if [ ! -e $XDG_CONFIG_HOME/ipython ]; then
+if [ ! -e $XDG_CONFIG_HOME/ipython ] and ipython -v 2>/dev/null; then
     ipython profile create
 
     for filepath in ${PWD}/ipython/*; do
         $DEST=$XDG_CONFIG_HOME/ipython/profile_default/${filename}
-        rm -r $DEST
-        ln_s ${filepath} $DEST
+        if [ -e $DEST ]; then
+            rm -r $DEST
+            ln_s ${filepath} $DEST
+        fi
     done
 
     # Todo: update default color scheme to Linux
@@ -64,6 +66,9 @@ ln_s ${PWD}/awesome ${XDG_CONFIG_HOME}/awesome
 cp -r ${PWD}/gedit/styles ${XDG_CONFIG_HOME}/gedit/
 
 # Gtk 3.0
+if [ ! -e ${XDG_CONFIG_HOME}/gtk-3.0/ ]; then
+    mkdir ${XDG_CONFIG_HOME}/gtk-3.0/
+fi
 ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 
 # Xresources themes
@@ -73,8 +78,8 @@ ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 ln -s ${PWD}/byobu/keybindings.tmux ~/.byobu/
 
 # Everything else
-for path in "conky" "conkyrc" "dir_colors" "gitconfig" "gitignore_global" 
-            "gtkrc-2.0" "Rprofile" "Renviron" "tmux.conf"
+for path in "conky" "conkyrc" "dir_colors" "gitconfig" "gitignore_global" \
+            "gtkrc-2.0" "Rprofile" "Renviron" "tmux.conf" \
             "vim" "vimrc" "xinitrc" "xmodmaprc" "Xresources"; do
     ln_s ${PWD}/${path} ~/.${path}
 done
