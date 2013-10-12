@@ -3,61 +3,40 @@
 # https://github.com/TrilbyWhite/interrobang
 #
 
-## | GENERAL OPTIONS
-## |
-font         -*-droid sans mono-medium-r-*-*-14-*-*-*-*-*-*-*
-geometry     top
-#foreground  #68B0E0
-foreground   #cf4f88
-background   #000000
-bangchar     :
-run_hook     PATH=$PATH:/home/keith/bin; cmd="%s"; ($cmd && echo $cmd >> ~/.interrobang_history) || (notify-send "Error: command not found"; XMODIFIERS='' interrobang)
+# GENERAL OPTIONS
+set font     = -*-droid sans mono-medium-r-*-*-14-*-*-*-*-*-*-*
+#set geometry = top
+#set geometry = 1900x16+20+0
+set colors   = #cf4f88 #000000 #4A9BA6 #000000 #484848 #59BCC7
+set border   = 2px #000000
+set bangchar = :
+set run_hook = PATH=$PATH:/home/keith/bin; cmd="%s"; ($cmd && echo $cmd >> ~/.interrobang_history) || (notify-send "Error: command not found"; XMODIFIERS='' interrobang)
+set autocomp = 1
+set list     = true
+#set last     = true
+#set margin   = -80
+#set shell    = bash
+#set flags    = -c
 
-## | SHOW OPTIONS IN THE BAR?
-## | options = colors: fg bg selfg selbg
-## | autocomp:
-## |     -1 = disabled (default)
-## |      0 = show options on startup, good for scripting menus
-## |      N = show options automatically when N or more characters
-## |              have been typed (N >= 1).
-## | Note: with autocomp >= 1, the completion options are only
-## |           displayed, but *not* filled in on the entry line
-## |           when you hit <enter> interrobang will use the currently
-## |           selected option as the command
+# BANGS & TAB COMPLETION
+bang term     = urxvtc -e %s
+bang web      = luakit %s
+bang pdf      = llpp %s
+bang man      = urxvtc -e man %s
+bang g        = chromium https://www.google.com/search?q=%s
+bang archbbs  = luakit https://duckduckgo.com/?q=%s%%20site%%3Abbs.archlinux.org
+bang archwiki = luakit https://duckduckgo.com/?q=%s%%20site%%3Awiki.archlinux.org
+bang pubmed   = chromium https://www.ncbi.nlm.nih.gov/pubmed/?term=%s
+bang calc     = echo "interrobang ignored \"%s\""
+bang ?        = echo "interrobang ignored \"%s\""
+bang logout   = case "%s" in shutdown) sudo systemctl poweroff ;; sleep) sudo systemctl suspend ;; reboot) sudo systemctl reboot ;; logout) killall xinit ;; cancel) exit ;; esac
 
-show     options
-#options  #242424 #48E084 #484848 #64FFAA
-#options  #242424 #2B7694 #484848 #47959e
-options   #242424 #4A9BA6 #484848 #59BCC7
-autocomp 1
-
-# | BANGS & TAB COMPLETION
-# | The first listed bang is the default
-# | TAB(bangname) defines completion for that bang and must be *after*
-# |     the bang definition
-# | TAB() defines the default tab completion
-:term       urxvtc -e %s
-:web        luakit %s
-:pdf        llpp %s
-:man        urxvtc -e man %s
-:g          chromium https://www.google.com/search?q=%s
-:archbbs    luakit https://duckduckgo.com/?q=%s%%20site%%3Abbs.archlinux.org
-:archwiki   luakit https://duckduckgo.com/?q=%s%%20site%%3Awiki.archlinux.org
-:pubmed     chromium https://www.ncbi.nlm.nih.gov/pubmed/?term=%s
-:calc       echo "interrobang ignored \"%s\""
-:?          echo "interrobang ignored \"%s\""
+# TAB COMPLETION
 
 # Prepend most used commands, followed by bash completion results.
 # the second awk command removes duplicate lines while preserving order.
-#TAB() pre="%s"; str="%s"; [[ -z "$pre" ]] && (grep "$str" ~/.interrobang_history | sort | uniq -c | sort -r | awk '{print $2}'; compgen -P "$pre" -cf $str) | awk ' !x[$0]++' | head -5
-TAB() pre="%s"; str="%s"; [[ -z "$pre" ]] && (grep "$str" ~/.interrobang_history | sort | uniq -c | sort -r | awk '{print $2}'; PATH=$PATH:/home/keith/bin percontation "$pre" $str) | awk ' !x[$0]++' | head -5
-#TAB()percontation "%s" %s
-
-# | Optional "complex" completer
-# |     adds spaces after commands and slashes after urls and escapes
-# |     parentheses and square brackets
-#TAB()       compgen -P "%s" -fc %s | sort -u | while read s; do s=${s/\(/\\(}; s=${s/\)/\\)}; s=${s/\[/\\[}; s=${s/\]/\\]}; [[ -d ${s##* } ]] && echo "$s/" || echo "$s "; done
-#TAB(pdf)    compgen -P "%s" -f ~/doc/pdfs/%s
-TAB(calc)    S1="%s%s"; S2="${S1/\:calc/}"; echo ":calc $(echo $S2 | bc -l)"
-TAB(?)       ignore="%s%s"; grep -o -E "^\:[[:alnum:]]+" ~/.interrobangrc
+tab default = pre="%s"; str="%s"; [[ -z "$pre" ]] && (grep "$str" ~/.interrobang_history | sort | uniq -c | sort -r | awk '{print $2}'; PATH=$PATH:/home/keith/bin percontation "$pre" $str) | awk ' !x[$0]++' | head -5
+tab calc    = str="%s%s"; echo "!calc $(echo ${str#\!calc} | bc -l)"
+tab ?       = ignore="%s%s"; awk '/^bang/ {print "!"$2" ";}' ~/.interrobangrc
+tab logout  = echo -e "cancel\nshutdown\nsleep\nreboot\nlogout" | grep "^%s%s"
 
