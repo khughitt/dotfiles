@@ -287,6 +287,14 @@ root.buttons(awful.util.table.join(
 -- Determine number of tags
 num_tags = #tags['names']
 
+-- Function to print out layout information
+function layout_info()
+    naughty.notify({
+      text=string.format('m %d\nc %d', awful.tag.getnmaster(),
+                                        awful.tag.getncol())
+    })
+end
+
 -- {{{ Key bindings
 globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
@@ -370,10 +378,22 @@ globalkeys = awful.util.table.join(
 
     awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)    end),
     awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact(-0.05)    end),
-    awful.key({ modkey, "Shift"   }, "h",     function () awful.tag.incnmaster( 1)      end), -- @TODO: awful.tag.getnmaster()
-    awful.key({ modkey, "Shift"   }, "l",     function () awful.tag.incnmaster(-1)      end),
-    awful.key({ modkey, "Control" }, "h",     function () awful.tag.incncol( 1)         end),
-    awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1)         end),
+    awful.key({ modkey, "Shift"   }, "h",     function ()
+                                                awful.tag.incnmaster(1)
+                                                layout_info()
+                                              end),
+    awful.key({ modkey, "Shift"   }, "l",     function ()
+                                                awful.tag.incnmaster(-1)
+                                                layout_info()
+                                              end),
+    awful.key({ modkey, "Control" }, "h",     function ()
+                                                awful.tag.incncol(1)
+                                                layout_info()
+                                              end),
+    awful.key({ modkey, "Control" }, "l",     function ()
+                                                awful.tag.incncol(-1)
+                                                layout_info()
+                                              end),
     awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts,  1) end),
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
 
