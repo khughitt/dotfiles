@@ -45,6 +45,9 @@ setopt HIST_IGNORE_DUPS
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
 
+# Autojump tab completion support
+autoload -U compinit && compinit -u
+
 # Disable auto correction
 unsetopt correct_all
 
