@@ -48,6 +48,12 @@ source $ZSH/oh-my-zsh.sh
 # Autojump tab completion support
 autoload -U compinit && compinit -u
 
+# Fasd
+eval "$(fasd --init auto)"
+alias v='f -t -e vim -b viminfo'
+alias m='f -e mplayer'
+alias o='a -e xdg-open'
+
 # Disable auto correction
 unsetopt correct_all
 
