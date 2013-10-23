@@ -80,7 +80,10 @@ set incsearch              " do incremental searching
 set laststatus=2           " always show the status line
 set ignorecase             " ignore case when searching
 set novisualbell           " no thank you
-set colorcolumn=80         " show right margin
+
+if exists('+colorcolumn')
+    set colorcolumn=80         " show right margin
+endif
 
 let marksCloseWhenSelected = 0
 let showmarks_include="abcdefghijklmnopqrstuvwxyz"
