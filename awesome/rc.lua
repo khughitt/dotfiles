@@ -3,7 +3,8 @@
 -- Based on github.com/tdy/dots --
 ----------------------------------
 local gears = require("gears")
-local awful = require("awful")
+--local awful = require("awful")
+awful = require("awful")
 awful.rules = require("awful.rules")
 require("awful.autofocus")
 
@@ -16,7 +17,8 @@ require("awful.remote")
 -- Theme handling library
 local beautiful = require("beautiful")
 beautiful.init(awful.util.getdir("config") .. "/themes/niceandclean/theme.lua")
-local naughty = require("naughty")
+--local naughty = require("naughty")
+naughty = require("naughty")
 local menubar = require("menubar")
 local vicious = require("vicious")
 local wi = require("wi")
@@ -75,7 +77,7 @@ local layouts =
     awful.layout.suit.fair,
     --awful.layout.suit.fair.horizontal,
     --awful.layout.suit.max.fullscreen,
-    --awful.layout.suit.magnifier
+    awful.layout.suit.magnifier
 }
 -- }}}
 
@@ -108,7 +110,7 @@ end
 -- {{{ Tags
 -- Define a tag table which hold all screen tags.
 tags = {
-  names = {'term', 'www', 'code', 'doc', 'misc'},
+  names = {'www', 'term', 'code', 'doc', 'misc'},
   layout = {layouts[2], layouts[2], layouts[3], layouts[2], layouts[4]}
 }
 for s = 1, screen.count() do
@@ -525,7 +527,7 @@ awful.rules.rules = {
   { rule = { class = "pinentry" }, properties = { floating = true } },
   { rule = { class = "gimp" }, properties = { floating = true } },
   { rule = { class = "Chromium" },
-    properties = { tag = tags[1][2], switchtotag=true } },
+    properties = { tag = tags[1][1], switchtotag=true } },
   { rule = { name = "Mendeley Desktop" },
     properties = { tag = tags[1][4], switchtotag=true } },
 
@@ -635,5 +637,6 @@ run_once("gnome-screensaver")
 run_once("xmodmap ~/.xmodmaprc")
 run_once(os.getenv("HOME") .. "/bin/tptoggle")
 run_once("dropboxd", "", "/opt/dropbox/dropbox")
+run_once("redshift -l 37.05:-78.66")
 run_once("wmname LG3D")
 
