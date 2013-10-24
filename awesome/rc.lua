@@ -637,6 +637,6 @@ run_once("gnome-screensaver")
 run_once("xmodmap ~/.xmodmaprc")
 run_once(os.getenv("HOME") .. "/bin/tptoggle")
 run_once("dropboxd", "", "/opt/dropbox/dropbox")
-run_once("redshift -l 37.05:-78.66")
+--run_once("redshift -l 37.05:-78.66")
 run_once("wmname LG3D")
 
