@@ -10,6 +10,7 @@
 " General
 " ---------------------------------------------------------------------------
 set nocompatible     " disable vi compatibility enchancements
+set hidden           " easy buffer switching
 set history=5000     " number of command history
 set isk+=_,$,@,%,#,- " none word dividers
 set showmatch        " highlight correspods character
@@ -198,6 +199,11 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 let g:Powerline_symbols = 'fancy'
 
 " ---------------------------------------------------------------------------
+"  NERDTree
+" ---------------------------------------------------------------------------
+map <C-n> :NERDTreeToggle<CR>
+
+" ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
 " ---------------------------------------------------------------------------
 
@@ -222,6 +228,7 @@ nohlsearch     " avoid highlighting when reloading vimrc
 " ---------------------------------------------------------------------------
 
 " Python
+let $PYTHONPATH="/usr/lib/python3.3/site-packages"
 autocmd BufRead,BufNewFile *.py syntax on
 autocmd BufRead,BufNewFile *.py set ai
 map <F8> :w\|!python %<CR>
