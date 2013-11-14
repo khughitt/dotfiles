@@ -12,7 +12,8 @@ fi
 # monitor
 external=$(xrandr -q | awk '/HDMI1/ {print $2}')
 if [ "$external" = "connected" ]; then
-    xrandr --output HDMI1 --auto
+    xrandr --output HDMI1 --auto --same-as eDP1
+    xrandr --output eDP1 --off
 fi
 
 # compositing

@@ -40,19 +40,20 @@ fi
 setopt HIST_IGNORE_DUPS
 
 # Plugins
-[ -z "$plugins" ] && plugins=(archlinux autojump git systemd web-search)
+[ -z "$plugins" ] && plugins=(archlinux git systemd web-search)
 
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
 
 # Autojump tab completion support
-autoload -U compinit && compinit -u
+#autoload -U compinit && compinit -u
 
 # Fasd
 eval "$(fasd --init auto)"
 alias v='f -t -e vim -b viminfo'
 alias m='f -e mplayer'
 alias o='a -e xdg-open'
+alias j='fasd_cd -d' 
 
 # Disable auto correction
 unsetopt correct_all

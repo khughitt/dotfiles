@@ -6,8 +6,8 @@
 ! -------------------------------------------------
 
 !! jwr dark
-*background: #080808
-*foreground: #999999
+URxvt*background: #080808
+URxvt*foreground: #999999
 
 !black
 *color0:#333333
