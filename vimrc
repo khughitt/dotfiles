@@ -37,6 +37,14 @@ nmap <leader>w :w!<cr>
 execute pathogen#infect()
 
 " ----------------------------------------------------------------------------
+" Practice time
+" ----------------------------------------------------------------------------
+map <Left> <Nop>
+map <Right> <Nop>
+map <Up> <Nop>
+map <Down> <Nop>
+
+" ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
 " ----------------------------------------------------------------------------
 
@@ -103,6 +111,7 @@ set shiftwidth=4           "
 set tabstop=4
 set expandtab              " expand tabs to spaces
 set nosmarttab             " no tabs
+set textwidth=79           " stick to less than 80 chars per line when possible
 set formatoptions+=n       " support for numbered/bullet lists
 set virtualedit=block      " allow virtual edit in visual block ..
 set encoding=utf8          " UTF-8 by default
@@ -121,10 +130,10 @@ map k gk
 " map <c-space> ?
 
 " Smart way to move between windows
-map <C-j> <C-W>j
-map <C-k> <C-W>k
-map <C-h> <C-W>h
-map <C-l> <C-W>l
+" map <C-j> <C-W>j
+" map <C-k> <C-W>k
+" map <C-h> <C-W>h
+" map <C-l> <C-W>l
 
 " Close the current buffer
 map <leader>bd :Bclose<cr>
@@ -147,16 +156,16 @@ map <leader>cd :cd %:p:h<cr>:pwd<cr>
 
 " Specify the behavior when switching between buffers 
 try
-    set switchbuf=useopen,usetab,newtab
-        set stal=2
-    catch
+set switchbuf=useopen,usetab,newtab
+    set stal=2
+catch
 endtry
 
 " Return to last edit position when opening files
 autocmd BufReadPost *
-     \ if line("'\"") > 0 && line("'\"") <= line("$") |
-     \   exe "normal! g`\"" |
-     \ endif
+    \ if line("'\"") > 0 && line("'\"") <= line("$") |
+    \   exe "normal! g`\"" |
+    \ endif
 
 " Remember info about open buffers on close
 set viminfo^=%
@@ -168,26 +177,26 @@ set mouse=a
 "  Appearance
 " ---------------------------------------------------------------------------
 if $TERM != 'linux'
-    set t_Co=256
+set t_Co=256
 endif
 
 " let g:hybrid_use_Xresources = 1
 
 if has("gui_running")
-    " theme
-    colorscheme jellybeans
-    "set background=dark
-    " Make shift-insert work like in Xterm
-    map <S-Insert> <MiddleMouse>
-    map! <S-Insert> <MiddleMouse>
+" theme
+colorscheme jellybeans
+"set background=dark
+" Make shift-insert work like in Xterm
+map <S-Insert> <MiddleMouse>
+map! <S-Insert> <MiddleMouse>
 
 else
-    colorscheme jellybeans
-    "set background=dark
+colorscheme jellybeans
+"set background=dark
 endif
 
 if has("syntax")
-  syntax on
+syntax on
 endif
 
 " Matching parens style
@@ -248,11 +257,13 @@ if $DISPLAY != ""
     let vimrplugin_openpdf = 1
     let vimrplugin_openhtml = 1
 endif
+
 if has("gui_running")
     inoremap <C-Space> <C-x><C-o>
 else
     inoremap <Nul> <C-x><C-o>
 endif
+
 vmap <Space> <Plug>RDSendSelection
 vmap <C-M> <Plug>RDSendSelection
 nmap <C-M> <Plug>RDSendLine

@@ -23,6 +23,11 @@ else
     vconsole=false
 fi
 
+# Windows terminals
+if [ "$TERM" = "screen" ] || [ "$TERM" = "screen-bce" ]; then
+    TERM='xterm-256color'
+fi
+
 # Use Xresrouces to set TTY colors
 if $vconsole; then
     _SEDCMD='s/.*\*\.color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
