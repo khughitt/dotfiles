@@ -70,7 +70,7 @@ altkey = "Mod1"
 local layouts =
 {
     awful.layout.suit.floating,
-    --awful.layout.suit.tile,
+    awful.layout.suit.tile,
     awful.layout.suit.tile.right,
     awful.layout.suit.tile.bottom,
     --awful.layout.suit.tile.top,
