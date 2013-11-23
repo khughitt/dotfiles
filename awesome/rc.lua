@@ -3,7 +3,7 @@
 -- Based on github.com/tdy/dots --
 ----------------------------------
 local gears = require("gears")
---local awful = require("awful")
+local scratch = require("scratch")
 awful = require("awful")
 awful.rules = require("awful.rules")
 require("awful.autofocus")
@@ -17,7 +17,6 @@ require("awful.remote")
 -- Theme handling library
 local beautiful = require("beautiful")
 beautiful.init(awful.util.getdir("config") .. "/themes/niceandclean/theme.lua")
---local naughty = require("naughty")
 naughty = require("naughty")
 local menubar = require("menubar")
 local vicious = require("vicious")
@@ -441,7 +440,9 @@ globalkeys = awful.util.table.join(
     -- awful.key({ modkey }, "p", function() menubar.show() end)
     awful.key({ modkey }, "p", function () 
         awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
-    end)
+    end),
+    awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
+    awful.key({ modkey }, "`", function () scratch.drop("urxvt", 'center', 'center', 0.5, 0.5) end)
 )
   -- }}}
 
@@ -453,6 +454,7 @@ clientkeys = awful.util.table.join(
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
     awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end),
+    awful.key({ modkey            }, "d",      function (c) scratch.pad.set(c, 0.60, 0.60, true) end),
     awful.key({ modkey,           }, "n",
         function (c)
             -- The client currently has the input focus, so it cannot be
