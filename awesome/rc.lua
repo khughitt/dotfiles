@@ -443,7 +443,7 @@ globalkeys = awful.util.table.join(
     end),
     awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
     awful.key({ altkey }, "Return", function () scratch.drop("urxvt", 'center', 'center', 0.5, 0.5) end),
-    awful.key({ modkey }, "l", function () scratch.drop("leafpad", 'center', 'center', 0.5, 0.5) end)
+    awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.5, 0.5) end)
 )
   -- }}}
 
