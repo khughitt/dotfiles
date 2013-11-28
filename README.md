@@ -25,10 +25,10 @@ users, the plugins are also available on the [Arch User Repository (AUR)](https:
 Screenshot
 ----------
 
-![desktop screenshot](https://raw.github.com/khughitt/dotfiles/master/misc/screenshot.png)
+![desktop screenshot](misc/2013-11-28_screenshot.png)
 
 Current setup:
 
- * Arch Linux
- * Gnome Shell
- * Z shell
+ * [Arch Linux](https://www.archlinux.org/)
+ * [AwesomeWM](http://awesome.naquadah.org/)
+ * [Z shell](http://www.zsh.org/)
