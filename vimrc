@@ -177,26 +177,33 @@ set mouse=a
 "  Appearance
 " ---------------------------------------------------------------------------
 if $TERM != 'linux'
-set t_Co=256
+    set t_Co=256
 endif
+
+" fix background bleeding in screen
+" http://sunaku.github.io/vim-256color-bce.html
+:set t_ut=""
 
 " let g:hybrid_use_Xresources = 1
 
 if has("gui_running")
-" theme
-colorscheme jellybeans
-"set background=dark
-" Make shift-insert work like in Xterm
-map <S-Insert> <MiddleMouse>
-map! <S-Insert> <MiddleMouse>
+    " theme
+    colorscheme jellybeans
 
+    " font
+    set guifont=DejaVu\ Sans\ Mono\ for\ Powerline\ 12
+
+    "set background=dark
+    " Make shift-insert work like in Xterm
+    map <S-Insert> <MiddleMouse>
+    map! <S-Insert> <MiddleMouse>
 else
-colorscheme jellybeans
-"set background=dark
+    colorscheme jellybeans
+    "set background=dark
 endif
 
 if has("syntax")
-syntax on
+    syntax on
 endif
 
 " Matching parens style
@@ -264,10 +271,26 @@ else
     inoremap <Nul> <C-x><C-o>
 endif
 
+" Knitr
 vmap <Space> <Plug>RDSendSelection
 vmap <C-M> <Plug>RDSendSelection
 nmap <C-M> <Plug>RDSendLine
 nmap <C-A-c> <Plug>RDSendChunk
+
+" KnitrBootstrap
+function! RMakeHTML_2()
+  update
+  call RSetWD()
+  let filename = expand("%:r:t")
+  let rcmd = "require('knitrBootstrap');
+    \knit_bootstrap(\"" . filename . ".rmd\")"
+  if g:vimrplugin_openhtml
+    let rcmd = rcmd . '; browseURL("' . filename . '.html")'
+  endif
+  call g:SendCmdToR(rcmd)
+endfunction
+
+nnoremap <silent> <localleader>kk :call RMakeHTML_2()<CR>
 
 " Ruby
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
