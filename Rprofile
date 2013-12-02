@@ -8,21 +8,42 @@ options(menu.graphics=F)
 options(github.user="khughitt")
 
 # interactive mode
-if (interactive() && !Sys.getenv('TERM')  %in% c('', 'linux')) {
-    library(setwidth)     # updates output width when terminal is resized
-    library(vimcom)       # better vim suport
-    library('colorout')   # syntax highlighting
+if (interactive()) {
+    # console settings
+    options(setwidth.verbose=1,
+            colorout.verbose=1,
+            vimcom.verbose=1,
+            vimcom.allnames=FALSE,
+            vimcom.texerrs=TRUE,
+            pager="vimrpager")
 
-    setOutputColors256(
-        normal = 15,
-        number = 12,
-        negnum = 9,
-        string = 10,
-        const  = 13,
-        stderror = 120,
-        error = c(1, 0, 1),
-        warn = 5
-    )
+    # select default editor
+    if(nchar(Sys.getenv("DISPLAY")) > 1)
+        options(editor = 'gvim -f -c "set ft=r"')
+    else
+        options(editor='vim -c "set ft=r"')
+
+    # syntax highlighting
+    library(colorout)
+    if (!Sys.getenv('TERM')  %in% c('', 'linux'))
+        setOutputColors256(
+            normal = 15,
+            number = 12,
+            negnum = 9,
+            string = 10,
+            const  = 13,
+            stderror = 120,
+            error = c(1, 0, 1),
+            warn = 5,
+            verbose=FALSE
+        )
+
+    # updates output width when terminal is resized
+    library(setwidth)
+
+    # better vim support
+    if(Sys.getenv("VIMRPLUGIN_TMPDIR") != "")
+        library(vimcom.plus)
 }
 
 # On quit

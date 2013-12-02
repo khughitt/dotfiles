@@ -23,9 +23,36 @@ else
     vconsole=false
 fi
 
-# Windows terminals
-if [ "$TERM" = "screen" ] || [ "$TERM" = "screen-bce" ]; then
-    TERM='xterm-256color'
+# Fix color support for screen
+if [[ "$TERM" == "screen" ]] || [[ "$TERM" == "screen-bce" ]]; then
+    #TERM='xterm-256color'
+    export TERM=screen-256color
+fi
+
+# R-vim tweaks
+if [[ "x$DISPLAY" != "x" ]]; then
+    alias vim='vim --servername VIM'
+    if [[ "x$TERM" = "xrxvt-256-color" ]] || [[ "x$TERM" == "xxterm-256color" ]]
+    then
+        function tvim(){
+            tmux -2 new-session "TERM=screen-256color vim --servername VIM $@" ;
+        }
+    else
+        function tvim(){
+            tmux new-session "vim --servername VIM $@" ;
+        }
+    fi
+else
+    if [[ "x$TERM" == "xrxvt-256color" ]] || [[ "x$TERM" == "xxterm-256color" ]]
+    then
+        function tvim(){
+            tmux -2 new-session "TERM=screen-256color vim $@" ;
+        }
+    else
+        function tvim(){
+            tmux new-session "vim $@" ;
+        }
+    fi
 fi
 
 # Use Xresrouces to set TTY colors
