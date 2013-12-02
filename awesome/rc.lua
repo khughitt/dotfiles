@@ -635,11 +635,10 @@ function run_once(prg,arg_string,pname,screen)
 end
 
 -- Startup Applications
+run_once(os.getenv("HOME") .. "/bin/tptoggle")
 run_once("nm-applet")
 run_once("gnome-screensaver")
 run_once("xmodmap ~/.xmodmaprc")
-run_once(os.getenv("HOME") .. "/bin/tptoggle")
 run_once("dropboxd", "", "/opt/dropbox/dropbox")
---run_once("redshift -l 37.05:-78.66")
-run_once("wmname LG3D")
+run_once("redshift -l 37.05:-78.66", "redshift -l 37.05 -78.66"))
 
