@@ -13,6 +13,12 @@ ZSH=$HOME/.oh-my-zsh
 ZSH_THEME="bira-mod"
 CASE_SENSITIVE="true"
 
+# Additional shell settings (aliases, exports)
+for file in ~/.shell/{aliases,private,exports}; do
+    [ -r "$file" ] && source "$file"
+done
+unset file
+
 # Local settings
 [ -e ~/.zshlocal ] && source ~/.zshlocal
 
@@ -99,12 +105,6 @@ alias -s com=chromium
 
 # Make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
-
-# Additional shell settings (aliases, exports)
-for file in ~/.shell/{aliases,private,exports}; do
-    [ -r "$file" ] && source "$file"
-done
-unset file
 
 # Disable scroll lock
 stty -ixon
