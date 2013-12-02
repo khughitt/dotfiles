@@ -25,8 +25,8 @@ fi
 
 # Fix color support for screen
 if [[ "$TERM" == "screen" ]] || [[ "$TERM" == "screen-bce" ]]; then
-    #TERM='xterm-256color'
-    export TERM=screen-256color
+    export TERM=xterm-256color
+    #export TERM=screen-256color
 fi
 
 # R-vim tweaks
@@ -35,7 +35,7 @@ if [[ "x$DISPLAY" != "x" ]]; then
     if [[ "x$TERM" = "xrxvt-256-color" ]] || [[ "x$TERM" == "xxterm-256color" ]]
     then
         function tvim(){
-            tmux -2 new-session "TERM=screen-256color vim --servername VIM $@" ;
+            tmux -2 new-session "TERM=xterm-256color vim --servername VIM $@" ;
         }
     else
         function tvim(){
@@ -46,7 +46,7 @@ else
     if [[ "x$TERM" == "xrxvt-256color" ]] || [[ "x$TERM" == "xxterm-256color" ]]
     then
         function tvim(){
-            tmux -2 new-session "TERM=screen-256color vim $@" ;
+            tmux -2 new-session "TERM=xterm-256color vim $@" ;
         }
     else
         function tvim(){
