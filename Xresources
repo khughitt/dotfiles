@@ -64,6 +64,10 @@ URxvt.keysym.C-S-minus: perl:font-size:decglobal
 !!
 XTerm*termName: xterm-256color
 XTerm*locale:   true
-xterm*faceName: dejavu sans mono:pixelsize=16
+XTerm*metaSendsEscape: true
+XTerm*saveLines: 4096
+XTerm*selectToClipboard: on
+xTerm*faceName: dejavu sans mono:pixelsize=16
 XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=14
+XTerm*background: #000000
 
