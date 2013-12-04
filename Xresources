@@ -42,11 +42,23 @@ URxvt.keysym.Control-Left:  \033[1;5D
 URxvt.keysym.Control-Right: \033[1;5C
 
 !! Extensions
-URxvt.perl-ext-common:   default,matcher,clipboard,vtwheel,font-size
+!! /usr/share/doc/urxvt-perls/README.md
+URxvt.perl-ext-common:   default,url-select,clipboard,vtwheel,font-size
 
 !! URL launcher
-URxvt*urlLauncher:       chromium
-URxvt.matcher.button:    1
+!
+!  Use Meta-u to activate URL selection mode, then use the following keys:
+!
+!    j/k:      Select next downward/upward URL (also with arrow keys)
+!    g/G:      Select first/last URL (also with home/end key)
+!    o/Return: Open selected URL in browser, Return: deactivate afterwards
+!    y:        Copy (yank) selected URL and deactivate selection mode
+!    q/Escape: Deactivate URL selection mode
+
+URxvt.url-select.launcher:  chromium
+URxvt.url-select.button:    1
+URxvt.keysym.M-u:           perl:url-select:select_next
+URxvt.url-select.underline: true
 
 !! Clipboard
 URxvt.keysym.M-c:      perl:clipboard:copy
@@ -63,11 +75,13 @@ URxvt.keysym.C-S-minus: perl:font-size:decglobal
 !! Xterm
 !!
 XTerm*termName: xterm-256color
+XTerm*background: #000000
 XTerm*locale:   true
 XTerm*metaSendsEscape: true
 XTerm*saveLines: 4096
 XTerm*selectToClipboard: on
-xTerm*faceName: dejavu sans mono:pixelsize=16
+XTerm*font:               xft:dejavu sans mono for powerline:regular:size=12
+XTerm*boldFont:           xft:dejavu sans mono for powerline:bold:size=12
 XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=14
-XTerm*background: #000000
+!XTerm*faceName: dejavu sans mono for powerline:pixelsize=16
 
