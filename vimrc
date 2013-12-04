@@ -265,11 +265,16 @@ if $DISPLAY != ""
     let vimrplugin_openhtml = 1
 endif
 
+" Use Ctrl+Space to do omnicompletion
 if has("gui_running")
     inoremap <C-Space> <C-x><C-o>
 else
     inoremap <Nul> <C-x><C-o>
 endif
+
+" Press the space bar to send lines and selection to R
+vmap <Space> <Plug>RDSendSelection
+nmap <Space> <Plug>RDSendLine
 
 " Knitr
 vmap <Space> <Plug>RDSendSelection
