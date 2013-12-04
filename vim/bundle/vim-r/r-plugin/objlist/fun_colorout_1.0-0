@@ -1,5 +1,0 @@
-syn keyword rFunction ColorOut
-syn keyword rFunction noColorOut
-syn keyword rFunction setOutputColors
-syn keyword rFunction setOutputColors256
-syn keyword rFunction show256Colors
