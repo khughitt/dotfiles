@@ -1,3 +1,6 @@
 [submodule "vim/bundle/vim-signature"]
 	path = vim/bundle/vim-signature
 	url = https://github.com/kshenoy/vim-signature.git
+[submodule "vim/bundle/csv.vim"]
+	path = vim/bundle/csv.vim
+	url = https://github.com/chrisbra/csv.vim.git
