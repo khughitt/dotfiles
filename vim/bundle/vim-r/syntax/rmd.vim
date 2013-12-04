@@ -1,6 +1,6 @@
 " markdown Text with R statements
 " Language: markdown with R code chunks
-" Last Change: Thu Sep 05, 2013  06:35PM
+" Last Change: Sat Nov 09, 2013  07:28PM
 "
 " CONFIGURATION:
 "   To highlight chunk headers as R code, put in your vimrc:
@@ -67,7 +67,7 @@ if rmdIsPandoc == 0
     " Region
     syntax match rmdLaTeXRegDelim "\$\$" contained
     syntax match rmdLaTeXRegDelim "\$\$latex$" contained
-    syntax region rmdLaTeXRegion start="^\$\$" skip="\\\$" end="\$\$$" contains=@LaTeX,rmdLaTeXSt,rmdLaTeXRegDelim keepend 
+    syntax region rmdLaTeXRegion start="^\$\$" skip="\\\$" end="\$\$$" contains=@LaTeX,rmdLaTeXSt,rmdLaTeXRegDelim keepend
     syntax region rmdLaTeXRegion2 start="^\\\[" end="\\\]" contains=@LaTeX,rmdLaTeXSt,rmdLaTeXRegDelim keepend
     hi def link rmdLaTeXSt Statement
     hi def link rmdLaTeXInlDelim Special
@@ -81,3 +81,5 @@ hi def link rmdBlockQuote Comment
 hi def link rmdSlidifySpecial Special
 
 let b:current_syntax = "rmd"
+
+" vim: ts=8 sw=4
