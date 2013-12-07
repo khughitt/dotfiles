@@ -16,3 +16,6 @@
 [submodule "vim/bundle/darkburn"]
 	path = vim/bundle/darkburn
 	url = https://github.com/vim-scripts/darkburn.git
+[submodule "vim/bundle/nerdtree"]
+	path = vim/bundle/nerdtree
+	url = https://github.com/scrooloose/nerdtree.git
