@@ -20,9 +20,9 @@ if (interactive()) {
 
     # select default editor
     if(nchar(Sys.getenv("DISPLAY")) > 1)
-        options(editor = 'gvim -f -c "set ft=r"')
+        options(editor = 'gvim -f')
     else
-        options(editor='vim -c "set ft=r"')
+        options(editor='vim')
 
     # syntax highlighting
     library(colorout)

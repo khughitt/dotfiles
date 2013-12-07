@@ -210,6 +210,13 @@ endif
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
 
 " ---------------------------------------------------------------------------
+"  Copy and Paste
+" ---------------------------------------------------------------------------
+
+" Remap vim register to CLIPBOARD selection
+set clipboard=unnamed
+
+" ---------------------------------------------------------------------------
 "  Powerline
 " ---------------------------------------------------------------------------
 let g:Powerline_symbols = 'fancy'
@@ -288,7 +295,8 @@ function! RMakeHTML_2()
   call RSetWD()
   let filename = expand("%:r:t")
   let rcmd = "require('knitrBootstrap');
-    \knit_bootstrap(\"" . filename . ".rmd\")"
+    \knit_bootstrap('" . filename . ".rmd',
+    \markdown_options=('mathjax', 'use_xhtml'))"
   if g:vimrplugin_openhtml
     let rcmd = rcmd . '; browseURL("' . filename . '.html")'
   endif
