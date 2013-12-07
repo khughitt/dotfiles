@@ -295,8 +295,8 @@ function! RMakeHTML_2()
   call RSetWD()
   let filename = expand("%:r:t")
   let rcmd = "require('knitrBootstrap');
-    \knit_bootstrap('" . filename . ".rmd',
-    \markdown_options=('mathjax', 'use_xhtml'))"
+    \knit_bootstrap('" . filename . ".rmd', 
+    \markdown_options=c('mathjax', 'use_xhtml'))"
   if g:vimrplugin_openhtml
     let rcmd = rcmd . '; browseURL("' . filename . '.html")'
   endif
