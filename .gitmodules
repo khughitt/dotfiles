@@ -13,3 +13,6 @@
 [submodule "vim/bundle/vim-r"]
 	path = vim/bundle/vim-r
 	url = https://github.com/jcfaria/Vim-R-plugin.git
+[submodule "vim/bundle/darkburn"]
+	path = vim/bundle/darkburn
+	url = https://github.com/vim-scripts/darkburn.git
