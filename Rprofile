@@ -15,8 +15,8 @@ if (interactive()) {
             vimcom.verbose=1,
             pager="vimrpager")
     # Use the text based web browser w3m to navigate through R docs:
-    if(Sys.getenv("TMUX") != "")
-        options(browser="~/bin/vimrw3mbrowser", help_type = "html")
+    #if(Sys.getenv("TMUX") != "")
+    #    options(browser="~/bin/vimrw3mbrowser", help_type = "html")
 
     # select default editor
     if(nchar(Sys.getenv("DISPLAY")) > 1)

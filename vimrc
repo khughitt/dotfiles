@@ -298,7 +298,7 @@ function! RMakeHTML_2()
     \knit_bootstrap('" . filename . ".rmd', 
     \markdown_options=c('mathjax', 'use_xhtml'))"
   if g:vimrplugin_openhtml
-    let rcmd = rcmd . '; browseURL("' . filename . '.html")'
+    let rcmd = rcmd . ';'
   endif
   call g:SendCmdToR(rcmd)
 endfunction
