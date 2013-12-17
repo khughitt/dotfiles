@@ -232,6 +232,14 @@ map <C-n> :NERDTreeToggle<CR>
 map vp :exec "w !vpaste ft=".&ft<CR>
 vmap vp <ESC>:exec "'<,'>w !vpaste ft=".&ft<CR>
 
+
+" ---------------------------------------------------------------------------
+"  snipmate.vim
+" ---------------------------------------------------------------------------
+let g:snips_author = "Keith Hughitt"
+let g:snips_email  = "user@email.com"
+let g:snips_github = "https://github.com/khughitt"
+
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
 " ---------------------------------------------------------------------------

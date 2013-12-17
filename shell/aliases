@@ -23,6 +23,7 @@ alias wth="ps uxa | less"
 alias da='date "+%A, %B %d, %Y [%T]"'
 alias du1='du --max-depth=1'
 alias pg='ps -Af | grep $1'
+alias lg='ls | grep $1'
 
 alias openports='netstat --all --numeric --programs --inet'
 alias apache_nc="ps -def | grep apache2 | grep -v grep | wc -l"
