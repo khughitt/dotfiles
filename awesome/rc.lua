@@ -425,37 +425,43 @@ globalkeys = awful.util.table.join(
   awful.key({ modkey }, ".", function ()
     awful.util.spawn_with_shell("xbacklight -inc 10") end),
 
-    -- Prompt
-    awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
-    awful.key({ altkey },            "F2",     function () mypromptbox[mouse.screen]:run() end),
+  -- Other Shortcuts
+  awful.key({ modkey, "Shift"   }, "n", function ()
+      awful.util.spawn("nautilus --no-desktop") 
+  end),
 
-    awful.key({ modkey }, "x",
-              function ()
-                  awful.prompt.run({ prompt = "Run Lua code: " },
-                  mypromptbox[mouse.screen].widget,
-                  awful.util.eval, nil,
-                  awful.util.getdir("cache") .. "/history_eval")
-              end),
-    -- Menubar
-    -- awful.key({ modkey }, "p", function() menubar.show() end)
-    awful.key({ modkey }, "p", function () 
-        awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
-    end),
-    awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
-    awful.key({ altkey }, "Return", function () scratch.drop("urxvt", 'center', 'center', 0.5, 0.5) end),
-    awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.5, 0.5) end)
+
+  -- Prompt
+  awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
+  awful.key({ altkey },            "F2",     function () mypromptbox[mouse.screen]:run() end),
+
+  awful.key({ modkey }, "x",
+            function ()
+                awful.prompt.run({ prompt = "Run Lua code: " },
+                mypromptbox[mouse.screen].widget,
+                awful.util.eval, nil,
+                awful.util.getdir("cache") .. "/history_eval")
+            end),
+  -- Menubar
+  -- awful.key({ modkey }, "p", function() menubar.show() end)
+  awful.key({ modkey }, "p", function () 
+      awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
+  end),
+  awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
+  awful.key({ altkey }, "Return", function () scratch.drop("urxvt", 'center', 'center', 0.5, 0.5) end),
+  awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.5, 0.5) end)
 )
   -- }}}
 
 clientkeys = awful.util.table.join(
+    awful.key({ modkey, "Control" }, "space",  awful.client.floating.toggle                     ),
+    awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
     awful.key({ modkey,           }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
     awful.key({ modkey, "Shift"   }, "c",      function (c) c:kill()                         end),
-    awful.key({ altkey,           }, "F4",      function (c) c:kill()                         end),
-    awful.key({ modkey, "Control" }, "space",  awful.client.floating.toggle                     ),
+    awful.key({ altkey,           }, "F4",     function (c) c:kill()                         end),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
-    awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end),
-    awful.key({ modkey            }, "d",      function (c) scratch.pad.set(c, 0.60, 0.60, true) end),
+    awful.key({ modkey,           }, "d",      function (c) scratch.pad.set(c, 0.6, 0.6, true)      end),
     awful.key({ modkey,           }, "n",
         function (c)
             -- The client currently has the input focus, so it cannot be
