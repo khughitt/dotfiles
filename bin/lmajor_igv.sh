@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-ANNOTATIONS=${REF}/lmajor_friedlin/annotation
 IGV_VERSION="2.3.32"
 
 java -Xmx12096m -Djava.net.preferIPv4Stack=true \
