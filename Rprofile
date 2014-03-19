@@ -13,14 +13,14 @@ if (interactive()) {
     options(setwidth.verbose=1,
             colorout.verbose=1,
             vimcom.verbose=1,
-            pager="vimrpager")
+            pager="/home/keith/bin/vimrpager")
     # Use the text based web browser w3m to navigate through R docs:
     #if(Sys.getenv("TMUX") != "")
     #    options(browser="~/bin/vimrw3mbrowser", help_type = "html")
 
     # select default editor
     if(nchar(Sys.getenv("DISPLAY")) > 1)
-        options(editor = 'gvim -f')
+        options(editor = 'gvim')
     else
         options(editor='vim')
 
@@ -58,6 +58,12 @@ if (interactive()) {
         require(utils)
         try(savehistory(Sys.getenv("R_HISTFILE")))
     }
+}
+
+# Shortcut to load bioconductor
+bc = function() {
+    print('Sourcing http://bioconductor.org/biocLite.R')
+    source("http://bioconductor.org/biocLite.R")
 }
 
 # Default HISTORY file

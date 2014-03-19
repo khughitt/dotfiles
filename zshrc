@@ -139,6 +139,20 @@ function ai {
     sox $1 -n remix 1 spectrogram -l -t "${artist} - ${title} (${bpm})" -x 1920 -o $spectrogram
 }
 
+# Generates simplified gff files
+function gff_genes() {
+    # exclude any fasta sections at end of file
+    last_line=$(expr $(grep --color='never' -nr "##FASTA" $1 |\
+                awk '{print $1}' FS=":") - 1)
+    outfile=$(basename $1 .gff)"_genes.gff"
+
+    # grab first few comment fields
+    head -n 3 $1 > $outfile
+
+    # grab all gene fields
+    head -n $last_line $1 | grep --color='never' 'gene' >> $outfile
+}
+
 # Hostname
 if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 26

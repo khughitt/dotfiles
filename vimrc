@@ -186,20 +186,16 @@ endif
 
 " let g:hybrid_use_Xresources = 1
 
-if has("gui_running")
-    " theme
-    colorscheme jellybeans
+" colorscheme jellybeans
+colorscheme Tomorrow-Night
 
+if has("gui_running")
     " font
     set guifont=DejaVu\ Sans\ Mono\ for\ Powerline\ 12
 
-    "set background=dark
     " Make shift-insert work like in Xterm
     map <S-Insert> <MiddleMouse>
     map! <S-Insert> <MiddleMouse>
-else
-    colorscheme jellybeans
-    "set background=dark
 endif
 
 if has("syntax")

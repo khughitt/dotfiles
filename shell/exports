@@ -8,6 +8,7 @@ export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswi
 #export XDG_CONFIG_HOME="$HOME/.config"
 #export QT_IM_MODULE=ibus
 #export TRITRYP=/usr/local/db/TriTrypDB/current
+export RESEARCH=$HOME/Dropbox/research
 
 # Less Colors for Man Pages
 export LESS_TERMCAP_mb=$'\E[01;31m'       # begin blinking
