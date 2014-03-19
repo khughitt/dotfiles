@@ -42,8 +42,11 @@ if (interactive()) {
     # updates output width when terminal is resized
     library(setwidth)
 
-    # better vim support
+    # better vim support on server
     if(Sys.getenv("VIMRPLUGIN_TMPDIR") != "") {
+        if(substring(Sys.getenv("HOSTNAME"), 0, 4) == "ibis") {
+            .libPaths("/cbcb/lab/nelsayed/local/R")
+        }
         library(vimcom.plus)
         # See R docs Vim buffer even if asking for help in R Console:
         if(Sys.getenv("VIM_PANE") != "")
