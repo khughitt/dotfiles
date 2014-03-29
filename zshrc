@@ -29,12 +29,6 @@ else
     vconsole=false
 fi
 
-# Fix color support for screen
-if [[ "$TERM" == "screen" ]] || [[ "$TERM" == "screen-bce" ]]; then
-    export TERM=xterm-256color
-    #export TERM=screen-256color
-fi
-
 # R-vim tweaks
 if [[ "x$DISPLAY" != "x" ]]; then
     alias vim='vim --servername VIM'
