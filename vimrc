@@ -299,8 +299,8 @@ function! RMakeHTML_2()
   call RSetWD()
   let filename = expand("%:r:t")
   let rcmd = "require('knitrBootstrap');
-    \knit_bootstrap('" . filename . ".rmd', 
-    \markdown_options=c('mathjax', 'use_xhtml'))"
+    \ render(\"" . filename . ".rmd\", knitrBootstrap::bootstrap_document,
+    \ output_options=c('mathjax', 'use_xhtml'))"
   if g:vimrplugin_openhtml
     let rcmd = rcmd . ';'
   endif
@@ -316,3 +316,11 @@ autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.md set filetype=markdown background=light nofoldenable
 autocmd FileType markdown colorscheme hybrid-light
 
+" ---------------------------------------------------------------------------
+"  Host-specific Options
+"  Based onhttps://github.com/teranex/dotvim/blob/master/vimrc
+" ---------------------------------------------------------------------------
+let hostfile=$HOME.'/.vim/vimrc-'.tolower(strpart(hostname(), 0, 4))
+if filereadable(hostfile)
+    exe 'source ' . hostfile
+endif
