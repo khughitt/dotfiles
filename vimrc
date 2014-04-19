@@ -261,7 +261,7 @@ nohlsearch     " avoid highlighting when reloading vimrc
 " ---------------------------------------------------------------------------
 
 " Python
-let $PYTHONPATH="/usr/lib/python3.3/site-packages"
+let $PYTHONPATH="/usr/lib/python3.4/site-packages"
 autocmd BufRead,BufNewFile *.py syntax on
 autocmd BufRead,BufNewFile *.py set ai
 map <F8> :w\|!python %<CR>
@@ -294,20 +294,20 @@ nmap <C-M> <Plug>RDSendLine
 nmap <C-A-c> <Plug>RDSendChunk
 
 " KnitrBootstrap
-function! RMakeHTML_2()
+"    \ render(\"" . filename . ".rmd\", knitrBootstrap::bootstrap_document(),
+function! RMakeBootstrapHTML()
   update
   call RSetWD()
   let filename = expand("%:r:t")
-  let rcmd = "require('knitrBootstrap');
-    \ render(\"" . filename . ".rmd\", knitrBootstrap::bootstrap_document,
-    \ output_options=c('mathjax', 'use_xhtml'))"
+  let rcmd = "require('knitrBootstrap'); require('rmarkdown');
+    \ render(\"" . filename . ".rmd\")"
   if g:vimrplugin_openhtml
     let rcmd = rcmd . ';'
   endif
   call g:SendCmdToR(rcmd)
 endfunction
 
-nnoremap <silent> <localleader>kk :call RMakeHTML_2()<CR>
+nnoremap <silent> <localleader>kk :call RMakeBootstrapHTML()<CR>
 
 " Ruby
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
@@ -315,6 +315,9 @@ autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 " Markdown
 autocmd BufRead,BufNewFile *.md set filetype=markdown background=light nofoldenable
 autocmd FileType markdown colorscheme hybrid-light
+
+" CSV
+let g:csv_no_conceal = 1
 
 " ---------------------------------------------------------------------------
 "  Host-specific Options
