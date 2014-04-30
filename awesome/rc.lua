@@ -408,6 +408,10 @@ globalkeys = awful.util.table.join(
     awful.util.spawn("xbacklight -dec 15") end),
   awful.key({ }, "XF86MonBrightnessUp", function ()
     awful.util.spawn("xbacklight -inc 15") end),
+  awful.key({ }, "XF86KbdBrightnessDown", function ()
+    awful.util.spawn("asus-kbd-backlight down") end),
+  awful.key({ }, "XF86KbdBrightnessUp", function ()
+    awful.util.spawn("asus-kbd-backlight up") end),
   awful.key({ }, "XF86AudioRaiseVolume", function ()
     awful.util.spawn_with_shell("pamixer --increase 3") end),
   awful.key({ }, "XF86AudioLowerVolume", function ()
