@@ -20,7 +20,8 @@ if (interactive()) {
 
     # select default editor
     if(nchar(Sys.getenv("DISPLAY")) > 1)
-        options(editor = 'gvim')
+        #options(editor = 'gvim')
+        options(editor = 'gvim -f -c "set ft=r"')
     else
         options(editor='vim')
 
@@ -42,8 +43,9 @@ if (interactive()) {
     # updates output width when terminal is resized
     library(setwidth)
 
-    # better vim support on server
+    # If R started by vim
     if(Sys.getenv("VIMRPLUGIN_TMPDIR") != "") {
+        # better vim support on server
         if(substring(Sys.getenv("HOSTNAME"), 0, 4) == "ibis") {
             .libPaths("/cbcb/lab/nelsayed/local/R")
         }

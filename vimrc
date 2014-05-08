@@ -237,6 +237,12 @@ let g:snips_email  = "user@email.com"
 let g:snips_github = "https://github.com/khughitt"
 
 " ---------------------------------------------------------------------------
+"  snipmate.vim
+" ---------------------------------------------------------------------------
+let g:SuperTabDefaultCompletionType = "context"
+highlight Pmenu ctermbg=198 ctermfg=234
+
+" ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
 " ---------------------------------------------------------------------------
 
@@ -283,14 +289,14 @@ else
     inoremap <Nul> <C-x><C-o>
 endif
 
-" Press the space bar to send lines and selection to R
+" Press enter and space bar to send lines and selection to R
 vmap <Space> <Plug>RDSendSelection
 nmap <Space> <Plug>RDSendLine
+vmap <C-M> <Plug>RDSendSelection
+nmap <C-M> <Plug>RDSendLine
 
 " Knitr
 vmap <Space> <Plug>RDSendSelection
-vmap <C-M> <Plug>RDSendSelection
-nmap <C-M> <Plug>RDSendLine
 nmap <C-A-c> <Plug>RDSendChunk
 
 " KnitrBootstrap
