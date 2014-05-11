@@ -280,7 +280,7 @@ settings = {
     reuse_unused_windows = "yes";
     theme = "xchat";
   };
-  "perl/core/scripts" = { nicklist_width = "100"; };
+  "perl/core/scripts" = { nicklist_width = "20"; };
 };
 windows = { 1 = { immortal = "yes"; name = "(status)"; level = "ALL"; }; };
 mainwindows = { 1 = { first_line = "1"; lines = "42"; }; };
