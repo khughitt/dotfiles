@@ -431,7 +431,8 @@ globalkeys = awful.util.table.join(
 
   -- Other Shortcuts
   awful.key({ modkey, "Shift"   }, "n", function ()
-      awful.util.spawn("nautilus --no-desktop") 
+      -- awful.util.spawn("nautilus --no-desktop") 
+      awful.util.spawn_with_shell("urxvt -e ranger") 
   end),
 
 
