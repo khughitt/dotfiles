@@ -1,7 +1,8 @@
 ! theme from sam87
 ! nov 2013
 *background: #151515
-*foreground: #707678
+!*foreground: #707678
+*foreground: #b0babd
 ! black
 *color0: #222222
 *color8: #666666

@@ -6,10 +6,8 @@
 ! -------------------------------------------------
 
 !! jwr dark
-URxvt*background: #080808
-URxvt*foreground: #999999
-XTerm*background: #080808
-XTerm*foreground: #999999
+*background: #080808
+*foreground: #999999
 
 !black
 *color0:#333333

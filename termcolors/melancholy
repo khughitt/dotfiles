@@ -1,0 +1,38 @@
+! FONTS
+*font: xft:pf tempesta five condensed:size=6:antialias=false
+*boldFont: xft:pf tempesta five condensed:size=6:antialias=false
+
+*background:          #191919
+*foreground:          #707070
+
+*colorBD:             #a6537d
+*colorUL:             #4d4d66
+*colorIT:             #4d4d66
+*underlineColor:      #d4d4d4
+*cursorColor:         #a6537d
+
+
+!black
+*color0:              #d4d4d4
+*color8:              #bababa
+!red
+*color1:              #801a4d
+*color9:              #8c1c54
+!green
+*color2:              #505955
+*color10:             #5c6661
+!yellow
+*color3:              #8c8277
+*color11:             #998e82
+!blue
+*color4:              #434359
+*color12:             #4d4d66
+!magenta
+*color5:              #994c73
+*color13:             #a6537d
+!cyan
+*color6:              #625766
+*color14:             #6f6273
+!white
+*color7:              #1a1a1a
+*color15:             #707070

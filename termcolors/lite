@@ -1,0 +1,31 @@
+!!
+!! lite - keith
+!!
+*.background: #1F1F1F
+*.foreground: #C3FFF9
+
+!BLK
+*.color0:     #303030
+*.color8:     #686868
+!RED
+*.color1:     #FF0081
+*.color9:     #BF0061
+!GRN
+*.color10:    #66FF99
+*.color2:     #4EC375
+!BLU
+*.color12:    #3CBBEA
+*.color4:     #2A82A3
+!YEL
+*.color11:    #D9FF9E
+*.color3:     #98B36F
+!CYN
+*.color14:    #15E6CF
+*.color6:     #10B3A1
+!MAG
+*.color13:    #9F6FFF
+*.color5:     #6B47B3
+!WHT
+*.color7:     #C3FFF9
+*.color15:    #B5EDE8
+

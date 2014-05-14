@@ -1,0 +1,31 @@
+!!
+!! glow - keith
+!!
+*background: #B5EDE8
+*foreground: #ACF2EB
+
+!black
+*color0:#333333
+!*color0:#242424
+*color8:#474747
+!red
+*color1:#FF0081
+*color9:#BF0061
+!green
+*color2:#15E6CF
+*color10:#0E998A
+!yellow
+*color3:#15E6A9
+*color11:#12C18D
+!blue
+*color4:#17A2A3
+*color12:#0F9697
+!magenta
+*color5:#ACBCEB
+*color13:#8390B4
+!cyan
+*color6:#15E6CF
+*color14:#10B3A1
+!white
+*color7:#ACF2EB
+*color15:#C0C0C0
