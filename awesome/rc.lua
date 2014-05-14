@@ -16,7 +16,7 @@ require("awful.remote")
 
 -- Theme handling library
 local beautiful = require("beautiful")
-beautiful.init(awful.util.getdir("config") .. "/themes/niceandclean/theme.lua")
+beautiful.init(awful.util.getdir("config") .. "/themes/glow/theme.lua")
 naughty = require("naughty")
 local menubar = require("menubar")
 local vicious = require("vicious")

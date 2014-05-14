@@ -3,7 +3,7 @@
 #
 options(showWarnCalls=T, showErrorCalls=T)
 options(max.print=10E3)
-options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
+#options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 options(menu.graphics=F)
 options(github.user="khughitt")
 

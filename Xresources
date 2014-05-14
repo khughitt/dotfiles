@@ -6,7 +6,7 @@ Xcursor.theme: XcursorAero
 !!
 !! Colour Scheme
 !!
-#include "/home/keith/.config/termcolors/dark"
+#include "/home/keith/.config/termcolors/sam"
 
 !!
 !! xft
@@ -23,7 +23,7 @@ Xft.rgba:      rgb
 !! URxvt
 !!
 URxvt.depth:             32
-URxvt.background:        [50]#000000
+!!URxvt.background:        [50]#000000
 URxvt*scrollBar:         false
 URxvt*scrollTtyOutput:   false
 URxvt*scrollWithBuffer:  true
@@ -75,13 +75,13 @@ URxvt.keysym.C-S-minus: perl:font-size:decglobal
 !! Xterm
 !!
 XTerm*termName: xterm-256color
-XTerm*background: #000000
+!!XTerm*background: #000000
 XTerm*locale:   true
 XTerm*metaSendsEscape: true
 XTerm*saveLines: 4096
 XTerm*selectToClipboard: on
-XTerm*font:               xft:dejavu sans mono for powerline:regular:size=16
-XTerm*boldFont:           xft:dejavu sans mono for powerline:bold:size=16
+XTerm*font:               xft:dejavu sans mono for powerline:regular:size=18
+XTerm*boldFont:           xft:dejavu sans mono for powerline:bold:size=18
 XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=14
 !XTerm*faceName: dejavu sans mono for powerline:pixelsize=16
 

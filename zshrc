@@ -147,8 +147,11 @@ function gff_genes() {
     head -n $last_line $1 | grep --color='never' 'gene' >> $outfile
 }
 
+# dir colors
+eval $(dircolors -b ~/.dir_colors)
+
 # Hostname
 if [ "$vconsole" = false ]; then
-    hostname | cut -d'.' -f1 | figlet | lolcat -S 26
+    hostname | cut -d'.' -f1 | figlet | lolcat -S 16
 fi
 

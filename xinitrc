@@ -17,7 +17,7 @@ if [ "$external" = "connected" ]; then
 fi
 
 # compositing
-compton -cGb
+compton --config ~/.config/compton.conf -b
 
 # enable restart X
 setxkbmap -option terminate:ctrl_alt_bksp
