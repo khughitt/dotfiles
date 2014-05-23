@@ -4,13 +4,12 @@
 #
 
 # GENERAL OPTIONS
-set font     = -*-droid sans mono-medium-r-*-*-14-*-*-*-*-*-*-*
-#set geometry = top
-#set geometry = 1900x16+20+0
+set font     = -*-droid sans mono-medium-r-*-*-15-*-*-*-*-*-*-*
+set geometry = 1920x18+0+0
 set colors   = #cf4f88 #000000 #4A9BA6 #000000 #484848 #59BCC7
 set border   = 2px #000000
 set bangchar = :
-set run_hook = PATH=$PATH:/home/keith/bin; cmd="%s"; ($cmd && echo $cmd >> ~/.interrobang_history) || (notify-send "Error: command not found"; XMODIFIERS='' interrobang)
+set run_hook = PATH=$PATH:$HOME/bin; cmd="%s"; ($cmd && echo $cmd >> $HOME/.interrobang_history) || (notify-send "Error: command not found"; XMODIFIERS='' interrobang)
 set autocomp = 1
 set list     = true
 #set last     = true
@@ -24,7 +23,8 @@ bang web      = luakit %s
 bang pdf      = llpp %s
 bang man      = urxvtc -e man %s
 bang g        = chromium https://www.google.com/search?q=%s
-bang archbbs  = luakit https://duckduckgo.com/?q=%s%%20site%%3Abbs.archlinux.org
+bang gh       = chromium https://github.com/%s
+bang archbbs  = chromium https://duckduckgo.com/?q=%s%%20site%%3Abbs.archlinux.org
 bang archwiki = luakit https://duckduckgo.com/?q=%s%%20site%%3Awiki.archlinux.org
 bang pubmed   = chromium https://www.ncbi.nlm.nih.gov/pubmed/?term=%s
 bang calc     = echo "interrobang ignored \"%s\""

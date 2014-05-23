@@ -6,7 +6,7 @@ Xcursor.theme: XcursorAero
 !!
 !! Colour Scheme
 !!
-#include "/home/keith/.config/termcolors/sam"
+#include "/home/keith/.config/termcolors/molokai"
 
 !!
 !! xft

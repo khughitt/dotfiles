@@ -240,7 +240,7 @@ let g:snips_github = "https://github.com/khughitt"
 "  snipmate.vim
 " ---------------------------------------------------------------------------
 let g:SuperTabDefaultCompletionType = "context"
-highlight Pmenu ctermbg=198 ctermfg=234
+highlight Pmenu ctermbg=234 ctermfg=198
 
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
@@ -275,7 +275,9 @@ map <F8> :w\|!python %<CR>
 " R
 let vimrplugin_objbr_place = "console,right"
 let vimrplugin_term = "urxvt"
+let vimrplugin_notmuxconf = 1
 let vimrplugin_assign = 0
+let vimrplugin_vsplit = 1
 
 if $DISPLAY != ""
     let vimrplugin_openpdf = 1
@@ -300,13 +302,12 @@ vmap <Space> <Plug>RDSendSelection
 nmap <C-A-c> <Plug>RDSendChunk
 
 " KnitrBootstrap
-"    \ render(\"" . filename . ".rmd\", knitrBootstrap::bootstrap_document(),
 function! RMakeBootstrapHTML()
   update
   call RSetWD()
   let filename = expand("%:r:t")
   let rcmd = "require('knitrBootstrap'); require('rmarkdown');
-    \ render(\"" . filename . ".rmd\")"
+    \ render(\"" . filename . ".rmd\", output_format=\"all\")"
   if g:vimrplugin_openhtml
     let rcmd = rcmd . ';'
   endif
