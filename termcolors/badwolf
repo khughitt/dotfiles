@@ -32,8 +32,10 @@
 
 
 ! Resourses {{{
-*background:  blackgravel
-*foreground:  plain
+URxvt*background:  blackgravel
+URxvt*foreground:  plain
+XTerm*background:  blackgravel
+XTerm*foreground:  plain
 *cursorColor: lime
 *scrollColor: deepgravel
 *fadeColor:   snow

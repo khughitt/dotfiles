@@ -3,7 +3,7 @@
 #
 
 # PATH
-PATH=$PATH:~/bin
+PATH=~/bin:~/.cabal/bin:$PATH
 
 # Stop here in non-interactive mode
 [ -z "$PS1" ] && return

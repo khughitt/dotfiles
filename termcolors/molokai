@@ -2,8 +2,10 @@
 !! Molokai theme
 !! https://gist.github.com/vreon/845878
 !!
-*background: #101010
-*foreground: #d0d0d0
+URxvt*background: #101010
+URxvt*foreground: #d0d0d0
+XTerm*background: #101010
+XTerm*foreground: #d0d0d0
 *cursorColor: #d0d0d0
 
 *color0: #101010
