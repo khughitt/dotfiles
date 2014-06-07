@@ -181,12 +181,22 @@ if $TERM != 'linux'
 endif
 
 " fix background bleeding in screen
+" http://snk.tuxfamily.org/log/vim-256color-bce.html
 " http://sunaku.github.io/vim-256color-bce.html
-:set t_ut=""
+set t_ut=""
 
-" let g:hybrid_use_Xresources = 1
+" fix control/shift + arrow keys in screen
+" http://superuser.com/questions/401926/how-to-get-shiftarrows-and-ctrlarrows-working-in-vim-in-tmux
+if &term =~ '^screen'
+    " tmux will send xterm-style keys when its xterm-keys option is on
+    execute "set <xUp>=\e[1;*A"
+    execute "set <xDown>=\e[1;*B"
+    execute "set <xRight>=\e[1;*C"
+    execute "set <xLeft>=\e[1;*D"
+endif
 
 " colorscheme jellybeans
+" let g:hybrid_use_Xresources = 1
 colorscheme Tomorrow-Night
 
 if has("gui_running")
@@ -312,7 +322,7 @@ function! RMakeBootstrapHTML()
   call RSetWD()
   let filename = expand("%:r:t")
   let rcmd = "require('knitrBootstrap'); require('rmarkdown');
-    \ render(\"" . filename . ".rmd\", output_format=\"all\")"
+    \ render(\"" . filename . ".rmd\", output_format=\"all\", clean=TRUE)"
   if g:vimrplugin_openhtml
     let rcmd = rcmd . ';'
   endif

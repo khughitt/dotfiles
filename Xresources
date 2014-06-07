@@ -80,8 +80,8 @@ XTerm*locale:   true
 XTerm*metaSendsEscape: true
 XTerm*saveLines: 4096
 XTerm*selectToClipboard: on
-XTerm*font:               xft:dejavu sans mono for powerline:regular:size=18
-XTerm*boldFont:           xft:dejavu sans mono for powerline:bold:size=18
-XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=14
+XTerm*font:               xft:dejavu sans mono for powerline:regular:size=26
+XTerm*boldFont:           xft:dejavu sans mono for powerline:bold:size=26
+!XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=18
 !XTerm*faceName: dejavu sans mono for powerline:pixelsize=16
 
