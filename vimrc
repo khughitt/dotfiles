@@ -113,7 +113,7 @@ set textwidth=79           " stick to less than 80 chars per line when possible
 set formatoptions+=n       " support for numbered/bullet lists
 set virtualedit=block      " allow virtual edit in visual block ..
 set encoding=utf8          " UTF-8 by default
-set pastetoggle=<F2>       " quickly toggle paste mode before pasting text
+set pastetoggle=<F6>       " quickly toggle paste mode before pasting text
 
 " ----------------------------------------------------------------------------
 " Moving around, tabs, windows and buffers
@@ -269,6 +269,43 @@ let g:SuperTabDefaultCompletionType = "context"
 highlight Pmenu ctermbg=234 ctermfg=198
 
 " ---------------------------------------------------------------------------
+"  Unite.vim
+"  http://bling.github.io/blog/2013/06/02/unite-dot-vim-the-plugin-you-didnt-know-you-need/
+" ---------------------------------------------------------------------------
+call unite#filters#matcher_default#use(['matcher_fuzzy'])
+call unite#filters#sorter_default#use(['sorter_rank'])
+call unite#set_profile('files', 'smartcase', 1)
+call unite#custom#source('file_rec/async','sorters','sorter_rank', )
+
+"let g:unite_data_directory=s:get_cache_dir('unite')
+let g:unite_data_directory='~/.vim/tmp/unite'
+let g:unite_enable_start_insert=1
+let g:unite_source_history_yank_enable=1
+let g:unite_source_rec_max_cache_files=5000
+let g:unite_prompt='» '
+let g:unite_split_rule = 'botright'
+
+nmap <space> [unite]
+nnoremap [unite] <nop>
+
+" cnrlp
+nnoremap <c-p> :Unite file file_mru file_rec/async<cr>
+
+" buffer switching
+nnoremap <space>s :Unite -quick-match buffer<cr>
+
+" yank history
+nnoremap <space>y :Unite history/yank<cr>
+
+nnoremap <silent> [unite]e :<C-u>Unite -buffer-name=recent file_mru<cr>
+nnoremap <silent> [unite]y :<C-u>Unite -buffer-name=yanks history/yank<cr>
+nnoremap <silent> [unite]l :<C-u>Unite -auto-resize -buffer-name=line line<cr>
+nnoremap <silent> [unite]b :<C-u>Unite -auto-resize -buffer-name=buffers buffer<cr>
+nnoremap <silent> [unite]/ :<C-u>Unite -no-quit -buffer-name=search grep:.<cr>
+nnoremap <silent> [unite]m :<C-u>Unite -auto-resize -buffer-name=mappings mapping<cr>
+nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
+
+" ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
 " ---------------------------------------------------------------------------
 
@@ -347,7 +384,7 @@ autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 
 " Markdown
 autocmd BufRead,BufNewFile *.md set filetype=markdown background=light nofoldenable
-autocmd FileType markdown colorscheme hybrid-light
+autocmd FileType markdown colorscheme summerfruit256
 
 " CSV
 let g:csv_no_conceal = 1
