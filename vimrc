@@ -54,14 +54,12 @@ highlight SpecialKey ctermfg=DarkGray ctermbg=Black
 " ----------------------------------------------------------------------------
 "  Backups
 " ----------------------------------------------------------------------------
-
-set nobackup                           " do not keep backups after close
-set nowritebackup                      " do not keep a backup while working
-set noswapfile                         " don't keep swp files either
-set backupdir=$HOME/.vim/backup        " store backups under ~/.vim/backup
+set backup                             " keep backups after close
+set writebackup                        " keep a backup while working
+set noswapfile                         " don't keep swp files
+set backupdir=$HOME/.vim/tmp/backup    " directory to store backups in
 set backupcopy=yes                     " keep attributes of original file
 set backupskip=/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*
-set directory=~/.vim/swap,~/tmp,.      " keep swp files under ~/.vim/swap
 
 " ----------------------------------------------------------------------------
 "  UI
@@ -221,6 +219,19 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 
 " Remap vim register to CLIPBOARD selection
 set clipboard=unnamed
+
+" ---------------------------------------------------------------------------
+"  Backup and undo directories
+" ---------------------------------------------------------------------------
+set undofile
+set history=100
+set undolevels=100
+set undodir=~/.vim/tmp/undo
+
+" ---------------------------------------------------------------------------
+"  gundo.vim
+" ---------------------------------------------------------------------------
+nnoremap <F5> :GundoToggle<CR>
 
 " ---------------------------------------------------------------------------
 "  Powerline
