@@ -13,7 +13,7 @@ if (interactive()) {
     options(setwidth.verbose=1,
             colorout.verbose=1,
             vimcom.verbose=1,
-            pager="/home/keith/bin/vimrpager")
+            pager=file.path(Sys.getenv("HOME"), "bin/vimrpager"))
     # Use the text based web browser w3m to navigate through R docs:
     #if(Sys.getenv("TMUX") != "")
     #    options(browser="~/bin/vimrw3mbrowser", help_type = "html")
