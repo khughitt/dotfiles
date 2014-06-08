@@ -18,6 +18,7 @@ set cursorline       " highlight current line
 set modeline         " make sure modeline support is enabled
 set noerrorbells     " quiet, please
 set nofoldenable     " disable folding
+set autoread         " automatically load changes made outside of vim
 filetype indent on   " indent based on filetype
 filetype plugin on   " enable filetype-specific plugin loading
 
@@ -48,7 +49,8 @@ map <Down> <Nop>
 "   Highlight Trailing Whitespace
 " ----------------------------------------------------------------------------
 
-set list listchars=trail:.,tab:>.
+"set list listchars=trail:.,tab:>.
+set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+
 highlight SpecialKey ctermfg=DarkGray ctermbg=Black
 
 " ----------------------------------------------------------------------------
@@ -64,11 +66,13 @@ set backupskip=/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*
 " ----------------------------------------------------------------------------
 "  UI
 " ----------------------------------------------------------------------------
-set so=7                    " stop scrolling when we get seven lines within top or bottom
+set scrolloff=5             " keep cursor at least this far away from top/bottom
+set sidescrolloff=1         " keep cursor this far from sides of screen
 set wildmenu                " enable wildmenu (easy buffer switching, etc)
 set wildignore=*.o,*~,*.pyc " ignore compiled files
-"set ruler                   " show the cursor position all the time
-set noshowcmd               " don't display incomplete commands
+set ruler                   " show the cursor position all the time
+"set noshowcmd               " don't display incomplete commands
+set showcmd                 " show incomplete commands and selection info
 set nolazyredraw            " turn off lazy redraw
 set number                  " line numbers
 "set ch=2                    " command line height
@@ -77,6 +81,7 @@ set whichwrap+=<,>,h,l,[,]  " backspace and cursor keys wrap to
 set shortmess=filtIoOA      " shorten messages
 set report=0                " tell us about changes
 set nostartofline           " don't jump to the start of line when scrolling
+set display+=lastline       " don't hide long lines
 
 " ----------------------------------------------------------------------------
 " Visual Cues
@@ -99,21 +104,23 @@ let showmarks_include="abcdefghijklmnopqrstuvwxyz"
 " Text Formatting
 " ----------------------------------------------------------------------------
 
-set autoindent             " automatic indent new lines
+set autoindent              " automatic indent new lines
 "disablign smart-indent: may be preventing comments from indenting?
 "http://stackoverflow.com/questions/191201/indenting-comments-to-match-code-in-vim
 "set smartindent            " be smart about it 
-set nowrap                 " do not wrap lines
-set softtabstop=4          " tab width
-set shiftwidth=4           " 
+set nowrap                  " do not wrap lines
+set softtabstop=4           " tab width
+set shiftwidth=4            " 
+set shiftround              " round indents to multiple of shift width
 set tabstop=4
-set expandtab              " expand tabs to spaces
-set nosmarttab             " no tabs
-set textwidth=79           " stick to less than 80 chars per line when possible
-set formatoptions+=n       " support for numbered/bullet lists
-set virtualedit=block      " allow virtual edit in visual block ..
-set encoding=utf8          " UTF-8 by default
-set pastetoggle=<F6>       " quickly toggle paste mode before pasting text
+set expandtab               " expand tabs to spaces
+set nosmarttab              " no tabs
+set textwidth=79            " stick to less than 80 chars per line when possible
+set formatoptions+=n        " support for numbered/bullet lists
+set virtualedit=block       " allow virtual edit in visual block ..
+set encoding=utf8           " UTF-8 by default
+set pastetoggle=<F6>        " quickly toggle paste mode before pasting text
+set sessionoptions-=options " don't preserve configuration across sessions
 
 " ----------------------------------------------------------------------------
 " Moving around, tabs, windows and buffers
@@ -221,12 +228,17 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 set clipboard=unnamed
 
 " ---------------------------------------------------------------------------
-"  Backup and undo directories
+"  Backup and undo
 " ---------------------------------------------------------------------------
 set undofile
-set history=100
-set undolevels=100
+set history=200
+set undolevels=200
 set undodir=~/.vim/tmp/undo
+
+" enable undo of c-u and c-w in insert mode
+" http://vim.wikia.com/wiki/Recover_from_accidental_Ctrl-U
+inoremap <c-u> <c-g>u<c-u>
+inoremap <c-w> <c-g>u<c-w>
 
 " ---------------------------------------------------------------------------
 "  gundo.vim
@@ -340,7 +352,7 @@ let vimrplugin_objbr_place = "console,right"
 let vimrplugin_term = "urxvt"
 let vimrplugin_notmuxconf = 1
 let vimrplugin_assign = 0
-let vimrplugin_vsplit = 1
+"let vimrplugin_vsplit = 1
 
 if $DISPLAY != ""
     let vimrplugin_openpdf = 1
