@@ -57,8 +57,9 @@ fi
 
 # Use Xresrouces to set TTY colors
 if $vconsole; then
-    _SEDCMD='s/.*\*\.color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
-    for i in $(sed -n "$_SEDCMD" $HOME/.Xresources | \
+    COLORFILE=$(grep --color='never' -o "/.*termcolors/[a-z1-9]*" $HOME/.Xresources)
+    _SEDCMD='s/.*\*color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
+    for i in $(sed -n "$_SEDCMD" $COLORFILE | \
                awk '$1 < 16 {printf "\\e]P%X%s", $1, $2}'); do
         echo -en "$i"
     done
@@ -76,9 +77,6 @@ setopt HIST_IGNORE_DUPS
 
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
-
-# Autojump tab completion support
-#autoload -U compinit && compinit -u
 
 # Fasd
 eval "$(fasd --init auto)"

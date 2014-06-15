@@ -119,7 +119,7 @@ set textwidth=79            " stick to less than 80 chars per line when possible
 set formatoptions+=n        " support for numbered/bullet lists
 set virtualedit=block       " allow virtual edit in visual block ..
 set encoding=utf8           " UTF-8 by default
-set pastetoggle=<F6>        " quickly toggle paste mode before pasting text
+set pastetoggle=<F6>        " paste-mode toggle
 set sessionoptions-=options " don't preserve configuration across sessions
 
 " ----------------------------------------------------------------------------
@@ -225,6 +225,8 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 " ---------------------------------------------------------------------------
 
 " Remap vim register to CLIPBOARD selection
+" unamed     = PRIMARY   (middlemouse)
+" unamedplus = CLIPBOARD (control v)
 set clipboard=unnamed
 
 " ---------------------------------------------------------------------------
@@ -279,6 +281,11 @@ let g:snips_github = "https://github.com/khughitt"
 " ---------------------------------------------------------------------------
 let g:SuperTabDefaultCompletionType = "context"
 highlight Pmenu ctermbg=234 ctermfg=198
+
+" ---------------------------------------------------------------------------
+"  Supertab 
+" ---------------------------------------------------------------------------
+let g:SuperTabNoCompleteAfter = ['^', ',', '\s', '"', "'"]
 
 " ---------------------------------------------------------------------------
 "  Unite.vim
@@ -409,3 +416,4 @@ let hostfile=$HOME.'/.vim/vimrc-'.tolower(strpart(hostname(), 0, 4))
 if filereadable(hostfile)
     exe 'source ' . hostfile
 endif
+

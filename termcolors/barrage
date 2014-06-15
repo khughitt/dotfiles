@@ -1,0 +1,28 @@
+! barrage
+! http://dotshare.it/dots/737/
+*background: #1f1f22
+*foreground: #839496
+! black
+*color0: #3a3a3a
+*color8: #505050
+! red
+*color1: #8c5b3d
+*color9: #9f6744
+! green
+*color2: #80764d
+*color10:#80785a
+! yellow
+*color3: #917154
+*color11:#917963
+! blue
+*color4: #596875
+*color12:#656d75
+! magenta
+*color5: #6e464b
+*color13:#635155
+! cyan
+*color6: #495e61
+*color14:#525F61
+! white
+*color7: #bcbcaf
+*color15:#c1c4bc

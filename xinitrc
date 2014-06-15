@@ -25,5 +25,8 @@ setxkbmap -option terminate:ctrl_alt_bksp
 # load Xresources
 xrdb -merge ~/.Xresources
 
+# map caps lock to escape
+xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
+
 # Awesome
 exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr

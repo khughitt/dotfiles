@@ -43,6 +43,7 @@ URxvt.keysym.Control-Right: \033[1;5C
 
 !! Extensions
 !! /usr/share/doc/urxvt-perls/README.md
+!URxvt.perl-ext-common:   default,url-select,clipboard,vtwheel,font-size,selection-to-clipboard
 URxvt.perl-ext-common:   default,url-select,clipboard,vtwheel,font-size
 
 !! URL launcher
