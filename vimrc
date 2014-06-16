@@ -31,8 +31,12 @@ let maplocalleader = ","
 let mapleader = ";"
 let g:mapleader = ";"
 
-" Fast save
+" Fast save (normal)
 nmap <leader>w :w!<cr>
+
+" Fast save (insert)
+inoremap <c-s> <c-o>:w<cr>
+nnoremap <c-s> :w<cr>
 
 " Pathogen
 execute pathogen#infect()
@@ -225,9 +229,10 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 " ---------------------------------------------------------------------------
 
 " Remap vim register to CLIPBOARD selection
-" unamed     = PRIMARY   (middlemouse)
-" unamedplus = CLIPBOARD (control v)
-set clipboard=unnamed
+" unamed        PRIMARY   (middlemouse)
+" unamedplusi   CLIPBOARD (control v)
+" autoselect    Automatically save visual selections
+set clipboard=unnamed,autoselect
 
 " ---------------------------------------------------------------------------
 "  Backup and undo
