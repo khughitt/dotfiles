@@ -6,7 +6,7 @@ Xcursor.theme: XcursorAero
 !!
 !! Colour Scheme
 !!
-#include "/home/keith/.config/termcolors/molokai"
+#include "/home/keith/.config/termcolors/dark"
 
 !!
 !! xft
@@ -22,18 +22,26 @@ Xft.rgba:      rgb
 !!
 !! URxvt
 !!
-URxvt.depth:             32
-!!URxvt.background:        [50]#000000
-URxvt*scrollBar:         false
-URxvt*scrollTtyOutput:   false
-URxvt*scrollWithBuffer:  true
-URxvt*scrollTtyKeypress: true
-URxvt*visualBell:        false
-URxvt.colorUL:           #81A2BE
+URxvt.background:         [75]#141414
+URxvt.depth:              32
+URxvt*scrollBar_right:    false
+URxvt*scrollBar:          false
+URxvt*scrollTtyOutput:    false
+URxvt*scrollWithBuffer:   true
+URxvt*scrollTtyKeypress:  true
+URxvt*visualBell:         false
+URxvt*borderLess:         false
+URxvt.cursorColor:        #395573
+URxvt.cursorUnderline:    false
+URxvt.cursorBlink:        false
+!URxvt.lineSpace:          0
+!URxvt.letterSpace:        -1
+!URxvt*skipBuiltinGlyphs:  true
+
 URxvt*termName:          rxvt-256color
-URxvt*font:              xft:dejavu sans mono for powerline:regular:size=12
-URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:size=12
-URxvt.iconFile:          /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
+URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16
+URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16
+URxvt*iconFile:          /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
 
 !! Control + arrow key navigation
 URxvt.keysym.Control-Up:    \033[1;5A
@@ -43,8 +51,7 @@ URxvt.keysym.Control-Right: \033[1;5C
 
 !! Extensions
 !! /usr/share/doc/urxvt-perls/README.md
-!URxvt.perl-ext-common:   default,url-select,clipboard,vtwheel,font-size,selection-to-clipboard
-URxvt.perl-ext-common:   default,url-select,clipboard,vtwheel,font-size
+URxvt.perl-ext-common:   default,url-select,clipboard,vtwheel,font-size,osc-xterm-clipboard
 
 !! URL launcher
 !
@@ -76,13 +83,12 @@ URxvt.keysym.C-S-minus: perl:font-size:decglobal
 !! Xterm
 !!
 XTerm*termName: xterm-256color
-!!XTerm*background: #000000
 XTerm*locale:   true
 XTerm*metaSendsEscape: true
 XTerm*saveLines: 4096
 XTerm*selectToClipboard: on
-XTerm*font:               xft:dejavu sans mono for powerline:regular:size=26
-XTerm*boldFont:           xft:dejavu sans mono for powerline:bold:size=26
+XTerm*font:              xft:dejavu sans mono for powerline:regular:size=26
+XTerm*boldFon:           xft:dejavu sans mono for powerline:bold:size=26
 !XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=18
 !XTerm*faceName: dejavu sans mono for powerline:pixelsize=16
 

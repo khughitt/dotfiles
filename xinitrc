@@ -22,6 +22,10 @@ compton --config ~/.config/compton.conf -b
 # enable restart X
 setxkbmap -option terminate:ctrl_alt_bksp
 
+# fonts
+xset +fp /usr/share/fonts/local
+xset fp rehash
+
 # load Xresources
 xrdb -merge ~/.Xresources
 

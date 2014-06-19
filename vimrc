@@ -257,6 +257,16 @@ nnoremap <F5> :GundoToggle<CR>
 " ---------------------------------------------------------------------------
 let g:Powerline_symbols = 'fancy'
 
+" speed up time update powerline when switching to normal mode
+if ! has('gui_running')
+    set ttimeoutlen=10
+    augroup FastEscape
+        autocmd!
+        au InsertEnter * set timeoutlen=0
+        au InsertLeave * set timeoutlen=1000
+    augroup END
+endif
+
 " ---------------------------------------------------------------------------
 "  NERDTree
 " ---------------------------------------------------------------------------
@@ -290,7 +300,8 @@ highlight Pmenu ctermbg=234 ctermfg=198
 " ---------------------------------------------------------------------------
 "  Supertab 
 " ---------------------------------------------------------------------------
-let g:SuperTabNoCompleteAfter = ['^', ',', '\s', '"', "'"]
+let g:SuperTabNoCompleteAfter  = ['^', ',', '\s', '"', "'"]
+let g:SuperTabNoCompleteBefore = ['\S']
 
 " ---------------------------------------------------------------------------
 "  Unite.vim
