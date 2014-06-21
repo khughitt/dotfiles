@@ -22,7 +22,7 @@ Xft.rgba:      rgb
 !!
 !! URxvt
 !!
-URxvt.background:         [75]#141414
+URxvt.background:         [85]#141414
 URxvt.depth:              32
 URxvt*scrollBar_right:    false
 URxvt*scrollBar:          false
@@ -39,9 +39,13 @@ URxvt.cursorBlink:        false
 !URxvt*skipBuiltinGlyphs:  true
 
 URxvt*termName:          rxvt-256color
-URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16
-URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16
-URxvt*iconFile:          /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
+URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16,\
+                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+!                         -*-stlarch-medium-r-*-*-10-*-*-*-*-*-*-*
+URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,\
+                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+!                         -*-stlarch-medium-r-*-*-10-*-*-*-*-*-*-*
+URxvt.iconFile:          /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
 
 !! Control + arrow key navigation
 URxvt.keysym.Control-Up:    \033[1;5A
