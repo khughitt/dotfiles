@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-if [ $(ps -ef | grep tmux | wc -l) -gt 1 ]; then
+if [ $(ps -f -u $USER | grep tmux | wc -l) -gt 1 ]; then
     # Fix DISPLAY variable
     # http://yubinkim.com/?p=203
     for name in `tmux ls -F '#{session_name}'`; do
