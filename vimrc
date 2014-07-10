@@ -70,22 +70,23 @@ set backupskip=/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*
 " ----------------------------------------------------------------------------
 "  UI
 " ----------------------------------------------------------------------------
-set scrolloff=5             " keep cursor at least this far away from top/bottom
-set sidescrolloff=1         " keep cursor this far from sides of screen
-set wildmenu                " enable wildmenu (easy buffer switching, etc)
-set wildignore=*.o,*~,*.pyc " ignore compiled files
-set ruler                   " show the cursor position all the time
-"set noshowcmd               " don't display incomplete commands
-set showcmd                 " show incomplete commands and selection info
-set nolazyredraw            " turn off lazy redraw
-set number                  " line numbers
-"set ch=2                    " command line height
-set backspace=2             " allow backspacing over everything in insert mode
-set whichwrap+=<,>,h,l,[,]  " backspace and cursor keys wrap to
-set shortmess=filtIoOA      " shorten messages
-set report=0                " tell us about changes
-set nostartofline           " don't jump to the start of line when scrolling
-set display+=lastline       " don't hide long lines
+set scrolloff=5                 " keep cursor at least this far away from top/bottom
+set sidescrolloff=1             " keep cursor this far from sides of screen
+set wildmenu                    " enable wildmenu (easy buffer switching, etc)
+"set wildmode=longest,list,full  " filepath completion
+set wildignore=*.o,*~,*.pyc     " ignore compiled files
+set ruler                       " show the cursor position all the time
+"set noshowcmd                  " don't display incomplete commands
+set showcmd                     " show incomplete commands and selection info
+set nolazyredraw                " turn off lazy redraw
+set number                      " line numbers
+"set ch=2                       " command line height
+set backspace=2                 " allow backspacing over everything in insert mode
+set whichwrap+=<,>,h,l,[,]      " backspace and cursor keys wrap to
+set shortmess=filtIoOA          " shorten messages
+set report=0                    " tell us about changes
+set nostartofline               " don't jump to the start of line when scrolling
+set display+=lastline           " don't hide long lines
 
 " ----------------------------------------------------------------------------
 " Visual Cues
@@ -137,6 +138,10 @@ map k gk
 " Map <Space> to / (search) and Ctrl-<Space> to ? (backwards search)
 " map <space> /
 " map <c-space> ?
+
+" Quick word navigation
+map <c-h> <C-Left>
+map <c-l> <C-Right>
 
 " Smart way to move between windows
 " map <C-j> <C-W>j
@@ -204,6 +209,10 @@ if &term =~ '^screen'
     execute "set <xLeft>=\e[1;*D"
 endif
 
+" tmux navigation in insert mode
+inoremap <silent> <c-j> <esc> :TmuxNavigateDown<cr>
+inoremap <silent> <c-k> <esc> :TmuxNavigateUp<cr>
+
 " colorscheme jellybeans
 " let g:hybrid_use_Xresources = 1
 colorscheme Tomorrow-Night
@@ -248,24 +257,14 @@ inoremap <c-u> <c-g>u<c-u>
 inoremap <c-w> <c-g>u<c-w>
 
 " ---------------------------------------------------------------------------
+"  airline
+" ---------------------------------------------------------------------------
+let g:airline_powerline_fonts = 1
+
+" ---------------------------------------------------------------------------
 "  gundo.vim
 " ---------------------------------------------------------------------------
 nnoremap <F5> :GundoToggle<CR>
-
-" ---------------------------------------------------------------------------
-"  Powerline
-" ---------------------------------------------------------------------------
-let g:Powerline_symbols = 'fancy'
-
-" speed up time update powerline when switching to normal mode
-if ! has('gui_running')
-    set ttimeoutlen=10
-    augroup FastEscape
-        autocmd!
-        au InsertEnter * set timeoutlen=0
-        au InsertLeave * set timeoutlen=1000
-    augroup END
-endif
 
 " ---------------------------------------------------------------------------
 "  NERDTree
@@ -360,12 +359,15 @@ set incsearch  " incremental search
 set hlsearch   " highlight searched words
 nohlsearch     " avoid highlighting when reloading vimrc
 
+" stop  highlighting
+" nnoremap <silent> <esc> :noh<cr><esc>
+nnoremap <silent> <C-l> :nohl<CR><C-l>
+
 " ---------------------------------------------------------------------------
 "  Language-specific Options
 " ---------------------------------------------------------------------------
 
 " Python
-let $PYTHONPATH="/usr/lib/python3.4/site-packages"
 autocmd BufRead,BufNewFile *.py syntax on
 autocmd BufRead,BufNewFile *.py set ai
 map <F8> :w\|!python %<CR>
@@ -403,9 +405,12 @@ nmap <C-A-c> <Plug>RDSendChunk
 function! RMakeBootstrapHTML()
   update
   call RSetWD()
-  let filename = expand("%:r:t")
+  "let filename = expand("%:r:t")
+  "let rcmd = "require('knitrBootstrap'); require('rmarkdown');
+  "  \ render(\"" . filename . ".rmd\", output_format=\"all\", clean=TRUE)"
+  let filename = expand("%")
   let rcmd = "require('knitrBootstrap'); require('rmarkdown');
-    \ render(\"" . filename . ".rmd\", output_format=\"all\", clean=TRUE)"
+           \  render(\"" . filename . "\", output_format=\"all\", clean=TRUE)"
   if g:vimrplugin_openhtml
     let rcmd = rcmd . ';'
   endif
