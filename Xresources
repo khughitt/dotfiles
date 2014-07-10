@@ -6,7 +6,7 @@ Xcursor.theme: XcursorAero
 !!
 !! Colour Scheme
 !!
-#include "/home/keith/.config/termcolors/dark"
+#include "/home/keith/.config/termcolors/hacker-blues-v2"
 
 !!
 !! xft
@@ -22,8 +22,10 @@ Xft.rgba:      rgb
 !!
 !! URxvt
 !!
-URxvt.background:         [85]#141414
+URxvt.background:         [85]#1C1C24
+!URxvt.cursorColor:        #395573
 URxvt.depth:              32
+URxvt*saveLines:          4096
 URxvt*scrollBar_right:    false
 URxvt*scrollBar:          false
 URxvt*scrollTtyOutput:    false
@@ -31,7 +33,6 @@ URxvt*scrollWithBuffer:   true
 URxvt*scrollTtyKeypress:  true
 URxvt*visualBell:         false
 URxvt*borderLess:         false
-URxvt.cursorColor:        #395573
 URxvt.cursorUnderline:    false
 URxvt.cursorBlink:        false
 !URxvt.lineSpace:          0
@@ -39,12 +40,13 @@ URxvt.cursorBlink:        false
 !URxvt*skipBuiltinGlyphs:  true
 
 URxvt*termName:          rxvt-256color
-URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16,\
-                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-!                         -*-stlarch-medium-r-*-*-10-*-*-*-*-*-*-*
-URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,\
-                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-!                         -*-stlarch-medium-r-*-*-10-*-*-*-*-*-*-*
+URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+
+!URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16,\
+!                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+!URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,\
+!                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
 URxvt.iconFile:          /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
 
 !! Control + arrow key navigation
@@ -52,6 +54,10 @@ URxvt.keysym.Control-Up:    \033[1;5A
 URxvt.keysym.Control-Down:  \033[1;5B
 URxvt.keysym.Control-Left:  \033[1;5D
 URxvt.keysym.Control-Right: \033[1;5C
+
+!! Shift + page up/down
+URxvt.keysym.Shift-Up: command:\033]720;1\007
+URxvt.keysym.Shift-Down: command:\033]721;1\007
 
 !! Extensions
 !! /usr/share/doc/urxvt-perls/README.md

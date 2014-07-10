@@ -16,7 +16,11 @@ require("awful.remote")
 
 -- Theme handling library
 local beautiful = require("beautiful")
-beautiful.init(awful.util.getdir("config") .. "/themes/niceandclean/theme.lua")
+beautiful.init(awful.util.getdir("config") .. "/themes/glow/theme.lua")
+
+local pomodoro = require("pomodoro")
+pomodoro.init()
+
 naughty = require("naughty")
 local menubar = require("menubar")
 local vicious = require("vicious")
@@ -99,6 +103,8 @@ naughty.config.defaults.hover_timeout = nil
 
 -- {{{ Wallpaper
 beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/Luetin_1920.jpg"
+--beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/02786_lakefornight_1920x1200.jpg"
+--beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/seaweed.jpg"
 if beautiful.wallpaper then
     for s = 1, screen.count() do
         gears.wallpaper.maximized(beautiful.wallpaper, s, true)
@@ -228,6 +234,10 @@ for s = 1, screen.count() do
     right_layout:add(volicon)
     right_layout:add(volpct)
     right_layout:add(volspace)
+    right_layout:add(pomodoro.widget)
+    right_layout:add(space)
+    right_layout:add(pomodoro.icon_widget)
+    right_layout:add(space)
     right_layout:add(mytextclock)
     right_layout:add(space)
     right_layout:add(baticon)
@@ -377,8 +387,8 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control" }, "r", awesome.restart),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit),
 
-    awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)    end),
-    awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact(-0.05)    end),
+    awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact( 0.05)    end),
+    awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact(-0.05)    end),
     awful.key({ modkey, "Shift"   }, "h",     function ()
                                                 awful.tag.incnmaster(1)
                                                 layout_info()
@@ -453,7 +463,7 @@ globalkeys = awful.util.table.join(
       awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
   end),
   awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
-  awful.key({ altkey }, "Return", function () scratch.drop("urxvt --background '[90]#333333'", 'center', 'center', 0.5, 0.5) end),
+  awful.key({ altkey }, "Return", function () scratch.drop("urxvt --background '[100]#333333'", 'center', 'center', 0.5, 0.5) end),
   awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.5, 0.5) end)
 )
   -- }}}

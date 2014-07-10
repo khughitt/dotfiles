@@ -41,8 +41,8 @@ theme.bg_systray    = theme.fg_tooltip
 theme.bg_widget     = theme.fg_tooltip
 
 theme.border_width  = 2
-theme.border_normal = "#628986"
-theme.border_focus  = "#19A46D"
+theme.border_normal = "#525252"
+theme.border_focus  = "#23E397" -- "#19A46D"
 theme.border_marked = "#91231c"
 theme.border_tooltip        = "#444444"
 theme.border_widget         = "#3f3f3f"

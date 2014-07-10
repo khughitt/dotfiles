@@ -1,8 +1,9 @@
 #!/bin/bash
+NET=$(ls /sys/class/net/ | awk '{print $1;}' | head -1)
 
-RXB=$(</sys/class/net/wlan0/statistics/rx_bytes)
+RXB=$(</sys/class/net/${NET}/statistics/rx_bytes)
 sleep 2
-RXBN=$(</sys/class/net/wlan0/statistics/rx_bytes)
+RXBN=$(</sys/class/net/${NET}/statistics/rx_bytes)
 RXDIF=$(echo $((RXBN - RXB)) )
 
 echo -e "$((RXDIF / 1024 / 2))"

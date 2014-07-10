@@ -13,12 +13,6 @@ ZSH=$HOME/.oh-my-zsh
 ZSH_THEME="bira-mod"
 CASE_SENSITIVE="true"
 
-# Additional shell settings (aliases, exports)
-for file in ~/.shell/{aliases,private,exports}; do
-    [ -r "$file" ] && source "$file"
-done
-unset file
-
 # Local settings
 [ -e ~/.zshlocal ] && source ~/.zshlocal
 
@@ -57,7 +51,7 @@ fi
 
 # Use Xresrouces to set TTY colors
 if $vconsole; then
-    COLORFILE=$(grep --color='never' -o "/.*termcolors/[a-z1-9]*" $HOME/.Xresources)
+    COLORFILE=$(grep --color='never' -o "/.*termcolors/[a-z1-9\-]*" $HOME/.Xresources)
     _SEDCMD='s/.*\*color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
     for i in $(sed -n "$_SEDCMD" $COLORFILE | \
                awk '$1 < 16 {printf "\\e]P%X%s", $1, $2}'); do
@@ -73,10 +67,17 @@ fi
 setopt HIST_IGNORE_DUPS
 
 # Plugins
-[ -z "$plugins" ] && plugins=(archlinux git systemd web-search)
+[ -z "$plugins" ] && plugins=(\
+    archlinux colored-man git systemd web-search)
 
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
+
+# Additional shell settings (aliases, exports)
+for file in ~/.shell/{aliases,private,exports}; do
+    [ -r "$file" ] && source "$file"
+done
+unset file
 
 # Fasd
 eval "$(fasd --init auto)"

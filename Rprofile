@@ -7,6 +7,19 @@ options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 options(menu.graphics=F)
 options(github.user="khughitt")
 
+options('rstudio.markdownToHTML'=NULL)
+
+## For knitr bootstrap
+## More info at http://www.rstudio.com/ide/docs/authoring/markdown_custom_rendering
+#options(rstudio.markdownToHTML =
+#  function(inputFile, outputFile) {
+#    library(knitrBootstrap)
+#    library(rmarkdown)
+#    render(inputFile, knitrBootstrap::bootstrap_document(),
+#           output_file=outputFile)
+#  }
+#)
+
 # interactive mode
 if (interactive()) {
     # console settings
@@ -52,7 +65,7 @@ if (interactive()) {
         library(vimcom.plus)
         # See R docs Vim buffer even if asking for help in R Console:
         if(Sys.getenv("VIM_PANE") != "")
-            options(help_type = "text", pager = vim.pager)
+            options(help_type = "text", pager=vim.pager)
     }
 }
 

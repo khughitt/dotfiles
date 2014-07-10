@@ -3,7 +3,8 @@
 #
 alias ll='ls -halF'
 alias la='ls -A'
-alias l='ls -CF'
+#alias l='ls -CF'
+alias l='ls++'
 
 alias grep='grep --color=always'
 alias bs='bzr status'
