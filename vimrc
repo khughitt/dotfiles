@@ -1,6 +1,6 @@
 " ---------------------------------------------------------------------------
 " Vim Configuration
-" 
+"
 " Much of the awesome functionality and settings in this file has come from
 " other dotfile on Github, and also from http://amix.dk/vim/vimrc.html.
 "
@@ -112,10 +112,10 @@ let showmarks_include="abcdefghijklmnopqrstuvwxyz"
 set autoindent              " automatic indent new lines
 "disablign smart-indent: may be preventing comments from indenting?
 "http://stackoverflow.com/questions/191201/indenting-comments-to-match-code-in-vim
-"set smartindent            " be smart about it 
+"set smartindent            " be smart about it
 set nowrap                  " do not wrap lines
 set softtabstop=4           " tab width
-set shiftwidth=4            " 
+set shiftwidth=4            "
 set shiftround              " round indents to multiple of shift width
 set tabstop=4
 set expandtab               " expand tabs to spaces
@@ -149,6 +149,10 @@ map <c-l> <C-Right>
 " map <C-h> <C-W>h
 " map <C-l> <C-W>l
 
+" Quick buffer switching
+map <s-left>  <esc> :bprev<cr>
+map <s-right> <esc> :bnext<cr>
+
 " Close the current buffer
 map <leader>bd :Bclose<cr>
 
@@ -168,7 +172,7 @@ map <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
 " Switch CWD to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>:pwd<cr>
 
-" Specify the behavior when switching between buffers 
+" Specify the behavior when switching between buffers
 try
 set switchbuf=useopen,usetab,newtab
     set stal=2
@@ -260,6 +264,7 @@ inoremap <c-w> <c-g>u<c-w>
 "  airline
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
+let g:airline#extensions#tabline#enabled = 1
 
 " ---------------------------------------------------------------------------
 "  gundo.vim
@@ -297,7 +302,7 @@ let g:SuperTabDefaultCompletionType = "context"
 highlight Pmenu ctermbg=234 ctermfg=198
 
 " ---------------------------------------------------------------------------
-"  Supertab 
+"  Supertab
 " ---------------------------------------------------------------------------
 let g:SuperTabNoCompleteAfter  = ['^', ',', '\s', '"', "'"]
 let g:SuperTabNoCompleteBefore = ['\S']
@@ -347,7 +352,7 @@ nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
 "    exec ':%s/ \+$//gc'
 "endfunction
 "map ,s :call StripWhitespace ()<CR>
-autocmd FileType py,php,js,rb,r autocmd BufWritePre <buffer> :%s/\s\+$//e
+autocmd FileType py,php,js,rb,r,rmd autocmd BufWritePre <buffer> :%s/\s\+$//e
 
 " ---------------------------------------------------------------------------
 "  Search Options
@@ -360,8 +365,8 @@ set hlsearch   " highlight searched words
 nohlsearch     " avoid highlighting when reloading vimrc
 
 " stop  highlighting
-" nnoremap <silent> <esc> :noh<cr><esc>
-nnoremap <silent> <C-l> :nohl<CR><C-l>
+" Used by tmux navigator
+" nnoremap <silent> <C-l> :nohl<CR><C-l>
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options

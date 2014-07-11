@@ -62,7 +62,7 @@ if (interactive()) {
         if(substring(Sys.getenv("HOSTNAME"), 0, 4) == "ibis") {
             .libPaths("/cbcb/lab/nelsayed/local/R")
         }
-        library(vimcom.plus)
+        library(vimcom)
         # See R docs Vim buffer even if asking for help in R Console:
         if(Sys.getenv("VIM_PANE") != "")
             options(help_type = "text", pager=vim.pager)
