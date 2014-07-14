@@ -59,7 +59,7 @@ if (interactive()) {
     # If R started by vim
     if(Sys.getenv("VIMRPLUGIN_TMPDIR") != "") {
         # better vim support on server
-        if(substring(Sys.getenv("HOSTNAME"), 0, 4) == "ibis") {
+        if(substring(Sys.getenv("HOME"), 0, 5) == "/cbcb") {
             .libPaths("/cbcb/lab/nelsayed/local/R")
         }
         library(vimcom)
