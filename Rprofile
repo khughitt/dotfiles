@@ -27,16 +27,30 @@ if (interactive()) {
             colorout.verbose=1,
             vimcom.verbose=1,
             pager=file.path(Sys.getenv("HOME"), "bin/vimrpager"))
+
     # Use the text based web browser w3m to navigate through R docs:
     #if(Sys.getenv("TMUX") != "")
     #    options(browser="~/bin/vimrw3mbrowser", help_type = "html")
 
     # select default editor
-    if(nchar(Sys.getenv("DISPLAY")) > 1)
+    #if(nchar(Sys.getenv("DISPLAY")) > 1)
         #options(editor = 'gvim')
-        options(editor = 'gvim -f -c "set ft=r"')
-    else
-        options(editor='vim')
+    #    options(editor = 'gvim -f -c "set ft=r"')
+    #else
+    #    options(editor='vim')
+    options(editor='vim')
+
+    # If R started by vim
+    if(Sys.getenv("VIMRPLUGIN_TMPDIR") != "") {
+        # better vim support on server
+        if(substring(Sys.getenv("HOME"), 0, 5) == "/cbcb") {
+            .libPaths("/cbcb/lab/nelsayed/local/R")
+        }
+        library(vimcom)
+        # See R docs Vim buffer even if asking for help in R Console:
+        if(Sys.getenv("VIM_PANE") != "")
+            options(help_type = "text", pager=vim.pager)
+    }
 
     # syntax highlighting
     library(colorout)
@@ -56,17 +70,6 @@ if (interactive()) {
     # updates output width when terminal is resized
     library(setwidth)
 
-    # If R started by vim
-    if(Sys.getenv("VIMRPLUGIN_TMPDIR") != "") {
-        # better vim support on server
-        if(substring(Sys.getenv("HOME"), 0, 5) == "/cbcb") {
-            .libPaths("/cbcb/lab/nelsayed/local/R")
-        }
-        library(vimcom)
-        # See R docs Vim buffer even if asking for help in R Console:
-        if(Sys.getenv("VIM_PANE") != "")
-            options(help_type = "text", pager=vim.pager)
-    }
 }
 
 # On quit
@@ -79,7 +82,7 @@ if (interactive()) {
 }
 
 # Shortcut to load bioconductor
-bc = function() {
+.bc = function() {
     print('Sourcing http://bioconductor.org/biocLite.R')
     source("http://bioconductor.org/biocLite.R")
 }
