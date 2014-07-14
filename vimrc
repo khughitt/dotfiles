@@ -28,15 +28,19 @@ set ofu=syntaxcomplete#Complete
 " With a map leader it's possible to do extra key combinations
 " like <leader>w saves the current file
 let maplocalleader = ","
-let mapleader = ";"
-let g:mapleader = ";"
+  
+"let mapleader = ";"
+"let g:mapleader = ";"
 
 " Fast save (normal)
-nmap <leader>w :w!<cr>
+nmap <leader>w :update<cr>
 
-" Fast save (insert)
+" Fast save (alt. method)
 inoremap <c-s> <c-o>:w<cr>
 nnoremap <c-s> :w<cr>
+
+nnoremap ; :
+nnoremap : ;
 
 " Pathogen
 execute pathogen#infect()
@@ -48,6 +52,7 @@ map <Left> <Nop>
 map <Right> <Nop>
 map <Up> <Nop>
 map <Down> <Nop>
+"inoremap <esc> <nop>
 
 " ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
@@ -150,8 +155,8 @@ map <c-l> <C-Right>
 " map <C-l> <C-W>l
 
 " Quick buffer switching
-map <s-left>  <esc> :bprev<cr>
-map <s-right> <esc> :bnext<cr>
+noremap <s-left>  <esc> :bprev<cr>
+noremap <s-right> <esc> :bnext<cr>
 
 " Close the current buffer
 map <leader>bd :Bclose<cr>
@@ -245,7 +250,8 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 " unamed        PRIMARY   (middlemouse)
 " unamedplusi   CLIPBOARD (control v)
 " autoselect    Automatically save visual selections
-set clipboard=unnamed,autoselect
+"set clipboard=unnamed,autoselect
+set clipboard=unnamed
 
 " ---------------------------------------------------------------------------
 "  Backup and undo
@@ -363,6 +369,21 @@ set smartcase  " override 'ignorecase' if the search pattern contains upper case
 set incsearch  " incremental search
 set hlsearch   " highlight searched words
 nohlsearch     " avoid highlighting when reloading vimrc
+
+" Make it easier to find current match
+nnoremap <silent> n   n:call HLNext(0.4)<cr>
+nnoremap <silent> N   N:call HLNext(0.4)<cr>
+
+function! HLNext (blinktime)
+    let [bufnum, lnum, col, off] = getpos('.')
+    let matchlen = strlen(matchstr(strpart(getline('.'),col-1),@/))
+    let target_pat = '\c\%#'.@/
+    let ring = matchadd('WhiteOnRed', target_pat, 101)
+    redraw
+    exec 'sleep ' . float2nr(a:blinktime * 1000) . 'm'
+    call matchdelete(ring)
+    redraw
+endfunction
 
 " stop  highlighting
 " Used by tmux navigator
