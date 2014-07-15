@@ -27,20 +27,21 @@ set ofu=syntaxcomplete#Complete
 
 " With a map leader it's possible to do extra key combinations
 " like <leader>w saves the current file
-let maplocalleader = ","
-  
-"let mapleader = ";"
-"let g:mapleader = ";"
+let mapleader = ";"
+let g:mapleader = ";"
 
-" Fast save (normal)
+let maplocalleader = ","
+
+" Fast save/quit
 nmap <leader>w :update<cr>
+nmap <leader>q :q<cr>
 
 " Fast save (alt. method)
 inoremap <c-s> <c-o>:w<cr>
 nnoremap <c-s> :w<cr>
 
-nnoremap ; :
-nnoremap : ;
+"nnoremap ; :
+"nnoremap : ;
 
 " Pathogen
 execute pathogen#infect()
@@ -273,6 +274,18 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 
 " ---------------------------------------------------------------------------
+"  dragvisuals.vim
+" ---------------------------------------------------------------------------
+vmap  <expr>  <LEFT>   DVB_Drag('left')                     
+vmap  <expr>  <RIGHT>  DVB_Drag('right')                    
+vmap  <expr>  <DOWN>   DVB_Drag('down')                     
+vmap  <expr>  <UP>     DVB_Drag('up')                       
+vmap  <expr>  D        DVB_Duplicate()                      
+
+" Remove any introduced trailing whitespace after moving... 
+let g:DVB_TrimWS = 1  
+
+" ---------------------------------------------------------------------------
 "  goyo.vim
 " ---------------------------------------------------------------------------
 function! GoyoBefore()
@@ -373,7 +386,8 @@ nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
 "    exec ':%s/ \+$//gc'
 "endfunction
 "map ,s :call StripWhitespace ()<CR>
-autocmd FileType py,php,js,rb,r,rmd autocmd BufWritePre <buffer> :%s/\s\+$//e
+autocmd FileType python,php,js,rb,r,rmd
+    \ autocmd BufWritePre <buffer> :%s/\s\+$//e
 
 " ---------------------------------------------------------------------------
 "  Search Options

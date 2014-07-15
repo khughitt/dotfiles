@@ -18,7 +18,18 @@ if [ -e ~/.zshlocal ]; then
     source ~/.zshlocal
 fi
 
-# Tmux on SSH
+# tmux helper function
+function xumt() {
+    WHOAMI=$(whoami)
+
+    if tmux has-session -t $WHOAMI 2>/dev/null; then
+        tmux -2 attach-session -t $WHOAMI
+    else
+        tmux -2 new-session -s $WHOAMI
+    fi
+}
+
+# Automatically launch tmux when connecting via SSH
 if [[ "$TERM" != screen* ]] && [ ! -z "$SSH_CLIENT" ]; then
     # Fix DISPLAY variable
     # http://yubinkim.com/?p=203
@@ -28,13 +39,7 @@ if [[ "$TERM" != screen* ]] && [ ! -z "$SSH_CLIENT" ]; then
 
     # Attempt to discover a detached session and attach 
     # it, else create a new session
-    WHOAMI=$(whoami)
-
-    if tmux has-session -t $WHOAMI 2>/dev/null; then
-        tmux -2 attach-session -t $WHOAMI
-    else
-        tmux -2 new-session -s $WHOAMI
-    fi
+    xumt
 
     # Exit on unattach
     exit

@@ -7,7 +7,7 @@ Xcursor.theme: XcursorAero
 !! Colour Scheme
 !!
 !#include "/home/keith/.config/termcolors/hacker-blues-v2"
-#include "/home/keith/.config/termcolors/barrage"
+#include "/home/keith/.config/termcolors/satori"
 
 !!
 !! xft
@@ -23,7 +23,7 @@ Xft.rgba:      rgb
 !!
 !! URxvt
 !!
-URxvt.background:         [85]#1C1C24
+!URxvt.background:         [85]#1C1C24
 !URxvt.cursorColor:        #395573
 URxvt.depth:              32
 URxvt*saveLines:          4096
