@@ -14,7 +14,9 @@ ZSH_THEME="bira-mod"
 CASE_SENSITIVE="true"
 
 # Local settings
-[ -e ~/.zshlocal ] && source ~/.zshlocal
+if [ -e ~/.zshlocal ] && [ ! -z "$ZSHLOCAL_LOADED" ]; then
+    source ~/.zshlocal
+fi
 
 # Tmux on SSH
 if [[ "$TERM" != screen* ]] && [ ! -z "$SSH_CLIENT" ]; then
