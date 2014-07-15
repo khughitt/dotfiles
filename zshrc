@@ -14,7 +14,7 @@ ZSH_THEME="bira-mod"
 CASE_SENSITIVE="true"
 
 # Local settings
-if [ -e ~/.zshlocal ] && [ ! -z "$ZSHLOCAL_LOADED" ]; then
+if [ -e ~/.zshlocal ] && [ -z "$ZSHLOCAL_LOADED" ]; then
     source ~/.zshlocal
 fi
 
