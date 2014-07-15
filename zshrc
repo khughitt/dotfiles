@@ -2,6 +2,28 @@
 # Z shell Settings
 #
 
+# Tmux on SSH
+if [[ "$TERM" != "screen" ]] && [ ! -z "$SSH_CLIENT" ]; then
+    # Fix DISPLAY variable
+    # http://yubinkim.com/?p=203
+    for name in `tmux ls -F '#{session_name}'`; do
+        tmux setenv -g -t $name DISPLAY $DISPLAY #set display for all sessions
+    done
+
+    # Attempt to discover a detached session and attach 
+    # it, else create a new session
+    WHOAMI=$(whoami)
+
+    if tmux has-session -t $WHOAMI 2>/dev/null; then
+        tmux -2 attach-session -t $WHOAMI
+    else
+        tmux -2 new-session -s $WHOAMI
+    fi
+
+    # Exit on unattach
+    exit
+fi
+
 # PATH
 PATH=~/bin:~/.cabal/bin:$PATH
 

@@ -2,6 +2,7 @@
 # R Configuration
 #
 options(showWarnCalls=T, showErrorCalls=T)
+options(warning.length=8170)
 options(max.print=10E3)
 options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 options(menu.graphics=F)

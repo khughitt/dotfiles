@@ -273,6 +273,21 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 
 " ---------------------------------------------------------------------------
+"  goyo.vim
+" ---------------------------------------------------------------------------
+function! GoyoBefore()
+  Limelight
+endfunction
+
+function! GoyoAfter()
+  Limelight!
+endfunction
+
+let g:goyo_callbacks = [function('GoyoBefore'), function('GoyoAfter')]
+
+nnoremap <leader><space> :Goyo<CR>  
+
+" ---------------------------------------------------------------------------
 "  gundo.vim
 " ---------------------------------------------------------------------------
 nnoremap <F5> :GundoToggle<CR>
