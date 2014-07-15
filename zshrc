@@ -3,7 +3,7 @@
 #
 
 # Tmux on SSH
-if [[ "$TERM" != "screen" ]] && [ ! -z "$SSH_CLIENT" ]; then
+if [[ "$TERM" != screen* ]] && [ ! -z "$SSH_CLIENT" ]; then
     # Fix DISPLAY variable
     # http://yubinkim.com/?p=203
     for name in `tmux ls -F '#{session_name}'`; do
