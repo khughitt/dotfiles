@@ -2,6 +2,20 @@
 # Z shell Settings
 #
 
+# PATH
+PATH=~/bin:~/.cabal/bin:$PATH
+
+# Stop here in non-interactive mode
+[ -z "$PS1" ] && return
+
+# Oh-my-zsh settings
+ZSH=$HOME/.oh-my-zsh
+ZSH_THEME="bira-mod"
+CASE_SENSITIVE="true"
+
+# Local settings
+[ -e ~/.zshlocal ] && source ~/.zshlocal
+
 # Tmux on SSH
 if [[ "$TERM" != screen* ]] && [ ! -z "$SSH_CLIENT" ]; then
     # Fix DISPLAY variable
@@ -23,20 +37,6 @@ if [[ "$TERM" != screen* ]] && [ ! -z "$SSH_CLIENT" ]; then
     # Exit on unattach
     exit
 fi
-
-# PATH
-PATH=~/bin:~/.cabal/bin:$PATH
-
-# Stop here in non-interactive mode
-[ -z "$PS1" ] && return
-
-# Oh-my-zsh settings
-ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="bira-mod"
-CASE_SENSITIVE="true"
-
-# Local settings
-[ -e ~/.zshlocal ] && source ~/.zshlocal
 
 # Check if in virtual console
 if [ "$TERM" = "linux" ]; then
