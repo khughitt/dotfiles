@@ -10,11 +10,11 @@ PATH=~/bin:~/.cabal/bin:$PATH
 
 # Oh-my-zsh settings
 ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="bira-mod"
+ZSH_THEME="bira"
 CASE_SENSITIVE="true"
 
 # Local settings
-if [ -e ~/.zshlocal ] && [ -z "$ZSHLOCAL_LOADED" ]; then
+if [ -e ~/.zshlocal ]; then
     source ~/.zshlocal
 fi
 
