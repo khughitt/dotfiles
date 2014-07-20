@@ -1,30 +1,62 @@
-----------------------------------
--- AwesomeWM 3.5.1 config       --
--- Based on github.com/tdy/dots --
-----------------------------------
-local gears = require("gears")
+------------------------------------------
+-- AwesomeWM 3.5.1 config
+-- Inspired by:
+--   github.com/tdy/dots
+--   github.com/pw4ever/awesome-wm-config
+------------------------------------------
+package.path = package.path .. ";./?/init.lua;"
+
+local gears   = require("gears")
 local scratch = require("scratch")
-awful = require("awful")
-awful.rules = require("awful.rules")
+local awful   = require("awful")
+awful.rules   = require("awful.rules")
+
 require("awful.autofocus")
-
--- Widgets and layout library
-local wibox = require("wibox")
-
--- awesome-client support
+require("awful.dbus")
 require("awful.remote")
 
--- Theme handling library
+awful.ewmh = require("awful.ewmh")
+
 local beautiful = require("beautiful")
 beautiful.init(awful.util.getdir("config") .. "/themes/glow/theme.lua")
 
-local pomodoro = require("pomodoro")
+local wibox     = require("wibox")
+local naughty   = require("naughty")
+local menubar   = require("menubar")
+local vicious   = require("vicious")
+local wi        = require("wi")
+local util      = require("util")
+
+local capi = {
+    tag = tag,
+}
+
+-- customization
+customization = {}
+customization.config = {}
+customization.orig = {}
+customization.func = {}
+customization.default = {}
+customization.option = {}
+customization.timer = {}
+
+customization.config.version = "1.5.4"
+customization.config.help_url = "https://github.com/pw4ever/awesome-wm-config/tree/" .. customization.config.version
+
+customization.default.property = {
+    layout = awful.layout.suit.tile.left,
+    mwfact = 0.5,
+    nmaster = 1,
+    ncol = 1,
+    min_opacity = 0.4,
+    max_opacity = 1,
+    default_naughty_opacity = 1,
+}
+
+-- Pomodoro widget
+local pomodoro  = require("pomodoro")
 pomodoro.init()
 
-naughty = require("naughty")
-local menubar = require("menubar")
-local vicious = require("vicious")
-local wi = require("wi")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -51,15 +83,125 @@ do
 end
 -- }}}
 
+-- {{{
+-- HACK! prevent Awesome start autostart items multiple times in a session
+-- cause: in-place restart by awesome.restart, xrandr change
+-- idea: 
+-- * create a file /tmp/awesome-autostart-once when first time "dex" autostart items (at the end of this file)
+-- * only "rm" this file when awesome.quit
+
+local awesome_autostart_once_fname = "/tmp/awesome-autostart-once-" .. os.getenv("XDG_SESSION_ID")
+local awesome_restart_tags_fname = "/tmp/awesome-restart-tags-" .. os.getenv("XDG_SESSION_ID")
+
+do
+    awesome.connect_signal("exit", function (restart)
+        if not restart then
+            awful.util.spawn_with_shell("rm -rf " .. awesome_autostart_once_fname)
+            awful.util.spawn_with_shell("rm -rf " .. awesome_restart_tags_fname .. '*')
+            bashets.stop()
+        end
+    end)
+
+    customization.orig.quit = awesome.quit
+    awesome.quit = function ()
+        local scr = mouse.screen
+        awful.prompt.run({prompt = "Quit (type 'yes' to confirm)? "},
+        mypromptbox[scr].widget,
+        function (t)
+            if string.lower(t) == 'yes' then
+                customization.orig.quit()
+            end
+        end,
+        function (t, p, n)
+            return awful.completion.generic(t, p, n, {'no', 'NO', 'yes', 'YES'})
+        end)
+    end
+end
+
+do
+    awesome.connect_signal("exit", function (restart)
+        if restart then
+            -- save number of screens, used for check proper tag recording
+            do
+                local f = io.open(awesome_restart_tags_fname .. ".0", "w+")
+                if f then
+                    f:write(string.format("%d", screen.count()) .. "\n")
+                    f:close()
+                end
+            end
+
+            -- save current tags
+            for s = 1, screen.count() do
+                local f = io.open(awesome_restart_tags_fname .. "." .. s, "w+")
+                if f then
+                    local tags = awful.tag.gettags(s)
+                    for _, tag in ipairs(tags) do
+                        f:write(tag.name .. "\n")
+                    end
+                    f:close()
+                end
+                f = io.open(awesome_restart_tags_fname .. "-selected." .. s, "w+")
+                if f then
+                    f:write(awful.tag.getidx() .. "\n")
+                    f:close()
+                end
+            end
+
+            -- save tags for each client
+            awful.util.mkdir(awesome_restart_tags_fname)
+            -- !! avoid awful.util.spawn_with_shell("mkdir -p " .. awesome_restart_tags_fname) 
+            -- race condition (whether awesome_restart_tags_fname is created) due to asynchrony of "spawn_with_shell"
+            for _, c in ipairs(client.get()) do
+                local client_id = c.pid .. '-' .. c.window
+                local f = io.open(awesome_restart_tags_fname .. '/' .. client_id, 'w+')
+                if f then
+                    for _, t in ipairs(c:tags()) do
+                        f:write(t.name .. "\n")
+                    end
+                    f:close()
+                end
+            end
+        end
+    end)
+
+    customization.orig.restart = awesome.restart
+    awesome.restart = function ()
+        local scr = mouse.screen
+        awful.prompt.run({prompt = "Restart (type 'yes' to confirm)? "},
+        mypromptbox[scr].widget,
+        function (t)
+            if string.lower(t) == 'yes' then
+                customization.orig.restart()
+            end
+        end,
+        function (t, p, n)
+            return awful.completion.generic(t, p, n, {'no', 'NO', 'yes', 'YES'})
+        end)
+    end
+end
+
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
 
+do
+    local config_path = awful.util.getdir("config")
+end
+
 -- This is used later as the default terminal and editor to run.
-terminal = "urxvt"
-editor = os.getenv("EDITOR") or "vim"
-editor_cmd = terminal .. " -e " .. editor
-files = "nautilus"
-browser = "chromium"
+
+--{{
+local tools = {
+    terminal = "urxvt",
+    browser  = "chromium",
+    editor   = os.getenv("EDITOR") or "vim",
+    system = {
+        filemanager = "ranger",
+    },
+}
+
+editor_cmd = "urxvt -e " .. tools.editor
+
+--}}
 
 -- Default modkey.
 -- Usually, Mod4 is the key with a logo between Control and Alt.
@@ -73,13 +215,9 @@ altkey = "Mod1"
 local layouts =
 {
     awful.layout.suit.floating,
-    awful.layout.suit.tile.left,
-    awful.layout.suit.tile.right,
+    awful.layout.suit.tile,
     awful.layout.suit.tile.bottom,
-    --awful.layout.suit.tile.top,
     awful.layout.suit.fair,
-    --awful.layout.suit.fair.horizontal,
-    --awful.layout.suit.max.fullscreen,
     awful.layout.suit.magnifier
 }
 -- }}}
@@ -128,14 +266,14 @@ end
 -- {{{ Menu
 -- Create a laucher widget and a main menu
 myawesomemenu = {
-   { "manual", terminal .. " -e man awesome" },
+   { "manual", tools.terminal .. " -e man awesome" },
    { "edit config", editor_cmd .. " " .. awesome.conffile },
    { "restart", awesome.restart },
    { "quit", awesome.quit }
 }
 
 mymainmenu = awful.menu({ items = { { "awesome", myawesomemenu, beautiful.awesome_icon },
-                                    { "open terminal", terminal }
+                                    { "open terminal", tools.terminal }
                                   }
                         })
 
@@ -143,7 +281,7 @@ mylauncher = awful.widget.launcher({ image = beautiful.awesome_icon,
                                      menu = mymainmenu })
 
 -- Menubar configuration
-menubar.utils.terminal = terminal -- Set the terminal for applications that require it
+menubar.utils.terminal = tools.terminal -- Set the terminal for applications that require it
 -- }}}
 
 -- {{{ Wibox
@@ -161,47 +299,49 @@ mypromptbox = {}
 mylayoutbox = {}
 mytaglist = {}
 mytaglist.buttons = awful.util.table.join(
-                    awful.button({ }, 1, awful.tag.viewonly),
-                    awful.button({ modkey }, 1, awful.client.movetotag),
-                    awful.button({ }, 3, awful.tag.viewtoggle),
-                    awful.button({ modkey }, 3, awful.client.toggletag),
-                    awful.button({ }, 4, function(t) awful.tag.viewnext(awful.tag.getscreen(t)) end),
-                    awful.button({ }, 5, function(t) awful.tag.viewprev(awful.tag.getscreen(t)) end)
-                    )
+    awful.button({ }, 1, awful.tag.viewonly),
+    awful.button({ modkey }, 1, awful.client.movetotag),
+    awful.button({ }, 3, awful.tag.viewtoggle),
+    awful.button({ modkey }, 3, awful.client.toggletag),
+    awful.button({ }, 4, function(t) awful.tag.viewnext(awful.tag.getscreen(t)) end),
+    awful.button({ }, 5, function(t) awful.tag.viewprev(awful.tag.getscreen(t)) end)
+)
+
 mytasklist = {}
 mytasklist.buttons = awful.util.table.join(
-                     awful.button({ }, 1, function (c)
-                                              if c == client.focus then
-                                                  c.minimized = true
-                                              else
-                                                  -- Without this, the following
-                                                  -- :isvisible() makes no sense
-                                                  c.minimized = false
-                                                  if not c:isvisible() then
-                                                      awful.tag.viewonly(c:tags()[1])
-                                                  end
-                                                  -- This will also un-minimize
-                                                  -- the client, if needed
-                                                  client.focus = c
-                                                  c:raise()
-                                              end
-                                          end),
-                     awful.button({ }, 3, function ()
-                                              if instance then
-                                                  instance:hide()
-                                                  instance = nil
-                                              else
-                                                  instance = awful.menu.clients({ width=250 })
-                                              end
-                                          end),
-                     awful.button({ }, 4, function ()
-                                              awful.client.focus.byidx(1)
-                                              if client.focus then client.focus:raise() end
-                                          end),
-                     awful.button({ }, 5, function ()
-                                              awful.client.focus.byidx(-1)
-                                              if client.focus then client.focus:raise() end
-                                          end))
+    awful.button({ }, 1, function (c)
+        if c == client.focus then
+            c.minimized = true
+        else
+            -- Without this, the following
+            -- :isvisible() makes no sense
+            c.minimized = false
+            if not c:isvisible() then
+                awful.tag.viewonly(c:tags()[1])
+            end
+            -- This will also un-minimize
+            -- the client, if needed
+            client.focus = c
+            c:raise()
+        end
+    end),
+    awful.button({ }, 3, function ()
+        if instance then
+            instance:hide()
+            instance = nil
+        else
+            instance = awful.menu.clients({ width=250 })
+        end
+    end),
+    awful.button({ }, 4, function ()
+        awful.client.focus.byidx(1)
+        if client.focus then client.focus:raise() end
+    end),
+    awful.button({ }, 5, function ()
+        awful.client.focus.byidx(-1)
+        if client.focus then client.focus:raise() end
+    end)
+)
 
 for s = 1, screen.count() do
     -- Create a promptbox for each screen
@@ -210,10 +350,11 @@ for s = 1, screen.count() do
     -- We need one layoutbox per screen.
     mylayoutbox[s] = awful.widget.layoutbox(s)
     mylayoutbox[s]:buttons(awful.util.table.join(
-                           awful.button({ }, 1, function () awful.layout.inc(layouts, 1) end),
-                           awful.button({ }, 3, function () awful.layout.inc(layouts, -1) end),
-                           awful.button({ }, 4, function () awful.layout.inc(layouts, 1) end),
-                           awful.button({ }, 5, function () awful.layout.inc(layouts, -1) end)))
+        awful.button({ }, 1, function () awful.layout.inc(layouts, 1) end),
+        awful.button({ }, 3, function () awful.layout.inc(layouts, -1) end),
+        awful.button({ }, 4, function () awful.layout.inc(layouts, 1) end),
+        awful.button({ }, 5, function () awful.layout.inc(layouts, -1) end)
+    ))
     -- Create a taglist widget
     mytaglist[s] = awful.widget.taglist(s, awful.widget.taglist.filter.all, mytaglist.buttons)
 
@@ -307,6 +448,21 @@ function layout_info()
     })
 end
 
+-- Dynamic tagging functions
+function create_tag ()
+    local scr = mouse.screen
+    local sel_idx = awful.tag.getidx()
+    local t = util.tag.add(nil, 
+    {
+        screen = scr,
+        index = sel_idx and sel_idx+1 or 1,
+        layout =     awful.layout.suit.tile.left,
+        mwfact = 0.5,
+        nmaster = 1,
+        ncol = 1,
+    })
+end
+
 -- {{{ Key bindings
 globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
@@ -315,7 +471,7 @@ globalkeys = awful.util.table.join(
     awful.key({ altkey, "Control" }, "Right",  awful.tag.viewnext       ),
     awful.key({ modkey,           }, "Escape", awful.tag.history.restore),
 
-    -- Gnome shell shortcuts
+    -- Gnome shell style shortcuts
     awful.key({ altkey, "Control", "Shift"}, "Left",
         function ()
             local i = awful.tag.getidx() - 1
@@ -368,6 +524,24 @@ globalkeys = awful.util.table.join(
     end),
     awful.key({ modkey,           }, "w", function () mymainmenu:show() end),
 
+    -- Rename tag
+    awful.key({ modkey, }, "r",    function ()
+        awful.prompt.run({ prompt = "Rename tab: ", text = "", },
+        mypromptbox[mouse.screen].widget,
+        function (s)
+            awful.tag.selected().name = s
+        end)
+    end),
+
+    -- Move tag
+    awful.key({modkey, "Shift"}, "Left", function () util.tag.rel_move(awful.tag.selected(), -1) end), 
+    awful.key({modkey, "Shift"}, "Right", function () util.tag.rel_move(awful.tag.selected(), 1) end), 
+   
+    -- Create tag
+    awful.key({ modkey }, "a", create_tag() ),
+
+    -- Delete tag
+    awful.key({ modkey }, "d", awful.tag.delete),
 
     -- Layout manipulation
     awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end),
@@ -384,7 +558,7 @@ globalkeys = awful.util.table.join(
     --    end),
 
     -- Standard program
-    awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
+    awful.key({ modkey,           }, "Return", function () awful.util.spawn(tools.terminal) end),
     awful.key({ modkey, "Control" }, "r", awesome.restart),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit),
 
@@ -448,8 +622,7 @@ globalkeys = awful.util.table.join(
 
 
   -- Prompt
-  awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
-  awful.key({ altkey },            "F2",     function () mypromptbox[mouse.screen]:run() end),
+  awful.key({ altkey }, "F2", function () mypromptbox[mouse.screen]:run() end),
 
   awful.key({ modkey }, "x",
             function ()
@@ -477,7 +650,6 @@ clientkeys = awful.util.table.join(
     awful.key({ altkey,           }, "F4",     function (c) c:kill()                         end),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end),
-    awful.key({ modkey,           }, "d",      function (c) scratch.pad.set(c, 0.6, 0.6, true)      end),
     awful.key({ modkey,           }, "n",
         function (c)
             -- The client currently has the input focus, so it cannot be
