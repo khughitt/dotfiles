@@ -252,15 +252,14 @@ end
 
 -- {{{ Tags
 -- Define a tag table which hold all screen tags.
-tags = {
--- names = {'www', 'term', 'code', 'doc', 'misc'},
-  names = {'www', 'utr', 'mtb', 'wgcna', 'reading'},
-  layout = {layouts[2], layouts[2], layouts[3], layouts[2], layouts[4]}
-}
-for s = 1, screen.count() do
+-- tags = {
+--   names = {'www', 'utr', 'mtb', 'wgcna', 'reading'},
+--   layout = {layouts[2], layouts[2], layouts[3], layouts[2], layouts[4]}
+-- }
+-- for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    tags[s] = awful.tag(tags.names, s, tags.layout)
-end
+--     tags[s] = awful.tag(tags.names, s, tags.layout)
+-- end
 -- }}}
 
 -- {{{ Menu
@@ -429,6 +428,87 @@ for s = 1, screen.count() do
 end
 -- }}}
 
+do
+    -- test whether screen 1 tag file exists
+    local f = io.open(awesome_restart_tags_fname .. ".0", "r")
+    if f then
+        local old_scr_count = tonumber(f:read("*l"))
+        f:close()
+        os.remove(awesome_restart_tags_fname .. ".0")
+
+        local new_scr_count = screen.count()
+
+        local count = {}
+
+        local scr_count = math.min(new_scr_count, old_scr_count)
+
+        if scr_count>0 then
+            for s = 1, scr_count do
+                count[s] = 1
+            end
+
+            for s = 1, old_scr_count do
+                local count_index = math.min(s, scr_count)
+                local fname = awesome_restart_tags_fname .. "." .. s
+                for tagname in io.lines(fname) do
+                    local tag = awful.tag.add(tagname,
+                    {
+                        screen = count_index,
+                        layout = customization.default.property.layout,
+                        mwfact = customization.default.property.mwfact,
+                        nmaster = customization.default.property.nmaster,
+                        ncol = customization.default.property.ncol,
+                    }
+                    )
+                    awful.tag.move(count[count_index], tag)
+
+                    count[count_index] = count[count_index]+1
+                end
+                os.remove(fname)
+            end
+        end
+
+        for s = 1, screen.count() do
+            local fname = awesome_restart_tags_fname .. "-selected." .. s 
+            f = io.open(fname, "r")
+            if f then
+                local tag = awful.tag.gettags(s)[tonumber(f:read("*l"))]
+                if tag then
+                    awful.tag.viewonly(tag)
+                end
+                f:close()
+            end
+            os.remove(fname)
+        end
+
+    else
+
+        local tag = awful.tag.add("www",
+        {
+            screen = 1,
+            layout = customization.default.property.layout,
+            mwfact = customization.default.property.mwfact,
+            nmaster = customization.default.property.nmaster,
+            ncol = customization.default.property.ncol, 
+        } 
+        )
+        awful.tag.viewonly(tag)
+
+        -- Second screen
+        --[[
+        awful.tag.add("nil",
+        {
+            screen = 2,
+            layout = customization.default.property.layout,
+            mwfact = customization.default.property.mwfact,
+            nmaster = customization.default.property.nmaster,
+            ncol = customization.default.property.ncol, 
+        } 
+        ) 
+        --]]
+    end
+end
+
 -- {{{ Mouse bindings
 root.buttons(awful.util.table.join(
     awful.button({ }, 3, function () mymainmenu:toggle() end),
@@ -437,29 +517,11 @@ root.buttons(awful.util.table.join(
 ))
 -- }}}
 
--- Determine number of tags
-num_tags = #tags['names']
-
 -- Function to print out layout information
 function layout_info()
     naughty.notify({
       text=string.format('m %d\nc %d', awful.tag.getnmaster(),
                                         awful.tag.getncol())
-    })
-end
-
--- Dynamic tagging functions
-function create_tag ()
-    local scr = mouse.screen
-    local sel_idx = awful.tag.getidx()
-    local t = util.tag.add(nil, 
-    {
-        screen = scr,
-        index = sel_idx and sel_idx+1 or 1,
-        layout =     awful.layout.suit.tile.left,
-        mwfact = 0.5,
-        nmaster = 1,
-        ncol = 1,
     })
 end
 
@@ -474,10 +536,11 @@ globalkeys = awful.util.table.join(
     -- Gnome shell style shortcuts
     awful.key({ altkey, "Control", "Shift"}, "Left",
         function ()
+            local tags = awful.tag.gettags(s)
             local i = awful.tag.getidx() - 1
 
             if i == 0 then
-                i = num_tags
+                i = #tags
             end
 
             local tag = awful.tag.gettags(client.focus.screen)[i]
@@ -488,9 +551,10 @@ globalkeys = awful.util.table.join(
         end),
     awful.key({ altkey, "Control", "Shift"}, "Right",
         function ()
+            local tags = awful.tag.gettags(s)
             local i = awful.tag.getidx() + 1
 
-            if i == num_tags + 1 then
+            if i == #tags + 1 then
                 i = 1
             end
 
@@ -538,7 +602,53 @@ globalkeys = awful.util.table.join(
     awful.key({modkey, "Shift"}, "Right", function () util.tag.rel_move(awful.tag.selected(), 1) end), 
    
     -- Create tag
-    awful.key({ modkey }, "a", create_tag() ),
+    awful.key({modkey}, "a",
+    function ()
+        local scr = mouse.screen
+        local sel_idx = awful.tag.getidx()
+        local tags = awful.tag.gettags(scr)
+
+        awful.prompt.run({prompt = "<span fgcolor='red'>new tag: </span>"},
+        mypromptbox[scr].widget,
+        function (text)
+            if #text>0 then
+                tag = awful.tag.add(text, {
+                    screen = scr,
+                    index = sel_idx and sel_idx or 1,
+                    layout = customization.default.property.layout,
+                    mwfact = customization.default.property.mwfact,
+                    nmaster = customization.default.property.nmaster,
+                    ncol = customization.default.property.ncol,
+                })
+                awful.tag.viewonly(tag)
+            end
+        end,
+        nil)
+    end),
+
+    awful.key({modkey, "Shift"}, "a",
+    function ()
+        local scr = mouse.screen
+        local sel_idx = awful.tag.getidx()
+        local tags = awful.tag.gettags(scr)
+
+        awful.prompt.run({prompt = "<span fgcolor='red'>new tag: </span>"},
+        mypromptbox[scr].widget,
+        function (text)
+            if #text>0 then
+                tag = awful.tag.add(text, {
+                    screen = scr,
+                    index = sel_idx and sel_idx -1 or 1,
+                    layout = customization.default.property.layout,
+                    mwfact = customization.default.property.mwfact,
+                    nmaster = customization.default.property.nmaster,
+                    ncol = customization.default.property.ncol,
+                })
+                awful.tag.viewonly(tag)
+            end
+        end,
+        nil)
+    end),
 
     -- Delete tag
     awful.key({ modkey }, "d", awful.tag.delete),
@@ -666,39 +776,37 @@ clientkeys = awful.util.table.join(
 -- Bind all key numbers to tags.
 -- Be careful: we use keycodes to make it works on any keyboard layout.
 -- This should map on the top row of your keyboard, usually 1 to 9.
-for i = 1, 9 do
+for i = 1, 10 do
+    local keycode = "#" .. i+9
+
     globalkeys = awful.util.table.join(globalkeys,
-        awful.key({ modkey }, "#" .. i + 9,
-                  function ()
-                        local screen = mouse.screen
-                        local tag = awful.tag.gettags(screen)[i]
-                        if tag then
-                           awful.tag.viewonly(tag)
-                        end
-                  end),
-        awful.key({ modkey, "Control" }, "#" .. i + 9,
-                  function ()
-                      local screen = mouse.screen
-                      local tag = awful.tag.gettags(screen)[i]
-                      if tag then
-                         awful.tag.viewtoggle(tag)
-                      end
-                  end),
-        awful.key({ modkey, "Shift" }, "#" .. i + 9,
-                  function ()
-                      local tag = awful.tag.gettags(client.focus.screen)[i]
-                      if client.focus and tag then
-                          awful.client.movetotag(tag)
-                          awful.tag.viewonly(tag)
-                     end
-                  end),
-        awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
-                  function ()
-                      local tag = awful.tag.gettags(client.focus.screen)[i]
-                      if client.focus and tag then
-                          awful.client.toggletag(tag)
-                      end
-                  end))
+
+    awful.key({ modkey }, keycode,
+    function ()
+        local tag
+        local tags = awful.tag.gettags(mouse.screen)
+        if i <= #tags then
+            tag = tags[i]
+        else
+            local scr = mouse.screen
+            local sel_idx = awful.tag.getidx()
+            local t = util.tag.add(#tags + 1,
+            {
+                screen = scr,
+                index = sel_idx and sel_idx+1 or 1,
+                layout = customization.default.property.layout,
+                mwfact = customization.default.property.mwfact,
+                nmaster = customization.default.property.nmaster,
+                ncol = customization.default.property.ncol,
+            })
+        end
+        if tag then
+            awful.tag.viewonly(tag)
+        end
+    end),
+
+    nil
+    )
 end
 
 clientbuttons = awful.util.table.join(
@@ -723,10 +831,10 @@ awful.rules.rules = {
   { rule = { class = "MPlayer" }, properties = { floating = true } },
   { rule = { class = "pinentry" }, properties = { floating = true } },
   { rule = { class = "gimp" }, properties = { floating = true } },
-  { rule = { class = "Chromium" },
-    properties = { tag = tags[1][1], switchtotag=true } },
-  { rule = { name = "Mendeley Desktop" },
-    properties = { tag = tags[1][4], switchtotag=true } },
+--  { rule = { class = "Chromium" },
+--    properties = { tag = tags[1][1], switchtotag=true } },
+--  { rule = { name = "Mendeley Desktop" },
+--    properties = { tag = tags[1][4], switchtotag=true } },
 
   -- Cytoscape
   { rule = { class = "sun-awt-X11-XFramePeer" }, properties = { floating =  true } },
@@ -742,12 +850,12 @@ awful.rules.rules = {
 -- Signal function to execute when a new client appears.
 client.connect_signal("manage", function (c, startup)
     -- Enable sloppy focus
-    --c:connect_signal("mouse::enter", function(c)
-    --    if awful.layout.get(c.screen) ~= awful.layout.suit.magnifier
-    --        and awful.client.focus.filter(c) then
-    --        client.focus = c
-    --    end
-    --end)
+    c:connect_signal("mouse::enter", function(c)
+        if awful.layout.get(c.screen) ~= awful.layout.suit.magnifier
+            and awful.client.focus.filter(c) then
+            client.focus = c
+        end
+    end)
 
     if not startup then
         -- Set the windows at the slave,
@@ -761,21 +869,22 @@ client.connect_signal("manage", function (c, startup)
         end
     end
 
-    local titlebars_enabled = false
+    local titlebars_enabled = true
     if titlebars_enabled and (c.type == "normal" or c.type == "dialog") then
+
         -- buttons for the titlebar
         local buttons = awful.util.table.join(
-                awful.button({ }, 1, function()
-                    client.focus = c
-                    c:raise()
-                    awful.mouse.client.move(c)
-                end),
-                awful.button({ }, 3, function()
-                    client.focus = c
-                    c:raise()
-                    awful.mouse.client.resize(c)
-                end)
-                )
+        awful.button({ }, 1, function()
+            client.focus = c
+            c:raise()
+            awful.mouse.client.move(c)
+        end),
+        awful.button({ }, 3, function()
+            client.focus = c
+            c:raise()
+            awful.mouse.client.resize(c)
+        end)
+        )
 
         -- Widgets that are aligned to the left
         local left_layout = wibox.layout.fixed.horizontal()
@@ -804,11 +913,45 @@ client.connect_signal("manage", function (c, startup)
         layout:set_middle(middle_layout)
 
         awful.titlebar(c):set_widget(layout)
+
+        -- hide the titlebar by default (it takes space)
+        awful.titlebar.hide(c)
+
     end
+
 end)
 
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
+
+customization.func.client_manage_tag = function (c, startup)
+    if startup then
+        local client_id = c.pid .. '-' .. c.window
+
+        local fname = awesome_restart_tags_fname .. '/' .. client_id
+        local f = io.open(fname, 'r')
+
+        if f then
+            local tags = {}
+            for tag in io.lines(fname) do
+                tags = awful.util.table.join(tags, {util.tag.name2tag(tag)})
+            end
+            -- remove the file after using it to reduce clutter
+            os.remove(fname)
+
+            if #tags>0 then
+                c:tags(tags)
+                -- set c's screen to that of its first (often the only) tag
+                -- this prevents client to be placed off screen in case of randr change (on the number of screen)
+                c.screen = awful.tag.getscreen(tags[1])
+                awful.placement.no_overlap(c)
+                awful.placement.no_offscreen(c)
+            end
+        end
+    end
+end
+
+client.connect_signal("manage", customization.func.client_manage_tag)
 -- }}}
 
 -- Autostart

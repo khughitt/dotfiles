@@ -94,11 +94,9 @@ function util.tag.add(name, props)
     end
 
     -- if add the tag interactively
-    --[[
     if not name then
         util.tag.rename(t, true)
     end
-    --]]
 
     return t
 end
@@ -106,7 +104,6 @@ end
 --rename
 --@param tag: tag object to be renamed
 --@param newp: boolean; true if the tag is new
---[[
 function util.tag.rename(tag, newp)
     local theme = beautiful.get()
     local t = tag or awful.tag.selected(capi.mouse.screen)
@@ -142,8 +139,7 @@ function util.tag.rename(tag, newp)
         ) 
     end
     --]]
---]]
---[[
+
     awful.prompt.run(
     {
         fg_cursor = fg,
@@ -153,7 +149,7 @@ function util.tag.rename(tag, newp)
         selectall = true
     },
     -- taglist internals -- found with the debug code above
-    util.taglist.taglist[scr].widgets[awful.tag.getidx(t)].widget.widgets[2].widget,
+    -- util.taglist.taglist[scr].widgets[awful.tag.getidx(t)].widget.widgets[2].widget,
     function (name)
         if name:len() > 0 then
             t.name = name;
@@ -173,6 +169,5 @@ function util.tag.rename(tag, newp)
     end
     )
 end
---]]
 
 return util
