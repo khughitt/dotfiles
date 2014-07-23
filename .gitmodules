@@ -80,3 +80,9 @@
 [submodule "vim/bundle/limelight.vim"]
 	path = vim/bundle/limelight.vim
 	url = https://github.com/junegunn/limelight.vim.git
+[submodule "vim/bundle/vim-textobj-delimited"]
+	path = vim/bundle/vim-textobj-delimited
+	url = https://github.com/machakann/vim-textobj-delimited.git
+[submodule "vim/bundle/argtextobj.vim"]
+	path = vim/bundle/argtextobj.vim
+	url = https://github.com/vim-scripts/argtextobj.vim.git

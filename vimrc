@@ -53,7 +53,6 @@ map <Left> <Nop>
 map <Right> <Nop>
 map <Up> <Nop>
 map <Down> <Nop>
-"inoremap <esc> <nop>
 
 " ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
@@ -417,6 +416,7 @@ endfunction
 " stop  highlighting
 " Used by tmux navigator
 " nnoremap <silent> <C-l> :nohl<CR><C-l>
+nnoremap <leader>n :nohl<CR>
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options

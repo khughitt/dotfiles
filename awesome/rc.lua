@@ -18,7 +18,7 @@ require("awful.remote")
 awful.ewmh = require("awful.ewmh")
 
 local beautiful = require("beautiful")
-beautiful.init(awful.util.getdir("config") .. "/themes/glow/theme.lua")
+beautiful.init(awful.util.getdir("config") .. "/themes/niceandclean/theme.lua")
 
 local wibox     = require("wibox")
 local naughty   = require("naughty")
@@ -451,7 +451,7 @@ do
                 local count_index = math.min(s, scr_count)
                 local fname = awesome_restart_tags_fname .. "." .. s
                 for tagname in io.lines(fname) do
-                    local tag = awful.tag.add(tagname,
+                    local tag = awful.tag.add(' ' .. tagname .. ' ',
                     {
                         screen = count_index,
                         layout = customization.default.property.layout,
@@ -483,7 +483,7 @@ do
 
     else
 
-        local tag = awful.tag.add("www",
+        local tag = awful.tag.add(" www ",
         {
             screen = 1,
             layout = customization.default.property.layout,
@@ -612,7 +612,7 @@ globalkeys = awful.util.table.join(
         mypromptbox[scr].widget,
         function (text)
             if #text>0 then
-                tag = awful.tag.add(text, {
+                tag = awful.tag.add(' ' .. text .. ' ', {
                     screen = scr,
                     index = sel_idx and sel_idx or 1,
                     layout = customization.default.property.layout,
@@ -636,7 +636,7 @@ globalkeys = awful.util.table.join(
         mypromptbox[scr].widget,
         function (text)
             if #text>0 then
-                tag = awful.tag.add(text, {
+                tag = awful.tag.add(' ' .. text .. ' ', {
                     screen = scr,
                     index = sel_idx and sel_idx -1 or 1,
                     layout = customization.default.property.layout,
@@ -790,7 +790,7 @@ for i = 1, 10 do
         else
             local scr = mouse.screen
             local sel_idx = awful.tag.getidx()
-            local t = util.tag.add(#tags + 1,
+            local t = util.tag.add(' ' .. #tags + 1 .. ' ',
             {
                 screen = scr,
                 index = sel_idx and sel_idx+1 or 1,
