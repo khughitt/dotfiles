@@ -30,12 +30,13 @@ xset fp rehash
 xrdb -merge ~/.Xresources
 
 # map caps lock to escape
-setxkbmap -option caps:escape
-# xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
+#setxkbmap -option caps:escape
+#xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
+#xmodmap -e 'clear Lock' -e 'keycode 0x66 = Escape'
 
-#if [ -s ~/.Xmodmap ]; then
-#    xmodmap ~/.xmodmaprc
-#fi
+if [ -s ~/.xmodmaprc ]; then
+    xmodmap ~/.xmodmaprc
+fi
 
 # Awesome
 exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr

@@ -35,6 +35,7 @@ let maplocalleader = ","
 " Fast save/quit
 nmap <leader>w :update<cr>
 nmap <leader>q :q<cr>
+nmap <leader>z :wq<cr>
 
 " Fast save (alt. method)
 inoremap <c-s> <c-o>:w<cr>

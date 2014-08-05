@@ -26,8 +26,8 @@ if (interactive()) {
     # console settings
     options(setwidth.verbose=1,
             colorout.verbose=1,
-            vimcom.verbose=1,
-            pager=file.path(Sys.getenv("HOME"), "bin/vimrpager"))
+            vimcom.verbose=1)
+            #pager=file.path(Sys.getenv("HOME"), "bin/vimrpager"))
 
     # Use the text based web browser w3m to navigate through R docs:
     #if(Sys.getenv("TMUX") != "")
@@ -49,8 +49,8 @@ if (interactive()) {
         }
         library(vimcom)
         # See R docs Vim buffer even if asking for help in R Console:
-        if(Sys.getenv("VIM_PANE") != "")
-            options(help_type = "text", pager=vim.pager)
+        #if(Sys.getenv("VIM_PANE") != "")
+        #    options(help_type = "text", pager=vim.pager)
     }
 
     # syntax highlighting
