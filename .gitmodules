@@ -98,3 +98,6 @@
 [submodule "vim/bundle/todo.txt-vim"]
 	path = vim/bundle/todo.txt-vim
 	url = git://github.com/freitass/todo.txt-vim.git
+[submodule "vim/bundle/vim-ipython"]
+	path = vim/bundle/vim-ipython
+	url = https://github.com/ivanov/vim-ipython.git
