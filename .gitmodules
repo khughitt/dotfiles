@@ -89,3 +89,12 @@
 [submodule "vim/bundle/vim-surround"]
 	path = vim/bundle/vim-surround
 	url = https://github.com/tpope/vim-surround.git
+[submodule "vim/bundle/gist-vim"]
+	path = vim/bundle/gist-vim
+	url = https://github.com/mattn/gist-vim.git
+[submodule "vim/bundle/webapi-vim"]
+	path = vim/bundle/webapi-vim
+	url = https://github.com/mattn/webapi-vim.git
+[submodule "vim/bundle/todo.txt-vim"]
+	path = vim/bundle/todo.txt-vim
+	url = git://github.com/freitass/todo.txt-vim.git

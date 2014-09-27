@@ -11,7 +11,7 @@
 # colors
 if [ -n "$1" ]; then
     infile=$1
-    #echo 'Loading colors from ${infile}...'
+    #echo "Loading colors from ${1}..."
 
     function setColor() {
         color=$1

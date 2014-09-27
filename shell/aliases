@@ -16,6 +16,7 @@ alias pcd='yaourt -Syua --devel'
 alias pup='pip2 freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs pip2 install -U'
 
 alias s='src-hilite-lesspipe.sh'
+alias t='todo.sh -d $HOME/Dropbox/dotfiles/todo.cfg'
 
 alias qpython='ipython2 qtconsole --colors=linux --pylab'
 

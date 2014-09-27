@@ -26,7 +26,7 @@ Xft.rgba:      rgb
 !!
 !URxvt.background:         [85]#1C1C24
 !URxvt.cursorColor:        #395573
-URxvt.depth:              32
+URxvt.depth:              16
 URxvt*saveLines:          4096
 URxvt*scrollBar_right:    false
 URxvt*scrollBar:          false
@@ -42,10 +42,10 @@ URxvt.cursorBlink:        false
 !URxvt*skipBuiltinGlyphs:  true
 
 URxvt*termName:          rxvt-256color
-!URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-!URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+!URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+!URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
 
 !URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16,\
 !                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
@@ -101,8 +101,10 @@ XTerm*locale:   true
 XTerm*metaSendsEscape: true
 XTerm*saveLines: 4096
 XTerm*selectToClipboard: on
-XTerm*font:              xft:dejavu sans mono for powerline:regular:size=26
-XTerm*boldFon:           xft:dejavu sans mono for powerline:bold:size=26
+!XTerm*font:              xft:dejavu sans mono for powerline:regular:size=26
+!XTerm*boldFont:          xft:dejavu sans mono for powerline:bold:size=26
+XTerm*faceName:              xft:dejavu sans mono for powerline:regular:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+!XTerm*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
 !XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=18
 !XTerm*faceName: dejavu sans mono for powerline:pixelsize=16
 

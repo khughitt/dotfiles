@@ -252,14 +252,15 @@ end
 
 -- {{{ Tags
 -- Define a tag table which hold all screen tags.
--- tags = {
---   names = {'www', 'utr', 'mtb', 'wgcna', 'reading'},
---   layout = {layouts[2], layouts[2], layouts[3], layouts[2], layouts[4]}
--- }
--- for s = 1, screen.count() do
-    -- Each screen has its own tag table.
---     tags[s] = awful.tag(tags.names, s, tags.layout)
--- end
+ tags = {
+   names = {'www', 'term'},
+   layout = {layouts[2], layouts[2]}
+ }
+ for s = 1, screen.count() do
+     -- Each screen has its own tag table.
+     tags[s] = awful.tag(tags.names, s, tags.layout)
+ end
+--
 -- }}}
 
 -- {{{ Menu
@@ -483,16 +484,16 @@ do
 
     else
 
-        local tag = awful.tag.add(" www ",
-        {
-            screen = 1,
-            layout = customization.default.property.layout,
-            mwfact = customization.default.property.mwfact,
-            nmaster = customization.default.property.nmaster,
-            ncol = customization.default.property.ncol, 
-        } 
-        )
-        awful.tag.viewonly(tag)
+        --local tag = awful.tag.add(" www ",
+        --{
+        --    screen = 1,
+        --    layout = customization.default.property.layout,
+        --    mwfact = customization.default.property.mwfact,
+        --    nmaster = customization.default.property.nmaster,
+        --    ncol = customization.default.property.ncol, 
+        --} 
+        --)
+        --awful.tag.viewonly(tag)
 
         -- Second screen
         --[[
@@ -608,21 +609,22 @@ globalkeys = awful.util.table.join(
         local sel_idx = awful.tag.getidx()
         local tags = awful.tag.gettags(scr)
 
-        awful.prompt.run({prompt = "<span fgcolor='red'>new tag: </span>"},
-        mypromptbox[scr].widget,
-        function (text)
-            if #text>0 then
-                tag = awful.tag.add(' ' .. text .. ' ', {
-                    screen = scr,
-                    index = sel_idx and sel_idx or 1,
-                    layout = customization.default.property.layout,
-                    mwfact = customization.default.property.mwfact,
-                    nmaster = customization.default.property.nmaster,
-                    ncol = customization.default.property.ncol,
-                })
-                awful.tag.viewonly(tag)
-            end
-        end,
+        awful.prompt.run(
+            {prompt = "<span fgcolor='red'>new tag: </span>"},
+            mypromptbox[scr].widget,
+            function (text)
+                if #text>0 then
+                    tag = awful.tag.add(' ' .. text .. ' ', {
+                        screen = scr,
+                        index = sel_idx and sel_idx or 1,
+                        layout = customization.default.property.layout,
+                        mwfact = customization.default.property.mwfact,
+                        nmaster = customization.default.property.nmaster,
+                        ncol = customization.default.property.ncol,
+                    })
+                    awful.tag.viewonly(tag)
+                end
+            end,
         nil)
     end),
 
@@ -690,7 +692,9 @@ globalkeys = awful.util.table.join(
                                                 awful.tag.incncol(-1)
                                                 layout_info()
                                               end),
-    awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts,  1) end),
+    -- awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts,  1) end),
+    awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts,  1)
+                                             naughty.notify({ title = 'Layout', text = awful.layout.getname(), timeout = 1 }) end),
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
 
     awful.key({ modkey, "Control" }, "n", awful.client.restore),
@@ -790,15 +794,37 @@ for i = 1, 10 do
         else
             local scr = mouse.screen
             local sel_idx = awful.tag.getidx()
-            local t = util.tag.add(' ' .. #tags + 1 .. ' ',
-            {
-                screen = scr,
-                index = sel_idx and sel_idx+1 or 1,
-                layout = customization.default.property.layout,
-                mwfact = customization.default.property.mwfact,
-                nmaster = customization.default.property.nmaster,
-                ncol = customization.default.property.ncol,
-            })
+            local tags = awful.tag.gettags(scr)
+
+            awful.prompt.run(
+                {prompt = "<span fgcolor='red'>new tag: </span>"},
+                mypromptbox[scr].widget,
+                function (text)
+                    if #text>0 then
+                        tag = awful.tag.add(' ' .. text .. ' ', {
+                            screen = scr,
+                            index = #tags + 1,
+                            layout = customization.default.property.layout,
+                            mwfact = customization.default.property.mwfact,
+                            nmaster = customization.default.property.nmaster,
+                            ncol = customization.default.property.ncol,
+                        })
+                        awful.tag.viewonly(tag)
+                    end
+                end,
+            nil)
+            --local scr = mouse.screen
+            --local sel_idx = awful.tag.getidx()
+            --local t = util.tag.add(' ' .. #tags + 1 .. ' ',
+            --{
+            --    screen = scr,
+            --    --index = sel_idx and sel_idx+1 or 1,
+            --    index = #tags + 1,
+            --    layout = awful.layout.suit.tile.bottom,
+            --    mwfact = customization.default.property.mwfact,
+            --    nmaster = customization.default.property.nmaster,
+            --    ncol = customization.default.property.ncol,
+            --})
         end
         if tag then
             awful.tag.viewonly(tag)

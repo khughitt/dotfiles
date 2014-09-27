@@ -9,3 +9,5 @@
 	external = git-meld
 [push]
 	default = simple
+[github]
+	user = khughitt

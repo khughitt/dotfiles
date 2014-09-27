@@ -276,14 +276,17 @@ let g:airline#extensions#tabline#enabled = 1
 " ---------------------------------------------------------------------------
 "  dragvisuals.vim
 " ---------------------------------------------------------------------------
-vmap  <expr>  <LEFT>   DVB_Drag('left')                     
-vmap  <expr>  <RIGHT>  DVB_Drag('right')                    
-vmap  <expr>  <DOWN>   DVB_Drag('down')                     
-vmap  <expr>  <UP>     DVB_Drag('up')                       
-vmap  <expr>  D        DVB_Duplicate()                      
+"vmap  <expr>  <LEFT>   DVB_Drag('left')
+"vmap  <expr>  <RIGHT>  DVB_Drag('right')
+"vmap  <expr>  <DOWN>   DVB_Drag('down')
+"vmap  <expr>  <UP>     DVB_Drag('up')
 
-" Remove any introduced trailing whitespace after moving... 
-let g:DVB_TrimWS = 1  
+" freezes up...
+" vmap  <expr>  D        DVB_Duplicate()
+
+
+" Remove any introduced trailing whitespace after moving...
+"let g:DVB_TrimWS = 1
 
 " ---------------------------------------------------------------------------
 "  goyo.vim
@@ -298,7 +301,7 @@ endfunction
 
 let g:goyo_callbacks = [function('GoyoBefore'), function('GoyoAfter')]
 
-nnoremap <leader><space> :Goyo<CR>  
+nnoremap <leader><space> :Goyo<CR>
 
 " ---------------------------------------------------------------------------
 "  gundo.vim
@@ -347,7 +350,8 @@ let g:SuperTabNoCompleteBefore = ['\S']
 " ---------------------------------------------------------------------------
 call unite#filters#matcher_default#use(['matcher_fuzzy'])
 call unite#filters#sorter_default#use(['sorter_rank'])
-call unite#set_profile('files', 'smartcase', 1)
+"call unite#set_profile('files', 'smartcase', 1)
+call unite#custom#profile('files', 'context.smartcase', 1)
 call unite#custom#source('file_rec/async','sorters','sorter_rank', )
 
 "let g:unite_data_directory=s:get_cache_dir('unite')
@@ -382,12 +386,12 @@ nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
 "  Strip all trailing whitespace in file
 " ---------------------------------------------------------------------------
 
-"function! StripWhitespace ()
-"    exec ':%s/ \+$//gc'
-"endfunction
-"map ,s :call StripWhitespace ()<CR>
-autocmd FileType python,php,js,rb,r,rmd
-    \ autocmd BufWritePre <buffer> :%s/\s\+$//e
+function! StripWhitespace ()
+    exec ':%s/ \+$//gc'
+endfunction
+map ,s :call StripWhitespace ()<CR>
+"autocmd FileType python,php,js,rb,r,rmd
+"    \ autocmd BufWritePre <buffer> :%s/\s\+$//e
 
 " ---------------------------------------------------------------------------
 "  Search Options
@@ -433,6 +437,7 @@ let vimrplugin_objbr_place = "console,right"
 let vimrplugin_term = "urxvt"
 let vimrplugin_notmuxconf = 1
 let vimrplugin_assign = 0
+let vimrplugin_tmux_title = "automatic"
 "let vimrplugin_vsplit = 1
 
 if $DISPLAY != ""
