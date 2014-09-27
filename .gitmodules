@@ -101,3 +101,6 @@
 [submodule "awesome/pomodoro"]
 	path = awesome/pomodoro
 	url = https://github.com/nikolavp/awesome-pomodoro.git
+[submodule "vim/bundle/vim-fugitive"]
+	path = vim/bundle/vim-fugitive
+	url = https://github.com/tpope/vim-fugitive.git
