@@ -3,10 +3,20 @@
 #
 options(showWarnCalls=T, showErrorCalls=T)
 options(warning.length=8170)
-options(max.print=10E3)
+options(max.print=100)
 options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 options(menu.graphics=F)
 options(github.user="khughitt")
+
+options(prompt="> ")
+options(continue="... ")
+
+q <- function (save="no", ...) {
+  quit(save=save, ...)
+}
+
+# tab complete package names
+utils::rc.settings(ipck=TRUE)
 
 options('rstudio.markdownToHTML'=NULL)
 
@@ -24,7 +34,7 @@ options('rstudio.markdownToHTML'=NULL)
 # interactive mode
 if (interactive()) {
     # console settings
-    options(setwidth.verbose=1,
+    options(setwidth.verbose=0,
             colorout.verbose=1,
             vimcom.verbose=1)
             #pager=file.path(Sys.getenv("HOME"), "bin/vimrpager"))
@@ -73,6 +83,20 @@ if (interactive()) {
 
 }
 
+# Default HISTORY file
+if (Sys.getenv("R_HISTFILE") == "") {
+  Sys.setenv(R_HISTFILE=file.path("~", ".Rhistory"))
+}
+Sys.setenv(R_HISTSIZE=5000)
+
+#.First <- function(){
+#  if(interactive()){
+#    library(utils)
+#    timestamp(,prefix=paste0("##------ [", system('hostname', intern=TRUE),"] "))
+ 
+#  }
+#}
+
 # On quit
 .Last <- function() {
     # Preserve history across sessions
@@ -87,10 +111,4 @@ if (interactive()) {
     print('Sourcing http://bioconductor.org/biocLite.R')
     source("http://bioconductor.org/biocLite.R")
 }
-
-# Default HISTORY file
-if (Sys.getenv("R_HISTFILE") == "") {
-  Sys.setenv(R_HISTFILE=file.path("~", ".Rhistory"))
-}
-Sys.setenv(R_HISTSIZE=5000)
 

@@ -20,12 +20,15 @@ fi
 
 # tmux helper function
 function xumt() {
-    WHOAMI=$(whoami)
+    SESSION_NAME=$(whoami)
+    if [ ! -z "$1" ]; then
+        SESSION_NAME="${SESSION_NAME}_$1"
+    fi
 
-    if tmux has-session -t $WHOAMI 2>/dev/null; then
-        tmux -2 attach-session -t $WHOAMI
+    if tmux has-session -t $SESSION_NAME 2>/dev/null; then
+        tmux -2 attach-session -t $SESSION_NAME
     else
-        tmux -2 new-session -s $WHOAMI
+        tmux -2 new-session -s $SESSION_NAME
     fi
 }
 
@@ -33,13 +36,13 @@ function xumt() {
 if [[ "$TERM" != screen* ]] && [ ! -z "$SSH_CLIENT" ]; then
     # Fix DISPLAY variable
     # http://yubinkim.com/?p=203
-    for name in `tmux ls -F '#{session_name}'`; do
-        tmux setenv -g -t $name DISPLAY $DISPLAY #set display for all sessions
-    done
+    #for name in `tmux ls -F '#{session_name}'`; do
+    #    tmux setenv -g -t $name DISPLAY $DISPLAY #set display for all sessions
+    #done
 
     # Attempt to discover a detached session and attach 
     # it, else create a new session
-    xumt
+    xumt $TMUX_SESSION
 
     # Exit on unattach
     exit
@@ -98,6 +101,13 @@ setopt HIST_IGNORE_DUPS
 # Plugins
 [ -z "$plugins" ] && plugins=(\
     archlinux colored-man git systemd web-search)
+
+# vim key bindings
+bindkey -v
+#
+# vim like history movements
+bindkey '^k' up-history
+bindkey '^j' down-history
 
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh

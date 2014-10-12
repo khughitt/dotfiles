@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-IGV_VERSION="2.3.34"
+IGV_VERSION="2.3.36"
 
 ANNOTATIONS="${REF}/hsapiens/annotation/ensembl/release-75/Homo_sapiens.GRCh37.75.compat.sorted.gtf,${HOME}/Dropbox/research/data/coverage_human.tdf"
 
