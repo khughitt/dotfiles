@@ -56,28 +56,28 @@ else
 fi
 
 # R-vim tweaks
-if [[ "x$DISPLAY" != "x" ]]; then
-    alias vim='vim --servername VIM'
-    if [[ "x$TERM" = "xrxvt-256-color" ]] || [[ "x$TERM" == "xxterm-256color" ]]
+if [ "x$DISPLAY" != "x" ]
+then
+    if [[ "screen" == "$TERM" ]]
     then
-        function tvim(){
-            tmux -2 new-session "TERM=xterm-256color vim --servername VIM $@" ;
-        }
+        export TERM=screen-256color
     else
-        function tvim(){
-            tmux new-session "vim --servername VIM $@" ;
-        }
+        export TERM=xterm-256color
+    fi
+    alias vim='vim --servername VIM'
+
+    if [[ "x$TERM" == "xxterm" ]] || [[ "x$TERM" == "xxterm-256color" ]]
+    then
+        function tvim(){ tmux -2 new-session "TERM=screen-256color vim --servername VIM $@" ; }
+    else
+        function tvim(){ tmux new-session "vim --servername VIM $@" ; }
     fi
 else
-    if [[ "x$TERM" == "xrxvt-256color" ]] || [[ "x$TERM" == "xxterm-256color" ]]
+    if [[ "x$TERM" == "xxterm" ]] || [[ "x$TERM" == "xxterm-256color" ]]
     then
-        function tvim(){
-            tmux -2 new-session "TERM=xterm-256color vim $@" ;
-        }
+        function tvim(){ tmux -2 new-session "TERM=screen-256color vim $@" ; }
     else
-        function tvim(){
-            tmux new-session "vim $@" ;
-        }
+        function tvim(){ tmux new-session "vim $@" ; }
     fi
 fi
 

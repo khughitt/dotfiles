@@ -430,11 +430,11 @@ nnoremap <leader>n :nohl<CR>
 " Python
 autocmd BufRead,BufNewFile *.py syntax on
 autocmd BufRead,BufNewFile *.py set ai
-map <F8> :w\|!python %<CR>
+map <F9> :w\|!python %<CR>
 
 " R
 let vimrplugin_objbr_place = "console,right"
-let vimrplugin_term = "urxvt"
+let vimrplugin_term = "xterm"
 let vimrplugin_notmuxconf = 1
 let vimrplugin_assign = 0
 let vimrplugin_tmux_title = "automatic"
@@ -444,6 +444,10 @@ if $DISPLAY != ""
     let vimrplugin_openpdf = 1
     let vimrplugin_openhtml = 1
 endif
+
+" highlight chunk headers
+let rrst_syn_hl_chunk = 1
+let rmd_syn_hl_chunk = 1
 
 " Use Ctrl+Space to do omnicompletion
 if has("gui_running")
@@ -461,6 +465,7 @@ nmap <C-M> <Plug>RDSendLine
 " Knitr
 vmap <Space> <Plug>RDSendSelection
 nmap <C-A-c> <Plug>RDSendChunk
+nmap <localleader>kr :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("cache/*")')<CR>
 
 " KnitrBootstrap
 function! RMakeBootstrapHTML()
