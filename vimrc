@@ -239,8 +239,10 @@ inoremap <silent> <c-k> <esc> :TmuxNavigateUp<cr>
 " colorscheme jellybeans
 " let g:hybrid_use_Xresources = 1
 "colorscheme Tomorrow-Night
-colorscheme hemisu
+let g:CSApprox_attr_map = { 'bold' : 'bold', 'italic' : '', 'sp' : '' }
+
 set background=dark
+colorscheme hemisu
 
 if has("gui_running")
     set guioptions-=m  " remove menu bar

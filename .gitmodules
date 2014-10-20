@@ -59,15 +59,18 @@
 [submodule "vim/bundle/neomru.vim"]
 	path = vim/bundle/neomru.vim
 	url = https://github.com/Shougo/neomru.vim.git
+    ignore = untracked  
 [submodule "vim/bundle/unite-colorscheme"]
 	path = vim/bundle/unite-colorscheme
 	url = https://github.com/ujihisa/unite-colorscheme.git
+    ignore = untracked  
 [submodule "vim/bundle/vim-tmux-navigator"]
 	path = vim/bundle/vim-tmux-navigator
 	url = https://github.com/christoomey/vim-tmux-navigator.git
 [submodule "vim/bundle/xterm-color-table.vim"]
 	path = vim/bundle/xterm-color-table.vim
 	url = https://github.com/guns/xterm-color-table.vim.git
+    ignore = untracked  
 [submodule "vim/bundle/vim-airline"]
 	path = vim/bundle/vim-airline
 	url = https://github.com/bling/vim-airline.git
@@ -80,6 +83,7 @@
 [submodule "vim/bundle/vim-textobj-delimited"]
 	path = vim/bundle/vim-textobj-delimited
 	url = https://github.com/machakann/vim-textobj-delimited.git
+    ignore = untracked  
 [submodule "vim/bundle/argtextobj.vim"]
 	path = vim/bundle/argtextobj.vim
 	url = https://github.com/vim-scripts/argtextobj.vim.git
@@ -98,6 +102,7 @@
 [submodule "vim/bundle/vim-ipython"]
 	path = vim/bundle/vim-ipython
 	url = https://github.com/ivanov/vim-ipython.git
+    ignore = untracked  
 [submodule "awesome/pomodoro"]
 	path = awesome/pomodoro
 	url = https://github.com/nikolavp/awesome-pomodoro.git
@@ -119,3 +124,45 @@
 [submodule "vim/bundle/csapprox"]
 	path = vim/bundle/csapprox
 	url = https://github.com/godlygeek/csapprox.git
+[submodule "vim/bundle/Zenburn"]
+	path = vim/bundle/Zenburn
+	url = https://github.com/jnurmine/Zenburn.git
+[submodule "vim/bundle/vim-hemisu"]
+	path = vim/bundle/vim-hemisu
+	url = https://github.com/noahfrederick/vim-hemisu.git
+[submodule "vim/bundle/vim-tomorrow-theme"]
+	path = vim/bundle/vim-tomorrow-theme
+	url = https://github.com/chriskempson/vim-tomorrow-theme.git
+[submodule "vim/bundle/grb256"]
+	path = vim/bundle/grb256
+	url = https://github.com/quanganhdo/grb256.git
+[submodule "vim/bundle/ir_black"]
+	path = vim/bundle/ir_black
+	url = https://github.com/twerth/ir_black.git
+[submodule "vim/bundle/C64.vim"]
+	path = vim/bundle/C64.vim
+	url = https://github.com/vim-scripts/C64.vim
+[submodule "vim/bundle/vim-aldmeris"]
+	path = vim/bundle/vim-aldmeris
+	url = https://github.com/veloce/vim-aldmeris.git
+[submodule "vim/bundle/jellybeans.vim"]
+	path = vim/bundle/jellybeans.vim
+	url = https://github.com/nanotech/jellybeans.vim.git
+[submodule "vim/bundle/Vim-Darkmate"]
+	path = vim/bundle/Vim-Darkmate
+	url = https://github.com/yearofmoo/Vim-Darkmate.git
+[submodule "vim/bundle/vim-vividchalk"]
+	path = vim/bundle/vim-vividchalk
+	url = https://github.com/tpope/vim-vividchalk.git
+[submodule "vim/bundle/neon.vim"]
+	path = vim/bundle/neon.vim
+	url = https://github.com/yuratomo/neon.vim.git
+[submodule "vim/bundle/vim-lucius"]
+	path = vim/bundle/vim-lucius
+	url = https://github.com/jonathanfilip/vim-lucius.git
+[submodule "vim/bundle/rootwater.vim"]
+	path = vim/bundle/rootwater.vim
+	url = https://github.com/vim-scripts/rootwater.vim.git
+[submodule "vim/bundle/Smyck-Color-Scheme"]
+	path = vim/bundle/Smyck-Color-Scheme
+	url = https://github.com/hukl/Smyck-Color-Scheme.git
