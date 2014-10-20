@@ -133,6 +133,19 @@ set encoding=utf8           " UTF-8 by default
 set pastetoggle=<F6>        " paste-mode toggle
 set sessionoptions-=options " don't preserve configuration across sessions
 
+" Shortuct to toggle textwidth.
+nmap <silent><localleader>w :call ToggleTextWidth()<CR>
+function! ToggleTextWidth()
+  if &textwidth != 0
+    let b:oldtextwidth = &textwidth
+    set textwidth=0
+  elseif exists("b:oldtextwidth")
+    let &textwidth = b:oldtextwidth
+  else
+    set textwidth=79
+  endif
+endfunction
+
 " ----------------------------------------------------------------------------
 " Moving around, tabs, windows and buffers
 " ----------------------------------------------------------------------------
@@ -200,9 +213,9 @@ set mouse=a
 " ---------------------------------------------------------------------------
 "  Appearance
 " ---------------------------------------------------------------------------
-if $TERM != 'linux'
-    set t_Co=256
-endif
+"if $TERM != 'linux'
+"    set t_Co=256
+"endif
 
 " fix background bleeding in screen
 " http://snk.tuxfamily.org/log/vim-256color-bce.html
@@ -225,9 +238,17 @@ inoremap <silent> <c-k> <esc> :TmuxNavigateUp<cr>
 
 " colorscheme jellybeans
 " let g:hybrid_use_Xresources = 1
-colorscheme Tomorrow-Night
+"colorscheme Tomorrow-Night
+colorscheme hemisu
+set background=dark
 
 if has("gui_running")
+    set guioptions-=m  " remove menu bar
+    set guioptions-=T  " remove toolbar
+
+    nnoremap <F11> :if &go=~#'m'<Bar>set go-=m<Bar>else<Bar>set go+=m<Bar>endif<CR>
+    nnoremap <F12> :if &go=~#'T'<Bar>set go-=T<Bar>else<Bar>set go+=T<Bar>endif<CR>
+
     " font
     set guifont=DejaVu\ Sans\ Mono\ for\ Powerline\ 12
 
@@ -465,7 +486,7 @@ nmap <C-M> <Plug>RDSendLine
 " Knitr
 vmap <Space> <Plug>RDSendSelection
 nmap <C-A-c> <Plug>RDSendChunk
-nmap <localleader>kr :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("cache/*")')<CR>
+nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("README_cache/*", recursive=TRUE)')<CR>
 
 " KnitrBootstrap
 function! RMakeBootstrapHTML()

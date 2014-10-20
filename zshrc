@@ -58,12 +58,12 @@ fi
 # R-vim tweaks
 if [ "x$DISPLAY" != "x" ]
 then
-    if [[ "screen" == "$TERM" ]]
-    then
-        export TERM=screen-256color
-    else
-        export TERM=xterm-256color
-    fi
+    #if [[ "screen" == "$TERM" ]]
+    #then
+    #    export TERM=screen-256color
+    #else
+    #    export TERM=xterm-256color
+    #fi
     alias vim='vim --servername VIM'
 
     if [[ "x$TERM" == "xxterm" ]] || [[ "x$TERM" == "xxterm-256color" ]]
@@ -91,9 +91,6 @@ if $vconsole; then
     done
     clear
 fi
-
-#Terminal
-#TERM=rxvt-unicode-256color
 
 # History
 setopt HIST_IGNORE_DUPS

@@ -96,15 +96,12 @@ URxvt.keysym.C-S-minus: perl:font-size:decglobal
 !!
 !! Xterm
 !!
-XTerm*termName: xterm-256color
-XTerm*locale:   true
+XTerm*termName:        xterm-256color
+XTerm*locale:          true
 XTerm*metaSendsEscape: true
-XTerm*saveLines: 4096
-XTerm*selectToClipboard: on
-!XTerm*font:              xft:dejavu sans mono for powerline:regular:size=26
-!XTerm*boldFont:          xft:dejavu sans mono for powerline:bold:size=26
-XTerm*faceName:              xft:dejavu sans mono for powerline:regular:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-!XTerm*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-!XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=18
-!XTerm*faceName: dejavu sans mono for powerline:pixelsize=16
+XTerm*saveLines:       4096
+!XTerm*font:            -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+!XTerm*boldFont:        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+XTerm*faceName:           xft:dejavu sans mono for powerline:regular:pixelsize=16
+XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=16
 

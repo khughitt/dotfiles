@@ -751,7 +751,7 @@ globalkeys = awful.util.table.join(
       awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
   end),
   awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
-  awful.key({ altkey }, "Return", function () scratch.drop("xterm --background '[100]#333333'", 'center', 'center', 0.5, 0.5) end),
+  awful.key({ altkey }, "Return", function () scratch.drop("urxvt --background '[100]#333333'", 'center', 'center', 0.5, 0.5) end),
   awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.5, 0.5) end)
 )
   -- }}}
