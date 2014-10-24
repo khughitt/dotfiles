@@ -50,10 +50,10 @@ execute pathogen#infect()
 " ----------------------------------------------------------------------------
 " Practice time
 " ----------------------------------------------------------------------------
-map <Left> <Nop>
-map <Right> <Nop>
-map <Up> <Nop>
-map <Down> <Nop>
+"map <Left> <Nop>
+"map <Right> <Nop>
+"map <Up> <Nop>
+"map <Down> <Nop>
 
 " ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
@@ -178,6 +178,10 @@ map <leader>bd :Bclose<cr>
 " Close all the buffers
 map <leader>ba :1,1000 bd!<cr>
 
+" Buffer switching using control-tab
+nnoremap <C-S-tab> :bprevious<CR>
+nnoremap <C-tab>   :bnext<CR>
+
 " Useful mappings for managing tabs
 map <leader>tn :tabnew<cr>
 map <leader>to :tabonly<cr>
@@ -213,9 +217,9 @@ set mouse=a
 " ---------------------------------------------------------------------------
 "  Appearance
 " ---------------------------------------------------------------------------
-"if $TERM != 'linux'
-"    set t_Co=256
-"endif
+if $TERM != 'linux'
+    set t_Co=256
+endif
 
 " fix background bleeding in screen
 " http://snk.tuxfamily.org/log/vim-256color-bce.html
@@ -236,13 +240,6 @@ endif
 inoremap <silent> <c-j> <esc> :TmuxNavigateDown<cr>
 inoremap <silent> <c-k> <esc> :TmuxNavigateUp<cr>
 
-" colorscheme jellybeans
-" let g:hybrid_use_Xresources = 1
-"colorscheme Tomorrow-Night
-let g:CSApprox_attr_map = { 'bold' : 'bold', 'italic' : '', 'sp' : '' }
-
-set background=dark
-colorscheme hemisu
 
 if has("gui_running")
     set guioptions-=m  " remove menu bar
@@ -262,6 +259,10 @@ endif
 if has("syntax")
     syntax on
 endif
+
+" colorscheme
+set background=dark
+colorscheme hemisu
 
 " Matching parens style
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
@@ -330,6 +331,20 @@ nnoremap <leader><space> :Goyo<CR>
 "  gundo.vim
 " ---------------------------------------------------------------------------
 nnoremap <F5> :GundoToggle<CR>
+
+" ---------------------------------------------------------------------------
+"  incsearch.vim
+" ---------------------------------------------------------------------------
+map /  <Plug>(incsearch-forward)
+map ?  <Plug>(incsearch-backward)
+map g/ <Plug>(incsearch-stay)
+
+" Compatibility with vim-indexed-search
+let g:indexed_search_mappings = 0
+augroup incsearch-indexed
+    autocmd!
+    autocmd User IncSearchLeave ShowSearchIndex
+augroup END
 
 " ---------------------------------------------------------------------------
 "  NERDTree
@@ -427,19 +442,19 @@ set hlsearch   " highlight searched words
 nohlsearch     " avoid highlighting when reloading vimrc
 
 " Make it easier to find current match
-nnoremap <silent> n   n:call HLNext(0.4)<cr>
-nnoremap <silent> N   N:call HLNext(0.4)<cr>
+"nnoremap <silent> n   n:call HLNext(0.4)<cr>
+"nnoremap <silent> N   N:call HLNext(0.4)<cr>
 
-function! HLNext (blinktime)
-    let [bufnum, lnum, col, off] = getpos('.')
-    let matchlen = strlen(matchstr(strpart(getline('.'),col-1),@/))
-    let target_pat = '\c\%#'.@/
-    let ring = matchadd('WhiteOnRed', target_pat, 101)
-    redraw
-    exec 'sleep ' . float2nr(a:blinktime * 1000) . 'm'
-    call matchdelete(ring)
-    redraw
-endfunction
+"function! HLNext (blinktime)
+"    let [bufnum, lnum, col, off] = getpos('.')
+"    let matchlen = strlen(matchstr(strpart(getline('.'),col-1),@/))
+"    let target_pat = '\c\%#'.@/
+"    let ring = matchadd('WhiteOnRed', target_pat, 101)
+"    redraw
+"    exec 'sleep ' . float2nr(a:blinktime * 1000) . 'm'
+"    call matchdelete(ring)
+"    redraw
+"endfunction
 
 " stop  highlighting
 " Used by tmux navigator
@@ -451,9 +466,7 @@ nnoremap <leader>n :nohl<CR>
 " ---------------------------------------------------------------------------
 
 " Python
-autocmd BufRead,BufNewFile *.py syntax on
 autocmd BufRead,BufNewFile *.py set ai
-map <F9> :w\|!python %<CR>
 
 " R
 let vimrplugin_objbr_place = "console,right"
