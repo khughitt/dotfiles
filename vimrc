@@ -263,6 +263,7 @@ endif
 " colorscheme
 set background=dark
 colorscheme hemisu
+highlight ColorColumn ctermbg=234 guibg=#666666
 
 " Matching parens style
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
@@ -296,6 +297,7 @@ inoremap <c-w> <c-g>u<c-w>
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
+let g:airline_theme = 'bubblegum'
 
 " ---------------------------------------------------------------------------
 "  dragvisuals.vim
@@ -345,6 +347,18 @@ augroup incsearch-indexed
     autocmd!
     autocmd User IncSearchLeave ShowSearchIndex
 augroup END
+
+nnoremap <silent>n nzv:ShowSearchIndex<CR>
+nnoremap <silent>N Nzv:ShowSearchIndex<CR>
+
+" Enable automatic :nohlsearch with index-search compatibility
+"let g:incsearch#auto_nohlsearch = 1
+"map n  <Plug>(incsearch-nohl-n)zv:ShowSearchIndex<CR>
+"map N  <Plug>(incsearch-nohl-N)zv:ShowSearchIndex<CR>
+"map *  <Plug>(incsearch-nohl-*)
+"map #  <Plug>(incsearch-nohl-#)
+"map g* <Plug>(incsearch-nohl-g*)
+"map g# <Plug>(incsearch-nohl-g#)
 
 " ---------------------------------------------------------------------------
 "  NERDTree
