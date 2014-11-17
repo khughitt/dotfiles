@@ -172,3 +172,6 @@
 [submodule "vim/bundle/vim-indexed-search"]
 	path = vim/bundle/vim-indexed-search
 	url = https://github.com/henrik/vim-indexed-search.git
+[submodule "vim/bundle/vim-minimap"]
+	path = vim/bundle/vim-minimap
+	url = https://github.com/severin-lemaignan/vim-minimap.git
