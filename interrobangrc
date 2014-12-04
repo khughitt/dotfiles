@@ -27,6 +27,7 @@ bang gh       = chromium https://github.com/%s
 bang archbbs  = chromium https://duckduckgo.com/?q=%s%%20site%%3Abbs.archlinux.org
 bang archwiki = luakit https://duckduckgo.com/?q=%s%%20site%%3Awiki.archlinux.org
 bang pubmed   = chromium https://www.ncbi.nlm.nih.gov/pubmed/?term=%s
+bang tryp     = chromium http://tritrypdb.org/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&source_id=%s&project_id=TriTrypDB
 bang calc     = echo "interrobang ignored \"%s\""
 bang ?        = echo "interrobang ignored \"%s\""
 bang logout   = case "%s" in shutdown) systemctl poweroff ;; sleep) systemctl suspend ;; reboot) systemctl reboot ;; logout) killall xinit ;; cancel) exit ;; esac

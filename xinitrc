@@ -34,6 +34,9 @@ xrdb -merge ~/.Xresources
 #xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 #xmodmap -e 'clear Lock' -e 'keycode 0x66 = Escape'
 
+# Java fix
+export _JAVA_AWT_WM_NONREPARENTING=1
+
 if [ -s ~/.xmodmaprc ]; then
     xmodmap ~/.xmodmaprc
 fi
