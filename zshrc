@@ -190,3 +190,6 @@ if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 16
 fi
 
+# TEMP work-around for oh-my-zsh deprecated grep options
+alias grep="grep ${GREP_OPTIONS}"
+unset GREP_OPTIONS
