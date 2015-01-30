@@ -484,7 +484,7 @@ autocmd BufRead,BufNewFile *.py set ai
 
 " R
 let vimrplugin_objbr_place = "console,right"
-let vimrplugin_term = "xterm"
+let vimrplugin_term = "urxvt"
 let vimrplugin_notmuxconf = 1
 let vimrplugin_assign = 0
 let vimrplugin_tmux_title = "automatic"

@@ -18,10 +18,10 @@ set list     = true
 #set flags    = -c
 
 # BANGS & TAB COMPLETION
-bang term     = xterm -e %s
+bang term     = urxvt -e %s
 bang web      = luakit %s
 bang pdf      = llpp %s
-bang man      = xterm -e man %s
+bang man      = urxvt -e man %s
 bang g        = chromium https://www.google.com/search?q=%s
 bang gh       = chromium https://github.com/%s
 bang archbbs  = chromium https://duckduckgo.com/?q=%s%%20site%%3Abbs.archlinux.org

@@ -191,7 +191,7 @@ end
 
 --{{
 local tools = {
-    terminal = "xterm",
+    terminal = "urxvt",
     browser  = "chromium",
     editor   = os.getenv("EDITOR") or "vim",
     system = {
@@ -199,7 +199,7 @@ local tools = {
     },
 }
 
-editor_cmd = "xterm -e " .. tools.editor
+editor_cmd = "urxvt -e " .. tools.editor
 
 --}}
 
@@ -731,7 +731,7 @@ globalkeys = awful.util.table.join(
   -- Other Shortcuts
   awful.key({ modkey, "Shift"   }, "n", function ()
       -- awful.util.spawn("nautilus --no-desktop") 
-      awful.util.spawn_with_shell("xterm -e ranger") 
+      awful.util.spawn_with_shell("urxvt -e ranger") 
   end),
 
 
