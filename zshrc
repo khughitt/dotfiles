@@ -55,32 +55,6 @@ else
     vconsole=false
 fi
 
-# R-vim tweaks
-if [ "x$DISPLAY" != "x" ]
-then
-    #if [[ "screen" == "$TERM" ]]
-    #then
-    #    export TERM=screen-256color
-    #else
-    #    export TERM=xterm-256color
-    #fi
-    alias vim='vim --servername VIM'
-
-    if [[ "x$TERM" == "xxterm" ]] || [[ "x$TERM" == "xxterm-256color" ]]
-    then
-        function tvim(){ tmux -2 new-session "TERM=screen-256color vim --servername VIM $@" ; }
-    else
-        function tvim(){ tmux new-session "vim --servername VIM $@" ; }
-    fi
-else
-    if [[ "x$TERM" == "xxterm" ]] || [[ "x$TERM" == "xxterm-256color" ]]
-    then
-        function tvim(){ tmux -2 new-session "TERM=screen-256color vim $@" ; }
-    else
-        function tvim(){ tmux new-session "vim $@" ; }
-    fi
-fi
-
 # Use Xresrouces to set TTY colors
 if $vconsole; then
     COLORFILE=$(grep --color='never' -o "/.*termcolors/[a-z1-9\-]*" $HOME/.Xresources)
@@ -90,6 +64,14 @@ if $vconsole; then
         echo -en "$i"
     done
     clear
+fi
+
+# R-vim tweaks
+if [ "$DISPLAY" != "" ]; then
+    alias vim='vim --servername VIM'
+    function tvim() { tmux new-session "vim --servername VIM $@" ; }
+else
+    function tvim() { tmux new-session "vim $@" ; }
 fi
 
 # History

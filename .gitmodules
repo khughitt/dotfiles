@@ -175,3 +175,9 @@
 [submodule "vim/bundle/vim-minimap"]
 	path = vim/bundle/vim-minimap
 	url = https://github.com/severin-lemaignan/vim-minimap.git
+[submodule "vim/bundle/vim-pandoc"]
+	path = vim/bundle/vim-pandoc
+	url = https://github.com/vim-pandoc/vim-pandoc.git
+[submodule "vim/bundle/vim-pandoc-syntax"]
+	path = vim/bundle/vim-pandoc-syntax
+	url = https://github.com/vim-pandoc/vim-pandoc-syntax.git

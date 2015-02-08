@@ -41,6 +41,9 @@ nmap <leader>z :wq<cr>
 inoremap <c-s> <c-o>:w<cr>
 nnoremap <c-s> :w<cr>
 
+" Disable macro recording for now
+map q <nop>
+
 "nnoremap ; :
 "nnoremap : ;
 
@@ -414,11 +417,22 @@ let g:unite_source_rec_max_cache_files=5000
 let g:unite_prompt='» '
 let g:unite_split_rule = 'botright'
 
+if executable('ack')
+    " Use ack in unite grep source.
+    let g:unite_source_grep_command = 'ack'
+    let g:unite_source_grep_default_opts =
+    \ '-i --no-heading --no-color -k -H'
+    let g:unite_source_grep_recursive_opt = ''
+endif
+
 nmap <space> [unite]
 nnoremap [unite] <nop>
 
 " cnrlp
 nnoremap <c-p> :Unite file file_mru file_rec/async<cr>
+
+" ack / grep
+nnoremap <space>/ :Unite grep:.<cr>
 
 " buffer switching
 nnoremap <space>s :Unite -quick-match buffer<cr>
@@ -499,6 +513,9 @@ endif
 let rrst_syn_hl_chunk = 1
 let rmd_syn_hl_chunk = 1
 
+" libraries to always include for autocompletion
+let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,ggplot2,dplyr,igraph,reshape2,preprocessCore,WGCNA"
+
 " Use Ctrl+Space to do omnicompletion
 if has("gui_running")
     inoremap <C-Space> <C-x><C-o>
@@ -507,13 +524,12 @@ else
 endif
 
 " Press enter and space bar to send lines and selection to R
-vmap <Space> <Plug>RDSendSelection
-nmap <Space> <Plug>RDSendLine
+"vmap <Space> <Plug>RDSendSelection
+"nmap <Space> <Plug>RDSendLine
 vmap <C-M> <Plug>RDSendSelection
 nmap <C-M> <Plug>RDSendLine
 
 " Knitr
-vmap <Space> <Plug>RDSendSelection
 nmap <C-A-c> <Plug>RDSendChunk
 nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("README_cache/*", recursive=TRUE)')<CR>
 

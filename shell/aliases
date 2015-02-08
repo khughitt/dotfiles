@@ -3,12 +3,14 @@
 #
 alias ll='ls -halF'
 alias la='ls -A'
-#alias l='ls -CF'
 alias l='ls++'
+
+alias v='f -t -e vim -b viminfo'
+alias vim='vim --servername VIM'
+alias tm='todotxt-machine'
 
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
-alias bs='bzr status'
 
 alias make='colormake'
 
