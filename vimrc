@@ -157,23 +157,22 @@ endfunction
 map j gj
 map k gk
 
-" Map <Space> to / (search) and Ctrl-<Space> to ? (backwards search)
-" map <space> /
-" map <c-space> ?
-
 " Quick word navigation
-map <c-h> <C-Left>
-map <c-l> <C-Right>
+" Currently used for tmux navigation
+"map <c-h> <C-Left>
+"map <c-l> <C-Right>
 
 " Smart way to move between windows
+" Currently used for tmux navigation
 " map <C-j> <C-W>j
 " map <C-k> <C-W>k
 " map <C-h> <C-W>h
 " map <C-l> <C-W>l
 
 " Quick buffer switching
-noremap <s-left>  <esc> :bprev<cr>
-noremap <s-right> <esc> :bnext<cr>
+" Only <s-right> working?
+"noremap <s-left>  <esc> :bprev<cr>
+"noremap <s-right> <esc> :bnext<cr>
 
 " Close the current buffer
 map <leader>bd :Bclose<cr>
@@ -182,8 +181,8 @@ map <leader>bd :Bclose<cr>
 map <leader>ba :1,1000 bd!<cr>
 
 " Buffer switching using control-tab
-nnoremap <C-S-tab> :bprevious<CR>
-nnoremap <C-tab>   :bnext<CR>
+"nnoremap <C-S-tab> :bprevious<CR>
+"nnoremap <C-tab>   :bnext<CR>
 
 " Useful mappings for managing tabs
 map <leader>tn :tabnew<cr>
@@ -290,10 +289,9 @@ set history=200
 set undolevels=200
 set undodir=~/.vim/tmp/undo
 
-" enable undo of c-u and c-w in insert mode
+" enable undo using c-u in insert mode
 " http://vim.wikia.com/wiki/Recover_from_accidental_Ctrl-U
 inoremap <c-u> <c-g>u<c-u>
-inoremap <c-w> <c-g>u<c-w>
 
 " ---------------------------------------------------------------------------
 "  airline
@@ -326,6 +324,8 @@ endfunction
 
 function! GoyoAfter()
   Limelight!
+  set background=dark
+  colorscheme hemisu
 endfunction
 
 let g:goyo_callbacks = [function('GoyoBefore'), function('GoyoAfter')]
@@ -374,11 +374,10 @@ map <C-n> :NERDTreeToggle<CR>
 let g:NERDDefaultAlign = 'left'
 
 " ---------------------------------------------------------------------------
-"  vpaste
+"  vpaste.net
 " ---------------------------------------------------------------------------
 map vp :exec "w !vpaste ft=".&ft<CR>
 vmap vp <ESC>:exec "'<,'>w !vpaste ft=".&ft<CR>
-
 
 " ---------------------------------------------------------------------------
 "  snipmate.vim
@@ -417,11 +416,12 @@ let g:unite_source_rec_max_cache_files=5000
 let g:unite_prompt='» '
 let g:unite_split_rule = 'botright'
 
-if executable('ack')
-    " Use ack in unite grep source.
-    let g:unite_source_grep_command = 'ack'
+if executable('ag')
+    " Use ag in unite grep source.
+    let g:unite_source_grep_command = 'ag'
     let g:unite_source_grep_default_opts =
-    \ '-i --no-heading --no-color -k -H'
+    \ '-i --line-numbers --nocolor --nogroup --hidden --ignore ' .
+    \  '''.hg'' --ignore ''.svn'' --ignore ''.git'' --ignore ''.bzr'''
     let g:unite_source_grep_recursive_opt = ''
 endif
 
@@ -447,6 +447,12 @@ nnoremap <silent> [unite]b :<C-u>Unite -auto-resize -buffer-name=buffers buffer<
 nnoremap <silent> [unite]/ :<C-u>Unite -no-quit -buffer-name=search grep:.<cr>
 nnoremap <silent> [unite]m :<C-u>Unite -auto-resize -buffer-name=mappings mapping<cr>
 nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
+
+" ---------------------------------------------------------------------------
+"  yankring.vim
+" ---------------------------------------------------------------------------
+let g:yankring_replace_n_pkey = '<C-up>'
+let g:yankring_replace_n_nkey = '<C-down>'
 
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
