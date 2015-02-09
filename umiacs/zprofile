@@ -1,0 +1,5 @@
+export LAB="/cbcb/lab/nelsayed"
+export PREFIX="${LAB}/local"
+export PATH="${PREFIX}/bin:$PATH"
+export LIBRARY_PATH="$PREFIX/lib:$PREFIX/lib64:/usr/lib64"
+export LD_LIBRARY_PATH="$PREFIX/lib:$PREFIX/lib64:$LD_LIBRARY_PATH"
