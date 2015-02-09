@@ -1,0 +1,12 @@
+# data.frames
+snippet d.f
+	data.frame(${0})
+
+# dplyr
+snippet tbl
+	tbl_df(${0})
+snippet select
+	${1:tbl_df} %>% select(${0:columns})
+snippet filter
+	${1:tbl_df} %>% filter(${0:rows})
+
