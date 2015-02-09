@@ -385,18 +385,17 @@ vmap vp <ESC>:exec "'<,'>w !vpaste ft=".&ft<CR>
 let g:snips_author = "Keith Hughitt"
 let g:snips_email  = "user@email.com"
 let g:snips_github = "https://github.com/khughitt"
-
-" ---------------------------------------------------------------------------
-"  snipmate.vim
-" ---------------------------------------------------------------------------
-let g:SuperTabDefaultCompletionType = "context"
-highlight Pmenu ctermbg=234 ctermfg=198
+let g:snipMate = {}
+let g:snipMate.scope_aliases = {}
+let g:snipMate.scope_aliases['rmd'] = 'r'
 
 " ---------------------------------------------------------------------------
 "  Supertab
 " ---------------------------------------------------------------------------
+let g:SuperTabDefaultCompletionType = "context"
 let g:SuperTabNoCompleteAfter  = ['^', ',', '\s', '"', "'"]
 let g:SuperTabNoCompleteBefore = ['\S']
+highlight Pmenu ctermbg=234 ctermfg=198
 
 " ---------------------------------------------------------------------------
 "  Unite.vim
