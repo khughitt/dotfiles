@@ -270,6 +270,9 @@ highlight ColorColumn ctermbg=234 guibg=#666666
 " Matching parens style
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
 
+" Highlight color
+hi Search ctermbg=197 ctermfg=233
+
 " ---------------------------------------------------------------------------
 "  Copy and Paste
 " ---------------------------------------------------------------------------

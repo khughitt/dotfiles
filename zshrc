@@ -67,8 +67,9 @@ if $vconsole; then
 fi
 
 # R-vim tweaks
+alias vim='vim --servername VIM'
+
 if [ "$DISPLAY" != "" ]; then
-    alias vim='vim --servername VIM'
     function tvim() { tmux new-session "vim --servername VIM $@" ; }
 else
     function tvim() { tmux new-session "vim $@" ; }
