@@ -999,6 +999,7 @@ end
 
 -- Startup Applications
 run_once(os.getenv("HOME") .. "/bin/tptoggle")
+run_once(os.getenv("HOME") .. "/bin/notify-listener.py")
 run_once("nm-applet")
 run_once("gnome-screensaver")
 run_once("xmodmap ~/.xmodmaprc")
