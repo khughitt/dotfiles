@@ -1,5 +1,6 @@
 # Set PATH
-source ~/.zshpath
+#source ~/.zshpath
+
 
 # launch more recent z shell
 if [ $(echo $ZSH_VERSION | sed "s/\.//g") -lt 500 ]; then
@@ -12,10 +13,13 @@ if [ $(id -gn) != "hpgl" ]; then
     exit
 fi
 
+#Enable group read access
+umask 0002
+
 # fix zsh fpath
 #export FPATH="$PREFIX/usr/share/zsh/site-functions:$PREFIX/usr/share/zsh/functions:$FPATH"
-fpath=( $fpath $PREFIX/usr/share/zsh/site-functions )
-fpath=( $fpath $PREFIX/usr/share/zsh/functions )
+#fpath=( $fpath $PREFIX/usr/share/zsh/site-functions )
+#fpath=( $fpath $PREFIX/usr/share/zsh/functions )
 
 # ibis doesn't like my java settings
 unset _JAVA_OPTIONS
@@ -38,41 +42,42 @@ alias qstat="date && qstat"
 # Lab settings
 export LOGS="${LAB}/logs"
 export PBS_WORKSTATION=${PBS_WORKSTATION-" -V -S /cbcb/lab/nelsayed/local/bin/bash -q workstation -l walltime=12:00:00 "}
-export PBS_THROUGHPUT=${PBS_THROUGHPUT-" -V -S /cbcb/lab/nelsayed/local/bin/bash -q throughput -l walltime=12:00:00 "}
+export PBS_THROUGHPUT=${PBS_THROUGHPUT-" -V -S /cbcb/lab/nelsayed/local/bin/bash -q new_throughput -l walltime=12:00:00 "}
 export PBS_LARGE=${PBS_LARGS-" -V -S /cbcb/lab/nelsayed/local/bin/bash -q large -l walltime=72:00:00"}
 export PBS_LOG=${PBS_LOG-" -j eo -e ibissub00.umiacs.umd.edu:${HOME}/outputs/pbs.out -m n"}
 export PBS_ARGS=${PBS_ARGS-"$PBS_THROUGHPUT $PBS_LOG"}
 export RAW="${LAB}/raw_data"
 export REF="${LAB}/ref_data"
 export SCRATCH=${SCRATCH-"/cbcb/nelsayed-scratch/${USER}"}
-export WD=${PWD}
-export TRINITY_HOME="${PROG}/trinityrnaseq_r2013-02-25"
-export R_LIBS=$PREFIX/R
-export PERLIO=stdio
-export PERL5LIB=$PREFIX/perl/lib/perl5
+#export TRINITY_HOME="${PROG}/trinityrnaseq_r2013-02-25"
+#export R_LIBS=$PREFIX/R
+#export PERLIO=stdio
+#export PERL5LIB=$PREFIX/perl/lib/perl5
+#
+export PERL5LIB=$HOME/perl5/lib/perl5 
 
 # CXX Flags
 export MYCFLAGS="-O3 -I$PREFIX/include -L$PREFIX/lib"
 
 # Required to compile Cairo
-export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+#export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
 
-export JAR_DIR="$PREFIX/jar"
-CLASSPATH_STMT="export CLASSPATH=$JAR_DIR"
-for jarfile in $(/bin/ls $JAR_DIR/*.jar); do
-    CLASSPATH_STMT="$CLASSPATH_STMT:$jarfile"
-    ALIAS_STMT="alias $(basename $jarfile .jar)=\"java -jar $jarfile\""
-    eval $(echo $ALIAS_STMT)
-done
-eval $(echo $CLASSPATH_STMT)
+#export JAR_DIR="$PREFIX/jar"
+#CLASSPATH_STMT="export CLASSPATH=$JAR_DIR"
+#for jarfile in $(/bin/ls $JAR_DIR/*.jar); do
+#    CLASSPATH_STMT="$CLASSPATH_STMT:$jarfile"
+#    ALIAS_STMT="alias $(basename $jarfile .jar)=\"java -jar $jarfile\""
+#    eval $(echo $ALIAS_STMT)
+#done
+#eval $(echo $CLASSPATH_STMT)
 
 # Biopieces
-export BP_DIR="/cbcb/lab/nelsayed/local/biopieces"
-export BP_DATA="/cbcb/lab/nelsayed/local/biopieces/data"
-export BP_TMP="/cbcb/lab/nelsayed/local/biopieces/tmp"
-export BP_LOG="/cbcb/lab/nelsayed/local/biopieces/log"
+#export BP_DIR="/cbcb/lab/nelsayed/local/biopieces"
+#export BP_DATA="/cbcb/lab/nelsayed/local/biopieces/data"
+#export BP_TMP="/cbcb/lab/nelsayed/local/biopieces/tmp"
+#export BP_LOG="/cbcb/lab/nelsayed/local/biopieces/log"
 
-source "$BP_DIR/bp_conf/bashrc"
+#source "$BP_DIR/bp_conf/bashrc"
 
 # Fastq
 fastq_count() {
@@ -97,9 +102,6 @@ fastq_filter () {
   echo "Running $CMD"
   eval $CMD
 }
-
-#Enable group read access
-umask 0002
 
 function end_log() {
     if [ $1 ]; then
@@ -212,7 +214,7 @@ function q {
 }
 
 function qattribs {
-    QUEUES=("long" "large" "workstation" "throughput" "xlarge")
+    QUEUES=("new_large" "new_throughput" "high_throughput")
     for q in $QUEUES; do
     echo "The attributes of the $q queue are:"
     CMD="qmgr -c \"print queue $q\" | grep -v \"^#\" | grep -v \"^create\" | sed 's/^set queue//g'"
@@ -305,4 +307,4 @@ function gff2bed() {
 # Don't do more work than necessary
 export ZSHLOCAL_LOADED='TRUE'
 
-CPATH=/cbcb/lab/nelsayed/local/lib/python2.7/site-packages/numpy/core/include:$CPATH
+#CPATH=/cbcb/lab/nelsayed/local/lib/python2.7/site-packages/numpy/core/include:$CPATH
