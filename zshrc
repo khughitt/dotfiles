@@ -2,6 +2,7 @@
 # Z shell Settings
 #
 
+
 # PATH
 PATH=~/bin:~/.cabal/bin:$PATH
 
@@ -13,9 +14,9 @@ ZSH=$HOME/.oh-my-zsh
 ZSH_THEME="bira"
 CASE_SENSITIVE="true"
 
-# Local settings
-if [ -e ~/.zshlocal ]; then
-    source ~/.zshlocal
+# Local settings (early settings)
+if [ -e ~/.zsh_local_early ]; then
+    source ~/.zsh_local_early
 fi
 
 # tmux helper function
@@ -170,9 +171,15 @@ eval $(dircolors -b ~/.dir_colors)
 
 # Hostname
 if [ "$vconsole" = false ]; then
-    hostname | cut -d'.' -f1 | figlet | lolcat -S 16
+#    hostname | cut -d'.' -f1 | figlet | lolcat -S 16
+    hostname | cut -d'.' -f1 | figlet
 fi
 
 # TEMP work-around for oh-my-zsh deprecated grep options
 alias grep="grep ${GREP_OPTIONS}"
 unset GREP_OPTIONS
+
+# Local settings (late settings)
+if [ -e ~/.zsh_local_late ]; then
+    source ~/.zsh_local_late
+fi

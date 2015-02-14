@@ -1,29 +1,29 @@
+export LAB=/cbcb/lab/nelsayed
+
 # RHEL 5/7
 export RHEL_RELEASE=$(lsb_release -c | awk '{print $2}')
 if [[ "${RHEL_RELEASE}" == "Maipo" ]]; then
-    export PREFIX="$LAB/local_rhel7"
     export CBCB="/cbcb/sw/RedHat-7-x86_64/common"
 elif [[ "${RHEL_RELEASE}" == "Tikanga" ]]; then
-    export PREFIX="$LAB/local_rhel5"
     export CBCB="/cbcb/sw/RedHat-5-x86_64/common"
 else
-        echo "I do not have a bash configuration for this release, doing nothing."
+    echo "I do not have a bash configuration for this release, doing nothing."
 fi
 
 # Exports
 export LAB="/cbcb/lab/nelsayed"
-export PATH="$PREFIX/bin:$HOME/perl5/bin:$PATH"
-export LIBRARY_PATH="$PREFIX/lib:$PREFIX/lib64:/usr/lib64"
+export PATH="$HOME/perl5/bin:$PATH"
+export LIBRARY_PATH="$LIBRARY_PATH:/usr/lib64"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/lib64"
-export MODULEPATH="$MODULEPATH:$PREFIX/modules"
+export MODULEPATH="$MODULEPATH:$CBCB/modules/dev"
 
 # Load modules
-module add shells/zsh \
-    editors/vim       \
-    lang/perl/ext     \
-    lang/python/ext   \
-    lang/R/ext        \
-    aligners/tophat   \
-    os/htop           \
-    os/tmux           \
-    os/the_silver_searcher
+module add zsh \
+    tmux       \
+    vim        \
+    the_silver_searcher
+    #perl/ext   \
+    #python/ext \
+    #R/ext      \
+    #tophat     \
+    #htop       \

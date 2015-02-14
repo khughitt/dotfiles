@@ -1,10 +1,9 @@
 # Set PATH
 #source ~/.zshpath
 
-
 # launch more recent z shell
 if [ $(echo $ZSH_VERSION | sed "s/\.//g") -lt 500 ]; then
-    exec /cbcb/lab/nelsayed/local/bin/zsh -l
+    exec zsh -l
 fi
 
 ## switch main group to hpgl
@@ -57,7 +56,7 @@ export SCRATCH=${SCRATCH-"/cbcb/nelsayed-scratch/${USER}"}
 export PERL5LIB=$HOME/perl5/lib/perl5 
 
 # CXX Flags
-export MYCFLAGS="-O3 -I$PREFIX/include -L$PREFIX/lib"
+#export MYCFLAGS="-O3 -I$PREFIX/include -L$PREFIX/lib"
 
 # Required to compile Cairo
 #export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig

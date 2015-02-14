@@ -1,0 +1,3 @@
+if [[ "$RHEL_RELEASE" == "Tikanga" ]]; then
+    alias l='ls -lah'
+fi
