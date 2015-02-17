@@ -2,9 +2,11 @@
 # Z shell Settings
 #
 
-
-# PATH
-PATH=~/bin:~/.cabal/bin:$PATH
+# Check to see if zprofile has been loaded yet
+if [[ $ZSHRC_LOADED = true ]]; then
+    return
+fi
+#echo `date` "| zshrc" >> ~/boot_order
 
 # Stop here in non-interactive mode
 [ -z "$PS1" ] && return
@@ -171,8 +173,7 @@ eval $(dircolors -b ~/.dir_colors)
 
 # Hostname
 if [ "$vconsole" = false ]; then
-#    hostname | cut -d'.' -f1 | figlet | lolcat -S 16
-    hostname | cut -d'.' -f1 | figlet
+    hostname | cut -d'.' -f1 | figlet | lolcat -S 16
 fi
 
 # TEMP work-around for oh-my-zsh deprecated grep options
@@ -183,3 +184,8 @@ unset GREP_OPTIONS
 if [ -e ~/.zsh_local_late ]; then
     source ~/.zsh_local_late
 fi
+
+# PATH
+PATH=~/.cabal/bin:$PATH
+
+export ZSHRC_LOADED='true'

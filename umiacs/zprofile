@@ -1,13 +1,16 @@
-export LAB=/cbcb/lab/nelsayed
+# for debugging...
+# set -x
 
-# RHEL 5/7
-export RHEL_RELEASE=$(lsb_release -c | awk '{print $2}')
-if [[ "${RHEL_RELEASE}" == "Maipo" ]]; then
-    export CBCB="/cbcb/sw/RedHat-7-x86_64/common"
-elif [[ "${RHEL_RELEASE}" == "Tikanga" ]]; then
-    export CBCB="/cbcb/sw/RedHat-5-x86_64/common"
-else
-    echo "I do not have a bash configuration for this release, doing nothing."
+# Check to see if zprofile has been loaded yet
+if [[ $ZPROFILE_LOADED = true ]]; then
+    return
+fi
+
+#echo `date` "| zprofile" >> ~/boot_order
+
+# CBCB shared settings
+if [[ -e "/cbcb/sw/cbcb_profile" ]]; then
+    source /cbcb/sw/cbcb_profile
 fi
 
 # Exports
@@ -15,15 +18,32 @@ export LAB="/cbcb/lab/nelsayed"
 export PATH="$HOME/perl5/bin:$PATH"
 export LIBRARY_PATH="$LIBRARY_PATH:/usr/lib64"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/lib64"
-export MODULEPATH="$MODULEPATH:$CBCB/modules/dev"
+export MODULEPATH="$MODULEPATH:$CBCB_MODULES/dev"
+
+export CBCB_SW_INSTALLER_NAME="Keith Hughitt"
+export CBCB_SW_INSTALLER_EMAIL="user@email.com"
 
 # Load modules
-module add zsh \
-    tmux       \
-    vim        \
+module add zsh     \
+    tmux           \
+    boost          \
+    cmake          \
+    git            \
+    htop           \
+    vim            \
+    R/common       \
+    ruby/common    \
+    perl/common    \
+    python2/common \
+    python3/common \
     the_silver_searcher
-    #perl/ext   \
-    #python/ext \
-    #R/ext      \
-    #tophat     \
-    #htop       \
+
+export ZPROFILE_LOADED='true'
+
+# Not yet supported on Heron
+    #cairo      \
+    #freetype   \
+    #gcc        \
+    #pixman     \
+    #lua        \
+    #

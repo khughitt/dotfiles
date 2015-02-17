@@ -1,3 +1,6 @@
 if [[ "$RHEL_RELEASE" == "Tikanga" ]]; then
     alias l='ls -lah'
 fi
+
+# Remove redundant PATH entries
+export PATH=$(echo $PATH | sed 's/:\/opt\/local\/bin//g')
