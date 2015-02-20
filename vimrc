@@ -44,6 +44,10 @@ nnoremap <c-s> :w<cr>
 " Disable macro recording for now
 map q <nop>
 
+" Autosave on leaving insert mode
+" http://stackoverflow.com/questions/9087582/how-to-autosave-in-vim-7-when-focus-is-lost-from-the-window
+autocmd InsertLeave * if expand('%') != '' | update | endif
+
 "nnoremap ; :
 "nnoremap : ;
 
@@ -215,6 +219,16 @@ set viminfo^=%
 
 " tmux mouse support
 set mouse=a
+
+" Easier switching to normal mode
+inoremap jk <Esc>
+
+" Faster command execution
+nnoremap ! :! 
+
+" Sloppyness is okay
+cabbrev ew :wq
+cabbrev qw :wq
 
 " ---------------------------------------------------------------------------
 "  Appearance
@@ -422,8 +436,9 @@ if executable('ag')
     " Use ag in unite grep source.
     let g:unite_source_grep_command = 'ag'
     let g:unite_source_grep_default_opts =
-    \ '-i --line-numbers --nocolor --nogroup --hidden --ignore ' .
-    \  '''.hg'' --ignore ''.svn'' --ignore ''.git'' --ignore ''.bzr'''
+    \ "-i --line-numbers --nocolor --nogroup --hidden --ignore '.hg' " .
+    \ "--ignore '.svn' --ignore '.git' --ignore '.bzr' " .
+    \ "--ignore 'README_cache' --ignore '.html' "
     let g:unite_source_grep_recursive_opt = ''
 endif
 

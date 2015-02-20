@@ -54,9 +54,9 @@ if (interactive()) {
     # If R started by vim
     if(Sys.getenv("VIMRPLUGIN_TMPDIR") != "") {
         # better vim support on server
-        if(substring(Sys.getenv("HOME"), 0, 5) == "/cbcb") {
-            .libPaths("/cbcb/lab/nelsayed/local/R")
-        }
+        #if(substring(Sys.getenv("HOME"), 0, 5) == "/cbcb") {
+        #    .libPaths("/cbcb/lab/nelsayed/local/R")
+        #}
         library(vimcom)
         # See R docs Vim buffer even if asking for help in R Console:
         #if(Sys.getenv("VIM_PANE") != "")
