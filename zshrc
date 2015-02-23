@@ -37,7 +37,7 @@ function xumt() {
 
 # Automatically launch tmux when connecting via SSH
 if [[ "$TERM" != screen* ]] && [ ! -z "$SSH_CLIENT" ]; then
-    # Fix DISPLAY variable
+    # Fix DISPLAY variableda
     # http://yubinkim.com/?p=203
     #for name in `tmux ls -F '#{session_name}'`; do
     #    tmux setenv -g -t $name DISPLAY $DISPLAY #set display for all sessions
@@ -53,9 +53,9 @@ fi
 
 # Check if in virtual console
 if [ "$TERM" = "linux" ]; then
-    vconsole=true
+    export vconsole=true
 else
-    vconsole=false
+    export vconsole=false
 fi
 
 # Use Xresrouces to set TTY colors
@@ -188,4 +188,4 @@ fi
 # PATH
 PATH=~/.cabal/bin:$PATH
 
-export ZSHRC_LOADED='true'
+ZSHRC_LOADED='true'
