@@ -470,6 +470,7 @@ nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
 " ---------------------------------------------------------------------------
 let g:yankring_replace_n_pkey = '<C-up>'
 let g:yankring_replace_n_nkey = '<C-down>'
+let g:yankring_history_dir = '$HOME/.vim/tmp/yankring'
 
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
@@ -560,12 +561,9 @@ nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("RE
 function! RMakeBootstrapHTML()
   update
   call RSetWD()
-  "let filename = expand("%:r:t")
-  "let rcmd = "require('knitrBootstrap'); require('rmarkdown');
-  "  \ render(\"" . filename . ".rmd\", output_format=\"all\", clean=TRUE)"
   let filename = expand("%")
   let rcmd = "require('knitrBootstrap'); require('rmarkdown');
-           \  render(\"" . filename . "\", output_format=\"all\", clean=TRUE)"
+           \  render(\"" . filename . "\", output_format=\"all\", clean=FALSE)"
   if g:vimrplugin_openhtml
     let rcmd = rcmd . ';'
   endif

@@ -981,7 +981,7 @@ client.connect_signal("manage", customization.func.client_manage_tag)
 -- }}}
 
 -- Autostart
-function run_once(prg,arg_string,pname,screen)
+function run_once(prg, arg_string, pname, screen)
     if not prg then
         do return nil end
     end
@@ -1003,6 +1003,7 @@ run_once(os.getenv("HOME") .. "/bin/notify-listener.py")
 run_once("nm-applet")
 run_once("gnome-screensaver")
 run_once("xmodmap ~/.xmodmaprc")
-run_once("dropboxd", "", "/opt/dropbox/dropbox")
+-- run_once("dropbox", "", "/opt/dropbox/dropbox")
+run_once("dropbox")
 run_once("redshift -l 37.05:-78.66", "redshift -l 37.05 -78.66")
 
