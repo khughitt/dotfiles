@@ -9,7 +9,6 @@ export JAVA_FONTS=/usr/share/fonts/TTF
 #export XDG_CONFIG_HOME="$HOME/.config"
 #export QT_IM_MODULE=ibus
 #export TRITRYP=/usr/local/db/TriTrypDB/current
-export RESEARCH=$HOME/Dropbox/research
 export XDG_CONFIG_HOME="$HOME/.config"
 
 # Less Colors for Man Pages

@@ -11,7 +11,7 @@ options(github.user="khughitt")
 options(prompt="> ")
 options(continue="... ")
 
-q <- function (save="no", ...) {
+q = function (save="no", ...) {
   quit(save=save, ...)
 }
 

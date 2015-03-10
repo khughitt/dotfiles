@@ -563,7 +563,7 @@ function! RMakeBootstrapHTML()
   call RSetWD()
   let filename = expand("%")
   let rcmd = "require('knitrBootstrap'); require('rmarkdown');
-           \  render(\"" . filename . "\", output_format=\"all\", clean=FALSE)"
+           \  render(\"" . filename . "\", output_format=\"all\", clean=TRUE)"
   if g:vimrplugin_openhtml
     let rcmd = rcmd . ';'
   endif
