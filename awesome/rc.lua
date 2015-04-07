@@ -674,8 +674,8 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control" }, "r", awesome.restart),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit),
 
-    awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact( 0.05)    end),
-    awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact(-0.05)    end),
+    awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact( 0.025)    end),
+    awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact(-0.025)    end),
     awful.key({ modkey, "Shift"   }, "h",     function ()
                                                 awful.tag.incnmaster(1)
                                                 layout_info()
@@ -751,8 +751,8 @@ globalkeys = awful.util.table.join(
       awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
   end),
   awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
-  awful.key({ altkey }, "Return", function () scratch.drop("urxvt --background '[100]#333333'", 'center', 'center', 0.5, 0.5) end),
-  awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.5, 0.5) end)
+  awful.key({ altkey }, "Return", function () scratch.drop("urxvt --background '[90]#191919'", 'center', 'center', 0.75, 0.75) end),
+  awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.75, 0.75) end)
 )
   -- }}}
 

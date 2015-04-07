@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-IGV_VERSION="2.3.36"
-TRITRYPDB_VERSION="8.0"
+IGV_VERSION="2.3.47"
+TRITRYPDB_VERSION="9.0"
 
 export JAVA_FONTS=/usr/share/fonts/TTF
 export _JAVA_AWT_WM_NONREPARENTING=1

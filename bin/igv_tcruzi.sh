@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-IGV_VERSION="2.3.36"
+IGV_VERSION="2.3.47"
 
 java -Xmx12096m -Djava.net.preferIPv4Stack=true \
     -jar ${HOME}/software/IGV_${IGV_VERSION}/igv.jar \
