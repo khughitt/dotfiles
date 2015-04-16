@@ -85,13 +85,6 @@ setopt HIST_IGNORE_DUPS
 [ -z "$plugins" ] && plugins=(\
     archlinux colored-man git systemd web-search)
 
-# vim key bindings
-bindkey -v
-#
-# vim like history movements
-bindkey '^k' up-history
-bindkey '^j' down-history
-
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
 
@@ -123,6 +116,42 @@ alias -s com=chromium
 
 # Disable scroll lock
 stty -ixon
+
+# vim key bindings
+# http://dougblack.io/words/zsh-vi-mode.html
+#bindkey -v
+
+#bindkey '^P' up-history
+#bindkey '^N' down-history
+#bindkey '^?' backward-delete-char
+#bindkey '^h' backward-delete-char
+#bindkey '^w' backward-kill-word
+#bindkey '^r' history-incremental-search-backward
+
+#function zle-line-init zle-keymap-select {
+#    VIM_PROMPT="%{$fg_bold[yellow]%} [% NORMAL]%  %{$reset_color%}"
+#    RPS1="${${KEYMAP/vicmd/$VIM_PROMPT}/(main|viins)/}$(git_custom_status) $EPS1"
+#    zle reset-prompt
+#}
+
+#zle -N zle-line-init
+#zle -N zle-keymap-select
+
+# re-enable moving around words with control left/right
+#bindkey '^[[1;5D' emacs-backward-word
+#bindkey '^[[1;5C' emacs-forward-word
+
+# same but with alt-left/right
+#bindkey "\e\e[D" backward-word
+#bindkey "\e\e[C" forward-word
+
+#
+# vim like history movements
+#bindkey '^k' up-history
+#bindkey '^j' down-history
+
+# Reduce lag when switching between modes
+#export KEYTIMEOUT=1
 
 # Urxvt keybindings
 if [[ "${TERM}" == rxvt-* ]]
