@@ -141,7 +141,7 @@ set pastetoggle=<F6>        " paste-mode toggle
 set sessionoptions-=options " don't preserve configuration across sessions
 
 " Shortuct to toggle textwidth.
-nmap <silent><localleader>w :call ToggleTextWidth()<CR>
+nmap <silent><localleader>r :call ToggleTextWidth()<CR>
 function! ToggleTextWidth()
   if &textwidth != 0
     let b:oldtextwidth = &textwidth
@@ -220,6 +220,24 @@ set viminfo^=%
 " tmux mouse support
 set mouse=a
 
+" Changing cursor shape per mode
+" https://gist.github.com/andyfowler/1195581#comment-993604
+" 
+" 1 or 0 -> blinking block
+" 2 -> solid block
+" 3 -> blinking underscore
+" 4 -> solid underscore
+"if exists('$TMUX')
+"    " tmux will only forward escape sequences to the terminal if surrounded by a DCS sequence
+"    let &t_SI .= "\<Esc>Ptmux;\<Esc>\<Esc>[4 q\<Esc>\\"
+"    let &t_EI .= "\<Esc>Ptmux;\<Esc>\<Esc>[2 q\<Esc>\\"
+"    autocmd VimLeave * silent !echo -ne "\033Ptmux;\033\033[0 q\033\\"
+"else
+"    let &t_SI .= "\<Esc>[4 q"
+"    let &t_EI .= "\<Esc>[2 q"
+"    autocmd VimLeave * silent !echo -ne "\033[0 q"
+"endif
+
 " Easier switching to normal mode
 inoremap jk <Esc>
 
@@ -293,7 +311,7 @@ hi Search ctermbg=197 ctermfg=233
 
 " Remap vim register to CLIPBOARD selection
 " unamed        PRIMARY   (middlemouse)
-" unamedplusi   CLIPBOARD (control v)
+" unamedplus    CLIPBOARD (control v)
 " autoselect    Automatically save visual selections
 "set clipboard=unnamed,autoselect
 set clipboard=unnamed
@@ -379,6 +397,16 @@ nnoremap <silent>N Nzv:ShowSearchIndex<CR>
 "map #  <Plug>(incsearch-nohl-#)
 "map g* <Plug>(incsearch-nohl-g*)
 "map g# <Plug>(incsearch-nohl-g#)
+
+" ---------------------------------------------------------------------------
+" indent guides 
+" ---------------------------------------------------------------------------
+let g:indent_guides_auto_colors = 0
+let g:indent_guides_start_level = 2
+let g:indent_guides_guide_size  = 1
+
+autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=black   ctermbg=black
+autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=darkgrey ctermbg=darkgrey
 
 " ---------------------------------------------------------------------------
 "  NERDTree
@@ -604,8 +632,9 @@ nnoremap <silent> <localleader>kk :call RMakeBootstrapHTML()<CR>
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 
 " Markdown
-autocmd BufRead,BufNewFile *.md set filetype=markdown background=light nofoldenable
-autocmd FileType markdown colorscheme summerfruit256
+"autocmd BufRead,BufNewFile *.md set filetype=markdown background=light nofoldenable
+autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
+"autocmd FileType markdown colorscheme summerfruit256
 let g:vim_markdown_folding_disabled=1
 
 " CSV

@@ -194,7 +194,10 @@ function gff_genes() {
     head -n 3 $1 > $outfile
 
     # grab all gene fields
-    head -n $last_line $1 | grep --color='never' 'gene' >> $outfile
+    #head -n $last_line $1 | grep --color='never' 'gene' >> $outfile
+    
+    # grab all fields after the FASTA entries
+    head -n $last_line $1 >> $outfile
 }
 
 # dir colors
@@ -218,3 +221,4 @@ fi
 PATH=~/.cabal/bin:$PATH
 
 ZSHRC_LOADED='true'
+

@@ -3,7 +3,8 @@
 #
 options(showWarnCalls=T, showErrorCalls=T)
 options(warning.length=8170)
-options(max.print=300)
+options(max.print=100)
+options(dplyr.print_max=30) 
 options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
 options(menu.graphics=F)
 options(github.user="khughitt")
@@ -113,3 +114,8 @@ Sys.setenv(R_HISTSIZE=5000)
     source("http://bioconductor.org/biocLite.R")
 }
 
+# Memory usage
+.top = function() {
+    # Prints 50 objects which use the most memory (in megabytes)
+    print(tail(sort(sapply(ls(),function(x){object.size(get(x))})), 50)/1E6)
+}

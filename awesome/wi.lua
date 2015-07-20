@@ -43,7 +43,7 @@ cpufreq = wibox.widget.textbox()
 vicious.register(cpufreq, vicious.widgets.cpuinf,
   function(widget, args)
     return string.format("<span color='" .. beautiful.fg_em ..
-      "'>cpu</span>%1.1fGHz", args["{cpu0 ghz}"])
+      "'>cpu</span> %1.1fGHz", args["{cpu0 ghz}"])
   end, 3000)
 
 -- Core 0 graph
@@ -147,6 +147,11 @@ cpupct3.fit =
     return math.max(pctwidth, w), h
   end
 vicious.register(cpupct3, vicious.widgets.cpu, "$5%", 2)
+
+-- CPU temperature
+tzswidget = wibox.widget.textbox()
+vicious.register(tzswidget, vicious.widgets.thermal, " $1°C", 3, "thermal_zone6")
+-- }}}
 
 -- {{{ Memory
 -- Cache
