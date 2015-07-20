@@ -1,0 +1,26 @@
+#!/bin/sh
+# loaded by GDM
+
+# monitor
+external=$(xrandr -q | awk '/HDMI1/ {print $2}')
+if [ "$external" = "connected" ]; then
+    xrandr --output HDMI1 --auto --same-as eDP1
+    xrandr --output eDP1 --off
+fi
+
+# compositing
+compton -cGb
+
+# enable restart X
+setxkbmap -option terminate:ctrl_alt_bksp
+
+# map caps lock to escape
+#setxkbmap -option caps:escape
+#xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
+#xmodmap -e 'clear Lock' -e 'keycode 0x66 = Escape'
+
+if [ -s ~/.xmodmaprc ]; then
+    xmodmap ~/.xmodmaprc
+fi
+
+
