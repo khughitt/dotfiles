@@ -998,12 +998,11 @@ function run_once(prg, arg_string, pname, screen)
 end
 
 -- Startup Applications
-run_once(os.getenv("HOME") .. "/bin/tptoggle")
 --run_once(os.getenv("HOME") .. "/bin/notify-listener.py")
+run_once(os.getenv("HOME") .. "/bin/tptoggle")
 run_once("nm-applet")
 run_once("gnome-screensaver")
 run_once("xmodmap ~/.xmodmaprc")
 -- run_once("dropbox", "", "/opt/dropbox/dropbox")
--- run_once("dropbox")
-run_once("redshift -l 37.05:-78.66", "redshift -l 37.05 -78.66")
+run_once("redshift\ -l\ 37.05:-78.66", "redshift -l 37.05 -78.66")
 

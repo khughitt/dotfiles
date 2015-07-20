@@ -18,6 +18,7 @@ fi
 if [ -z $XDG_CONFIG_HOME ]; then
     XDG_CONFIG_HOME=$HOME/.config
 fi
+mkdir -p $XDG_CONFIG_HOME
 
 # Checks for file or directory and creates a sym link if it 
 # doesn't already exist
@@ -37,27 +38,27 @@ ln_s ${PWD}/${SH}rc ~/.${SH}rc
 ln_s ${PWD}/shell ~/.shell
 
 # Terminator
-if [ ! -e ~/.config/terminator ]; then
-    mkdir -p ~/.config/terminator
-fi
-ln_s ${PWD}/terminator ~/.config/terminator/config
+#if [ ! -e ~/.config/terminator ]; then
+#    mkdir -p ~/.config/terminator
+#fi
+#ln_s ${PWD}/terminator ~/.config/terminator/config
 
 # IPython
-if [ ! -e $XDG_CONFIG_HOME/ipython ] and ipython -v 2>/dev/null; then
-    ipython profile create
-
-    for filepath in ${PWD}/ipython/*; do
-        $DEST=$XDG_CONFIG_HOME/ipython/profile_default/${filename}
-        if [ -e $DEST ]; then
-            rm -r $DEST
-            ln_s ${filepath} $DEST
-        fi
-    done
-
-    # Todo: update default color scheme to Linux
-else
-    echo "[SKIPPING] Ipython (already exists...)"
-fi
+#if [ ! -e $XDG_CONFIG_HOME/ipython ] and ipython -v 2>/dev/null; then
+#    ipython profile create
+#
+#    for filepath in ${PWD}/ipython/*; do
+#        $DEST=$XDG_CONFIG_HOME/ipython/profile_default/${filename}
+#        if [ -e $DEST ]; then
+#            rm -r $DEST
+#            ln_s ${filepath} $DEST
+#        fi
+#    done
+#
+#    # Todo: update default color scheme to Linux
+#else
+#    echo "[SKIPPING] Ipython (already exists...)"
+#fi
 
 # Awesome
 ln_s ${PWD}/awesome ${XDG_CONFIG_HOME}/awesome
@@ -75,11 +76,11 @@ ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 
 # Byobu
-ln -s ${PWD}/byobu/keybindings.tmux ~/.byobu/
+#ln -s ${PWD}/byobu/keybindings.tmux ~/.byobu/
 
 # Everything else
-for path in "conky" "conkyrc" "dir_colors" "gitconfig" "gitignore_global" \
-            "gtkrc-2.0" "Rprofile" "Renviron" "tmux.conf" \
+for path in "dir_colors" "gitconfig" "gitignore_global" \
+            "Rprofile" "Renviron" "tmux.conf" \
             "vim" "vimrc" "xinitrc" "xmodmaprc" "Xresources"; do
     ln_s ${PWD}/${path} ~/.${path}
 done
