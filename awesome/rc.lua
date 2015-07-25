@@ -1004,5 +1004,6 @@ run_once("nm-applet")
 run_once("gnome-screensaver")
 run_once("xmodmap ~/.xmodmaprc")
 -- run_once("dropbox", "", "/opt/dropbox/dropbox")
-run_once("redshift\ -l\ 37.05:-78.66", "redshift -l 37.05 -78.66")
+run_once("redshift -l37.05:-78.66", "", "redshift -l37.05:-78.66")
+--run_once("redshift" "-l37.05:-78.66", "redshift -l37.05:-78.66")
 
