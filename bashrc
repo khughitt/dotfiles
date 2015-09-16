@@ -2,9 +2,6 @@
 # Bash configuration
 #
 
-# PATH
-export PATH=$HOME/bin:$PATH
-
 # If not running interactively, don't do anything
 # [] is an "if" statement
 # -z returns True if the length of the string is zero
@@ -14,7 +11,9 @@ export PATH=$HOME/bin:$PATH
 #export TERM=rxvt-unicode
 
 # Bash
-shopt -s histappend checkwinsize autocd globstar checkjobs dirspell
+if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+    shopt -s histappend checkwinsize autocd globstar checkjobs dirspell
+fi
 
 # History
 HISTCONTROL=$HISTCONTROL${HISTCONTROL+,}ignoredups:ignorespace
@@ -34,6 +33,14 @@ if [ -x /usr/bin/dircolors ] || [ -x /bin/dircolors ]; then
     alias egrep='egrep --color=auto'
 fi
 
+# For machines without dircolors support
+# http://stackoverflow.com/questions/1550288/mac-os-x-terminal-colors
+if [[ ! -e "$LSCOLORS" ]]; then
+    export CLICOLOR=1
+    export LSCOLORS=GxFxCxDxBxegedabagaced
+fi
+
+
 # Make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
@@ -52,5 +59,7 @@ function h {
 source /etc/profile
 
 # Banner
-figlet `hostname` | lolcat
+if [[ $(type "figlet" &> /dev/null) ]]; then
+    figlet `hostname` | lolcat
+fi
 
