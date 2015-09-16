@@ -6,7 +6,7 @@ alias la='ls -A'
 alias l='ls++'
 
 alias v='f -t -e vim -b viminfo'
-alias vim='vim --servername VIM'
+#alias vim='vim --servername VIM'
 alias tm='todotxt-machine'
 
 alias grep='grep --color=always'
