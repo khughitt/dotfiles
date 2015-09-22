@@ -3,7 +3,10 @@
 #
 alias ll='ls -halF'
 alias la='ls -A'
-alias l='ls++'
+
+if [[ $(type "ls++" &> /dev/null) ]]; then
+    alias l='ls++'
+fi
 
 alias v='f -t -e vim -b viminfo'
 #alias vim='vim --servername VIM'
