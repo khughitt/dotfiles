@@ -2,9 +2,6 @@
 # Bash configuration
 #
 
-# PATH
-export PATH=$HOME/bin:$PATH
-
 # If not running interactively, don't do anything
 # [] is an "if" statement
 # -z returns True if the length of the string is zero

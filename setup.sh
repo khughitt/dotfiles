@@ -85,6 +85,10 @@ for path in "dir_colors" "gitconfig" "gitignore_global" \
     ln_s ${PWD}/${path} ~/.${path}
 done
 
+# Vim temp dirs
+mkdir -p ~/.vim/tmp/backup
+mkdir -p ~/.vim/tmp/yankring
+
 echo "Done!"
 echo "Don't forget to install any necessary fonts, icons, etc."
 

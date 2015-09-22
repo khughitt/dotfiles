@@ -196,15 +196,12 @@
 [submodule "vim/bundle/YankRing.vim"]
 	path = vim/bundle/YankRing.vim
 	url = https://github.com/vim-scripts/YankRing.vim.git
-[submodule "CamelCaseMotion"]
-	path = CamelCaseMotion
-	url = git@github.com:bkad/CamelCaseMotion.git
 [submodule "vim/bundle/vim-indent-guides"]
 	path = vim/bundle/vim-indent-guides
-	url = git@github.com:nathanaelkane/vim-indent-guides.git
+	url = https://github.com/nathanaelkane/vim-indent-guides.git
 [submodule "vim/bundle/CamelCaseMotion"]
 	path = vim/bundle/CamelCaseMotion
-	url = git@github.com:bkad/CamelCaseMotion.git
+	url = https://github.com/bkad/CamelCaseMotion.git
 [submodule "vim/bundle/dracula-theme"]
 	path = vim/bundle/dracula-theme
 	url = git@github.com:zenorocha/dracula-theme.git
