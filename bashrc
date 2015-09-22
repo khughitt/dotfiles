@@ -1,10 +1,8 @@
 #
-# Bash configuration
+# Bash Settings
 #
 
-# If not running interactively, don't do anything
-# [] is an "if" statement
-# -z returns True if the length of the string is zero
+# Stop here in non-interactive mode
 [ -z "$PS1" ] && return
 
 # Terminal
@@ -74,16 +72,16 @@ if $vconsole; then
 fi
 
 # R-vim tweaks
-alias vim='vim --servername VIM'
+if [[ $(vim --version | grep -o "+clientserver") -eq '+clientserver' ]]; then
+    alias vim='vim --servername VIM'
 
-if [ "$DISPLAY" != "" ]; then
-    function tvim() { tmux new-session "vim --servername VIM $@" ; }
-else
-    function tvim() { tmux new-session "vim $@" ; }
+    if [ "$DISPLAY" != "" ]; then
+        function tvim() { tmux new-session "vim --servername VIM $@" ; }
+    else
+        function tvim() { tmux new-session "vim $@" ; }
+    fi
 fi
 
-# Make less more friendly for non-text input files, see lesspipe(1)
-[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # Additional shell settings (aliases, exports)
 for file in ~/.shell/{aliases,private,exports}; do
@@ -91,18 +89,19 @@ for file in ~/.shell/{aliases,private,exports}; do
 done
 unset file
 
+# Make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# Disable scroll lock
+stty -ixon
+
 # Quick history searches (can also use ctrl + R)
 function h {
     history | grep $1
 }
 
-
-# Disable scroll lock
-stty -ixon
-
 # Banner
 if [[ $(type "figlet" &> /dev/null) ]]; then
-# Hostname
     if [ "$vconsole" = false ]; then
         hostname | cut -d'.' -f1 | figlet | lolcat -S 16
     fi

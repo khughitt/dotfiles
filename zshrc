@@ -70,12 +70,14 @@ if $vconsole; then
 fi
 
 # R-vim tweaks
-alias vim='vim --servername VIM'
+if [[ $(vim --version | grep -o "+clientserver") -eq '+clientserver' ]]; then
+    alias vim='vim --servername VIM'
 
-if [ "$DISPLAY" != "" ]; then
-    function tvim() { tmux new-session "vim --servername VIM $@" ; }
-else
-    function tvim() { tmux new-session "vim $@" ; }
+    if [ "$DISPLAY" != "" ]; then
+        function tvim() { tmux new-session "vim --servername VIM $@" ; }
+    else
+        function tvim() { tmux new-session "vim $@" ; }
+    fi
 fi
 
 # History
