@@ -6,6 +6,8 @@ alias la='ls -A'
 
 if [[ $(type "ls++" &> /dev/null) ]]; then
     alias l='ls++'
+else
+    alias l='ls -lh'
 fi
 
 alias v='f -t -e vim -b viminfo'
