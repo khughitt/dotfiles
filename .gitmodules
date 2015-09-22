@@ -204,4 +204,4 @@
 	url = https://github.com/bkad/CamelCaseMotion.git
 [submodule "vim/bundle/dracula-theme"]
 	path = vim/bundle/dracula-theme
-	url = git@github.com:zenorocha/dracula-theme.git
+    url = https://github.com/zenorocha/dracula-theme.git

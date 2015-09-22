@@ -5,6 +5,7 @@
 	ui = true
 [core]
 	excludesfile = /home/keith/.gitignore_global
+	filemode = false
 [diff]
 	external = git-meld
 [push]
