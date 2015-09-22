@@ -7,6 +7,7 @@ Installation
 To install, simply clone this repo and run `setup.sh`:
 
     git clone https://github.com/khughitt/dotfiles
+    git submodule update --init --recursive
     cd dotfiles && ./setup.sh
 
 Symbolic links will be created in $HOME to all of the major configuration files.
@@ -32,3 +33,4 @@ Current setup:
  * [Arch Linux](https://www.archlinux.org/)
  * [AwesomeWM](http://awesome.naquadah.org/)
  * [Z shell](http://www.zsh.org/)
+
