@@ -17,7 +17,9 @@ alias tm='todotxt-machine'
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
 
-alias make='colormake'
+if [[ $(type "colormake" &> /dev/null) ]]; then
+    alias make='colormake'
+fi
 
 alias rc='random_country.py'
 alias ap='sudo apt-get update && sudo apt-get dist-upgrade'
