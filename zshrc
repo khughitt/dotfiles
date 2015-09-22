@@ -183,21 +183,14 @@ function ai {
     sox $1 -n remix 1 spectrogram -l -t "${artist} - ${title} (${bpm})" -x 1920 -o $spectrogram
 }
 
-# Generates simplified gff files
-function gff_genes() {
+function strip_fasta() {
     # exclude any fasta sections at end of file
     last_line=$(expr $(grep --color='never' -nr "##FASTA" $1 |\
                 awk '{print $1}' FS=":") - 1)
-    outfile=$(basename $1 .gff)"_genes.gff"
 
-    # grab first few comment fields
-    head -n 3 $1 > $outfile
-
-    # grab all gene fields
-    #head -n $last_line $1 | grep --color='never' 'gene' >> $outfile
-    
     # grab all fields after the FASTA entries
-    head -n $last_line $1 >> $outfile
+    head -n ${last_line} ${1} >> ${1}.tmp
+    mv ${1}.tmp ${1}
 }
 
 # dir colors
@@ -221,4 +214,25 @@ fi
 PATH=~/.cabal/bin:$PATH
 
 ZSHRC_LOADED='true'
+
+# gifify
+# https://gist.github.com/SlexAxton/4989674
+gifify() {
+  if [[ -n "$1" ]]; then
+    if [[ $2 == '--good' ]]; then
+      ffmpeg -i $1 -r 10 -vcodec png out-static-%05d.png
+      time convert -verbose +dither -layers Optimize -resize 600x600\> out-static*.png  GIF:- | gifsicle --colors 128 --delay=5 --loop --optimize=3 --multifile - > $1.gif
+      rm out-static*.png
+    else
+      ffmpeg -i $1 -s 600x400 -pix_fmt rgb24 -r 10 -f gif - | gifsicle --optimize=3 --delay=3 > $1.gif
+    fi
+  else
+    echo "proper usage: gifify <input_movie.mov>. You DO need to include extension."
+  fi
+}
+
+# hstr - improved history searching
+export HISTFILE=~/.zsh_history  # ensure history file visibility
+export HH_CONFIG=hicolor        # get more colors
+bindkey -s "\C-r" "\eqhh\n"     # bind hh to Ctrl-r (for Vi mode check doc)
 

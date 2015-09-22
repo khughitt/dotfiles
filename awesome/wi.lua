@@ -281,7 +281,7 @@ vicious.register(rxwidget, vicious.widgets.net, "${wlan0 down_kb}", 2)
 weather = wibox.widget.textbox()
 vicious.register(weather, vicious.widgets.weather,
   "<span color='" .. beautiful.fg_em .. "'>${sky}</span> @ ${tempf}°F on",
-  1501, "KCGS")
+  300, "KCGS")
 weather:buttons(awful.util.table.join(awful.button({ }, 1,
   function() vicious.force({ weather }) end)))
 -- }}}
