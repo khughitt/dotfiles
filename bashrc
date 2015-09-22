@@ -72,7 +72,7 @@ if $vconsole; then
 fi
 
 # R-vim tweaks
-if [[ $(vim --version | grep -o "+clientserver") -eq '+clientserver' ]]; then
+if [[ $(vim --version | grep -o "+clientserver") == '+clientserver' ]]; then
     alias vim='vim --servername VIM'
 
     if [ "$DISPLAY" != "" ]; then
