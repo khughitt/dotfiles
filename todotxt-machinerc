@@ -1,3 +1,7 @@
 [settings]
 file = ~/Dropbox/todo/todo.txt
 
+[keys]
+edit-word-left = meta b, ctrl b, ctrl left
+edit-word-right = meta f, ctrl f, ctrl right
+edit-save = return, escape

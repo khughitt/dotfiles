@@ -65,7 +65,8 @@ URxvt.keysym.Shift-Down: command:\033]721;1\007
 
 !! Extensions
 !! /usr/share/doc/urxvt-perls/README.md
-URxvt.perl-ext-common:   default,url-select,clipboard,vtwheel,font-size,osc-xterm-clipboard
+URxvt.perl-ext-common:   default,url-select,clipboard,vtwheel,font-size,osc-xterm-clipboard,keyboard-select
+
 
 !! URL launcher
 !
@@ -83,6 +84,7 @@ URxvt.keysym.M-u:           perl:url-select:select_next
 URxvt.url-select.underline: true
 
 !! Clipboard
+URxvt.keysym.M-Escape: perl:keyboard-select:activate
 URxvt.keysym.M-c:      perl:clipboard:copy
 URxvt.keysym.M-v:      perl:clipboard:paste
 URxvt.keysym.M-C-v:    perl:clipboard:paste_escaped

@@ -45,6 +45,11 @@ if (interactive()) {
     #if(Sys.getenv("TMUX") != "")
     #    options(browser="~/bin/vimrw3mbrowser", help_type = "html")
 
+    # Use the text based web browser w3m to navigate through R docs
+    # in Linux Console after help.start():
+    if(Sys.getenv("TMUX") != "" && Sys.getenv("DISPLAY") == "")
+        options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
+
     # select default editor
     #if(nchar(Sys.getenv("DISPLAY")) > 1)
         #options(editor = 'gvim')

@@ -323,83 +323,83 @@ pacicon:buttons(pacwidget:buttons())
 
 -- {{{ Pianobar
 -- Icon
-mpdicon = wibox.widget.imagebox()
-mpdicon:set_image(beautiful.widget_mpd)
+--mpdicon = wibox.widget.imagebox()
+--mpdicon:set_image(beautiful.widget_mpd)
 
 -- Song info
-mpdwidget = wibox.widget.textbox()
-vicious.register(mpdwidget, vicious.widgets.mpd,
-  function(widget, args)
-    mpdicon:set_image(beautiful.widget_play)
-    local bg = beautiful.bg_focus
+--mpdwidget = wibox.widget.textbox()
+--vicious.register(mpdwidget, vicious.widgets.mpd,
+--  function(widget, args)
+--    mpdicon:set_image(beautiful.widget_play)
+--    local bg = beautiful.bg_focus
 
-    local italic = ""
-    local like = ""
-    local color = beautiful.fg_focus
-    local f = io.popen("pgrep pianobar")
+--    local italic = ""
+--    local like = ""
+--    local color = beautiful.fg_focus
+--    local f = io.popen("pgrep pianobar")
 
-    if f:read("*line") then
-      f = io.open(os.getenv("HOME") .. "/.config/pianobar/isplaying")
-      play_or_pause = f:read("*line")
-      f:close()
+--    if f:read("*line") then
+--      f = io.open(os.getenv("HOME") .. "/.config/pianobar/isplaying")
+--      play_or_pause = f:read("*line")
+--      f:close()
 
-      -- Current song
-      f = io.open(os.getenv("HOME") .. "/.config/pianobar/nowplaying")
-      text = f:read("*line"):match("(.*)")
-      f:close()
+--      -- Current song
+--      f = io.open(os.getenv("HOME") .. "/.config/pianobar/nowplaying")
+--      text = f:read("*line"):match("(.*)")
+--      f:close()
 
-      -- Awaiting song
-      if text:match(" -  $") then text = "..." end
+--      -- Awaiting song
+--      if text:match(" -  $") then text = "..." end
 
-      -- Loved song
-      if text:find("%(like%)") then like = "&#x1f495;" end
+--      -- Loved song
+--      if text:find("%(like%)") then like = "&#x1f495;" end
 
-      -- Ampersands
-      if text:find("&") then text = text:gsub("&","and") end
+--      -- Ampersands
+--      if text:find("&") then text = text:gsub("&","and") end
 
-      -- Paused
-      if play_or_pause == "0" then
-        if text:len() > 35 then mpdwidget.width = mpdwidth end
-        italic = "font_style='italic'"
-        mpdicon:set_image(beautiful.widget_pause)
-        info = like .. awful.util.escape(text:gsub("%(like%)",""))
-      else
-        mpdwidget.width = 0
-        local helpers = require("vicious.helpers")
-        info = like ..
-          awful.util.escape(helpers.scroll(text:gsub("%(like%)",""), 30, mpdwidget))
-      end
-    else
-      -- Stopped
-      mpdwidget.width = 0
-      mpdicon:set_image(beautiful.widget_mpd)
-      bg = beautiful.bg_normal
-      color = beautiful.fg_normal
-      info = "..."
-    end
+--      -- Paused
+--      if play_or_pause == "0" then
+--        if text:len() > 35 then mpdwidget.width = mpdwidth end
+--        italic = "font_style='italic'"
+--        mpdicon:set_image(beautiful.widget_pause)
+--        info = like .. awful.util.escape(text:gsub("%(like%)",""))
+--      else
+--        mpdwidget.width = 0
+--        local helpers = require("vicious.helpers")
+--        info = like ..
+--          awful.util.escape(helpers.scroll(text:gsub("%(like%)",""), 30, mpdwidget))
+--      end
+--    else
+--      -- Stopped
+--      mpdwidget.width = 0
+--      mpdicon:set_image(beautiful.widget_mpd)
+--      bg = beautiful.bg_normal
+--      color = beautiful.fg_normal
+--      info = "..."
+--    end
 
-    return "<span color='" .. color .. "' background='" .. bg ..
-      "' " .. italic  .. ">" .. info .. "</span>"
-  end, 3)
+--    return "<span color='" .. color .. "' background='" .. bg ..
+--      "' " .. italic  .. ">" .. info .. "</span>"
+--  end, 3)
 
 -- Buttons
-mpdwidget:buttons(awful.util.table.join(
-  awful.button({ }, 1,
-    function()
-      local f = io.popen("pgrep pianobar")
-      p = f:read("*a"):match("([0-9]*)")
-      if p == "" then
-        awful.util.spawn(pianobar_screen, false)
-      else
-        awful.util.spawn(pianobar_toggle, false)
-      end
-    end),
-  awful.button({ modkey }, 1, function() awful.util.spawn(pianobar_upcoming, false) end),
-  awful.button({ }, 2, function() awful.util.spawn(pianobar_quit, false) end),
-  awful.button({ }, 3, function() awful.util.spawn(pianobar_station, false) end),
-  awful.button({ }, 4, function() awful.util.spawn(pianobar_next, false) end),
-  awful.button({ }, 5, function() awful.util.spawn(pianobar_history, false) end)))
-mpdicon:buttons(mpdwidget:buttons())
+--mpdwidget:buttons(awful.util.table.join(
+--  awful.button({ }, 1,
+--    function()
+--      local f = io.popen("pgrep pianobar")
+--      p = f:read("*a"):match("([0-9]*)")
+--      if p == "" then
+--        awful.util.spawn(pianobar_screen, false)
+--      else
+--        awful.util.spawn(pianobar_toggle, false)
+--      end
+--    end),
+--  awful.button({ modkey }, 1, function() awful.util.spawn(pianobar_upcoming, false) end),
+--  awful.button({ }, 2, function() awful.util.spawn(pianobar_quit, false) end),
+--  awful.button({ }, 3, function() awful.util.spawn(pianobar_station, false) end),
+--  awful.button({ }, 4, function() awful.util.spawn(pianobar_next, false) end),
+--  awful.button({ }, 5, function() awful.util.spawn(pianobar_history, false) end)))
+--mpdicon:buttons(mpdwidget:buttons())
 -- }}}
 
 -- {{{ Volume

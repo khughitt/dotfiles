@@ -635,7 +635,9 @@ autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 "autocmd BufRead,BufNewFile *.md set filetype=markdown background=light nofoldenable
 autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
 "autocmd FileType markdown colorscheme summerfruit256
-let g:vim_markdown_folding_disabled=1
+
+" https://github.com/plasticboy/vim-markdown/issues/162
+"let g:vim_markdown_folding_disabled=1
 
 " CSV
 let g:csv_no_conceal = 1
