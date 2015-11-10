@@ -51,6 +51,25 @@ autocmd InsertLeave * if expand('%') != '' | update | endif
 "nnoremap ; :
 "nnoremap : ;
 
+" ---------------------------------------------------------------------------
+" CamelCaseMotion
+" ---------------------------------------------------------------------------
+map w <Plug>CamelCaseMotion_w 
+nmap cw ce 
+
+" For some reason, CamelCase mappings have a <SPACE> appended to the end
+" which conflicts with Unite mapping. Disabling b & e for now...
+"map b <Plug>CamelCaseMotion_b 
+"map e <Plug>CamelCaseMotion_e 
+
+omap <silent> iw <Plug>CamelCaseMotion_iw
+xmap <silent> iw <Plug>CamelCaseMotion_iw
+omap <silent> ib <Plug>CamelCaseMotion_ib
+xmap <silent> ib <Plug>CamelCaseMotion_ib
+omap <silent> ie <Plug>CamelCaseMotion_ie
+xmap <silent> ie <Plug>CamelCaseMotion_ie
+
+
 " Pathogen
 execute pathogen#infect()
 
@@ -580,9 +599,11 @@ autocmd BufRead,BufNewFile *.py set ai
 " R
 let vimrplugin_objbr_place = "console,right"
 let vimrplugin_notmuxconf = 1
-let vimrplugin_assign = 0
 let vimrplugin_tmux_title = "automatic"
 "let vimrplugin_vsplit = 1
+
+" disable <- shortcut
+let vimrplugin_assign = 0
 
 if $DISPLAY != ""
     let vimrplugin_openpdf = 1
