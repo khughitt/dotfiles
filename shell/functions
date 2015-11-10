@@ -50,3 +50,8 @@ gifify() {
   fi
 }
 
+# Simple function to dislay justified CSV file in less
+# http://stackoverflow.com/questions/1875305/command-line-csv-viewer
+csv_view() {
+    column -s, -t < $1 | less -#2 -N -S
+}
