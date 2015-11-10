@@ -4,8 +4,9 @@
 options(showWarnCalls=T, showErrorCalls=T)
 options(warning.length=8170)
 options(max.print=100)
+options(download.file.method = "libcurl")
 options(dplyr.print_max=30) 
-options(repos=structure(c(CRAN="http://watson.nci.nih.gov/cran_mirror/")))
+options(repos=structure(c(CRAN="https://mirrors.nics.utk.edu/cran/")))
 options(menu.graphics=F)
 options(github.user="khughitt")
 options(knitr.duplicate.label='allow')
@@ -13,9 +14,9 @@ options(knitr.duplicate.label='allow')
 options(prompt="> ")
 options(continue="... ")
 
-q = function (save="no", ...) {
-  quit(save=save, ...)
-}
+#q = function (save="no", ...) {
+#  quit(save=save, ...)
+#}
 
 # tab complete package names
 utils::rc.settings(ipck=TRUE)
@@ -71,7 +72,9 @@ if (interactive()) {
     }
 
     # syntax highlighting
-    library(colorout)
+    if (isatty(stdout())) {
+        library(colorout)
+    }
     if (!Sys.getenv('TERM')  %in% c('', 'linux'))
         setOutputColors256(
             normal = 15,
