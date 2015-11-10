@@ -85,6 +85,7 @@ setopt HIST_IGNORE_DUPS
 # Disable auto correction
 unsetopt correct_all
 
+
 # Plugins
 [ -z "$plugins" ] && plugins=(\
     archlinux colored-man git systemd web-search)
@@ -136,6 +137,15 @@ stty -ixon
 #    zle reset-prompt
 #}
 
+# edit command in vim
+# http://unix.stackexchange.com/questions/6620/how-to-edit-command-line-in-full-screen-editor-in-zsh
+#autoload edit-command-line;
+#bindkey -M vicmd v edit-command-line
+#zle -N edit-command-line
+
+# resore Cntl-R searching
+#bindkey \\C-R history-incremental-search-backward
+
 #zle -N zle-line-init
 #zle -N zle-keymap-select
 
@@ -147,7 +157,6 @@ stty -ixon
 #bindkey "\e\e[D" backward-word
 #bindkey "\e\e[C" forward-word
 
-#
 # vim like history movements
 #bindkey '^k' up-history
 #bindkey '^j' down-history
@@ -179,6 +188,6 @@ if [ -e ~/.zsh_local_late ]; then
 fi
 
 # PATH
-PATH=~/.cabal/bin:$PATH
+PATH=~/.cabal/bin:~/software/tabulator/bin:$PATH
 
 ZSHRC_LOADED='true'
