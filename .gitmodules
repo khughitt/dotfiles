@@ -4,16 +4,10 @@
 [submodule "vim/bundle/csv.vim"]
 	path = vim/bundle/csv.vim
 	url = https://github.com/chrisbra/csv.vim.git
-[submodule "vim/bundle/badwolf"]
-	path = vim/bundle/badwolf
-	url = https://github.com/sjl/badwolf.git
 [submodule "vim/bundle/vim-r"]
 	path = vim/bundle/vim-r
 	url = https://github.com/jcfaria/Vim-R-plugin.git
     ignore = dirty
-[submodule "vim/bundle/darkburn"]
-	path = vim/bundle/darkburn
-	url = https://github.com/vim-scripts/darkburn.git
 [submodule "vim/bundle/nerdtree"]
 	path = vim/bundle/nerdtree
 	url = https://github.com/scrooloose/nerdtree.git
@@ -53,10 +47,6 @@
 [submodule "vim/bundle/unite.vim"]
 	path = vim/bundle/unite.vim
 	url = https://github.com/Shougo/unite.vim.git
-[submodule "vim/bundle/neomru.vim"]
-	path = vim/bundle/neomru.vim
-	url = https://github.com/Shougo/neomru.vim.git
-    ignore = untracked  
 [submodule "vim/bundle/unite-colorscheme"]
 	path = vim/bundle/unite-colorscheme
 	url = https://github.com/ujihisa/unite-colorscheme.git
@@ -115,51 +105,9 @@
 [submodule "vim/bundle/vim-misc"]
 	path = vim/bundle/vim-misc
 	url = https://github.com/xolox/vim-misc.git
-[submodule "vim/bundle/base16-vim"]
-	path = vim/bundle/base16-vim
-	url = https://github.com/chriskempson/base16-vim.git
 [submodule "vim/bundle/csapprox"]
 	path = vim/bundle/csapprox
 	url = https://github.com/godlygeek/csapprox.git
-[submodule "vim/bundle/Zenburn"]
-	path = vim/bundle/Zenburn
-	url = https://github.com/jnurmine/Zenburn.git
-[submodule "vim/bundle/vim-hemisu"]
-	path = vim/bundle/vim-hemisu
-	url = https://github.com/noahfrederick/vim-hemisu.git
-[submodule "vim/bundle/vim-tomorrow-theme"]
-	path = vim/bundle/vim-tomorrow-theme
-	url = https://github.com/chriskempson/vim-tomorrow-theme.git
-[submodule "vim/bundle/grb256"]
-	path = vim/bundle/grb256
-	url = https://github.com/quanganhdo/grb256.git
-[submodule "vim/bundle/ir_black"]
-	path = vim/bundle/ir_black
-	url = https://github.com/twerth/ir_black.git
-[submodule "vim/bundle/C64.vim"]
-	path = vim/bundle/C64.vim
-	url = https://github.com/vim-scripts/C64.vim
-[submodule "vim/bundle/vim-aldmeris"]
-	path = vim/bundle/vim-aldmeris
-	url = https://github.com/veloce/vim-aldmeris.git
-[submodule "vim/bundle/jellybeans.vim"]
-	path = vim/bundle/jellybeans.vim
-	url = https://github.com/nanotech/jellybeans.vim.git
-[submodule "vim/bundle/Vim-Darkmate"]
-	path = vim/bundle/Vim-Darkmate
-	url = https://github.com/yearofmoo/Vim-Darkmate.git
-[submodule "vim/bundle/vim-vividchalk"]
-	path = vim/bundle/vim-vividchalk
-	url = https://github.com/tpope/vim-vividchalk.git
-[submodule "vim/bundle/neon.vim"]
-	path = vim/bundle/neon.vim
-	url = https://github.com/yuratomo/neon.vim.git
-[submodule "vim/bundle/vim-lucius"]
-	path = vim/bundle/vim-lucius
-	url = https://github.com/jonathanfilip/vim-lucius.git
-[submodule "vim/bundle/rootwater.vim"]
-	path = vim/bundle/rootwater.vim
-	url = https://github.com/vim-scripts/rootwater.vim.git
 [submodule "vim/bundle/Smyck-Color-Scheme"]
 	path = vim/bundle/Smyck-Color-Scheme
 	url = https://github.com/hukl/Smyck-Color-Scheme.git
@@ -205,3 +153,6 @@
 [submodule "vim/bundle/dracula-theme"]
 	path = vim/bundle/dracula-theme
     url = https://github.com/zenorocha/dracula-theme.git
+[submodule "vim/bundle/neomru.vim"]
+	path = vim/bundle/neomru.vim
+	url = https://github.com/Shougo/neomru.vim.git

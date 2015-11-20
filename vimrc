@@ -54,7 +54,7 @@ autocmd InsertLeave * if expand('%') != '' | update | endif
 " ---------------------------------------------------------------------------
 " CamelCaseMotion
 " ---------------------------------------------------------------------------
-map w <Plug>CamelCaseMotion_w 
+"map w <Plug>CamelCaseMotion_w 
 nmap cw ce 
 
 " For some reason, CamelCase mappings have a <SPACE> appended to the end
@@ -68,7 +68,6 @@ omap <silent> ib <Plug>CamelCaseMotion_ib
 xmap <silent> ib <Plug>CamelCaseMotion_ib
 omap <silent> ie <Plug>CamelCaseMotion_ie
 xmap <silent> ie <Plug>CamelCaseMotion_ie
-
 
 " Pathogen
 execute pathogen#infect()
@@ -352,7 +351,8 @@ inoremap <c-u> <c-g>u<c-u>
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
-let g:airline_theme = 'bubblegum'
+let g:airline_theme = 'hybrid'
+"let g:airline_theme = 'bubblegum'
 
 " ---------------------------------------------------------------------------
 "  dragvisuals.vim
