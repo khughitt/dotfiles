@@ -108,9 +108,6 @@
 [submodule "vim/bundle/csapprox"]
 	path = vim/bundle/csapprox
 	url = https://github.com/godlygeek/csapprox.git
-[submodule "vim/bundle/Smyck-Color-Scheme"]
-	path = vim/bundle/Smyck-Color-Scheme
-	url = https://github.com/hukl/Smyck-Color-Scheme.git
 [submodule "vim/bundle/incsearch.vim"]
 	path = vim/bundle/incsearch.vim
 	url = https://github.com/haya14busa/incsearch.vim.git
@@ -150,9 +147,6 @@
 [submodule "vim/bundle/CamelCaseMotion"]
 	path = vim/bundle/CamelCaseMotion
 	url = https://github.com/bkad/CamelCaseMotion.git
-[submodule "vim/bundle/dracula-theme"]
-	path = vim/bundle/dracula-theme
-    url = https://github.com/zenorocha/dracula-theme.git
 [submodule "vim/bundle/neomru.vim"]
 	path = vim/bundle/neomru.vim
 	url = https://github.com/Shougo/neomru.vim.git

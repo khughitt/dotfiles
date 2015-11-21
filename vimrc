@@ -23,7 +23,7 @@ filetype indent on   " indent based on filetype
 filetype plugin on   " enable filetype-specific plugin loading
 
 " Omnicompletion
-set ofu=syntaxcomplete#Complete
+set omnifunc=syntaxcomplete#Complete
 
 " With a map leader it's possible to do extra key combinations
 " like <leader>w saves the current file
@@ -41,7 +41,7 @@ nmap <leader>z :wq<cr>
 inoremap <c-s> <c-o>:w<cr>
 nnoremap <c-s> :w<cr>
 
-" Disable macro recording for now
+" Disable macro recording
 map q <nop>
 
 " Autosave on leaving insert mode
@@ -54,20 +54,9 @@ autocmd InsertLeave * if expand('%') != '' | update | endif
 " ---------------------------------------------------------------------------
 " CamelCaseMotion
 " ---------------------------------------------------------------------------
-"map w <Plug>CamelCaseMotion_w 
-nmap cw ce 
-
-" For some reason, CamelCase mappings have a <SPACE> appended to the end
-" which conflicts with Unite mapping. Disabling b & e for now...
-"map b <Plug>CamelCaseMotion_b 
-"map e <Plug>CamelCaseMotion_e 
-
-omap <silent> iw <Plug>CamelCaseMotion_iw
-xmap <silent> iw <Plug>CamelCaseMotion_iw
-omap <silent> ib <Plug>CamelCaseMotion_ib
-xmap <silent> ib <Plug>CamelCaseMotion_ib
-omap <silent> ie <Plug>CamelCaseMotion_ie
-xmap <silent> ie <Plug>CamelCaseMotion_ie
+map <s-w> <Plug>CamelCaseMotion_w
+map <s-b> <Plug>CamelCaseMotion_b
+map <s-e> <Plug>CamelCaseMotion_e
 
 " Pathogen
 execute pathogen#infect()
@@ -178,18 +167,6 @@ endfunction
 " Treat long lines as break lines (useful when moving around in them)
 map j gj
 map k gk
-
-" Quick word navigation
-" Currently used for tmux navigation
-"map <c-h> <C-Left>
-"map <c-l> <C-Right>
-
-" Smart way to move between windows
-" Currently used for tmux navigation
-" map <C-j> <C-W>j
-" map <C-k> <C-W>k
-" map <C-h> <C-W>h
-" map <C-l> <C-W>l
 
 " Quick buffer switching
 " Only <s-right> working?
@@ -569,21 +546,6 @@ set incsearch  " incremental search
 set hlsearch   " highlight searched words
 nohlsearch     " avoid highlighting when reloading vimrc
 
-" Make it easier to find current match
-"nnoremap <silent> n   n:call HLNext(0.4)<cr>
-"nnoremap <silent> N   N:call HLNext(0.4)<cr>
-
-"function! HLNext (blinktime)
-"    let [bufnum, lnum, col, off] = getpos('.')
-"    let matchlen = strlen(matchstr(strpart(getline('.'),col-1),@/))
-"    let target_pat = '\c\%#'.@/
-"    let ring = matchadd('WhiteOnRed', target_pat, 101)
-"    redraw
-"    exec 'sleep ' . float2nr(a:blinktime * 1000) . 'm'
-"    call matchdelete(ring)
-"    redraw
-"endfunction
-
 " stop  highlighting
 " Used by tmux navigator
 " nnoremap <silent> <C-l> :nohl<CR><C-l>
@@ -654,8 +616,8 @@ autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 
 " Markdown
 "autocmd BufRead,BufNewFile *.md set filetype=markdown background=light nofoldenable
-autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
 "autocmd FileType markdown colorscheme summerfruit256
+autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
 
 " https://github.com/plasticboy/vim-markdown/issues/162
 "let g:vim_markdown_folding_disabled=1
