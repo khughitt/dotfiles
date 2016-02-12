@@ -755,6 +755,7 @@ globalkeys = awful.util.table.join(
   end),
   awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
   awful.key({ altkey }, "Return", function () scratch.drop("urxvt --background '[90]#191919'", 'center', 'center', 0.75, 0.75) end),
+  awful.key({ altkey }, "space", function () scratch.drop("urxvt -e 'R'", 'center', 'center', 0.7, 0.9) end),
   awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.75, 0.75) end)
 )
   -- }}}
