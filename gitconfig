@@ -6,8 +6,8 @@
 [core]
 	excludesfile = /home/keith/.gitignore_global
 	filemode = false
-[diff]
-	external = git-meld
+;[diff]
+;    external = git-meld
 [push]
 	default = simple
 [github]

@@ -328,8 +328,9 @@ inoremap <c-u> <c-g>u<c-u>
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
-let g:airline_theme = 'hybrid'
+"let g:airline_theme = 'hybrid'
 "let g:airline_theme = 'bubblegum'
+let g:airline_theme = 'zenburn'
 
 " ---------------------------------------------------------------------------
 "  dragvisuals.vim
@@ -563,6 +564,9 @@ let vimrplugin_objbr_place = "console,right"
 let vimrplugin_notmuxconf = 1
 let vimrplugin_tmux_title = "automatic"
 "let vimrplugin_vsplit = 1
+
+" development
+"let vimrplugin_r_path='/usr/local/bin/R-devel'
 
 " disable <- shortcut
 let vimrplugin_assign = 0
