@@ -1,3 +1,5 @@
 shell/private
 vim/tmp
+nvim/tmp
+nvim/plugged
 .netrwhist

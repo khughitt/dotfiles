@@ -56,8 +56,19 @@ map <s-w> <Plug>CamelCaseMotion_w
 map <s-b> <Plug>CamelCaseMotion_b
 map <s-e> <Plug>CamelCaseMotion_e
 
-" Pathogen
-execute pathogen#infect()
+" ---------------------------------------------------------------------------
+" vim-plug
+" ---------------------------------------------------------------------------
+call plug#begin()
+    Plug 'airblade/vim-gitgutter'
+    Plug 'chrisbra/csv.vim'
+    Plug 'jalvesaq/Nvim-R'
+    Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+    Plug 'Shougo/neomru.vim'
+    Plug 'Shougo/unite.vim'
+    Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+    Plug 'vim-airline/vim-airline-themes'
+call plug#end()
 
 " ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace

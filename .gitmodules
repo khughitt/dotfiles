@@ -153,15 +153,3 @@
 [submodule "vim/bundle/bio-vim"]
 	path = vim/bundle/bio-vim
 	url = https://github.com/viklund/bio-vim
-[submodule "nvim/bundle/unite.vim"]
-	path = nvim/bundle/unite.vim
-	url = https://github.com/Shougo/unite.vim
-[submodule "nvim/bundle/Nvim-R"]
-	path = nvim/bundle/Nvim-R
-	url = https://github.com/jalvesaq/Nvim-R
-[submodule "nvim/bundle/vim-airline"]
-	path = nvim/bundle/vim-airline
-	url = https://github.com/vim-airline/vim-airline.git
-[submodule "nvim/bundle/vim-airline-themes"]
-	path = nvim/bundle/vim-airline-themes
-	url = https://github.com/vim-airline/vim-airline-themes
