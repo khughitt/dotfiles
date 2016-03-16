@@ -19,7 +19,7 @@ filetype indent on   " indent based on filetype
 " Syntax highlighting
 syntax on
 
-" 24-bit color support (not yet supported in urxvt)
+" 24-bit color support (not yet supported in un-patched urxvt)
 "let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 " Omnicompletion
@@ -154,8 +154,8 @@ endfunction
 " ----------------------------------------------------------------------------
 
 " Treat long lines as break lines (useful when moving around in them)
-map j gj
-map k gk
+map <silent> j gj
+map <silent> k gk
 
 " Quick buffer switching
 " Only <s-right> working?
@@ -252,8 +252,8 @@ if &term =~ '^screen'
 endif
 
 " tmux navigation in insert mode
-inoremap <silent> <c-j> <esc> :TmuxNavigateDown<cr>
-inoremap <silent> <c-k> <esc> :TmuxNavigateUp<cr>
+"inoremap <silent> <c-j> <esc> :TmuxNavigateDown<cr>
+"inoremap <silent> <c-k> <esc> :TmuxNavigateUp<cr>
 
 
 if has("gui_running")
@@ -306,6 +306,21 @@ set undodir=~/.vim/tmp/undo
 inoremap <c-u> <c-g>u<c-u>
 
 " ---------------------------------------------------------------------------
+"  terminal
+" ---------------------------------------------------------------------------
+tnoremap <C-h> <C-\><C-n><C-w>h
+tnoremap <C-j> <C-\><C-n><C-w>j
+tnoremap <C-k> <C-\><C-n><C-w>k
+tnoremap <C-l> <C-\><C-n><C-w>l
+nnoremap <C-h> <C-w>h
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-l> <C-w>l
+
+" automatically enter insert mode
+autocmd BufWinEnter,WinEnter term://* startinsert
+
+" ---------------------------------------------------------------------------
 "  airline
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
@@ -352,21 +367,21 @@ nnoremap <leader><space> :Goyo<CR>
 nnoremap <F5> :GundoToggle<CR>
 
 " ---------------------------------------------------------------------------
-"  incsearch.vim
+"  incsearch.vim (2016/03/16: not yet compatible with Neovim)
 " ---------------------------------------------------------------------------
-map /  <Plug>(incsearch-forward)
-map ?  <Plug>(incsearch-backward)
-map g/ <Plug>(incsearch-stay)
+"map /  <Plug>(incsearch-forward)
+"map ?  <Plug>(incsearch-backward)
+"map g/ <Plug>(incsearch-stay)
 
 " Compatibility with vim-indexed-search
-let g:indexed_search_mappings = 0
-augroup incsearch-indexed
-    autocmd!
-    autocmd User IncSearchLeave ShowSearchIndex
-augroup END
+"let g:indexed_search_mappings = 0
+"augroup incsearch-indexed
+"    autocmd!
+"    autocmd User IncSearchLeave ShowSearchIndex
+"augroup END
 
-nnoremap <silent>n nzv:ShowSearchIndex<CR>
-nnoremap <silent>N Nzv:ShowSearchIndex<CR>
+"nnoremap <silent>n nzv:ShowSearchIndex<CR>
+"nnoremap <silent>N Nzv:ShowSearchIndex<CR>
 
 " Enable automatic :nohlsearch with index-search compatibility
 "let g:incsearch#auto_nohlsearch = 1

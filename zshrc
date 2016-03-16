@@ -194,3 +194,7 @@ source $(which virtualenvwrapper.sh)
 PATH=~/.cabal/bin:~/software/tabulator/bin:$PATH
 
 ZSHRC_LOADED='true'
+
+# Neovim
+alias vim=nvim
+
