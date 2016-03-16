@@ -68,7 +68,7 @@ if $vconsole; then
     clear
 fi
 
-# R-vim tweaks
+# vim-r tweaks
 if [[ $(vim --version | grep -o "+clientserver") == '+clientserver' ]]; then
     alias vim='vim --servername VIM'
 
@@ -186,6 +186,9 @@ unset GREP_OPTIONS
 if [ -e ~/.zsh_local_late ]; then
     source ~/.zsh_local_late
 fi
+
+# Virtualenvwrapper
+source $(which virtualenvwrapper.sh)
 
 # PATH
 PATH=~/.cabal/bin:~/software/tabulator/bin:$PATH

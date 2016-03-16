@@ -138,9 +138,6 @@
 [submodule "tmux/plugins/tpm"]
 	path = tmux/plugins/tpm
 	url = https://github.com/tmux-plugins/tpm.git
-[submodule "vim/bundle/YankRing.vim"]
-	path = vim/bundle/YankRing.vim
-	url = https://github.com/vim-scripts/YankRing.vim.git
 [submodule "vim/bundle/vim-indent-guides"]
 	path = vim/bundle/vim-indent-guides
 	url = https://github.com/nathanaelkane/vim-indent-guides.git
@@ -152,4 +149,19 @@
 	url = https://github.com/Shougo/neomru.vim.git
 [submodule "vim/bundle/vim-airline-themes"]
 	path = vim/bundle/vim-airline-themes
+	url = https://github.com/vim-airline/vim-airline-themes
+[submodule "vim/bundle/bio-vim"]
+	path = vim/bundle/bio-vim
+	url = https://github.com/viklund/bio-vim
+[submodule "nvim/bundle/unite.vim"]
+	path = nvim/bundle/unite.vim
+	url = https://github.com/Shougo/unite.vim
+[submodule "nvim/bundle/Nvim-R"]
+	path = nvim/bundle/Nvim-R
+	url = https://github.com/jalvesaq/Nvim-R
+[submodule "nvim/bundle/vim-airline"]
+	path = nvim/bundle/vim-airline
+	url = https://github.com/vim-airline/vim-airline.git
+[submodule "nvim/bundle/vim-airline-themes"]
+	path = nvim/bundle/vim-airline-themes
 	url = https://github.com/vim-airline/vim-airline-themes

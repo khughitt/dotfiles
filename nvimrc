@@ -1,15 +1,10 @@
 " ---------------------------------------------------------------------------
-" Vim Configuration
-"
-" Much of the awesome functionality and settings in this file has come from
-" other dotfile on Github, and also from http://amix.dk/vim/vimrc.html.
-"
+" Neovim Configuration
 " ---------------------------------------------------------------------------
 
 " ---------------------------------------------------------------------------
 " General
 " ---------------------------------------------------------------------------
-set nocompatible     " disable vi compatibility enchancements
 set hidden           " easy buffer switching
 set history=5000     " number of command history
 set isk+=_,$,@,%,#,- " none word dividers
@@ -18,9 +13,14 @@ set cursorline       " highlight current line
 set modeline         " make sure modeline support is enabled
 set noerrorbells     " quiet, please
 set nofoldenable     " disable folding
-set autoread         " automatically load changes made outside of vim
+set complete+=i      " complete filenames
 filetype indent on   " indent based on filetype
-filetype plugin on   " enable filetype-specific plugin loading
+
+" Syntax highlighting
+syntax on
+
+" 24-bit color support (not yet supported in urxvt)
+"let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 " Omnicompletion
 set omnifunc=syntaxcomplete#Complete
@@ -49,9 +49,6 @@ map q <nop>
 " http://stackoverflow.com/questions/9087582/how-to-autosave-in-vim-7-when-focus-is-lost-from-the-window
 autocmd InsertLeave * if expand('%') != '' | update | endif
 
-"nnoremap ; :
-"nnoremap : ;
-
 " ---------------------------------------------------------------------------
 " CamelCaseMotion
 " ---------------------------------------------------------------------------
@@ -63,19 +60,10 @@ map <s-e> <Plug>CamelCaseMotion_e
 execute pathogen#infect()
 
 " ----------------------------------------------------------------------------
-" Practice time
-" ----------------------------------------------------------------------------
-"map <Left> <Nop>
-"map <Right> <Nop>
-"map <Up> <Nop>
-"map <Down> <Nop>
-
-" ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
 " ----------------------------------------------------------------------------
 
-"set list listchars=trail:.,tab:>.
-set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+
+"set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+
 highlight SpecialKey ctermfg=DarkGray ctermbg=Black
 
 " ----------------------------------------------------------------------------
@@ -93,21 +81,16 @@ set backupskip=/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*
 " ----------------------------------------------------------------------------
 set scrolloff=5                 " keep cursor at least this far away from top/bottom
 set sidescrolloff=1             " keep cursor this far from sides of screen
-set wildmenu                    " enable wildmenu (easy buffer switching, etc)
-"set wildmode=longest,list,full  " filepath completion
 set wildignore=*.o,*~,*.pyc     " ignore compiled files
 set ruler                       " show the cursor position all the time
-"set noshowcmd                  " don't display incomplete commands
 set showcmd                     " show incomplete commands and selection info
 set nolazyredraw                " turn off lazy redraw
 set number                      " line numbers
-"set ch=2                       " command line height
-set backspace=2                 " allow backspacing over everything in insert mode
 set whichwrap+=<,>,h,l,[,]      " backspace and cursor keys wrap to
 set shortmess=filtIoOA          " shorten messages
 set report=0                    " tell us about changes
 set nostartofline               " don't jump to the start of line when scrolling
-set display+=lastline           " don't hide long lines
+"set display+=lastline           " don't hide long lines
 
 " ----------------------------------------------------------------------------
 " Visual Cues
@@ -115,13 +98,10 @@ set display+=lastline           " don't hide long lines
 set showmatch              " brackets/braces that is
 set mat=5                  " duration to show matching brace (1/10 sec)
 set incsearch              " do incremental searching
-set laststatus=2           " always show the status line
+set infercase              " case insensitive tab completion
 set ignorecase             " ignore case when searching
 set novisualbell           " no thank you
-
-if exists('+colorcolumn')
-    set colorcolumn=80         " show right margin
-endif
+set colorcolumn=80         " show right margin
 
 let marksCloseWhenSelected = 0
 let showmarks_include="abcdefghijklmnopqrstuvwxyz"
@@ -130,7 +110,6 @@ let showmarks_include="abcdefghijklmnopqrstuvwxyz"
 " Text Formatting
 " ----------------------------------------------------------------------------
 
-set autoindent              " automatic indent new lines
 "disablign smart-indent: may be preventing comments from indenting?
 "http://stackoverflow.com/questions/191201/indenting-comments-to-match-code-in-vim
 "set smartindent            " be smart about it
@@ -140,16 +119,14 @@ set shiftwidth=4            "
 set shiftround              " round indents to multiple of shift width
 set tabstop=4
 set expandtab               " expand tabs to spaces
-set nosmarttab              " no tabs
+"set nosmarttab              " no tabs
 set textwidth=79            " stick to less than 80 chars per line when possible
 set formatoptions+=n        " support for numbered/bullet lists
 set virtualedit=block       " allow virtual edit in visual block ..
-set encoding=utf8           " UTF-8 by default
 set pastetoggle=<F6>        " paste-mode toggle
-set sessionoptions-=options " don't preserve configuration across sessions
 
-" Shortuct to toggle textwidth.
-nmap <silent><localleader>r :call ToggleTextWidth()<CR>
+" Shortuct to toggle textwidth wrapping
+"nmap <silent><localleader>r :call ToggleTextWidth()<CR>
 function! ToggleTextWidth()
   if &textwidth != 0
     let b:oldtextwidth = &textwidth
@@ -212,9 +189,6 @@ autocmd BufReadPost *
 
 " Remember info about open buffers on close
 set viminfo^=%
-
-" tmux mouse support
-set mouse=a
 
 " Changing cursor shape per mode
 " https://gist.github.com/andyfowler/1195581#comment-993604
@@ -286,10 +260,6 @@ if has("gui_running")
     map! <S-Insert> <MiddleMouse>
 endif
 
-if has("syntax")
-    syntax on
-endif
-
 " colorscheme
 set background=dark
 colorscheme hemisu
@@ -316,7 +286,7 @@ set clipboard=unnamed
 "  Backup and undo
 " ---------------------------------------------------------------------------
 set undofile
-set history=200
+set history=1000
 set undolevels=200
 set undodir=~/.vim/tmp/undo
 
@@ -480,7 +450,7 @@ call unite#custom#profile('files', 'context.smartcase', 1)
 call unite#custom#source('file_rec/async','sorters','sorter_rank', )
 
 "let g:unite_data_directory=s:get_cache_dir('unite')
-let g:unite_data_directory='~/.vim/tmp/unite'
+let g:unite_data_directory='~/.config/nvim/tmp/unite'
 let g:unite_enable_start_insert=1
 let g:unite_source_history_yank_enable=1
 let g:unite_source_rec_max_cache_files=5000
@@ -523,9 +493,9 @@ nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
 " ---------------------------------------------------------------------------
 "  yankring.vim
 " ---------------------------------------------------------------------------
-let g:yankring_replace_n_pkey = '<C-up>'
-let g:yankring_replace_n_nkey = '<C-down>'
-let g:yankring_history_dir = '$HOME/.vim/tmp/yankring'
+"let g:yankring_replace_n_pkey = '<C-up>'
+"let g:yankring_replace_n_nkey = '<C-down>'
+"let g:yankring_history_dir = '$HOME/.vim/tmp/yankring'
 
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
@@ -544,8 +514,6 @@ map ,s :call StripWhitespace ()<CR>
 set wrapscan   " search wrap around the end of the file
 set ignorecase " ignore case search
 set smartcase  " override 'ignorecase' if the search pattern contains upper case
-set incsearch  " incremental search
-set hlsearch   " highlight searched words
 nohlsearch     " avoid highlighting when reloading vimrc
 
 " stop  highlighting
@@ -562,8 +530,8 @@ autocmd BufRead,BufNewFile *.py set ai
 
 " R
 let vimrplugin_objbr_place = "console,right"
-let vimrplugin_notmuxconf = 1
-let vimrplugin_tmux_title = "automatic"
+"let vimrplugin_notmuxconf = 1
+"let vimrplugin_tmux_title = "automatic"
 "let vimrplugin_vsplit = 1
 
 " development
@@ -592,8 +560,8 @@ else
 endif
 
 " Press enter and space bar to send lines and selection to R
-"vmap <Space> <Plug>RDSendSelection
-"nmap <Space> <Plug>RDSendLine
+vmap <Space> <Plug>RDSendSelection
+nmap <Space> <Plug>RDSendLine
 vmap <C-M> <Plug>RDSendSelection
 nmap <C-M> <Plug>RDSendLine
 
@@ -620,8 +588,6 @@ nnoremap <silent> <localleader>kk :call RMakeBootstrapHTML()<CR>
 autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 
 " Markdown
-"autocmd BufRead,BufNewFile *.md set filetype=markdown background=light nofoldenable
-"autocmd FileType markdown colorscheme summerfruit256
 autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
 
 " https://github.com/plasticboy/vim-markdown/issues/162

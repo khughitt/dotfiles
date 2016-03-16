@@ -4,7 +4,7 @@
 alias ll='ls -halF'
 alias la='ls -A'
 
-if [[ $(type "ls++" &> /dev/null) ]]; then
+if [ $(type "ls++" &> /dev/null) ]; then
     alias l='ls++'
 else
     alias l='ls -lh'
