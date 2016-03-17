@@ -113,13 +113,14 @@ function qdelrange {
     done
 }
 
-function qs {
-    CMD="qstat | grep ${USER} "
-    if [ $@ ]; then
-    CMD="${CMD} $@"
-    fi
-    eval $CMD
-}
+#function qs {
+#    CMD="qstat | grep ${USER} "
+#    if [ $@ ]; then
+#    CMD="${CMD} $@"
+#    fi
+#    eval $CMD
+#}
+alias qs=~abelew/bin/qs
 
 function qwho {
     QUSERS=$(qstat -a | grep "^[0-9]" | awk '{print $2}' | sort | uniq)
