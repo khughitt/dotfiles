@@ -567,7 +567,10 @@ let vimrplugin_objbr_place = "console,right"
 let vimrplugin_assign = 0
 
 if $DISPLAY != ""
-    let vimrplugin_openpdf = 1
+    " PDF support when available
+    if executable('zathura')
+        let vimrplugin_openpdf = 1
+    endif
     let vimrplugin_openhtml = 1
 endif
 
@@ -584,6 +587,7 @@ if has("gui_running")
 else
     inoremap <Nul> <C-x><C-o>
 endif
+
 
 " Press enter and space bar to send lines and selection to R
 vmap <Space> <Plug>RDSendSelection
