@@ -19,11 +19,15 @@ filetype indent on   " indent based on filetype
 " Syntax highlighting
 syntax on
 
-" 24-bit color support (not yet supported in un-patched urxvt)
-"let $NVIM_TUI_ENABLE_TRUE_COLOR=1
-
 " Omnicompletion
 set omnifunc=syntaxcomplete#Complete
+
+" Use Ctrl+Space to do omnicompletion
+if has("gui_running")
+    inoremap <C-Space> <C-x><C-o>
+else
+    inoremap <Nul> <C-x><C-o>
+endif
 
 " With a map leader it's possible to do extra key combinations
 " like <leader>w saves the current file
@@ -63,11 +67,16 @@ call plug#begin()
     Plug 'airblade/vim-gitgutter'
     Plug 'chrisbra/csv.vim'
     Plug 'jalvesaq/Nvim-R'
+    Plug 'mhartington/oceanic-next'
+    Plug 'qpkorr/vim-bufkill'
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'Shougo/neomru.vim'
     Plug 'Shougo/unite.vim'
     Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+    Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
+    Plug 'whatyouhide/vim-gotham'
+    Plug 'scrooloose/nerdcommenter'
 call plug#end()
 
 " ----------------------------------------------------------------------------
@@ -157,30 +166,21 @@ endfunction
 map <silent> j gj
 map <silent> k gk
 
-" Quick buffer switching
-" Only <s-right> working?
-"noremap <s-left>  <esc> :bprev<cr>
-"noremap <s-right> <esc> :bnext<cr>
+" Use bufkill to preserve splits when closing buffers
+cabbrev bd :BD
+map <C-w> :BD<cr>
+
+" Quick buffer switching using tab / shift + arrow keys
+nnoremap <Tab> :bnext<CR>
+nnoremap <S-Tab> :bprev<CR>
+nnoremap <s-left> :bprev<CR>
+nnoremap <s-right> :bnext<CR>
 
 " Close the current buffer
-map <leader>bd :Bclose<cr>
+map <leader>bd :BD<cr>
 
 " Close all the buffers
 map <leader>ba :1,1000 bd!<cr>
-
-" Buffer switching using control-tab
-"nnoremap <C-S-tab> :bprevious<CR>
-"nnoremap <C-tab>   :bnext<CR>
-
-" Useful mappings for managing tabs
-map <leader>tn :tabnew<cr>
-map <leader>to :tabonly<cr>
-map <leader>tc :tabclose<cr>
-map <leader>tm :tabmove
-
-" Opens a new tab with the current buffer's path
-" Super useful when editing files in the same directory
-map <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
 
 " Switch CWD to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>:pwd<cr>
@@ -201,29 +201,14 @@ autocmd BufReadPost *
 " Remember info about open buffers on close
 set viminfo^=%
 
-" Changing cursor shape per mode
-" https://gist.github.com/andyfowler/1195581#comment-993604
-" 
-" 1 or 0 -> blinking block
-" 2 -> solid block
-" 3 -> blinking underscore
-" 4 -> solid underscore
-"if exists('$TMUX')
-"    " tmux will only forward escape sequences to the terminal if surrounded by a DCS sequence
-"    let &t_SI .= "\<Esc>Ptmux;\<Esc>\<Esc>[4 q\<Esc>\\"
-"    let &t_EI .= "\<Esc>Ptmux;\<Esc>\<Esc>[2 q\<Esc>\\"
-"    autocmd VimLeave * silent !echo -ne "\033Ptmux;\033\033[0 q\033\\"
-"else
-"    let &t_SI .= "\<Esc>[4 q"
-"    let &t_EI .= "\<Esc>[2 q"
-"    autocmd VimLeave * silent !echo -ne "\033[0 q"
-"endif
+" Enable cursor shape support
+let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1
 
 " Easier switching to normal mode
 inoremap jk <Esc>
 
 " Faster command execution
-nnoremap ! :! 
+nnoremap ! :!
 
 " Sloppyness is okay
 cabbrev ew :wq
@@ -251,11 +236,6 @@ if &term =~ '^screen'
     execute "set <xLeft>=\e[1;*D"
 endif
 
-" tmux navigation in insert mode
-"inoremap <silent> <c-j> <esc> :TmuxNavigateDown<cr>
-"inoremap <silent> <c-k> <esc> :TmuxNavigateUp<cr>
-
-
 if has("gui_running")
     set guioptions-=m  " remove menu bar
     set guioptions-=T  " remove toolbar
@@ -273,8 +253,31 @@ endif
 
 " colorscheme
 set background=dark
-colorscheme hemisu
+"colorscheme hemisu
+colorscheme gotham
 highlight ColorColumn ctermbg=234 guibg=#666666
+let $NVIM_TUI_ENABLE_TRUE_COLOR=1
+
+" terminal color scheme
+" https://github.com/metalelf0/oceanic-next
+let g:terminal_color_0="#1b2b34"
+let g:terminal_color_1="#ed5f67"
+let g:terminal_color_2="#9ac895"
+let g:terminal_color_3="#fbc963"
+let g:terminal_color_4="#669acd"
+let g:terminal_color_5="#c695c6"
+let g:terminal_color_6="#5fb4b4"
+let g:terminal_color_7="#c1c6cf"
+let g:terminal_color_8="#65737e"
+let g:terminal_color_9="#fa9257"
+let g:terminal_color_10="#343d46"
+let g:terminal_color_11="#4f5b66"
+let g:terminal_color_12="#a8aebb"
+let g:terminal_color_13="#ced4df"
+let g:terminal_color_14="#ac7967"
+let g:terminal_color_15="#d9dfea"
+let g:terminal_color_background="#1b2b34"
+let g:terminal_color_foreground="#c1c6cf"
 
 " Matching parens style
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
@@ -320,6 +323,9 @@ nnoremap <C-l> <C-w>l
 " automatically enter insert mode
 autocmd BufWinEnter,WinEnter term://* startinsert
 
+" Exclude from buffer list
+autocmd TermOpen * set nobuflisted
+
 " ---------------------------------------------------------------------------
 "  airline
 " ---------------------------------------------------------------------------
@@ -327,7 +333,7 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 "let g:airline_theme = 'hybrid'
 "let g:airline_theme = 'bubblegum'
-let g:airline_theme = 'zenburn'
+"let g:airline_theme = 'zenburn'
 
 " ---------------------------------------------------------------------------
 "  dragvisuals.vim
@@ -393,7 +399,7 @@ nnoremap <F5> :GundoToggle<CR>
 "map g# <Plug>(incsearch-nohl-g#)
 
 " ---------------------------------------------------------------------------
-" indent guides 
+" indent guides
 " ---------------------------------------------------------------------------
 let g:indent_guides_auto_colors = 0
 let g:indent_guides_start_level = 2
@@ -543,31 +549,29 @@ set smartcase  " override 'ignorecase' if the search pattern contains upper case
 nohlsearch     " avoid highlighting when reloading vimrc
 
 " stop  highlighting
-" Used by tmux navigator
-" nnoremap <silent> <C-l> :nohl<CR><C-l>
-nnoremap <leader>n :nohl<CR>
+" nnoremap <leader>n :nohl<CR>
+nnoremap <silent> <C-l> :nohl<CR><C-l>
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options
 " ---------------------------------------------------------------------------
 
-" Python
-autocmd BufRead,BufNewFile *.py set ai
+" Language-specific options
+autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
+autocmd BufRead,BufNewFile *.py set autoindent
 
 " R
 let vimrplugin_objbr_place = "console,right"
-"let vimrplugin_notmuxconf = 1
-"let vimrplugin_tmux_title = "automatic"
-"let vimrplugin_vsplit = 1
 
 " development
 "let vimrplugin_r_path='/usr/local/bin/R-devel'
 
 " disable <- shortcut
-let vimrplugin_assign = 0
+let R_assign = 0
 
+" enable PDF/Browser support when available
 if $DISPLAY != ""
-    " PDF support when available
     if executable('zathura')
         let vimrplugin_openpdf = 1
     endif
@@ -581,15 +585,7 @@ let rmd_syn_hl_chunk = 1
 " libraries to always include for autocompletion
 let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,ggplot2,dplyr,igraph,reshape2,preprocessCore,WGCNA"
 
-" Use Ctrl+Space to do omnicompletion
-if has("gui_running")
-    inoremap <C-Space> <C-x><C-o>
-else
-    inoremap <Nul> <C-x><C-o>
-endif
-
-
-" Press enter and space bar to send lines and selection to R
+" press enter and space bar to send lines and selection to R
 vmap <Space> <Plug>RDSendSelection
 nmap <Space> <Plug>RDSendLine
 vmap <C-M> <Plug>RDSendSelection
@@ -614,24 +610,9 @@ endfunction
 
 nnoremap <silent> <localleader>kk :call RMakeBootstrapHTML()<CR>
 
-" Ruby
-autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
-
-" Markdown
-autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
-
 " https://github.com/plasticboy/vim-markdown/issues/162
 "let g:vim_markdown_folding_disabled=1
 
 " CSV
 let g:csv_no_conceal = 1
-
-" ---------------------------------------------------------------------------
-"  Host-specific Options
-"  Based onhttps://github.com/teranex/dotvim/blob/master/vimrc
-" ---------------------------------------------------------------------------
-let hostfile=$HOME.'/.vim/vimrc-'.tolower(strpart(hostname(), 0, 4))
-if filereadable(hostfile)
-    exe 'source ' . hostfile
-endif
 
