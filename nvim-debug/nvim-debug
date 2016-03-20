@@ -1,0 +1,2 @@
+#!/bin/env sh
+XDG_CONFIG_HOME=$HOME/.config/debug nvim $1
