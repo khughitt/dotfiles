@@ -6,9 +6,8 @@ Xcursor.theme: XcursorAero
 !!
 !! Colour Scheme
 !!
-!#include "/home/keith/.config/termcolors/hacker-blues-v2"
-!#include "/home/keith/.config/termcolors/satori"
-#include "/home/keith/.config/termcolors/dark"
+!#include "/home/keith/.config/termcolors/dark"
+#include "/home/keith/.config/termcolors/glow"
 
 !!
 !! xft

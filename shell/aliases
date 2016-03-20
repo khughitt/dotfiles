@@ -47,7 +47,8 @@ alias apache_cm="ps -ylC apache2 --sort:rss"
 
 # http://www.zzapper.co.uk/zshtips.html
 alias blue='colortest visiblue'
-if [ "$0" == 'zsh' ]; then
+
+if [[ "$0" == 'zsh' ]]; then
     alias -g ND='*(/om[1])' # newest directory
     alias -g NF='*(.om[1])' # newest file
 fi

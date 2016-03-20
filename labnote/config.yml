@@ -18,6 +18,21 @@ exclude: ['header.html', 'parent.html', 'ruffus-test', 'qsub-test']
 
 # Research categories
 categories:
+  'Host-pathogen Network Analysis': 
+    patterns: ['hpi-network', 'host-pathogen-module']
+    image: 'resources/user/img/lmhs_hpinetwork_v4.1_mistyrose_vs_%23FF5C00.png'
+  'Co-expression Cluster Analysis': 
+    patterns: ['co-expression_simulation', 'expr-cluster']  
+    image: 'resources/user/img/coex_clusters_lmpd.png'
+  'Co-expression Network Analysis': 
+    patterns: ['network', 'similarity-matrix', 'random-cor', 'coex-alt', 'edge-betweenness']  
+    image: 'resources/user/img/lmhs_coex_network_v4.1_adjmatrix.png'
+  'Regulatory Element Prediction':
+    patterns: ['gene-regulation', 'motif']
+    image: 'resources/user/img/motif-detection.png'
+  'Exploratory Data Analysis':
+    patterns: ['eigengene', 'pca', 'data_exploration', 'eda']
+    image: 'resources/user/img/biplot.png'
   'T. cruzi': 
     patterns: ['tcruzi-inf', 'tula', 'tcruzi-media', 'tcruzi-mexican', 'tcruzi-chr',
                'tcurzi-multicopy']
@@ -35,21 +50,6 @@ categories:
     patterns: ['lmajor-infecting', 'lmajor_limma', 'lmajor-data', 'lmajor-all', 'lmajor-network']  
     image: '2015/01-coex-network-lmajor-infecting-hsapiens/extra/lmexicana_2009-hm-34-medium.jpg'
   'L. braziliensis': ['lbraziliensis-infecting']  
-  'Host-pathogen Network Analysis': 
-    patterns: ['hpi-network', 'host-pathogen-module']
-    image: 'resources/user/img/lmhs_hpinetwork_v4.1_mistyrose_vs_%23FF5C00.png'
-  'Co-expression Cluster Analysis': 
-    patterns: ['co-expression_simulation', 'expr-cluster']  
-    image: 'resources/user/img/coex_clusters_lmpd.png'
-  'Co-expression Network Analysis': 
-    patterns: ['network', 'similarity-matrix', 'random-cor', 'coex-alt', 'edge-betweenness']  
-    image: 'resources/user/img/lmhs_coex_network_v4.1_adjmatrix.png'
-  'Exploratory Data Analysis':
-    patterns: ['eigengene', 'pca', 'data_exploration', 'eda']
-    image: 'resources/user/img/biplot.png'
-  'Sequence Analysis':
-    patterns: ['hmmer', 'kmer']
-    image: 'resources/user/img/kmer_dist.png'
   'UTR Analysis': 
     patterns: ['3UTR', 'utr', 'sl_analysis', 'trans-splicing']
     image: 'resources/user/img/lmall_alt_polya.png'
@@ -62,9 +62,9 @@ categories:
   'Trypanosome Genome Analysis':
     patterns: ['chromosome_func', 'chromosome_expr', 'gene-structure', 'ptu', 'multicopy']
     image: 'resources/user/img/lmajor_ch23.png'
-  'Regulatory Element Prediction':
-    patterns: ['gene-regulation', 'motif']
-    image: 'resources/user/img/motif-detection.png'
+  'Sequence Analysis':
+    patterns: ['hmmer', 'kmer']
+    image: 'resources/user/img/kmer_dist.png'
   'Bioconductor':
     patterns: ['transcript-lengths', 'genomic-ranges']
     image: 'resources/user/img/logo_bioconductor.gif'
@@ -87,6 +87,6 @@ external:
 
 user_css: 'resources/user/css/custom.css'
 
-sort_categories_by_date: false
+sort_categories_by_date: true
 
 
