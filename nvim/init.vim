@@ -167,7 +167,7 @@ map <silent> j gj
 map <silent> k gk
 
 " Use bufkill to preserve splits when closing buffers
-cabbrev bd :BD
+cabbrev bd BD
 map <C-w> :BD<cr>
 
 " Quick buffer switching using tab / shift + arrow keys
@@ -276,7 +276,8 @@ let g:terminal_color_12="#a8aebb"
 let g:terminal_color_13="#ced4df"
 let g:terminal_color_14="#ac7967"
 let g:terminal_color_15="#d9dfea"
-let g:terminal_color_background="#1b2b34"
+"let g:terminal_color_background="#1b2b34"
+let g:terminal_color_background="#525252"
 let g:terminal_color_foreground="#c1c6cf"
 
 " Matching parens style
@@ -563,6 +564,9 @@ autocmd BufRead,BufNewFile *.py set autoindent
 
 " R
 let vimrplugin_objbr_place = "console,right"
+
+" Exclude object browser from buffer list
+autocmd BufEnter Object_Browser set nobuflisted
 
 " development
 "let vimrplugin_r_path='/usr/local/bin/R-devel'
