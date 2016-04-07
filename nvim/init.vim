@@ -1,5 +1,12 @@
 " ---------------------------------------------------------------------------
 " Neovim Configuration
+"
+" TODO:
+"
+"  1. Restore cntl-left and right word navigation behavior when inside terminal
+"  2. Fix behavior when using :bd with a terminal open
+"  3. Fix Nerd commenter behavior within code blocks
+"
 " ---------------------------------------------------------------------------
 
 " ---------------------------------------------------------------------------
@@ -65,18 +72,34 @@ map <s-e> <Plug>CamelCaseMotion_e
 " ---------------------------------------------------------------------------
 call plug#begin()
     Plug 'airblade/vim-gitgutter'
+    Plug 'bkad/CamelCaseMotion'
     Plug 'chrisbra/csv.vim'
+    Plug 'ervandew/supertab'
+    Plug 'garbas/vim-snipmate'
+    Plug 'henrik/vim-indexed-search'
+    Plug 'honza/vim-snippets'
     Plug 'jalvesaq/Nvim-R'
+    Plug 'junegunn/goyo.vim'
+    Plug 'junegunn/limelight.vim'
+    Plug 'kshenoy/vim-signature'
+    Plug 'machakann/vim-textobj-delimited'
+    Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'mhartington/oceanic-next'
+    Plug 'nathanaelkane/vim-indent-guides'
     Plug 'qpkorr/vim-bufkill'
+    Plug 'scrooloose/nerdcommenter'
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'Shougo/neomru.vim'
     Plug 'Shougo/unite.vim'
     Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+    Plug 'tomtom/tlib_vim'
+    Plug 'tpope/vim-surround'
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
+    Plug 'vim-scripts/argtextobj.vim'
     Plug 'whatyouhide/vim-gotham'
-    Plug 'scrooloose/nerdcommenter'
+    Plug 'xolox/vim-misc'
+    Plug 'xolox/vim-colorscheme-switcher'
 call plug#end()
 
 " ----------------------------------------------------------------------------
@@ -127,6 +150,14 @@ let marksCloseWhenSelected = 0
 let showmarks_include="abcdefghijklmnopqrstuvwxyz"
 
 " ----------------------------------------------------------------------------
+" Navigation
+" ----------------------------------------------------------------------------
+inoremap <M-h> <Esc>h
+inoremap <M-j> <Esc>j
+inoremap <M-k> <Esc>k
+inoremap <M-l> <Esc>l
+
+" ----------------------------------------------------------------------------
 " Text Formatting
 " ----------------------------------------------------------------------------
 
@@ -168,7 +199,7 @@ map <silent> k gk
 
 " Use bufkill to preserve splits when closing buffers
 cabbrev bd BD
-map <C-w> :BD<cr>
+"map <C-w> :BD<cr>
 
 " Quick buffer switching using tab / shift + arrow keys
 nnoremap <Tab> :bnext<CR>
@@ -228,13 +259,13 @@ set t_ut=""
 
 " fix control/shift + arrow keys in screen
 " http://superuser.com/questions/401926/how-to-get-shiftarrows-and-ctrlarrows-working-in-vim-in-tmux
-if &term =~ '^screen'
+"if &term =~ '^screen'
     " tmux will send xterm-style keys when its xterm-keys option is on
-    execute "set <xUp>=\e[1;*A"
-    execute "set <xDown>=\e[1;*B"
-    execute "set <xRight>=\e[1;*C"
-    execute "set <xLeft>=\e[1;*D"
-endif
+    "execute "set <xUp>=\e[1;*A"
+    "execute "set <xDown>=\e[1;*B"
+    "execute "set <xRight>=\e[1;*C"
+    "execute "set <xLeft>=\e[1;*D"
+"endif
 
 if has("gui_running")
     set guioptions-=m  " remove menu bar
@@ -253,10 +284,8 @@ endif
 
 " colorscheme
 set background=dark
-"colorscheme hemisu
-colorscheme gotham
+colorscheme hemisu
 highlight ColorColumn ctermbg=234 guibg=#666666
-let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
@@ -320,6 +349,10 @@ nnoremap <C-h> <C-w>h
 nnoremap <C-j> <C-w>j
 nnoremap <C-k> <C-w>k
 nnoremap <C-l> <C-w>l
+
+" terminal cntl + arrow keys
+tnoremap <C-Left> <m-b>
+tnoremap <C-Right> <m-f>
 
 " automatically enter insert mode
 autocmd BufWinEnter,WinEnter term://* startinsert
@@ -550,8 +583,8 @@ set smartcase  " override 'ignorecase' if the search pattern contains upper case
 nohlsearch     " avoid highlighting when reloading vimrc
 
 " stop  highlighting
-" nnoremap <leader>n :nohl<CR>
-nnoremap <silent> <C-l> :nohl<CR><C-l>
+nnoremap <leader>n :nohl<CR>
+"nnoremap <silent> <C-l> :nohl<CR><C-l>
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options
@@ -596,23 +629,10 @@ vmap <C-M> <Plug>RDSendSelection
 nmap <C-M> <Plug>RDSendLine
 
 " Knitr
-nmap <C-A-c> <Plug>RDSendChunk
+"nmap <C-A-c> <Plug>RDSendChunk
+
+" wipe knitr cache and output
 nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("README_cache/*", recursive=TRUE)')<CR>
-
-" KnitrBootstrap
-function! RMakeBootstrapHTML()
-  update
-  call RSetWD()
-  let filename = expand("%")
-  let rcmd = "require('knitrBootstrap'); require('rmarkdown');
-           \  render(\"" . filename . "\", output_format=\"all\", clean=TRUE)"
-  if g:vimrplugin_openhtml
-    let rcmd = rcmd . ';'
-  endif
-  call g:SendCmdToR(rcmd)
-endfunction
-
-nnoremap <silent> <localleader>kk :call RMakeBootstrapHTML()<CR>
 
 " https://github.com/plasticboy/vim-markdown/issues/162
 "let g:vim_markdown_folding_disabled=1
