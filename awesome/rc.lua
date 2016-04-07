@@ -18,7 +18,7 @@ require("awful.remote")
 awful.ewmh = require("awful.ewmh")
 
 local beautiful = require("beautiful")
-beautiful.init(awful.util.getdir("config") .. "/themes/niceandclean/theme.lua")
+beautiful.init(awful.util.getdir("config") .. "/themes/glow/theme.lua")
 
 local wibox     = require("wibox")
 local naughty   = require("naughty")

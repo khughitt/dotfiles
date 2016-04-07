@@ -7,7 +7,7 @@ Xcursor.theme: XcursorAero
 !! Colour Scheme
 !!
 !#include "/home/keith/.config/termcolors/dark"
-#include "/home/keith/.config/termcolors/glow"
+#include "/home/keith/.config/termcolors/lite"
 
 !!
 !! xft

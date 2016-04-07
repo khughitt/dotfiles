@@ -31,7 +31,7 @@ categories:
     patterns: ['gene-regulation', 'motif']
     image: 'resources/user/img/motif-detection.png'
   'Exploratory Data Analysis':
-    patterns: ['eigengene', 'pca', 'data_exploration', 'eda']
+    patterns: ['eigengene', 'pca', 'data_exploration', 'eda', 'exprvis']
     image: 'resources/user/img/biplot.png'
   'T. cruzi': 
     patterns: ['tcruzi-inf', 'tula', 'tcruzi-media', 'tcruzi-mexican', 'tcruzi-chr',
@@ -51,13 +51,13 @@ categories:
     image: '2015/01-coex-network-lmajor-infecting-hsapiens/extra/lmexicana_2009-hm-34-medium.jpg'
   'L. braziliensis': ['lbraziliensis-infecting']  
   'UTR Analysis': 
-    patterns: ['3UTR', 'utr', 'sl_analysis', 'trans-splicing']
+    patterns: ['3UTR', 'utr', 'sl_analysis', 'trans-splicing', 'sl-sequence']
     image: 'resources/user/img/lmall_alt_polya.png'
   'RNA-Seq':
-    patterns: ['rna-seq', 'mrna', 'de-gene', 'time_series_dea']
+    patterns: ['rna-seq', 'mrna', 'de-gene', 'time_series_dea', 'mapper']
     image: 'resources/user/img/maplot.png'
   'Ribosome Profiling': 
-    patterns: ['ribosome', 'riboseq']
+    patterns: ['ribosome', 'riboseq', 'uorf']
     image: 'resources/user/img/riboseq_smoothing.png'
   'Trypanosome Genome Analysis':
     patterns: ['chromosome_func', 'chromosome_expr', 'gene-structure', 'ptu', 'multicopy']

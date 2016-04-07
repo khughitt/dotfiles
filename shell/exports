@@ -1,5 +1,5 @@
 # Environmental variables
-export EDITOR=vim
+export EDITOR=nvim
 export R_HISTFILE=~/.Rhistory
 export R_HISTSIZE=10000 
 export JAVA_FONTS=/usr/share/fonts/TTF

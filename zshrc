@@ -101,7 +101,7 @@ unset file
 
 # Fasd
 eval "$(fasd --init auto)"
-alias v='f -t -e vim -b viminfo'
+alias v='f -t -e nvim -b viminfo'
 alias m='f -e mplayer'
 alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
@@ -175,7 +175,8 @@ eval $(dircolors -b ~/.dir_colors)
 
 # Hostname
 if [ "$vconsole" = false ]; then
-    hostname | cut -d'.' -f1 | figlet | lolcat -S 16
+    #hostname | cut -d'.' -f1 | figlet | lolcat -S 16
+    hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
 # TEMP work-around for oh-my-zsh deprecated grep options
@@ -186,6 +187,10 @@ unset GREP_OPTIONS
 if [ -e ~/.zsh_local_late ]; then
     source ~/.zsh_local_late
 fi
+
+function ztabview() {
+    zcat $1 | tabview -
+}
 
 # Virtualenvwrapper
 source $(which virtualenvwrapper.sh)

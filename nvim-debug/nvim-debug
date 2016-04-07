@@ -1,2 +1,7 @@
 #!/bin/env sh
+# To setup:
+#
+#  mkdir ~/.config/debug
+#  ln -s ~/Dropbox/dotfiles/nvim-debug ~/.config/debug/nvim
+#
 XDG_CONFIG_HOME=$HOME/.config/debug nvim $1
