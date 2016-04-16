@@ -86,6 +86,7 @@ call plug#begin()
     Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'mhartington/oceanic-next'
     Plug 'nathanaelkane/vim-indent-guides'
+    "Plug 'plasticboy/vim-markdown'
     Plug 'qpkorr/vim-bufkill'
     Plug 'scrooloose/nerdcommenter'
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
@@ -166,11 +167,11 @@ inoremap <M-l> <Esc>l
 "set smartindent            " be smart about it
 set nowrap                  " do not wrap lines
 set softtabstop=4           " tab width
-set shiftwidth=4            "
+set shiftwidth=4
 set shiftround              " round indents to multiple of shift width
 set tabstop=4
 set expandtab               " expand tabs to spaces
-"set nosmarttab              " no tabs
+"set nosmarttab             " no tabs
 set textwidth=79            " stick to less than 80 chars per line when possible
 set formatoptions+=n        " support for numbered/bullet lists
 set virtualedit=block       " allow virtual edit in visual block ..
