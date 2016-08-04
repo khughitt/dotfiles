@@ -6,8 +6,8 @@ Xcursor.theme: XcursorAero
 !!
 !! Colour Scheme
 !!
-!#include "/home/keith/.config/termcolors/dark"
-#include "/home/keith/.config/termcolors/lite"
+#include "/home/keith/.config/termcolors/dark"
+!#include "/home/keith/.config/termcolors/lite"
 
 !!
 !! xft
@@ -40,9 +40,8 @@ URxvt.cursorBlink:        false
 !URxvt.letterSpace:        -1
 !URxvt*skipBuiltinGlyphs:  true
 
-URxvt*termName:          rxvt-256color
-URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
 !URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
 !URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
 
@@ -50,6 +49,7 @@ URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,-m
 !                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
 !URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,\
 !                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+URxvt*termName:          rxvt-256color
 URxvt.iconFile:          /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
 
 !! Control + arrow key navigation

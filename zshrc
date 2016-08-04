@@ -203,3 +203,8 @@ ZSHRC_LOADED='true'
 # Neovim
 alias vim=nvim
 
+# Torch
+if [ -e ~/torch/install/bin/torch-activate ]; then
+    source ~/torch/install/bin/torch-activate
+fi
+

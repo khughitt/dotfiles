@@ -6,57 +6,73 @@ email: user@email.com
 
 # Notebook contents
 input_dirs:
+  - /home/keith/Dropbox/research/presentations/*
   - /home/keith/Dropbox/research/201[2-5]/*
   - /home/keith/Dropbox/research/2016/*/*
   - /home/keith/Dropbox/research/2015/73-mtb-ifnb-diffexpr/output/*
-  
+  - /home/keith/Dropbox/research/2015/74-mtb-ifnb-combined/output/*
+
 output_file: /home/keith/Dropbox/research/index.html
 
 include_files: ['*.html', '*.py', '*.ipynb']
 
-exclude: ['header.html', 'parent.html', 'ruffus-test', 'qsub-test']
+exclude: ['header.html', 'parent.html', 'ruffus-test', 'qsub-test', 'rf.py']
 
 # Research categories
 categories:
-  'Host-pathogen Network Analysis': 
+  'Presentations':
+    patterns: ['presentations']
+  'Host-pathogen Network Analysis':
     patterns: ['hpi-network', 'host-pathogen-module']
     image: 'resources/user/img/lmhs_hpinetwork_v4.1_mistyrose_vs_%23FF5C00.png'
-  'Co-expression Cluster Analysis': 
-    patterns: ['co-expression_simulation', 'expr-cluster']  
+  'Co-expression Cluster Analysis':
+    patterns: ['co-expression_simulation', 'expr-cluster']
     image: 'resources/user/img/coex_clusters_lmpd.png'
-  'Co-expression Network Analysis': 
-    patterns: ['network', 'similarity-matrix', 'random-cor', 'coex-alt', 'edge-betweenness']  
+  'Co-expression Network Analysis (General)':
+    patterns: ['random-cor', 'coex-alt', 'edge-betweenness', 'network-resampling',
+               'network-euclidean-dist', 'network-layouts', 'network-smoothing',
+               'wgcna']
     image: 'resources/user/img/lmhs_coex_network_v4.1_adjmatrix.png'
+  'Co-expression Network Analysis (Host)':
+    patterns: ['coex-network-hsapiens', 'coex-network-mmusculus',
+               'coex-network-illumina']
+  'Co-expression Network Analysis (Parasite)':
+    patterns: ['coex-network-lmajor', 'coex-network-tcruzi',
+               'coex-network-lbraziliensis', 'tcruzi-co-ex',
+               'module-network-lmajor']
+    image: 'resources/user/img/tcruzi_dendrogram_small.png'
+  'Co-expression Network Parameter Optimization':
+    patterns: ['param-opt']
   'Regulatory Element Prediction':
     patterns: ['gene-regulation', 'motif']
     image: 'resources/user/img/motif-detection.png'
   'Exploratory Data Analysis':
     patterns: ['eigengene', 'pca', 'data_exploration', 'eda', 'exprvis']
     image: 'resources/user/img/biplot.png'
-  'T. cruzi': 
+  'T. cruzi':
     patterns: ['tcruzi-inf', 'tula', 'tcruzi-media', 'tcruzi-mexican', 'tcruzi-chr',
                'tcurzi-multicopy']
-    image: '2015/03-coex-network-tcruzi-infecting-hsapiens/extra/2894934_pone.0011407.g001.png'
-  'M. tuberculosis': 
+    image: '2015/00-coex-network-shared/img/2894934_pone.0011407.g001.png'
+  'M. tuberculosis':
     patterns: ['mtb']
     image: 'resources/user/img/mycobacterium_tuberculosis_wikipedia.jpg'
-  'H. sapiens': 
+  'H. sapiens':
     patterns: ['hsapiens-inf', 'hsapiens-all']
     image: '2015/00-coex-network-shared/img/vitruvian.jpg'
   'M. musculus':
     patterns: ['mmusculus-inf']
     image: '2015/00-coex-network-shared/img/House_mouse.jpg'
   'L. major':
-    patterns: ['lmajor-infecting', 'lmajor_limma', 'lmajor-data', 'lmajor-all', 'lmajor-network']  
+    patterns: ['lmajor-infecting', 'lmajor_limma', 'lmajor-data', 'lmajor-all', 'lmajor-network']
     image: '2015/01-coex-network-lmajor-infecting-hsapiens/extra/lmexicana_2009-hm-34-medium.jpg'
-  'L. braziliensis': ['lbraziliensis-infecting']  
-  'UTR Analysis': 
+  'L. braziliensis': ['lbraziliensis-infecting']
+  'UTR Analysis':
     patterns: ['3UTR', 'utr', 'sl_analysis', 'trans-splicing', 'sl-sequence']
     image: 'resources/user/img/lmall_alt_polya.png'
   'RNA-Seq':
-    patterns: ['rna-seq', 'mrna', 'de-gene', 'time_series_dea', 'mapper']
+    patterns: ['rna-seq', 'mrna', 'de-gene', 'mapper']
     image: 'resources/user/img/maplot.png'
-  'Ribosome Profiling': 
+  'Ribosome Profiling':
     patterns: ['ribosome', 'riboseq', 'uorf']
     image: 'resources/user/img/riboseq_smoothing.png'
   'Trypanosome Genome Analysis':
@@ -69,7 +85,7 @@ categories:
     patterns: ['transcript-lengths', 'genomic-ranges']
     image: 'resources/user/img/logo_bioconductor.gif'
   'Time Series Analysis':
-    patterns: ['running-diff']
+    patterns: ['running-diff', 'time', 'tcruzi.py']
   'Genome Annotations': ['refnet', 'kegg', 'tritrypdb', 'leishcyc']
   'Dev': ['dev']
   'WGCNA': ['wgcna']
@@ -84,9 +100,13 @@ external:
   'Host-pathogen Network Explorer':
     category: 'Shiny'
     url: 'http://kore.umd.edu:3838/host-pathogen-networks/'
+  'Network Biology Overview':
+    category: 'Presentations'
+    url: 'http://khughitt.github.io/slidify-network-biology/#1'
 
 user_css: 'resources/user/css/custom.css'
 
 sort_categories_by_date: true
+sort_entries_by_date: true
 
 

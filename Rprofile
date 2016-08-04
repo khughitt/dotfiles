@@ -116,7 +116,7 @@ Sys.setenv(R_HISTSIZE=5000)
 }
 
 # Memory usage
-.top = function() {
-    # Prints 50 objects which use the most memory (in megabytes)
-    print(tail(sort(sapply(ls(),function(x){object.size(get(x))})), 50)/1E6)
+.top = function(n=10) {
+    # Prints N objects which use the most memory (in megabytes)
+    print(tail(sort(sapply(ls(),function(x){object.size(get(x))})), n)/1E6)
 }
