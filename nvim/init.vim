@@ -50,8 +50,11 @@ nmap <leader>z :wq<cr>
 
 
 " Fast save (alt. method)
-inoremap <c-s> <c-o>:w<cr>
-nnoremap <c-s> :w<cr>
+" disabling for now to try out vim-ipython
+"inoremap <c-s> <c-o>:w<cr>
+"nnoremap <c-s> :w<cr>
+let g:nvim_ipy_perform_mappings = 0
+map <silent> <c-s>   <Plug>(IPy-Run)
 
 " Disable macro recording
 map q <nop>
@@ -72,6 +75,7 @@ map <s-e> <Plug>CamelCaseMotion_e
 " ---------------------------------------------------------------------------
 call plug#begin()
     Plug 'airblade/vim-gitgutter'
+    "Plug 'bfredl/nvim-ipy'
     Plug 'bkad/CamelCaseMotion'
     Plug 'chrisbra/csv.vim'
     Plug 'ervandew/supertab'
@@ -79,12 +83,15 @@ call plug#begin()
     Plug 'henrik/vim-indexed-search'
     Plug 'honza/vim-snippets'
     Plug 'jalvesaq/Nvim-R'
+    "Plug 'jalvesaq/R-Vim-runtime'
     Plug 'junegunn/goyo.vim'
     Plug 'junegunn/limelight.vim'
     Plug 'kshenoy/vim-signature'
     Plug 'machakann/vim-textobj-delimited'
+    Plug 'majutsushi/tagbar'
     Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'mhartington/oceanic-next'
+    Plug 'ludovicchabant/vim-gutentags'
     Plug 'nathanaelkane/vim-indent-guides'
     "Plug 'plasticboy/vim-markdown'
     Plug 'qpkorr/vim-bufkill'
@@ -178,7 +185,7 @@ set virtualedit=block       " allow virtual edit in visual block ..
 set pastetoggle=<F6>        " paste-mode toggle
 
 " Shortuct to toggle textwidth wrapping
-"nmap <silent><localleader>r :call ToggleTextWidth()<CR>
+nmap <silent><localleader>r :call ToggleTextWidth()<CR>
 function! ToggleTextWidth()
   if &textwidth != 0
     let b:oldtextwidth = &textwidth
@@ -288,6 +295,13 @@ set background=dark
 colorscheme hemisu
 highlight ColorColumn ctermbg=234 guibg=#666666
 
+" NeoVim tmux support
+" https://github.com/neovim/neovim/issues/2528
+if &term =~ '^screen'
+    hi Normal ctermbg=NONE
+    set noshowcmd
+endif
+
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
 let g:terminal_color_0="#1b2b34"
@@ -354,6 +368,9 @@ nnoremap <C-l> <C-w>l
 " terminal cntl + arrow keys
 tnoremap <C-Left> <m-b>
 tnoremap <C-Right> <m-f>
+
+" disable jumping (e.g. control-i) in terminal
+"tnoremap <c-i> <nop>
 
 " automatically enter insert mode
 autocmd BufWinEnter,WinEnter term://* startinsert
@@ -565,6 +582,11 @@ nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
 "let g:yankring_history_dir = '$HOME/.vim/tmp/yankring'
 
 " ---------------------------------------------------------------------------
+"  tagbar
+" ---------------------------------------------------------------------------
+nmap <F9> :TagbarToggle<CR>
+
+" ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
 " ---------------------------------------------------------------------------
 
@@ -598,6 +620,19 @@ autocmd BufRead,BufNewFile *.py set autoindent
 
 " R
 let vimrplugin_objbr_place = "console,right"
+
+" Force use of colorout for highlighting terminal
+let R_hl_term = 0
+
+" Emulate Tmux ^az
+function ZoomWindow()
+    let cpos = getpos(".")
+    tabnew %
+    redraw
+    call cursor(cpos[1], cpos[2])
+    normal! zz
+endfunction
+nmap gz :call ZoomWindow()<CR>
 
 " Exclude object browser from buffer list
 autocmd BufEnter Object_Browser set nobuflisted
