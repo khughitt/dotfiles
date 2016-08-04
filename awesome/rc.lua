@@ -239,6 +239,7 @@ naughty.config.defaults.hover_timeout = nil
 -- }}}
 
 -- {{{ Wallpaper
+--beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/minimalistic_dark_circles_glow_1920x1080_8295_alt.png"
 beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/Luetin_1920.jpg"
 --beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/02786_lakefornight_1920x1200.jpg"
 --beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/seaweed.jpg"
