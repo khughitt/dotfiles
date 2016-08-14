@@ -87,6 +87,7 @@ call plug#begin()
     Plug 'junegunn/goyo.vim'
     Plug 'junegunn/limelight.vim'
     Plug 'kshenoy/vim-signature'
+    Plug 'lilydjwg/colorizer'
     Plug 'machakann/vim-textobj-delimited'
     Plug 'majutsushi/tagbar'
     Plug 'MarcWeber/vim-addon-mw-utils'
@@ -265,6 +266,10 @@ endif
 " http://sunaku.github.io/vim-256color-bce.html
 set t_ut=""
 
+" enable true colors
+let $NVIM_TUI_ENABLE_TRUE_COLOR=1
+set termguicolors
+
 " fix control/shift + arrow keys in screen
 " http://superuser.com/questions/401926/how-to-get-shiftarrows-and-ctrlarrows-working-in-vim-in-tmux
 "if &term =~ '^screen'
@@ -292,8 +297,11 @@ endif
 
 " colorscheme
 set background=dark
-colorscheme hemisu
-highlight ColorColumn ctermbg=234 guibg=#666666
+"colorscheme hemisu
+"colorscheme gotham
+colorscheme sweyla907357
+
+highlight ColorColumn ctermbg=234 guibg=#222222
 
 " NeoVim tmux support
 " https://github.com/neovim/neovim/issues/2528
@@ -401,6 +409,12 @@ let g:airline#extensions#tabline#enabled = 1
 
 " Remove any introduced trailing whitespace after moving...
 "let g:DVB_TrimWS = 1
+
+
+" ---------------------------------------------------------------------------
+"  colorizer
+" ---------------------------------------------------------------------------
+let g:colorizer_startup = 0
 
 " ---------------------------------------------------------------------------
 "  goyo.vim
@@ -669,6 +683,9 @@ nmap <C-M> <Plug>RDSendLine
 
 " wipe knitr cache and output
 nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("README_cache/*", recursive=TRUE)')<CR>
+
+" render markdown
+nmap <localleader>km :call RMakeRmd("md_document")<CR> 
 
 " https://github.com/plasticboy/vim-markdown/issues/162
 "let g:vim_markdown_folding_disabled=1

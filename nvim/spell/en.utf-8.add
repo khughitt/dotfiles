@@ -1,6 +1,5 @@
-cruzi
-cruzi
 Hughitt
+cruzi
 pdf
 Trimmomatic
 TopHat2
@@ -27,3 +26,7 @@ RSG
 bioinformatics
 genomics
 UMD
+NMF
+PCA
+VQ
+NMF's

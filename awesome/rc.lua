@@ -190,7 +190,7 @@ end
 
 --{{
 local tools = {
-    terminal = "urxvt",
+    terminal = "termite",
     browser  = "chromium",
     editor   = os.getenv("EDITOR") or "vim",
     system = {
@@ -198,7 +198,7 @@ local tools = {
     },
 }
 
-editor_cmd = "urxvt -e " .. tools.editor
+editor_cmd = "termite -e " .. tools.editor
 
 --}}
 
@@ -734,7 +734,7 @@ globalkeys = awful.util.table.join(
   -- Other Shortcuts
   awful.key({ modkey, "Shift"   }, "n", function ()
       -- awful.util.spawn("nautilus --no-desktop") 
-      awful.util.spawn_with_shell("urxvt -e ranger") 
+      awful.util.spawn_with_shell("termite -e ranger") 
   end),
 
 
@@ -754,8 +754,8 @@ globalkeys = awful.util.table.join(
       awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
   end),
   awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
-  awful.key({ altkey }, "Return", function () scratch.drop("urxvt --background '[90]#191919'", 'center', 'center', 0.75, 0.75) end),
-  awful.key({ altkey }, "space", function () scratch.drop("urxvt -e 'R'", 'center', 'center', 0.7, 0.9) end),
+  awful.key({ altkey }, "Return", function () scratch.drop("termite --background '[90]#191919'", 'center', 'center', 0.75, 0.75) end),
+  awful.key({ altkey }, "space", function () scratch.drop("termite -e 'R'", 'center', 'center', 0.7, 0.9) end),
   awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.75, 0.75) end)
 )
   -- }}}
