@@ -299,7 +299,7 @@ endif
 set background=dark
 "colorscheme hemisu
 "colorscheme gotham
-colorscheme sweyla907357
+colorscheme sweyla721647
 
 highlight ColorColumn ctermbg=234 guibg=#222222
 
@@ -415,6 +415,14 @@ let g:airline#extensions#tabline#enabled = 1
 "  colorizer
 " ---------------------------------------------------------------------------
 let g:colorizer_startup = 0
+
+" ---------------------------------------------------------------------------
+"  colorscheme-switcher.vim
+" ---------------------------------------------------------------------------
+let g:colorscheme_switcher_exclude = [
+            \'blue', 'darkblue', 'default', 'delek', 'desert', 'elflord',
+            \'evening', 'fi', 'gotham256', 'hybrid', 'hybrid-light', 'koehler', 
+            \'morning', 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'torte', 'zellner']
 
 " ---------------------------------------------------------------------------
 "  goyo.vim
