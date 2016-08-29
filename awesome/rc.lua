@@ -18,7 +18,7 @@ require("awful.remote")
 awful.ewmh = require("awful.ewmh")
 
 local beautiful = require("beautiful")
-beautiful.init(awful.util.getdir("config") .. "/themes/glow/theme.lua")
+beautiful.init(awful.util.getdir("config") .. "/themes/seasong/theme.lua")
 
 local wibox     = require("wibox")
 local naughty   = require("naughty")
@@ -754,7 +754,7 @@ globalkeys = awful.util.table.join(
       awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
   end),
   awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
-  awful.key({ altkey }, "Return", function () scratch.drop("termite --background '[90]#191919'", 'center', 'center', 0.75, 0.75) end),
+  awful.key({ altkey }, "Return", function () scratch.drop("termite", 'center', 'center', 0.75, 0.75) end),
   awful.key({ altkey }, "space", function () scratch.drop("termite -e 'R'", 'center', 'center', 0.7, 0.9) end),
   awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.75, 0.75) end)
 )

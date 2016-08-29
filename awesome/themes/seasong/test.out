@@ -1,0 +1,29 @@
+theme.bg_normal     = "#020001"
+heme.bg_focus       = "#4e0027"
+theme.bg_urgent     = "#b2e5ff"
+theme.bg_tooltip    = "#fff"
+theme.bg_em         = "#00ffda"
+theme.bg_systray    = "#020001"
+theme.bg_widget     = "#020001"
+
+theme.fg_normal     = "#fff"
+theme.fg_focus      = "#fff" 
+theme.fg_urgent     = "#b2e5ff"
+theme.fg_tooltip    = "#020001"
+theme.fg_tooltip    = "#313030"
+theme.fg_em         = "#fff"
+theme.fg_widget        = "#14d1de"
+theme.fg_center_widget = "#007099"
+theme.fg_end_widget    = theme.bg_normal 
+
+theme.border_width  = 2
+theme.border_normal = "#313030"
+theme.border_focus  = "#007099"
+theme.border_marked = "#00baff"
+theme.border_tooltip        = "#313030"
+theme.border_widget         = "#1b191a"
+
+theme.titlebar_bg_focus     = theme.border_widget
+theme.titlebar_bg_normal    = theme.border_widget
+
+theme.mouse_finder_color    = "#009983"

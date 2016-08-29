@@ -29,7 +29,3 @@ export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
 #PERL_LOCAL_LIB_ROOT="/home/keith/perl5${PERL_LOCAL_LIB_ROOT+:}${PERL_LOCAL_LIB_ROOT}"; export PERL_LOCAL_LIB_ROOT;
 #PERL_MB_OPT="--install_base \"/home/keith/perl5\""; export PERL_MB_OPT;
 #PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5"; export PERL_MM_OPT;
-
-# luarocks path
-export LUA_PATH='/home/keith/.luarocks/share/lua/5.3/?.lua;/home/keith/.luarocks/share/lua/5.3/?/init.lua;/usr/share/lua/5.3/?.lua;/usr/share/lua/5.3/?/init.lua;/usr/lib/lua/5.3/?.lua;/usr/lib/lua/5.3/?/init.lua;./?.lua;./?/init.lua'
-export LUA_CPATH='/home/keith/.luarocks/lib/lua/5.3/?.so;/usr/lib/lua/5.3/?.so;/usr/lib/lua/5.3/loadall.so;./?.so'

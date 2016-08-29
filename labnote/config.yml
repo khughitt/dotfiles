@@ -9,6 +9,8 @@ input_dirs:
   - /home/keith/Dropbox/research/presentations/*
   - /home/keith/Dropbox/research/201[2-5]/*
   - /home/keith/Dropbox/research/2016/*/*
+
+multi_version_dirs:
   - /home/keith/Dropbox/research/2015/73-mtb-ifnb-diffexpr/output/*
   - /home/keith/Dropbox/research/2015/74-mtb-ifnb-combined/output/*
 
