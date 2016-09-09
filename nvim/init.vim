@@ -299,7 +299,8 @@ endif
 set background=dark
 "colorscheme hemisu
 "colorscheme gotham
-colorscheme sweyla721647
+"colorscheme sweyla721647
+colorscheme sweyla939829
 
 highlight ColorColumn ctermbg=234 guibg=#222222
 
@@ -607,6 +608,15 @@ nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
 "  tagbar
 " ---------------------------------------------------------------------------
 nmap <F9> :TagbarToggle<CR>
+
+let g:tagbar_type_r = {
+    \ 'ctagstype' : 'r',
+    \ 'kinds'     : [
+        \ 'f:Functions',
+        \ 'g:GlobalVariables',
+        \ 'v:FunctionVariables',
+    \ ]
+\ }
 
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
