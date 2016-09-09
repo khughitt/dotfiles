@@ -1,0 +1,40 @@
+!
+! systems color theme
+!
+
+! special
+*.foreground:   #c2cbc5
+*.background:   #0f100f
+*.cursorColor:  #c2cbc5
+
+! black
+*.color0:       #181a19
+*.color8:       #7ac693
+
+! red
+*.color1:       #212321
+*.color9:       #55989d
+
+! green
+*.color2:       #313432
+*.color10:      #d46a57
+
+! yellow
+*.color3:       #484c49
+*.color11:      #6da8ac
+
+! blue
+*.color4:       #646965
+*.color12:      #749d80
+
+! magenta
+*.color5:       #868d88
+*.color13:      #e36e57
+
+! cyan
+*.color6:       #adb6b0
+*.color14:      #e47662
+
+! white
+*.color7:       #dce5de
+*.color15:      #88825b
