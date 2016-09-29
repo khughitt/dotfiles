@@ -44,7 +44,7 @@ theme.fg_center_widget = "#009983"
 theme.fg_end_widget    = theme.bg_normal 
 
 theme.border_width  = 2
-theme.border_normal = "#007099"
+theme.border_normal = "#00000000"
 theme.border_focus  = "#b2e5ff"
 theme.border_marked = "#00baff"
 theme.border_tooltip        = "#313030"

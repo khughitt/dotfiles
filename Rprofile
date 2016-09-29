@@ -115,6 +115,12 @@ Sys.setenv(R_HISTSIZE=5000)
     source("http://bioconductor.org/biocLite.R")
 }
 
+# Git status support
+gst <- structure(1, class="gst")
+print.gst <- function(x) {
+    system('git status')
+}
+
 # Memory usage
 .top = function(n=10) {
     # Prints N objects which use the most memory (in megabytes)

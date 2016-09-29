@@ -323,7 +323,7 @@ let g:terminal_color_6="#5fb4b4"
 let g:terminal_color_7="#c1c6cf"
 let g:terminal_color_8="#65737e"
 let g:terminal_color_9="#fa9257"
-let g:terminal_color_10="#343d46"
+let g:terminal_color_10="#4e5d6b" " #343d46
 let g:terminal_color_11="#4f5b66"
 let g:terminal_color_12="#a8aebb"
 let g:terminal_color_13="#ced4df"
@@ -337,7 +337,9 @@ let g:terminal_color_foreground="#c1c6cf"
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
 
 " Highlight color
-hi Search ctermbg=197 ctermfg=233
+"hi Search ctermbg=197 ctermfg=233
+hi Search guibg=#14D1DE guifg=#2C2C2C
+hi IncSearch guifg=#67E8F1 guibg=#333333
 
 " ---------------------------------------------------------------------------
 "  Copy and Paste
@@ -379,7 +381,7 @@ tnoremap <C-Left> <m-b>
 tnoremap <C-Right> <m-f>
 
 " disable jumping (e.g. control-i) in terminal
-"tnoremap <c-i> <nop>
+tnoremap <c-i> <nop>
 
 " automatically enter insert mode
 autocmd BufWinEnter,WinEnter term://* startinsert
@@ -395,6 +397,7 @@ let g:airline#extensions#tabline#enabled = 1
 "let g:airline_theme = 'hybrid'
 "let g:airline_theme = 'bubblegum'
 "let g:airline_theme = 'zenburn'
+let g:airline_theme = 'hybridline'
 
 " ---------------------------------------------------------------------------
 "  dragvisuals.vim
