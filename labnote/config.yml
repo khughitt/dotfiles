@@ -43,11 +43,15 @@ categories:
                'coex-network-lbraziliensis', 'tcruzi-co-ex',
                'module-network-lmajor']
     image: 'resources/user/img/tcruzi_dendrogram_small.png'
+  'Co-expression Network Analysis (Model organisms)':
+    patterns: ['modencode-worm', 'modencode-fly']
   'Co-expression Network Parameter Optimization':
     patterns: ['param-opt']
   'Regulatory Element Prediction':
-    patterns: ['gene-regulation', 'motif']
+    patterns: ['gene-regulation', 'motif', 'predict']
     image: 'resources/user/img/motif-detection.png'
+  'Precision Medicine':
+    patterns: ['p3']
   'Exploratory Data Analysis':
     patterns: ['eigengene', 'pca', 'data_exploration', 'eda', 'exprvis']
     image: 'resources/user/img/biplot.png'
@@ -65,8 +69,10 @@ categories:
     patterns: ['mmusculus-inf']
     image: '2015/00-coex-network-shared/img/House_mouse.jpg'
   'L. major':
-    patterns: ['lmajor-infecting', 'lmajor_limma', 'lmajor-data', 'lmajor-all', 'lmajor-network']
+    patterns: ['lmajor-infecting', 'lmajor_limma', 'lmajor-data', 'lmajor-all', 'lmajor-network', 'sandfly', 'lmjf']
     image: '2015/01-coex-network-lmajor-infecting-hsapiens/extra/lmexicana_2009-hm-34-medium.jpg'
+  'T. brucei':
+    patterns: ['brucei']
   'L. braziliensis': ['lbraziliensis-infecting']
   'UTR Analysis':
     patterns: ['3UTR', 'utr', 'sl_analysis', 'trans-splicing', 'sl-sequence']
