@@ -64,51 +64,44 @@ map q <nop>
 autocmd InsertLeave * if expand('%') != '' | update | endif
 
 " ---------------------------------------------------------------------------
-" CamelCaseMotion
-" ---------------------------------------------------------------------------
-map <s-w> <Plug>CamelCaseMotion_w
-map <s-b> <Plug>CamelCaseMotion_b
-map <s-e> <Plug>CamelCaseMotion_e
-
-" ---------------------------------------------------------------------------
 " vim-plug
 " ---------------------------------------------------------------------------
 call plug#begin()
-    Plug 'airblade/vim-gitgutter'
+    "Plug 'airblade/vim-gitgutter'
     "Plug 'bfredl/nvim-ipy'
-    Plug 'bkad/CamelCaseMotion'
-    Plug 'chrisbra/csv.vim'
-    Plug 'ervandew/supertab'
-    Plug 'garbas/vim-snipmate'
+    "Plug 'bkad/CamelCaseMotion'
+    "Plug 'chrisbra/csv.vim'
+    "Plug 'ervandew/supertab'
+    "Plug 'garbas/vim-snipmate'
     "Plug 'haya14busa/incsearch.vim'
-    Plug 'henrik/vim-indexed-search'
-    Plug 'honza/vim-snippets'
+    "Plug 'henrik/vim-indexed-search'
+    "Plug 'honza/vim-snippets'
     Plug 'jalvesaq/Nvim-R'
-    Plug 'junegunn/goyo.vim'
-    Plug 'junegunn/limelight.vim'
-    Plug 'kshenoy/vim-signature'
-    Plug 'lilydjwg/colorizer'
-    Plug 'machakann/vim-textobj-delimited'
-    Plug 'majutsushi/tagbar'
-    Plug 'MarcWeber/vim-addon-mw-utils'
-    Plug 'mhartington/oceanic-next'
-    Plug 'ludovicchabant/vim-gutentags'
-    Plug 'nathanaelkane/vim-indent-guides'
-    ""Plug 'plasticboy/vim-markdown'
-    Plug 'qpkorr/vim-bufkill'
-    Plug 'scrooloose/nerdcommenter'
-    Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
-    Plug 'Shougo/neomru.vim'
-    Plug 'Shougo/unite.vim'
-    Plug 'Shougo/vimproc.vim', { 'do': 'make' }
-    Plug 'tomtom/tlib_vim'
-    Plug 'tpope/vim-surround'
-    Plug 'vim-airline/vim-airline'
-    Plug 'vim-airline/vim-airline-themes'
-    Plug 'vim-scripts/argtextobj.vim'
-    Plug 'whatyouhide/vim-gotham'
-    Plug 'xolox/vim-misc'
-    Plug 'xolox/vim-colorscheme-switcher'
+    "Plug 'junegunn/goyo.vim'
+    "Plug 'junegunn/limelight.vim'
+    "Plug 'kshenoy/vim-signature'
+    "Plug 'lilydjwg/colorizer'
+    "Plug 'machakann/vim-textobj-delimited'
+    "Plug 'majutsushi/tagbar'
+    "Plug 'MarcWeber/vim-addon-mw-utils'
+    "Plug 'mhartington/oceanic-next'
+    "Plug 'ludovicchabant/vim-gutentags'
+    "Plug 'nathanaelkane/vim-indent-guides'
+    "Plug 'plasticboy/vim-markdown'
+    "Plug 'qpkorr/vim-bufkill'
+    "Plug 'scrooloose/nerdcommenter'
+    "Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+    "Plug 'Shougo/neomru.vim'
+    "Plug 'Shougo/unite.vim'
+    "Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+    "Plug 'tomtom/tlib_vim'
+    "Plug 'tpope/vim-surround'
+    "Plug 'vim-airline/vim-airline'
+    "Plug 'vim-airline/vim-airline-themes'
+    "Plug 'vim-scripts/argtextobj.vim'
+    "Plug 'whatyouhide/vim-gotham'
+    "Plug 'xolox/vim-misc'
+    "Plug 'xolox/vim-colorscheme-switcher'
 call plug#end()
 
 " ----------------------------------------------------------------------------
@@ -380,9 +373,8 @@ nnoremap <C-l> <C-w>l
 tnoremap <C-Left> <m-b>
 tnoremap <C-Right> <m-f>
 
-"" disable jumping (e.g. control-i) in terminal
-" 2016/12/15 Disabling: prevents terminal tab completion from working properly
-"tnoremap <c-i> <nop>
+" disable jumping (e.g. control-i) in terminal
+tnoremap <c-i> <nop>
 
 " automatically enter insert mode
 autocmd BufWinEnter,WinEnter term://* startinsert
@@ -447,183 +439,6 @@ let g:goyo_callbacks = [function('GoyoBefore'), function('GoyoAfter')]
 nnoremap <leader><space> :Goyo<CR>
 
 " ---------------------------------------------------------------------------
-"  gundo.vim
-" ---------------------------------------------------------------------------
-nnoremap <F5> :GundoToggle<CR>
-
-" ---------------------------------------------------------------------------
-"  incsearch.vim
-"  2016/12/17 - disabling for now due to memory leak
-" ---------------------------------------------------------------------------
-"map /  <Plug>(incsearch-forward)
-"map ?  <Plug>(incsearch-backward)
-"map g/ <Plug>(incsearch-stay)
-
-"" Compatibility with vim-indexed-search
-"let g:indexed_search_mappings = 0
-"augroup incsearch-indexed
-"    autocmd!
-"    autocmd User IncSearchLeave ShowSearchIndex
-"augroup END
-
-"nnoremap <silent>n nzv:ShowSearchIndex<CR>
-"nnoremap <silent>N Nzv:ShowSearchIndex<CR>
-
-"" Enable automatic :nohlsearch with index-search compatibility
-"let g:incsearch#auto_nohlsearch = 1
-"map n  <Plug>(incsearch-nohl-n)zv:ShowSearchIndex<CR>
-"map N  <Plug>(incsearch-nohl-N)zv:ShowSearchIndex<CR>
-"map *  <Plug>(incsearch-nohl-*)
-"map #  <Plug>(incsearch-nohl-#)
-"map g* <Plug>(incsearch-nohl-g*)
-"map g# <Plug>(incsearch-nohl-g#)
-
-" ---------------------------------------------------------------------------
-" indent guides
-" ---------------------------------------------------------------------------
-let g:indent_guides_auto_colors = 0
-let g:indent_guides_start_level = 2
-let g:indent_guides_guide_size  = 1
-
-autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=black   ctermbg=black
-autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=darkgrey ctermbg=darkgrey
-
-" ---------------------------------------------------------------------------
-"  NERDTree
-" ---------------------------------------------------------------------------
-map <C-n> :NERDTreeToggle<CR>
-
-" ---------------------------------------------------------------------------
-"  NERDcommenter
-" ---------------------------------------------------------------------------
-let g:NERDDefaultAlign = 'left'
-
-" ---------------------------------------------------------------------------
-"  vpaste.net
-" ---------------------------------------------------------------------------
-map vp :exec "w !vpaste ft=".&ft<CR>
-vmap vp <ESC>:exec "'<,'>w !vpaste ft=".&ft<CR>
-
-" ---------------------------------------------------------------------------
-"  vim-signature
-" ---------------------------------------------------------------------------
-
-" Unmap `] and `[ to allow for navigation to last yanked text, etc.
-let g:SignatureMap = {
-    \ 'Leader'             :  "m",
-    \ 'PlaceNextMark'      :  "m,",
-    \ 'ToggleMarkAtLine'   :  "m.",
-    \ 'PurgeMarksAtLine'   :  "m-",
-    \ 'DeleteMark'         :  "dm",
-    \ 'PurgeMarks'         :  "m<Space>",
-    \ 'PurgeMarkers'       :  "m<BS>",
-    \ 'GotoNextLineAlpha'  :  "']",
-    \ 'GotoPrevLineAlpha'  :  "'[",
-    \ 'GotoNextSpotAlpha'  :  "",
-    \ 'GotoPrevSpotAlpha'  :  "",
-    \ 'GotoNextLineByPos'  :  "]'",
-    \ 'GotoPrevLineByPos'  :  "['",
-    \ 'GotoNextSpotByPos'  :  "]`",
-    \ 'GotoPrevSpotByPos'  :  "[`",
-    \ 'GotoNextMarker'     :  "[+",
-    \ 'GotoPrevMarker'     :  "[-",
-    \ 'GotoNextMarkerAny'  :  "]=",
-    \ 'GotoPrevMarkerAny'  :  "[=",
-    \ 'ListLocalMarks'     :  "m/",
-    \ 'ListLocalMarkers'   :  "m?"
-    \ }
-
-" ---------------------------------------------------------------------------
-"  snipmate.vim
-" ---------------------------------------------------------------------------
-let g:snips_author = "Keith Hughitt"
-let g:snips_email  = "user@email.com"
-let g:snips_github = "https://github.com/khughitt"
-let g:snipMate = {}
-let g:snipMate.scope_aliases = {}
-let g:snipMate.scope_aliases['rmd'] = 'r,r-extra,rmd'
-
-" ---------------------------------------------------------------------------
-"  Supertab
-" ---------------------------------------------------------------------------
-let g:SuperTabDefaultCompletionType = "context"
-let g:SuperTabNoCompleteAfter  = ['^', ',', '\s', '"', "'"]
-let g:SuperTabNoCompleteBefore = ['\S']
-highlight Pmenu ctermbg=234 ctermfg=198
-
-" ---------------------------------------------------------------------------
-"  Unite.vim
-"  http://bling.github.io/blog/2013/06/02/unite-dot-vim-the-plugin-you-didnt-know-you-need/
-" ---------------------------------------------------------------------------
-call unite#filters#matcher_default#use(['matcher_fuzzy'])
-call unite#filters#sorter_default#use(['sorter_rank'])
-"call unite#set_profile('files', 'smartcase', 1)
-call unite#custom#profile('files', 'context.smartcase', 1)
-call unite#custom#source('file_rec/async','sorters','sorter_rank', )
-
-"let g:unite_data_directory=s:get_cache_dir('unite')
-let g:unite_data_directory='~/.config/nvim/tmp/unite'
-let g:unite_enable_start_insert=1
-let g:unite_source_history_yank_enable=1
-let g:unite_source_rec_max_cache_files=5000
-let g:unite_prompt='» '
-let g:unite_split_rule = 'botright'
-
-if executable('ag')
-    " Use ag in unite grep source.
-    let g:unite_source_grep_command = 'ag'
-    let g:unite_source_grep_default_opts =
-    \ "-i --line-numbers --nocolor --nogroup --hidden --ignore '.hg' " .
-    \ "--ignore '.svn' --ignore '.git' --ignore '.bzr' " .
-    \ "--ignore 'README_cache' --ignore '.html' "
-    let g:unite_source_grep_recursive_opt = ''
-endif
-
-nmap <space> [unite]
-nnoremap [unite] <nop>
-
-" cnrlp
-nnoremap <c-p> :Unite file file_mru file_rec/async<cr>
-
-" ack / grep
-nnoremap <space>/ :Unite grep:.<cr>
-
-" buffer switching
-nnoremap <space>s :Unite -quick-match buffer<cr>
-
-" yank history
-nnoremap <space>y :Unite history/yank<cr>
-
-nnoremap <silent> [unite]e :<C-u>Unite -buffer-name=recent file_mru<cr>
-nnoremap <silent> [unite]y :<C-u>Unite -buffer-name=yanks history/yank<cr>
-nnoremap <silent> [unite]l :<C-u>Unite -auto-resize -buffer-name=line line<cr>
-nnoremap <silent> [unite]b :<C-u>Unite -auto-resize -buffer-name=buffers buffer<cr>
-nnoremap <silent> [unite]/ :<C-u>Unite -no-quit -buffer-name=search grep:.<cr>
-nnoremap <silent> [unite]m :<C-u>Unite -auto-resize -buffer-name=mappings mapping<cr>
-nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
-
-" ---------------------------------------------------------------------------
-"  yankring.vim
-" ---------------------------------------------------------------------------
-"let g:yankring_replace_n_pkey = '<C-up>'
-"let g:yankring_replace_n_nkey = '<C-down>'
-"let g:yankring_history_dir = '$HOME/.vim/tmp/yankring'
-
-" ---------------------------------------------------------------------------
-"  tagbar
-" ---------------------------------------------------------------------------
-nmap <F9> :TagbarToggle<CR>
-
-let g:tagbar_type_r = {
-    \ 'ctagstype' : 'r',
-    \ 'kinds'     : [
-        \ 'f:Functions',
-        \ 'g:GlobalVariables',
-        \ 'v:FunctionVariables',
-    \ ]
-\ }
-
-" ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
 " ---------------------------------------------------------------------------
 
@@ -657,10 +472,6 @@ autocmd BufRead,BufNewFile *.py set autoindent
 
 " R
 let vimrplugin_objbr_place = "console,right"
-
-" Fix issue relating to setwidth
-" https://github.com/jalvesaq/Nvim-R/issues/81#issuecomment-262651872
-let R_setwidth = 0
 
 " Force use of colorout for highlighting terminal
 let R_hl_term = 0
@@ -697,7 +508,7 @@ let rrst_syn_hl_chunk = 1
 let rmd_syn_hl_chunk = 1
 
 " libraries to always include for autocompletion
-let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,ggplot2,dplyr,readr,igraph,reshape2"
+let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,ggplot2,dplyr,igraph,reshape2,preprocessCore,WGCNA"
 
 " press enter and space bar to send lines and selection to R
 vmap <Space> <Plug>RDSendSelection
@@ -713,17 +524,6 @@ nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("RE
 
 " render markdown
 nmap <localleader>km :call RMakeRmd("md_document")<CR> 
-
-" show source code for function under cursor
-function ShowRSource()
-    let g:function_name = expand("<cword>")
-    echom "Showing source code for function: \"" . g:function_name . "\""
-	enew
-	set syntax=r
-    execute ":Rinsert " . g:function_name
-endfunction
-
-nmap <localleader>sc :call ShowRSource()<CR> 
 
 " https://github.com/plasticboy/vim-markdown/issues/162
 "let g:vim_markdown_folding_disabled=1

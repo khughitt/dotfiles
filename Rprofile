@@ -37,8 +37,7 @@ options('rstudio.markdownToHTML'=NULL)
 # interactive mode
 if (interactive()) {
     # console settings
-    options(setwidth.verbose=0,
-            colorout.verbose=1,
+    options(colorout.verbose=1,
             vimcom.verbose=1)
             #pager=file.path(Sys.getenv("HOME"), "bin/vimrpager"))
 
@@ -80,10 +79,6 @@ if (interactive()) {
             warn = 5,
             verbose=FALSE
         )
-
-    # updates output width when terminal is resized
-    library(setwidth)
-
 }
 
 # Default HISTORY file

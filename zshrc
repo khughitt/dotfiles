@@ -68,23 +68,14 @@ if $vconsole; then
     clear
 fi
 
-# vim-r tweaks
-if [[ $(vim --version | grep -o "+clientserver") == '+clientserver' ]]; then
-    alias vim='vim --servername VIM'
-
-    if [ "$DISPLAY" != "" ]; then
-        function tvim() { tmux new-session "vim --servername VIM $@" ; }
-    else
-        function tvim() { tmux new-session "vim $@" ; }
-    fi
-fi
-
 # History
 setopt HIST_IGNORE_DUPS
 
 # Disable auto correction
 unsetopt correct_all
 
+# Extended globstring support
+setopt extended_glob
 
 # Plugins
 [ -z "$plugins" ] && plugins=(\
@@ -175,7 +166,6 @@ eval $(dircolors -b ~/.dir_colors)
 
 # Hostname
 if [ "$vconsole" = false ]; then
-    #hostname | cut -d'.' -f1 | figlet | lolcat -S 16
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
@@ -203,8 +193,13 @@ ZSHRC_LOADED='true'
 # Neovim
 alias vim=nvim
 
-# Torch
-if [ -e ~/torch/install/bin/torch-activate ]; then
-    source ~/torch/install/bin/torch-activate
+# Biopieces
+if [ -e "$HOME/software/biopieces" ]; then
+    source ~/.shell/biopieces
 fi
+
+# Torch
+#if [ -e ~/torch/install/bin/torch-activate ]; then
+#    source ~/torch/install/bin/torch-activate
+#fi
 

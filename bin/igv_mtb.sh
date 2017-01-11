@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-IGV_VERSION="2.3.47"
+IGV_VERSION="2.3.79"
 
 export JAVA_FONTS=/usr/share/fonts/TTF
 export _JAVA_AWT_WM_NONREPARENTING=1

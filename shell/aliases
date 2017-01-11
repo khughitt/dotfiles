@@ -25,7 +25,7 @@ alias rc='random_country.py'
 alias ap='sudo apt-get update && sudo apt-get dist-upgrade'
 alias pc='yaourt -Syua'
 alias pcd='yaourt -Syua --devel'
-alias pup='pip2 freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs pip2 install -U'
+#alias pup='pip2 freeze --local | grep -v '^\-e' | cut -d = -f 1 | xargs pip2 install -U'
 
 alias s='src-hilite-lesspipe.sh'
 alias t='todo.sh -d $HOME/Dropbox/dotfiles/todo.cfg'

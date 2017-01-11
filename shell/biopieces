@@ -1,0 +1,8 @@
+export BP_DIR="$HOME/software/biopieces"  # Directory where biopieces are installed
+export BP_DATA="$HOME/BP_DATA"   # Contains genomic data etc.
+export BP_TMP="/tmp"        # Required temporary directory.
+export BP_LOG="$HOME/BP_LOG"     # Required log directory.
+
+if [ -f "$BP_DIR/config/bashrc" ]; then
+    source "$BP_DIR/config/bashrc"
+fi  
