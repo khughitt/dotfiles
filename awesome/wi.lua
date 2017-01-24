@@ -163,8 +163,11 @@ vicious.register(memused, vicious.widgets.mem,
   "<span color='" .. beautiful.fg_em .. "'>ram</span>$2MB", 5)
 
 -- RAM bar
-membar = awful.widget.progressbar()
-membar:set_vertical(false):set_width(graphwidth):set_height(graphheight)
+membar = wibox.widget.progressbar({
+    forcedwidth=graphwidth,
+    forcedheight=graphheight
+})
+
 membar:set_ticks(false):set_ticks_size(2)
 membar:set_border_color(nil)
 membar:set_background_color(beautiful.bg_widget)
@@ -193,8 +196,10 @@ vicious.register(rootfsused, vicious.widgets.fs,
   "<span color='" .. beautiful.fg_em .. "'>hd</span>${/ used_gb}GB", 97)
 
 -- Root bar
-rootfsbar = awful.widget.progressbar()
-rootfsbar:set_vertical(false):set_width(graphwidth):set_height(graphheight)
+rootfsbar = wibox.widget.progressbar({
+    forcedwidth=graphwidth,
+    forcedheight=graphheight
+})
 rootfsbar:set_ticks(false):set_ticks_size(2)
 rootfsbar:set_border_color(nil)
 rootfsbar:set_background_color(beautiful.bg_widget)

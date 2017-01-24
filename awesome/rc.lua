@@ -130,7 +130,8 @@ do
             end
 
             -- save current tags
-            for s = 1, screen.count() do
+            --for s = 1, screen.count() do
+            awful.screen.connect_for_each_screen(function(s)
                 local f = io.open(awesome_restart_tags_fname .. "." .. s, "w+")
                 if f then
                     local tags = awful.tag.gettags(s)
@@ -144,7 +145,7 @@ do
                     f:write(awful.tag.getidx() .. "\n")
                     f:close()
                 end
-            end
+            end)
 
             -- save tags for each client
             awful.util.mkdir(awesome_restart_tags_fname)
@@ -166,7 +167,8 @@ do
     customization.orig.restart = awesome.restart
     awesome.restart = function ()
         local scr = mouse.screen
-        awful.prompt.run({prompt = "Restart (type 'yes' to confirm)? "},
+        awful.prompt.run({
+        prompt="Restart (type 'yes' to confirm)? "},
         mypromptbox[scr].widget,
         function (t)
             if string.lower(t) == 'yes' then
@@ -244,9 +246,10 @@ beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/Luetin_19
 --beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/02786_lakefornight_1920x1200.jpg"
 --beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/seaweed.jpg"
 if beautiful.wallpaper then
-    for s = 1, screen.count() do
+    --for s = 1, screen.count() do
+    awful.screen.connect_for_each_screen(function(s)
         gears.wallpaper.maximized(beautiful.wallpaper, s, true)
-    end
+    end)
 end
 -- }}}
 
@@ -256,10 +259,11 @@ end
    names = {'www', 'term'},
    layout = {layouts[2], layouts[2]}
  }
- for s = 1, screen.count() do
+ --for s = 1, screen.count() do
+ awful.screen.connect_for_each_screen(function(s)
      -- Each screen has its own tag table.
      tags[s] = awful.tag(tags.names, s, tags.layout)
- end
+ end)
 --
 -- }}}
 
@@ -343,7 +347,8 @@ mytasklist.buttons = awful.util.table.join(
     end)
 )
 
-for s = 1, screen.count() do
+--for s = 1, screen.count() do
+awful.screen.connect_for_each_screen(function(s)
     -- Create a promptbox for each screen
     mypromptbox[s] = awful.widget.prompt()
     -- Create an imagebox widget which will contains an icon indicating which layout we're using.
@@ -426,7 +431,7 @@ for s = 1, screen.count() do
   graphbox_layout:set_right(right_graphbox)
 
   mygraphbox[s]:set_widget(graphbox_layout)
-end
+end)
 -- }}}
 
 do
@@ -470,7 +475,8 @@ do
             end
         end
 
-        for s = 1, screen.count() do
+        --for s = 1, screen.count() do
+        awful.screen.connect_for_each_screen(function(s)
             local fname = awesome_restart_tags_fname .. "-selected." .. s 
             f = io.open(fname, "r")
             if f then
@@ -481,7 +487,7 @@ do
                 f:close()
             end
             os.remove(fname)
-        end
+        end)
 
     else
 
