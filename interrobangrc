@@ -5,7 +5,7 @@
 
 # GENERAL OPTIONS
 set font     = -*-droid sans mono-medium-r-*-*-15-*-*-*-*-*-*-*
-set geometry = 1920x18+0+0
+set geometry = 1920x20+0+0
 set colors   = #cf4f88 #000000 #4A9BA6 #000000 #484848 #59BCC7
 set border   = 2px #000000
 set bangchar = :

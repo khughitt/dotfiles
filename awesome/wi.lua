@@ -1,8 +1,7 @@
------------------------
--- AwesomeWM widgets --
---    version 3.5    --
---   <tdy@gmx.com>   --
------------------------
+--[[
+- awesomeWM 4.0 widgets
+- github@tdy/awesome
+--]]
 
 local awful = require("awful")
 local wibox = require("wibox")
@@ -42,9 +41,12 @@ vicious.cache(vicious.widgets.cpuinf)
 cpufreq = wibox.widget.textbox()
 vicious.register(cpufreq, vicious.widgets.cpuinf,
   function(widget, args)
-    return string.format("<span color='" .. beautiful.fg_em ..
-      "'>cpu</span> %1.1fGHz", args["{cpu0 ghz}"])
-  end, 3000)
+    return string.format(
+      "<span color='" .. beautiful.fg_em .. "'>cpu</span>%1.1fGHz", args["{cpu0 ghz}"]
+    )
+  end,
+  3000
+)
 
 -- Core 0 graph
 cpugraph0 = awful.widget.graph()
@@ -59,16 +61,14 @@ cpugraph0:set_color({
   stops = {
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
-    { 1, beautiful.fg_end_widget } } })
+    { 1, beautiful.fg_end_widget }
+  }
+})
 vicious.register(cpugraph0, vicious.widgets.cpu, "$2")
 
 -- Core 0 %
 cpupct0 = wibox.widget.textbox()
-cpupct0.fit =
-  function(box, w, h)
-    local w, h = wibox.widget.textbox.fit(box, w, h)
-    return math.max(pctwidth, w), h
-  end
+function cpupct0:fit(box, w, h) return math.min(pctwidth, w), h end
 vicious.register(cpupct0, vicious.widgets.cpu, "$2%", 2)
 
 -- Core 1 graph
@@ -85,16 +85,13 @@ cpugraph1:set_color({
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
     { 1, beautiful.fg_end_widget }
-  }})
+  }
+})
 vicious.register(cpugraph1, vicious.widgets.cpu, "$3")
 
 -- Core 1 %
 cpupct1 = wibox.widget.textbox()
-cpupct1.fit =
-  function(box, w, h)
-    local w, h = wibox.widget.textbox.fit(box, w, h)
-    return math.max(pctwidth, w), h
-  end
+function cpupct1:fit(box, w, h) return math.min(pctwidth, w), h end
 vicious.register(cpupct1, vicious.widgets.cpu, "$3%", 2)
 
 -- Core 2 graph
@@ -110,18 +107,15 @@ cpugraph2:set_color({
   stops = {
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
-    { 1, beautiful.fg_end_widget } } })
+    { 1, beautiful.fg_end_widget }
+  }
+})
 vicious.register(cpugraph2, vicious.widgets.cpu, "$4")
 
 -- Core 2 %
 cpupct2 = wibox.widget.textbox()
-cpupct2.fit =
-  function(box, w, h)
-    local w, h = wibox.widget.textbox.fit(box, w, h)
-    return math.max(pctwidth, w), h
-  end
+function cpupct2:fit(box, w, h) return math.min(pctwidth, w), h end
 vicious.register(cpupct2, vicious.widgets.cpu, "$4%", 2)
--- }}}
 
 -- Core 3 graph
 cpugraph3 = awful.widget.graph()
@@ -136,21 +130,15 @@ cpugraph3:set_color({
   stops = {
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
-    { 1, beautiful.fg_end_widget } } })
+    { 1, beautiful.fg_end_widget }
+  }
+})
 vicious.register(cpugraph3, vicious.widgets.cpu, "$5")
 
 -- Core 3 %
 cpupct3 = wibox.widget.textbox()
-cpupct3.fit =
-  function(box, w, h)
-    local w, h = wibox.widget.textbox.fit(box, w, h)
-    return math.max(pctwidth, w), h
-  end
+function cpupct3:fit(box, w, h) return math.min(pctwidth, w), h end
 vicious.register(cpupct3, vicious.widgets.cpu, "$5%", 2)
-
--- CPU temperature
-tzswidget = wibox.widget.textbox()
-vicious.register(tzswidget, vicious.widgets.thermal, " $1°C", 3, "thermal_zone6")
 -- }}}
 
 -- {{{ Memory
@@ -160,7 +148,9 @@ vicious.cache(vicious.widgets.mem)
 -- RAM used
 memused = wibox.widget.textbox()
 vicious.register(memused, vicious.widgets.mem,
-  "<span color='" .. beautiful.fg_em .. "'>ram</span>$2MB", 5)
+  "<span color='" .. beautiful.fg_em .. "'>ram</span>$2MB",
+  5
+)
 
 -- RAM bar
 membar = wibox.widget.progressbar({
@@ -178,7 +168,9 @@ membar:set_color({
   stops = {
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
-    { 1, beautiful.fg_end_widget } } })
+    { 1, beautiful.fg_end_widget }
+  }
+})
 vicious.register(membar, vicious.widgets.mem, "$1", 13)
 
 -- RAM %
@@ -193,7 +185,9 @@ vicious.cache(vicious.widgets.fs)
 -- Root used
 rootfsused = wibox.widget.textbox()
 vicious.register(rootfsused, vicious.widgets.fs,
-  "<span color='" .. beautiful.fg_em .. "'>hd</span>${/ used_gb}GB", 97)
+  "<span color='" .. beautiful.fg_em .. "'>ssd</span>${/ used_gb}GB",
+  97
+)
 
 -- Root bar
 rootfsbar = wibox.widget.progressbar({
@@ -210,7 +204,9 @@ rootfsbar:set_color({
   stops = {
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
-    { 1, beautiful.fg_end_widget } } })
+    { 1, beautiful.fg_end_widget }
+  }
+})
 vicious.register(rootfsbar, vicious.widgets.fs, "${/ used_p}", 97)
 
 -- Root %
@@ -225,7 +221,8 @@ vicious.cache(vicious.widgets.net)
 
 -- TX graph
 txgraph = awful.widget.graph()
-txgraph:set_width(graphwidth):set_height(graphheight)
+txgraph:set_width(graphwidth)
+txgraph:set_height(graphheight)
 txgraph:set_border_color(nil)
 txgraph:set_background_color(beautiful.bg_widget)
 txgraph:set_color({
@@ -244,17 +241,14 @@ vicious.register(txwidget, vicious.widgets.net,
   "<span color='" .. beautiful.fg_em .. "'>tx</span>${wlan0 tx_mb}MB", 19)
 
 -- TX speed
-txwidget = wibox.widget.textbox()
-txwidget.fit =
-  function(box, w, h)
-    local w, h = wibox.widget.textbox.fit(box, w, h)
-    return math.max(netwidth, w), h
-  end
-vicious.register(txwidget, vicious.widgets.net, "${wlan0 up_kb}", 2)
+upwidget = wibox.widget.textbox()
+function upwidget:fit(box, w, h) return math.min(netwidth, w), h end
+vicious.register(upwidget, vicious.widgets.net, "${wlan0 up_kb}", 2)
 
 -- RX graph
 rxgraph = awful.widget.graph()
-rxgraph:set_width(graphwidth):set_height(graphheight)
+rxgraph:set_width(graphwidth)
+rxgraph:set_height(graphheight)
 rxgraph:set_border_color(nil)
 rxgraph:set_background_color(beautiful.bg_widget)
 rxgraph:set_color({
@@ -273,22 +267,19 @@ vicious.register(rxwidget, vicious.widgets.net,
   "<span color='" .. beautiful.fg_em .. "'>rx</span>${wlan0 rx_mb}MB", 17)
 
 -- RX speed
-rxwidget = wibox.widget.textbox()
-rxwidget.fit =
-  function(box, w, h)
-    local w, h = wibox.widget.textbox.fit(box, w, h)
-    return math.max(netwidth, w), h
-  end
-vicious.register(rxwidget, vicious.widgets.net, "${wlan0 down_kb}", 2)
+dnwidget = wibox.widget.textbox()
+function dnwidget:fit(box, w, h) return math.min(netwidth, w), h end
+vicious.register(dnwidget, vicious.widgets.net, "${wlan0 down_kb}", 2)
 -- }}}
 
 -- {{{ Weather
 weather = wibox.widget.textbox()
 vicious.register(weather, vicious.widgets.weather,
-  "<span color='" .. beautiful.fg_em .. "'>${sky}</span> @ ${tempf}°F ",
+  "<span color='" .. beautiful.fg_em .. "'>${sky}</span> @ ${tempf}°F on",
   600, "KCGS")
 weather:buttons(awful.util.table.join(awful.button({ }, 1,
-  function() vicious.force({ weather }) end)))
+  function() vicious.force({ weather }) end
+)))
 -- }}}
 
 -- {{{ Pacman
@@ -307,7 +298,10 @@ vicious.register(pacwidget, vicious.widgets.pkg,
     end
 
     return args[1]
-  end, 1801, "Arch S") -- Arch S for ignorepkg
+  end,
+  1801,
+  "Arch S"
+)
 
 -- Buttons
 function popup_pac()
@@ -471,7 +465,10 @@ vicious.register(batpct, vicious.widgets.bat,
     end
 
     return args[2] .. "%"
-  end, nil, "BAT0")
+  end,
+  nil,
+  "BAT0"
+)
 
 -- Buttons
 function popup_bat()
@@ -490,8 +487,10 @@ function popup_bat()
     state = "Unknown"
   end
 
-  naughty.notify { text = "Charge : " .. bat_charge .. "%\nState  : " .. state ..
-    " (" .. bat_time .. ")", timeout = 5, hover_timeout = 0.5 }
+  naughty.notify {
+    text = "Charge : " .. bat_charge .. "%\nState  : " .. state ..
+           " (" .. bat_time .. ")", timeout = 5, hover_timeout = 0.5
+  }
 end
 batpct:buttons(awful.util.table.join(awful.button({ }, 1, popup_bat)))
 baticon:buttons(batpct:buttons())

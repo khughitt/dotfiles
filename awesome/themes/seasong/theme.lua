@@ -1,4 +1,4 @@
--- seasong, awesome3 theme
+-- seasong, awesome4 theme
 -- Sources:
 -- [1] Blazeix's niceandclean awesome3 theme
 -- [2] ghost1227's openbox theme
@@ -14,13 +14,14 @@ function homewidgets(path) return hometheme("/widgets") .. path end
 function hometp(path) return hometheme("/tp") .. path end
 
 function systheme(path) return "/usr/share/awesome/themes/default" .. path end
+function syslayouts(path) return systheme("layouts/") .. path end
 function systitle(path) return systheme("/titlebar") .. path end
 -- }}}
 
 -- {{ Main
 theme = {}
 theme.font          = "droid sans mono 10"
-theme.menu_height   = 16
+theme.menu_height   = 15
 theme.menu_width    = 100
 -- }}}
 
@@ -43,6 +44,7 @@ theme.fg_widget        = "#14d1de"
 theme.fg_center_widget = "#009983"
 theme.fg_end_widget    = theme.bg_normal 
 
+theme.useless_gap           = 0
 theme.border_width  = 2
 theme.border_normal = "#00000000"
 theme.border_focus  = "#b2e5ff"
@@ -108,27 +110,31 @@ theme.widget_fs2            = hometp("/fs_02.png")
 theme.widget_up             = hometp("/up.png")
 theme.widget_down           = hometp("/down.png")
 
-theme.titlebar_close_button_focus               = systitle("/close_focus.png")
-theme.titlebar_close_button_normal              = systitle("/close_normal.png")
+theme.titlebar_close_button_focus               = systitle("close_focus.png")
+theme.titlebar_close_button_normal              = systitle("close_normal.png")
 
-theme.titlebar_ontop_button_focus_active        = systitle("/ontop_focus_active.png")
-theme.titlebar_ontop_button_normal_active       = systitle("/ontop_normal_active.png")
-theme.titlebar_ontop_button_focus_inactive      = systitle("/ontop_focus_inactive.png")
-theme.titlebar_ontop_button_normal_inactive     = systitle("/ontop_normal_inactive.png")
+theme.titlebar_minimize_button_normal           = systitle("minimize_normal.png")
+theme.titlebar_minimize_button_focus            = systitle("minimize_focus.png")
 
-theme.titlebar_sticky_button_focus_active       = systitle("/sticky_focus_active.png")
-theme.titlebar_sticky_button_normal_active      = systitle("/sticky_normal_active.png")
-theme.titlebar_sticky_button_focus_inactive     = systitle("/sticky_focus_inactive.png")
-theme.titlebar_sticky_button_normal_inactive    = systitle("/sticky_normal_inactive.png")
+theme.titlebar_ontop_button_focus_active        = systitle("ontop_focus_active.png")
+theme.titlebar_ontop_button_normal_active       = systitle("ontop_normal_active.png")
+theme.titlebar_ontop_button_focus_inactive      = systitle("ontop_focus_inactive.png")
+theme.titlebar_ontop_button_normal_inactive     = systitle("ontop_normal_inactive.png")
 
-theme.titlebar_floating_button_focus_active     = systitle("/floating_focus_active.png")
-theme.titlebar_floating_button_normal_active    = systitle("/floating_normal_active.png")
-theme.titlebar_floating_button_focus_inactive   = systitle("/floating_focus_inactive.png")
-theme.titlebar_floating_button_normal_inactive  = systitle("/floating_normal_inactive.png")
+theme.titlebar_sticky_button_focus_active       = systitle("sticky_focus_active.png")
+theme.titlebar_sticky_button_normal_active      = systitle("sticky_normal_active.png")
+theme.titlebar_sticky_button_focus_inactive     = systitle("sticky_focus_inactive.png")
+theme.titlebar_sticky_button_normal_inactive    = systitle("sticky_normal_inactive.png")
 
-theme.titlebar_maximized_button_focus_active    = systitle("/maximized_focus_active.png")
-theme.titlebar_maximized_button_normal_active   = systitle("/maximized_normal_active.png")
-theme.titlebar_maximized_button_focus_inactive  = systitle("/maximized_focus_inactive.png")
-theme.titlebar_maximized_button_normal_inactive = systitle("/maximized_normal_inactive.png")
+theme.titlebar_floating_button_focus_active     = systitle("floating_focus_active.png")
+theme.titlebar_floating_button_normal_active    = systitle("floating_normal_active.png")
+theme.titlebar_floating_button_focus_inactive   = systitle("floating_focus_inactive.png")
+theme.titlebar_floating_button_normal_inactive  = systitle("floating_normal_inactive.png")
+
+theme.titlebar_maximized_button_focus_active    = systitle("maximized_focus_active.png")
+theme.titlebar_maximized_button_normal_active   = systitle("maximized_normal_active.png")
+theme.titlebar_maximized_button_focus_inactive  = systitle("maximized_focus_inactive.png")
+theme.titlebar_maximized_button_normal_inactive = systitle("maximized_normal_inactive.png")
 
 return theme
+

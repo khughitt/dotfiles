@@ -1,6 +1,6 @@
 ------------------------------------------
--- AwesomeWM 3.5.1 config
--- Inspired by:
+-- AwesomeWM 4.0 config
+-- Based on:
 --   github.com/tdy/dots
 --   github.com/pw4ever/awesome-wm-config
 ------------------------------------------
@@ -76,7 +76,7 @@ do
 
         naughty.notify({ preset = naughty.config.presets.critical,
                          title = "Oops, an error happened!",
-                         text = err })
+                         text = tostring(err) })
         in_error = false
     end)
 end
@@ -227,12 +227,12 @@ local layouts =
 naughty.config.defaults.timeout = 5
 naughty.config.defaults.screen = 1
 naughty.config.defaults.position = "top_right"
-naughty.config.defaults.margin = 5
+naughty.config.defaults.margin = 8
 naughty.config.defaults.gap = 1
 naughty.config.defaults.ontop = true
-naughty.config.defaults.font = "Sergo UI 12"
+naughty.config.defaults.font = "terminus 12"
 naughty.config.defaults.icon = nil
-naughty.config.defaults.icon_size = 64
+naughty.config.defaults.icon_size = 128
 naughty.config.defaults.fg = beautiful.fg_tooltip
 naughty.config.defaults.bg = beautiful.bg_tooltip
 naughty.config.defaults.border_color = beautiful.border_tooltip
@@ -246,7 +246,6 @@ beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/Luetin_19
 --beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/02786_lakefornight_1920x1200.jpg"
 --beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/seaweed.jpg"
 if beautiful.wallpaper then
-    --for s = 1, screen.count() do
     awful.screen.connect_for_each_screen(function(s)
         gears.wallpaper.maximized(beautiful.wallpaper, s, true)
     end)
@@ -347,8 +346,9 @@ mytasklist.buttons = awful.util.table.join(
     end)
 )
 
---for s = 1, screen.count() do
-awful.screen.connect_for_each_screen(function(s)
+-- {{{ Create wiboxes
+awful.screen.connect_for_each_screen(
+  function(s)
     -- Create a promptbox for each screen
     mypromptbox[s] = awful.widget.prompt()
     -- Create an imagebox widget which will contains an icon indicating which layout we're using.
@@ -760,9 +760,9 @@ globalkeys = awful.util.table.join(
       awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
   end),
   awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
-  awful.key({ altkey }, "Return", function () scratch.drop("termite", 'center', 'center', 0.75, 0.75) end),
-  awful.key({ altkey }, "space", function () scratch.drop("termite -e 'R'", 'center', 'center', 0.7, 0.9) end),
-  awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad", 'center', 'center', 0.75, 0.75) end)
+  awful.key({ altkey }, "Return",          function () scratch.drop("termite",        'center', 'center', 0.75, 0.75) end),
+  awful.key({ altkey }, "space",           function () scratch.drop("termite -e 'R'", 'center', 'center', 0.70, 0.90) end),
+  awful.key({ altkey, "Shift" }, "Return", function () scratch.drop("leafpad",        'center', 'center', 0.75, 0.75) end)
 )
   -- }}}
 
@@ -863,6 +863,7 @@ awful.rules.rules = {
      border_color = beautiful.border_normal,
      focus = awful.client.focus.filter,
      keys = clientkeys,
+     raise = true,
      buttons = clientbuttons,
      size_hints_honor = false } },
   { rule = { class = "MPlayer" }, properties = { floating = true } },
