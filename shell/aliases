@@ -45,6 +45,8 @@ alias openports='netstat --all --numeric --programs --inet'
 alias apache_nc="ps -def | grep apache2 | grep -v grep | wc -l"
 alias apache_cm="ps -ylC apache2 --sort:rss"
 
+alias diff='diff --color=auto'
+
 # http://www.zzapper.co.uk/zshtips.html
 alias blue='colortest visiblue'
 
@@ -52,3 +54,7 @@ if [[ "$0" == 'zsh' ]]; then
     alias -g ND='*(/om[1])' # newest directory
     alias -g NF='*(.om[1])' # newest file
 fi
+
+# termbin
+# example usage: echo just testing! | tb
+alias tb="nc termbin.com 9999"

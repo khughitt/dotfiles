@@ -1,0 +1,42 @@
+[options]
+font = Droid Sans Mono 11
+#font = Terminus (TTF) 11
+
+[colors]
+# special
+foreground      = #fff
+foreground_bold = #fff
+cursor          = #fff
+background      = #020001
+
+# black
+color0  = #313030
+color8  = #1b191a
+
+# red
+color1  = #51a446
+color9  = #8dcb85
+
+# green
+color2  = #009983
+color10 = #00ffda
+
+# yellow
+color3  = #007bdd
+color11 = #44acff
+
+# blue
+color4  = #4cc3ff
+color12 = #b2e5ff
+
+# magenta
+color5  = #007099
+color13 = #00baff
+
+# cyan
+color6  = #14d1de
+color14 = #67e8f1
+
+# white
+color7  = #fff
+color15 = #fff

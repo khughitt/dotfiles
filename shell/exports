@@ -21,8 +21,15 @@ export LESS_TERMCAP_ue=$'\E[0m'           # end underline
 export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
 #export LESS_TERMCAP_us=$'\E[04;38;5;146m' # begin underline
 
+# Local bin
+export PATH=$HOME/bin:$PATH
+
+# Ruby
+export PATH=$HOME/.gem/ruby/2.4.0/bin:$PATH
+
+# Python
+export PATH=$HOME/.local/bin:$PATH
 #export PATH=$HOME/miniconda3/bin:$PATH
-export PATH=$HOME/.gem/ruby/2.3.0/bin:$PATH
 
 # Perl
 export PERL5LIB=$HOME/perl5/lib/perl5:$PERL5LIB
