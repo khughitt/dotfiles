@@ -115,8 +115,26 @@ function toggle(prog, vert, horiz, width, height, sticky, screen)
         -- Focus and raise if hidden
         if c.hidden then
             -- Make sure it is centered
-            if vert  == "center" then awful.placement.center_vertical(c)   end
-            if horiz == "center" then awful.placement.center_horizontal(c) end
+            --if vert  == "center" then awful.placement.center_vertical(c)   end
+            --if horiz == "center" then awful.placement.center_horizontal(c) end
+
+            -- 2017/02/21:
+            -- Vertical centering not working; setting manually.
+            local screengeom = capi.screen[screen].workarea
+
+            if width  <= 1 then width  = screengeom.width  * width  end
+            if height <= 1 then height = screengeom.height * height end
+
+            if     horiz == "left"  then x = screengeom.x
+            elseif horiz == "right" then x = screengeom.width - width
+            else   x =  screengeom.x+(screengeom.width-width)/2 end
+
+            if     vert == "bottom" then y = screengeom.height + screengeom.y - height
+            elseif vert == "center" then y = screengeom.y+(screengeom.height-height)/2
+            else   y =  screengeom.y - screengeom.y end
+
+            c:geometry({ x = x, y = y, width = width, height = height })
+
             c.hidden = false
             c:raise()
             capi.client.focus = c
