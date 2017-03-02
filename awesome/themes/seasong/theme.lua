@@ -15,11 +15,11 @@ function hometp(path) return hometheme("/tp") .. path end
 
 function systheme(path) return "/usr/share/awesome/themes/default" .. path end
 function syslayouts(path) return systheme("layouts/") .. path end
-function systitle(path) return systheme("/titlebar") .. path end
+function systitle(path) return systheme("/titlebar/") .. path end
 -- }}}
 
 -- {{ Main
-theme = {}
+local theme = {}
 theme.font          = "droid sans mono 10"
 theme.menu_height   = 15
 theme.menu_width    = 100
@@ -34,7 +34,7 @@ theme.bg_em         = "#b2e5ff"
 theme.bg_systray    = "#020001"
 theme.bg_widget     = "#020001"
 
-theme.fg_normal     = "#555"
+theme.fg_normal     = "#009983"
 theme.fg_focus      = "#b2e5ff" 
 theme.fg_urgent     = "#ff0000"
 theme.fg_tooltip    = "#020001"
@@ -62,21 +62,9 @@ theme.mouse_finder_color    = "#009983"
 theme.taglist_squares_sel   = hometags("/squaref.png")
 theme.taglist_squares_unsel = hometags("/square.png")
 
-theme.awesome_icon =        hometheme("/awesome16.png")
+
 theme.menu_submenu_icon     = systheme("/submenu.png")
 
-theme.layout_tile           = homelayouts("/tilew.png")
-theme.layout_tileleft       = homelayouts("/tileleftw.png")
-theme.layout_tilebottom     = homelayouts("/tilebottomw.png")
-theme.layout_tiletop        = homelayouts("/tiletopw.png")
-theme.layout_fairv          = homelayouts("/fairvw.png")
-theme.layout_fairh          = homelayouts("/fairhw.png")
-theme.layout_spiral         = homelayouts("/spiralw.png")
-theme.layout_dwindle        = homelayouts("/dwindlew.png")
-theme.layout_max            = homelayouts("/maxw.png")
-theme.layout_fullscreen     = homelayouts("/fullscreenw.png")
-theme.layout_magnifier      = homelayouts("/magnifierw.png")
-theme.layout_floating       = homelayouts("/floatingw.png")
 
 theme.widget_disk           = homewidgets("/disk.png")
 theme.widget_cpu            = homewidgets("/cpu.png")
@@ -135,6 +123,29 @@ theme.titlebar_maximized_button_focus_active    = systitle("maximized_focus_acti
 theme.titlebar_maximized_button_normal_active   = systitle("maximized_normal_active.png")
 theme.titlebar_maximized_button_focus_inactive  = systitle("maximized_focus_inactive.png")
 theme.titlebar_maximized_button_normal_inactive = systitle("maximized_normal_inactive.png")
+
+theme.layout_tile           = homelayouts("/tilew.png")
+theme.layout_tileleft       = homelayouts("/tileleftw.png")
+theme.layout_tilebottom     = homelayouts("/tilebottomw.png")
+theme.layout_tiletop        = homelayouts("/tiletopw.png")
+theme.layout_fairv          = homelayouts("/fairvw.png")
+theme.layout_fairh          = homelayouts("/fairhw.png")
+theme.layout_spiral         = homelayouts("/spiralw.png")
+theme.layout_dwindle        = homelayouts("/dwindlew.png")
+theme.layout_max            = homelayouts("/maxw.png")
+theme.layout_fullscreen     = homelayouts("/fullscreenw.png")
+theme.layout_magnifier      = homelayouts("/magnifierw.png")
+theme.layout_floating       = homelayouts("/floatingw.png")
+theme.layout_cornernw       = homelayouts("cornernww.png")
+theme.layout_cornerne       = homelayouts("cornernew.png")
+theme.layout_cornersw       = homelayouts("cornersww.png")
+theme.layout_cornerse       = homelayouts("cornersew.png")
+
+theme.awesome_icon =        hometheme("/awesome16.png")
+
+-- Define the icon theme for application icons. If not set then the icons
+-- from /usr/share/icons and /usr/share/icons/hicolor will be used.
+theme.icon_theme = nil
 
 return theme
 

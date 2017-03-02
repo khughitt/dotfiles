@@ -662,6 +662,9 @@ let vimrplugin_objbr_place = "console,right"
 " https://github.com/jalvesaq/Nvim-R/issues/81#issuecomment-262651872
 let R_setwidth = 0
 
+" split editor and console top/bottom
+let R_rconsole_width = 0
+
 " Force use of colorout for highlighting terminal
 let R_hl_term = 0
 

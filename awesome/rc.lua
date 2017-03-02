@@ -82,105 +82,6 @@ do
 end
 -- }}}
 
--- {{{
--- HACK! prevent Awesome start autostart items multiple times in a session
--- cause: in-place restart by awesome.restart, xrandr change
--- idea: 
--- * create a file /tmp/awesome-autostart-once when first time "dex" autostart items (at the end of this file)
--- * only "rm" this file when awesome.quit
-
-local awesome_autostart_once_fname = "/tmp/awesome-autostart-once-" .. os.getenv("XDG_SESSION_ID")
-local awesome_restart_tags_fname = "/tmp/awesome-restart-tags-" .. os.getenv("XDG_SESSION_ID")
-
-do
-    awesome.connect_signal("exit", function (restart)
-        if not restart then
-            awful.util.spawn_with_shell("rm -rf " .. awesome_autostart_once_fname)
-            awful.util.spawn_with_shell("rm -rf " .. awesome_restart_tags_fname .. '*')
-            bashets.stop()
-        end
-    end)
-
-    customization.orig.quit = awesome.quit
-    awesome.quit = function ()
-        local scr = mouse.screen
-        awful.prompt.run({prompt = "Quit (type 'yes' to confirm)? "},
-        mypromptbox[scr].widget,
-        function (t)
-            if string.lower(t) == 'yes' then
-                customization.orig.quit()
-            end
-        end,
-        function (t, p, n)
-            return awful.completion.generic(t, p, n, {'no', 'NO', 'yes', 'YES'})
-        end)
-    end
-end
-
-do
-    awesome.connect_signal("exit", function (restart)
-        if restart then
-            -- save number of screens, used for check proper tag recording
-            do
-                local f = io.open(awesome_restart_tags_fname .. ".0", "w+")
-                if f then
-                    f:write(string.format("%d", screen.count()) .. "\n")
-                    f:close()
-                end
-            end
-
-            -- save current tags
-            --for s = 1, screen.count() do
-            awful.screen.connect_for_each_screen(function(s)
-                local f = io.open(awesome_restart_tags_fname .. "." .. s, "w+")
-                if f then
-                    local tags = awful.tag.gettags(s)
-                    for _, tag in ipairs(tags) do
-                        f:write(tag.name .. "\n")
-                    end
-                    f:close()
-                end
-                f = io.open(awesome_restart_tags_fname .. "-selected." .. s, "w+")
-                if f then
-                    f:write(awful.tag.getidx() .. "\n")
-                    f:close()
-                end
-            end)
-
-            -- save tags for each client
-            awful.util.mkdir(awesome_restart_tags_fname)
-            -- !! avoid awful.util.spawn_with_shell("mkdir -p " .. awesome_restart_tags_fname) 
-            -- race condition (whether awesome_restart_tags_fname is created) due to asynchrony of "spawn_with_shell"
-            for _, c in ipairs(client.get()) do
-                local client_id = c.pid .. '-' .. c.window
-                local f = io.open(awesome_restart_tags_fname .. '/' .. client_id, 'w+')
-                if f then
-                    for _, t in ipairs(c:tags()) do
-                        f:write(t.name .. "\n")
-                    end
-                    f:close()
-                end
-            end
-        end
-    end)
-
-    customization.orig.restart = awesome.restart
-    awesome.restart = function ()
-        local scr = mouse.screen
-        awful.prompt.run({
-        prompt="Restart (type 'yes' to confirm)? "},
-        mypromptbox[scr].widget,
-        function (t)
-            if string.lower(t) == 'yes' then
-                customization.orig.restart()
-            end
-        end,
-        function (t, p, n)
-            return awful.completion.generic(t, p, n, {'no', 'NO', 'yes', 'YES'})
-        end)
-    end
-end
-
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
 
@@ -254,15 +155,15 @@ end
 
 -- {{{ Tags
 -- Define a tag table which hold all screen tags.
- tags = {
-   names = {'www', 'term'},
-   layout = {layouts[2], layouts[2]}
- }
+tags = {
+    names = {'www', 'term'},
+    layout = {layouts[2], layouts[2]}
+}
  --for s = 1, screen.count() do
- awful.screen.connect_for_each_screen(function(s)
-     -- Each screen has its own tag table.
-     tags[s] = awful.tag(tags.names, s, tags.layout)
- end)
+ --awful.screen.connect_for_each_screen(function(s)
+ --    -- Each screen has its own tag table.
+ --    tags[s] = awful.tag(tags.names, s, tags.layout)
+ --end)
 --
 -- }}}
 
@@ -300,8 +201,8 @@ mywibox = {}
 mygraphbox = {}
 mypromptbox = {}
 mylayoutbox = {}
-mytaglist = {}
-mytaglist.buttons = awful.util.table.join(
+
+local taglist_buttons = awful.util.table.join(
     awful.button({ }, 1, awful.tag.viewonly),
     awful.button({ modkey }, 1, awful.client.movetotag),
     awful.button({ }, 3, awful.tag.viewtoggle),
@@ -310,8 +211,7 @@ mytaglist.buttons = awful.util.table.join(
     awful.button({ }, 5, function(t) awful.tag.viewprev(awful.tag.getscreen(t)) end)
 )
 
-mytasklist = {}
-mytasklist.buttons = awful.util.table.join(
+local tasklist_buttons = awful.util.table.join(
     awful.button({ }, 1, function (c)
         if c == client.focus then
             c.minimized = true
@@ -349,35 +249,50 @@ mytasklist.buttons = awful.util.table.join(
 -- {{{ Create wiboxes
 awful.screen.connect_for_each_screen(
   function(s)
+    -- Taglist
+    awful.tag(tags.names, s, tags.layouts)
+    s.mytaglist = awful.widget.taglist(
+      s, awful.widget.taglist.filter.all, taglist_buttons
+    )
+
     -- Create a promptbox for each screen
-    mypromptbox[s] = awful.widget.prompt()
+    s.mypromptbox = awful.widget.prompt()
+
     -- Create an imagebox widget which will contains an icon indicating which layout we're using.
     -- We need one layoutbox per screen.
-    mylayoutbox[s] = awful.widget.layoutbox(s)
-    mylayoutbox[s]:buttons(awful.util.table.join(
+    s.mylayoutbox = awful.widget.layoutbox(s)
+    s.mylayoutbox:buttons(awful.util.table.join(
         awful.button({ }, 1, function () awful.layout.inc(layouts, 1) end),
         awful.button({ }, 3, function () awful.layout.inc(layouts, -1) end),
         awful.button({ }, 4, function () awful.layout.inc(layouts, 1) end),
         awful.button({ }, 5, function () awful.layout.inc(layouts, -1) end)
     ))
     -- Create a taglist widget
-    mytaglist[s] = awful.widget.taglist(s, awful.widget.taglist.filter.all, mytaglist.buttons)
+    awful.tag(tags.names, s, tags.layouts)
+
+    s.mytaglist = awful.widget.taglist(
+      s, awful.widget.taglist.filter.all, taglist_buttons
+    )
 
     -- Create a tasklist widget
-    mytasklist[s] = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, mytasklist.buttons)
+    s.mytasklist = awful.widget.tasklist(
+      s, awful.widget.tasklist.filter.currenttags, tasklist_buttons
+    )
 
     -- Create the wibox
-    mywibox[s] = awful.wibox({ position = "top", screen = s })
+    s.mywibox = awful.wibar({ position = "top", screen = s })
 
     -- Widgets that are aligned to the left
     local left_layout = wibox.layout.fixed.horizontal()
     left_layout:add(mylauncher)
-    left_layout:add(mytaglist[s])
-    left_layout:add(mypromptbox[s])
+    left_layout:add(s.mytaglist)
+    left_layout:add(s.mypromptbox)
 
     -- Widgets that are aligned to the right
     local right_layout = wibox.layout.fixed.horizontal()
-    if s == 1 then right_layout:add(wibox.widget.systray()) end
+
+    --if s == 1 then right_layout:add(wibox.widget.systray()) end
+    right_layout:add(wibox.widget.systray())
     right_layout:add(volicon)
     right_layout:add(volpct)
     right_layout:add(volspace)
@@ -387,20 +302,26 @@ awful.screen.connect_for_each_screen(
     right_layout:add(space)
     right_layout:add(mytextclock)
     right_layout:add(space)
-    right_layout:add(baticon)
-    right_layout:add(batpct)
-    right_layout:add(space)
-    right_layout:add(mylayoutbox[s])
+
+    -- For laptop, show battery usage
+    if os.getenv('HOST') == 'Europa' then
+        right_layout:add(baticon)
+        right_layout:add(batpct)
+        right_layout:add(space)
+    end
+
+    -- Add layout selector
+    right_layout:add(s.mylayoutbox)
 
     -- Now bring it all together (with the tasklist in the middle)
     local layout = wibox.layout.align.horizontal()
     layout:set_left(left_layout)
-    layout:set_middle(mytasklist[s])
+    layout:set_middle(s.mytasklist)
     layout:set_right(right_layout)
 
-    mywibox[s]:set_widget(layout)
+    s.mywibox:set_widget(layout)
 -- Graphbox
-  mygraphbox[s] = awful.wibox({ position = "bottom", height = 20, screen = s })
+  s.mygraphbox = awful.wibox({ position = "bottom", height = 20, screen = s })
 
   local left_graphbox = wibox.layout.fixed.horizontal()
   left_graphbox:add(space)
@@ -430,92 +351,9 @@ awful.screen.connect_for_each_screen(
   graphbox_layout:set_left(left_graphbox)
   graphbox_layout:set_right(right_graphbox)
 
-  mygraphbox[s]:set_widget(graphbox_layout)
+  s.mygraphbox:set_widget(graphbox_layout)
 end)
 -- }}}
-
-do
-    -- test whether screen 1 tag file exists
-    local f = io.open(awesome_restart_tags_fname .. ".0", "r")
-    if f then
-        local old_scr_count = tonumber(f:read("*l"))
-        f:close()
-        os.remove(awesome_restart_tags_fname .. ".0")
-
-        local new_scr_count = screen.count()
-
-        local count = {}
-
-        local scr_count = math.min(new_scr_count, old_scr_count)
-
-        if scr_count>0 then
-            for s = 1, scr_count do
-                count[s] = 1
-            end
-
-            for s = 1, old_scr_count do
-                local count_index = math.min(s, scr_count)
-                local fname = awesome_restart_tags_fname .. "." .. s
-                for tagname in io.lines(fname) do
-                    local tag = awful.tag.add(' ' .. tagname .. ' ',
-                    {
-                        screen = count_index,
-                        --layout = customization.default.property.layout,
-                        layout = layouts[2],
-                        mwfact = customization.default.property.mwfact,
-                        nmaster = customization.default.property.nmaster,
-                        ncol = customization.default.property.ncol,
-                    }
-                    )
-                    awful.tag.move(count[count_index], tag)
-
-                    count[count_index] = count[count_index]+1
-                end
-                os.remove(fname)
-            end
-        end
-
-        --for s = 1, screen.count() do
-        awful.screen.connect_for_each_screen(function(s)
-            local fname = awesome_restart_tags_fname .. "-selected." .. s 
-            f = io.open(fname, "r")
-            if f then
-                local tag = awful.tag.gettags(s)[tonumber(f:read("*l"))]
-                if tag then
-                    awful.tag.viewonly(tag)
-                end
-                f:close()
-            end
-            os.remove(fname)
-        end)
-
-    else
-
-        --local tag = awful.tag.add(" www ",
-        --{
-        --    screen = 1,
-        --    layout = customization.default.property.layout,
-        --    mwfact = customization.default.property.mwfact,
-        --    nmaster = customization.default.property.nmaster,
-        --    ncol = customization.default.property.ncol, 
-        --} 
-        --)
-        --awful.tag.viewonly(tag)
-
-        -- Second screen
-        --[[
-        awful.tag.add("nil",
-        {
-            screen = 2,
-            layout = customization.default.property.layout,
-            mwfact = customization.default.property.mwfact,
-            nmaster = customization.default.property.nmaster,
-            ncol = customization.default.property.ncol, 
-        } 
-        ) 
-        --]]
-    end
-end
 
 -- {{{ Mouse bindings
 root.buttons(awful.util.table.join(
@@ -531,6 +369,28 @@ function layout_info()
       text=string.format('m %d\nc %d', awful.tag.getnmaster(),
                                         awful.tag.getncol())
     })
+end
+
+-- Helper functions for working with tags
+local function delete_tag()
+    local t = awful.screen.focused().selected_tag
+    if not t then return end
+    t:delete()
+end
+
+local function add_tag()
+
+    awful.prompt.run(
+        {prompt = "<span fgcolor='red'>new tag: </span>"},
+        mouse.screen.mypromptbox.widget,
+        function (text)
+            if #text>0 then
+                awful.tag.add(' ' .. text .. ' ',
+                              { screen= awful.screen.focused() }):view_only()
+            end
+        end,
+    nil)
+    awful.tag.add("NewTag",{screen= awful.screen.focused() }):view_only()
 end
 
 -- {{{ Key bindings
@@ -599,7 +459,8 @@ globalkeys = awful.util.table.join(
     -- Rename tag
     awful.key({ modkey, }, "r",    function ()
         awful.prompt.run({ prompt = "Rename tab: ", text = "", },
-        mypromptbox[mouse.screen].widget,
+        --mypromptbox[mouse.screen].widget,
+        mouse.screen.mypromptbox.widget,
         function (s)
             awful.tag.selected().name = s
         end)
@@ -608,33 +469,36 @@ globalkeys = awful.util.table.join(
     -- Move tag
     awful.key({modkey, "Shift"}, "Left", function () util.tag.rel_move(awful.tag.selected(), -1) end), 
     awful.key({modkey, "Shift"}, "Right", function () util.tag.rel_move(awful.tag.selected(), 1) end), 
+
+    awful.key({modkey}, "a", add_tag, {description = "add a tag", group = "tag"}),
    
     -- Create tag
-    awful.key({modkey}, "a",
-    function ()
-        local scr = mouse.screen
-        local sel_idx = awful.tag.getidx()
-        local tags = awful.tag.gettags(scr)
+    --awful.key({modkey}, "a",
+    --function ()
+    --    local scr = mouse.screen
+    --    local sel_idx = awful.tag.getidx()
+    --    local tags = awful.tag.gettags(scr)
 
-        awful.prompt.run(
-            {prompt = "<span fgcolor='red'>new tag: </span>"},
-            mypromptbox[scr].widget,
-            function (text)
-                if #text>0 then
-                    tag = awful.tag.add(' ' .. text .. ' ', {
-                        screen = scr,
-                        index = sel_idx and sel_idx or 1,
-                        --layout = customization.default.property.layout,
-                        layout = layouts[2],
-                        mwfact = customization.default.property.mwfact,
-                        nmaster = customization.default.property.nmaster,
-                        ncol = customization.default.property.ncol,
-                    })
-                    awful.tag.viewonly(tag)
-                end
-            end,
-        nil)
-    end),
+    --    awful.prompt.run(
+    --        {prompt = "<span fgcolor='red'>new tag: </span>"},
+    --        --mypromptbox[scr].widget,
+    --        scr.mypromptbox.widget,
+    --        function (text)
+    --            if #text>0 then
+    --                tag = awful.tag.add(' ' .. text .. ' ', {
+    --                    screen = scr,
+    --                    index = sel_idx and sel_idx or 1,
+    --                    --layout = customization.default.property.layout,
+    --                    layout = layouts[2],
+    --                    mwfact = customization.default.property.mwfact,
+    --                    nmaster = customization.default.property.nmaster,
+    --                    ncol = customization.default.property.ncol,
+    --                })
+    --                awful.tag.viewonly(tag)
+    --            end
+    --        end,
+    --    nil)
+    --end),
 
     awful.key({modkey, "Shift"}, "a",
     function ()
@@ -643,7 +507,8 @@ globalkeys = awful.util.table.join(
         local tags = awful.tag.gettags(scr)
 
         awful.prompt.run({prompt = "<span fgcolor='red'>new tag: </span>"},
-        mypromptbox[scr].widget,
+        --mypromptbox[scr].widget,
+        scr.mypromptbox.widget,
         function (text)
             if #text>0 then
                 tag = awful.tag.add(' ' .. text .. ' ', {
@@ -662,7 +527,8 @@ globalkeys = awful.util.table.join(
     end),
 
     -- Delete tag
-    awful.key({ modkey }, "d", awful.tag.delete),
+    awful.key({ modkey }, "d", delete_tag,
+              {description = "delete the current tag", group = "tag"}),
 
     -- Layout manipulation
     awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end),
@@ -745,12 +611,14 @@ globalkeys = awful.util.table.join(
 
 
   -- Prompt
-  awful.key({ altkey }, "F2", function () mypromptbox[mouse.screen]:run() end),
+  --awful.key({ altkey }, "F2", function () mypromptbox[mouse.screen]:run() end),
+  awful.key({ altkey }, "F2", function () mouse.screen.mypromptbox:run() end),
 
   awful.key({ modkey }, "x",
             function ()
                 awful.prompt.run({ prompt = "Run Lua code: " },
-                mypromptbox[mouse.screen].widget,
+                --mypromptbox[mouse.screen].widget,
+                mouse.screen.mypromptbox.widget,
                 awful.util.eval, nil,
                 awful.util.getdir("cache") .. "/history_eval")
             end),
@@ -808,7 +676,8 @@ for i = 1, 10 do
 
             awful.prompt.run(
                 {prompt = "<span fgcolor='red'>new tag: </span>"},
-                mypromptbox[scr].widget,
+                --mypromptbox[scr].widget,
+                scr.mypromptbox.widget,
                 function (text)
                     if #text>0 then
                         tag = awful.tag.add(' ' .. text .. ' ', {
@@ -888,12 +757,12 @@ awful.rules.rules = {
 -- Signal function to execute when a new client appears.
 client.connect_signal("manage", function (c, startup)
     -- Enable sloppy focus
-    --c:connect_signal("mouse::enter", function(c)
-    --    if awful.layout.get(c.screen) ~= awful.layout.suit.magnifier
-    --        and awful.client.focus.filter(c) then
-    --        client.focus = c
-    --    end
-    --end)
+    c:connect_signal("mouse::enter", function(c)
+        if awful.layout.get(c.screen) ~= awful.layout.suit.magnifier
+            and awful.client.focus.filter(c) then
+            client.focus = c
+        end
+    end)
 
     if not startup then
         -- Set the windows at the slave,
@@ -961,35 +830,6 @@ end)
 
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
-
-customization.func.client_manage_tag = function (c, startup)
-    if startup then
-        local client_id = c.pid .. '-' .. c.window
-
-        local fname = awesome_restart_tags_fname .. '/' .. client_id
-        local f = io.open(fname, 'r')
-
-        if f then
-            local tags = {}
-            for tag in io.lines(fname) do
-                tags = awful.util.table.join(tags, {util.tag.name2tag(tag)})
-            end
-            -- remove the file after using it to reduce clutter
-            os.remove(fname)
-
-            if #tags>0 then
-                c:tags(tags)
-                -- set c's screen to that of its first (often the only) tag
-                -- this prevents client to be placed off screen in case of randr change (on the number of screen)
-                c.screen = awful.tag.getscreen(tags[1])
-                awful.placement.no_overlap(c)
-                awful.placement.no_offscreen(c)
-            end
-        end
-    end
-end
-
-client.connect_signal("manage", customization.func.client_manage_tag)
 -- }}}
 
 -- Autostart

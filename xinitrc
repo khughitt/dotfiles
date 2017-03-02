@@ -23,8 +23,8 @@ fi
 setxkbmap -option terminate:ctrl_alt_bksp
 
 # fonts
-xset +fp /usr/share/fonts/local
-xset fp rehash
+#xset +fp /usr/share/fonts/local
+#xset fp rehash
 
 # load Xresources
 xrdb -merge ~/.Xresources
@@ -43,3 +43,4 @@ fi
 
 # Awesome
 exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr
+
