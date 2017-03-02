@@ -153,11 +153,10 @@ vicious.register(memused, vicious.widgets.mem,
 )
 
 -- RAM bar
-membar = wibox.widget.progressbar({
-    forcedwidth=graphwidth,
-    forcedheight=graphheight
-})
-
+membar = awful.widget.progressbar()
+membar:set_vertical(false)
+membar:set_width(graphwidth)
+membar:set_height(graphheight)
 membar:set_ticks(false):set_ticks_size(2)
 membar:set_border_color(nil)
 membar:set_background_color(beautiful.bg_widget)
@@ -190,10 +189,10 @@ vicious.register(rootfsused, vicious.widgets.fs,
 )
 
 -- Root bar
-rootfsbar = wibox.widget.progressbar({
-    forcedwidth=graphwidth,
-    forcedheight=graphheight
-})
+rootfsbar = awful.widget.progressbar()
+rootfsbar:set_vertical(false)
+rootfsbar:set_width(graphwidth)
+rootfsbar:set_height(graphheight)
 rootfsbar:set_ticks(false):set_ticks_size(2)
 rootfsbar:set_border_color(nil)
 rootfsbar:set_background_color(beautiful.bg_widget)
@@ -220,6 +219,8 @@ vicious.register(rootfspct, vicious.widgets.fs, "${/ used_p}%", 97)
 vicious.cache(vicious.widgets.net)
 
 -- TX graph
+-- See https://wiki.archlinux.org/index.php?title=Network_configuration&redirect=no#Change_device_name
+-- for method to rename network interface
 txgraph = awful.widget.graph()
 txgraph:set_width(graphwidth)
 txgraph:set_height(graphheight)
@@ -233,17 +234,17 @@ txgraph:set_color({
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
     { 1, beautiful.fg_end_widget } } })
-vicious.register(txgraph, vicious.widgets.net, "${wlan0 up_kb}")
+vicious.register(txgraph, vicious.widgets.net, "${wifi0 up_kb}")
 
 -- TX total
 txwidget = wibox.widget.textbox()
 vicious.register(txwidget, vicious.widgets.net,
-  "<span color='" .. beautiful.fg_em .. "'>tx</span>${wlan0 tx_mb}MB", 19)
+  "<span color='" .. beautiful.fg_em .. "'>tx</span>${wifi0 tx_mb}MB", 19)
 
 -- TX speed
 upwidget = wibox.widget.textbox()
 function upwidget:fit(box, w, h) return math.min(netwidth, w), h end
-vicious.register(upwidget, vicious.widgets.net, "${wlan0 up_kb}", 2)
+vicious.register(upwidget, vicious.widgets.net, "${wifi0 up_kb}", 2)
 
 -- RX graph
 rxgraph = awful.widget.graph()
@@ -259,24 +260,26 @@ rxgraph:set_color({
     { 0, beautiful.fg_widget },
     { 0.25, beautiful.fg_center_widget },
     { 1, beautiful.fg_end_widget } } })
-vicious.register(rxgraph, vicious.widgets.net, "${wlan0 down_kb}")
+vicious.register(rxgraph, vicious.widgets.net, "${wifi0 down_kb}")
 
 -- RX total
 rxwidget = wibox.widget.textbox()
 vicious.register(rxwidget, vicious.widgets.net,
-  "<span color='" .. beautiful.fg_em .. "'>rx</span>${wlan0 rx_mb}MB", 17)
+  "<span color='" .. beautiful.fg_em .. "'>rx</span>${wifi0 rx_mb}MB", 17)
 
 -- RX speed
 dnwidget = wibox.widget.textbox()
 function dnwidget:fit(box, w, h) return math.min(netwidth, w), h end
-vicious.register(dnwidget, vicious.widgets.net, "${wlan0 down_kb}", 2)
+vicious.register(dnwidget, vicious.widgets.net, "${wifi0 down_kb}", 2)
 -- }}}
 
 -- {{{ Weather
 weather = wibox.widget.textbox()
 vicious.register(weather, vicious.widgets.weather,
   "<span color='" .. beautiful.fg_em .. "'>${sky}</span> @ ${tempf}°F on",
-  600, "KCGS")
+  600,
+  "KCGS"
+)
 weather:buttons(awful.util.table.join(awful.button({ }, 1,
   function() vicious.force({ weather }) end
 )))

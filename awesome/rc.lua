@@ -249,12 +249,6 @@ local tasklist_buttons = awful.util.table.join(
 -- {{{ Create wiboxes
 awful.screen.connect_for_each_screen(
   function(s)
-    -- Taglist
-    awful.tag(tags.names, s, tags.layouts)
-    s.mytaglist = awful.widget.taglist(
-      s, awful.widget.taglist.filter.all, taglist_buttons
-    )
-
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
 
@@ -269,7 +263,6 @@ awful.screen.connect_for_each_screen(
     ))
     -- Create a taglist widget
     awful.tag(tags.names, s, tags.layouts)
-
     s.mytaglist = awful.widget.taglist(
       s, awful.widget.taglist.filter.all, taglist_buttons
     )
@@ -379,7 +372,6 @@ local function delete_tag()
 end
 
 local function add_tag()
-
     awful.prompt.run(
         {prompt = "<span fgcolor='red'>new tag: </span>"},
         mouse.screen.mypromptbox.widget,
@@ -390,7 +382,6 @@ local function add_tag()
             end
         end,
     nil)
-    awful.tag.add("NewTag",{screen= awful.screen.focused() }):view_only()
 end
 
 -- {{{ Key bindings
