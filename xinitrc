@@ -41,6 +41,10 @@ if [ -s ~/.xmodmaprc ]; then
     xmodmap ~/.xmodmaprc
 fi
 
+#autocutsel -fork &
+autocutsel -selection PRIMARY -fork &
+
 # Awesome
 exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr
+
 
