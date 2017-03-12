@@ -2,4 +2,7 @@ shell/private
 vim/tmp
 nvim/tmp
 nvim/plugged
+ranger/history
+ranger/bookmarks
+ranger/tagged
 .netrwhist
