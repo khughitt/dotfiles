@@ -12,3 +12,5 @@
 	default = simple
 [github]
 	user = khughitt
+[diff]
+	tool = meld
