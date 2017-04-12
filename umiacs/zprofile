@@ -7,43 +7,37 @@ if [[ $ZPROFILE_LOADED = true ]]; then
 fi
 
 #echo `date` "| zprofile" >> ~/boot_order
+source /cbcb/sw/cbcb_profile
 
-# CBCB shared settings
-if [[ -e "/cbcb/sw/cbcb_profile" ]]; then
-    source /cbcb/sw/cbcb_profile
-fi
+# CBCB Modules
+#export MODULEPATH=$(echo $MODULEPATH | sed 's/latest/dev/g')
+export MODULEPATH="$MODULEPATH:/cbcb/sw/RedHat-7-x86_64/common/modules/version/dev"
+export CBCB_DEV="/cbcb/sw/RedHat-7-x86_64/dev"
+export CBCB_SW_MAINTAINER_NAME="Keith Hughitt"
+export CBCB_SW_MAINTAINER_EMAIL="user@email.com"
+
+# Load modules
+module add         \
+    zsh/5.3.1      \
+    tmux/2.3       \
+    git            \
+    htop           \
+    neovim         \
+    perl/common    \
+    bowtie2/2.2.4  \
+    samtools/1.3   \
+    tophat         \
+    pandoc         \
+    R/3.3.3        \
+    R/common/3.3.3 \
+    the_silver_searcher
+
+module remove samtools/0.1.19
 
 # Exports
 export LAB="/cbcb/lab/nelsayed"
 export PATH="$HOME/perl5/bin:$PATH"
 export LIBRARY_PATH="$LIBRARY_PATH:/usr/lib64"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/lib64"
-export MODULEPATH="$MODULEPATH:$CBCB_MODULES/dev"
-
-export CBCB_SW_INSTALLER_NAME="Keith Hughitt"
-export CBCB_SW_INSTALLER_EMAIL="user@email.com"
-
-# Load modules
-module add zsh     \
-    tmux           \
-    boost          \
-    cmake          \
-    git            \
-    htop           \
-    vim            \
-    R/common       \
-    ruby/common    \
-    perl/common    \
-    python2/common \
-    python3/common \
-    the_silver_searcher
 
 export ZPROFILE_LOADED='true'
-
-# Not yet supported on Heron
-    #cairo      \
-    #freetype   \
-    #gcc        \
-    #pixman     \
-    #lua        \
-    #
