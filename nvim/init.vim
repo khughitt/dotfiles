@@ -608,6 +608,11 @@ nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
 "let g:yankring_replace_n_pkey = '<C-up>'
 "let g:yankring_replace_n_nkey = '<C-down>'
 "let g:yankring_history_dir = '$HOME/.vim/tmp/yankring'
+"
+
+"
+"
+let g:gutentags_exclude_project_root = ['/usr/local', '/cbcb/sw']
 
 " ---------------------------------------------------------------------------
 "  tagbar
