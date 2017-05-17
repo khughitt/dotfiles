@@ -28,14 +28,14 @@ function xumt() {
     fi
 
     if tmux has-session -t $SESSION_NAME 2>/dev/null; then
-        tmux -2 attach-session -t $SESSION_NAME
+        tmux attach-session -t $SESSION_NAME
     else
-        tmux -2 new-session -s $SESSION_NAME
+        tmux new-session -s $SESSION_NAME
     fi
 }
 
 # Automatically launch tmux when connecting via SSH
-if [[ "$TERM" != screen* ]] && [ ! -z "$SSH_CLIENT" ]; then
+if [[ "$TERM" != (screen|tmux)-* ]] && [ ! -z "$SSH_CLIENT" ]; then
     # Fix DISPLAY variables
     # http://yubinkim.com/?p=203
     #for name in `tmux ls -F '#{session_name}'`; do
