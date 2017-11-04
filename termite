@@ -1,6 +1,8 @@
 [options]
-font = Droid Sans Mono 11
+#font = Droid Sans Mono 11
 #font = Terminus (TTF) 11
+font = Hack 11
+scrollback_lines = 4096
 
 [colors]
 # special

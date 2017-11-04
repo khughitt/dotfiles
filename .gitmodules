@@ -135,6 +135,9 @@
 [submodule "tmux/plugins/tmux-open"]
 	path = tmux/plugins/tmux-open
 	url = https://github.com/tmux-plugins/tmux-open.git
+[submodule "tmux/plugins/tmux-mem-cpu-load"]
+	path = tmux/tmux-mem-cpu-load
+	url = https://github.com/thewtex/tmux-mem-cpu-load/
 [submodule "tmux/plugins/tpm"]
 	path = tmux/plugins/tpm
 	url = https://github.com/tmux-plugins/tpm.git

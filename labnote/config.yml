@@ -7,16 +7,18 @@ email: user@email.com
 # Notebook contents
 input_dirs:
   - /home/keith/Dropbox/research/presentations/*
-  - /home/keith/Dropbox/research/201[2-5]/*
+  - /home/keith/Dropbox/research/201[2-7]/*
   - /home/keith/Dropbox/research/2016/*/*
-
-multi_version_dirs:
-  - /home/keith/Dropbox/research/2015/73-mtb-ifnb-diffexpr/output/*
-  - /home/keith/Dropbox/research/2015/74-mtb-ifnb-combined/output/*
+  - /home/keith/Dropbox/research/2017/04-coex-consensus-network/output/*
+  - /home/keith/Dropbox/research/2017/05-coex-consensus-network-comparison/output
+    
+#multi_version_dirs:
+#  - /home/keith/Dropbox/research/2015/73-mtb-ifnb-diffexpr/output/*
+#  - /home/keith/Dropbox/research/2015/74-mtb-ifnb-combined/output/*
 
 output_file: /home/keith/Dropbox/research/index.html
 
-include_files: ['*.html', '*.py', '*.ipynb']
+include_files: ['*.html', '*.py']
 
 exclude: ['header.html', 'parent.html', 'ruffus-test', 'qsub-test', 'rf.py']
 
@@ -27,6 +29,8 @@ categories:
   'Host-pathogen Network Analysis':
     patterns: ['hpi-network', 'host-pathogen-module']
     image: 'resources/user/img/lmhs_hpinetwork_v4.1_mistyrose_vs_%23FF5C00.png'
+  'Consensus Network Analysis':
+    patterns: ['consensus']
   'Co-expression Cluster Analysis':
     patterns: ['co-expression_simulation', 'expr-cluster']
     image: 'resources/user/img/coex_clusters_lmpd.png'

@@ -10,6 +10,8 @@ else
     alias l='ls -lh'
 fi
 
+alias lc='colorls -r'
+
 alias v='f -t -e vim -b viminfo'
 #alias vim='vim --servername VIM'
 alias tm='todotxt-machine'

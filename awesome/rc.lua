@@ -740,7 +740,9 @@ awful.rules.rules = {
   -- Fullscreen flash
   { rule = { class = "Exe"}, properties = {floating = true} },
   -- RCommander view data
-  { rule = { class = "Toplevel" }, properties = {floating = true} }
+  { rule = { class = "Toplevel" }, properties = {floating = true} },
+    -- work-around for chromimium staying maximized
+  { rule = { class = "chromium" }, properties = { maximized = false } }
 }
 -- }}}
 

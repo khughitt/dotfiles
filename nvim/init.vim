@@ -23,6 +23,10 @@ set nofoldenable     " disable folding
 set complete+=i      " complete filenames
 filetype indent on   " indent based on filetype
 
+" Mouse support
+" https://github.com/neovim/neovim/wiki/Following-HEAD#20170403
+set mouse=a
+
 " Syntax highlighting
 syntax on
 
@@ -101,6 +105,7 @@ call plug#begin()
     Plug 'Shougo/neomru.vim'
     Plug 'Shougo/unite.vim'
     Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+    Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
     Plug 'vim-airline/vim-airline'
@@ -687,7 +692,8 @@ nmap gz :call ZoomWindow()<CR>
 autocmd BufEnter Object_Browser set nobuflisted
 
 " development
-"let vimrplugin_r_path='/usr/local/bin/R-devel'
+"let R_path = '/usr/local/bin/'
+"let R_cmd = 'R-devel'
 
 " disable <- shortcut
 let R_assign = 0
