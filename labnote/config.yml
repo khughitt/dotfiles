@@ -9,8 +9,7 @@ input_dirs:
   - /home/keith/Dropbox/research/presentations/*
   - /home/keith/Dropbox/research/201[2-7]/*
   - /home/keith/Dropbox/research/2016/*/*
-  - /home/keith/Dropbox/research/2017/04-coex-consensus-network/output/*
-  - /home/keith/Dropbox/research/2017/05-coex-consensus-network-comparison/output
+  - /home/keith/Dropbox/research/2017/10-coex-manuscript/output/1.0/*
     
 #multi_version_dirs:
 #  - /home/keith/Dropbox/research/2015/73-mtb-ifnb-diffexpr/output/*
@@ -30,7 +29,7 @@ categories:
     patterns: ['hpi-network', 'host-pathogen-module']
     image: 'resources/user/img/lmhs_hpinetwork_v4.1_mistyrose_vs_%23FF5C00.png'
   'Consensus Network Analysis':
-    patterns: ['consensus']
+    patterns: ['10-coex-manuscript']
   'Co-expression Cluster Analysis':
     patterns: ['co-expression_simulation', 'expr-cluster']
     image: 'resources/user/img/coex_clusters_lmpd.png'
