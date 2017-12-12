@@ -27,9 +27,6 @@ filetype indent on   " indent based on filetype
 " https://github.com/neovim/neovim/wiki/Following-HEAD#20170403
 set mouse=a
 
-" Syntax highlighting
-syntax on
-
 " Omnicompletion
 set omnifunc=syntaxcomplete#Complete
 
@@ -60,8 +57,9 @@ nmap <leader>z :wq<cr>
 let g:nvim_ipy_perform_mappings = 0
 map <silent> <c-s>   <Plug>(IPy-Run)
 
-" Disable macro recording
-map q <nop>
+" remap macro recording to Q
+nnoremap Q q
+nnoremap q <nop>
 
 " Autosave on leaving insert mode
 " http://stackoverflow.com/questions/9087582/how-to-autosave-in-vim-7-when-focus-is-lost-from-the-window
@@ -185,7 +183,7 @@ set shiftround              " round indents to multiple of shift width
 set tabstop=4
 set expandtab               " expand tabs to spaces
 "set nosmarttab             " no tabs
-set textwidth=79            " stick to less than 80 chars per line when possible
+" set textwidth=79          " stick to less than 80 chars per line when possible
 set formatoptions+=n        " support for numbered/bullet lists
 set virtualedit=block       " allow virtual edit in visual block ..
 set pastetoggle=<F6>        " paste-mode toggle
@@ -747,3 +745,5 @@ nmap <localleader>sc :call ShowRSource()<CR>
 " CSV
 let g:csv_no_conceal = 1
 
+" Syntax highlighting
+syntax on

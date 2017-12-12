@@ -45,6 +45,10 @@ ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 # Xresources themes
 ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 
+# Termite
+mkdir -p ${XDG_CONFIG_HOME}/termite
+ln -s ${PWD}/termite ${XDG_CONFIG_HOME}/termite/config
+
 # Everything else
 for path in "dir_colors" "gitconfig" "gitignore_global" \
             "Rprofile" "Renviron" "tmux" "tmux.conf" \
