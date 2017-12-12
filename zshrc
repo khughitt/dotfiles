@@ -79,7 +79,7 @@ setopt extended_glob
 
 # Plugins
 [ -z "$plugins" ] && plugins=(\
-    archlinux colored-man git systemd web-search)
+    fasd archlinux colored-man git systemd web-search)
 
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
@@ -91,9 +91,6 @@ done
 unset file
 
 # Fasd
-eval "$(fasd --init auto)"
-alias v='f -t -e nvim -b viminfo'
-alias m='f -e mplayer'
 alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
 

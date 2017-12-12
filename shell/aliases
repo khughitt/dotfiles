@@ -12,8 +12,8 @@ fi
 
 alias lc='colorls -r'
 
-alias v='f -t -e vim -b viminfo'
-#alias vim='vim --servername VIM'
+# doesn't support neovim
+#alias v='f -t -e vim -b viminfo'
 alias tm='todotxt-machine'
 
 alias grep='grep --color=always'
@@ -29,7 +29,7 @@ alias pc='yaourt -Syua'
 alias pcd='yaourt -Syua --devel'
 #alias pup='pip2 freeze --local | grep -v '^\-e' | cut -d = -f 1 | xargs pip2 install -U'
 
-alias s='src-hilite-lesspipe.sh'
+alias hl='src-hilite-lesspipe.sh'
 alias t='todo.sh -d $HOME/Dropbox/dotfiles/todo.cfg'
 
 alias qpython='ipython2 qtconsole --colors=linux --pylab'
