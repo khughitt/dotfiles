@@ -638,12 +638,14 @@ clientkeys = awful.util.table.join(
             -- The client currently has the input focus, so it cannot be
             -- minimized, since minimized clients can't have the focus.
             c.minimized = true
-        end),
+        end ,
+        {description = "minimize", group = "client"}),
     awful.key({ modkey,           }, "m",
         function (c)
-            c.maximized_horizontal = not c.maximized_horizontal
-            c.maximized_vertical   = not c.maximized_vertical
-        end)
+            c.maximized = not c.maximized
+            c:raise()
+        end ,
+        {description = "(un)maximize", group = "client"})
 )
 
 -- Bind all key numbers to tags.
@@ -742,7 +744,7 @@ awful.rules.rules = {
   -- RCommander view data
   { rule = { class = "Toplevel" }, properties = {floating = true} },
     -- work-around for chromimium staying maximized
-  { rule = { class = "chromium" }, properties = { maximized = false } }
+    { rule = { class = "chromium" }, properties = { maximized = false } }
 }
 -- }}}
 
@@ -849,6 +851,9 @@ run_once("nm-applet")
 run_once("gnome-screensaver")
 run_once("xmodmap ~/.xmodmaprc")
 run_once("xset r rate 220 30")
---run_once("xset r off")
 run_once("redshift -l37.05:-78.66 -m randr:screen=0", "", "redshift -l37.05:-78.66 -m randr:screen=0")
+
+if os.getenv('HOST') == 'Europa' then
+    run_once("batterymon")
+end
 
