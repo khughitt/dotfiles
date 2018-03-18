@@ -93,6 +93,7 @@ unset file
 # Fasd
 alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
+alias v='f -e nvim'
 
 # Suffix aliases
 alias -s doc=lowriter
@@ -190,10 +191,11 @@ ZSHRC_LOADED='true'
 # Neovim
 alias vim=nvim
 
-# Biopieces
-if [ -e "$HOME/software/biopieces" ]; then
-    source ~/.shell/biopieces
-fi
+# Anaconda
+export PATH=$HOME/anaconda3/bin:$PATH
+
+# Map caps lock to <Esc>
+#xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 
 # Torch
 #if [ -e ~/torch/install/bin/torch-activate ]; then

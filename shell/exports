@@ -3,6 +3,7 @@ export EDITOR=nvim
 export R_HISTFILE=~/.Rhistory
 export R_HISTSIZE=10000 
 export JAVA_FONTS=/usr/share/fonts/TTF
+export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=lcd -Dswing.aatext=true'
 #export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel'
 #export GTK_IM_MODULE=ibus
 #export XMODIFIERS=@im=ibus
@@ -25,7 +26,7 @@ export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
 export PATH=$HOME/bin:$PATH
 
 # Ruby
-export PATH=$HOME/.gem/ruby/2.4.0/bin:$PATH
+export PATH=$HOME/.gem/ruby/2.5.0/bin:$PATH
 
 # Python
 export PATH=$HOME/.local/bin:$PATH

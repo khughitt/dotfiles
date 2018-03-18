@@ -12,6 +12,9 @@ fi
 
 alias lc='colorls -r'
 
+# https://twitter.com/amuellerml/status/779001124317650945?s=03
+alias gitlog="git log --graph --decorate --all --oneline"
+
 # doesn't support neovim
 #alias v='f -t -e vim -b viminfo'
 alias tm='todotxt-machine'

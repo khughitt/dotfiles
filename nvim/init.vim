@@ -54,8 +54,6 @@ nmap <leader>z :wq<cr>
 " disabling for now to try out vim-ipython
 "inoremap <c-s> <c-o>:w<cr>
 "nnoremap <c-s> :w<cr>
-let g:nvim_ipy_perform_mappings = 0
-map <silent> <c-s>   <Plug>(IPy-Run)
 
 " remap macro recording to Q
 nnoremap Q q
@@ -77,15 +75,20 @@ map <s-e> <Plug>CamelCaseMotion_e
 " ---------------------------------------------------------------------------
 call plug#begin()
     Plug 'airblade/vim-gitgutter'
-    "Plug 'bfredl/nvim-ipy'
     Plug 'bkad/CamelCaseMotion'
     Plug 'chrisbra/csv.vim'
+    "Plug 'dracula/vim', { 'as': 'dracula' }
     Plug 'ervandew/supertab'
-    Plug 'garbas/vim-snipmate'
+    Plug 'fenetikm/falcon'
+    "Plug 'garbas/vim-snipmate'
+    Plug 'guns/xterm-color-table.vim'
     "Plug 'haya14busa/incsearch.vim'
     Plug 'henrik/vim-indexed-search'
-    Plug 'honza/vim-snippets'
+    "Plug 'honza/vim-snippets'
+    Plug 'hkupty/iron.nvim'
+    Plug 'jacoborus/tender.vim'
     Plug 'jalvesaq/Nvim-R'
+    Plug 'joshdick/onedark.vim'
     Plug 'junegunn/goyo.vim'
     Plug 'junegunn/limelight.vim'
     Plug 'kshenoy/vim-signature'
@@ -93,25 +96,28 @@ call plug#begin()
     Plug 'machakann/vim-textobj-delimited'
     Plug 'majutsushi/tagbar'
     Plug 'MarcWeber/vim-addon-mw-utils'
-    Plug 'mhartington/oceanic-next'
+    "Plug 'mhartington/oceanic-next'
+    Plug 'mllg/vim-devtools-plugin'
     Plug 'ludovicchabant/vim-gutentags'
     Plug 'nathanaelkane/vim-indent-guides'
-    ""Plug 'plasticboy/vim-markdown'
+    "Plug 'plasticboy/vim-markdown'
     Plug 'qpkorr/vim-bufkill'
     Plug 'scrooloose/nerdcommenter'
-    Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+    "Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'Shougo/neomru.vim'
     Plug 'Shougo/unite.vim'
     Plug 'Shougo/vimproc.vim', { 'do': 'make' }
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
+    Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
     Plug 'vim-scripts/argtextobj.vim'
     Plug 'whatyouhide/vim-gotham'
     Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
+    Plug 'zanloy/vim-colors-grb256'
 call plug#end()
 
 " ----------------------------------------------------------------------------
@@ -235,6 +241,9 @@ set switchbuf=useopen,usetab,newtab
 catch
 endtry
 
+" create file under cursor
+map <silent> <leader>cf :!touch <c-r><c-p><cr><cr>
+
 " Return to last edit position when opening files
 autocmd BufReadPost *
     \ if line("'\"") > 0 && line("'\"") <= line("$") |
@@ -272,8 +281,11 @@ endif
 set t_ut=""
 
 " enable true colors
-let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 set termguicolors
+
+" use colorscheme for R output
+"let g:rout_follow_colorscheme = 1
+"let g:Rout_more_colors = 1
 
 " fix control/shift + arrow keys in screen
 " http://superuser.com/questions/401926/how-to-get-shiftarrows-and-ctrlarrows-working-in-vim-in-tmux
@@ -301,13 +313,19 @@ if has("gui_running")
 endif
 
 " colorscheme
+let g:quantum_black=1
+let g:quantum_italics=1
+
 set background=dark
 "colorscheme hemisu
 "colorscheme gotham
 "colorscheme sweyla721647
-colorscheme sweyla939829
+"colorscheme sweyla939829
+"colorscheme sweyla708971
+colorscheme falcon
 
-highlight ColorColumn ctermbg=234 guibg=#222222
+"not working with recent versions
+"highlight ColorColumn ctermbg=234 guibg=#222222
 
 " NeoVim tmux support
 " https://github.com/neovim/neovim/issues/2528
@@ -318,33 +336,32 @@ endif
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
-let g:terminal_color_0="#1b2b34"
-let g:terminal_color_1="#ed5f67"
-let g:terminal_color_2="#9ac895"
-let g:terminal_color_3="#fbc963"
-let g:terminal_color_4="#669acd"
-let g:terminal_color_5="#c695c6"
-let g:terminal_color_6="#5fb4b4"
-let g:terminal_color_7="#c1c6cf"
-let g:terminal_color_8="#65737e"
-let g:terminal_color_9="#fa9257"
-let g:terminal_color_10="#4e5d6b" " #343d46
-let g:terminal_color_11="#4f5b66"
-let g:terminal_color_12="#a8aebb"
-let g:terminal_color_13="#ced4df"
-let g:terminal_color_14="#ac7967"
-let g:terminal_color_15="#d9dfea"
-"let g:terminal_color_background="#1b2b34"
-let g:terminal_color_background="#525252"
-let g:terminal_color_foreground="#c1c6cf"
+"let g:terminal_color_0="#1b2b34"
+"let g:terminal_color_1="#ed5f67"
+"let g:terminal_color_2="#9ac895"
+"let g:terminal_color_3="#fbc963"
+"let g:terminal_color_4="#669acd"
+"let g:terminal_color_5="#c695c6"
+"let g:terminal_color_6="#5fb4b4"
+"let g:terminal_color_7="#c1c6cf"
+"let g:terminal_color_8="#65737e"
+"let g:terminal_color_9="#fa9257"
+"let g:terminal_color_10="#4e5d6b" " #343d46
+"let g:terminal_color_11="#4f5b66"
+"let g:terminal_color_12="#a8aebb"
+"let g:terminal_color_13="#ced4df"
+"let g:terminal_color_14="#ac7967"
+"let g:terminal_color_15="#d9dfea"
+"let g:terminal_color_background="#525252"
+"let g:terminal_color_foreground="#c1c6cf"
 
 " Matching parens style
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
 
-" Highlight color
+" Highlight color (not working in recent versions)
 "hi Search ctermbg=197 ctermfg=233
-hi Search guibg=#14D1DE guifg=#2C2C2C
-hi IncSearch guifg=#67E8F1 guibg=#333333
+"hi Search guibg=#14D1DE guifg=#2C2C2C
+"hi IncSearch guifg=#67E8F1 guibg=#333333
 
 " ---------------------------------------------------------------------------
 "  Copy and Paste
@@ -392,8 +409,11 @@ tnoremap <C-Right> <m-f>
 " automatically enter insert mode
 autocmd BufWinEnter,WinEnter term://* startinsert
 
-" Exclude from buffer list
+" Exclude terminal from buffer list
 autocmd TermOpen * set nobuflisted
+
+" Disable terminal line numbers
+au TermOpen * setlocal nonumber norelativenumber
 
 " ---------------------------------------------------------------------------
 "  airline
@@ -403,7 +423,9 @@ let g:airline#extensions#tabline#enabled = 1
 "let g:airline_theme = 'hybrid'
 "let g:airline_theme = 'bubblegum'
 "let g:airline_theme = 'zenburn'
-let g:airline_theme = 'hybridline'
+"let g:airline_theme='quantum'
+"let g:airline_theme = 'hybridline'
+let g:airline_theme = 'tender'
 
 " ---------------------------------------------------------------------------
 "  dragvisuals.vim
@@ -431,8 +453,8 @@ let g:colorizer_startup = 0
 " ---------------------------------------------------------------------------
 let g:colorscheme_switcher_exclude = [
             \'blue', 'darkblue', 'default', 'delek', 'desert', 'elflord',
-            \'evening', 'fi', 'gotham256', 'hybrid', 'hybrid-light', 'koehler', 
-            \'morning', 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'torte', 'zellner']
+            \'evening', 'fi', 'gotham256', 'hybrid', 'hybrid-light', 'industry', 'koehler',
+            \'morning', 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'slate', 'torte', 'zellner']
 
 " ---------------------------------------------------------------------------
 "  goyo.vim
@@ -444,7 +466,8 @@ endfunction
 function! GoyoAfter()
   Limelight!
   set background=dark
-  colorscheme hemisu
+  "colorscheme hemisu
+  colorscheme sweyla708971
 endfunction
 
 let g:goyo_callbacks = [function('GoyoBefore'), function('GoyoAfter')]
@@ -580,7 +603,7 @@ if executable('ag')
     let g:unite_source_grep_default_opts =
     \ "-i --line-numbers --nocolor --nogroup --hidden --ignore '.hg' " .
     \ "--ignore '.svn' --ignore '.git' --ignore '.bzr' " .
-    \ "--ignore 'README_cache' --ignore '.html' "
+    \ "--ignore '*cache' --ignore '.html' "
     let g:unite_source_grep_recursive_opt = ''
 endif
 
@@ -678,6 +701,9 @@ let R_rconsole_width = 0
 " Force use of colorout for highlighting terminal
 let R_hl_term = 0
 
+" devtools load all shortcut
+map ;dl :RLoadPackage<CR>
+
 " Emulate Tmux ^az
 function ZoomWindow()
     let cpos = getpos(".")
@@ -700,9 +726,8 @@ let R_assign = 0
 
 " enable PDF/Browser support when available
 if $DISPLAY != ""
-    if executable('zathura')
-        let vimrplugin_openpdf = 1
-    endif
+    let R_pdfviewer = 'evince'
+    let vimrplugin_openpdf = 1
     let vimrplugin_openhtml = 1
 endif
 
@@ -723,24 +748,33 @@ nmap <C-M> <Plug>RDSendLine
 "nmap <C-A-c> <Plug>RDSendChunk
 
 " wipe knitr cache and output
-nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("README_cache/*", recursive=TRUE)')<CR>
+nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("*_cache/*", recursive=TRUE)')<CR>
 
 " render markdown
-nmap <localleader>km :call RMakeRmd("md_document")<CR> 
+nmap <localleader>km :call RMakeRmd("md_document")<CR>
 
 " show source code for function under cursor
 function ShowRSource()
     let g:function_name = expand("<cword>")
     echom "Showing source code for function: \"" . g:function_name . "\""
-	enew
-	set syntax=r
+    enew
+    set syntax=r
     execute ":Rinsert " . g:function_name
 endfunction
 
-nmap <localleader>sc :call ShowRSource()<CR> 
+nmap <localleader>sc :call ShowRSource()<CR>
 
 " https://github.com/plasticboy/vim-markdown/issues/162
 "let g:vim_markdown_folding_disabled=1
+
+" iron / ipython
+autocmd Filetype python vmap <Space> <Plug>(iron-send-motion)
+autocmd Filetype python nmap <Space> <Plug>(iron-send-motion)
+autocmd Filetype python vmap <C-M> <Plug>(iron-send-motion)
+autocmd Filetype python nmap <C-M> <Plug>(iron-send-motion)
+
+autocmd Filetype python nmap <localleader>rf :IronRepl<cr>
+
 
 " CSV
 let g:csv_no_conceal = 1

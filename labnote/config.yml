@@ -9,7 +9,7 @@ input_dirs:
   - /home/keith/Dropbox/research/presentations/*
   - /home/keith/Dropbox/research/201[2-7]/*
   - /home/keith/Dropbox/research/2016/*/*
-  - /home/keith/Dropbox/research/2017/10-coex-manuscript/output/1.0/*
+  - /home/keith/Dropbox/research/2017/10-coex-manuscript/output/4.0/*
     
 #multi_version_dirs:
 #  - /home/keith/Dropbox/research/2015/73-mtb-ifnb-diffexpr/output/*
@@ -36,7 +36,7 @@ categories:
   'Co-expression Network Analysis (General)':
     patterns: ['random-cor', 'coex-alt', 'edge-betweenness', 'network-resampling',
                'network-euclidean-dist', 'network-layouts', 'network-smoothing',
-               'wgcna']
+               'wgcna', 'fagerberg2013']
     image: 'resources/user/img/lmhs_coex_network_v4.1_adjmatrix.png'
   'Co-expression Network Analysis (Host)':
     patterns: ['coex-network-hsapiens', 'coex-network-mmusculus',
@@ -63,7 +63,7 @@ categories:
                'tcurzi-multicopy']
     image: '2015/00-coex-network-shared/img/2894934_pone.0011407.g001.png'
   'M. tuberculosis':
-    patterns: ['mtb']
+    patterns: ['mtb', 'Mtb']
     image: 'resources/user/img/mycobacterium_tuberculosis_wikipedia.jpg'
   'H. sapiens':
     patterns: ['hsapiens-inf', 'hsapiens-all']
