@@ -114,6 +114,7 @@ call plug#begin()
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
     Plug 'vim-scripts/argtextobj.vim'
+    Plug 'vim-syntastic/syntastic'
     Plug 'whatyouhide/vim-gotham'
     Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
@@ -188,6 +189,7 @@ set shiftwidth=4
 set shiftround              " round indents to multiple of shift width
 set tabstop=4
 set expandtab               " expand tabs to spaces
+set smarttab
 "set nosmarttab             " no tabs
 " set textwidth=79          " stick to less than 80 chars per line when possible
 set formatoptions+=n        " support for numbered/bullet lists
@@ -641,6 +643,13 @@ nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
 "
 "
 let g:gutentags_exclude_project_root = ['/usr/local', '/cbcb/sw']
+
+" ---------------------------------------------------------------------------
+"  syntastic
+" ---------------------------------------------------------------------------
+let g:syntastic_enable_r_lintr_checker = 1
+let g:syntastic_r_checkers = ['lintr']
+let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL)"
 
 " ---------------------------------------------------------------------------
 "  tagbar
