@@ -413,6 +413,8 @@ autocmd BufWinEnter,WinEnter term://* startinsert
 
 " Exclude terminal from buffer list
 autocmd TermOpen * set nobuflisted
+autocmd TermOpen * noremap <buffer> <tab> <nop>
+autocmd TermOpen * noremap <buffer> <s-tab> <nop>
 
 " Disable terminal line numbers
 au TermOpen * setlocal nonumber norelativenumber
