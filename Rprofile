@@ -7,7 +7,7 @@ options(github.user="khughitt")
 options(knitr.duplicate.label='allow')
 options(max.print=100)
 options(menu.graphics=F)
-options(repos=structure(c(CRAN="https://mirrors.sorengard.com/cran/")))
+options(repos=structure(c(CRAN="http://lib.stat.cmu.edu/R/CRAN/")))
 options(showWarnCalls=T, showErrorCalls=T)
 options(warning.length=8170)
 

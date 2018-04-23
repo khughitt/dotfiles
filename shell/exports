@@ -37,5 +37,5 @@ export PERL5LIB=$HOME/perl5/lib/perl5:$PERL5LIB
 source ~/perl5/perlbrew/etc/bashrc
 
 # CMFinder
-export PATH=$PATH:$HOME/software/CMfinder_0.2/bin
-export CMfinder=$HOME/software/CMfinder_0.2/bin
+export PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin
+export CMfinder=$HOME/software/cmfinder-0.4.1.9
