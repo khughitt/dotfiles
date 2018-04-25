@@ -1,6 +1,11 @@
 #
 # R Configuration
 #
+# For quick version updates:
+#
+#  cp -r ~/R/path/to/3.x ~/R/path/to/3.y
+#  R -e "update.packages(checkBuilt=TRUE, ask=FALSE)"
+#
 options(download.file.method = "libcurl")
 options(dplyr.print_max=30) 
 options(github.user="khughitt")
@@ -15,7 +20,7 @@ options(prompt="> ")
 options(continue="... ")
 
 # tab complete package names
-utils::rc.settings(ipck=TRUE)
+utils::rc.settings(ipck=TRUE, fuzzy=TRUE)
 
 options('rstudio.markdownToHTML'=NULL)
 
