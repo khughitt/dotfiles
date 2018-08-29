@@ -74,21 +74,14 @@ map <s-e> <Plug>CamelCaseMotion_e
 " vim-plug
 " ---------------------------------------------------------------------------
 call plug#begin()
+    " plugins
     Plug 'airblade/vim-gitgutter'
-    Plug 'bkad/CamelCaseMotion'
     Plug 'chrisbra/csv.vim'
-    "Plug 'dracula/vim', { 'as': 'dracula' }
     Plug 'ervandew/supertab'
-    Plug 'fenetikm/falcon'
-    "Plug 'garbas/vim-snipmate'
     Plug 'guns/xterm-color-table.vim'
-    "Plug 'haya14busa/incsearch.vim'
     Plug 'henrik/vim-indexed-search'
-    "Plug 'honza/vim-snippets'
     Plug 'hkupty/iron.nvim'
-    Plug 'jacoborus/tender.vim'
     Plug 'jalvesaq/Nvim-R'
-    Plug 'joshdick/onedark.vim'
     Plug 'junegunn/goyo.vim'
     Plug 'junegunn/limelight.vim'
     Plug 'kshenoy/vim-signature'
@@ -96,17 +89,11 @@ call plug#begin()
     Plug 'machakann/vim-textobj-delimited'
     Plug 'majutsushi/tagbar'
     Plug 'MarcWeber/vim-addon-mw-utils'
-    "Plug 'mhartington/oceanic-next'
     Plug 'mllg/vim-devtools-plugin'
-    Plug 'ludovicchabant/vim-gutentags'
     Plug 'nathanaelkane/vim-indent-guides'
-    "Plug 'plasticboy/vim-markdown'
     Plug 'qpkorr/vim-bufkill'
     Plug 'scrooloose/nerdcommenter'
-    "Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
-    Plug 'Shougo/neomru.vim'
-    Plug 'Shougo/unite.vim'
-    Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+    Plug 'Shougo/denite.nvim'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
@@ -115,9 +102,22 @@ call plug#begin()
     Plug 'vim-airline/vim-airline-themes'
     Plug 'vim-scripts/argtextobj.vim'
     Plug 'vim-syntastic/syntastic'
-    Plug 'whatyouhide/vim-gotham'
     Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
+
+    "Plug 'garbas/vim-snipmate'
+    "Plug 'haya14busa/incsearch.vim'
+    "Plug 'honza/vim-snippets'
+    "Plug 'ludovicchabant/vim-gutentags'
+    "Plug 'plasticboy/vim-markdown'
+    "Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+    "Plug 'tpope/vim-repeat'
+
+    " themes
+    Plug 'fenetikm/falcon'
+    Plug 'jacoborus/tender.vim'
+    Plug 'joshdick/onedark.vim'
+    Plug 'whatyouhide/vim-gotham'
     Plug 'zanloy/vim-colors-grb256'
 call plug#end()
 
@@ -163,7 +163,7 @@ set incsearch              " do incremental searching
 set infercase              " case insensitive tab completion
 set ignorecase             " ignore case when searching
 set novisualbell           " no thank you
-set colorcolumn=80         " show right margin
+set colorcolumn=100        " show right margin
 
 let marksCloseWhenSelected = 0
 let showmarks_include="abcdefghijklmnopqrstuvwxyz"
@@ -191,7 +191,7 @@ set tabstop=4
 set expandtab               " expand tabs to spaces
 set smarttab
 "set nosmarttab             " no tabs
-" set textwidth=79          " stick to less than 80 chars per line when possible
+set textwidth=99          " stick to less than 100 chars per line when possible
 set formatoptions+=n        " support for numbered/bullet lists
 set virtualedit=block       " allow virtual edit in visual block ..
 set pastetoggle=<F6>        " paste-mode toggle
@@ -205,7 +205,7 @@ function! ToggleTextWidth()
   elseif exists("b:oldtextwidth")
     let &textwidth = b:oldtextwidth
   else
-    set textwidth=79
+    set textwidth=99
   endif
 endfunction
 
@@ -320,11 +320,11 @@ let g:quantum_italics=1
 
 set background=dark
 "colorscheme hemisu
-"colorscheme gotham
 "colorscheme sweyla721647
 "colorscheme sweyla939829
 "colorscheme sweyla708971
-colorscheme falcon
+"colorscheme falcon
+colorscheme gotham
 
 "not working with recent versions
 "highlight ColorColumn ctermbg=234 guibg=#222222
@@ -584,55 +584,61 @@ let g:SuperTabNoCompleteBefore = ['\S']
 highlight Pmenu ctermbg=234 ctermfg=198
 
 " ---------------------------------------------------------------------------
-"  Unite.vim
-"  http://bling.github.io/blog/2013/06/02/unite-dot-vim-the-plugin-you-didnt-know-you-need/
+"  denite
 " ---------------------------------------------------------------------------
-call unite#filters#matcher_default#use(['matcher_fuzzy'])
-call unite#filters#sorter_default#use(['sorter_rank'])
-"call unite#set_profile('files', 'smartcase', 1)
-call unite#custom#profile('files', 'context.smartcase', 1)
-call unite#custom#source('file_rec/async','sorters','sorter_rank', )
+call denite#custom#var('file/rec', 'command', 
+        \ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
 
-"let g:unite_data_directory=s:get_cache_dir('unite')
-let g:unite_data_directory='~/.config/nvim/tmp/unite'
-let g:unite_enable_start_insert=1
-let g:unite_source_history_yank_enable=1
-let g:unite_source_rec_max_cache_files=5000
-let g:unite_prompt='» '
-let g:unite_split_rule = 'botright'
+" Ag command on grep source
+call denite#custom#var('grep', 'command', ['ag'])
+call denite#custom#var('grep', 'default_opts',
+        \ ['-i', '--vimgrep'])
+call denite#custom#var('grep', 'recursive_opts', [])
+call denite#custom#var('grep', 'pattern_opt', [])
+call denite#custom#var('grep', 'separator', ['--'])
+call denite#custom#var('grep', 'final_opts', [])
+"
+" Change ignore_globs
+call denite#custom#filter('matcher/ignore_globs', 'ignore_globs',
+        \ [ '.git/', '.ropeproject/', '__pycache__/',
+        \   'venv/', 'images/', '*.min.*', 'img/', 'fonts/'])
 
-if executable('ag')
-    " Use ag in unite grep source.
-    let g:unite_source_grep_command = 'ag'
-    let g:unite_source_grep_default_opts =
-    \ "-i --line-numbers --nocolor --nogroup --hidden --ignore '.hg' " .
-    \ "--ignore '.svn' --ignore '.git' --ignore '.bzr' " .
-    \ "--ignore '*cache' --ignore '.html' "
-    let g:unite_source_grep_recursive_opt = ''
-endif
+"    \ "-i --line-numbers --nocolor --nogroup --hidden --ignore '.hg' " .
+"    \ "--ignore '.svn' --ignore '.git' --ignore '.bzr' " .
+"    \ "--ignore '*cache' --ignore '.html' "
 
-nmap <space> [unite]
-nnoremap [unite] <nop>
+" reset 50% winheight on window resize
+augroup deniteresize
+  autocmd!
+  autocmd VimResized,VimEnter * call denite#custom#option('default',
+        \'winheight', winheight(0) / 2)
+augroup end
 
-" cnrlp
-nnoremap <c-p> :Unite file file_mru file_rec/async<cr>
+call denite#custom#option('default', {
+      \ 'prompt': '❯'
+      \ })
 
-" ack / grep
-nnoremap <space>/ :Unite grep:.<cr>
+call denite#custom#map('insert', '<Esc>', '<denite:enter_mode:normal>',
+      \'noremap')
+call denite#custom#map('normal', '<Esc>', '<NOP>',
+      \'noremap')
+call denite#custom#map('insert', '<C-v>', '<denite:do_action:vsplit>',
+      \'noremap')
+call denite#custom#map('normal', '<C-v>', '<denite:do_action:vsplit>',
+      \'noremap')
+call denite#custom#map('normal', 'dw', '<denite:delete_word_after_caret>',
+      \'noremap')
 
-" buffer switching
-nnoremap <space>s :Unite -quick-match buffer<cr>
+nnoremap <C-p> :<C-u>Denite file_rec<CR>
+nnoremap <leader>s :<C-u>Denite buffer<CR>
+nnoremap <leader><Space>s :<C-u>DeniteBufferDir buffer<CR>
+nnoremap <leader>8 :<C-u>DeniteCursorWord grep:. -mode=normal<CR>
+nnoremap <leader>/ :<C-u>Denite grep:. -mode=normal<CR>
+nnoremap <leader><Space>/ :<C-u>DeniteBufferDir grep:. -mode=normal<CR>
+nnoremap <leader>d :<C-u>DeniteBufferDir file_rec<CR>
+nnoremap <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
 
-" yank history
-nnoremap <space>y :Unite history/yank<cr>
-
-nnoremap <silent> [unite]e :<C-u>Unite -buffer-name=recent file_mru<cr>
-nnoremap <silent> [unite]y :<C-u>Unite -buffer-name=yanks history/yank<cr>
-nnoremap <silent> [unite]l :<C-u>Unite -auto-resize -buffer-name=line line<cr>
-nnoremap <silent> [unite]b :<C-u>Unite -auto-resize -buffer-name=buffers buffer<cr>
-nnoremap <silent> [unite]/ :<C-u>Unite -no-quit -buffer-name=search grep:.<cr>
-nnoremap <silent> [unite]m :<C-u>Unite -auto-resize -buffer-name=mappings mapping<cr>
-nnoremap <silent> [unite]s :<C-u>Unite -quick-match buffer<cr>
+hi link deniteMatchedChar Special
 
 " ---------------------------------------------------------------------------
 "  yankring.vim
@@ -650,8 +656,17 @@ let g:gutentags_exclude_project_root = ['/usr/local', '/cbcb/sw']
 "  syntastic
 " ---------------------------------------------------------------------------
 let g:syntastic_enable_r_lintr_checker = 1
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
 let g:syntastic_r_checkers = ['lintr']
 let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL)"
+
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
 
 " ---------------------------------------------------------------------------
 "  tagbar

@@ -19,7 +19,7 @@ options(warning.length=8170)
 options(prompt="> ")
 options(continue="... ")
 
-# tab complete package names
+# tab complete package names and allow fuzzy case completion
 utils::rc.settings(ipck=TRUE, fuzzy=TRUE)
 
 options('rstudio.markdownToHTML'=NULL)
@@ -42,6 +42,12 @@ if (interactive()) {
         library(colorout)
     }
 }
+
+# Helper functions
+# https://csgillespie.github.io/efficientR/3-3-r-startup.html
+.env <- new.env()
+.env$hh <- function(d) d[1:min(3, nrow(d)), 1:min(3, ncol(d))]
+attach(.env)
 
 # Default HISTORY file
 if (Sys.getenv("R_HISTFILE") == "") {
@@ -67,5 +73,5 @@ Sys.setenv(R_HISTSIZE=5000)
 # Memory usage
 .top = function(n=10) {
     # Prints N objects which use the most memory (in megabytes)
-    print(tail(sort(sapply(ls(),function(x){object.size(get(x))})), n)/1E6)
+    print(tail(sort(sapply(ls(),function(x){ object.size(get(x)) })), n) / 1E6)
 }

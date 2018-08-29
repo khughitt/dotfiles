@@ -54,8 +54,8 @@ customization.default.property = {
 }
 
 -- Pomodoro widget
-local pomodoro  = require("pomodoro")
-pomodoro.init()
+--local pomodoro  = require("pomodoro")
+--pomodoro.init()
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -289,9 +289,9 @@ awful.screen.connect_for_each_screen(
     right_layout:add(volicon)
     right_layout:add(volpct)
     right_layout:add(volspace)
-    right_layout:add(pomodoro.widget)
+    --right_layout:add(pomodoro.widget)
     right_layout:add(space)
-    right_layout:add(pomodoro.icon_widget)
+    --right_layout:add(pomodoro.icon_widget)
     right_layout:add(space)
     right_layout:add(mytextclock)
     right_layout:add(space)

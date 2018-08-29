@@ -181,7 +181,7 @@ function ztabview() {
 }
 
 # Virtualenvwrapper
-source $(which virtualenvwrapper.sh)
+# source $(which virtualenvwrapper.sh)
 
 # PATH
 PATH=~/.cabal/bin:~/software/tabulator/bin:$PATH
@@ -192,13 +192,17 @@ ZSHRC_LOADED='true'
 alias vim=nvim
 
 # Anaconda
-export PATH=$HOME/anaconda3/bin:$PATH
+#export PATH=$HOME/anaconda3/bin:$PATH
 
 # Map caps lock to <Esc>
-#xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
+xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 
 # Torch
 #if [ -e ~/torch/install/bin/torch-activate ]; then
 #    source ~/torch/install/bin/torch-activate
 #fi
+
+# sync primary / clipboard buffers
+#autocutsel -fork &
+#autocutsel -selection PRIMARY -fork &
 
