@@ -80,7 +80,8 @@ call plug#begin()
     Plug 'ervandew/supertab'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
-    Plug 'hkupty/iron.nvim'
+    "Plug 'hkupty/iron.nvim'
+    Plug 'bfredl/nvim-ipy'
     Plug 'jalvesaq/Nvim-R'
     Plug 'junegunn/goyo.vim'
     Plug 'junegunn/limelight.vim'
@@ -98,10 +99,11 @@ call plug#begin()
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
     Plug 'tyrannicaltoucan/vim-quantum'
+    Plug 'manabuishii/vim-cwl'
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
     Plug 'vim-scripts/argtextobj.vim'
-    Plug 'vim-syntastic/syntastic'
+    "Plug 'vim-syntastic/syntastic'
     Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
 
@@ -376,6 +378,10 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 "set clipboard=unnamed,autoselect
 set clipboard=unnamed
 
+" work-around to preserve yank buffer when pasting; the solution below first
+" deletes selected text to an unused register
+xnoremap p "_dP
+
 " ---------------------------------------------------------------------------
 "  Backup and undo
 " ---------------------------------------------------------------------------
@@ -586,10 +592,12 @@ highlight Pmenu ctermbg=234 ctermfg=198
 " ---------------------------------------------------------------------------
 "  denite
 " ---------------------------------------------------------------------------
-call denite#custom#var('file/rec', 'command', 
-        \ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
 
-" Ag command on grep source
+" Ag recursive file list settings    (<C-p>)
+call denite#custom#var('file/rec', 'command', 
+        \ ['ag', '--follow', '--nocolor', '--nogroup', '--ignore', '*.pyc', '*.png', '*.RData', '-g', ''])
+
+" Ag command on grep source settings (<leader>/)
 call denite#custom#var('grep', 'command', ['ag'])
 call denite#custom#var('grep', 'default_opts',
         \ ['-i', '--vimgrep'])
@@ -597,15 +605,11 @@ call denite#custom#var('grep', 'recursive_opts', [])
 call denite#custom#var('grep', 'pattern_opt', [])
 call denite#custom#var('grep', 'separator', ['--'])
 call denite#custom#var('grep', 'final_opts', [])
-"
+
 " Change ignore_globs
 call denite#custom#filter('matcher/ignore_globs', 'ignore_globs',
         \ [ '.git/', '.ropeproject/', '__pycache__/',
-        \   'venv/', 'images/', '*.min.*', 'img/', 'fonts/'])
-
-"    \ "-i --line-numbers --nocolor --nogroup --hidden --ignore '.hg' " .
-"    \ "--ignore '.svn' --ignore '.git' --ignore '.bzr' " .
-"    \ "--ignore '*cache' --ignore '.html' "
+        \   'venv/', 'images/', '*.min.*', 'img/', 'fonts/', '*cache/', '*_files/'])
 
 " reset 50% winheight on window resize
 augroup deniteresize
@@ -656,17 +660,16 @@ let g:gutentags_exclude_project_root = ['/usr/local', '/cbcb/sw']
 "  syntastic
 " ---------------------------------------------------------------------------
 let g:syntastic_enable_r_lintr_checker = 1
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
+"let g:syntastic_always_populate_loc_list = 1
+"let g:syntastic_auto_loc_list = 1
+"let g:syntastic_check_on_open = 0
+"let g:syntastic_check_on_wq = 0
 let g:syntastic_r_checkers = ['lintr']
 let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL)"
 
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
-
+"set statusline+=%#warningmsg#
+"set statusline+=%{SyntasticStatuslineFlag()}
+"set statusline+=%*
 
 " ---------------------------------------------------------------------------
 "  tagbar
@@ -710,7 +713,7 @@ nnoremap <leader>n :nohl<CR>
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType ruby,eruby,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd FileType ruby,eruby,yaml,r,rmd setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
 autocmd BufRead,BufNewFile *.py set autoindent
 
@@ -793,14 +796,24 @@ nmap <localleader>sc :call ShowRSource()<CR>
 " https://github.com/plasticboy/vim-markdown/issues/162
 "let g:vim_markdown_folding_disabled=1
 
+" nvim-ipy
+let g:nvim_ipy_perform_mappings = 0
+
+" note: <c-w> <c-r> swaps two vertical buffers
+vmap <Silent><Space> <Plug>(IPy-Run)
+nmap <Silent><Space> <Plug>(IPy-Run)
+vmap <Silent><C-M> <Plug>(IPy-Run) 
+nmap <Silent><C-M> <Plug>(IPy-Run) 
+
+autocmd Filetype python nmap <localleader>rf :IPython<cr>
+
 " iron / ipython
-autocmd Filetype python vmap <Space> <Plug>(iron-send-motion)
-autocmd Filetype python nmap <Space> <Plug>(iron-send-motion)
-autocmd Filetype python vmap <C-M> <Plug>(iron-send-motion)
-autocmd Filetype python nmap <C-M> <Plug>(iron-send-motion)
+"autocmd Filetype python vmap <Space> <Plug>(iron-send-motion)
+"autocmd Filetype python nmap <Space> <Plug>(iron-send-motion)
+"autocmd Filetype python vmap <C-M> <Plug>(iron-send-motion)
+"autocmd Filetype python nmap <C-M> <Plug>(iron-send-motion)
 
-autocmd Filetype python nmap <localleader>rf :IronRepl<cr>
-
+"autocmd Filetype python nmap <localleader>rf :IronRepl<cr>
 
 " CSV
 let g:csv_no_conceal = 1

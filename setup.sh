@@ -32,6 +32,9 @@ ln_s ${PWD}/shell ~/.shell
 # Awesome
 ln_s ${PWD}/awesome ${XDG_CONFIG_HOME}/awesome
 
+# Neovim
+ln_s ${PWD}/nvim ${XDG_CONFIG_HOME}/nvim
+
 # Gedit
 mkdir -p ${XDG_CONFIG_HOME}/gedit/
 cp -r ${PWD}/gedit/styles ${XDG_CONFIG_HOME}/gedit/
@@ -49,10 +52,17 @@ ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 mkdir -p ${XDG_CONFIG_HOME}/termite
 ln -s ${PWD}/termite ${XDG_CONFIG_HOME}/termite/config
 
+# labnote
+ln -s ${PWD}/labnote ${XDG_CONFIG_HOME}/labnote
+
+# ranger
+ln -s ${PWD}/ranger ${XDG_CONFIG_HOME}/ranger
+
 # Everything else
 for path in "dir_colors" "gitconfig" "gitignore_global" \
             "Rprofile" "Renviron" "tmux" "tmux.conf" \
-            "vim" "vimrc" "xinitrc" "xmodmaprc" "Xresources"; do
+            "vim" "vimrc" "xinitrc" "xmodmaprc" "Xresources" \
+	    "xprofile"; do
     ln_s ${PWD}/${path} ~/.${path}
 done
 

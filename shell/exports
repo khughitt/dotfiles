@@ -12,6 +12,9 @@ export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=lcd -Dswing.aatext=true'
 #export TRITRYP=/usr/local/db/TriTrypDB/current
 export XDG_CONFIG_HOME="$HOME/.config"
 
+# May be needed by ncurses
+export TERMINFO=$TERMINFO:/usr/share/terminfo
+
 # Less Colors for Man Pages
 export LESS_TERMCAP_mb=$'\E[01;31m'       # begin blinking
 export LESS_TERMCAP_md=$'\E[01;38;5;74m'  # begin bold
