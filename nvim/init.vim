@@ -807,6 +807,10 @@ nmap <Silent><C-M> <Plug>(IPy-Run)
 
 autocmd Filetype python nmap <localleader>rf :IPython<cr>
 
+" Snakemake syntax highlighting
+au BufNewFile,BufRead Snakefile set syntax=snakemake
+au BufNewFile,BufRead *.snakefile set syntax=snakemake
+
 " iron / ipython
 "autocmd Filetype python vmap <Space> <Plug>(iron-send-motion)
 "autocmd Filetype python nmap <Space> <Plug>(iron-send-motion)
