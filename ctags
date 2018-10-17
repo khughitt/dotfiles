@@ -1,7 +1,71 @@
 --python-kinds=-i
---exclude=*/build/*
+--exclude=.git
+--exclude=node_modules
+
+--exclude=.git
+--exclude=.svn
+--exclude=.hg
+--exclude=min
+--exclude=vendor
+--exclude=\*.min.\*
+--exclude=\*.map
+--exclude=\*.swp
+--exclude=\*.bak
+--exclude=\*.pyc
+--exclude=\*.class
+--exclude=\*.sln
+--exclude=\*.Master
+--exclude=\*.csproj
+--exclude=\*.csproj.user
+--exclude=\*.cache
+--exclude=\*.dll
+--exclude=\*.pdb
+--exclude=tags
+--exclude=cscope.\*
+--exclude=\*.tar.\*
+--exclude=node_modules
+--exclude=bower_components
+--exclude=dist
+--exclude=test
+--exclude=tests
+--exclude=tmp
+--exclude=.tmp
+--exclude=*bundle.*
+
+--exclude=log
+--exclude=build
+--exclude=public
+--exclude=libs
+--exclude=db
+--exclude=*.html
+
 --langdef=R
 --langmap=r:.R.r
 --regex-R=/^[ \t]*"?([.A-Za-z][.A-Za-z0-9_]*)"?[ \t]*<-[ \t]function/\1/f,Functions/
 --regex-R=/^"?([.A-Za-z][.A-Za-z0-9_]*)"?[ \t]*<-[ \t][^f][^u][^n][^c][^t][^i][^o][^n]/\1/g,GlobalVars/
 --regex-R=/[ \t]"?([.A-Za-z][.A-Za-z0-9_]*)"?[ \t]*<-[ \t][^f][^u][^n][^c][^t][^i][^o][^n]/\1/v,FunctionVariables/
+
+--langdef=less
+--langmap=less:.less
+--regex-less=/^[ \t&]*#([A-Za-z0-9_-]+)/\1/i,id,ids/
+--regex-less=/^[ \t&]*\.([A-Za-z0-9_-]+)/\1/c,class,classes/
+--regex-less=/^[ \t]*(([A-Za-z0-9_-]+[ \t\n,]+)+)\{/\1/t,tag,tags/
+--regex-less=/^[ \t]*@media\s+([A-Za-z0-9_-]+)/\1/m,media,medias/
+--regex-less=/^[ \t]*(@[A-Za-z0-9_-]+):/\1/v,variable,variables/
+--regex-javascript=/\/\/[ \t]*(FIXME|TODO)[ \t]*\:*(.*)/\1/T,Tag,Tags/
+
+--langdef=markdown
+--langmap=markdown:.md
+--regex-markdown=/^[:blank:]*([#]+.+)/\1/s,sections,Markdown Headings/
+--regex-markdown=/(^|[^!\\])\[([^!]([^]]|\\\])*)\]\(/\2/l,links,Markdown Links/
+--regex-markdown=/!\[(([^]]|\\\])+)\]\(/\1/i,images,Markdown Image/
+--langmap=vim:+(vimrc)
+
+--langdef=rmarkdown
+--langmap=rmarkdown:.rmd.Rmd
+--regex-rmarkdown=/^([#]+[[:space:]]+.+)/\1/s,sections,Markdown Headings/
+--regex-rmarkdown=/(^|[^!\\])\[([^!]([^]]|\\\])*)\]\(/\2/l,links,Markdown Links/
+--regex-rmarkdown=/!\[(([^]]|\\\])+)\]\(/\1/i,images,Markdown Image/
+--regex-rmarkdown=/^```{r[[:blank:]]+([^,}]+)[,}]/\1/r,snippets,R Snippets/
+
+--sort=no

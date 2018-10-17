@@ -1,5 +1,0 @@
-# Fix the problematic F1-F4 key mappings in screenrc
-termcapinfo xterm 'k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS'
-
-# Use short name
-term rxvt-256color

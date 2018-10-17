@@ -59,7 +59,7 @@ ln -s ${PWD}/labnote ${XDG_CONFIG_HOME}/labnote
 ln -s ${PWD}/ranger ${XDG_CONFIG_HOME}/ranger
 
 # Everything else
-for path in "dir_colors" "gitconfig" "gitignore_global" \
+for path in "ctags dir_colors" "gitconfig" "gitignore_global" \
             "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "xinitrc" "xmodmaprc" "Xresources" \
 	    "xprofile"; do
