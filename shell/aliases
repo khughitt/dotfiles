@@ -18,6 +18,12 @@ alias gitlog="git log --graph --decorate --all --oneline"
 # rtichoke
 alias rt=rtichoke
 
+# ipython
+alias ipy=ipython
+
+# tabview
+alias t=tabview
+
 # doesn't support neovim
 #alias v='f -t -e vim -b viminfo'
 alias tm='todotxt-machine'
@@ -36,7 +42,7 @@ alias pcd='yaourt -Syua --devel'
 #alias pup='pip2 freeze --local | grep -v '^\-e' | cut -d = -f 1 | xargs pip2 install -U'
 
 alias hl='src-hilite-lesspipe.sh'
-alias t='todo.sh -d $HOME/Dropbox/dotfiles/todo.cfg'
+#alias t='todo.sh -d $HOME/Dropbox/dotfiles/todo.cfg'
 
 alias qpython='ipython2 qtconsole --colors=linux --pylab'
 
