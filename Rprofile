@@ -90,10 +90,23 @@ if (interactive()) {
     }
 }
 
+#
 # Helper functions
-# https://csgillespie.github.io/efficientR/3-3-r-startup.html
+#
+# Defined in a separate hidden environment
+# (https://csgillespie.github.io/efficientR/3-3-r-startup.html)
+#
 .env <- new.env()
-.env$hh <- function(d) d[1:min(3, nrow(d)), 1:min(3, ncol(d))]
+
+# show first three columns and rows of a matrix / dataframe
+.env$hh  <- function(dat) {
+  dat[1:min(3, nrow(dat)), 1:min(3, ncol(dat))]
+}
+
+# number of nas by column or row
+.env$nna <- function(dat, axis = 1) {
+  apply(dat, axis, function (x) { sum(is.na(x)) })
+}
 attach(.env)
 
 # Default HISTORY file

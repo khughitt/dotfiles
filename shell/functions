@@ -4,7 +4,7 @@ function h {
 }
 
 # Syntax highlighting with less
-function src {
+function les {
     /usr/bin/src-hilite-lesspipe.sh "$1" | less -R
 }
 

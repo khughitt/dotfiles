@@ -12,6 +12,8 @@ fi
 
 alias lc='colorls -r'
 
+alias rmf="rm -rf"
+
 # https://twitter.com/amuellerml/status/779001124317650945?s=03
 alias gitlog="git log --graph --decorate --all --oneline"
 

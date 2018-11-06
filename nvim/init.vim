@@ -59,6 +59,13 @@ nmap <leader>z :wq<cr>
 nnoremap Q q
 nnoremap q <nop>
 
+" home/end key tmux work-around
+" https://github.com/neovim/neovim/issues/9012
+inoremap <C-a> <Home>
+inoremap <C-e> <End>
+noremap <C-a> <Home>
+noremap <C-e> <End>
+
 " Autosave on leaving insert mode
 " http://stackoverflow.com/questions/9087582/how-to-autosave-in-vim-7-when-focus-is-lost-from-the-window
 autocmd InsertLeave * if expand('%') != '' | update | endif
@@ -83,8 +90,6 @@ call plug#begin()
     "Plug 'hkupty/iron.nvim'
     Plug 'bfredl/nvim-ipy'
     Plug 'jalvesaq/Nvim-R'
-    Plug 'junegunn/goyo.vim'
-    Plug 'junegunn/limelight.vim'
     Plug 'kshenoy/vim-signature'
     Plug 'lilydjwg/colorizer'
     Plug 'machakann/vim-textobj-delimited'
@@ -106,6 +111,8 @@ call plug#begin()
     "Plug 'vim-syntastic/syntastic'
     Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
+    Plug 'ryanoasis/vim-devicons'
+    Plug 'wellle/targets.vim'
 
     "Plug 'garbas/vim-snipmate'
     "Plug 'haya14busa/incsearch.vim'
@@ -121,6 +128,16 @@ call plug#begin()
     Plug 'joshdick/onedark.vim'
     Plug 'whatyouhide/vim-gotham'
     Plug 'zanloy/vim-colors-grb256'
+    Plug 'agreco/vim-citylights'
+    Plug 'Dru89/vim-adventurous'
+    Plug 'yuttie/hydrangea-vim'
+    Plug 'lu-ren/SerialExperimentsLain'
+    Plug 'danilo-augusto/vim-afterglow'
+    Plug 'davidklsn/vim-sialoquent'
+    Plug 'dikiaap/minimalist'
+    Plug 'cseelus/vim-colors-tone'
+    Plug 'connorholyday/vim-snazzy'
+    Plug 'dracula/vim', { 'as': 'dracula' }
 call plug#end()
 
 " ----------------------------------------------------------------------------
@@ -465,24 +482,6 @@ let g:colorscheme_switcher_exclude = [
             \'blue', 'darkblue', 'default', 'delek', 'desert', 'elflord',
             \'evening', 'fi', 'gotham256', 'hybrid', 'hybrid-light', 'industry', 'koehler',
             \'morning', 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'slate', 'torte', 'zellner']
-
-" ---------------------------------------------------------------------------
-"  goyo.vim
-" ---------------------------------------------------------------------------
-function! GoyoBefore()
-  Limelight
-endfunction
-
-function! GoyoAfter()
-  Limelight!
-  set background=dark
-  "colorscheme hemisu
-  colorscheme sweyla708971
-endfunction
-
-let g:goyo_callbacks = [function('GoyoBefore'), function('GoyoAfter')]
-
-nnoremap <leader><space> :Goyo<CR>
 
 " ---------------------------------------------------------------------------
 "  gundo.vim

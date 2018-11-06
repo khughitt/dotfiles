@@ -208,6 +208,12 @@ unset __conda_setup
 # Map caps lock to <Esc>
 xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 
+# fzf
+if [ -e /usr/share/fzf/key-bindings.zsh ]; then
+    source /usr/share/fzf/key-bindings.zsh
+    source /usr/share/fzf/completion.zsh
+fi
+
 # Torch
 #if [ -e ~/torch/install/bin/torch-activate ]; then
 #    source ~/torch/install/bin/torch-activate
