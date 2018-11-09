@@ -1,75 +1,43 @@
+################################################################################
 #
 # Aliases
 #
+################################################################################
+
+# navigation
+alias cl='colorls'
 alias ll='ls -halF'
 alias la='ls -A'
-
-if [ $(type "ls++" &> /dev/null) ]; then
-    alias l='ls++'
-else
-    alias l='ls -lh'
-fi
-
-alias lc='colorls -r'
-
-alias rmf="rm -rf"
-
-# https://twitter.com/amuellerml/status/779001124317650945?s=03
-alias gitlog="git log --graph --decorate --all --oneline"
-
-# rtichoke
-alias rt=rtichoke
-
-# ipython
-alias ipy=ipython
-
-# tabview
-alias t=tabview
-
-# doesn't support neovim
-#alias v='f -t -e vim -b viminfo'
-alias tm='todotxt-machine'
+alias l='colorls -l'
 
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
+
+alias rmf="rm -rf"
+
+alias r=rtichoke
+alias ra=ranger
+alias ipy=ipython
+alias t=tabview
+
+alias vim=nvim
+
+alias open='xdg-open'
+
+alias tm='todotxt-machine'
+#alias t='todo.sh -d $HOME/Dropbox/dotfiles/todo.cfg'
 
 if [ $(type "colormake" &> /dev/null) ]; then
     alias make='colormake'
 fi
 
 alias rc='random_country.py'
-alias ap='sudo apt-get update && sudo apt-get dist-upgrade'
 alias pc='yaourt -Syua'
 alias pcd='yaourt -Syua --devel'
-#alias pup='pip2 freeze --local | grep -v '^\-e' | cut -d = -f 1 | xargs pip2 install -U'
 
-alias hl='src-hilite-lesspipe.sh'
-#alias t='todo.sh -d $HOME/Dropbox/dotfiles/todo.cfg'
-
-alias qpython='ipython2 qtconsole --colors=linux --pylab'
-
-alias open='xdg-open'
-alias del='mv -t ~/.local/share/Trash/files --backup=t'
-alias wtf="watch -n 1 w -hs"
-alias wth="ps uxa | less"
-alias da='date "+%A, %B %d, %Y [%T]"'
-alias du1='du --max-depth=1'
 alias pg='ps -Af | grep $1'
-alias lg='ls | grep $1'
-
-alias openports='netstat --all --numeric --programs --inet'
-alias apache_nc="ps -def | grep apache2 | grep -v grep | wc -l"
-alias apache_cm="ps -ylC apache2 --sort:rss"
 
 alias diff='diff --color=auto'
-
-# http://www.zzapper.co.uk/zshtips.html
-alias blue='colortest visiblue'
-
-if [[ "$0" == 'zsh' ]]; then
-    alias -g ND='*(/om[1])' # newest directory
-    alias -g NF='*(.om[1])' # newest file
-fi
 
 # termbin
 # example usage: echo just testing! | tb

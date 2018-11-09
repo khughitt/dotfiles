@@ -36,16 +36,8 @@ function xumt() {
 
 # Automatically launch tmux when connecting via SSH
 if [[ "$TERM" != (screen|tmux)-* ]] && [ ! -z "$SSH_CLIENT" ]; then
-    # Fix DISPLAY variables
-    # http://yubinkim.com/?p=203
-    #for name in `tmux ls -F '#{session_name}'`; do
-    #    tmux setenv -g -t $name DISPLAY $DISPLAY #set display for all sessions
-    #done
-
-    # Attempt to discover a detached session and attach 
-    # it, else create a new session
+    # Attempt to discover a detached session and attach  it, else create a new session
     xumt $TMUX_SESSION
-
     # Exit on unattach
     exit
 fi
@@ -57,7 +49,7 @@ else
     export vconsole=false
 fi
 
-# Use Xresrouces to set TTY colors
+# Use Xresrouces to set TTY colors for virtual console sessions
 if $vconsole; then
     COLORFILE=$(grep --color='never' -o "/.*termcolors/[a-z1-9\-]*" $HOME/.Xresources)
     _SEDCMD='s/.*\*color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
@@ -97,7 +89,7 @@ alias v='f -e nvim'
 
 # Suffix aliases
 alias -s doc=lowriter
-alias -s pdf=evince
+alias -s pdf=zathura
 alias -s html=chromium
 alias -s org=chromium
 alias -s com=chromium
@@ -109,7 +101,7 @@ alias -s Rmd=vim
 # Disable scroll lock
 stty -ixon
 
-# vim key bindings
+# vi-mode key bindings
 # http://dougblack.io/words/zsh-vi-mode.html
 #bindkey -v
 
@@ -153,25 +145,21 @@ stty -ixon
 # Reduce lag when switching between modes
 #export KEYTIMEOUT=1
 
-# Urxvt keybindings
+# urxvt keybindings
 if [[ "${TERM}" == rxvt-* ]]
 then
-    source ~/.shell/key_bindings
+    source ~/.shell/urxvt
 fi
 
 # dir colors
 eval $(dircolors -b ~/.dir_colors)
 
-# Hostname
+# hostname
 if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
-# TEMP work-around for oh-my-zsh deprecated grep options
-alias grep="grep ${GREP_OPTIONS}"
-unset GREP_OPTIONS
-
-# Local settings (late settings)
+# local settings (late settings)
 if [ -e ~/.zsh_local_late ]; then
     source ~/.zsh_local_late
 fi
@@ -180,16 +168,7 @@ function ztabview() {
     zcat $1 | tabview -
 }
 
-# Virtualenvwrapper
-# source $(which virtualenvwrapper.sh)
-
-# PATH
-PATH=~/.cabal/bin:~/software/tabulator/bin:$PATH
-
 ZSHRC_LOADED='true'
-
-# Neovim
-alias vim=nvim
 
 # Anaconda
 __conda_setup="$(CONDA_REPORT_ERRORS=false '$HOME/anaconda3/bin/conda' shell.bash hook 2> /dev/null)"

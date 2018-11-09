@@ -20,6 +20,9 @@ options(showWarnCalls = T, showErrorCalls = T)
 options(warning.length = 8170)
 options(width = 100)
 
+# this may help speed up some plots over ssh (use per-connection)
+#X11.options(type = 'Xlib')
+
 # tab complete package names and allow fuzzy case completion
 utils::rc.settings(ipck = TRUE, fuzzy = TRUE)
 

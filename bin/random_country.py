@@ -7,7 +7,7 @@ import subprocess
 from urllib.parse import quote
 
 # load country list
-filepath = os.path.expanduser('~/Dropbox/Documents/countries.txt')
+filepath = os.path.expanduser('~/d/documents/countries.txt')
 countries = [x.strip() for x in open(filepath).readlines()]
 
 # choose random country

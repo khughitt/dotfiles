@@ -113,6 +113,10 @@ call plug#begin()
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'ryanoasis/vim-devicons'
     Plug 'wellle/targets.vim'
+    Plug '/usr/share/vim/vimfiles'
+    Plug 'junegunn/fzf.vim'
+    Plug 'yuttie/comfortable-motion.vim'
+    Plug 'severin-lemaignan/vim-minimap'
 
     "Plug 'garbas/vim-snipmate'
     "Plug 'haya14busa/incsearch.vim'
@@ -123,7 +127,7 @@ call plug#begin()
     "Plug 'tpope/vim-repeat'
 
     " themes
-    Plug 'fenetikm/falcon'
+    Plug 'dracula/vim', { 'as': 'dracula' }
     Plug 'jacoborus/tender.vim'
     Plug 'joshdick/onedark.vim'
     Plug 'whatyouhide/vim-gotham'
@@ -137,15 +141,15 @@ call plug#begin()
     Plug 'dikiaap/minimalist'
     Plug 'cseelus/vim-colors-tone'
     Plug 'connorholyday/vim-snazzy'
-    Plug 'dracula/vim', { 'as': 'dracula' }
+    Plug 'fenetikm/falcon'
 call plug#end()
 
-" ----------------------------------------------------------------------------
-"   Highlight Trailing Whitespace
-" ----------------------------------------------------------------------------
+" TESTING
+noremap <silent> <ScrollWheelDown> :call comfortable_motion#flick(40)<CR>
+noremap <silent> <ScrollWheelUp>   :call comfortable_motion#flick(-40)<CR>
 
-"set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+
-highlight SpecialKey ctermfg=DarkGray ctermbg=Black
+let g:minimap_highlight='Visual'
+let g:minimap_toggle='<leader>mm'
 
 " ----------------------------------------------------------------------------
 "  Backups
@@ -342,18 +346,19 @@ set background=dark
 "colorscheme sweyla721647
 "colorscheme sweyla939829
 "colorscheme sweyla708971
-"colorscheme falcon
-colorscheme gotham
+"colorscheme gotham
+"colorscheme SerialExperimentsLain
+colorscheme dracula
 
 "not working with recent versions
 "highlight ColorColumn ctermbg=234 guibg=#222222
 
 " NeoVim tmux support
 " https://github.com/neovim/neovim/issues/2528
-if &term =~ '^screen'
-    hi Normal ctermbg=NONE
-    set noshowcmd
-endif
+"if &term =~ '^screen'
+    "hi Normal ctermbg=NONE
+    "set noshowcmd
+"endif
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
@@ -398,6 +403,13 @@ set clipboard=unnamed
 " work-around to preserve yank buffer when pasting; the solution below first
 " deletes selected text to an unused register
 xnoremap p "_dP
+
+" ----------------------------------------------------------------------------
+"   Highlight Trailing Whitespace
+" ----------------------------------------------------------------------------
+
+"set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+
+highlight SpecialKey ctermfg=DarkGray ctermbg=Black
 
 " ---------------------------------------------------------------------------
 "  Backup and undo
@@ -598,8 +610,7 @@ call denite#custom#var('file/rec', 'command',
 
 " Ag command on grep source settings (<leader>/)
 call denite#custom#var('grep', 'command', ['ag'])
-call denite#custom#var('grep', 'default_opts',
-        \ ['-i', '--vimgrep'])
+call denite#custom#var('grep', 'default_opts', ['-i', '--vimgrep'])
 call denite#custom#var('grep', 'recursive_opts', [])
 call denite#custom#var('grep', 'pattern_opt', [])
 call denite#custom#var('grep', 'separator', ['--'])
@@ -613,35 +624,61 @@ call denite#custom#filter('matcher/ignore_globs', 'ignore_globs',
 " reset 50% winheight on window resize
 augroup deniteresize
   autocmd!
-  autocmd VimResized,VimEnter * call denite#custom#option('default',
-        \'winheight', winheight(0) / 2)
+  autocmd VimResized,VimEnter * call denite#custom#option('default', 'winheight', winheight(0) / 2)
 augroup end
 
-call denite#custom#option('default', {
-      \ 'prompt': '❯'
-      \ })
+call denite#custom#option('default', { 'prompt': '❯' })
 
-call denite#custom#map('insert', '<Esc>', '<denite:enter_mode:normal>',
-      \'noremap')
-call denite#custom#map('normal', '<Esc>', '<NOP>',
-      \'noremap')
-call denite#custom#map('insert', '<C-v>', '<denite:do_action:vsplit>',
-      \'noremap')
-call denite#custom#map('normal', '<C-v>', '<denite:do_action:vsplit>',
-      \'noremap')
-call denite#custom#map('normal', 'dw', '<denite:delete_word_after_caret>',
-      \'noremap')
+call denite#custom#map('insert', '<Esc>', '<denite:enter_mode:normal>',       'noremap')
+call denite#custom#map('normal', '<Esc>', '<NOP>',                            'noremap')
+call denite#custom#map('insert', '<C-v>', '<denite:do_action:vsplit>',        'noremap')
+call denite#custom#map('normal', '<C-v>', '<denite:do_action:vsplit>',        'noremap')
+call denite#custom#map('normal', 'dw',    '<denite:delete_word_after_caret>', 'noremap')
 
-nnoremap <C-p> :<C-u>Denite file_rec<CR>
+nnoremap <C-p>     :<C-u>Denite file_rec<CR>
+nnoremap <leader>d :<C-u>DeniteBufferDir file_rec<CR>
+nnoremap <leader>o :<C-u>Denite file_old<CR>
+nnoremap <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
 nnoremap <leader>s :<C-u>Denite buffer<CR>
-nnoremap <leader><Space>s :<C-u>DeniteBufferDir buffer<CR>
 nnoremap <leader>8 :<C-u>DeniteCursorWord grep:. -mode=normal<CR>
 nnoremap <leader>/ :<C-u>Denite grep:. -mode=normal<CR>
+nnoremap <leader><Space>s :<C-u>DeniteBufferDir buffer<CR>
 nnoremap <leader><Space>/ :<C-u>DeniteBufferDir grep:. -mode=normal<CR>
-nnoremap <leader>d :<C-u>DeniteBufferDir file_rec<CR>
-nnoremap <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
 
 hi link deniteMatchedChar Special
+
+" ---------------------------------------------------------------------------
+"  fzf.vim
+" ---------------------------------------------------------------------------
+let g:fzf_layout = { 'window': 'enew' }
+"let g:fzf_layout = { 'window': '-tabnew' }
+"let g:fzf_layout = { 'window': '10split enew' }
+"let g:fzf_layout = { 'down': '~40%' }
+"
+
+nmap <leader><tab> <plug>(fzf-maps-n)
+xmap <leader><tab> <plug>(fzf-maps-x)
+omap <leader><tab> <plug>(fzf-maps-o)
+
+imap <c-x><c-k> <plug>(fzf-complete-word)
+imap <c-x><c-f> <plug>(fzf-complete-path)
+imap <c-x><c-j> <plug>(fzf-complete-file-ag)
+imap <c-x><c-l> <plug>(fzf-complete-line)
+
+let g:fzf_colors =
+\ { 'fg':      ['fg', 'Normal'],
+  \ 'bg':      ['bg', 'Normal'],
+  \ 'hl':      ['fg', 'Comment'],
+  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+  \ 'hl+':     ['fg', 'Statement'],
+  \ 'info':    ['fg', 'PreProc'],
+  \ 'border':  ['fg', 'Ignore'],
+  \ 'prompt':  ['fg', 'Conditional'],
+  \ 'pointer': ['fg', 'Exception'],
+  \ 'marker':  ['fg', 'Keyword'],
+  \ 'spinner': ['fg', 'Label'],
+  \ 'header':  ['fg', 'Comment'] }
 
 " ---------------------------------------------------------------------------
 "  yankring.vim
@@ -771,6 +808,8 @@ vmap <Space> <Plug>RDSendSelection
 nmap <Space> <Plug>RDSendLine
 vmap <C-M> <Plug>RDSendSelection
 nmap <C-M> <Plug>RDSendLine
+
+nmap <silent> <LocalLeader>h :call RAction("hh", "@,48-57,_,.")<CR>
 
 " Knitr
 "nmap <C-A-c> <Plug>RDSendChunk

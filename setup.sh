@@ -48,6 +48,14 @@ ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 # Xresources themes
 ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 
+# rofi
+mkdir -p ${XDG_CONFIG_HOME}/rofi
+ln -s ${PWD}/rofi ${XDG_CONFIG_HOME}/rofi/config
+
+# Sway
+mkdir -p ${XDG_CONFIG_HOME}/sway
+ln -s ${PWD}/sway ${XDG_CONFIG_HOME}/sway/config
+
 # Termite
 mkdir -p ${XDG_CONFIG_HOME}/termite
 ln -s ${PWD}/termite ${XDG_CONFIG_HOME}/termite/config
@@ -65,6 +73,9 @@ for path in "ctags dir_colors" "gitconfig" "gitignore_global" \
 	    "xprofile"; do
     ln_s ${PWD}/${path} ~/.${path}
 done
+
+# Copy Xresources to Xdefaults for sway
+ln_s ${PWD)/Xresources ~/.Xdefaults
 
 # scripts, etc.
 ln -s ${PWD}/bin ~/

@@ -6,7 +6,7 @@ Xcursor.theme: XcursorAero
 !!
 !! Colour Scheme
 !!
-#include "/home/keith/Dropbox/dotfiles/termcolors/dark"
+#include "/home/keith/d/dotfiles/termcolors/dark"
 
 !!
 !! xft
@@ -49,7 +49,7 @@ URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=22,-m
 !URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,\
 !                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
 URxvt*termName:          rxvt-256color
-URxvt.iconFile:          /home/keith/Dropbox/linux/.icons/Crashbit/128x128/apps/terminal.png
+URxvt.iconFile:          /home/keith/d/linux/.icons/Crashbit/128x128/apps/terminal.png
 
 !! Control + arrow key navigation
 URxvt.keysym.Control-Up:    \033[1;5A
