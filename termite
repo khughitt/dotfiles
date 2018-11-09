@@ -5,40 +5,50 @@ font = Hack 11
 scrollback_lines = 9192
 
 [colors]
-# special
-foreground      = #fff
-foreground_bold = #fff
-cursor          = #fff
-background      = #020001
+# Base16 Dracula
+# Author: Mike Barkmin (http://github.com/mikebarkmin) based on Dracula Theme (http://github.com/dracula)
+foreground          = #e9e9f4
+foreground_bold     = #f1f2f8
+cursor              = #f1f2f8
+cursor_foreground   = #282936
+background          = rgba(40, 41, 54)
 
-# black
-color0  = #313030
-color8  = #1b191a
+# 16 color space
 
-# red
-color1  = #51a446
-color9  = #8dcb85
+# Black, Gray, Silver, White
+color0  = #282936
+color8  = #4d4f68
+color7  = #e9e9f4
+color15 = #f7f7fb
 
-# green
-color2  = #009983
-color10 = #00ffda
+# Red
+color1  = #ea51b2
+color9  = #ea51b2
 
-# yellow
-color3  = #007bdd
-color11 = #44acff
+# Green
+color2  = #00f769
+color10 = #00f769
 
-# blue
-color4  = #4cc3ff
-color12 = #b2e5ff
+# Yellow
+color3  = #ebff87
+color11 = #ebff87
 
-# magenta
-color5  = #007099
-color13 = #00baff
+# Blue
+color4  = #62d6e8
+color12 = #62d6e8
 
-# cyan
-color6  = #14d1de
-color14 = #67e8f1
+# Purple
+color5  = #b45bcf
+color13 = #b45bcf
 
-# white
-color7  = #fff
-color15 = #fff
+# Teal
+color6  = #a1efe4
+color14 = #a1efe4
+
+# Extra colors
+color16 = #b45bcf
+color17 = #00f769
+color18 = #3a3c4e
+color19 = #626483
+color20 = #62d6e8
+color21 = #f1f2f8

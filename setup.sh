@@ -48,6 +48,9 @@ ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 # Xresources themes
 ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 
+# colorls
+ln -s ${PWD}/colorls ${XDG_CONFIG_HOME}/colorls
+
 # rofi
 mkdir -p ${XDG_CONFIG_HOME}/rofi
 ln -s ${PWD}/rofi ${XDG_CONFIG_HOME}/rofi/config

@@ -8,7 +8,7 @@
 alias cl='colorls'
 alias ll='ls -halF'
 alias la='ls -A'
-alias l='colorls -l'
+alias l='colorls -l --sd'
 
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'

@@ -309,8 +309,8 @@ set t_ut=""
 set termguicolors
 
 " use colorscheme for R output
-"let g:rout_follow_colorscheme = 1
-"let g:Rout_more_colors = 1
+let g:rout_follow_colorscheme = 1
+let g:Rout_more_colors = 1
 
 " fix control/shift + arrow keys in screen
 " http://superuser.com/questions/401926/how-to-get-shiftarrows-and-ctrlarrows-working-in-vim-in-tmux
