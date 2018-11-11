@@ -1,0 +1,66 @@
+#
+# i3status config
+# kh nov.2018
+# 
+# adapted from https://gist.github.com/rafi/6063132
+#
+general {
+    colors = true
+    color_good = "#00f769"
+    color_degraded = "#ebff87"
+    color_bad = "#ea51b2"
+    interval = 5
+}
+
+# dracula
+
+
+
+order += "disk /"
+order += "sysdata"
+order += "spotify"
+order += "dropboxd_status"
+order += "volume_status"
+order += "wifi"
+order += "pomodoro"
+order += "tztime local"
+
+disk "/" {
+        format = " %avail "
+}
+
+dropboxd_status {
+    format = " d: {status} "
+}
+
+pomodoro {
+    format = "{mmss}"
+}
+
+spotify {
+    button_next = 4
+    button_play_pause = 1
+    button_previous = 5
+    format = " {title} by {artist} -> {time} "
+    format_down = " no Spotify "
+}
+
+sysdata {
+    format = "mem: {mem_used}G ({mem_used_percent}%) load: {load1} "
+}
+
+tztime local {
+        format = " %Y-%m-%d %H:%M:%S "
+}
+
+volume master {
+	format = " ♪: %volume  " 
+	device = "default"
+	mixer = "Master"
+	mixer_idx = 0
+}
+
+wifi {
+    format = " w: {ssid} ({signal_percent}) "
+}
+

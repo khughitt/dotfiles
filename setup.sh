@@ -51,13 +51,17 @@ ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 # colorls
 ln -s ${PWD}/colorls ${XDG_CONFIG_HOME}/colorls
 
+# Sway
+mkdir -p ${XDG_CONFIG_HOME}/sway
+ln -s ${PWD}/sway ${XDG_CONFIG_HOME}/sway/config
+
 # rofi
 mkdir -p ${XDG_CONFIG_HOME}/rofi
 ln -s ${PWD}/rofi ${XDG_CONFIG_HOME}/rofi/config
 
-# Sway
-mkdir -p ${XDG_CONFIG_HOME}/sway
-ln -s ${PWD}/sway ${XDG_CONFIG_HOME}/sway/config
+# i3status
+mkdir -p ${XDG_CONFIG_HOME}/i3status
+ln -s ${PWD}/i3status ${XDG_CONFIG_HOME}/i3status/config
 
 # Termite
 mkdir -p ${XDG_CONFIG_HOME}/termite

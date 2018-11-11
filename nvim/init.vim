@@ -393,7 +393,7 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 "  Copy and Paste
 " ---------------------------------------------------------------------------
 
-" Remap vim register to CLIPBOARD selection
+" Remap vim register to PRIMARY selection
 " unamed        PRIMARY   (middlemouse)
 " unamedplus    CLIPBOARD (control v)
 " autoselect    Automatically save visual selections
