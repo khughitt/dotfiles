@@ -168,22 +168,18 @@ bindsym $mod+a focus parent
 #-------------------------------------------------------------------------------
 # Scratchpad
 #-------------------------------------------------------------------------------
-# Move the currently focused window to the scratchpad
-bindsym $mod+Shift+i move scratchpad
 
-# Show the next scratchpad window or hide the focused scratchpad window.
-# If there are multiple scratchpad windows, this command cycles through them.
-bindsym $mod+i scratchpad show, resize set 1440 810
+# console terminte (alt + enter)
+exec termite --name=terminal_scratchpad
 
-#bindsym Mod1+Shift+Return exec --no-startup-id termite --name=terminal_scratchpad --geometry=1920x480
-#exec_always --no-startup-id termite --name=terminal_scratchpad --geometry 1920x480
-#exec_always --no-startup-id termite --name=r_scratchpad --geometry 1920x480
+# R terminal (alt + space)
+exec termite --name=r_scratchpad -e R
 
-bindsym Mod1+Return [instance="terminal_scratchpad"] scratchpad show
-bindsym Mod1+space [instance="r_scratchpad"] scratchpad show
+for_window [app_id="terminal_scratchpad"] move scratchpad, resize set 1440 810
+for_window [app_id="r_scratchpad"] move scratchpad, resize set 1440 810
 
-for_window [instance="terminal_scratchpad"] move scratchpad, border 1pixel
-for_window [instance="r_scratchpad"] move scratchpad, border 1pixel
+bindsym Mod1+Return [app_id="terminal_scratchpad"] scratchpad show
+bindsym Mod1+space [app_id="r_scratchpad"] scratchpad show
 
 #
 # Media keys:
