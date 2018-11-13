@@ -22,7 +22,7 @@ set $term termite
 set $menu rofi -show run
 
 #-------------------------------------------------------------------------------
-#  Display
+#  Appearance
 #-------------------------------------------------------------------------------
 
 # wallpaper
@@ -31,9 +31,20 @@ output * bg /home/keith/d/linux/backgrounds/02727_mossy_1920x1200.jpg fill
 # font
 font pango:Droid Sans Mono 10
 
+# window borders
+for_window [class="^.*"] border pixel 0
+hide_edge_borders smart_no_gaps
+default_border pixel 2
+
 # gaps
-gaps inner 20
 smart_gaps on
+gaps inner 20
+
+# colors
+client.focused          #ea51b2 #d1499f #282936 #a1efe4 #ea51b2 
+client.focused_inactive #3a3c4e #626483 #f7f7fb #3a3c4e #3a3c4e
+client.unfocused        #3a3c4e #282936 #626483 #292d2e #3a3c4e
+client.urgent           #3a3c4e #ebff87 #626483 #ebff87 #3a3c4e
 
 #-------------------------------------------------------------------------------
 #  Input
@@ -54,7 +65,7 @@ smart_gaps on
 bindsym $mod+Return exec $term
 
 # kill focused window
-bindsym $mod+Shift+q kill
+bindsym $mod+q kill
 
 # start your launcher
 bindsym $mod+p exec $menu
@@ -101,10 +112,10 @@ bindsym $mod+Shift+Right move right
 #
 
 # switch to workspace
-bindsym $mod+1 workspace 1
-bindsym $mod+2 workspace 2
-bindsym $mod+3 workspace 3
-bindsym $mod+4 workspace 4
+bindsym $mod+1 workspace 📖
+bindsym $mod+2 workspace # 
+bindsym $mod+3 workspace 🌎
+bindsym $mod+4 workspace ♫
 bindsym $mod+5 workspace 5
 bindsym $mod+6 workspace 6
 bindsym $mod+7 workspace 7
@@ -113,10 +124,10 @@ bindsym $mod+9 workspace 9
 bindsym $mod+0 workspace 10
 
 # move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace 1
-bindsym $mod+Shift+2 move container to workspace 2
-bindsym $mod+Shift+3 move container to workspace 3
-bindsym $mod+Shift+4 move container to workspace 4
+bindsym $mod+Shift+1 move container to workspace 📖
+bindsym $mod+Shift+2 move container to workspace #
+bindsym $mod+Shift+3 move container to workspace 🌎
+bindsym $mod+Shift+4 move container to workspace ♫
 bindsym $mod+Shift+5 move container to workspace 5
 bindsym $mod+Shift+6 move container to workspace 6
 bindsym $mod+Shift+7 move container to workspace 7
@@ -124,8 +135,8 @@ bindsym $mod+Shift+8 move container to workspace 8
 bindsym $mod+Shift+9 move container to workspace 9
 bindsym $mod+Shift+0 move container to workspace 10
 
-# Note: workspaces can have any name you want, not just numbers.
-# We just use 1-10 as the default.
+# default ref workspace to left monitor
+#workspace "📖" output XWAYLAND1
 
 #
 # Layout
@@ -162,7 +173,7 @@ bindsym $mod+Shift+i move scratchpad
 
 # Show the next scratchpad window or hide the focused scratchpad window.
 # If there are multiple scratchpad windows, this command cycles through them.
-bindsym $mod+i scratchpad show
+bindsym $mod+i scratchpad show, resize set 1440 810
 
 #bindsym Mod1+Shift+Return exec --no-startup-id termite --name=terminal_scratchpad --geometry=1920x480
 #exec_always --no-startup-id termite --name=terminal_scratchpad --geometry 1920x480

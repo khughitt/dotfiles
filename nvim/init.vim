@@ -214,10 +214,10 @@ set tabstop=4
 set expandtab               " expand tabs to spaces
 set smarttab
 "set nosmarttab             " no tabs
-set textwidth=99          " stick to less than 100 chars per line when possible
+set textwidth=99            " stick to less than 100 chars per line when possible
 set formatoptions+=n        " support for numbered/bullet lists
 set virtualedit=block       " allow virtual edit in visual block ..
-set pastetoggle=<F6>        " paste-mode toggle
+set pastetoggle=<F6>        " paste-mode toggle (other insert plugins disable in paste mode)
 
 " Shortuct to toggle textwidth wrapping
 nmap <silent><localleader>r :call ToggleTextWidth()<CR>

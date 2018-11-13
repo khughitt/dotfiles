@@ -1,7 +1,7 @@
 [options]
 #font = Droid Sans Mono 11
 #font = Terminus (TTF) 11
-font = Hack 11
+font = Hack 12
 scrollback_lines = 9192
 
 [colors]
@@ -11,7 +11,7 @@ foreground          = #e9e9f4
 foreground_bold     = #f1f2f8
 cursor              = #f1f2f8
 cursor_foreground   = #282936
-background          = rgba(40, 41, 54)
+background          = rgba(40, 41, 54, 0.95)
 
 # 16 color space
 

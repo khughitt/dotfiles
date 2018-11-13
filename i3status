@@ -16,9 +16,9 @@ general {
 
 
 
-order += "disk /"
+#order += "disk /"
 order += "sysdata"
-order += "spotify"
+#order += "spotify"
 order += "dropboxd_status"
 order += "volume_status"
 order += "wifi"
