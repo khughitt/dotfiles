@@ -55,6 +55,9 @@ ln -s ${PWD}/colorls ${XDG_CONFIG_HOME}/colorls
 mkdir -p ${XDG_CONFIG_HOME}/sway
 ln -s ${PWD}/sway ${XDG_CONFIG_HOME}/sway/config
 
+# redshift
+ln -s ${PWD}/redshift ${XDG_CONFIG_HOME}/redshift.conf
+
 # rofi
 mkdir -p ${XDG_CONFIG_HOME}/rofi
 ln -s ${PWD}/rofi ${XDG_CONFIG_HOME}/rofi/config
