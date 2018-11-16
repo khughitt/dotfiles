@@ -4,6 +4,8 @@
 # 
 # adapted from https://gist.github.com/rafi/6063132
 #
+
+# dracula colorscheme
 general {
     colors = true
     color_good = "#00f769"
@@ -12,13 +14,10 @@ general {
     interval = 5
 }
 
-# dracula
-
-
 
 #order += "disk /"
 order += "sysdata"
-#order += "spotify"
+order += "spotify"
 order += "dropboxd_status"
 order += "volume_status"
 order += "wifi"

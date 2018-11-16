@@ -19,14 +19,15 @@ set $right l
 set $term termite
 
 # Your preferred application launcher
-set $menu rofi -show run
+#set $menu rofi -show run
+set $menu rofi -show drun
 
 #-------------------------------------------------------------------------------
 #  Appearance
 #-------------------------------------------------------------------------------
 
 # wallpaper
-output * bg /home/keith/d/linux/backgrounds/02727_mossy_1920x1200.jpg fill
+output * bg ~/d/linux/backgrounds/02727_mossy_1920x1200.jpg fill
 
 # font
 font pango:Droid Sans Mono 10
@@ -61,8 +62,12 @@ client.urgent           #3a3c4e #ebff87 #626483 #ebff87 #3a3c4e
 # general
 #
 
-# start a terminal
+# terminal
 bindsym $mod+Return exec $term
+
+# file browser
+bindsym $mod+n exec termite -e ranger
+
 
 # kill focused window
 bindsym $mod+q kill
@@ -135,6 +140,9 @@ bindsym $mod+Shift+8 move container to workspace 8
 bindsym $mod+Shift+9 move container to workspace 9
 bindsym $mod+Shift+0 move container to workspace 10
 
+# move workspace to different monitor
+bindsym $mod+m move workspace to output left
+
 # default ref workspace to left monitor
 #workspace "📖" output XWAYLAND1
 
@@ -165,15 +173,19 @@ bindsym $mod+space focus mode_toggle
 # move focus to the parent container
 bindsym $mod+a focus parent
 
+# application shortcuts
+#bindsym Mod1+backslash [class="Chromium"] focus, [app_id='terminal_scratchpad'] move scratchpad
+bindsym Mod1+backslash [class="Chromium"] focus
+
 #-------------------------------------------------------------------------------
 # Scratchpad
 #-------------------------------------------------------------------------------
 
 # console terminte (alt + enter)
-exec termite --name=terminal_scratchpad
+exec_always termite --name=terminal_scratchpad
 
 # R terminal (alt + space)
-exec termite --name=r_scratchpad -e R
+exec_always termite --name=r_scratchpad -e R
 
 for_window [app_id="terminal_scratchpad"] move scratchpad, resize set 1440 810
 for_window [app_id="r_scratchpad"] move scratchpad, resize set 1440 810
