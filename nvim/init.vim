@@ -654,7 +654,8 @@ let g:fzf_layout = { 'window': 'enew' }
 "let g:fzf_layout = { 'window': '-tabnew' }
 "let g:fzf_layout = { 'window': '10split enew' }
 "let g:fzf_layout = { 'down': '~40%' }
-"
+
+cmap <C-r> History:<CR>
 
 nmap <leader><tab> <plug>(fzf-maps-n)
 xmap <leader><tab> <plug>(fzf-maps-x)
@@ -810,9 +811,6 @@ vmap <C-M> <Plug>RDSendSelection
 nmap <C-M> <Plug>RDSendLine
 
 nmap <silent> <LocalLeader>h :call RAction("hh", "@,48-57,_,.")<CR>
-
-" Knitr
-"nmap <C-A-c> <Plug>RDSendChunk
 
 " wipe knitr cache and output
 nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("*_cache/*", recursive=TRUE)')<CR>
