@@ -49,11 +49,9 @@ nmap <leader>w :update<cr>
 nmap <leader>q :q<cr>
 nmap <leader>z :wq<cr>
 
-
 " Fast save (alt. method)
-" disabling for now to try out vim-ipython
-"inoremap <c-s> <c-o>:w<cr>
-"nnoremap <c-s> :w<cr>
+inoremap <c-s> <c-o>:w<cr>
+nnoremap <c-s> :w<cr>
 
 " remap macro recording to Q
 nnoremap Q q
@@ -108,7 +106,7 @@ call plug#begin()
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
     Plug 'vim-scripts/argtextobj.vim'
-    "Plug 'vim-syntastic/syntastic'
+    Plug 'vim-syntastic/syntastic'
     Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'ryanoasis/vim-devicons'
@@ -217,7 +215,7 @@ set smarttab
 set textwidth=99            " stick to less than 100 chars per line when possible
 set formatoptions+=n        " support for numbered/bullet lists
 set virtualedit=block       " allow virtual edit in visual block ..
-set pastetoggle=<F6>        " paste-mode toggle (other insert plugins disable in paste mode)
+set pastetoggle=<F6>        " paste-mode toggle
 
 " Shortuct to toggle textwidth wrapping
 nmap <silent><localleader>r :call ToggleTextWidth()<CR>
@@ -393,7 +391,7 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 "  Copy and Paste
 " ---------------------------------------------------------------------------
 
-" Remap vim register to PRIMARY selection
+" Remap vim register to CLIPBOARD selection
 " unamed        PRIMARY   (middlemouse)
 " unamedplus    CLIPBOARD (control v)
 " autoselect    Automatically save visual selections
@@ -696,17 +694,22 @@ let g:gutentags_exclude_project_root = ['/usr/local', '/cbcb/sw']
 " ---------------------------------------------------------------------------
 "  syntastic
 " ---------------------------------------------------------------------------
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 0
+let g:syntastic_check_on_wq = 0
+
+" r
 let g:syntastic_enable_r_lintr_checker = 1
-"let g:syntastic_always_populate_loc_list = 1
-"let g:syntastic_auto_loc_list = 1
-"let g:syntastic_check_on_open = 0
-"let g:syntastic_check_on_wq = 0
 let g:syntastic_r_checkers = ['lintr']
 let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL)"
 
-"set statusline+=%#warningmsg#
-"set statusline+=%{SyntasticStatuslineFlag()}
-"set statusline+=%*
+" python
+let g:syntastic_rst_checkers=['sphinx']
 
 " ---------------------------------------------------------------------------
 "  tagbar

@@ -85,7 +85,13 @@ unset file
 # Fasd
 alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
-alias v='f -e nvim'
+function v {
+    if [ -e" $1" ]; then
+       nvim $1
+    else
+       f -e nvim
+    fi
+}
 
 # Suffix aliases
 alias -s doc=lowriter

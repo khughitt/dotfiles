@@ -41,7 +41,7 @@ default_border pixel 2
 smart_gaps on
 gaps inner 20
 
-# colors
+# colors [dracula]
 client.focused          #ea51b2 #d1499f #282936 #a1efe4 #ea51b2 
 client.focused_inactive #3a3c4e #626483 #f7f7fb #3a3c4e #3a3c4e
 client.unfocused        #3a3c4e #282936 #626483 #292d2e #3a3c4e
@@ -71,6 +71,7 @@ bindsym $mod+n exec termite -e ranger
 
 # kill focused window
 bindsym $mod+q kill
+bindsym Mod1+F4 kill
 
 # start your launcher
 bindsym $mod+p exec $menu
@@ -176,6 +177,7 @@ bindsym $mod+a focus parent
 # application shortcuts
 #bindsym Mod1+backslash [class="Chromium"] focus, [app_id='terminal_scratchpad'] move scratchpad
 bindsym Mod1+backslash [class="Chromium"] focus
+bindsym Mod1+s [instance="spotify"] focus
 
 #-------------------------------------------------------------------------------
 # Scratchpad
@@ -199,6 +201,12 @@ bindsym Mod1+space [app_id="r_scratchpad"] scratchpad show
 bindsym XF86AudioRaiseVolume exec pactl set-sink-volume $(pacmd list-sinks |awk '/* index:/{print $3}') +5%
 bindsym XF86AudioLowerVolume exec pactl set-sink-volume $(pacmd list-sinks |awk '/* index:/{print $3}') -5%
 bindsym XF86AudioMute exec pactl set-sink-mute $(pacmd list-sinks |awk '/* index:/{print $3}') toggle
+
+# spotify
+bindsym XF86AudioPlay exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause"
+bindsym XF86AudioStop exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Stop"
+bindsym XF86AudioPrev exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Previous"
+bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Next"
 
 #
 # Resizing containers:
@@ -233,7 +241,7 @@ bar {
     position top
     colors {
         statusline #ffffff
-        background #323232
+        background #282936EE
         inactive_workspace #32323200 #32323200 #5c5c5c
     }
 }
@@ -241,7 +249,7 @@ bar {
 bar {
     colors {
         statusline #e9e9f4
-        background #282936
+        background #282936EE
     }
     status_command py3status 
 }

@@ -73,6 +73,9 @@ ln -s ${PWD}/termite ${XDG_CONFIG_HOME}/termite/config
 # labnote
 ln -s ${PWD}/labnote ${XDG_CONFIG_HOME}/labnote
 
+# pylint 
+ln -s ${PWD}/pylintrc ${XDG_CONFIG_HOME}/pylintrc
+
 # ranger
 ln -s ${PWD}/ranger ${XDG_CONFIG_HOME}/ranger
 

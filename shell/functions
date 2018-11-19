@@ -3,6 +3,14 @@ function h {
     history | grep $1
 }
 
+# head helper functions
+function hl {
+    head -n10 $1 | less
+}
+function hc {
+    head -n10 $1 | tabview -
+}
+
 # syntax highlighting in less 
 function les {
     /usr/bin/src-hilite-lesspipe.sh "$1" | less -R
