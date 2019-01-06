@@ -85,7 +85,6 @@ call plug#begin()
     Plug 'ervandew/supertab'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
-    "Plug 'hkupty/iron.nvim'
     Plug 'bfredl/nvim-ipy'
     Plug 'jalvesaq/Nvim-R'
     Plug 'kshenoy/vim-signature'
@@ -116,6 +115,7 @@ call plug#begin()
     Plug 'yuttie/comfortable-motion.vim'
     Plug 'severin-lemaignan/vim-minimap'
 
+    "Plug 'hkupty/iron.nvim'
     "Plug 'garbas/vim-snipmate'
     "Plug 'haya14busa/incsearch.vim'
     "Plug 'honza/vim-snippets'
@@ -753,9 +753,15 @@ nnoremap <leader>n :nohl<CR>
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType ruby,eruby,yaml,r,rmd setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd FileType ruby,eruby,yaml,r,rmd,jinja setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
 autocmd BufRead,BufNewFile *.py set autoindent
+
+" Languge-specific color schemes
+autocmd FileType yaml colorscheme sweyla907357
+autocmd FileType jinja colorscheme SerialExperimentsLain
+autocmd FileType snakemake colorscheme gotham
+autocmd FileType rmd colorscheme grb256
 
 " R
 let vimrplugin_objbr_place = "console,right"
@@ -805,7 +811,7 @@ let rrst_syn_hl_chunk = 1
 let rmd_syn_hl_chunk = 1
 
 " libraries to always include for autocompletion
-let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,ggplot2,dplyr,readr,igraph,reshape2"
+let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,igraph,tidyverse"
 
 " press enter and space bar to send lines and selection to R
 vmap <Space> <Plug>RDSendSelection
@@ -860,6 +866,13 @@ au BufNewFile,BufRead *.snakefile set syntax=snakemake
 
 " CSV
 let g:csv_no_conceal = 1
+
+" Host-specific configuration
+" http://effectif.com/vim/host-specific-vim-config
+let hostfile=$XDG_CONFIG_HOME . '/nvim/' . substitute(hostname(), "\\..*", "", "") . '-local.vim'
+if filereadable(hostfile)
+    exe 'source ' . hostfile
+endif
 
 " Syntax highlighting
 syntax on

@@ -11,6 +11,11 @@ function hc {
     head -n10 $1 | tabview -
 }
 
+# vim + ag
+function va {
+    nvim $(ag -l $1)
+}
+
 # syntax highlighting in less 
 function les {
     /usr/bin/src-hilite-lesspipe.sh "$1" | less -R

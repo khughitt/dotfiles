@@ -1,6 +1,14 @@
 #
 # Z shell Settings
 #
+# .zshrc config debugging switch
+VERBOSE='false'
+
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:0
+
+if [[ $ZSHRC_LOADED = true ]]; then
+    return
+fi
 
 # Check to see if zprofile has been loaded yet
 if [[ $ZSHRC_LOADED = true ]]; then
@@ -14,6 +22,8 @@ fi
 ZSH=$HOME/.oh-my-zsh
 ZSH_THEME="bira"
 CASE_SENSITIVE="true"
+
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:1
 
 # Local settings (early settings)
 if [ -e ~/.zsh_local_early ]; then
@@ -34,6 +44,8 @@ function xumt() {
     fi
 }
 
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:2
+
 # Automatically launch tmux when connecting via SSH
 if [[ "$TERM" != (screen|tmux)-* ]] && [ ! -z "$SSH_CLIENT" ]; then
     # Attempt to discover a detached session and attach  it, else create a new session
@@ -48,6 +60,8 @@ if [ "$TERM" = "linux" ]; then
 else
     export vconsole=false
 fi
+
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:3
 
 # Use Xresrouces to set TTY colors for virtual console sessions
 if $vconsole; then
@@ -73,14 +87,20 @@ setopt extended_glob
 [ -z "$plugins" ] && plugins=(\
     fasd archlinux colored-man git biozsh sudo systemd web-search)
 
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:4
+
 # Load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
+
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:5
 
 # Additional shell settings (aliases, exports, etc.)
 for file in ~/.shell/{aliases,functions,private,exports}; do
     [ -r "$file" ] && source "$file"
 done
 unset file
+
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:6
 
 # Fasd
 alias o='a -e xdg-open'
@@ -103,6 +123,8 @@ alias -s Rmd=vim
 
 # Make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:7
 
 # Disable scroll lock
 stty -ixon
@@ -165,19 +187,22 @@ if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:8
+
 # local settings (late settings)
 if [ -e ~/.zsh_local_late ]; then
     source ~/.zsh_local_late
 fi
 
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:9
+
 function ztabview() {
     zcat $1 | tabview -
 }
 
-ZSHRC_LOADED='true'
-
 # Anaconda
 __conda_setup="$(CONDA_REPORT_ERRORS=false '$HOME/anaconda3/bin/conda' shell.bash hook 2> /dev/null)"
+
 if [ $? -eq 0 ]; then
     \eval "$__conda_setup"
 else
@@ -190,6 +215,8 @@ else
 fi
 unset __conda_setup
 
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:10
+
 # Map caps lock to <Esc>
 xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 
@@ -197,6 +224,20 @@ xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 if [ -e /usr/share/fzf/key-bindings.zsh ]; then
     source /usr/share/fzf/key-bindings.zsh
     source /usr/share/fzf/completion.zsh
+fi
+
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:11
+
+# PySpark
+if type "pyspark" > /dev/null && [ ! -z "$CONDA_PREFIX" ]; then
+    #export SPARK_HOME="/opt/apache-spark"
+    #source ${SPARK_HOME}/conf/spark-env.sh 
+    export PYSPARK_PYTHON=${CONDA_PYTHON_EXE}
+    export PYSPARK_DRIVER_PYTHON=${CONDA_PREFIX}/bin/ipython
+    source ${CONDA_PREFIX}/lib/python3.7/site-packages/pyspark/bin/load-spark-env.sh 
+
+    # required for sparklyr local instances to work
+    #unset SPARK_HOME
 fi
 
 # Torch
@@ -207,4 +248,8 @@ fi
 # sync primary / clipboard buffers
 #autocutsel -fork &
 #autocutsel -selection PRIMARY -fork &
+#
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:12
+
+ZSHRC_LOADED='true'
 

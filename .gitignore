@@ -6,3 +6,5 @@ ranger/history
 ranger/bookmarks
 ranger/tagged
 .netrwhist
+*-local.vim
+tags

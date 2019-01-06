@@ -26,6 +26,11 @@ set $menu rofi -show drun
 #  Appearance
 #-------------------------------------------------------------------------------
 
+# monitor output
+output HDMI-A-1 pos 1920 0 res 1920x1080
+output HDMI-A-2 pos 0 0 res 1920x1080
+
+
 # wallpaper
 output * bg ~/d/linux/backgrounds/02727_mossy_1920x1200.jpg fill
 
@@ -189,8 +194,13 @@ exec_always termite --name=terminal_scratchpad
 # R terminal (alt + space)
 exec_always termite --name=r_scratchpad -e R
 
-for_window [app_id="terminal_scratchpad"] move scratchpad, resize set 1440 810
-for_window [app_id="r_scratchpad"] move scratchpad, resize set 1440 810
+#for_window [app_id="terminal_scratchpad"] move scratchpad, resize set 1440 810
+for_window [app_id="terminal_scratchpad"] move scratchpad
+for_window [app_id="r_scratchpad"] move scratchpad
+
+# work-around for wl-clipboard window flashing bug
+# https://github.com/swaywm/sway/issues/926#issuecomment-441185009
+for_window [title="wl-clipboard"] floating enable
 
 bindsym Mod1+Return [app_id="terminal_scratchpad"] scratchpad show
 bindsym Mod1+space [app_id="r_scratchpad"] scratchpad show

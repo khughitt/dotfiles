@@ -12,6 +12,7 @@ alias nautilus=ranger
 alias cl='colorls'
 alias ll='ls -halF'
 alias la='ls -A'
+alias lr='ls -latrh'
 alias l='colorls -l --sd'
 
 alias g='grep --color=always'
