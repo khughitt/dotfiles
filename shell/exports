@@ -7,10 +7,6 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export JAVA_FONTS=/usr/share/fonts/TTF
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=lcd -Dswing.aatext=true'
 
-# r
-export R_HISTFILE=~/.Rhistory
-export R_HISTSIZE=10000 
-
 # let ncurces know where to find terminfo
 export TERMINFO=$TERMINFO:/usr/share/terminfo
 
@@ -30,17 +26,12 @@ export LESS_TERMCAP_se=$'\E[0m'           # end standout-mode
 export LESS_TERMCAP_so=$'\E[38;5;204m'    # begin standout-mode - info/highlight
 export LESS_TERMCAP_ue=$'\E[0m'           # end underline
 export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
-#export LESS_TERMCAP_us=$'\E[04;38;5;146m' # begin underline
 
 # ruby
-export PATH=$HOME/.gem/ruby/2.5.0/bin:$PATH
+export PATH=$HOME/.gem/ruby/2.6.0/bin:$PATH
 
-# python
+# non-conda python binaries (rtichoke, py3status, powerline)
 export PATH=$HOME/.local/bin:$PATH
-
-# perl
-export PERL5LIB=$HOME/perl5/lib/perl5:$PERL5LIB
-source ~/perl5/perlbrew/etc/bashrc
 
 # CMFinder
 export PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin

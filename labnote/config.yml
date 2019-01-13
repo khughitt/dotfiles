@@ -6,16 +6,17 @@ email: user@email.com
 
 # Notebook contents
 input_dirs:
-  - /home/keith/Dropbox/research/presentations/*
-  - /home/keith/Dropbox/research/201[2-7]/*
-  - /home/keith/Dropbox/research/2016/*/*
-  - /home/keith/Dropbox/research/2017/10-coex-manuscript/output/5.0/*
+  - /home/keith/d/r/umd/presentations/*
+  - /home/keith/d/r/umd/201[2-7]/*
+  - /home/keith/d/r/umd/2016/*/*
+  - /home/keith/d/r/umd/2017/10-coex-manuscript/output/5.0/*
+  - /home/keith/d/r/umd/2017/10-coex-manuscript/output/7.0/*
     
 #multi_version_dirs:
-#  - /home/keith/Dropbox/research/2015/73-mtb-ifnb-diffexpr/output/*
-#  - /home/keith/Dropbox/research/2015/74-mtb-ifnb-combined/output/*
+#  - /home/keith/d/r/umd/2015/73-mtb-ifnb-diffexpr/output/*
+#  - /home/keith/d/r/umd/2015/74-mtb-ifnb-combined/output/*
 
-output_file: /home/keith/Dropbox/research/index.html
+output_file: /home/keith/d/r/index.html
 
 include_files: ['*.html', '*.py']
 

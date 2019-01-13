@@ -698,10 +698,15 @@ set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
 set statusline+=%*
 
+let g:syntastic_mode_map = {'mode':'passive'}
+
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 1
 let g:syntastic_check_on_open = 0
 let g:syntastic_check_on_wq = 0
+
+"nnoremap <F10> :SyntasticCheck<CR> :SyntasticToggleMode<CR> :w<CR>
+nnoremap <F10> :SyntasticCheck<CR>
 
 " r
 let g:syntastic_enable_r_lintr_checker = 1
@@ -761,7 +766,7 @@ autocmd BufRead,BufNewFile *.py set autoindent
 autocmd FileType yaml colorscheme sweyla907357
 autocmd FileType jinja colorscheme SerialExperimentsLain
 autocmd FileType snakemake colorscheme gotham
-autocmd FileType rmd colorscheme grb256
+"autocmd FileType rmd colorscheme grb256
 
 " R
 let vimrplugin_objbr_place = "console,right"
