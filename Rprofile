@@ -8,13 +8,13 @@
 #
 options(continue = "... ")
 options(download.file.method = "libcurl")
-options(dplyr.print_max = 30) 
+options(dplyr.print_max = 20) 
 options(github.user = "khughitt")
 options(knitr.duplicate.label = 'allow')
 options(max.print = 100)
 options(menu.graphics = F)
 options(prompt = "> ")
-options(repos = structure(c(CRAN = "http://lib.stat.cmu.edu/R/CRAN/")))
+options(repos = structure(c(CRAN = "https://cran.mtu.edu/")))
 options(rstudio.markdownToHTML = NULL)
 options(showWarnCalls = T, showErrorCalls = T)
 options(warning.length = 8170)
@@ -89,7 +89,7 @@ if (interactive()) {
 
     # syntax highlighting
     if (isatty(stdout())) {
-        library(colorout)
+        try(library(colorout), silent = TRUE)
     }
 }
 
@@ -102,7 +102,7 @@ if (interactive()) {
 .env <- new.env()
 
 # show first three columns and rows of a matrix / dataframe
-.env$hh  <- function(dat) {
+.env$h  <- function(dat) {
   dat[1:min(3, nrow(dat)), 1:min(3, ncol(dat))]
 }
 
@@ -110,28 +110,36 @@ if (interactive()) {
 .env$nna <- function(dat, axis = 1) {
   apply(dat, axis, function (x) { sum(is.na(x)) })
 }
-attach(.env)
 
-# Default HISTORY file
-if (Sys.getenv("R_HISTFILE") == "") {
-  Sys.setenv(R_HISTFILE = file.path("~", ".Rhistory"))
+# Shortcut to load bioconductor
+try(.env$.bc <- BiocManager::install, silent = TRUE)
+
+# Memory usage
+.env$.top = function(n = 10) {
+    # Prints N objects which use the most memory (in megabytes)
+    print(tail(sort(sapply(ls(),function(x){ object.size(get(x)) })), n) / 1E6)
 }
-Sys.setenv(R_HISTSIZE = 5000)
+attach(.env)
 
 # On quit
 .Last <- function() {
-    # Preserve history across sessions
-    if (!any(commandArgs()=='--no-readline') && interactive()){
-        require(utils)
-        try(savehistory(Sys.getenv("R_HISTFILE")))
-    }
-}
+  # Preserve history across sessions
+  if ((!'--no-readline' %in% commandArgs()) && interactive()) {
+    # Append to history instead of over-writing it
+    # Adapted from https://stackoverflow.com/a/13525172/554531
+    try({
+      # store old history in a temporary file
+      full_hist <- tempfile()
+      file.copy(Sys.getenv("R_HISTFILE"), full_hist)
 
-# Shortcut to load bioconductor
-.bc <- BiocManager::install
+      # save the history for the current session
+      utils::savehistory(Sys.getenv("R_HISTFILE"))
 
-# Memory usage
-.top = function(n = 10) {
-    # Prints N objects which use the most memory (in megabytes)
-    print(tail(sort(sapply(ls(),function(x){ object.size(get(x)) })), n) / 1E6)
+      # append the current session history and copy back over
+      file.append(full_hist, Sys.getenv("R_HISTFILE"))
+      file.copy(full_hist, Sys.getenv("R_HISTFILE"))
+
+      # TODO: add check to limit the history size...
+    })
+  }
 }

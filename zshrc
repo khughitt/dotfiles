@@ -103,15 +103,21 @@ unset file
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:6
 
 # Fasd
+export _FASD_SHELL='dash'
+
+eval "$(fasd --init auto)"
+
 alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
-function v {
-    if [ -e" $1" ]; then
-       nvim $1
-    else
-       f -e nvim
-    fi
-}
+alias v='f -e nvim'
+
+#function v {
+#    if [ -e" $1" ]; then
+#       nvim $1
+#    else
+#       f -e nvim
+#    fi
+#}
 
 # Suffix aliases
 alias -s doc=lowriter
@@ -182,6 +188,21 @@ fi
 # dir colors
 eval $(dircolors -b ~/.dir_colors)
 
+# Anaconda
+__conda_setup="$(CONDA_REPORT_ERRORS=false '$HOME/anaconda3/bin/conda' shell.bash hook 2> /dev/null)"
+
+if [ $? -eq 0 ]; then
+    \eval "$__conda_setup"
+else
+    if [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
+        . "$HOME/anaconda3/etc/profile.d/conda.sh"
+        CONDA_CHANGEPS1=false conda activate base
+    else
+        \export PATH="$HOME/anaconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+
 # hostname
 if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
@@ -199,21 +220,6 @@ if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:9
 function ztabview() {
     zcat $1 | tabview -
 }
-
-# Anaconda
-__conda_setup="$(CONDA_REPORT_ERRORS=false '$HOME/anaconda3/bin/conda' shell.bash hook 2> /dev/null)"
-
-if [ $? -eq 0 ]; then
-    \eval "$__conda_setup"
-else
-    if [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "$HOME/anaconda3/etc/profile.d/conda.sh"
-        CONDA_CHANGEPS1=false conda activate base
-    else
-        \export PATH="$HOME/anaconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:10
 

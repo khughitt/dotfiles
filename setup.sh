@@ -80,7 +80,7 @@ ln -s ${PWD}/pylintrc ${XDG_CONFIG_HOME}/pylintrc
 ln -s ${PWD}/ranger ${XDG_CONFIG_HOME}/ranger
 
 # Everything else
-for path in "ctags dir_colors" "gitconfig" "gitignore_global" \
+for path in "ctags" "dir_colors" "gitconfig" "gitignore_global" \
             "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "xinitrc" "xmodmaprc" "Xresources" \
 	    "xprofile"; do
@@ -88,7 +88,7 @@ for path in "ctags dir_colors" "gitconfig" "gitignore_global" \
 done
 
 # Copy Xresources to Xdefaults for sway
-ln_s ${PWD)/Xresources ~/.Xdefaults
+ln_s ${PWD}/Xresources ~/.Xdefaults
 
 # scripts, etc.
 ln -s ${PWD}/bin ~/

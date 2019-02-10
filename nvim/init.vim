@@ -396,7 +396,10 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 " unamedplus    CLIPBOARD (control v)
 " autoselect    Automatically save visual selections
 "set clipboard=unnamed,autoselect
-set clipboard=unnamed
+"set clipboard=unnamed
+
+" switching to unnamedplus to allow pasting to chromium, etc. in wayland
+set clipboard=unnamedplus
 
 " work-around to preserve yank buffer when pasting; the solution below first
 " deletes selected text to an unused register

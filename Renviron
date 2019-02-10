@@ -1,5 +1,6 @@
+R_LIBS_USER=~/R/%p-library/%v
 R_HISTFILE=~/.Rhistory
-R_HISTSIZE=10000 
+R_HISTSIZE=5000
 R_UNZIPCMD=/usr/bin/unzip
 R_MAX_NUM_DLLS=150
 
