@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+    <mime-type type="text/tab-separated-values">
+        <comment>TSV data</comment>
+        <icon name="text/tab-separated-values"/>
+        <glob-deleteall/>
+        <glob pattern="*.tsv"/>
+    </mime-type>
+</mime-info>

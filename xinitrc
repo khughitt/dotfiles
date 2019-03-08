@@ -45,6 +45,10 @@ fi
 autocutsel -selection PRIMARY -fork &
 
 # Awesome
-exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr
+#exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr
+
+# Less Awesome
+exec gnome-session
+
 
 

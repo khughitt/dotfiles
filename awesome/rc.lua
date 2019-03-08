@@ -141,6 +141,10 @@ naughty.config.defaults.border_width = 1
 naughty.config.defaults.hover_timeout = nil
 -- }}}
 
+-- {{{ Monitors
+--
+local xrandr = require("xrandr")
+
 -- {{{ Wallpaper
 --beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/minimalistic_dark_circles_glow_1920x1080_8295_alt.png"
 beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/Luetin_1920.jpg"
@@ -567,6 +571,9 @@ globalkeys = awful.util.table.join(
 
   -- Lock screen
   awful.key({ modkey }, "F12", function () awful.util.spawn("xlock -mode blank") end),
+
+  -- Display toggle
+  awful.key({ modkey }, "F11", function() xrandr.xrandr() end),
 
   -- Multimedia keys
   awful.key({ }, "XF86MonBrightnessDown", function ()

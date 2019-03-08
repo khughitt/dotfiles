@@ -5,3 +5,6 @@ R_UNZIPCMD=/usr/bin/unzip
 R_MAX_NUM_DLLS=150
 
 ANNOTATION_HUB_TESTING=TRUE
+
+R_PACKRAT_CACHE_DIR=~/R/packrat
+R_PACKRAT_EXTERNAL_PACKAGES="colorout,devtools,nvimcom"

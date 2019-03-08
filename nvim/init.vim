@@ -112,7 +112,7 @@ call plug#begin()
     Plug 'wellle/targets.vim'
     Plug '/usr/share/vim/vimfiles'
     Plug 'junegunn/fzf.vim'
-    Plug 'yuttie/comfortable-motion.vim'
+    "Plug 'yuttie/comfortable-motion.vim'
     Plug 'severin-lemaignan/vim-minimap'
 
     "Plug 'hkupty/iron.nvim'
@@ -143,8 +143,8 @@ call plug#begin()
 call plug#end()
 
 " TESTING
-noremap <silent> <ScrollWheelDown> :call comfortable_motion#flick(40)<CR>
-noremap <silent> <ScrollWheelUp>   :call comfortable_motion#flick(-40)<CR>
+"noremap <silent> <ScrollWheelDown> :call comfortable_motion#flick(40)<CR>
+"noremap <silent> <ScrollWheelUp>   :call comfortable_motion#flick(-40)<CR>
 
 let g:minimap_highlight='Visual'
 let g:minimap_toggle='<leader>mm'
@@ -393,7 +393,7 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 
 " Remap vim register to CLIPBOARD selection
 " unamed        PRIMARY   (middlemouse)
-" unamedplus    CLIPBOARD (control v)
+" unamedplus    CLIPBOARD (shift-control v)
 " autoselect    Automatically save visual selections
 "set clipboard=unnamed,autoselect
 "set clipboard=unnamed
@@ -701,7 +701,7 @@ set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
 set statusline+=%*
 
-let g:syntastic_mode_map = {'mode':'passive'}
+let g:syntastic_mode_map = {'mode': 'passive'}
 
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 1
@@ -714,7 +714,10 @@ nnoremap <F10> :SyntasticCheck<CR>
 " r
 let g:syntastic_enable_r_lintr_checker = 1
 let g:syntastic_r_checkers = ['lintr']
-let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL)"
+let g:syntastic_rmd_checkers = ['lintr']
+let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
+
+"let g:syntastic_debug = 33
 
 " python
 let g:syntastic_rst_checkers=['sphinx']

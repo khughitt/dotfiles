@@ -51,6 +51,9 @@ ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 # colorls
 ln -s ${PWD}/colorls ${XDG_CONFIG_HOME}/colorls
 
+# mimetypes
+ln -s mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
+
 # Sway
 mkdir -p ${XDG_CONFIG_HOME}/sway
 ln -s ${PWD}/sway ${XDG_CONFIG_HOME}/sway/config
@@ -96,6 +99,11 @@ ln -s ${PWD}/bin ~/
 # Vim temp dirs
 mkdir -p ~/.vim/tmp/backup
 mkdir -p ~/.vim/tmp/yankring
+
+# Mimetypes
+mkdir -p ~/.local/share/mime
+ln -s mime ~/.local/share/mime/packages
+update-mime-database ~/.local/share/mime
 
 echo "Done!"
 echo "Don't forget to install any necessary fonts, icons, etc."

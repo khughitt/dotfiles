@@ -224,7 +224,7 @@ function ztabview() {
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:10
 
 # Map caps lock to <Esc>
-xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
+#xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 
 # fzf
 if [ -e /usr/share/fzf/key-bindings.zsh ]; then
@@ -233,6 +233,9 @@ if [ -e /usr/share/fzf/key-bindings.zsh ]; then
 fi
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:11
+
+# Marker
+[[ -s "$HOME/.local/share/marker/marker.sh" ]] && source "$HOME/.local/share/marker/marker.sh"
 
 # PySpark
 if type "pyspark" > /dev/null && [ ! -z "$CONDA_PREFIX" ]; then

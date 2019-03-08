@@ -5,7 +5,9 @@ export XDG_CONFIG_HOME="$HOME/.config"
 
 # java
 export JAVA_FONTS=/usr/share/fonts/TTF
-export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=lcd -Dswing.aatext=true'
+#export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Dsun.java2d.opengl=true'
+export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true'
+export _JAVA_AWT_WM_NONREPARENTING=1
 
 # let ncurces know where to find terminfo
 export TERMINFO=$TERMINFO:/usr/share/terminfo

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+    <mime-type type="text/comma-separated-values">
+        <comment>CSV data</comment>
+        <icon name="text/comma-separated-values"/>
+        <glob-deleteall/>
+        <glob pattern="*.csv"/>
+    </mime-type>
+</mime-info>

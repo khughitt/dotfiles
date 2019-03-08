@@ -1,0 +1,25 @@
+[Default Applications]
+text/plain=leafpad.desktop
+application/wps-office.docx=libreoffice-writer.desktop
+application/pdf=org.pwmt.zathura-pdf-mupdf.desktop
+
+[Added Associations]
+text/plain=libreoffice-calc.desktop;wine-extension-txt.desktop;leafpad.desktop;
+image/x-eps=inkscape.desktop;evince.desktop;
+image/svg+xml=inkscape.desktop;eog.desktop;gimp.desktop;
+image/png=feh.desktop;gimp.desktop;
+image/jpeg=gimp.desktop;
+text/markdown=leafpad.desktop;
+application/vnd.openxmlformats-officedocument.wordprocessingml.document=libreoffice-writer.desktop;
+application/x-ms-dos-executable=wine.desktop;
+text/x-r-markdown=org.gnome.gedit.desktop;
+application/wps-office.docx=wps-office-wps.desktop;libreoffice-writer.desktop;
+application/wps-office.xlsx=libreoffice-calc.desktop;
+image/tiff=gimp.desktop;
+application/wps-office.xls=libreoffice-calc.desktop;
+video/mp4=org.gnome.Totem.desktop;gnome-mplayer.desktop;mplayer.desktop;vlc.desktop;
+video/x-flv=gnome-mplayer.desktop;vlc.desktop;
+video/x-msvideo=org.gnome.Totem.desktop;vlc.desktop;
+application/zip=org.gnome.FileRoller.desktop;
+
+

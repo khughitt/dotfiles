@@ -107,8 +107,12 @@ if (interactive()) {
 }
 
 # number of nas by column or row
-.env$nna <- function(dat, axis = 1) {
-  apply(dat, axis, function (x) { sum(is.na(x)) })
+.env$nna <- function(dat, axis = 1, num_non_na = FALSE) {
+  if (num_non_na) {
+    apply(dat, axis, function (x) { sum(!is.na(x)) })
+  } else {
+    apply(dat, axis, function (x) { sum(is.na(x)) })
+  }
 }
 
 # Shortcut to load bioconductor
@@ -121,9 +125,16 @@ try(.env$.bc <- BiocManager::install, silent = TRUE)
 }
 attach(.env)
 
+# On startup
+.First <- function () {
+  if ((!'--no-readline' %in% commandArgs()) && interactive()) {
+    utils::loadhistory(Sys.getenv('R_HISTFILE')) 
+  }
+}
+
 # On quit
 .Last <- function() {
-  # Preserve history across sessions
+#  # Preserve history across sessions
   if ((!'--no-readline' %in% commandArgs()) && interactive()) {
     # Append to history instead of over-writing it
     # Adapted from https://stackoverflow.com/a/13525172/554531
@@ -135,9 +146,9 @@ attach(.env)
       # save the history for the current session
       utils::savehistory(Sys.getenv("R_HISTFILE"))
 
-      # append the current session history and copy back over
+      # append the current session history to the temp file and copy it back over
       file.append(full_hist, Sys.getenv("R_HISTFILE"))
-      file.copy(full_hist, Sys.getenv("R_HISTFILE"))
+      file.copy(full_hist, Sys.getenv("R_HISTFILE"), overwrite = TRUE)
 
       # TODO: add check to limit the history size...
     })
