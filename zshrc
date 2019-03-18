@@ -234,8 +234,8 @@ fi
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:11
 
-# Marker
-[[ -s "$HOME/.local/share/marker/marker.sh" ]] && source "$HOME/.local/share/marker/marker.sh"
+# Marker (key bindings conflicts with fzf)
+#[[ -s "$HOME/.local/share/marker/marker.sh" ]] && source "$HOME/.local/share/marker/marker.sh"
 
 # PySpark
 if type "pyspark" > /dev/null && [ ! -z "$CONDA_PREFIX" ]; then

@@ -194,16 +194,15 @@ exec_always termite --name=terminal_scratchpad
 # R terminal (alt + space)
 exec_always termite --name=r_scratchpad -e R
 
-#for_window [app_id="terminal_scratchpad"] move scratchpad, resize set 1440 810
-for_window [app_id="terminal_scratchpad"] move scratchpad, resize set 1440 810
+for_window [app_id="terminal_scratchpad"] move scratchpad
 for_window [app_id="r_scratchpad"] move scratchpad
 
 # work-around for wl-clipboard window flashing bug
 # https://github.com/swaywm/sway/issues/926#issuecomment-441185009
 for_window [title="wl-clipboard"] floating enable
 
-bindsym Mod1+Return [app_id="terminal_scratchpad"] scratchpad show
-bindsym Mod1+space [app_id="r_scratchpad"] scratchpad show
+bindsym Mod1+Return [app_id="terminal_scratchpad"] scratchpad show, resize set 1440 810
+bindsym Mod1+space [app_id="r_scratchpad"] scratchpad show, resize set 1440 810
 
 #
 # Media keys:
