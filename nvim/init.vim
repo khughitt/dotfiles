@@ -399,7 +399,7 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 "set clipboard=unnamed
 
 " switching to unnamedplus to allow pasting to chromium, etc. in wayland
-set clipboard=unnamedplus
+set clipboard=unnamed
 
 " work-around to preserve yank buffer when pasting; the solution below first
 " deletes selected text to an unused register
@@ -836,7 +836,7 @@ nmap <silent> <LocalLeader>h :call RAction("hh", "@,48-57,_,.")<CR>
 nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("*_cache/*", recursive=TRUE)')<CR>
 
 " render markdown
-nmap <localleader>km :call RMakeRmd("md_document")<CR>
+nmap <localleader>km :call RMakeRmd("github_document")<CR>
 
 " show source code for function under cursor
 function ShowRSource()
@@ -887,3 +887,9 @@ endif
 
 " Syntax highlighting
 syntax on
+
+" Work-around for failing rmarkdown syntax highlighting when jumping around in files
+" https://vim.fandom.com/wiki/Fix_syntax_highlighting
+"autocmd BufEnter * :syntax sync fromstart
+syntax sync minlines=300
+

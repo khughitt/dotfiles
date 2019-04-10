@@ -12,8 +12,8 @@ function h {
 function hl {
     head -n10 $1 | less
 }
-function hc {
-    head -n10 $1 | tabview -
+function hv {
+    head -n10 $1 | vd -
 }
 
 # vim + ag

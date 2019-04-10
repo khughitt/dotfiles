@@ -35,6 +35,9 @@ export PATH=$HOME/.gem/ruby/2.6.0/bin:$PATH
 # non-conda python binaries (rtichoke, py3status, powerline)
 export PATH=$HOME/.local/bin:$PATH
 
+# rust (xsv)
+export PATH=$HOME/.cargo/bin:$PATH
+
 # CMFinder
 export PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin
 export CMfinder=$HOME/software/cmfinder-0.4.1.9

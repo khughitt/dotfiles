@@ -84,8 +84,7 @@ unsetopt correct_all
 setopt extended_glob
 
 # Plugins
-[ -z "$plugins" ] && plugins=(\
-    fasd archlinux colored-man git biozsh sudo systemd web-search)
+[ -z "$plugins" ] && plugins=(fasd archlinux git sudo systemd web-search)
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:4
 

@@ -115,6 +115,9 @@ if (interactive()) {
   }
 }
 
+# ascii density plot
+try(.env$td <- txtplot::txtdensity, silent = TRUE)
+
 # Shortcut to load bioconductor
 try(.env$.bc <- BiocManager::install, silent = TRUE)
 

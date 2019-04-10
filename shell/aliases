@@ -4,10 +4,6 @@
 #
 ################################################################################
 
-# temp reminders
-alias find='echo use fd!'
-alias nautilus=ranger
-
 # navigation
 alias cl='colorls'
 alias ll='ls -halF'

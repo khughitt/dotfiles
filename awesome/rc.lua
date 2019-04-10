@@ -146,10 +146,10 @@ naughty.config.defaults.hover_timeout = nil
 local xrandr = require("xrandr")
 
 -- {{{ Wallpaper
---beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/minimalistic_dark_circles_glow_1920x1080_8295_alt.png"
-beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/Luetin_1920.jpg"
---beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/02786_lakefornight_1920x1200.jpg"
---beautiful.wallpaper = os.getenv("HOME") .. "/Dropbox/linux/backgrounds/seaweed.jpg"
+--beautiful.wallpaper = os.getenv("HOME") .. "/d/linux/backgrounds/minimalistic_dark_circles_glow_1920x1080_8295_alt.png"
+beautiful.wallpaper = os.getenv("HOME") .. "/d/linux/backgrounds/Luetin_1920.jpg"
+--beautiful.wallpaper = os.getenv("HOME") .. "/d/linux/backgrounds/02786_lakefornight_1920x1200.jpg"
+--beautiful.wallpaper = os.getenv("HOME") .. "/d/linux/backgrounds/seaweed.jpg"
 if beautiful.wallpaper then
     awful.screen.connect_for_each_screen(function(s)
         gears.wallpaper.maximized(beautiful.wallpaper, s, true)
@@ -852,15 +852,15 @@ function run_once(prg, arg_string, pname, screen)
 end
 
 -- Startup Applications
---run_once(os.getenv("HOME") .. "/bin/notify-listener.py")
-run_once(os.getenv("HOME") .. "/bin/tptoggle")
-run_once("nm-applet")
-run_once("gnome-screensaver")
-run_once("xmodmap ~/.xmodmaprc")
+-- run_once(os.getenv("HOME") .. "/bin/notify-listener.py")
+-- run_once("nm-applet")
+-- run_once("gnome-screensaver")
+-- run_once("xmodmap ~/.xmodmaprc")
 run_once("xset r rate 220 30")
 run_once("redshift -l37.05:-78.66 -m randr:screen=0", "", "redshift -l37.05:-78.66 -m randr:screen=0")
 
 if os.getenv('HOST') == 'Europa' then
     run_once("batterymon")
+    run_once(os.getenv("HOME") .. "/bin/tptoggle")
 end
 
