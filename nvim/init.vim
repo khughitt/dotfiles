@@ -21,6 +21,7 @@ set modeline         " make sure modeline support is enabled
 set noerrorbells     " quiet, please
 set nofoldenable     " disable folding
 set complete+=i      " complete filenames
+set noshowmode       " hide <INSERT>
 filetype indent on   " indent based on filetype
 
 " Mouse support
@@ -102,8 +103,9 @@ call plug#begin()
     Plug 'tpope/vim-surround'
     Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'manabuishii/vim-cwl'
-    Plug 'vim-airline/vim-airline'
-    Plug 'vim-airline/vim-airline-themes'
+    "Plug 'vim-airline/vim-airline'
+    "Plug 'vim-airline/vim-airline-themes'
+    Plug 'itchyny/lightline.vim'
     Plug 'vim-scripts/argtextobj.vim'
     Plug 'vim-syntastic/syntastic'
     Plug 'xolox/vim-misc'
@@ -346,7 +348,8 @@ set background=dark
 "colorscheme sweyla708971
 "colorscheme gotham
 "colorscheme SerialExperimentsLain
-colorscheme dracula
+"colorscheme dracula
+colorscheme ThemerVim
 
 "not working with recent versions
 "highlight ColorColumn ctermbg=234 guibg=#222222
@@ -683,16 +686,21 @@ let g:fzf_colors =
   \ 'header':  ['fg', 'Comment'] }
 
 " ---------------------------------------------------------------------------
+"  gutentags
+" ---------------------------------------------------------------------------
+let g:gutentags_exclude_project_root = ['/usr/local', '/cbcb/sw']
+
+" ---------------------------------------------------------------------------
+"  lightline
+" ---------------------------------------------------------------------------
+let g:lightline = { 'colorscheme': 'ThemerVimLightline' }
+
+" ---------------------------------------------------------------------------
 "  yankring.vim
 " ---------------------------------------------------------------------------
 "let g:yankring_replace_n_pkey = '<C-up>'
 "let g:yankring_replace_n_nkey = '<C-down>'
 "let g:yankring_history_dir = '$HOME/.vim/tmp/yankring'
-"
-
-"
-"
-let g:gutentags_exclude_project_root = ['/usr/local', '/cbcb/sw']
 
 " ---------------------------------------------------------------------------
 "  syntastic
@@ -769,9 +777,9 @@ autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
 autocmd BufRead,BufNewFile *.py set autoindent
 
 " Languge-specific color schemes
-autocmd FileType yaml colorscheme sweyla907357
-autocmd FileType jinja colorscheme SerialExperimentsLain
-autocmd FileType snakemake colorscheme gotham
+"autocmd FileType yaml colorscheme sweyla907357
+"autocmd FileType jinja colorscheme SerialExperimentsLain
+"autocmd FileType snakemake colorscheme gotham
 "autocmd FileType rmd colorscheme grb256
 
 " R
