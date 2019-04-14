@@ -29,19 +29,22 @@ set $menu rofi -show drun
 #-------------------------------------------------------------------------------
 
 # wallpaper
-exec_always feh --bg-scale ~/d/linux/backgrounds/02727_mossy_1920x1200.jpg 
+#exec_always feh --bg-scale ~/d/linux/backgrounds/02727_mossy_1920x1200.jpg 
+#exec_always feh --bg-scale ~/d/linux/backgrounds/Luetin_1920.jpg
+exec_always feh --bg-scale ~/d/linux/backgrounds/board_black_line_texture_background_wood_55220_1920x1080.jpg
 
 # font
 font pango:Droid Sans Mono 10
 
 # window borders
-#for_window [class="^.*"] border pixel 0
-#hide_edge_borders smart_no_gaps
-#default_border pixel 2
+for_window [class=".*"] border pixel 0
+hide_edge_borders smart_no_gaps
 
 # gaps
-#smart_gaps on
-#gaps inner 20
+gaps inner 15
+smart_gaps on
+#gaps inner all set 20
+#gaps outer current plus 5
 
 # colors [dracula]
 #client.focused          #ea51b2 #d1499f #282936 #a1efe4 #ea51b2 
@@ -122,10 +125,14 @@ bindsym $mod+Shift+Right move right
 #
 
 # switch to workspace
-bindsym $mod+1 workspace 📖
-bindsym $mod+2 workspace # 
-bindsym $mod+3 workspace 🌎
-bindsym $mod+4 workspace ♫
+#bindsym $mod+1 workspace 📖
+#bindsym $mod+2 workspace # 
+#bindsym $mod+3 workspace 🌎
+#bindsym $mod+4 workspace ♫
+bindsym $mod+1 workspace web
+bindsym $mod+2 workspace term
+bindsym $mod+3 workspace code
+bindsym $mod+4 workspace ssh
 bindsym $mod+5 workspace 5
 bindsym $mod+6 workspace 6
 bindsym $mod+7 workspace 7
@@ -134,10 +141,14 @@ bindsym $mod+9 workspace 9
 bindsym $mod+0 workspace 10
 
 # move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace 📖
-bindsym $mod+Shift+2 move container to workspace #
-bindsym $mod+Shift+3 move container to workspace 🌎
-bindsym $mod+Shift+4 move container to workspace ♫
+#bindsym $mod+Shift+1 move container to workspace 📖
+#bindsym $mod+Shift+2 move container to workspace #
+#bindsym $mod+Shift+3 move container to workspace 🌎
+#bindsym $mod+Shift+4 move container to workspace ♫
+bindsym $mod+Shift+1 move container to workspace web
+bindsym $mod+Shift+2 move container to workspace term
+bindsym $mod+Shift+3 move container to workspace code
+bindsym $mod+Shift+4 move container to workspace ssh
 bindsym $mod+Shift+5 move container to workspace 5
 bindsym $mod+Shift+6 move container to workspace 6
 bindsym $mod+Shift+7 move container to workspace 7
@@ -200,7 +211,8 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 # Scratchpad
 #-------------------------------------------------------------------------------
 #exec_always --no-startup-id termite -e 'tmux new-session -s $(whoami)' --class=termite_scratchpad
-exec_always --no-startup-id termite -e 'tmux new-session' --name=termite_scratch -t termite_scratch
+#exec_always --no-startup-id termite -e 'tmux new-session' --name=termite_scratch -t termite_scratch
+exec_always --no-startup-id termite --name=termite_scratch -t termite_scratch
 for_window[instance="termite_scratch"] move scratchpad
 bindsym Mod1+Return [instance="termite_scratch"] scratchpad show, resize set 1200 800; move position 2280px 140px
 
@@ -233,24 +245,23 @@ bindsym $mod+r mode "resize"
 # Status Bar:
 #
 bar {
+    i3bar_command i3bar -t
     position top
     colors {
         statusline #ffffff
-        background #282936EE
+        background #333333
         inactive_workspace #32323200 #32323200 #5c5c5c
     }
 }
 
 bar {
+    i3bar_command i3bar -t
     colors {
         statusline #e9e9f4
-        background #282936EE
+        background #333333
     }
     status_command py3status 
     #status_command i3status 
 }
 
-#bar {
-#    status_command i3status
-#}
-
+exec_always --no-startup-id killall compton; compton

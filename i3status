@@ -8,9 +8,9 @@
 # dracula colorscheme
 general {
     colors = true
-    color_good = "#00f769"
-    color_degraded = "#ebff87"
-    color_bad = "#ea51b2"
+    color_good = "#09b399"
+    color_degraded = "#f37055"
+    color_bad = "#a067ab"
     interval = 5
 }
 
@@ -28,12 +28,13 @@ disk "/" {
         format = " %avail "
 }
 
-dropboxd_status {
-    format = " d: {status} "
-}
+#dropboxd_status {
+#    format = " d: {status} "
+#}
 
 pomodoro {
     format = "{mmss}"
+    color_bad = "#09b399"
 }
 
 spotify {
