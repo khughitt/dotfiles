@@ -188,18 +188,24 @@ fi
 eval $(dircolors -b ~/.dir_colors)
 
 # Anaconda
-__conda_setup="$(CONDA_REPORT_ERRORS=false '$HOME/anaconda3/bin/conda' shell.bash hook 2> /dev/null)"
+if [ -d "$HOME/anaconda3" ]; then
+    export CONDA_DIR="$HOME/anaconda3"
+else
+    export CONDA_DIR="$HOME/miniconda3"
+fi
+__conda_setup="$(CONDA_REPORT_ERRORS=false '$CONDA_DIR/bin/conda' shell.bash hook 2> /dev/null)"
 
 if [ $? -eq 0 ]; then
     \eval "$__conda_setup"
 else
-    if [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "$HOME/anaconda3/etc/profile.d/conda.sh"
+    if [ -f "$CONDA_DIR/etc/profile.d/conda.sh" ]; then
+        . "$CONDA_DIR/etc/profile.d/conda.sh"
         CONDA_CHANGEPS1=false conda activate base
     else
-        \export PATH="$HOME/anaconda3/bin:$PATH"
+        \export PATH="$CONDA_DIR/bin:$PATH"
     fi
 fi
+unset CONDA_DIR
 unset __conda_setup
 
 # hostname
@@ -233,7 +239,7 @@ fi
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:11
 
-# Marker (key bindings conflicts with fzf)
+# powerlin# Marker (key bindings conflicts with fzf)
 #[[ -s "$HOME/.local/share/marker/marker.sh" ]] && source "$HOME/.local/share/marker/marker.sh"
 
 # PySpark

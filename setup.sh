@@ -51,25 +51,33 @@ ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
 # colorls
 ln -s ${PWD}/colorls ${XDG_CONFIG_HOME}/colorls
 
+# compton
+mkdir -p ${XDG_CONFIG_HOME}/compton
+ln -s ${PWD}/compton.conf ${XDG_CONFIG_HOME}/compton/compton.conf
+
+# i3
+mkdir -p ${XDG_CONFIG_HOME}/i3
+ln -s ${PWD}/i3 ${XDG_CONFIG_HOME}/i3/config
+
 # mimetypes
 ln -s mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
 
-# Sway
+# sway
 mkdir -p ${XDG_CONFIG_HOME}/sway
 ln -s ${PWD}/sway ${XDG_CONFIG_HOME}/sway/config
 
 # redshift
 ln -s ${PWD}/redshift ${XDG_CONFIG_HOME}/redshift.conf
 
-# rofi
-mkdir -p ${XDG_CONFIG_HOME}/rofi
-ln -s ${PWD}/rofi ${XDG_CONFIG_HOME}/rofi/config
-
 # i3status
 mkdir -p ${XDG_CONFIG_HOME}/i3status
 ln -s ${PWD}/i3status ${XDG_CONFIG_HOME}/i3status/config
 
-# Termite
+# rofi
+mkdir -p ${XDG_CONFIG_HOME}/rofi
+ln -s ${PWD}/rofi ${XDG_CONFIG_HOME}/rofi/config
+
+# termite
 mkdir -p ${XDG_CONFIG_HOME}/termite
 ln -s ${PWD}/termite ${XDG_CONFIG_HOME}/termite/config
 
