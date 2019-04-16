@@ -17,6 +17,8 @@ alias zgrep='zgrep --color=always'
 
 alias rmf="rm -rf"
 
+alias sudo="sudo "
+
 alias r=rtichoke
 alias ra=ranger
 alias ipy=ipython

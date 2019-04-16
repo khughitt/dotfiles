@@ -87,6 +87,8 @@ call plug#begin()
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
     Plug 'bfredl/nvim-ipy'
+    Plug 'davidoc/taskpaper.vim'
+    Plug 'freitass/todo.txt-vim'
     Plug 'jalvesaq/Nvim-R'
     Plug 'kshenoy/vim-signature'
     Plug 'lilydjwg/colorizer'

@@ -8,7 +8,6 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
   unset f
 fi
 
-
 # detect monitors
 edp1=$(xrandr -q | awk '/eDP1/ {print $2}')
 hdmi1=$(xrandr -q | awk '/HDMI1/ {print $2}')
@@ -50,7 +49,8 @@ if [ -s ~/.xmodmaprc ]; then
     xmodmap ~/.xmodmaprc
 fi
 
-# mirror primary/clipboard
+# sync primary/clipboard buffers
+autocutsel -fork &
 autocutsel -selection PRIMARY -fork &
 
 # awesome

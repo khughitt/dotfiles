@@ -232,10 +232,7 @@ if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:10
 #xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 
 # fzf
-if [ -e /usr/share/fzf/key-bindings.zsh ]; then
-    source /usr/share/fzf/key-bindings.zsh
-    source /usr/share/fzf/completion.zsh
-fi
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:11
 

@@ -37,7 +37,7 @@ exec_always feh --bg-scale ~/d/linux/backgrounds/board_black_line_texture_backgr
 font pango:Droid Sans Mono 10
 
 # window borders
-for_window [class=".*"] border pixel 0
+for_window [class=".*"] border pixel 2
 hide_edge_borders smart_no_gaps
 
 # gaps
@@ -51,6 +51,11 @@ smart_gaps on
 #client.focused_inactive #3a3c4e #626483 #f7f7fb #3a3c4e #3a3c4e
 #client.unfocused        #3a3c4e #282936 #626483 #292d2e #3a3c4e
 #client.urgent           #3a3c4e #ebff87 #626483 #ebff87 #3a3c4e
+
+# colors [themer]
+# class                 border    backgr.   text      indicator child_border
+client.focused          #a067abff #f37055ff #23292dff #1299adff #a067abff
+client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
 
 #-------------------------------------------------------------------------------
 #  Input
@@ -210,11 +215,13 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 #-------------------------------------------------------------------------------
 # Scratchpad
 #-------------------------------------------------------------------------------
-#exec_always --no-startup-id termite -e 'tmux new-session -s $(whoami)' --class=termite_scratchpad
-#exec_always --no-startup-id termite -e 'tmux new-session' --name=termite_scratch -t termite_scratch
 exec_always --no-startup-id termite --name=termite_scratch -t termite_scratch
 for_window[instance="termite_scratch"] move scratchpad
 bindsym Mod1+Return [instance="termite_scratch"] scratchpad show, resize set 1200 800; move position 2280px 140px
+
+exec_always --no-startup-id termite -e R --name=r_scratch -t r_scratch
+for_window[instance="r_scratch"] move scratchpad
+bindsym Mod1+Space [instance="r_scratch"] scratchpad show, resize set 1200 800; move position 2280px 140px
 
 #
 # Resizing containers:
@@ -246,19 +253,15 @@ bindsym $mod+r mode "resize"
 #
 bar {
     i3bar_command i3bar -t
-    position top
-    colors {
-        statusline #ffffff
-        background #333333
-        inactive_workspace #32323200 #32323200 #5c5c5c
-    }
-}
-
-bar {
-    i3bar_command i3bar -t
     colors {
         statusline #e9e9f4
-        background #333333
+        background #33333377
+        inactive_workspace #33333377 #33333377 #5c5c5c
+        focused_workspace  #33333377 #33333377 #f37055ff
+        #inactive_workspace #32323200 #32323200 #5c5c5c
+        #focused_workspace  #ef4e7caa #ef4e7cff #000000ff
+        #active_workspace #333333 #333333 #888888
+        #urgent_workspace #eb709b #eb709b #ffffff
     }
     status_command py3status 
     #status_command i3status 
