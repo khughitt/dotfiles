@@ -87,27 +87,29 @@ call plug#begin()
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
     Plug 'bfredl/nvim-ipy'
+    Plug 'godlygeek/tabular'
+    Plug 'plasticboy/vim-markdown'
     Plug 'davidoc/taskpaper.vim'
     Plug 'freitass/todo.txt-vim'
     Plug 'jalvesaq/Nvim-R'
     Plug 'kshenoy/vim-signature'
     Plug 'lilydjwg/colorizer'
+    Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'machakann/vim-textobj-delimited'
     Plug 'majutsushi/tagbar'
-    Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'mllg/vim-devtools-plugin'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'qpkorr/vim-bufkill'
     Plug 'scrooloose/nerdcommenter'
+    Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'Shougo/denite.nvim'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
     Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'manabuishii/vim-cwl'
-    "Plug 'vim-airline/vim-airline'
-    "Plug 'vim-airline/vim-airline-themes'
     Plug 'itchyny/lightline.vim'
+    Plug 'mengelbrecht/lightline-bufferline'
     Plug 'vim-scripts/argtextobj.vim'
     Plug 'vim-syntastic/syntastic'
     Plug 'xolox/vim-misc'
@@ -116,16 +118,16 @@ call plug#begin()
     Plug 'wellle/targets.vim'
     Plug '/usr/share/vim/vimfiles'
     Plug 'junegunn/fzf.vim'
-    "Plug 'yuttie/comfortable-motion.vim'
     Plug 'severin-lemaignan/vim-minimap'
 
+    "Plug 'vim-airline/vim-airline'
+    "Plug 'vim-airline/vim-airline-themes'
+    "Plug 'yuttie/comfortable-motion.vim'
     "Plug 'hkupty/iron.nvim'
     "Plug 'garbas/vim-snipmate'
-    "Plug 'haya14busa/incsearch.vim'
     "Plug 'honza/vim-snippets'
     "Plug 'ludovicchabant/vim-gutentags'
     "Plug 'plasticboy/vim-markdown'
-    "Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     "Plug 'tpope/vim-repeat'
 
     " themes
@@ -397,14 +399,14 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 " ---------------------------------------------------------------------------
 
 " Remap vim register to CLIPBOARD selection
-" unamed        PRIMARY   (middlemouse)
-" unamedplus    CLIPBOARD (shift-control v)
+" unnamed        CLIPBOARD (shift-control v)
+" unnamedplus    PRIMARY   (middlemouse)
 " autoselect    Automatically save visual selections
 "set clipboard=unnamed,autoselect
 "set clipboard=unnamed
 
 " switching to unnamedplus to allow pasting to chromium, etc. in wayland
-set clipboard=unnamed
+set clipboard^=unnamedplus
 
 " work-around to preserve yank buffer when pasting; the solution below first
 " deletes selected text to an unused register
@@ -507,36 +509,10 @@ let g:colorscheme_switcher_exclude = [
 nnoremap <F5> :GundoToggle<CR>
 
 " ---------------------------------------------------------------------------
-"  incsearch.vim
-"  2016/12/17 - disabling for now due to memory leak
-" ---------------------------------------------------------------------------
-"map /  <Plug>(incsearch-forward)
-"map ?  <Plug>(incsearch-backward)
-"map g/ <Plug>(incsearch-stay)
-
-"" Compatibility with vim-indexed-search
-"let g:indexed_search_mappings = 0
-"augroup incsearch-indexed
-"    autocmd!
-"    autocmd User IncSearchLeave ShowSearchIndex
-"augroup END
-
-"nnoremap <silent>n nzv:ShowSearchIndex<CR>
-"nnoremap <silent>N Nzv:ShowSearchIndex<CR>
-
-"" Enable automatic :nohlsearch with index-search compatibility
-"let g:incsearch#auto_nohlsearch = 1
-"map n  <Plug>(incsearch-nohl-n)zv:ShowSearchIndex<CR>
-"map N  <Plug>(incsearch-nohl-N)zv:ShowSearchIndex<CR>
-"map *  <Plug>(incsearch-nohl-*)
-"map #  <Plug>(incsearch-nohl-#)
-"map g* <Plug>(incsearch-nohl-g*)
-"map g# <Plug>(incsearch-nohl-g#)
-
-" ---------------------------------------------------------------------------
 " indent guides
 " ---------------------------------------------------------------------------
 let g:indent_guides_auto_colors = 0
+let g:indent_guides_auto_colors = 1
 let g:indent_guides_start_level = 2
 let g:indent_guides_guide_size  = 1
 
@@ -696,6 +672,9 @@ let g:gutentags_exclude_project_root = ['/usr/local', '/cbcb/sw']
 "  lightline
 " ---------------------------------------------------------------------------
 let g:lightline = { 'colorscheme': 'ThemerVimLightline' }
+let g:lightline.tabline          = {'left': [['buffers']], 'right': [['close']]}
+let g:lightline.component_expand = {'buffers': 'lightline#bufferline#buffers'}
+let g:lightline.component_type   = {'buffers': 'tabsel'}
 
 " ---------------------------------------------------------------------------
 "  yankring.vim
@@ -783,6 +762,10 @@ autocmd BufRead,BufNewFile *.py set autoindent
 "autocmd FileType jinja colorscheme SerialExperimentsLain
 "autocmd FileType snakemake colorscheme gotham
 "autocmd FileType rmd colorscheme grb256
+
+" Markdown
+let g:vim_markdown_frontmatter = 1
+let g:vim_markdown_strikethrough = 1
 
 " R
 let vimrplugin_objbr_place = "console,right"

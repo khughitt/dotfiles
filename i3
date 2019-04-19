@@ -221,7 +221,7 @@ bindsym Mod1+Return [instance="termite_scratch"] scratchpad show, resize set 120
 
 exec_always --no-startup-id termite -e R --name=r_scratch -t r_scratch
 for_window[instance="r_scratch"] move scratchpad
-bindsym Mod1+Space [instance="r_scratch"] scratchpad show, resize set 1200 800; move position 2280px 140px
+bindsym Mod1+space [instance="r_scratch"] scratchpad show, resize set 1200 800; move position 2280px 140px
 
 #
 # Resizing containers:
@@ -231,16 +231,16 @@ mode "resize" {
     # right will grow the containers width
     # up will shrink the containers height
     # down will grow the containers height
-    bindsym $left resize shrink width 10 px or 10 ppt
-    bindsym $down resize grow height 10 px or 10 ppt
-    bindsym $up resize shrink height 10 px or 10 ppt
-    bindsym $right resize grow width 10 px or 10 ppt
+    bindsym $left resize shrink width 5 px or 5 ppt
+    bindsym $down resize grow height 5 px or 5 ppt
+    bindsym $up resize shrink height 5 px or 5 ppt
+    bindsym $right resize grow width 5 px or 5 ppt
 
     # ditto, with arrow keys
-    bindsym Left resize shrink width 10 px or 10 ppt
-    bindsym Down resize grow height 10 px or 10 ppt
-    bindsym Up resize shrink height 10 px or 10 ppt
-    bindsym Right resize grow width 10 px or 10 ppt
+    bindsym Left resize shrink width 5 px or 5 ppt
+    bindsym Down resize grow height 5 px or 5 ppt
+    bindsym Up resize shrink height 5 px or 5 ppt
+    bindsym Right resize grow width 5 px or 5 ppt
 
     # return to default mode
     bindsym Return mode "default"

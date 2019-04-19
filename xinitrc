@@ -49,15 +49,20 @@ if [ -s ~/.xmodmaprc ]; then
     xmodmap ~/.xmodmaprc
 fi
 
-# sync primary/clipboard buffers
+# sync clipboard buffers
 autocutsel -fork &
-autocutsel -selection PRIMARY -fork &
+
+# sync primary/clipboard buffers
+#autocutsel -selection PRIMARY -fork &
 
 # awesome
 #exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr
 
 # gnome
 #exec gnome-session
+
+# sway
+#exec sway >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
 
 # i3
 exec i3 >> ~/.cache/i3/stdout 2>> ~/.cache/i3/stderr

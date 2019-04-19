@@ -29,8 +29,9 @@ alias vm='nvim README.Rmd'
 
 alias open='xdg-open'
 
-alias tm='todotxt-machine'
-#alias t='todo.sh -d $HOME/Dropbox/dotfiles/todo.cfg'
+alias tp='todotxt-machine $HOME/d/notes/todo/personal.txt $HOME/d/notes/todo/.done.personal.txt'
+alias tw='todotxt-machine $HOME/d/notes/todo/work.txt $HOME/d/notes/todo/.done.work.txt'
+alias tl='todotxt-machine $HOME/d/notes/todo/linux.txt $HOME/d/notes/todo/.done.linux.txt'
 
 if [ $(type "colormake" &> /dev/null) ]; then
     alias make='colormake'
