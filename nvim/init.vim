@@ -88,7 +88,6 @@ call plug#begin()
     Plug 'henrik/vim-indexed-search'
     Plug 'bfredl/nvim-ipy'
     Plug 'godlygeek/tabular'
-    Plug 'plasticboy/vim-markdown'
     Plug 'davidoc/taskpaper.vim'
     Plug 'freitass/todo.txt-vim'
     Plug 'jalvesaq/Nvim-R'
