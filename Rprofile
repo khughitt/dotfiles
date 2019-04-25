@@ -27,16 +27,14 @@ options(width = 100)
 utils::rc.settings(ipck = TRUE, fuzzy = TRUE)
 
 # radian
-options(
-    options(radian.editing_mode = "vi")
-    options(radian.auto_match = TRUE)
-    options(radian.tab_size = 2)
+options(radian.editing_mode = "vi")
+options(radian.auto_match = TRUE)
+options(radian.tab_size = 2)
 
-    # custom prompt for different modes
-    #options(radian.prompt = "\033[0;34mr$>\033[0m ")
-    #options(radian.shell_prompt = "\033[0;31m#!>\033[0m ")
-    #options(radian.browse_prompt = "\033[0;33mBrowse[{}]>\033[0m ")
-)
+# custom prompt for different modes
+#options(radian.prompt = "\033[0;34mr$>\033[0m ")
+#options(radian.shell_prompt = "\033[0;31m#!>\033[0m ")
+#options(radian.browse_prompt = "\033[0;33mBrowse[{}]>\033[0m ")
 
 # interactive mode
 if (interactive()) {
