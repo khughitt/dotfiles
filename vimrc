@@ -639,3 +639,4 @@ if filereadable(hostfile)
     exe 'source ' . hostfile
 endif
 
+syntax enable

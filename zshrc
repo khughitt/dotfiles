@@ -94,7 +94,7 @@ source $ZSH/oh-my-zsh.sh
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:5
 
 # Additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{aliases,functions,private,exports}; do
+for file in ~/.shell/{aliases,functions,private,exports,biosyntax}; do
     [ -r "$file" ] && source "$file"
 done
 unset file
@@ -188,24 +188,16 @@ fi
 eval $(dircolors -b ~/.dir_colors)
 
 # Anaconda
-if [ -d "$HOME/anaconda3" ]; then
-    export CONDA_DIR="$HOME/anaconda3"
-else
-    export CONDA_DIR="$HOME/miniconda3"
-fi
-__conda_setup="$(CONDA_REPORT_ERRORS=false '$CONDA_DIR/bin/conda' shell.bash hook 2> /dev/null)"
-
+__conda_setup="$('/home/keith/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
-    \eval "$__conda_setup"
+    eval "$__conda_setup"
 else
-    if [ -f "$CONDA_DIR/etc/profile.d/conda.sh" ]; then
-        . "$CONDA_DIR/etc/profile.d/conda.sh"
-        CONDA_CHANGEPS1=false conda activate base
+    if [ -f "/home/keith/conda/etc/profile.d/conda.sh" ]; then
+        . "/home/keith/conda/etc/profile.d/conda.sh"
     else
-        \export PATH="$CONDA_DIR/bin:$PATH"
+        export PATH="/home/keith/conda/bin:$PATH"
     fi
 fi
-unset CONDA_DIR
 unset __conda_setup
 
 # hostname

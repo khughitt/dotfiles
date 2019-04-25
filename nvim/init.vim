@@ -82,13 +82,13 @@ map <s-e> <Plug>CamelCaseMotion_e
 call plug#begin()
     " plugins
     Plug 'airblade/vim-gitgutter'
+    Plug 'bioSyntax/bioSyntax-vim'
     Plug 'chrisbra/csv.vim'
     Plug 'ervandew/supertab'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
     Plug 'bfredl/nvim-ipy'
     Plug 'godlygeek/tabular'
-    Plug 'plasticboy/vim-markdown'
     Plug 'davidoc/taskpaper.vim'
     Plug 'freitass/todo.txt-vim'
     Plug 'jalvesaq/Nvim-R'
