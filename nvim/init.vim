@@ -777,8 +777,13 @@ let R_setwidth = 0
 " split editor and console top/bottom
 let R_rconsole_width = 0
 
-" Force use of colorout for highlighting terminal
-let R_hl_term = 0
+" syntax highlighting in console output
+let R_hl_term = 0 
+
+" Nvim-R / radian
+let R_app = "radian"
+let R_cmd = "R"
+let R_bracketed_paste = 1
 
 " devtools load all shortcut
 map ;dl :RLoadPackage<CR>
