@@ -623,7 +623,8 @@ globalkeys = awful.util.table.join(
   -- Menubar
   -- awful.key({ modkey }, "p", function() menubar.show() end)
   awful.key({ modkey }, "p", function () 
-      awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
+      --awful.util.spawn_with_shell("XMODIFIERS='' interrobang") 
+      awful.util.spawn_with_shell("rofi -show drun")
   end),
   awful.key({ modkey }, "s", function () scratch.pad.toggle() end),
   awful.key({ altkey }, "Return",          function () scratch.drop("termite",        'center', 'center', 0.75, 0.75) end),

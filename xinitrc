@@ -10,6 +10,7 @@ fi
 
 # detect monitors
 edp1=$(xrandr -q | awk '/eDP1/ {print $2}')
+dvi1=$(xrandr -q | awk '/DVI-D-1/ {print $2}')
 hdmi1=$(xrandr -q | awk '/HDMI1/ {print $2}')
 hdmi2=$(xrandr -q | awk '/HDMI2/ {print $2}')
 
@@ -19,9 +20,14 @@ if [ "$edp1" = "connected" & "$hdmi1" = "connected" ]; then
   xrandr --output eDP1 --off
 fi
 
-# two monitors
+# two monitors (HDMI/HDMI)
 if [ "$hdmi2" = "connected" ]; then
   xrandr --output HDMI2 --auto --left-of HDMI1
+fi
+
+# two monitors (HDMI/DVI)
+if [ "$dvi1" = "connected" ]; then
+  xrandr --output DVI-D-1 --auto --left-of HDMI-A-0
 fi
 
 # compositing
