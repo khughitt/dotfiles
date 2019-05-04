@@ -2,7 +2,7 @@
 export HIGHLIGHT="$HOME/.local/share/source-highlight"
 export LESSOPEN="| $HIGHLIGHT/src-hilite-lesspipe-bio.sh %s"
 
-alias less='less -NSi -# 10'
+alias less='less -NSi --shift 10'
 #	-N: add line numbers
 #	-S: don't wrap lines (force to single line)
 #	-# 10: Horizontal scroll distance

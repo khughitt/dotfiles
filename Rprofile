@@ -51,7 +51,25 @@ if (interactive()) {
 
     # syntax highlighting
     if (isatty(stdout())) {
-        try(library(colorout), silent = TRUE)
+        try({
+          library(colorout)
+          setOutputColors(
+            normal   = "\x1b[38;2;9;179;153m", #"\x1b[38;2;247;149;50m",
+            negnum   = "\x1b[38;2;239;78;124m",
+            zero     = "\x1b[38;2;160;103;171m",
+            number   = "\x1b[38;2;18;153;173m",
+            date     = "\x1b[38;2;247;149;50m",
+            string   = "\x1b[38;2;110;187;130m",
+            const    = "\x1b[38;2;247;149;50m",
+            false    = "\x1b[38;2;239;78;124m",
+            true     = "\x1b[38;2;18;153;173m",
+            infinite = "\x1b[38;2;247;149;50m",
+            index    = "\x1b[38;2;18;153;173m",
+            stderror = "\x1b[38;2;239;78;124m",
+            warn     = "\x1b[38;2;243;112;85m",
+            error    = "\x1b[38;2;222;223;223;48;2;239;78;124m",
+            zero.limit = 0.001, verbose = FALSE)
+        }, silent = TRUE)
     }
 }
 

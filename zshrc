@@ -4,6 +4,9 @@
 # .zshrc config debugging switch
 VERBOSE='false'
 
+# start profiling zshrc
+# zmodload zsh/zprof 
+
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:0
 
 if [[ $ZSHRC_LOADED = true ]]; then
@@ -19,9 +22,23 @@ fi
 [ -z "$PS1" ] && return
 
 # Oh-my-zsh settings
-ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="bira"
-CASE_SENSITIVE="true"
+export ZSH=$HOME/.oh-my-zsh
+export ZSH_THEME="bira"
+export CASE_SENSITIVE="true"
+
+# reduce amount of time zsh waits after escape characters
+# https://www.johnhawthorn.com/2012/09/vi-escape-delays/<Paste>
+export KEYTIMEOUT=1
+
+# reduce frequency of zcompdump regeneration checks
+# https://medium.com/@dannysmith/little-thing-2-speeding-up-zsh-f1860390f92
+autoload -Uz compinit
+
+for dump in ~/.zcompdump(N.mh+24); do
+  compinit
+done
+
+compinit -C
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:1
 
@@ -83,8 +100,11 @@ unsetopt correct_all
 # Extended globstring support
 setopt extended_glob
 
+# Lazy-load NVM
+export NVM_LAZY_LOAD=true
+
 # Plugins
-[ -z "$plugins" ] && plugins=(fasd archlinux git sudo systemd web-search)
+[ -z "$plugins" ] && plugins=(fasd docker archlinux git git-auto-status sudo systemd web-search biozsh zsh-nvm)
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:4
 
@@ -256,3 +276,5 @@ if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:12
 
 ZSHRC_LOADED='true'
 
+# stop profiling zshrc
+#zprof

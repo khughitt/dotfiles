@@ -93,7 +93,7 @@ ln -s ${PWD}/ranger ${XDG_CONFIG_HOME}/ranger
 # Everything else
 for path in "ctags" "dir_colors" "gitconfig" "gitignore_global" \
             "Rprofile" "Renviron" "tmux" "tmux.conf" \
-            "vim" "vimrc" "xinitrc" "xmodmaprc" "Xresources" \
+            "vim" "vimrc" "visidatarc" "xinitrc" "xmodmaprc" "Xresources" \
 	    "xprofile"; do
     ln_s ${PWD}/${path} ~/.${path}
 done
@@ -112,6 +112,25 @@ mkdir -p ~/.vim/tmp/yankring
 mkdir -p ~/.local/share/mime
 ln -s mime ~/.local/share/mime/packages
 update-mime-database ~/.local/share/mime
+
+# Install oh-my-zsh
+if [ "$SH" == "zsh" ]; then
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" 
+
+    # install biozsh
+    git clone https://github.com/kloetzl/biozsh.git \
+        ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/biozsh 
+
+    # install zsh-nvm
+    git clone https://github.com/lukechilds/zsh-nvm.git \
+        ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-nvm 
+
+    # install git-auto-status
+    mkdir ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/git-auto-status
+    wget https://gist.githubusercontent.com/oshybystyi/475ee7768efc03727f21/raw/4bfd57ef277f5166f3070f11800548b95a501a19/git-auto-status.plugin.zsh \
+        -O ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/git-auto-status/git-auto-status.plugin.zsh
+
+fi
 
 echo "Done!"
 echo "Don't forget to install any necessary fonts, icons, etc."

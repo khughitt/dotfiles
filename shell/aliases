@@ -23,8 +23,8 @@ alias ra=ranger
 alias ipy=ipython
 alias t=tabview
 
-#alias R='R --no-save'
-alias R=radian
+alias R='R --no-save'
+alias r=radian
 
 alias vim=nvim
 alias vm='nvim README.Rmd'
@@ -50,3 +50,28 @@ alias diff='diff --color=auto'
 # termbin
 # example usage: echo just testing! | tb
 alias tb="nc termbin.com 9999"
+
+# from oh-my-zsh common aliases plugin..
+
+# Command line head / tail shortcuts
+alias ldot='ls -ld .*'
+alias lS='ls -1FSsh'
+alias lart='ls -1Fcart'
+alias lrt='ls -1Fcrt'
+
+alias -g H='| head'
+alias -g T='| tail'
+alias -g G='| grep'
+alias -g L="| less"
+alias -g M="| most"
+alias -g LL="2>&1 | less"
+alias -g CA="2>&1 | cat -A"
+alias -g NE="2> /dev/null"
+alias -g NUL="> /dev/null 2>&1"
+alias -g P="2>&1| pygmentize -l pytb"
+
+alias dud='du -d 1 -h'
+alias duf='du -sh *'
+alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
+
+alias hgrep="fc -El 0 | grep"

@@ -24,6 +24,9 @@ set complete+=i      " complete filenames
 set noshowmode       " hide <INSERT>
 filetype indent on   " indent based on filetype
 
+" reduce mapping timeout delay
+set ttimeoutlen=15
+
 " Mouse support
 " https://github.com/neovim/neovim/wiki/Following-HEAD#20170403
 set mouse=a
@@ -67,7 +70,7 @@ noremap <C-e> <End>
 
 " Autosave on leaving insert mode
 " http://stackoverflow.com/questions/9087582/how-to-autosave-in-vim-7-when-focus-is-lost-from-the-window
-autocmd InsertLeave * if expand('%') != '' | update | endif
+" autocmd InsertLeave * if expand('%') != '' | update | endif
 
 " ---------------------------------------------------------------------------
 " CamelCaseMotion
@@ -406,7 +409,7 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 "set clipboard=unnamed
 
 " switching to unnamedplus to allow pasting to chromium, etc. in wayland
-set clipboard^=unnamedplus
+set clipboard^=unnamed,unnamedplus
 
 " work-around to preserve yank buffer when pasting; the solution below first
 " deletes selected text to an unused register
@@ -781,9 +784,9 @@ let R_rconsole_width = 0
 let R_hl_term = 0 
 
 " Nvim-R / radian
-let R_app = "radian"
+"let R_app = "radian"
+"let R_bracketed_paste = 1
 let R_cmd = "R"
-let R_bracketed_paste = 1
 
 " devtools load all shortcut
 map ;dl :RLoadPackage<CR>
