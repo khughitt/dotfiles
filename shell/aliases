@@ -40,8 +40,8 @@ if [ $(type "colormake" &> /dev/null) ]; then
 fi
 
 alias rc='random_country.py'
-alias pc='yaourt -Syua'
-alias pcd='yaourt -Syua --devel'
+alias pc='yay -Syu'
+alias pcd='yay -Syu --devel'
 
 alias pg='ps -Af | grep $1'
 
