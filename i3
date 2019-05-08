@@ -138,7 +138,7 @@ bindsym $mod+1 workspace web
 bindsym $mod+2 workspace term
 bindsym $mod+3 workspace code
 bindsym $mod+4 workspace ssh
-bindsym $mod+5 workspace 5
+bindsym $mod+5 workspace music
 bindsym $mod+6 workspace 6
 bindsym $mod+7 workspace 7
 bindsym $mod+8 workspace 8
@@ -154,7 +154,7 @@ bindsym $mod+Shift+1 move container to workspace web
 bindsym $mod+Shift+2 move container to workspace term
 bindsym $mod+Shift+3 move container to workspace code
 bindsym $mod+Shift+4 move container to workspace ssh
-bindsym $mod+Shift+5 move container to workspace 5
+bindsym $mod+Shift+5 move container to workspace music
 bindsym $mod+Shift+6 move container to workspace 6
 bindsym $mod+Shift+7 move container to workspace 7
 bindsym $mod+Shift+8 move container to workspace 8
@@ -164,8 +164,12 @@ bindsym $mod+Shift+0 move container to workspace 10
 # move workspace to different monitor
 bindsym $mod+m move workspace to output left
 
-# default ref workspace to left monitor
-#workspace "📖" output XWAYLAND1
+# specify default monitors for first few workspaces
+workspace "web" output HDMI-A-0
+workspace "code" output HDMI-A-0
+workspace "term" output DVI-D-1
+workspace "ssh" output DVI-D-1
+workspace "music" output DVI-D-1
 
 #
 # Layout
