@@ -1,4 +1,5 @@
 shell/private
+vim/black
 vim/tmp
 nvim/tmp
 nvim/plugged

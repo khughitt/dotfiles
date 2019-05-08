@@ -274,3 +274,4 @@ bar {
 # autostart
 exec_always --no-startup-id killall compton; compton
 exec --no-startup-id /usr/lib/geoclue-2.0/demos/agent
+exec --no-startup-id blackd

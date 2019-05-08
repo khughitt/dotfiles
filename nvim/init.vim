@@ -103,6 +103,7 @@ call plug#begin()
     Plug 'mllg/vim-devtools-plugin'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'qpkorr/vim-bufkill'
+    Plug 'python/black'
     Plug 'scrooloose/nerdcommenter'
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'Shougo/denite.nvim'
@@ -193,7 +194,7 @@ set incsearch              " do incremental searching
 set infercase              " case insensitive tab completion
 set ignorecase             " ignore case when searching
 set novisualbell           " no thank you
-set colorcolumn=100        " show right margin
+set colorcolumn=88         " show right margin
 
 let marksCloseWhenSelected = 0
 let showmarks_include="abcdefghijklmnopqrstuvwxyz"
@@ -863,6 +864,8 @@ vmap <Silent><C-M> <Plug>(IPy-Run)
 nmap <Silent><C-M> <Plug>(IPy-Run) 
 
 autocmd Filetype python nmap <localleader>rf :IPython<cr>
+
+autocmd BufWritePre *.py execute ':Black'
 
 " Snakemake syntax highlighting
 au BufNewFile,BufRead Snakefile set syntax=snakemake
