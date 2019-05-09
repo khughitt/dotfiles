@@ -27,6 +27,7 @@ alias R='R --no-save'
 alias r=radian
 
 alias vim=nvim
+alias vmi=nvim
 alias vm='nvim README.Rmd'
 
 alias open='xdg-open'

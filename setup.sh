@@ -91,7 +91,7 @@ ln -s ${PWD}/pylintrc ${XDG_CONFIG_HOME}/pylintrc
 ln -s ${PWD}/ranger ${XDG_CONFIG_HOME}/ranger
 
 # Everything else
-for path in "ctags" "dir_colors" "gitconfig" "gitignore_global" \
+for path in "agignore" "ctags" "dir_colors" "gitconfig" "gitignore_global" \
             "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "xmodmaprc" "Xresources" \
 	    "xprofile"; do

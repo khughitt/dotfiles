@@ -25,7 +25,7 @@ set noshowmode       " hide <INSERT>
 filetype indent on   " indent based on filetype
 
 " reduce mapping timeout delay
-set ttimeoutlen=15
+set ttimeoutlen=5
 
 " Mouse support
 " https://github.com/neovim/neovim/wiki/Following-HEAD#20170403
@@ -194,7 +194,7 @@ set incsearch              " do incremental searching
 set infercase              " case insensitive tab completion
 set ignorecase             " ignore case when searching
 set novisualbell           " no thank you
-set colorcolumn=88         " show right margin
+set colorcolumn=89         " show right margin
 
 let marksCloseWhenSelected = 0
 let showmarks_include="abcdefghijklmnopqrstuvwxyz"
@@ -222,7 +222,7 @@ set tabstop=4
 set expandtab               " expand tabs to spaces
 set smarttab
 "set nosmarttab             " no tabs
-set textwidth=99            " stick to less than 100 chars per line when possible
+set textwidth=88            " stick to 88 characters or less, when possible
 set formatoptions+=n        " support for numbered/bullet lists
 set virtualedit=block       " allow virtual edit in visual block ..
 set pastetoggle=<F6>        " paste-mode toggle
@@ -793,7 +793,7 @@ let R_cmd = "R"
 map ;dl :RLoadPackage<CR>
 
 " Emulate Tmux ^az
-function ZoomWindow()
+function! ZoomWindow()
     let cpos = getpos(".")
     tabnew %
     redraw
@@ -841,7 +841,7 @@ nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("*_
 nmap <localleader>km :call RMakeRmd("github_document")<CR>
 
 " show source code for function under cursor
-function ShowRSource()
+function! ShowRSource()
     let g:function_name = expand("<cword>")
     echom "Showing source code for function: \"" . g:function_name . "\""
     enew
@@ -866,6 +866,8 @@ nmap <Silent><C-M> <Plug>(IPy-Run)
 autocmd Filetype python nmap <localleader>rf :IPython<cr>
 
 autocmd BufWritePre *.py execute ':Black'
+
+au FileType python map <silent> <leader>b obreakpoint()<esc>
 
 " Snakemake syntax highlighting
 au BufNewFile,BufRead Snakefile set syntax=snakemake

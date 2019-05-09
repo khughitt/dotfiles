@@ -41,7 +41,7 @@ for_window [class=".*"] border pixel 2
 hide_edge_borders smart_no_gaps
 
 # gaps
-gaps inner 15
+gaps inner 12
 smart_gaps on
 #gaps inner all set 20
 #gaps outer current plus 5
@@ -135,9 +135,9 @@ bindsym $mod+Shift+Right move right
 #bindsym $mod+3 workspace 🌎
 #bindsym $mod+4 workspace ♫
 bindsym $mod+1 workspace web
-bindsym $mod+2 workspace term
-bindsym $mod+3 workspace code
-bindsym $mod+4 workspace ssh
+bindsym $mod+2 workspace code1
+bindsym $mod+3 workspace code2
+bindsym $mod+4 workspace term
 bindsym $mod+5 workspace music
 bindsym $mod+6 workspace 6
 bindsym $mod+7 workspace 7
@@ -151,9 +151,9 @@ bindsym $mod+0 workspace 10
 #bindsym $mod+Shift+3 move container to workspace 🌎
 #bindsym $mod+Shift+4 move container to workspace ♫
 bindsym $mod+Shift+1 move container to workspace web
-bindsym $mod+Shift+2 move container to workspace term
-bindsym $mod+Shift+3 move container to workspace code
-bindsym $mod+Shift+4 move container to workspace ssh
+bindsym $mod+Shift+2 move container to workspace code1
+bindsym $mod+Shift+3 move container to workspace code2
+bindsym $mod+Shift+4 move container to workspace term
 bindsym $mod+Shift+5 move container to workspace music
 bindsym $mod+Shift+6 move container to workspace 6
 bindsym $mod+Shift+7 move container to workspace 7
@@ -166,9 +166,9 @@ bindsym $mod+m move workspace to output left
 
 # specify default monitors for first few workspaces
 workspace "web" output HDMI-A-0
-workspace "code" output HDMI-A-0
-workspace "term" output DVI-D-1
-workspace "ssh" output DVI-D-1
+workspace "code1" output HDMI-A-0
+workspace "code2" output DVI-D-1
+workspace "term" output HDMI-A-0
 workspace "music" output DVI-D-1
 
 #
