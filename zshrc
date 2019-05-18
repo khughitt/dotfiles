@@ -13,18 +13,21 @@ if [[ $ZSHRC_LOADED = true ]]; then
     return
 fi
 
-# Check to see if zprofile has been loaded yet
+# check to see if zprofile has been loaded yet
 if [[ $ZSHRC_LOADED = true ]]; then
     return
 fi
 
-# Stop here in non-interactive mode
+# stop here in non-interactive mode
 [ -z "$PS1" ] && return
 
-# Oh-my-zsh settings
+# oh-my-zsh settings
 export ZSH=$HOME/.oh-my-zsh
 export ZSH_THEME="bira"
 export CASE_SENSITIVE="true"
+
+# conda tab completion
+fpath+=~/software/conda-zsh-completion
 
 # reduce amount of time zsh waits after escape characters
 # https://www.johnhawthorn.com/2012/09/vi-escape-delays/<Paste>
@@ -42,7 +45,7 @@ compinit -C
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:1
 
-# Local settings (early settings)
+# local settings (early)
 if [ -e ~/.zsh_local_early ]; then
     source ~/.zsh_local_early
 fi
@@ -63,15 +66,14 @@ function xumt() {
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:2
 
-# Automatically launch tmux when connecting via SSH
+# automatically launch tmux when connecting via SSH
 if [[ "$TERM" != (screen|tmux)-* ]] && [ ! -z "$SSH_CLIENT" ]; then
-    # Attempt to discover a detached session and attach  it, else create a new session
+    # attempt to discover a detached session and attach  it, else create a new session
     xumt $TMUX_SESSION
-    # Exit on unattach
     exit
 fi
 
-# Check if in virtual console
+# check if in virtual console
 if [ "$TERM" = "linux" ]; then
     export vconsole=true
 else
@@ -80,7 +82,7 @@ fi
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:3
 
-# Use Xresrouces to set TTY colors for virtual console sessions
+# use Xresrouces to set TTY colors for virtual console sessions
 if $vconsole; then
     COLORFILE=$(grep --color='never' -o "/.*termcolors/[a-z1-9\-]*" $HOME/.Xresources)
     _SEDCMD='s/.*\*color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
@@ -91,29 +93,32 @@ if $vconsole; then
     clear
 fi
 
-# History
+# history
 setopt HIST_IGNORE_DUPS
 
-# Disable auto correction
+# disable auto correction
 unsetopt correct_all
 
-# Extended globstring support
+# extended globstring support
 setopt extended_glob
 
-# Lazy-load NVM
+# lazy-load NVM
 export NVM_LAZY_LOAD=true
 
-# Plugins
+# plugins
 [ -z "$plugins" ] && plugins=(fasd docker archlinux git git-auto-status sudo systemd web-search biozsh zsh-nvm)
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:4
 
-# Load Oh-my-zsh
+# load Oh-my-zsh
 source $ZSH/oh-my-zsh.sh
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:5
 
-# Additional shell settings (aliases, exports, etc.)
+# snakemake tab completion
+compdef _gnu_generic snakemake
+
+# additional shell settings (aliases, exports, etc.)
 for file in ~/.shell/{aliases,functions,private,exports,biosyntax}; do
     [ -r "$file" ] && source "$file"
 done
@@ -121,7 +126,7 @@ unset file
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:6
 
-# Fasd
+# fasd
 export _FASD_SHELL='dash'
 
 eval "$(fasd --init auto)"
@@ -138,20 +143,12 @@ alias v='f -e nvim'
 #    fi
 #}
 
-# Suffix aliases
-alias -s doc=lowriter
-alias -s pdf=zathura
-alias -s html=chromium
-alias -s org=chromium
-alias -s com=chromium
-alias -s Rmd=vim
-
-# Make less more friendly for non-text input files, see lesspipe(1)
+# make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:7
 
-# Disable scroll lock
+# disable scroll lock
 stty -ixon
 
 # vi-mode key bindings
@@ -207,51 +204,41 @@ fi
 # dir colors
 eval $(dircolors -b ~/.dir_colors)
 
-# Anaconda
-__conda_setup="$('/home/keith/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+# conda
+__conda_setup="$("$HOME/conda/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "/home/keith/conda/etc/profile.d/conda.sh" ]; then
-        . "/home/keith/conda/etc/profile.d/conda.sh"
+    if [ -f "$HOME/conda/etc/profile.d/conda.sh" ]; then
+        . "$HOME/conda/etc/profile.d/conda.sh"
     else
-        export PATH="/home/keith/conda/bin:$PATH"
+        export PATH="$HOME/conda/bin:$PATH"
     fi
 fi
 unset __conda_setup
 
-# hostname
-if [ "$vconsole" = false ]; then
-    hostname | cut -d'.' -f1 | figlet | lolcat -S 33
-fi
-
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:8
 
-# local settings (late settings)
+# local settings (late)
 if [ -e ~/.zsh_local_late ]; then
     source ~/.zsh_local_late
 fi
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:9
 
-function ztabview() {
-    zcat $1 | tabview -
-}
-
-if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:10
-
-# Map caps lock to <Esc>
+# map caps lock to <Esc>
 #xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:11
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:10
 
-# powerlin# Marker (key bindings conflicts with fzf)
+# marker;
+# key bindings conflicts with fzf; disabling for now
 #[[ -s "$HOME/.local/share/marker/marker.sh" ]] && source "$HOME/.local/share/marker/marker.sh"
 
-# PySpark
+# pyspark
 if type "pyspark" > /dev/null && [ ! -z "$CONDA_PREFIX" ]; then
     #export SPARK_HOME="/opt/apache-spark"
     #source ${SPARK_HOME}/conf/spark-env.sh 
@@ -263,18 +250,26 @@ if type "pyspark" > /dev/null && [ ! -z "$CONDA_PREFIX" ]; then
     #unset SPARK_HOME
 fi
 
-# Torch
+# torch
 #if [ -e ~/torch/install/bin/torch-activate ]; then
 #    source ~/torch/install/bin/torch-activate
 #fi
 
-# sync primary / clipboard buffers
-#autocutsel -fork &
-#autocutsel -selection PRIMARY -fork &
-#
-if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:12
+if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:11
 
 ZSHRC_LOADED='true'
 
 # stop profiling zshrc
 #zprof
+
+# rvm
+export PATH="$PATH:$HOME/.rvm/bin"
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+
+# hide ruby version from ps1
+function ruby_prompt_info() { echo '' }
+
+# hostname
+if [ "$vconsole" = false ]; then
+    hostname | cut -d'.' -f1 | figlet | lolcat -S 33
+fi
