@@ -29,14 +29,12 @@ echo "Setting up dotfiles..."
 ln_s ${PWD}/${SH}rc ~/.${SH}rc
 ln_s ${PWD}/shell ~/.shell
 
-# Awesome
-ln_s ${PWD}/awesome ${XDG_CONFIG_HOME}/awesome
-
-# Neovim
-ln_s ${PWD}/nvim ${XDG_CONFIG_HOME}/nvim
+# Create needed directories
+for dir in "compton" "gedit" "i3" "i3status" "sway" "rofi" "termite"; do
+    mkdir -p ${XDG_CONFIG_HOME}/${dir}
+done
 
 # Gedit
-mkdir -p ${XDG_CONFIG_HOME}/gedit/
 cp -r ${PWD}/gedit/styles ${XDG_CONFIG_HOME}/gedit/
 
 # Gtk 3.0
@@ -45,58 +43,27 @@ if [ ! -e ${XDG_CONFIG_HOME}/gtk-3.0/ ]; then
 fi
 ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 
-# Xresources themes
-ln -s ${PWD}/termcolors ${XDG_CONFIG_HOME}/
+# ~/.config/xx
+for path in "termcolors" "colorls" "mimeapps.list" "redshift.conf"  \
+            "labnote" "pylintrc" "ranger"; do
+    ln_s ${PWD}/${path} ${XDG_CONFIG_HOME}/${path}
+done
 
-# colorls
-ln -s ${PWD}/colorls ${XDG_CONFIG_HOME}/colorls
-
-# compton
-mkdir -p ${XDG_CONFIG_HOME}/compton
-ln -s ${PWD}/compton.conf ${XDG_CONFIG_HOME}/compton/compton.conf
-
-# i3
-mkdir -p ${XDG_CONFIG_HOME}/i3
-ln -s ${PWD}/i3 ${XDG_CONFIG_HOME}/i3/config
-
-# mimetypes
-ln -s mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
-
-# sway
-mkdir -p ${XDG_CONFIG_HOME}/sway
-ln -s ${PWD}/sway ${XDG_CONFIG_HOME}/sway/config
-
-# redshift
-ln -s ${PWD}/redshift ${XDG_CONFIG_HOME}/redshift.conf
-
-# i3status
-mkdir -p ${XDG_CONFIG_HOME}/i3status
-ln -s ${PWD}/i3status ${XDG_CONFIG_HOME}/i3status/config
-
-# rofi
-mkdir -p ${XDG_CONFIG_HOME}/rofi
-ln -s ${PWD}/rofi ${XDG_CONFIG_HOME}/rofi/config
-
-# termite
-mkdir -p ${XDG_CONFIG_HOME}/termite
-ln -s ${PWD}/termite ${XDG_CONFIG_HOME}/termite/config
-
-# labnote
-ln -s ${PWD}/labnote ${XDG_CONFIG_HOME}/labnote
-
-# pylint 
-ln -s ${PWD}/pylintrc ${XDG_CONFIG_HOME}/pylintrc
-
-# ranger
-ln -s ${PWD}/ranger ${XDG_CONFIG_HOME}/ranger
-
-# Everything else
+# ~/.xx
 for path in "agignore" "ctags" "dir_colors" "gitconfig" "gitignore_global" \
             "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "xmodmaprc" "Xresources" \
-	    "xprofile"; do
+	        "xprofile"; do
     ln_s ${PWD}/${path} ~/.${path}
 done
+
+# ~/.config/xx/config
+for path in "i3" "i3status" "sway" "rofi" "termite"; do
+    ln_s ${PWD}/${path} ${XDG_CONFIG_HOME}/${path}/config
+done
+
+# compton
+ln -s ${PWD}/compton.conf ${XDG_CONFIG_HOME}/compton/compton.conf
 
 # Copy Xresources to Xdefaults for sway
 ln_s ${PWD}/Xresources ~/.Xdefaults
@@ -131,6 +98,18 @@ if [ "$SH" == "zsh" ]; then
         -O ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/git-auto-status/git-auto-status.plugin.zsh
 
 fi
+
+# rvm
+while
+  read -r -p "Install RVM? [yes|no]" response &&
+    [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]
+do
+    echo "Adding rvm gpg key..."
+    gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+
+    echo "Installing rvm..."
+    \curl -sSL https://get.rvm.io | bash
+done
 
 echo "Done!"
 echo "Don't forget to install any necessary fonts, icons, etc."

@@ -52,6 +52,14 @@ alias diff='diff --color=auto'
 # example usage: echo just testing! | tb
 alias tb="nc termbin.com 9999"
 
+# Suffix aliases
+alias -s doc=lowriter
+alias -s pdf=zathura
+alias -s html=chromium
+alias -s org=chromium
+alias -s com=chromium
+alias -s Rmd=vim
+
 # from oh-my-zsh common aliases plugin..
 
 # Command line head / tail shortcuts
