@@ -8,16 +8,24 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
   unset f
 fi
 
-# detect monitors
-edp1=$(xrandr -q | awk '/eDP1/ {print $2}')
-dvi1=$(xrandr -q | awk '/DVI-D-1/ {print $2}')
-hdmi1=$(xrandr -q | awk '/HDMI1/ {print $2}')
-hdmi2=$(xrandr -q | awk '/HDMI2/ {print $2}')
+# detect displays
+dp1=$(xrandr -q | awk '/^DP-1/ {print $2}')
+edp1=$(xrandr -q | awk '/^eDP-?1/ {print $2}')
+dvi1=$(xrandr -q | awk '/^DVI-D-1/ {print $2}')
+hdmi1=$(xrandr -q | awk '/^HDMI1/ {print $2}')
+hdmi2=$(xrandr -q | awk '/^HDMI2/ {print $2}')
 
 # laptop + monitor
-if [ "$edp1" = "connected" & "$hdmi1" = "connected" ]; then
-  xrandr --output HDMI1 --auto --same-as eDP1
-  xrandr --output eDP1 --off
+if [ "$edp1" = "connected" ]; then
+    # eDP1 / eDP-1
+    edp1_id=$(xrandr -q | awk '/^eDP-?1/ {print $1}')
+
+    if [ "$hdmi1" = "connected" ]; then
+        xrandr --output HDMI1 --auto --same-as $edp1_id
+    elif [ "$dp1" = "connected" ]; then
+        xrandr --output DP-1 --auto --same-as $edp1_id
+    fi
+    xrandr --output $edp1_id --off
 fi
 
 # two monitors (HDMI/HDMI)
