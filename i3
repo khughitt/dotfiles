@@ -221,15 +221,24 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 #-------------------------------------------------------------------------------
 exec_always --no-startup-id termite --name=termite_scratch -t termite_scratch
 for_window[instance="termite_scratch"] move scratchpad
-bindsym Mod1+Return [instance="termite_scratch"] scratchpad show, resize set 1200 800; move position 2280px 140px
+bindsym Mod1+Return \
+    [instance="python_scratch|r_scratch"] move scratchpad; \
+    [instance="termite_scratch"] scratchpad show, resize set 1200 800;  \
+    move position 2280px 140px;
 
 exec_always --no-startup-id termite -e R --name=r_scratch -t r_scratch
 for_window[instance="r_scratch"] move scratchpad
-bindsym Mod1+space [instance="r_scratch"] scratchpad show, resize set 1200 800; move position 2280px 140px
+bindsym Mod1+space \
+    [instance="python_scratch|termite_scratch"] move scratchpad; \
+    [instance="r_scratch"] scratchpad show, resize set 1200 800; 
+    move position 2280px 140px
 
 exec_always --no-startup-id termite -e ipython --name=python_scratch -t python_scratch
 for_window[instance="python_scratch"] move scratchpad
-bindsym Mod1+j [instance="python_scratch"] scratchpad show, resize set 1200 800; move position 2280px 140px
+bindsym Mod1+j \
+    [instance="r_scratch|termite_scratch"] move scratchpad; \
+    [instance="python_scratch"] scratchpad show, resize set 1200 800; \
+    move position 2280px 140px
 
 #
 # Resizing containers:
