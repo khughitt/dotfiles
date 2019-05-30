@@ -50,8 +50,8 @@ for path in "termcolors" "colorls" "mimeapps.list" "redshift.conf"  \
 done
 
 # ~/.xx
-for path in "agignore" "ctags" "dir_colors" "gitconfig" "gitignore_global" \
-            "Rprofile" "Renviron" "tmux" "tmux.conf" \
+for path in "agignore" "ansiweather" "ctags" "dir_colors" "gitconfig" \
+            "gitignore_global" "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "xmodmaprc" "Xresources" \
 	        "xprofile"; do
     ln_s ${PWD}/${path} ~/.${path}

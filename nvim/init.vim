@@ -451,10 +451,6 @@ nnoremap <C-l> <C-w>l
 tnoremap <C-Left> <m-b>
 tnoremap <C-Right> <m-f>
 
-"" disable jumping (e.g. control-i) in terminal
-" 2016/12/15 Disabling: prevents terminal tab completion from working properly
-"tnoremap <c-i> <nop>
-
 " automatically enter insert mode
 autocmd BufWinEnter,WinEnter term://* startinsert
 
@@ -471,11 +467,6 @@ au TermOpen * setlocal nonumber norelativenumber
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
-"let g:airline_theme = 'hybrid'
-"let g:airline_theme = 'bubblegum'
-"let g:airline_theme = 'zenburn'
-"let g:airline_theme='quantum'
-"let g:airline_theme = 'hybridline'
 let g:airline_theme = 'tender'
 
 " ---------------------------------------------------------------------------
@@ -748,16 +739,15 @@ set ignorecase " ignore case search
 set smartcase  " override 'ignorecase' if the search pattern contains upper case
 nohlsearch     " avoid highlighting when reloading vimrc
 
-" stop  highlighting
+" turn off highlighting
 nnoremap <leader>n :nohl<CR>
-"nnoremap <silent> <C-l> :nohl<CR><C-l>
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType ruby,eruby,yaml,r,rmd,jinja setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd FileType ruby,eruby,yaml,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
 autocmd BufRead,BufNewFile *.py set autoindent
 
@@ -814,7 +804,7 @@ let R_assign = 0
 
 " enable PDF/Browser support when available
 if $DISPLAY != ""
-    let R_pdfviewer = 'evince'
+    let R_pdfviewer = 'zathura'
     let vimrplugin_openpdf = 1
     let vimrplugin_openhtml = 1
 endif
@@ -832,6 +822,7 @@ nmap <Space> <Plug>RDSendLine
 vmap <C-M> <Plug>RDSendSelection
 nmap <C-M> <Plug>RDSendLine
 
+" preview data
 nmap <silent> <LocalLeader>h :call RAction("hh", "@,48-57,_,.")<CR>
 
 " wipe knitr cache and output
@@ -865,7 +856,7 @@ nmap <Silent><C-M> <Plug>(IPy-Run)
 
 autocmd Filetype python nmap <localleader>rf :IPython<cr>
 
-autocmd BufWritePre *.py execute ':Black'
+"autocmd BufWritePre *.py execute ':Black'
 
 au FileType python map <silent> <leader>b obreakpoint()<esc>
 

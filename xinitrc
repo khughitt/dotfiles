@@ -12,8 +12,8 @@ fi
 dp1=$(xrandr -q | awk '/^DP-1/ {print $2}')
 edp1=$(xrandr -q | awk '/^eDP-?1/ {print $2}')
 dvi1=$(xrandr -q | awk '/^DVI-D-1/ {print $2}')
-hdmi1=$(xrandr -q | awk '/^HDMI1/ {print $2}')
-hdmi2=$(xrandr -q | awk '/^HDMI2/ {print $2}')
+hdmi0=$(xrandr -q | awk '/^HDMI-?0/ {print $2}')
+hdmi1=$(xrandr -q | awk '/^HDMI-?1/ {print $2}')
 
 # laptop + monitor
 if [ "$edp1" = "connected" ]; then
@@ -28,9 +28,9 @@ if [ "$edp1" = "connected" ]; then
     xrandr --output $edp1_id --off
 fi
 
-# two monitors (HDMI/HDMI)
-if [ "$hdmi2" = "connected" ]; then
-  xrandr --output HDMI2 --auto --left-of HDMI1
+# two monitors (HDMI/DP-I)
+if [ "$hdmi0" = "connected" && "$dp1" = "connected" ]; then
+  xrandr --output DP-1 --auto --left-of HDMI-0
 fi
 
 # two monitors (HDMI/DVI)

@@ -23,6 +23,6 @@ function va {
 
 # syntax highlighting in less 
 function les {
-    /usr/bin/src-hilite-lesspipe.sh "$1" | less -R
+    src-hilite-lesspipe.sh "$1" | less -R
 }
 

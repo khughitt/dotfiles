@@ -5,48 +5,49 @@
 ################################################################################
 
 # navigation
-alias cl='colorls'
-alias ll='ls -halF'
-alias la='ls -A'
-alias lr='ls -latrh'
-alias l='colorls -l --sd'
+alias ls='lsd --group-dirs=first'
+alias l='ls -l'
+alias la='ls -a'
+alias lla='ls -la'
+alias lt='ls --tree'
 
+alias tree='tree -C'
+
+alias ra=ranger
+
+# matching
 alias g='grep --color=always'
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
 
+# file management
+alias open='mimeopen'
 alias rmf="rm -rf"
 
-alias sudo="sudo "
-
-alias ra=ranger
-alias ipy=ipython
-alias t=tabview
-
-alias R='R --no-save'
-alias r=radian
-
-alias vim=nvim
-alias vmi=nvim
-alias vm='nvim README.Rmd'
-
-alias open='xdg-open'
-
-alias tp='todotxt-machine $HOME/d/notes/todo/personal.txt $HOME/d/notes/todo/.done.personal.txt'
-alias tw='todotxt-machine $HOME/d/notes/todo/work.txt $HOME/d/notes/todo/.done.work.txt'
-alias tl='todotxt-machine $HOME/d/notes/todo/linux.txt $HOME/d/notes/todo/.done.linux.txt'
-
-if [ $(type "colormake" &> /dev/null) ]; then
-    alias make='colormake'
-fi
-
-alias rc='random_country.py'
+# package management
 alias pc='yay -Syu'
 alias pcd='yay -Syu --devel'
 
+# process management
 alias pg='ps -Af | grep $1'
 
+# diff
 alias diff='diff --color=auto'
+
+# support aliases when using sudo
+alias sudo="sudo "
+
+# python
+alias ipy=ipython
+
+# r
+alias R='R --quiet --no-save'
+alias r=radian
+
+# neovim
+alias vim=nvim
+alias vmi=nvim
+alias vm='nvim README.Rmd'
 
 # termbin
 # example usage: echo just testing! | tb
@@ -81,6 +82,8 @@ alias -g P="2>&1| pygmentize -l pytb"
 
 alias dud='du -d 1 -h'
 alias duf='du -sh *'
+
+# recursively counts # files in directories and returns a ranked list
 alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
 
-alias hgrep="fc -El 0 | grep"
+

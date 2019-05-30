@@ -25,6 +25,8 @@ umask 0002
 #fpath=( $fpath $PREFIX/usr/share/zsh/site-functions )
 #fpath=( $fpath $PREFIX/usr/share/zsh/functions )
 
+export PATH=$PATH:$HOME/.gem/ruby/2.5.0/bin
+
 # ibis doesn't like my java settings
 unset _JAVA_OPTIONS
 

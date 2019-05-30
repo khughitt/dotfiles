@@ -19,18 +19,11 @@ export CBCB_SW_MAINTAINER_EMAIL="user@email.com"
 # Load modules
 module add         \
     zsh/5.3.1      \
-    tmux/2.3       \
     git            \
-    htop           \
-    neovim         \
     perl/common    \
-    bowtie2/2.2.4  \
-    samtools/1.3   \
-    tophat         \
-    pandoc         \
     R/3.3.3        \
     R/common/3.3.3 \
-    the_silver_searcher
+    ruby/2.5.0
 
 module remove samtools/0.1.19
 
