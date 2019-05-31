@@ -1,11 +1,6 @@
 " ---------------------------------------------------------------------------
+"  
 " Neovim Configuration
-"
-" TODO:
-"
-"  1. Restore cntl-left and right word navigation behavior when inside terminal
-"  2. Fix behavior when using :bd with a terminal open
-"  3. Fix Nerd commenter behavior within code blocks
 "
 " ---------------------------------------------------------------------------
 
@@ -55,7 +50,7 @@ nmap <leader>z :wq<cr>
 
 " Fast save (alt. method)
 inoremap <c-s> <c-o>:w<cr>
-nnoremap <c-s> :w<cr>
+"nnoremap <c-s> :w<cr>
 
 " remap macro recording to Q
 nnoremap Q q
@@ -85,6 +80,7 @@ map <s-e> <Plug>CamelCaseMotion_e
 call plug#begin()
     " plugins
     Plug 'airblade/vim-gitgutter'
+    Plug 'https://github.com/Alok/notational-fzf-vim'
     Plug 'bioSyntax/bioSyntax-vim'
     Plug 'chrisbra/csv.vim'
     Plug 'ervandew/supertab'
@@ -121,7 +117,7 @@ call plug#begin()
     Plug 'ryanoasis/vim-devicons'
     Plug 'wellle/targets.vim'
     Plug '/usr/share/vim/vimfiles'
-    Plug 'junegunn/fzf.vim'
+    Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
     Plug 'severin-lemaignan/vim-minimap'
 
     "Plug 'vim-airline/vim-airline'
@@ -524,6 +520,16 @@ map <C-n> :NERDTreeToggle<CR>
 " ---------------------------------------------------------------------------
 let g:NERDDefaultAlign = 'left'
 
+
+" ---------------------------------------------------------------------------
+"  notational-fzf-vim
+" ---------------------------------------------------------------------------
+let g:nv_search_paths = ['~/d/notes', './doc']
+let g:nv_use_short_pathnames = 1
+let g:nv_default_extension = '.md'
+
+nnoremap <silent> <c-y> :NV<CR>
+
 " ---------------------------------------------------------------------------
 "  vpaste.net
 " ---------------------------------------------------------------------------
@@ -670,6 +676,11 @@ let g:lightline = { 'colorscheme': 'ThemerVimLightline' }
 let g:lightline.tabline          = {'left': [['buffers']], 'right': [['close']]}
 let g:lightline.component_expand = {'buffers': 'lightline#bufferline#buffers'}
 let g:lightline.component_type   = {'buffers': 'tabsel'}
+
+" ---------------------------------------------------------------------------
+"  notational-fzf-vim
+" ---------------------------------------------------------------------------
+let g:nv_search_paths = ['~/d/notes']
 
 " ---------------------------------------------------------------------------
 "  yankring.vim

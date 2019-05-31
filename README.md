@@ -17,6 +17,9 @@ Z shell you will also want to install [oh-my-zsh](https://github.com/robbyrussel
 
 Additional Z shell plugins I'm currently using:
 
+ * [biozsh](https://github.com/kloetzl/biozsh.git)
+ * [git-auto-status](https://gist.github.com/oshybystyi/475ee7768efc03727f21)
+ * [zsh-nvm](https://github.com/lukechilds/zsh-nvm.git)
  * [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
  * [zsh-completions](https://github.com/zsh-users/zsh-completions)
  
@@ -26,11 +29,11 @@ users, the plugins are also available on the [Arch User Repository (AUR)](https:
 Screenshot
 ----------
 
-![desktop screenshot](misc/2013-11-28_screenshot.png)
+![desktop screenshot](misc/2019-05-31_screenshot.png)
 
 Current setup:
 
  * [Arch Linux](https://www.archlinux.org/)
- * [AwesomeWM](http://awesome.naquadah.org/)
+ * [i3](https://i3wm.org/)
  * [Z shell](http://www.zsh.org/)
 

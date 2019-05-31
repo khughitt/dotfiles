@@ -62,6 +62,7 @@ volume master {
 }
 
 wifi {
-    format = " w: {ssid} ({signal_percent}) "
+#    format = " w: {ssid} ({signal_percent}) "
+    format = " w: {bitrate} ({signal_percent}) "
 }
 
