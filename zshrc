@@ -26,8 +26,8 @@ export ZSH=$HOME/.oh-my-zsh
 export ZSH_THEME="bira"
 export CASE_SENSITIVE="true"
 
-# conda tab completion
-fpath+=~/software/conda-zsh-completion
+# additional zsh completions
+fpath+=$HOME/d/dotfiles/zsh/
 
 # reduce amount of time zsh waits after escape characters
 # https://www.johnhawthorn.com/2012/09/vi-escape-delays/<Paste>
@@ -38,7 +38,7 @@ export KEYTIMEOUT=1
 autoload -Uz compinit
 
 for dump in ~/.zcompdump(N.mh+24); do
-  compinit
+  compinit -u
 done
 
 compinit -C
@@ -134,6 +134,9 @@ eval "$(fasd --init auto)"
 alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
 alias v='f -e nvim'
+
+# git -> hub
+eval "$(hub alias -s)"
 
 #function v {
 #    if [ -e" $1" ]; then

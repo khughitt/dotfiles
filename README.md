@@ -19,6 +19,7 @@ Additional Z shell plugins I'm currently using:
 
  * [biozsh](https://github.com/kloetzl/biozsh.git)
  * [git-auto-status](https://gist.github.com/oshybystyi/475ee7768efc03727f21)
+ * [hub.zsh_completion](https://github.com/github/hub/blob/master/etc/hub.zsh_completion)
  * [zsh-nvm](https://github.com/lukechilds/zsh-nvm.git)
  * [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
  * [zsh-completions](https://github.com/zsh-users/zsh-completions)

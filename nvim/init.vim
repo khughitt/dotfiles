@@ -83,6 +83,7 @@ call plug#begin()
     Plug 'https://github.com/Alok/notational-fzf-vim'
     Plug 'bioSyntax/bioSyntax-vim'
     Plug 'chrisbra/csv.vim'
+    Plug 'deoplete-plugins/deoplete-jedi'
     Plug 'ervandew/supertab'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'

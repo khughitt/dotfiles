@@ -24,7 +24,6 @@ umask 0002
 #export FPATH="$PREFIX/usr/share/zsh/site-functions:$PREFIX/usr/share/zsh/functions:$FPATH"
 #fpath=( $fpath $PREFIX/usr/share/zsh/site-functions )
 #fpath=( $fpath $PREFIX/usr/share/zsh/functions )
-
 export PATH=$PATH:$HOME/.gem/ruby/2.5.0/bin
 
 # ibis doesn't like my java settings
@@ -34,9 +33,6 @@ unset _JAVA_OPTIONS
 ZSH_THEME='gallois'
 plugins=(git)
 
-# qstat tweak
-alias qstat="date && qstat"
-
 # Lab settings
 export LOGS="${LAB}/logs"
 export RAW="${LAB}/raw_data"
@@ -44,122 +40,5 @@ export REF="${LAB}/ref_data"
 export SCRATCH=${SCRATCH-"/cbcb/nelsayed-scratch/${USER}"}
 export PERL5LIB=$HOME/perl5/lib/perl5 
 
-# CXX Flags
-#export MYCFLAGS="-O3 -I$PREFIX/include -L$PREFIX/lib"
-
-# Required to compile Cairo
-#export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
-
-#export JAR_DIR="$PREFIX/jar"
-#CLASSPATH_STMT="export CLASSPATH=$JAR_DIR"
-#for jarfile in $(/bin/ls $JAR_DIR/*.jar); do
-#    CLASSPATH_STMT="$CLASSPATH_STMT:$jarfile"
-#    ALIAS_STMT="alias $(basename $jarfile .jar)=\"java -jar $jarfile\""
-#    eval $(echo $ALIAS_STMT)
-#done
-#eval $(echo $CLASSPATH_STMT)
-
-# Biopieces
-#export BP_DIR="/cbcb/lab/nelsayed/local/biopieces"
-#export BP_DATA="/cbcb/lab/nelsayed/local/biopieces/data"
-#export BP_TMP="/cbcb/lab/nelsayed/local/biopieces/tmp"
-#export BP_LOG="/cbcb/lab/nelsayed/local/biopieces/log"
-
-#source "$BP_DIR/bp_conf/bashrc"
-
-function nodes {
-    NUM_NODES=$(pbsnodes -a | grep "^[a-z]" | wc -l)
-    FREE_NODES=$(pbsnodes -a | grep "state \= free" | wc -l)
-    FREE_CPUS=$(pbsnodes -a | grep -C 1 "state \= free" | grep "np \=" | awk '{print $3}')
-    JOBS=$(pbsnodes -a | grep "jobs =" | awk -F "=" '{print $2}')
-    AVAILMEM=$(pbsnodes -a | grep availmem | awk -F "availmem" '{print $2}' | sed 's/kb.*$//g' | sed 's/\=//g')
-    TOTALMEM=$(pbsnodes -a | grep availmem | awk -F "totmem" '{print $2}' | sed 's/kb.*$//g' | sed 's/\=//g')
-    PHYSMEM=$(pbsnodes -a | grep availmem | awk -F "physmem" '{print $2}' | sed 's/kb.*$//g' | sed 's/\=//g')
-
-    FREE_CPUS=$(count $FREE_CPUS)
-    JOBS=$(count inc $JOBS)
-    AVAILMEM=$(count $AVAILMEM)
-    TOTALMEM=$(count $TOTALMEM)
-    PHYSMEM=$(count $PHYSMEM)
-    PCTMEM=$(( $AVAILMEM * 100 / $TOTALMEM  ))
-
-    TOTALMEM=$(( $TOTALMEM / 1000000 ))
-    AVAILMEM=$(( $AVAILMEM / 1000000 ))
-    PHYSMEM=$((  $PHYSMEM  / 1000000 ))
-    echo "There are $NUM_NODES total nodes, $FREE_NODES are unused, comprising $FREE_CPUS idle processors."
-
-    echo "There are $JOBS running jobs."
-    echo "Of $TOTALMEM Gb memory, $PHYSMEM is physical, and $AVAILMEM is available. ${PCTMEM}% free."
-}
-
-function qattribs {
-    QUEUES=("large" "throughput" "workstation")
-    for q in $QUEUES; do
-    echo "The attributes of the $q queue are:"
-    CMD="qmgr -c \"print queue $q\" | grep -v \"^#\" | grep -v \"^create\" | sed 's/^set queue//g'"
-    eval $CMD
-    echo ""
-    done
-}
-
-function qdelall {
-    JOBS=$(qstat | grep ${USER} | awk '{print $1}' )
-    for JB in $JOBS; do
-    qdel $JB
-    done
-}
-
-function qdelrange {
-    for i in {$1..$2}; do
-        qdel $i.cbcbsrv 
-    done
-}
-
-#function qs {
-#    CMD="qstat | grep ${USER} "
-#    if [ $@ ]; then
-#    CMD="${CMD} $@"
-#    fi
-#    eval $CMD
-#}
-alias qs=~abelew/bin/qs
-
-function qwho {
-    QUSERS=$(qstat -a | grep "^[0-9]" | awk '{print $2}' | sort | uniq)
-    for acuser in $QUSERS; do
-    USER_JOBS=$(qstat -a -u $acuser | grep "^[0-9]" | wc -l)
-    RUNNING_JOBS=$(qstat -u $acuser -r | grep "^[0-9]" | wc -l)
-    RMEM=$(qstat -u $acuser | grep "^[0-9]" | awk '{print $8}' | sed 's/[a-z]//g')
-    UMEM=$(qstat -u $acuser -r | grep "^[0-9]" | awk '{print $8}' | sed 's/[a-z]//g')
-    RCORES=$(qstat -u $acuser | grep "^[0-9]" | awk '{print $7}' | sed 's/[a-z]//g' | grep -v "\-\-")
-    UCORES=$(qstat -u $acuser -r | grep "^[0-9]" | awk '{print $7}' | sed 's/[a-z]//g' | grep -v "\-\-")
-    REQ_MEM=$(count $RMEM)
-    USED_MEM=$(count $UMEM)
-    REQ_CORES=$(count $RCORES)
-    USED_CORES=$(count $UCORES)
-    QUEUED_JOBS=$(( $USER_JOBS - $RUNNING_JOBS ))
-    QUEUED_MEM=$(( $REQ_MEM - $USED_MEM ))
-    QUEUED_CORES=$(( $REQ_CORES - $USED_CORES ))
-    echo "$acuser requested $USER_JOBS jobs, $RUNNING_JOBS are running, $QUEUED_JOBS are waiting."
-    echo "$acuser requested $REQ_MEM gb memory, $USED_MEM gb is being used, $QUEUED_MEM is waiting."
-    echo "$acuser requested $REQ_CORES cores, $USED_CORES are being used, $QUEUED_CORES are waiting."
-    echo ""
-    done
-}
-
-# PBS node names
-alias pbsnode-names='pbsnodes | grep --color=never "^[a-z0-9]*.umiacs.umd.edu$"'
-
-# Bedops gff2bed ##FASTA work-around (should be fixed in upcoming version)
-# 2014/03/19
-function gff2bed() {
-    line_num=$(expr $(grep -nr "##FASTA" $1 | awk '{print $1}' FS=":") - 1)
-    outfile=$(basename $1 gff)"bed"
-    head -n $line_num $1 | $LAB/local/bin/gff2bed - > $outfile
-    igvtools index $outfile
-}
-
 # Don't do more work than necessary
 export ZSHLOCAL_LOADED='TRUE'
-
-#CPATH=/cbcb/lab/nelsayed/local/lib/python2.7/site-packages/numpy/core/include:$CPATH
