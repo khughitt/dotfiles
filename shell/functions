@@ -21,6 +21,11 @@ function va {
     nvim $(ag -l $1)
 }
 
+# feh browse dir
+function fehd {
+    feh –start-at $1
+}
+
 # syntax highlighting in less 
 function les {
     src-hilite-lesspipe.sh "$1" | less -R

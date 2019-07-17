@@ -6,11 +6,9 @@ if [[ $ZPROFILE_LOADED = true ]]; then
     return
 fi
 
-#echo `date` "| zprofile" >> ~/boot_order
 source /cbcb/sw/cbcb_profile
 
 # CBCB Modules
-#export MODULEPATH=$(echo $MODULEPATH | sed 's/latest/dev/g')
 export MODULEPATH="$MODULEPATH:/cbcb/sw/RedHat-7-x86_64/common/modules/version/dev"
 export CBCB_DEV="/cbcb/sw/RedHat-7-x86_64/dev"
 export CBCB_SW_MAINTAINER_NAME="Keith Hughitt"
@@ -19,18 +17,7 @@ export CBCB_SW_MAINTAINER_EMAIL="user@email.com"
 # Load modules
 module add         \
     zsh/5.3.1      \
-    git            \
-    perl/common    \
-    R/3.3.3        \
-    R/common/3.3.3 \
-    ruby/2.5.0
-
-module remove samtools/0.1.19
+    R/3.5.1
 
 # Exports
-export LAB="/cbcb/lab/nelsayed"
-export PATH="$HOME/perl5/bin:$PATH"
-export LIBRARY_PATH="$LIBRARY_PATH:/usr/lib64"
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/lib64"
-
 export ZPROFILE_LOADED='true'

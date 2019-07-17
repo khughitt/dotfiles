@@ -88,6 +88,7 @@ call plug#begin()
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
     Plug 'bfredl/nvim-ipy'
+    Plug 'editorconfig/editorconfig-vim'
     Plug 'godlygeek/tabular'
     Plug 'davidoc/taskpaper.vim'
     Plug 'freitass/todo.txt-vim'
@@ -272,7 +273,7 @@ catch
 endtry
 
 " create file under cursor
-map <silent> <leader>cf :!touch <c-r><c-p><cr><cr>
+map <localleader>gf :e <cfile><cr>
 
 " Return to last edit position when opening files
 autocmd BufReadPost *
@@ -619,9 +620,9 @@ call denite#custom#map('insert', '<C-v>', '<denite:do_action:vsplit>',        'n
 call denite#custom#map('normal', '<C-v>', '<denite:do_action:vsplit>',        'noremap')
 call denite#custom#map('normal', 'dw',    '<denite:delete_word_after_caret>', 'noremap')
 
-nnoremap <C-p>     :<C-u>Denite file_rec<CR>
+nnoremap <C-p>     :<C-u>Denite file/rec<CR>
 nnoremap <leader>d :<C-u>DeniteBufferDir file_rec<CR>
-nnoremap <leader>o :<C-u>Denite file_old<CR>
+nnoremap <leader>o :<C-u>Denite file/old<CR>
 nnoremap <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
 nnoremap <leader>s :<C-u>Denite buffer<CR>
 nnoremap <leader>8 :<C-u>DeniteCursorWord grep:. -mode=normal<CR>
@@ -826,7 +827,7 @@ let rrst_syn_hl_chunk = 1
 let rmd_syn_hl_chunk = 1
 
 " libraries to always include for autocompletion
-let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,igraph,tidyverse"
+let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,parallel,tidyverse"
 
 " press enter and space bar to send lines and selection to R
 vmap <Space> <Plug>RDSendSelection

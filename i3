@@ -227,7 +227,7 @@ bindsym Mod1+Return \
     [instance="termite_scratch"] scratchpad show, resize set 1200 800; \
     move position 2280px 140px;
 
-exec_always --no-startup-id termite -e R --name=r_scratch -t r_scratch
+exec_always --no-startup-id termite -e radian --name=r_scratch -t r_scratch
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \

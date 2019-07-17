@@ -22,10 +22,11 @@ if [ "$edp1" = "connected" ]; then
 
     if [ "$hdmi1" = "connected" ]; then
         xrandr --output HDMI1 --auto --same-as $edp1_id
+        xrandr --output $edp1_id --off
     elif [ "$dp1" = "connected" ]; then
         xrandr --output DP-1 --auto --same-as $edp1_id
+        xrandr --output $edp1_id --off
     fi
-    xrandr --output $edp1_id --off
 fi
 
 # two monitors (HDMI/DP-I)

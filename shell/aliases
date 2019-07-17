@@ -23,6 +23,7 @@ alias zgrep='zgrep --color=always'
 # file management
 alias open='mimeopen'
 alias rmf="rm -rf"
+alias cpr="cp -r"
 
 # package management
 alias pc='yay -Syu'
