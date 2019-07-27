@@ -1,28 +1,52 @@
 [options]
 #font = Droid Sans Mono 11
 #font = Terminus (TTF) 11
-font = Hack 12
+#font = Hack 12
+font = Droid Sans Mono 12
 scrollback_lines = 9192
 
+# todo:
+# https://github.com/adi1090x/termite-style
+
+# tomorrow night eighties
 [colors]
-foreground = #dedfdf
-background = #23292d
-color0 = #23292d
-color1 = #ef4e7c
-color2 = #6ebb82
-color3 = #f79532
-color4 = #1299ad
-color5 = #a067ab
-color6 = #09b399
-color7 = #dedfdf
-color8 = #42474b
-color9 = #f37055
-color10 = #09b399
-color11 = #f79532
-color12 = #1299ad
-color13 = #a067ab
-color14 = #09b399
-color15 = #fdfdfd
+color0 = #000000
+color1 = #f27779
+color10 = #99cc99
+color12 = #6699cc
+color13 = #cc99cc
+color14 = #66cccc
+color2 = #99cc99
+color4 = #6699cc
+color5 = #cc99cc
+color6 = #66cccc
+color8 = #000000
+color9 = #f17779
+background = #2c2c2c
+foreground_bold = #cccccc
+cursor = #cccccc
+foreground = #cccccc
+highlight = #515151
+
+#[colors]
+#foreground = #dedfdf
+#background = #23292d
+#color0 = #23292d
+#color1 = #ef4e7c
+#color2 = #6ebb82
+#color3 = #f79532
+#color4 = #1299ad
+#color5 = #a067ab
+#color6 = #09b399
+#color7 = #dedfdf
+#color8 = #42474b
+#color9 = #f37055
+#color10 = #09b399
+#color11 = #f79532
+#color12 = #1299ad
+#color13 = #a067ab
+#color14 = #09b399
+#color15 = #fdfdfd
 
 #[colors]
 # Base16 Dracula

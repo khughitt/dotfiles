@@ -23,7 +23,9 @@ fi
 
 # oh-my-zsh settings
 export ZSH=$HOME/.oh-my-zsh
-export ZSH_THEME="bira"
+#export ZSH_THEME="bira"
+#export DISABLE_LS_COLORS="true"
+#
 export CASE_SENSITIVE="true"
 
 # additional zsh completions
@@ -32,6 +34,9 @@ fpath+=$HOME/d/dotfiles/zsh/
 # reduce amount of time zsh waits after escape characters
 # https://www.johnhawthorn.com/2012/09/vi-escape-delays/<Paste>
 export KEYTIMEOUT=1
+
+# load zplugin
+source ~/.zplugin/bin/zplugin.zsh
 
 # reduce frequency of zcompdump regeneration checks
 # https://medium.com/@dannysmith/little-thing-2-speeding-up-zsh-f1860390f92
@@ -105,7 +110,7 @@ setopt extended_glob
 # lazy-load NVM
 export NVM_LAZY_LOAD=true
 
-# plugins
+# oh-my-zsh plugins
 [ -z "$plugins" ] && plugins=(fasd docker archlinux git git-auto-status sudo systemd web-search biozsh zsh-nvm)
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:4
@@ -115,7 +120,7 @@ source $ZSH/oh-my-zsh.sh
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:5
 
-# snakemake tab completion
+# snakemake tab completion support
 compdef _gnu_generic snakemake
 
 # additional shell settings (aliases, exports, etc.)
@@ -260,10 +265,25 @@ fi
 
 if [[ $VERBOSE = true ]] echo \[ $(date) \] .zshrc:11
 
+# unset lscolors (lsd handles)
+#unset LSCOLORS
+#unset LS_COLORS
+
+# lscolors
+. /usr/share/LS_COLORS/dircolors.sh
+
 ZSHRC_LOADED='true'
 
 # stop profiling zshrc
 #zprof
+
+# zplugin
+zplugin light zsh-users/zsh-autosuggestions
+zplugin light zdharma/fast-syntax-highlighting
+zplugin ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
+zplugin load trapd00r/LS_COLORS
+zplugin load trapd00r/zsh-syntax-highlighting-filetypes
+zplugin ice pick"async.zsh" src"pure.zsh"; zplugin light sindresorhus/pure
 
 # rvm
 export PATH="$PATH:$HOME/.rvm/bin"

@@ -900,6 +900,6 @@ syntax on
 
 " Work-around for failing rmarkdown syntax highlighting when jumping around in files
 " https://vim.fandom.com/wiki/Fix_syntax_highlighting
-"autocmd BufEnter * :syntax sync fromstart
+autocmd BufEnter * :syntax sync fromstart
 syntax sync minlines=300
 
