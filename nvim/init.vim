@@ -1,5 +1,5 @@
 " ---------------------------------------------------------------------------
-"  
+"
 " Neovim Configuration
 "
 " ---------------------------------------------------------------------------
@@ -10,7 +10,6 @@
 set hidden           " easy buffer switching
 set history=5000     " number of command history
 set isk+=_,$,@,%,#,- " none word dividers
-set showmatch        " highlight correspods character
 set cursorline       " highlight current line
 set modeline         " make sure modeline support is enabled
 set noerrorbells     " quiet, please
@@ -19,15 +18,18 @@ set complete+=i      " complete filenames
 set noshowmode       " hide <INSERT>
 filetype indent on   " indent based on filetype
 
-" reduce mapping timeout delay
+" reduce keycode mapping timeout delay
 set ttimeoutlen=5
+
+" reduce mapping delays
+set timeoutlen=500
 
 " Mouse support
 " https://github.com/neovim/neovim/wiki/Following-HEAD#20170403
 set mouse=a
 
 " Omnicompletion
-set omnifunc=syntaxcomplete#Complete
+" set omnifunc=syntaxcomplete#Complete
 
 " Use Ctrl+Space to do omnicompletion
 if has("gui_running")
@@ -38,9 +40,8 @@ endif
 
 " With a map leader it's possible to do extra key combinations
 " like <leader>w saves the current file
-let mapleader = ";"
-let g:mapleader = ";"
-
+let mapleader      = ";"
+let g:mapleader    = ";"
 let maplocalleader = ","
 
 " Fast save/quit
@@ -50,7 +51,7 @@ nmap <leader>z :wq<cr>
 
 " Fast save (alt. method)
 inoremap <c-s> <c-o>:w<cr>
-"nnoremap <c-s> :w<cr>
+nnoremap <c-s> :w<cr>
 
 " remap macro recording to Q
 nnoremap Q q
@@ -63,17 +64,6 @@ inoremap <C-e> <End>
 noremap <C-a> <Home>
 noremap <C-e> <End>
 
-" Autosave on leaving insert mode
-" http://stackoverflow.com/questions/9087582/how-to-autosave-in-vim-7-when-focus-is-lost-from-the-window
-" autocmd InsertLeave * if expand('%') != '' | update | endif
-
-" ---------------------------------------------------------------------------
-" CamelCaseMotion
-" ---------------------------------------------------------------------------
-map <s-w> <Plug>CamelCaseMotion_w
-map <s-b> <Plug>CamelCaseMotion_b
-map <s-e> <Plug>CamelCaseMotion_e
-
 " ---------------------------------------------------------------------------
 " vim-plug
 " ---------------------------------------------------------------------------
@@ -84,9 +74,9 @@ call plug#begin()
     Plug 'bioSyntax/bioSyntax-vim'
     Plug 'chrisbra/csv.vim'
     Plug 'deoplete-plugins/deoplete-jedi'
-    Plug 'ervandew/supertab'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
+    Plug 'honza/vim-snippets'
     Plug 'bfredl/nvim-ipy'
     Plug 'editorconfig/editorconfig-vim'
     Plug 'godlygeek/tabular'
@@ -98,13 +88,21 @@ call plug#begin()
     Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'machakann/vim-textobj-delimited'
     Plug 'majutsushi/tagbar'
+    Plug 'mboughaba/i3config.vim'
     Plug 'mllg/vim-devtools-plugin'
     Plug 'nathanaelkane/vim-indent-guides'
+    Plug 'ncm2/float-preview.nvim'
     Plug 'qpkorr/vim-bufkill'
-    Plug 'python/black'
+    Plug 'raimon49/requirements.txt.vim'
     Plug 'scrooloose/nerdcommenter'
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'Shougo/denite.nvim'
+    Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+    Plug 'Shougo/deoplete-terminal'
+    Plug 'Shougo/neomru.vim'
+    "Plug 'Shougo/neosnippet.vim'
+    "Plug 'Shougo/neosnippet-snippets'
+    Plug 'troydm/zoomwintab.vim'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
@@ -114,26 +112,34 @@ call plug#begin()
     Plug 'mengelbrecht/lightline-bufferline'
     Plug 'vim-scripts/argtextobj.vim'
     Plug 'vim-syntastic/syntastic'
+    Plug 'stephpy/vim-yaml'
+    Plug 'mrk21/yaml-vim'
     Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'ryanoasis/vim-devicons'
     Plug 'wellle/targets.vim'
     Plug '/usr/share/vim/vimfiles'
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+    Plug 'junegunn/fzf.vim'
     Plug 'severin-lemaignan/vim-minimap'
 
     "Plug 'vim-airline/vim-airline'
     "Plug 'vim-airline/vim-airline-themes'
     "Plug 'yuttie/comfortable-motion.vim'
     "Plug 'hkupty/iron.nvim'
-    "Plug 'garbas/vim-snipmate'
-    "Plug 'honza/vim-snippets'
-    "Plug 'ludovicchabant/vim-gutentags'
     "Plug 'plasticboy/vim-markdown'
     "Plug 'tpope/vim-repeat'
+    "Plug 'ervandew/supertab'
+    "Plug 'hyiltiz/vim-plugins-profile'
+    "Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+    "Plug 'python/black'
 
     " themes
+    Plug 'challenger-deep-theme/vim'
+    Plug 'cseelus/vim-colors-lucid'
     Plug 'dracula/vim', { 'as': 'dracula' }
+    Plug 'fcpg/vim-orbital'
+    Plug 'fmoralesc/molokayo'
     Plug 'jacoborus/tender.vim'
     Plug 'joshdick/onedark.vim'
     Plug 'whatyouhide/vim-gotham'
@@ -141,12 +147,14 @@ call plug#begin()
     Plug 'agreco/vim-citylights'
     Plug 'Dru89/vim-adventurous'
     Plug 'yuttie/hydrangea-vim'
+    Plug 'liuchengxu/space-vim-dark'
     Plug 'lu-ren/SerialExperimentsLain'
     Plug 'danilo-augusto/vim-afterglow'
     Plug 'davidklsn/vim-sialoquent'
     Plug 'dikiaap/minimalist'
     Plug 'cseelus/vim-colors-tone'
     Plug 'connorholyday/vim-snazzy'
+    Plug 'sheerun/vim-wombat-scheme'
     Plug 'fenetikm/falcon'
 call plug#end()
 
@@ -188,14 +196,8 @@ set nostartofline               " don't jump to the start of line when scrolling
 " ----------------------------------------------------------------------------
 set showmatch              " brackets/braces that is
 set mat=5                  " duration to show matching brace (1/10 sec)
-set incsearch              " do incremental searching
-set infercase              " case insensitive tab completion
-set ignorecase             " ignore case when searching
-set novisualbell           " no thank you
 set colorcolumn=89         " show right margin
-
-let marksCloseWhenSelected = 0
-let showmarks_include="abcdefghijklmnopqrstuvwxyz"
+set novisualbell           " no thank you
 
 " ----------------------------------------------------------------------------
 " Navigation
@@ -219,7 +221,6 @@ set shiftround              " round indents to multiple of shift width
 set tabstop=4
 set expandtab               " expand tabs to spaces
 set smarttab
-"set nosmarttab             " no tabs
 set textwidth=88            " stick to 88 characters or less, when possible
 set formatoptions+=n        " support for numbered/bullet lists
 set virtualedit=block       " allow virtual edit in visual block ..
@@ -434,6 +435,16 @@ set undodir=~/.vim/tmp/undo
 inoremap <c-u> <c-g>u<c-u>
 
 " ---------------------------------------------------------------------------
+"  paste bug work-around
+"  https://github.com/neovim/neovim/issues/7994#issuecomment-388296360
+" ---------------------------------------------------------------------------
+nnoremap p p`]<Esc>
+
+" insert blank line without entering insert mode
+nmap <A-CR> O<Esc>
+nmap <CR> o<Esc>
+
+" ---------------------------------------------------------------------------
 "  terminal
 " ---------------------------------------------------------------------------
 tnoremap <C-h> <C-\><C-n><C-w>h
@@ -497,6 +508,111 @@ let g:colorscheme_switcher_exclude = [
             \'morning', 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'slate', 'torte', 'zellner']
 
 " ---------------------------------------------------------------------------
+"  deoplete
+" ---------------------------------------------------------------------------
+
+"
+" key bindings:
+"
+" tab next
+" c-n next
+" c-p prev
+" c-y select
+"
+
+"
+" abbreviations:
+"
+" [↑]  after cursor
+" [↓]  before cursor
+" [*]  in changes
+" [F]  file
+" [T]  tag
+" [ns] neosnippet
+"
+
+"
+" TODO: normalize behavior between zsh + fzf and deoplete
+"
+" 1. autocomplete expressions upon <tab> when only a single match exists
+" 2. include relative filepaths without having to include prefix "./"
+" 3. don't include typed expression at all (currently cycles through it, even though
+"    it's not displayed..)
+" 4. automatically insert first match upon opening deoplete menu; currently
+"    insertion only occurs upon cycling of completion choices.
+
+" enable at start-up
+let g:deoplete#enable_at_startup = 1
+
+" only show popup upon request
+let g:deoplete#disable_auto_complete = 1
+
+call deoplete#custom#var('around', {
+    \   'range_above': 25,
+    \   'range_below': 25,
+    \   'mark_above': '[↑]',
+    \   'mark_below': '[↓]',
+    \   'mark_changes': '[*]',
+    \})
+
+" number of results to show
+call deoplete#custom#option({'max_list': 10})
+
+" use <tab> to cycle through completions
+function! s:check_back_space() abort "{{{
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~ '\s'
+endfunction"}}}
+
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ deoplete#manual_complete()
+
+inoremap <silent><expr><S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
+
+" automatically select the first match
+set completeopt+=noinsert
+
+" don't ever insert a newline when selecting with <Enter>
+inoremap <expr> <CR> (pumvisible() ? "\<c-y>" : "\<CR>")
+
+" matchers
+" head   - exact matches
+" length - don't show typed word
+call deoplete#custom#source('_', 'matchers', ['matcher_head', 'terminal', 'matcher_length'])
+
+" sort results alphabetically
+call deoplete#custom#source('_', 'sorters', ['sorter_word'])
+
+" disable the candidates in Comment/String syntaxes.
+call deoplete#custom#source('_', 'disabled_syntaxes', ['Comment', 'String'])
+
+" shortcuts
+call deoplete#custom#option('candidate_marks', ['A', 'S', 'D', 'F', 'G'])
+inoremap <expr><m-a>  deoplete#insert_candidate(0)
+inoremap <expr><m-s>  deoplete#insert_candidate(1)
+inoremap <expr><m-d>  deoplete#insert_candidate(2)
+inoremap <expr><m-f>  deoplete#insert_candidate(3)
+inoremap <expr><m-g>  deoplete#insert_candidate(4)
+
+" ---------------------------------------------------------------------------
+" float-preview.nvim
+" ---------------------------------------------------------------------------
+let g:float_preview#docked = 1
+
+" ---------------------------------------------------------------------------
+"  gitgutter
+" ---------------------------------------------------------------------------
+let g:gitgutter_async = 1
+let g:gitgutter_eager = 0
+let g:gitgutter_enabled = 1
+let g:gItgutter_highlight_lines = 0
+let g:gitgutter_map_keys = 0
+let g:gitgutter_max_signs = 1000
+let g:gitgutter_diff_args = '--ignore-all-space'
+
+" ---------------------------------------------------------------------------
 "  gundo.vim
 " ---------------------------------------------------------------------------
 nnoremap <F5> :GundoToggle<CR>
@@ -513,6 +629,30 @@ autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=black   ctermbg=black
 autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=darkgrey ctermbg=darkgrey
 
 " ---------------------------------------------------------------------------
+"  neosnippet.vim
+" ---------------------------------------------------------------------------
+" mapping
+"imap <C-k> <Plug>(neosnippet_expand_or_jump)
+"smap <C-k> <Plug>(neosnippet_expand_or_jump)
+"xmap <C-k> <Plug>(neosnippet_expand_target)
+
+" SuperTab like snippets behavior.
+"imap <expr><TAB>
+" \ pumvisible() ? "\<C-n>" :
+" \ neosnippet#expandable_or_jumpable() ?
+" \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+"smap <expr><TAB> neosnippet#expandable_or_jumpable() ?
+" \ "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+
+" For conceal markers (disabling; also conceals asterisks in markdown docs...)
+"if has('conceal')
+"  set conceallevel=2 concealcursor=niv
+"endif
+
+"let g:neosnippet#enable_completed_snippet = 1
+"let g:neosnippet#snippets_directory='~/.config/nvim/plugged/vim-snippets/snippets'
+
+" ---------------------------------------------------------------------------
 "  NERDTree
 " ---------------------------------------------------------------------------
 map <C-n> :NERDTreeToggle<CR>
@@ -526,8 +666,9 @@ let g:NERDDefaultAlign = 'left'
 " ---------------------------------------------------------------------------
 "  notational-fzf-vim
 " ---------------------------------------------------------------------------
+"let g:nv_use_short_pathnames = 1
 let g:nv_search_paths = ['~/d/notes', './doc']
-let g:nv_use_short_pathnames = 1
+let g:nv_ignore_pattern = ['personal', 'meetings']
 let g:nv_default_extension = '.md'
 
 nnoremap <silent> <c-y> :NV<CR>
@@ -568,32 +709,48 @@ let g:SignatureMap = {
     \ }
 
 " ---------------------------------------------------------------------------
-"  snipmate.vim
-" ---------------------------------------------------------------------------
-let g:snips_author = "Keith Hughitt"
-let g:snips_email  = "user@email.com"
-let g:snips_github = "https://github.com/khughitt"
-let g:snipMate = {}
-let g:snipMate.scope_aliases = {}
-let g:snipMate.scope_aliases['rmd'] = 'r,r-extra,rmd'
-
-" ---------------------------------------------------------------------------
-"  Supertab
-" ---------------------------------------------------------------------------
-let g:SuperTabDefaultCompletionType = "context"
-let g:SuperTabNoCompleteAfter  = ['^', ',', '\s', '"', "'"]
-let g:SuperTabNoCompleteBefore = ['\S']
-highlight Pmenu ctermbg=234 ctermfg=198
-
-" ---------------------------------------------------------------------------
 "  denite
 " ---------------------------------------------------------------------------
 
-" Ag recursive file list settings    (<C-p>)
-call denite#custom#var('file/rec', 'command', 
-        \ ['ag', '--follow', '--nocolor', '--nogroup', '--ignore', '*.pyc', '*.png', '*.RData', '-g', ''])
+" general
+call denite#custom#option('default', {
+            \ 'prompt': '❯',
+            \ 'auto_resize': 1,
+            \ })
 
-" Ag command on grep source settings (<leader>/)
+" key bindings
+nnoremap <silent> <C-p> :<C-u>Denite file/rec file_mru<CR>
+nnoremap <silent> <leader>/ :<C-u>Denite grep:.<CR>
+nnoremap <silent> <leader>g :<C-u>DeniteCursorWord grep:.<CR>
+nnoremap <silent> <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
+
+" navigation
+autocmd FileType denite call s:denite_my_settings()
+function! s:denite_my_settings() abort
+    nnoremap <silent><buffer><expr> <CR> denite#do_map('do_action')
+    nnoremap <silent><buffer><expr> d    denite#do_map('do_action', 'delete')
+    nnoremap <silent><buffer><expr> p    denite#do_map('do_action', 'preview')
+    nnoremap <silent><buffer><expr> q    denite#do_map('quit')
+    nnoremap <silent><buffer><expr> i    denite#do_map('open_filter_buffer')
+    nnoremap <silent><buffer><expr> <Space> denite#do_map('toggle_select').'j'
+endfunction
+
+" no longer supported
+"call denite#custom#map('insert', '<Esc>', '<denite:enter_mode:normal>',       'noremap')
+"call denite#custom#map('normal', '<Esc>', '<NOP>',                            'noremap')
+"call denite#custom#map('normal', 'dw',    '<denite:delete_word_after_caret>', 'noremap')
+
+autocmd FileType denite-filter call s:denite_filter_my_settings()
+function! s:denite_filter_my_settings() abort
+    imap <silent><buffer> <C-o> <Plug>(denite_filter_quit)
+endfunction
+
+" file/rec
+call denite#custom#var('file/rec', 'command',
+  \ ['ag', '--follow', '--nocolor', '--nogroup', '--ignore', '*.pyc', '-g', ''])
+
+"\ ['ag', '--follow', '--nocolor', '--nogroup', '--ignore', '*.pyc', '*.png', '*.RData', '-g', ''])
+
 call denite#custom#var('grep', 'command', ['ag'])
 call denite#custom#var('grep', 'default_opts', ['-i', '--vimgrep'])
 call denite#custom#var('grep', 'recursive_opts', [])
@@ -601,75 +758,53 @@ call denite#custom#var('grep', 'pattern_opt', [])
 call denite#custom#var('grep', 'separator', ['--'])
 call denite#custom#var('grep', 'final_opts', [])
 
-" Change ignore_globs
 call denite#custom#filter('matcher/ignore_globs', 'ignore_globs',
-        \ [ '.git/', '.ropeproject/', '__pycache__/',
-        \   'venv/', 'images/', '*.min.*', 'img/', 'fonts/', '*cache/', '*_files/'])
+        \ [ '.git/', '.snakemake/', '__pycache__/',
+        \   'venv/', 'images/', '*.rda', '*.min.*', 'img/', 'fonts/', '*cache/', '*_files/'])
 
-" reset 50% winheight on window resize
-augroup deniteresize
-  autocmd!
-  autocmd VimResized,VimEnter * call denite#custom#option('default', 'winheight', winheight(0) / 2)
-augroup end
+" find
+call denite#custom#var('file_rec/fd', 'command',
+  \ ['fd', '--type=f', '--follow', '--hidden', '--full-path', '--color=never', '--exclude=.git', ''])
 
-call denite#custom#option('default', { 'prompt': '❯' })
+" sorters
+call denite#custom#source('file/rec', 'sorters', ['sorter/sublime'])
 
-call denite#custom#map('insert', '<Esc>', '<denite:enter_mode:normal>',       'noremap')
-call denite#custom#map('normal', '<Esc>', '<NOP>',                            'noremap')
-call denite#custom#map('insert', '<C-v>', '<denite:do_action:vsplit>',        'noremap')
-call denite#custom#map('normal', '<C-v>', '<denite:do_action:vsplit>',        'noremap')
-call denite#custom#map('normal', 'dw',    '<denite:delete_word_after_caret>', 'noremap')
-
-nnoremap <C-p>     :<C-u>Denite file/rec<CR>
-nnoremap <leader>d :<C-u>DeniteBufferDir file_rec<CR>
-nnoremap <leader>o :<C-u>Denite file/old<CR>
-nnoremap <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
-nnoremap <leader>s :<C-u>Denite buffer<CR>
-nnoremap <leader>8 :<C-u>DeniteCursorWord grep:. -mode=normal<CR>
-nnoremap <leader>/ :<C-u>Denite grep:. -mode=normal<CR>
-nnoremap <leader><Space>s :<C-u>DeniteBufferDir buffer<CR>
-nnoremap <leader><Space>/ :<C-u>DeniteBufferDir grep:. -mode=normal<CR>
-
-hi link deniteMatchedChar Special
+" default action.
+" call denite#custom#kind('file', 'default_action', 'split')
 
 " ---------------------------------------------------------------------------
 "  fzf.vim
 " ---------------------------------------------------------------------------
 let g:fzf_layout = { 'window': 'enew' }
-"let g:fzf_layout = { 'window': '-tabnew' }
-"let g:fzf_layout = { 'window': '10split enew' }
-"let g:fzf_layout = { 'down': '~40%' }
+let g:fzf_layout = { 'window': '-tabnew' }
+let g:fzf_layout = { 'window': '10split enew' }
+let g:fzf_layout = { 'down': '~40%' }
 
-cmap <C-r> History:<CR>
+cmap <C-r> :History:<CR>
 
-nmap <leader><tab> <plug>(fzf-maps-n)
-xmap <leader><tab> <plug>(fzf-maps-x)
-omap <leader><tab> <plug>(fzf-maps-o)
+"nmap <leader><tab> <plug>(fzf-maps-n)
+"xmap <leader><tab> <plug>(fzf-maps-x)
+"omap <leader><tab> <plug>(fzf-maps-o)
 
-imap <c-x><c-k> <plug>(fzf-complete-word)
-imap <c-x><c-f> <plug>(fzf-complete-path)
-imap <c-x><c-j> <plug>(fzf-complete-file-ag)
-imap <c-x><c-l> <plug>(fzf-complete-line)
+"imap <c-x><c-k> <plug>(fzf-complete-word)
+"imap <c-x><c-f> <plug>(fzf-complete-path)
+"imap <c-x><c-j> <plug>(fzf-complete-file-ag)
+"imap <c-x><c-l> <plug>(fzf-complete-line)
 
-let g:fzf_colors =
-\ { 'fg':      ['fg', 'Normal'],
-  \ 'bg':      ['bg', 'Normal'],
-  \ 'hl':      ['fg', 'Comment'],
-  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
-  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
-  \ 'hl+':     ['fg', 'Statement'],
-  \ 'info':    ['fg', 'PreProc'],
-  \ 'border':  ['fg', 'Ignore'],
-  \ 'prompt':  ['fg', 'Conditional'],
-  \ 'pointer': ['fg', 'Exception'],
-  \ 'marker':  ['fg', 'Keyword'],
-  \ 'spinner': ['fg', 'Label'],
-  \ 'header':  ['fg', 'Comment'] }
-
-" ---------------------------------------------------------------------------
-"  gutentags
-" ---------------------------------------------------------------------------
-let g:gutentags_exclude_project_root = ['/usr/local', '/cbcb/sw']
+"let g:fzf_colors =
+"\ { 'fg':      ['fg', 'Normal'],
+"  \ 'bg':      ['bg', 'Normal'],
+"  \ 'hl':      ['fg', 'Comment'],
+"  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+"  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+"  \ 'hl+':     ['fg', 'Statement'],
+"  \ 'info':    ['fg', 'PreProc'],
+"  \ 'border':  ['fg', 'Ignore'],
+"  \ 'prompt':  ['fg', 'Conditional'],
+"  \ 'pointer': ['fg', 'Exception'],
+"  \ 'marker':  ['fg', 'Keyword'],
+"  \ 'spinner': ['fg', 'Label'],
+"  \ 'header':  ['fg', 'Comment'] }
 
 " ---------------------------------------------------------------------------
 "  lightline
@@ -678,6 +813,8 @@ let g:lightline = { 'colorscheme': 'ThemerVimLightline' }
 let g:lightline.tabline          = {'left': [['buffers']], 'right': [['close']]}
 let g:lightline.component_expand = {'buffers': 'lightline#bufferline#buffers'}
 let g:lightline.component_type   = {'buffers': 'tabsel'}
+let g:lightline#bufferline#shorten_path = 1
+let g:lightline#bufferline#enable_devicons = 1
 
 " ---------------------------------------------------------------------------
 "  notational-fzf-vim
@@ -685,11 +822,9 @@ let g:lightline.component_type   = {'buffers': 'tabsel'}
 let g:nv_search_paths = ['~/d/notes']
 
 " ---------------------------------------------------------------------------
-"  yankring.vim
+" supertab.vim 
 " ---------------------------------------------------------------------------
-"let g:yankring_replace_n_pkey = '<C-up>'
-"let g:yankring_replace_n_nkey = '<C-down>'
-"let g:yankring_history_dir = '$HOME/.vim/tmp/yankring'
+" let g:SuperTabDefaultCompletionType = "<c-n>"
 
 " ---------------------------------------------------------------------------
 "  syntastic
@@ -705,16 +840,13 @@ let g:syntastic_auto_loc_list = 1
 let g:syntastic_check_on_open = 0
 let g:syntastic_check_on_wq = 0
 
-"nnoremap <F10> :SyntasticCheck<CR> :SyntasticToggleMode<CR> :w<CR>
 nnoremap <F10> :SyntasticCheck<CR>
 
 " r
 let g:syntastic_enable_r_lintr_checker = 1
 let g:syntastic_r_checkers = ['lintr']
 let g:syntastic_rmd_checkers = ['lintr']
-let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
-
-"let g:syntastic_debug = 33
+let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),object_camel_case_linter=NULL,single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
 
 " python
 let g:syntastic_rst_checkers=['sphinx']
@@ -741,19 +873,29 @@ function! StripWhitespace ()
     exec ':%s/ \+$//gc'
 endfunction
 map ,s :call StripWhitespace ()<CR>
+
 "autocmd FileType python,php,js,rb,r,rmd
 "    \ autocmd BufWritePre <buffer> :%s/\s\+$//e
 
 " ---------------------------------------------------------------------------
 "  Search Options
 " ---------------------------------------------------------------------------
+set incsearch  " do incremental searching
 set wrapscan   " search wrap around the end of the file
-set ignorecase " ignore case search
-set smartcase  " override 'ignorecase' if the search pattern contains upper case
 nohlsearch     " avoid highlighting when reloading vimrc
 
 " turn off highlighting
 nnoremap <leader>n :nohl<CR>
+
+" ---------------------------------------------------------------------------
+"  Tab completion
+" ---------------------------------------------------------------------------
+set infercase " case insensitive tab completion
+set ignorecase " ignore case search
+set smartcase  " override 'ignorecase' if the search pattern contains upper case
+
+" enable completion of filenames following '='
+set isfname-==
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options
@@ -771,8 +913,8 @@ autocmd BufRead,BufNewFile *.py set autoindent
 "autocmd FileType rmd colorscheme grb256
 
 " Markdown
-let g:vim_markdown_frontmatter = 1
-let g:vim_markdown_strikethrough = 1
+"let g:vim_markdown_frontmatter = 1
+"let g:vim_markdown_strikethrough = 1
 
 " R
 let vimrplugin_objbr_place = "console,right"
@@ -785,7 +927,7 @@ let R_setwidth = 0
 let R_rconsole_width = 0
 
 " syntax highlighting in console output
-let R_hl_term = 0 
+let R_hl_term = 0
 
 " Nvim-R / radian
 "let R_app = "radian"
@@ -855,17 +997,14 @@ endfunction
 
 nmap <localleader>sc :call ShowRSource()<CR>
 
-" https://github.com/plasticboy/vim-markdown/issues/162
-"let g:vim_markdown_folding_disabled=1
-
 " nvim-ipy
 let g:nvim_ipy_perform_mappings = 0
 
 " note: <c-w> <c-r> swaps two vertical buffers
 vmap <Silent><Space> <Plug>(IPy-Run)
 nmap <Silent><Space> <Plug>(IPy-Run)
-vmap <Silent><C-M> <Plug>(IPy-Run) 
-nmap <Silent><C-M> <Plug>(IPy-Run) 
+vmap <Silent><C-M> <Plug>(IPy-Run)
+nmap <Silent><C-M> <Plug>(IPy-Run)
 
 autocmd Filetype python nmap <localleader>rf :IPython<cr>
 
