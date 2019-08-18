@@ -14,8 +14,10 @@ conda config --add channels bioconda
 conda config --set anaconda_upload yes
 
 # install some useful packages
-conda install csvkit 
-conda install -c conda-forge ncurses csvkit visidata snakemake-minimal pynvim black
+conda install -c conda-forge ncurses csvkit visidata snakemake-minimal
+
+# neovim
+conda install -c conda-forge pynvim black jupyter
 
 # radian r console (pip install --user radian)
 conda install jedi 
@@ -27,7 +29,7 @@ git clone https://github.com/esc/conda-zsh-completion ~/software/conda-zsh-compl
 #
 # other things that may be useful to install, depending on the system..
 #
-# conda install the-silver-searcher jupyter
+# conda install the-silver-searcher
 # conda install -c conda-forge tmux htop source-highlight
 # conda install -c tsnyder figlet 
 # conda install -c ostrokach-forge fd-find 

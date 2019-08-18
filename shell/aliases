@@ -15,6 +15,10 @@ alias tree='tree -C'
 
 alias ra=ranger
 
+alias feh='feh scale-down auto-zoom'
+
+alias m=tldr
+
 # matching
 alias g='grep --color=always'
 alias grep='grep --color=always'
@@ -28,6 +32,8 @@ alias cpr="cp -r"
 # package management
 alias pc='yay -Syu'
 alias pcd='yay -Syu --devel'
+
+alias cs='conda search'
 
 # process management
 alias pg='ps -Af | grep $1'

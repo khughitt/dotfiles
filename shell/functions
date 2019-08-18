@@ -5,7 +5,7 @@ function wd {
 
 # quick history searches
 function h {
-    history | grep $1
+    history -df -100000 | grep $1
 }
 
 # head helper functions
