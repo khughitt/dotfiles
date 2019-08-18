@@ -1,0 +1,4 @@
+options.use_default_colors = True
+options.command_copy_clipboard = 'xclip'
+options.color_current_row = 'reverse 11'
+
