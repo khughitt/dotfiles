@@ -4,11 +4,16 @@
 "
 " ---------------------------------------------------------------------------
 
+"
+" Useful commands:
+"
+" :verbose set <var>?    find where a setting was made
+"
+
 " ---------------------------------------------------------------------------
 " General
 " ---------------------------------------------------------------------------
 set hidden           " easy buffer switching
-set history=5000     " number of command history
 set isk+=_,$,@,%,#,- " none word dividers
 set cursorline       " highlight current line
 set modeline         " make sure modeline support is enabled
@@ -20,26 +25,13 @@ filetype indent on   " indent based on filetype
 
 " reduce keycode mapping timeout delay
 set ttimeoutlen=5
-
-" reduce mapping delays
 set timeoutlen=500
 
 " Mouse support
 " https://github.com/neovim/neovim/wiki/Following-HEAD#20170403
 set mouse=a
 
-" Omnicompletion
-" set omnifunc=syntaxcomplete#Complete
-
-" Use Ctrl+Space to do omnicompletion
-if has("gui_running")
-    inoremap <C-Space> <C-x><C-o>
-else
-    inoremap <Nul> <C-x><C-o>
-endif
-
-" With a map leader it's possible to do extra key combinations
-" like <leader>w saves the current file
+" Remap leader / localleader
 let mapleader      = ";"
 let g:mapleader    = ";"
 let maplocalleader = ","
@@ -49,10 +41,6 @@ nmap <leader>w :update<cr>
 nmap <leader>q :q<cr>
 nmap <leader>z :wq<cr>
 
-" Fast save (alt. method)
-inoremap <c-s> <c-o>:w<cr>
-nnoremap <c-s> :w<cr>
-
 " remap macro recording to Q
 nnoremap Q q
 nnoremap q <nop>
@@ -61,8 +49,8 @@ nnoremap q <nop>
 " https://github.com/neovim/neovim/issues/9012
 inoremap <C-a> <Home>
 inoremap <C-e> <End>
-noremap <C-a> <Home>
-noremap <C-e> <End>
+noremap  <C-a> <Home>
+noremap  <C-e> <End>
 
 " ---------------------------------------------------------------------------
 " vim-plug
@@ -70,58 +58,86 @@ noremap <C-e> <End>
 call plug#begin()
     " plugins
     Plug 'airblade/vim-gitgutter'
-    Plug 'https://github.com/Alok/notational-fzf-vim'
+    Plug 'bfredl/nvim-ipy'
+    Plug 'Alok/notational-fzf-vim'
     Plug 'bioSyntax/bioSyntax-vim'
     Plug 'chrisbra/csv.vim'
+    Plug 'davidoc/taskpaper.vim'
     Plug 'deoplete-plugins/deoplete-jedi'
+
+    " overrides filetype tabstop, etc. options
+    "Plug 'editorconfig/editorconfig-vim'
+
+    Plug 'freitass/todo.txt-vim'
+    Plug 'godlygeek/tabular'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
     Plug 'honza/vim-snippets'
-    Plug 'bfredl/nvim-ipy'
-    Plug 'editorconfig/editorconfig-vim'
-    Plug 'godlygeek/tabular'
-    Plug 'davidoc/taskpaper.vim'
-    Plug 'freitass/todo.txt-vim'
+    Plug 'itchyny/lightline.vim'
     Plug 'jalvesaq/Nvim-R'
+    Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+    Plug 'junegunn/fzf.vim'
     Plug 'kshenoy/vim-signature'
     Plug 'lilydjwg/colorizer'
     Plug 'MarcWeber/vim-addon-mw-utils'
-    Plug 'machakann/vim-textobj-delimited'
     Plug 'majutsushi/tagbar'
+    Plug 'manabuishii/vim-cwl'
     Plug 'mboughaba/i3config.vim'
+    Plug 'mengelbrecht/lightline-bufferline'
     Plug 'mllg/vim-devtools-plugin'
+    Plug 'mrk21/yaml-vim'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
     Plug 'qpkorr/vim-bufkill'
     Plug 'raimon49/requirements.txt.vim'
+    Plug 'ryanoasis/vim-devicons'
     Plug 'scrooloose/nerdcommenter'
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+    Plug 'severin-lemaignan/vim-minimap'
     Plug 'Shougo/denite.nvim'
     Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
     Plug 'Shougo/deoplete-terminal'
     Plug 'Shougo/neomru.vim'
-    "Plug 'Shougo/neosnippet.vim'
-    "Plug 'Shougo/neosnippet-snippets'
+    Plug 'stephpy/vim-yaml'
     Plug 'troydm/zoomwintab.vim'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
     Plug 'tyrannicaltoucan/vim-quantum'
-    Plug 'manabuishii/vim-cwl'
-    Plug 'itchyny/lightline.vim'
-    Plug 'mengelbrecht/lightline-bufferline'
-    Plug 'vim-scripts/argtextobj.vim'
+    Plug 'terryma/vim-expand-region'
     Plug 'vim-syntastic/syntastic'
-    Plug 'stephpy/vim-yaml'
-    Plug 'mrk21/yaml-vim'
+    Plug 'wellle/targets.vim'
     Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
-    Plug 'ryanoasis/vim-devicons'
-    Plug 'wellle/targets.vim'
     Plug '/usr/share/vim/vimfiles'
-    Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-    Plug 'junegunn/fzf.vim'
-    Plug 'severin-lemaignan/vim-minimap'
+
+    Plug 'glts/vim-textobj-comment'
+    Plug 'kana/vim-textobj-user'
+    Plug 'machakann/vim-textobj-delimited'
+    Plug 'vim-scripts/argtextobj.vim'
+    Plug 'vimtaku/vim-textobj-keyvalue'
+
+    Plug 'agreco/vim-citylights'
+    Plug 'challenger-deep-theme/vim'
+    Plug 'connorholyday/vim-snazzy'
+    Plug 'cseelus/vim-colors-lucid'
+    Plug 'cseelus/vim-colors-tone'
+    Plug 'danilo-augusto/vim-afterglow'
+    Plug 'davidklsn/vim-sialoquent'
+    Plug 'dikiaap/minimalist'
+    Plug 'dracula/vim', { 'as': 'dracula' }
+    Plug 'Dru89/vim-adventurous'
+    Plug 'fcpg/vim-orbital'
+    Plug 'fenetikm/falcon'
+    Plug 'fmoralesc/molokayo'
+    Plug 'jacoborus/tender.vim'
+    Plug 'joshdick/onedark.vim'
+    Plug 'liuchengxu/space-vim-dark'
+    Plug 'lu-ren/SerialExperimentsLain'
+    Plug 'sheerun/vim-wombat-scheme'
+    Plug 'whatyouhide/vim-gotham'
+    Plug 'yuttie/hydrangea-vim'
+    Plug 'zanloy/vim-colors-grb256'
 
     "Plug 'vim-airline/vim-airline'
     "Plug 'vim-airline/vim-airline-themes'
@@ -133,37 +149,10 @@ call plug#begin()
     "Plug 'hyiltiz/vim-plugins-profile'
     "Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
     "Plug 'python/black'
-
-    " themes
-    Plug 'challenger-deep-theme/vim'
-    Plug 'cseelus/vim-colors-lucid'
-    Plug 'dracula/vim', { 'as': 'dracula' }
-    Plug 'fcpg/vim-orbital'
-    Plug 'fmoralesc/molokayo'
-    Plug 'jacoborus/tender.vim'
-    Plug 'joshdick/onedark.vim'
-    Plug 'whatyouhide/vim-gotham'
-    Plug 'zanloy/vim-colors-grb256'
-    Plug 'agreco/vim-citylights'
-    Plug 'Dru89/vim-adventurous'
-    Plug 'yuttie/hydrangea-vim'
-    Plug 'liuchengxu/space-vim-dark'
-    Plug 'lu-ren/SerialExperimentsLain'
-    Plug 'danilo-augusto/vim-afterglow'
-    Plug 'davidklsn/vim-sialoquent'
-    Plug 'dikiaap/minimalist'
-    Plug 'cseelus/vim-colors-tone'
-    Plug 'connorholyday/vim-snazzy'
-    Plug 'sheerun/vim-wombat-scheme'
-    Plug 'fenetikm/falcon'
+    "Plug 'gcavallanti/vim-noscrollbar'
+    "Plug 'Shougo/neosnippet.vim'
+    "Plug 'Shougo/neosnippet-snippets'
 call plug#end()
-
-" TESTING
-"noremap <silent> <ScrollWheelDown> :call comfortable_motion#flick(40)<CR>
-"noremap <silent> <ScrollWheelUp>   :call comfortable_motion#flick(-40)<CR>
-
-let g:minimap_highlight='Visual'
-let g:minimap_toggle='<leader>mm'
 
 " ----------------------------------------------------------------------------
 "  Backups
@@ -181,6 +170,7 @@ set backupskip=/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*
 set scrolloff=5                 " keep cursor at least this far away from top/bottom
 set sidescrolloff=1             " keep cursor this far from sides of screen
 set wildignore=*.o,*~,*.pyc     " ignore compiled files
+set wildmode=longest,list       " for filename completion, fill longest and list others
 set ruler                       " show the cursor position all the time
 set showcmd                     " show incomplete commands and selection info
 set nolazyredraw                " turn off lazy redraw
@@ -266,6 +256,10 @@ map <leader>ba :1,1000 bd!<cr>
 " Switch CWD to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>:pwd<cr>
 
+" Copy and comment current line
+nmap zz yy<leader>ccp
+vmap zz ygv<leader>cc`.jP
+
 " Specify the behavior when switching between buffers
 try
 set switchbuf=useopen,usetab,newtab
@@ -277,7 +271,7 @@ endtry
 map <localleader>gf :e <cfile><cr>
 
 " Return to last edit position when opening files
-autocmd BufReadPost *
+au BufReadPost *
     \ if line("'\"") > 0 && line("'\"") <= line("$") |
     \   exe "normal! g`\"" |
     \ endif
@@ -297,7 +291,6 @@ inoremap jk <Esc>
 nnoremap ! :!
 
 " Sloppyness is okay
-cabbrev ew :wq
 cabbrev qw :wq
 
 " ---------------------------------------------------------------------------
@@ -308,7 +301,6 @@ if $TERM != 'linux'
 endif
 
 " fix background bleeding in screen
-" http://snk.tuxfamily.org/log/vim-256color-bce.html
 " http://sunaku.github.io/vim-256color-bce.html
 set t_ut=""
 
@@ -318,16 +310,6 @@ set termguicolors
 " use colorscheme for R output
 let g:rout_follow_colorscheme = 1
 let g:Rout_more_colors = 1
-
-" fix control/shift + arrow keys in screen
-" http://superuser.com/questions/401926/how-to-get-shiftarrows-and-ctrlarrows-working-in-vim-in-tmux
-"if &term =~ '^screen'
-    " tmux will send xterm-style keys when its xterm-keys option is on
-    "execute "set <xUp>=\e[1;*A"
-    "execute "set <xDown>=\e[1;*B"
-    "execute "set <xRight>=\e[1;*C"
-    "execute "set <xLeft>=\e[1;*D"
-"endif
 
 if has("gui_running")
     set guioptions-=m  " remove menu bar
@@ -358,16 +340,6 @@ set background=dark
 "colorscheme dracula
 colorscheme ThemerVim
 
-"not working with recent versions
-"highlight ColorColumn ctermbg=234 guibg=#222222
-
-" NeoVim tmux support
-" https://github.com/neovim/neovim/issues/2528
-"if &term =~ '^screen'
-    "hi Normal ctermbg=NONE
-    "set noshowcmd
-"endif
-
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
 "let g:terminal_color_0="#1b2b34"
@@ -389,14 +361,6 @@ colorscheme ThemerVim
 "let g:terminal_color_background="#525252"
 "let g:terminal_color_foreground="#c1c6cf"
 
-" Matching parens style
-hi MatchParen cterm=bold ctermbg=none ctermfg=red
-
-" Highlight color (not working in recent versions)
-"hi Search ctermbg=197 ctermfg=233
-"hi Search guibg=#14D1DE guifg=#2C2C2C
-"hi IncSearch guifg=#67E8F1 guibg=#333333
-
 " ---------------------------------------------------------------------------
 "  Copy and Paste
 " ---------------------------------------------------------------------------
@@ -415,6 +379,9 @@ set clipboard^=unnamed,unnamedplus
 " deletes selected text to an unused register
 xnoremap p "_dP
 
+" stay at last selected character after yanking text in visual mode
+vmap y y`]
+
 " ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
 " ----------------------------------------------------------------------------
@@ -426,7 +393,7 @@ highlight SpecialKey ctermfg=DarkGray ctermbg=Black
 "  Backup and undo
 " ---------------------------------------------------------------------------
 set undofile
-set history=1000
+set history=5000
 set undolevels=200
 set undodir=~/.vim/tmp/undo
 
@@ -441,8 +408,36 @@ inoremap <c-u> <c-g>u<c-u>
 nnoremap p p`]<Esc>
 
 " insert blank line without entering insert mode
-nmap <A-CR> O<Esc>
+nmap <c-o> O<Esc>
 nmap <CR> o<Esc>
+
+" ---------------------------------------------------------------------------
+"  Strip all trailing whitespace in file
+" ---------------------------------------------------------------------------
+function! StripWhitespace ()
+    exec ':%s/ \+$//gc'
+endfunction
+map ,s :call StripWhitespace ()<CR>
+
+" ---------------------------------------------------------------------------
+"  Search Options
+" ---------------------------------------------------------------------------
+set incsearch  " do incremental searching
+set wrapscan   " search wrap around the end of the file
+nohlsearch     " avoid highlighting when reloading vimrc
+
+" turn off highlighting
+nnoremap <leader>n :nohl<CR>
+
+" ---------------------------------------------------------------------------
+"  Tab completion
+" ---------------------------------------------------------------------------
+set infercase " case insensitive tab completion
+set ignorecase " ignore case search
+set smartcase  " override 'ignorecase' if the search pattern contains upper case
+
+" enable completion of filenames following '='
+set isfname-==
 
 " ---------------------------------------------------------------------------
 "  terminal
@@ -461,12 +456,12 @@ tnoremap <C-Left> <m-b>
 tnoremap <C-Right> <m-f>
 
 " automatically enter insert mode
-autocmd BufWinEnter,WinEnter term://* startinsert
+au BufWinEnter,WinEnter term://* startinsert
 
 " Exclude terminal from buffer list
-autocmd TermOpen * set nobuflisted
-autocmd TermOpen * noremap <buffer> <tab> <nop>
-autocmd TermOpen * noremap <buffer> <s-tab> <nop>
+au TermOpen * set nobuflisted
+au TermOpen * noremap <buffer> <tab> <nop>
+au TermOpen * noremap <buffer> <s-tab> <nop>
 
 " Disable terminal line numbers
 au TermOpen * setlocal nonumber norelativenumber
@@ -479,20 +474,14 @@ let g:airline#extensions#tabline#enabled = 1
 let g:airline_theme = 'tender'
 
 " ---------------------------------------------------------------------------
-"  dragvisuals.vim
+"  black
 " ---------------------------------------------------------------------------
-"vmap  <expr>  <LEFT>   DVB_Drag('left')
-"vmap  <expr>  <RIGHT>  DVB_Drag('right')
-"vmap  <expr>  <DOWN>   DVB_Drag('down')
-"vmap  <expr>  <UP>     DVB_Drag('up')
+au BufWritePre *.py execute ':Black'
 
-" freezes up...
-" vmap  <expr>  D        DVB_Duplicate()
-
-
-" Remove any introduced trailing whitespace after moving...
-"let g:DVB_TrimWS = 1
-
+" ---------------------------------------------------------------------------
+" csv.vim
+" ---------------------------------------------------------------------------
+let g:csv_no_conceal = 1
 
 " ---------------------------------------------------------------------------
 "  colorizer
@@ -540,6 +529,9 @@ let g:colorscheme_switcher_exclude = [
 "    it's not displayed..)
 " 4. automatically insert first match upon opening deoplete menu; currently
 "    insertion only occurs upon cycling of completion choices.
+" 5. automatically refresh completion candidates after additional characters are typed.
+" 6. When entering a filepath, exclude all other completions (can just <tab> expand
+"    filepath very quickly that way, esp. if only one sub-dir at each level..)
 
 " enable at start-up
 let g:deoplete#enable_at_startup = 1
@@ -558,7 +550,7 @@ call deoplete#custom#var('around', {
 " number of results to show
 call deoplete#custom#option({'max_list': 10})
 
-" use <tab> to cycle through completions
+" use <tab> / <s-tab> to cycle through completions
 function! s:check_back_space() abort "{{{
   let col = col('.') - 1
   return !col || getline('.')[col - 1]  =~ '\s'
@@ -574,7 +566,7 @@ inoremap <silent><expr><S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
 " automatically select the first match
 set completeopt+=noinsert
 
-" don't ever insert a newline when selecting with <Enter>
+" don't insert a newline when selecting with <Enter>
 inoremap <expr> <CR> (pumvisible() ? "\<c-y>" : "\<CR>")
 
 " matchers
@@ -587,6 +579,13 @@ call deoplete#custom#source('_', 'sorters', ['sorter_word'])
 
 " disable the candidates in Comment/String syntaxes.
 call deoplete#custom#source('_', 'disabled_syntaxes', ['Comment', 'String'])
+
+" prioritize file matches when present
+call deoplete#custom#source('file', 'rank', 9999)
+
+" disable buffer source
+let g:deoplete#ignore_sources = {}
+let g:deoplete#ignore_sources._ = ['buffer']
 
 " shortcuts
 call deoplete#custom#option('candidate_marks', ['A', 'S', 'D', 'F', 'G'])
@@ -607,15 +606,15 @@ let g:float_preview#docked = 1
 let g:gitgutter_async = 1
 let g:gitgutter_eager = 0
 let g:gitgutter_enabled = 1
-let g:gItgutter_highlight_lines = 0
-let g:gitgutter_map_keys = 0
+let g:gitgutter_highlight_lines = 0
+let g:gitgutter_map_keys = 1
 let g:gitgutter_max_signs = 1000
 let g:gitgutter_diff_args = '--ignore-all-space'
 
 " ---------------------------------------------------------------------------
 "  gundo.vim
 " ---------------------------------------------------------------------------
-nnoremap <F5> :GundoToggle<CR>
+" nnoremap <F5> :GundoToggle<CR>
 
 " ---------------------------------------------------------------------------
 " indent guides
@@ -625,8 +624,16 @@ let g:indent_guides_auto_colors = 1
 let g:indent_guides_start_level = 2
 let g:indent_guides_guide_size  = 1
 
-autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=black   ctermbg=black
-autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=darkgrey ctermbg=darkgrey
+" au VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=black    ctermbg=black
+" au VimEnter,Colorscheme * :hi IndentGuidesEven guibg=darkgrey ctermbg=darkgrey
+
+" ---------------------------------------------------------------------------
+"
+" vim-minimap
+"
+" ---------------------------------------------------------------------------
+let g:minimap_highlight='Visual'
+let g:minimap_toggle='<leader>mm'
 
 " ---------------------------------------------------------------------------
 "  neosnippet.vim
@@ -661,7 +668,12 @@ map <C-n> :NERDTreeToggle<CR>
 "  NERDcommenter
 " ---------------------------------------------------------------------------
 let g:NERDDefaultAlign = 'left'
+let g:NERDSpaceDelims = 1
+let g:NERDCommentEmptyLines = 1
+let g:NERDTrimTrailingWhitespace = 1
 
+nmap <space> <leader>c<space>
+vmap <space> <leader>c<space>
 
 " ---------------------------------------------------------------------------
 "  notational-fzf-vim
@@ -672,6 +684,19 @@ let g:nv_ignore_pattern = ['personal', 'meetings']
 let g:nv_default_extension = '.md'
 
 nnoremap <silent> <c-y> :NV<CR>
+
+" ---------------------------------------------------------------------------
+"  nvim-ipy
+" ---------------------------------------------------------------------------
+let g:nvim_ipy_perform_mappings = 0
+
+" note: <c-w> <c-r> swaps two vertical buffers
+vmap <Silent><Space> <Plug>(IPy-Run)
+nmap <Silent><Space> <Plug>(IPy-Run)
+vmap <Silent><C-M> <Plug>(IPy-Run)
+nmap <Silent><C-M> <Plug>(IPy-Run)
+
+au FileType python nmap <localleader>rf :IPython<CR>
 
 " ---------------------------------------------------------------------------
 "  vpaste.net
@@ -725,7 +750,7 @@ nnoremap <silent> <leader>g :<C-u>DeniteCursorWord grep:.<CR>
 nnoremap <silent> <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
 
 " navigation
-autocmd FileType denite call s:denite_my_settings()
+au FileType denite call s:denite_my_settings()
 function! s:denite_my_settings() abort
     nnoremap <silent><buffer><expr> <CR> denite#do_map('do_action')
     nnoremap <silent><buffer><expr> d    denite#do_map('do_action', 'delete')
@@ -735,12 +760,7 @@ function! s:denite_my_settings() abort
     nnoremap <silent><buffer><expr> <Space> denite#do_map('toggle_select').'j'
 endfunction
 
-" no longer supported
-"call denite#custom#map('insert', '<Esc>', '<denite:enter_mode:normal>',       'noremap')
-"call denite#custom#map('normal', '<Esc>', '<NOP>',                            'noremap')
-"call denite#custom#map('normal', 'dw',    '<denite:delete_word_after_caret>', 'noremap')
-
-autocmd FileType denite-filter call s:denite_filter_my_settings()
+au FileType denite-filter call s:denite_filter_my_settings()
 function! s:denite_filter_my_settings() abort
     imap <silent><buffer> <C-o> <Plug>(denite_filter_quit)
 endfunction
@@ -748,8 +768,6 @@ endfunction
 " file/rec
 call denite#custom#var('file/rec', 'command',
   \ ['ag', '--follow', '--nocolor', '--nogroup', '--ignore', '*.pyc', '-g', ''])
-
-"\ ['ag', '--follow', '--nocolor', '--nogroup', '--ignore', '*.pyc', '*.png', '*.RData', '-g', ''])
 
 call denite#custom#var('grep', 'command', ['ag'])
 call denite#custom#var('grep', 'default_opts', ['-i', '--vimgrep'])
@@ -786,26 +804,6 @@ cmap <C-r> :History:<CR>
 "xmap <leader><tab> <plug>(fzf-maps-x)
 "omap <leader><tab> <plug>(fzf-maps-o)
 
-"imap <c-x><c-k> <plug>(fzf-complete-word)
-"imap <c-x><c-f> <plug>(fzf-complete-path)
-"imap <c-x><c-j> <plug>(fzf-complete-file-ag)
-"imap <c-x><c-l> <plug>(fzf-complete-line)
-
-"let g:fzf_colors =
-"\ { 'fg':      ['fg', 'Normal'],
-"  \ 'bg':      ['bg', 'Normal'],
-"  \ 'hl':      ['fg', 'Comment'],
-"  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
-"  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
-"  \ 'hl+':     ['fg', 'Statement'],
-"  \ 'info':    ['fg', 'PreProc'],
-"  \ 'border':  ['fg', 'Ignore'],
-"  \ 'prompt':  ['fg', 'Conditional'],
-"  \ 'pointer': ['fg', 'Exception'],
-"  \ 'marker':  ['fg', 'Keyword'],
-"  \ 'spinner': ['fg', 'Label'],
-"  \ 'header':  ['fg', 'Comment'] }
-
 " ---------------------------------------------------------------------------
 "  lightline
 " ---------------------------------------------------------------------------
@@ -817,106 +815,29 @@ let g:lightline#bufferline#shorten_path = 1
 let g:lightline#bufferline#enable_devicons = 1
 
 " ---------------------------------------------------------------------------
+"  noscrollbar
+" ---------------------------------------------------------------------------
+" Replace percent component of Lightline statusline
+" https://codeyarns.com/2017/10/25/how-to-add-noscrollbar-to-lightline/
+"let g:lightline = {
+"      \ 'component_function': {
+"      \   'percent': 'NoScrollbarForLightline'
+"      \ }
+"      \ }
+
+" Instead of % show NoScrollbar horizontal scrollbar
+"function! NoScrollbarForLightline()
+"    return noscrollbar#statusline()
+"endfunction
+
+" ---------------------------------------------------------------------------
 "  notational-fzf-vim
 " ---------------------------------------------------------------------------
 let g:nv_search_paths = ['~/d/notes']
 
 " ---------------------------------------------------------------------------
-" supertab.vim 
+"  Nvim-R
 " ---------------------------------------------------------------------------
-" let g:SuperTabDefaultCompletionType = "<c-n>"
-
-" ---------------------------------------------------------------------------
-"  syntastic
-" ---------------------------------------------------------------------------
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
-
-let g:syntastic_mode_map = {'mode': 'passive'}
-
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 0
-let g:syntastic_check_on_wq = 0
-
-nnoremap <F10> :SyntasticCheck<CR>
-
-" r
-let g:syntastic_enable_r_lintr_checker = 1
-let g:syntastic_r_checkers = ['lintr']
-let g:syntastic_rmd_checkers = ['lintr']
-let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),object_camel_case_linter=NULL,single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
-
-" python
-let g:syntastic_rst_checkers=['sphinx']
-
-" ---------------------------------------------------------------------------
-"  tagbar
-" ---------------------------------------------------------------------------
-nmap <F9> :TagbarToggle<CR>
-
-let g:tagbar_type_r = {
-    \ 'ctagstype' : 'r',
-    \ 'kinds'     : [
-        \ 'f:Functions',
-        \ 'g:GlobalVariables',
-        \ 'v:FunctionVariables',
-    \ ]
-\ }
-
-" ---------------------------------------------------------------------------
-"  Strip all trailing whitespace in file
-" ---------------------------------------------------------------------------
-
-function! StripWhitespace ()
-    exec ':%s/ \+$//gc'
-endfunction
-map ,s :call StripWhitespace ()<CR>
-
-"autocmd FileType python,php,js,rb,r,rmd
-"    \ autocmd BufWritePre <buffer> :%s/\s\+$//e
-
-" ---------------------------------------------------------------------------
-"  Search Options
-" ---------------------------------------------------------------------------
-set incsearch  " do incremental searching
-set wrapscan   " search wrap around the end of the file
-nohlsearch     " avoid highlighting when reloading vimrc
-
-" turn off highlighting
-nnoremap <leader>n :nohl<CR>
-
-" ---------------------------------------------------------------------------
-"  Tab completion
-" ---------------------------------------------------------------------------
-set infercase " case insensitive tab completion
-set ignorecase " ignore case search
-set smartcase  " override 'ignorecase' if the search pattern contains upper case
-
-" enable completion of filenames following '='
-set isfname-==
-
-" ---------------------------------------------------------------------------
-"  Language-specific Options
-" ---------------------------------------------------------------------------
-
-" Language-specific options
-autocmd FileType ruby,eruby,yaml,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
-autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
-autocmd BufRead,BufNewFile *.py set autoindent
-
-" Languge-specific color schemes
-"autocmd FileType yaml colorscheme sweyla907357
-"autocmd FileType jinja colorscheme SerialExperimentsLain
-"autocmd FileType snakemake colorscheme gotham
-"autocmd FileType rmd colorscheme grb256
-
-" Markdown
-"let g:vim_markdown_frontmatter = 1
-"let g:vim_markdown_strikethrough = 1
-
-" R
 let vimrplugin_objbr_place = "console,right"
 
 " Fix issue relating to setwidth
@@ -926,13 +847,8 @@ let R_setwidth = 0
 " split editor and console top/bottom
 let R_rconsole_width = 0
 
-" syntax highlighting in console output
+" disable syntax highlighting in console output
 let R_hl_term = 0
-
-" Nvim-R / radian
-"let R_app = "radian"
-"let R_bracketed_paste = 1
-let R_cmd = "R"
 
 " devtools load all shortcut
 map ;dl :RLoadPackage<CR>
@@ -948,7 +864,7 @@ endfunction
 nmap gz :call ZoomWindow()<CR>
 
 " Exclude object browser from buffer list
-autocmd BufEnter Object_Browser set nobuflisted
+au BufEnter Object_Browser set nobuflisted
 
 " development
 "let R_path = '/usr/local/bin/'
@@ -972,18 +888,32 @@ let rmd_syn_hl_chunk = 1
 let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,parallel,tidyverse"
 
 " press enter and space bar to send lines and selection to R
+" au FileType r,rmd vmap <Space> <Plug>RDSendSelection
+" au FileType r,rmd nmap <Space> <Plug>RDSendLine
+" vmap <C-M> <Plug>RDSendSelection
+" nmap <C-M> <Plug>RDSendLine
+
 vmap <Space> <Plug>RDSendSelection
 nmap <Space> <Plug>RDSendLine
 vmap <C-M> <Plug>RDSendSelection
 nmap <C-M> <Plug>RDSendLine
 
+nmap <C-Space> ,rp
+
+" autostart term (disabled: often results in 'not yet ready' messages...)
+au FileType r   if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
+au FileType rmd if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
+
 " preview data
+" au FileType r,rmd nmap <silent> <LocalLeader>h :call RAction("hh", "@,48-57,_,.")<CR>
 nmap <silent> <LocalLeader>h :call RAction("hh", "@,48-57,_,.")<CR>
 
 " wipe knitr cache and output
+" au FileType r,rmd nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("*_cache/*", recursive=TRUE)')<CR>
 nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("*_cache/*", recursive=TRUE)')<CR>
 
 " render markdown
+" au FileType r,rmd nmap <localleader>km :call RMakeRmd("github_document")<CR>
 nmap <localleader>km :call RMakeRmd("github_document")<CR>
 
 " show source code for function under cursor
@@ -995,37 +925,83 @@ function! ShowRSource()
     execute ":Rinsert " . g:function_name
 endfunction
 
+" au FileType r,rmd nmap <localleader>sc :call ShowRSource()<CR>
 nmap <localleader>sc :call ShowRSource()<CR>
 
-" nvim-ipy
-let g:nvim_ipy_perform_mappings = 0
+" ---------------------------------------------------------------------------
+" supertab.vim
+" ---------------------------------------------------------------------------
+" let g:SuperTabDefaultCompletionType = "<c-n>"
 
-" note: <c-w> <c-r> swaps two vertical buffers
-vmap <Silent><Space> <Plug>(IPy-Run)
-nmap <Silent><Space> <Plug>(IPy-Run)
-vmap <Silent><C-M> <Plug>(IPy-Run)
-nmap <Silent><C-M> <Plug>(IPy-Run)
+" ---------------------------------------------------------------------------
+"  syntastic
+" ---------------------------------------------------------------------------
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
 
-autocmd Filetype python nmap <localleader>rf :IPython<cr>
+let g:syntastic_mode_map = {'mode': 'passive'}
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 0
+let g:syntastic_check_on_wq = 1
 
-"autocmd BufWritePre *.py execute ':Black'
+" r
+let g:syntastic_enable_r_lintr_checker = 1
+let g:syntastic_r_checkers = ['lintr']
+let g:syntastic_rmd_checkers = ['lintr']
+let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),object_camel_case_linter=NULL,single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
+
+" python
+let g:syntastic_rst_checkers=['sphinx']
+
+" key bindings
+nnoremap <F10> :SyntasticCheck<CR>
+
+" ---------------------------------------------------------------------------
+"  tagbar
+" ---------------------------------------------------------------------------
+nmap <F9> :TagbarToggle<CR>
+
+let g:tagbar_type_r = {
+    \ 'ctagstype' : 'r',
+    \ 'kinds'     : [
+        \ 'f:Functions',
+        \ 'g:GlobalVariables',
+        \ 'v:FunctionVariables',
+    \ ]
+\ }
+
+" ---------------------------------------------------------------------------
+"  vim-expand-region
+" ---------------------------------------------------------------------------
+vmap v <Plug>(expand_region_expand)
+vmap <C-v> <Plug>(expand_region_shrink)
+
+" ---------------------------------------------------------------------------
+"  Language-specific Options
+" ---------------------------------------------------------------------------
+
+" Language-specific options
+autocmd FileType ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
+autocmd BufRead,BufNewFile *.py set autoindent
+
+" Languge-specific color schemes
+"au FileType yaml colorscheme sweyla907357
+"au FileType jinja colorscheme SerialExperimentsLain
+"au FileType snakemake colorscheme gotham
+"au FileType rmd colorscheme grb256
+
+" Markdown
+"let g:vim_markdown_frontmatter = 1
+"let g:vim_markdown_strikethrough = 1
 
 au FileType python map <silent> <leader>b obreakpoint()<esc>
 
 " Snakemake syntax highlighting
 au BufNewFile,BufRead Snakefile set syntax=snakemake
 au BufNewFile,BufRead *.snakefile set syntax=snakemake
-
-" iron / ipython
-"autocmd Filetype python vmap <Space> <Plug>(iron-send-motion)
-"autocmd Filetype python nmap <Space> <Plug>(iron-send-motion)
-"autocmd Filetype python vmap <C-M> <Plug>(iron-send-motion)
-"autocmd Filetype python nmap <C-M> <Plug>(iron-send-motion)
-
-"autocmd Filetype python nmap <localleader>rf :IronRepl<cr>
-
-" CSV
-let g:csv_no_conceal = 1
 
 " Host-specific configuration
 " http://effectif.com/vim/host-specific-vim-config
@@ -1034,11 +1010,24 @@ if filereadable(hostfile)
     exe 'source ' . hostfile
 endif
 
-" Syntax highlighting
+"
+" more colorscheme changes (keep at end of file to ensure these aren't over-ridden)
+"
 syntax on
+
+" color column
+highlight ColorColumn ctermbg=234 guibg=#222222
+
+" Matching parens style
+hi MatchParen cterm=bold ctermbg=none ctermfg=red
+
+" Highlight color (not working in recent versions)
+hi Search ctermbg=197 ctermfg=233
+hi Search guibg=#14D1DE guifg=#2C2C2C
+hi IncSearch guifg=#67E8F1 guibg=#333333
 
 " Work-around for failing rmarkdown syntax highlighting when jumping around in files
 " https://vim.fandom.com/wiki/Fix_syntax_highlighting
-autocmd BufEnter * :syntax sync fromstart
+au BufEnter * :syntax sync fromstart
 syntax sync minlines=300
 
