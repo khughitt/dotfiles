@@ -26,10 +26,15 @@ options(width = 100)
 # tab complete package names and allow fuzzy case completion
 utils::rc.settings(ipck = TRUE, fuzzy = TRUE)
 
+#
 # radian
-options(radian.editing_mode = "vi")
+#
 options(radian.auto_match = TRUE)
 options(radian.tab_size = 2)
+options(radian.history_search_no_duplicates = FALSE)
+
+# breaks cntl-left / cntl-right / etc. 
+#options(radian.editing_mode = "vi")
 
 # custom prompt for different modes
 #options(radian.prompt = "\033[0;34mr$>\033[0m ")
@@ -84,6 +89,10 @@ if (interactive()) {
 # show first three columns and rows of a matrix / dataframe
 .env$h  <- function(dat) {
   dat[1:min(3, nrow(dat)), 1:min(3, ncol(dat))]
+}
+
+.env$hh  <- function(dat) {
+  dat[1:min(6, nrow(dat)), 1:min(6, ncol(dat))]
 }
 
 # number of nas by column or row

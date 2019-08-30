@@ -203,6 +203,9 @@ bindsym $mod+a focus parent
 #bindsym Mod1+backslash [class="Chromium"] focus
 #bindsym Mod1+s [instance="spotify"] focus
 
+# peek
+for_window [class="peek"] floating enable
+
 #
 # Media keys:
 #
@@ -215,6 +218,7 @@ bindsym XF86AudioPlay exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 bindsym XF86AudioStop exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Stop"
 bindsym XF86AudioPrev exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Previous"
 bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Next"
+
 
 #-------------------------------------------------------------------------------
 # Scratchpads

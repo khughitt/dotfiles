@@ -15,9 +15,12 @@ alias tree='tree -C'
 
 alias ra=ranger
 
-alias feh='feh scale-down auto-zoom'
+alias feh='feh --scale-down --auto-zoom'
 
 alias m=tldr
+
+# manpages in lynx
+alias man='man --html="lynx --vikeys"'
 
 # matching
 alias g='grep --color=always'

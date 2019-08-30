@@ -190,11 +190,23 @@ unset __conda_setup
 #. /usr/share/LS_COLORS/dircolors.sh
 #
 # rvm
-#export PATH="$PATH:$HOME/.rvm/bin"
-#[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+export PATH="$PATH:$HOME/.rvm/bin"
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
 # hide ruby version from ps1
 function ruby_prompt_info() { echo '' }
+
+# enable vi-mode
+bindkey -v
+
+bindkey '^P' up-history
+bindkey '^N' down-history
+bindkey '^?' backward-delete-char
+bindkey '^h' backward-delete-char
+bindkey '^w' backward-kill-word
+bindkey '^r' history-incremental-search-backward
+
+export KEYTIMEOUT=1
 
 # fix keybindings
 bindkey "^[[H" beginning-of-line
@@ -246,6 +258,9 @@ zplugin load trapd00r/zsh-syntax-highlighting-filetypes
 # alias reminders
 zplugin light "djui/alias-tips"
 
+# cntl-z -> fg
+zplugin light mdumitru/fancy-ctrl-z
+
 # completions
 if is-at-least 5.3; then
   zplugin ice lucid wait'0a' blockf
@@ -255,7 +270,7 @@ fi
 zplugin light zsh-users/zsh-completions
 
 # zshmarks
-zplugin light "jocelynmallon/zshmarks"
+zplugin light "urbainvaes/fzf-marks"
 
 # fzf
 export FZF_DEFAULT_COMMAND="fd --type file --color=always"

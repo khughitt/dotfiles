@@ -21,6 +21,20 @@ function va {
     nvim $(ag -l $1)
 }
 
+# zcat | wc -l
+function zcl {
+    zcat $1 | wc -l
+}
+
+# number of columns
+function nc {
+    if [[ $1 == *.tsv* ]]; then
+        csvgrep -n -t $1 | wc -l
+    else
+        csvgrep -n $1 | wc -l
+    fi
+}
+
 # feh browse dir
 function fehd {
     feh –start-at $1
