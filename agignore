@@ -1,5 +1,8 @@
 *.html
 *.min.js
+*.js
 *.pyc
 *.rda
+*.tsv
+*.csv
 *.RData

@@ -9,7 +9,6 @@
 #    return
 #fi
 
-
 # stop here in non-interactive mode
 [ -z "$PS1" ] && return
 
@@ -30,9 +29,9 @@ source ~/.zplugin/bin/zplugin.zsh
 #autoload -U compinit && compinit
 
 # local settings (early)
-#if [ -e ~/.zsh_local_early ]; then
-#    source ~/.zsh_local_early
-#fi
+if [ -e ~/.zsh_local_early ]; then
+   source ~/.zsh_local_early
+fi
 
 # tmux helper function
 function xumt() {
@@ -116,7 +115,14 @@ unset file
 
 # fasd
 export _FASD_SHELL='dash'
-eval "$(fasd --init auto)"
+
+#eval "$(fasd --init auto)"
+fasd_cache="$HOME/.fasd-init-zsh"
+if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
+  fasd --init auto >| "$fasd_cache"
+fi
+source "$fasd_cache"
+unset fasd_cache
 
 alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
@@ -154,9 +160,9 @@ fi
 unset __conda_setup
 
 # local settings (late)
-#if [ -e ~/.zsh_local_late ]; then
-#    source ~/.zsh_local_late
-#fi
+if [ -e ~/.zsh_local_late ]; then
+   source ~/.zsh_local_late
+fi
 
 # map caps lock to <Esc>
 #xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
@@ -253,7 +259,6 @@ zplugin load trapd00r/LS_COLORS
 
 # syntax highlighting
 zplugin light zdharma/fast-syntax-highlighting
-zplugin load trapd00r/zsh-syntax-highlighting-filetypes
 
 # alias reminders
 zplugin light "djui/alias-tips"
@@ -269,13 +274,19 @@ else
 fi
 zplugin light zsh-users/zsh-completions
 
-# zshmarks
+# fzf-marks
 zplugin light "urbainvaes/fzf-marks"
 
 # fzf
 export FZF_DEFAULT_COMMAND="fd --type file --color=always"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# greenclip
+fzf-clipboard() { echo -n "$(greenclip print | fzf -e -i)" | xclip -selection clipboard ;}
+cfg-greenclip() { killall greenclip ; $EDITOR ~/.config/greenclip.cfg && nohup greenclip daemon > /dev/null 2>&1 & }
+rld-greenclip() { killall greenclip ; nohup greenclip daemon > /dev/null 2>&1 & }
+derez-greenclip() { killall greenclip ; rm ~/.cache/greenclip.history && nohup greenclip daemon > /dev/null 2>&1 & }
 
 # location of additional zsh completions
 fpath+=$HOME/d/dotfiles/zsh/

@@ -5,7 +5,14 @@
 ################################################################################
 
 # navigation
-alias ls='lsd --group-dirs=first'
+if type "lsd" > /dev/null; then
+    alias ls='lsd --group-dirs=first'
+elif type "ls++" > /dev/null; then
+    alias ls='ls++'
+elif type "colorls" > /dev/null; then
+    alias ls='colorls'
+fi
+
 alias l='ls -l'
 alias la='ls -a'
 alias lla='ls -la'
@@ -19,8 +26,12 @@ alias feh='feh --scale-down --auto-zoom'
 
 alias m=tldr
 
+# config files
+alias vn='vim ~/.config/nvim/init.vim'
+alias vz='vim ~/.zshrc'
+
 # manpages in lynx
-alias man='man --html="lynx --vikeys"'
+# alias man='man --html="lynx --vikeys"'
 
 # matching
 alias g='grep --color=always'

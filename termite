@@ -1,8 +1,9 @@
 [options]
-#font = Droid Sans Mono 11
-#font = Terminus (TTF) 11
-#font = Hack 12
-font = Droid Sans Mono 12
+#font = Hack Nerd Font Mono 12
+font = Droid Sans Mono Nerd Font 12
+#font = Source Code Pro for Powerline Medium 16px
+#font = DejaVu Sans Mono Nerd Font 12
+#font = Ubuntu Mono Nerd Font 15
 scrollback_lines = 9192
 
 # todo:

@@ -20,6 +20,7 @@ set $term termite
 
 # Your preferred application launcher
 set $menu rofi -show drun
+set $greenclip rofi -modi "clipboard:greenclip print" -show clipboard -run-command '{cmd}'
 
 # start dmenu
 #set $menu dmenu_run
@@ -86,6 +87,9 @@ bindsym Mod1+F4 kill
 # start your launcher
 bindsym $mod+p exec $menu
 
+# clipboard history
+bindsym $mod+o exec $greenclip
+
 # Drag floating windows by holding down $mod and left mouse button.
 # Resize them with right mouse button + $mod.
 # Despite the name, also works for non-floating windows.
@@ -97,10 +101,6 @@ bindsym $mod+Shift+c reload
 
 # exit i3
 bindsym $mod+Shift+e exit
-
-#
-# Moving around
-#
 
 # Move your focus around
 bindsym $mod+$left focus left
@@ -125,55 +125,104 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
-#
-# Workspaces:
-#
+#-------------------------------------------------------------------------------
+# Workspaces
+#-------------------------------------------------------------------------------
+set $exec_i3_groups exec --no-startup-id i3-workspace-groups
+
+# Switch active workspace group
+bindsym $mod+g exec --no-startup-id i3-switch-active-workspace-group
+
+# Move workspace to another group
+bindsym $mod+Shift+g exec --no-startup-id i3-assign-workspace-to-group
+bindsym $mod+1 $exec_i3_groups workspace-number 1
+bindsym $mod+2 $exec_i3_groups workspace-number 2
+bindsym $mod+3 $exec_i3_groups workspace-number 3
+bindsym $mod+4 $exec_i3_groups workspace-number 4
+bindsym $mod+5 $exec_i3_groups workspace-number 5
+bindsym $mod+6 $exec_i3_groups workspace-number 6
+bindsym $mod+7 $exec_i3_groups workspace-number 7
+bindsym $mod+8 $exec_i3_groups workspace-number 8
+bindsym $mod+9 $exec_i3_groups workspace-number 9
+bindsym $mod+0 $exec_i3_groups workspace-number 10
+
+bindsym $mod+Shift+1 $exec_i3_groups move-to-number 1
+bindsym $mod+Shift+2 $exec_i3_groups move-to-number 2
+bindsym $mod+Shift+3 $exec_i3_groups move-to-number 3
+bindsym $mod+Shift+4 $exec_i3_groups move-to-number 4
+bindsym $mod+Shift+5 $exec_i3_groups move-to-number 5
+bindsym $mod+Shift+6 $exec_i3_groups move-to-number 6
+bindsym $mod+Shift+7 $exec_i3_groups move-to-number 7
+bindsym $mod+Shift+8 $exec_i3_groups move-to-number 8
+bindsym $mod+Shift+9 $exec_i3_groups move-to-number 9
+bindsym $mod+Shift+0 $exec_i3_groups move-to-number 10
+
+# default workspace navigation
+bindsym $mod+Control+1 workspace number 1
+bindsym $mod+Control+2 workspace number 2
+bindsym $mod+Control+3 workspace number 3
+bindsym $mod+Control+4 workspace number 4
+bindsym $mod+Control+5 workspace number 5
+bindsym $mod+Control+6 workspace number 6
+bindsym $mod+Control+7 workspace number 7
+bindsym $mod+Control+8 workspace number 8
+bindsym $mod+Control+9 workspace number 9
+bindsym $mod+Control+0 workspace number 10
+
+# Switch to previous workspace in group.
+bindsym $mod+u $exec_i3_groups workspace-prev
+
+# Switch to next workspace in group.
+bindsym $mod+i $exec_i3_groups workspace-next
+
+# Move to previous workspace in group.
+bindsym $mod+Shift+p $exec_i3_groups move-to-prev
+
+# Move to next workspace in group.
+bindsym $mod+Shift+n $exec_i3_groups move-to-next
 
 # switch to workspace
-#bindsym $mod+1 workspace 📖
-#bindsym $mod+2 workspace # 
-#bindsym $mod+3 workspace 🌎
-#bindsym $mod+4 workspace ♫
-bindsym $mod+1 workspace web
-bindsym $mod+2 workspace code1
-bindsym $mod+3 workspace code2
-bindsym $mod+4 workspace term
-bindsym $mod+5 workspace music
-bindsym $mod+6 workspace 6
-bindsym $mod+7 workspace 7
-bindsym $mod+8 workspace 8
-bindsym $mod+9 workspace 9
-bindsym $mod+0 workspace 10
+# bindsym $mod+1 workspace 1
+# bindsym $mod+2 workspace 2
+# bindsym $mod+3 workspace 3
+# bindsym $mod+4 workspace 4
+# bindsym $mod+5 workspace 5
+# bindsym $mod+6 workspace 6
+# bindsym $mod+7 workspace 7
+# bindsym $mod+8 workspace 8
+# bindsym $mod+9 workspace 9
+# bindsym $mod+0 workspace 10
 
 # move focused container to workspace
 #bindsym $mod+Shift+1 move container to workspace 📖
 #bindsym $mod+Shift+2 move container to workspace #
 #bindsym $mod+Shift+3 move container to workspace 🌎
 #bindsym $mod+Shift+4 move container to workspace ♫
-bindsym $mod+Shift+1 move container to workspace web
-bindsym $mod+Shift+2 move container to workspace code1
-bindsym $mod+Shift+3 move container to workspace code2
-bindsym $mod+Shift+4 move container to workspace term
-bindsym $mod+Shift+5 move container to workspace music
-bindsym $mod+Shift+6 move container to workspace 6
-bindsym $mod+Shift+7 move container to workspace 7
-bindsym $mod+Shift+8 move container to workspace 8
-bindsym $mod+Shift+9 move container to workspace 9
-bindsym $mod+Shift+0 move container to workspace 10
+# bindsym $mod+Shift+1 move container to workspace 1
+# bindsym $mod+Shift+2 move container to workspace 2
+# bindsym $mod+Shift+3 move container to workspace 3
+# bindsym $mod+Shift+4 move container to workspace 4
+# bindsym $mod+Shift+5 move container to workspace 5
+# bindsym $mod+Shift+6 move container to workspace 6
+# bindsym $mod+Shift+7 move container to workspace 7
+# bindsym $mod+Shift+8 move container to workspace 8
+# bindsym $mod+Shift+9 move container to workspace 9
+# bindsym $mod+Shift+0 move container to workspace 10
 
 # move workspace to different monitor
 bindsym $mod+m move workspace to output left
 
 # specify default monitors for first few workspaces
-workspace "web" output HDMI-0
-workspace "code1" output HDMI-0
-workspace "code2" output DP-1
-workspace "term" output HDMI-0
-workspace "music" output DP-1
+workspace "1" output HDMI-0
+workspace "2" output HDMI-0
+workspace "3" output HDMI-0
+workspace "4" output DP-1
+workspace "5" output DP-1
+workspace "6" output DP-1
 
-#
+#-------------------------------------------------------------------------------
 # Layout
-#
+#-------------------------------------------------------------------------------
 
 # You can "split" the current object of your focus with
 # $mod+b or $mod+v, for horizontal and vertical splits
@@ -276,6 +325,7 @@ bindsym $mod+r mode "resize"
 # Status Bar:
 #
 bar {
+    strip_workspace_numbers yes
     i3bar_command i3bar -t
     colors {
         statusline #e9e9f4
@@ -293,5 +343,7 @@ bar {
 
 # autostart
 exec_always --no-startup-id killall compton; compton
+exec --no-startup-id xrandr --output DP-1 --auto --left-of HDMI-0
 exec --no-startup-id /usr/lib/geoclue-2.0/demos/agent
 exec --no-startup-id blackd
+exec --no-startup-id greenclip daemon

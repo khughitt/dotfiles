@@ -58,12 +58,14 @@ noremap  <C-e> <End>
 call plug#begin()
     " plugins
     Plug 'airblade/vim-gitgutter'
+    Plug 'andymass/vim-matchup'
     Plug 'bfredl/nvim-ipy'
     Plug 'Alok/notational-fzf-vim'
     Plug 'bioSyntax/bioSyntax-vim'
     Plug 'chrisbra/csv.vim'
     Plug 'davidoc/taskpaper.vim'
-    Plug 'deoplete-plugins/deoplete-jedi'
+    "Plug 'deoplete-plugins/deoplete-jedi'
+    Plug 'ervandew/supertab'
 
     " overrides filetype tabstop, etc. options
     "Plug 'editorconfig/editorconfig-vim'
@@ -71,6 +73,7 @@ call plug#begin()
     Plug 'freitass/todo.txt-vim'
     Plug 'godlygeek/tabular'
     Plug 'guns/xterm-color-table.vim'
+    Plug 'haya14busa/vim-operator-flashy'
     Plug 'henrik/vim-indexed-search'
     Plug 'honza/vim-snippets'
     Plug 'itchyny/lightline.vim'
@@ -78,6 +81,7 @@ call plug#begin()
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
     Plug 'junegunn/fzf.vim'
     Plug 'kshenoy/vim-signature'
+    Plug 'kana/vim-operator-user'
     Plug 'lilydjwg/colorizer'
     Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'majutsushi/tagbar'
@@ -88,15 +92,15 @@ call plug#begin()
     Plug 'mrk21/yaml-vim'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
+    Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
     Plug 'qpkorr/vim-bufkill'
     Plug 'raimon49/requirements.txt.vim'
-    Plug 'ryanoasis/vim-devicons'
     Plug 'scrooloose/nerdcommenter'
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'severin-lemaignan/vim-minimap'
     Plug 'Shougo/denite.nvim'
-    Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-    Plug 'Shougo/deoplete-terminal'
+    "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+    "Plug 'Shougo/deoplete-terminal'
     Plug 'Shougo/neomru.vim'
     Plug 'stephpy/vim-yaml'
     Plug 'troydm/zoomwintab.vim'
@@ -130,10 +134,12 @@ call plug#begin()
     Plug 'fcpg/vim-orbital'
     Plug 'fenetikm/falcon'
     Plug 'fmoralesc/molokayo'
+    Plug 'gcavallanti/vim-noscrollbar'
     Plug 'jacoborus/tender.vim'
     Plug 'joshdick/onedark.vim'
     Plug 'liuchengxu/space-vim-dark'
     Plug 'lu-ren/SerialExperimentsLain'
+    Plug 'reedes/vim-colors-pencil'
     Plug 'sheerun/vim-wombat-scheme'
     Plug 'whatyouhide/vim-gotham'
     Plug 'yuttie/hydrangea-vim'
@@ -143,15 +149,15 @@ call plug#begin()
     "Plug 'vim-airline/vim-airline-themes'
     "Plug 'yuttie/comfortable-motion.vim'
     "Plug 'hkupty/iron.nvim'
-    "Plug 'plasticboy/vim-markdown'
     "Plug 'tpope/vim-repeat'
-    "Plug 'ervandew/supertab'
     "Plug 'hyiltiz/vim-plugins-profile'
     "Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
     "Plug 'python/black'
-    "Plug 'gcavallanti/vim-noscrollbar'
     "Plug 'Shougo/neosnippet.vim'
     "Plug 'Shougo/neosnippet-snippets'
+    
+    " devicons should always be loaded last
+    Plug 'ryanoasis/vim-devicons'
 call plug#end()
 
 " ----------------------------------------------------------------------------
@@ -192,10 +198,10 @@ set novisualbell           " no thank you
 " ----------------------------------------------------------------------------
 " Navigation
 " ----------------------------------------------------------------------------
-inoremap <M-h> <Esc>h
-inoremap <M-j> <Esc>j
-inoremap <M-k> <Esc>k
-inoremap <M-l> <Esc>l
+inoremap <M-h> <C-o>h
+inoremap <M-j> <C-o>j
+inoremap <M-k> <C-o>k
+inoremap <M-l> <C-o>l
 
 " ----------------------------------------------------------------------------
 " Text Formatting
@@ -382,6 +388,10 @@ xnoremap p "_dP
 " stay at last selected character after yanking text in visual mode
 vmap y y`]
 
+" paste from primary in normal mode
+noremap <Leader>p "*p
+noremap <Leader>P "*P
+
 " ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
 " ----------------------------------------------------------------------------
@@ -408,8 +418,8 @@ inoremap <c-u> <c-g>u<c-u>
 nnoremap p p`]<Esc>
 
 " insert blank line without entering insert mode
-nmap <c-o> O<Esc>
-nmap <CR> o<Esc>
+" nmap <c-o> O<Esc> " used to navigate jump list..
+" nmap <CR> o<Esc>
 
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
@@ -534,66 +544,66 @@ let g:colorscheme_switcher_exclude = [
 "    filepath very quickly that way, esp. if only one sub-dir at each level..)
 
 " enable at start-up
-let g:deoplete#enable_at_startup = 1
+"let g:deoplete#enable_at_startup = 1
 
 " only show popup upon request
-let g:deoplete#disable_auto_complete = 1
+"let g:deoplete#disable_auto_complete = 1
 
-call deoplete#custom#var('around', {
-    \   'range_above': 25,
-    \   'range_below': 25,
-    \   'mark_above': '[↑]',
-    \   'mark_below': '[↓]',
-    \   'mark_changes': '[*]',
-    \})
+" call deoplete#custom#var('around', {
+"     \   'range_above': 25,
+"     \   'range_below': 25,
+"     \   'mark_above': '[↑]',
+"     \   'mark_below': '[↓]',
+"     \   'mark_changes': '[*]',
+"     \})
 
 " number of results to show
-call deoplete#custom#option({'max_list': 10})
+" call deoplete#custom#option({'max_list': 10})
 
 " use <tab> / <s-tab> to cycle through completions
-function! s:check_back_space() abort "{{{
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~ '\s'
-endfunction"}}}
+" function! s:check_back_space() abort "{{{
+"   let col = col('.') - 1
+"   return !col || getline('.')[col - 1]  =~ '\s'
+" endfunction"}}}
 
-inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ deoplete#manual_complete()
-
-inoremap <silent><expr><S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-
-" automatically select the first match
-set completeopt+=noinsert
-
-" don't insert a newline when selecting with <Enter>
-inoremap <expr> <CR> (pumvisible() ? "\<c-y>" : "\<CR>")
-
-" matchers
-" head   - exact matches
-" length - don't show typed word
-call deoplete#custom#source('_', 'matchers', ['matcher_head', 'terminal', 'matcher_length'])
-
-" sort results alphabetically
-call deoplete#custom#source('_', 'sorters', ['sorter_word'])
-
-" disable the candidates in Comment/String syntaxes.
-call deoplete#custom#source('_', 'disabled_syntaxes', ['Comment', 'String'])
-
-" prioritize file matches when present
-call deoplete#custom#source('file', 'rank', 9999)
-
-" disable buffer source
-let g:deoplete#ignore_sources = {}
-let g:deoplete#ignore_sources._ = ['buffer']
-
-" shortcuts
-call deoplete#custom#option('candidate_marks', ['A', 'S', 'D', 'F', 'G'])
-inoremap <expr><m-a>  deoplete#insert_candidate(0)
-inoremap <expr><m-s>  deoplete#insert_candidate(1)
-inoremap <expr><m-d>  deoplete#insert_candidate(2)
-inoremap <expr><m-f>  deoplete#insert_candidate(3)
-inoremap <expr><m-g>  deoplete#insert_candidate(4)
+" inoremap <silent><expr> <TAB>
+"       \ pumvisible() ? "\<C-n>" :
+"       \ <SID>check_back_space() ? "\<TAB>" :
+"       \ deoplete#manual_complete()
+"
+" inoremap <silent><expr><S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
+"
+" " automatically select the first match
+" set completeopt+=noinsert
+"
+" " don't insert a newline when selecting with <Enter>
+" inoremap <expr> <CR> (pumvisible() ? "\<c-y>" : "\<CR>")
+"
+" " matchers
+" " head   - exact matches
+" " length - don't show typed word
+" call deoplete#custom#source('_', 'matchers', ['matcher_head', 'terminal', 'matcher_length'])
+"
+" " sort results alphabetically
+" call deoplete#custom#source('_', 'sorters', ['sorter_word'])
+"
+" " disable the candidates in Comment/String syntaxes.
+" call deoplete#custom#source('_', 'disabled_syntaxes', ['Comment', 'String'])
+"
+" " prioritize file matches when present
+" call deoplete#custom#source('file', 'rank', 9999)
+"
+" " disable buffer source
+" let g:deoplete#ignore_sources = {}
+" let g:deoplete#ignore_sources._ = ['buffer']
+"
+" " shortcuts
+" call deoplete#custom#option('candidate_marks', ['A', 'S', 'D', 'F', 'G'])
+" inoremap <expr><m-a>  deoplete#insert_candidate(0)
+" inoremap <expr><m-s>  deoplete#insert_candidate(1)
+" inoremap <expr><m-d>  deoplete#insert_candidate(2)
+" inoremap <expr><m-f>  deoplete#insert_candidate(3)
+" inoremap <expr><m-g>  deoplete#insert_candidate(4)
 
 " ---------------------------------------------------------------------------
 " float-preview.nvim
@@ -697,6 +707,31 @@ vmap <Silent><C-M> <Plug>(IPy-Run)
 nmap <Silent><C-M> <Plug>(IPy-Run)
 
 au FileType python nmap <localleader>rf :IPython<CR>
+
+" ---------------------------------------------------------------------------
+"  operator-flashy
+" ---------------------------------------------------------------------------
+map y <Plug>(operator-flashy)
+nmap Y <Plug>(operator-flashy)$
+
+" ---------------------------------------------------------------------------
+"  vim-markdown
+" ---------------------------------------------------------------------------
+let g:vim_markdown_folding_disabled = 1
+let g:vim_markdown_frontmatter = 1
+let g:vim_markdown_toc_autofit = 1
+let g:vim_markdown_strikethrough = 1
+let g:vim_markdown_math = 1
+
+au BufNewFile,BufRead *.md set filetype=markdown nofoldenable
+au BufNewFile,BufRead *.md set conceallevel=2
+
+" replace tagbar binding
+au FileType markdown nmap <F9> :Toc<CR>
+au FileType markdown imap <F9> :Toc<CR>
+
+" override default conceal colors
+syntax match Normal /\*/ conceal cchar=∗
 
 " ---------------------------------------------------------------------------
 "  vpaste.net
@@ -809,26 +844,19 @@ cmap <C-r> :History:<CR>
 " ---------------------------------------------------------------------------
 let g:lightline = { 'colorscheme': 'ThemerVimLightline' }
 let g:lightline.tabline          = {'left': [['buffers']], 'right': [['close']]}
+let g:lightline.component_function = { 'percent': 'NoScrollbarForLightline' }
 let g:lightline.component_expand = {'buffers': 'lightline#bufferline#buffers'}
 let g:lightline.component_type   = {'buffers': 'tabsel'}
-let g:lightline#bufferline#shorten_path = 1
 let g:lightline#bufferline#enable_devicons = 1
+let g:lightline#bufferline#show_number  = 1
 
 " ---------------------------------------------------------------------------
 "  noscrollbar
 " ---------------------------------------------------------------------------
-" Replace percent component of Lightline statusline
-" https://codeyarns.com/2017/10/25/how-to-add-noscrollbar-to-lightline/
-"let g:lightline = {
-"      \ 'component_function': {
-"      \   'percent': 'NoScrollbarForLightline'
-"      \ }
-"      \ }
-
 " Instead of % show NoScrollbar horizontal scrollbar
-"function! NoScrollbarForLightline()
-"    return noscrollbar#statusline()
-"endfunction
+function! NoScrollbarForLightline()
+   return noscrollbar#statusline()
+endfunction
 
 " ---------------------------------------------------------------------------
 "  notational-fzf-vim
@@ -887,22 +915,24 @@ let rmd_syn_hl_chunk = 1
 " libraries to always include for autocompletion
 let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,parallel,tidyverse"
 
-" press enter and space bar to send lines and selection to R
-" au FileType r,rmd vmap <Space> <Plug>RDSendSelection
-" au FileType r,rmd nmap <Space> <Plug>RDSendLine
-" vmap <C-M> <Plug>RDSendSelection
-" nmap <C-M> <Plug>RDSendLine
+" tell nvim-r to expect same prompt format as defined in .Rprofile
+let g:Rout_prompt_str = '> '
+let g:Rout_continue_str = '... '
 
+" press enter and space bar to send lines and selection to R
 vmap <Space> <Plug>RDSendSelection
 nmap <Space> <Plug>RDSendLine
-vmap <C-M> <Plug>RDSendSelection
-nmap <C-M> <Plug>RDSendLine
+
+" au BufNewFile,BufRead *.Rmd,*.R vmap <CR> <Plug>RDSendSelection
+" au BufNewFile,BufRead *.Rmd,*.R nmap <CR> <Plug>RDSendLine
+vmap <CR> <Plug>RDSendSelection
+nmap <CR> <Plug>RDSendLine
 
 nmap <C-Space> ,rp
 
-" autostart term (disabled: often results in 'not yet ready' messages...)
-au FileType r   if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
-au FileType rmd if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
+" autostart term
+" au FileType r   if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
+" au FileType rmd if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
 
 " preview data
 " au FileType r,rmd nmap <silent> <LocalLeader>h :call RAction("hh", "@,48-57,_,.")<CR>
@@ -931,7 +961,8 @@ nmap <localleader>sc :call ShowRSource()<CR>
 " ---------------------------------------------------------------------------
 " supertab.vim
 " ---------------------------------------------------------------------------
-" let g:SuperTabDefaultCompletionType = "<c-n>"
+let g:SuperTabDefaultCompletionType = "<c-n>"
+let g:SuperTabDefaultCompletionType = "context"
 
 " ---------------------------------------------------------------------------
 "  syntastic
@@ -950,7 +981,10 @@ let g:syntastic_check_on_wq = 1
 let g:syntastic_enable_r_lintr_checker = 1
 let g:syntastic_r_checkers = ['lintr']
 let g:syntastic_rmd_checkers = ['lintr']
-let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),object_camel_case_linter=NULL,single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
+
+" 2019-09-05: new linter in devel version of lintr:
+"  object_name_linter(styles = c('snake_case'))
+let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
 
 " python
 let g:syntastic_rst_checkers=['sphinx']
@@ -983,8 +1017,7 @@ vmap <C-v> <Plug>(expand_region_shrink)
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
-autocmd BufRead,BufNewFile *.md set filetype=markdown nofoldenable
+autocmd FileType markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.py set autoindent
 
 " Languge-specific color schemes
@@ -992,10 +1025,6 @@ autocmd BufRead,BufNewFile *.py set autoindent
 "au FileType jinja colorscheme SerialExperimentsLain
 "au FileType snakemake colorscheme gotham
 "au FileType rmd colorscheme grb256
-
-" Markdown
-"let g:vim_markdown_frontmatter = 1
-"let g:vim_markdown_strikethrough = 1
 
 au FileType python map <silent> <leader>b obreakpoint()<esc>
 
@@ -1025,6 +1054,9 @@ hi MatchParen cterm=bold ctermbg=none ctermfg=red
 hi Search ctermbg=197 ctermfg=233
 hi Search guibg=#14D1DE guifg=#2C2C2C
 hi IncSearch guifg=#67E8F1 guibg=#333333
+
+" Conceal characters
+hi Conceal guibg=background guifg=foreground
 
 " Work-around for failing rmarkdown syntax highlighting when jumping around in files
 " https://vim.fandom.com/wiki/Fix_syntax_highlighting

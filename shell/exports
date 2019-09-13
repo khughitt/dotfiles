@@ -10,10 +10,20 @@ export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true'
 export _JAVA_AWT_WM_NONREPARENTING=1
 
 # let ncurces know where to find terminfo
-export TERMINFO=$TERMINFO:/usr/share/terminfo
+export TERMINFO=~/.terminfo
 
 # remap caps-lock in sway
 export XKB_DEFAULT_OPTIONS=caps:escape
+
+# Predictable SSH authentication socket location.
+# https://unix.stackexchange.com/a/76256/39903
+SOCK="/tmp/ssh-agent-keith-screen"
+
+if test $SSH_AUTH_SOCK && [ $SSH_AUTH_SOCK != $SOCK ]; then
+    rm -f /tmp/ssh-agent-$USER-screen
+    ln -sf $SSH_AUTH_SOCK $SOCK
+    export SSH_AUTH_SOCK=$SOCK
+fi
 
 # ibus
 #export GTK_IM_MODULE=ibus
