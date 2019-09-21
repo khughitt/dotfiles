@@ -1,0 +1,41 @@
+#
+# vi-mode settings
+#
+bindkey -v
+
+# reduce amount of time zsh waits after escape characters
+# https://www.johnhawthorn.com/2012/09/vi-escape-delays/
+export KEYTIMEOUT=1
+
+# change cursor shape based on current mode
+# https://gist.github.com/MatrixManAtYrService/8ba56e957c861719691105e52592ee62
+function zle-keymap-select {
+  if [[ ${KEYMAP} == vicmd ]] ||
+     [[ $1 = 'block' ]]; then
+    echo -ne '\e[1 q'
+
+  elif [[ ${KEYMAP} == main ]] ||
+       [[ ${KEYMAP} == viins ]] ||
+       [[ ${KEYMAP} = '' ]] ||
+       [[ $1 = 'beam' ]]; then
+    echo -ne '\e[5 q'
+  fi
+}
+zle -N zle-keymap-select
+
+# Use beam shape cursor for each new prompt.
+make_beam() {
+   echo -ne '\e[5 q'
+}
+
+# Do so now
+make_beam
+
+# And at the start of each prompt
+autoload -U add-zsh-hook
+add-zsh-hook preexec make_beam
+
+# Fix cntl-u, etc.
+zle -A kill-whole-line vi-kill-line
+zle -A backward-kill-word vi-backward-kill-word
+zle -A backward-delete-char vi-backward-delete-char
