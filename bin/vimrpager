@@ -1,2 +1,0 @@
-#!/bin/sh
-cat | vim -c 'set ft=rdoc' -

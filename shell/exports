@@ -1,7 +1,12 @@
 # environmental variables
+export BROWSER=chromium
 export EDITOR=nvim
 export PATH=$HOME/bin:$PATH
 export XDG_CONFIG_HOME="$HOME/.config"
+
+if type "moar" > /dev/null; then
+  export PAGER=$(which moar)
+fi
 
 # java
 export JAVA_FONTS=/usr/share/fonts/TTF

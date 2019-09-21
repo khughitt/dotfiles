@@ -17,10 +17,6 @@ source ~/.zplugin/bin/zplugin.zsh
 
 #export CASE_SENSITIVE="true"
 
-# reduce amount of time zsh waits after escape characters
-# https://www.johnhawthorn.com/2012/09/vi-escape-delays/
-#export KEYTIMEOUT=1
-
 #for dump in ~/.zcompdump(N.mh+24); do
 #  compinit -u
 #done
@@ -108,7 +104,7 @@ export NVM_LAZY_LOAD=true
 #compdef _gnu_generic snakemake
 
 # additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{aliases,functions,private,exports,biosyntax}; do
+for file in ~/.shell/{aliases,biosyntax,functions,private,exports}; do
     [ -r "$file" ] && source "$file"
 done
 unset file
@@ -164,7 +160,8 @@ if [ -e ~/.zsh_local_late ]; then
    source ~/.zsh_local_late
 fi
 
-# map caps lock to <Esc>
+# map caps lock to <Esc>;
+# handled in .xmodmaprc
 #xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
 
 # marker;
@@ -203,16 +200,12 @@ export PATH="$PATH:$HOME/.rvm/bin"
 function ruby_prompt_info() { echo '' }
 
 # enable vi-mode
-bindkey -v
-
 bindkey '^P' up-history
 bindkey '^N' down-history
 bindkey '^?' backward-delete-char
 bindkey '^h' backward-delete-char
 bindkey '^w' backward-kill-word
 bindkey '^r' history-incremental-search-backward
-
-export KEYTIMEOUT=1
 
 # fix keybindings
 bindkey "^[[H" beginning-of-line
@@ -238,7 +231,6 @@ zplugin snippet OMZ::lib/completion.zsh
 zplugin snippet OMZ::lib/directories.zsh
 zplugin snippet OMZ::lib/git.zsh
 zplugin snippet OMZ::lib/grep.zsh
-zplugin snippet OMZ::lib/key-bindings.zsh
 zplugin snippet OMZ::lib/spectrum.zsh
 zplugin snippet OMZ::lib/directories.zsh
 zplugin snippet OMZ::plugins/archlinux/archlinux.plugin.zsh
@@ -247,15 +239,20 @@ zplugin snippet OMZ::plugins/rvm/rvm.plugin.zsh
 zplugin snippet OMZ::plugins/sudo/sudo.plugin.zsh
 zplugin snippet OMZ::plugins/systemd/systemd.plugin.zsh
 
+#zplugin snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
+
+# emacs mode improvements
+zplugin snippet OMZ::lib/key-bindings.zsh
+
 # theme
 zplugin ice pick"async.zsh" src"pure.zsh"; zplugin light sindresorhus/pure
 
 # zsh autosuggestions
 #zplugin light zsh-users/zsh-autosuggestions
 
-# ls colors
-zplugin ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
-zplugin load trapd00r/LS_COLORS
+# ls colors 
+# zplugin ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
+# zplugin load trapd00r/LS_COLORS
 
 # syntax highlighting
 zplugin light zdharma/fast-syntax-highlighting
@@ -278,7 +275,7 @@ zplugin light zsh-users/zsh-completions
 zplugin light "urbainvaes/fzf-marks"
 
 # fzf
-export FZF_DEFAULT_COMMAND="fd --type file --color=always"
+export FZF_DEFAULT_COMMAND="fd --type file --color=never"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 

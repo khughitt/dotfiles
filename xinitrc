@@ -79,6 +79,9 @@ autocutsel -fork &
 # sway
 #exec sway >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
 
+# ssh-agent
+eval $(ssh-agent)
+
 # i3
 exec i3 >> ~/.cache/i3/stdout 2>> ~/.cache/i3/stderr
 

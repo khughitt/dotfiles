@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-# navigation
+# ls
 if type "lsd" > /dev/null; then
     alias ls='lsd --group-dirs=first'
 elif type "ls++" > /dev/null; then
@@ -22,9 +22,13 @@ alias tree='tree -C'
 
 alias ra=ranger
 
-alias feh='feh --scale-down --auto-zoom'
+# alias feh='feh --scale-down --auto-zoom'
+alias feh='feh --scale-down'
 
 alias m=tldr
+
+# fzf notes
+alias n="vim \`fd -t f md ~/d/notes | fzf -1 --exact\`"
 
 # config files
 alias vn='vim ~/.config/nvim/init.vim'

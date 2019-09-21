@@ -63,17 +63,9 @@ call plug#begin()
     Plug 'Alok/notational-fzf-vim'
     Plug 'bioSyntax/bioSyntax-vim'
     Plug 'chrisbra/csv.vim'
-    Plug 'davidoc/taskpaper.vim'
-    "Plug 'deoplete-plugins/deoplete-jedi'
     Plug 'ervandew/supertab'
-
-    " overrides filetype tabstop, etc. options
-    "Plug 'editorconfig/editorconfig-vim'
-
-    Plug 'freitass/todo.txt-vim'
     Plug 'godlygeek/tabular'
     Plug 'guns/xterm-color-table.vim'
-    Plug 'haya14busa/vim-operator-flashy'
     Plug 'henrik/vim-indexed-search'
     Plug 'honza/vim-snippets'
     Plug 'itchyny/lightline.vim'
@@ -92,25 +84,26 @@ call plug#begin()
     Plug 'mrk21/yaml-vim'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
-    Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
+    Plug 'nightsense/night-and-day'
+    "Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
+    Plug 'psf/black'
     Plug 'qpkorr/vim-bufkill'
     Plug 'raimon49/requirements.txt.vim'
     Plug 'scrooloose/nerdcommenter'
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
-    Plug 'severin-lemaignan/vim-minimap'
     Plug 'Shougo/denite.nvim'
+    "Plug 'deoplete-plugins/deoplete-jedi'
     "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
     "Plug 'Shougo/deoplete-terminal'
     Plug 'Shougo/neomru.vim'
     Plug 'stephpy/vim-yaml'
-    Plug 'troydm/zoomwintab.vim'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
-    Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'terryma/vim-expand-region'
     Plug 'vim-syntastic/syntastic'
     Plug 'wellle/targets.vim'
+    Plug 'wincent/terminus'
     Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug '/usr/share/vim/vimfiles'
@@ -122,6 +115,7 @@ call plug#begin()
     Plug 'vimtaku/vim-textobj-keyvalue'
 
     Plug 'agreco/vim-citylights'
+    Plug 'ayu-theme/ayu-vim'
     Plug 'challenger-deep-theme/vim'
     Plug 'connorholyday/vim-snazzy'
     Plug 'cseelus/vim-colors-lucid'
@@ -139,22 +133,36 @@ call plug#begin()
     Plug 'joshdick/onedark.vim'
     Plug 'liuchengxu/space-vim-dark'
     Plug 'lu-ren/SerialExperimentsLain'
+    Plug 'NLKNguyen/papercolor-theme'
     Plug 'reedes/vim-colors-pencil'
     Plug 'sheerun/vim-wombat-scheme'
+    Plug 'tyrannicaltoucan/vim-quantum'
+    Plug 'tyrannicaltoucan/vim-deep-space'
+    Plug 'vim-scripts/pyte'
+    Plug 'vim-scripts/summerfruit256.vim'
     Plug 'whatyouhide/vim-gotham'
+    Plug 'wimstefan/Lightning'
     Plug 'yuttie/hydrangea-vim'
     Plug 'zanloy/vim-colors-grb256'
 
+    "Plug 'chriskempson/base16-vim'
     "Plug 'vim-airline/vim-airline'
+    "Plug 'severin-lemaignan/vim-minimap'
     "Plug 'vim-airline/vim-airline-themes'
     "Plug 'yuttie/comfortable-motion.vim'
     "Plug 'hkupty/iron.nvim'
     "Plug 'tpope/vim-repeat'
     "Plug 'hyiltiz/vim-plugins-profile'
+    "Plug 'troydm/zoomwintab.vim'
     "Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
-    "Plug 'python/black'
+    "Plug 'davidoc/taskpaper.vim'
     "Plug 'Shougo/neosnippet.vim'
     "Plug 'Shougo/neosnippet-snippets'
+    "Plug 'freitass/todo.txt-vim'
+    "
+    " overrides filetype tabstop, etc. options
+    "Plug 'editorconfig/editorconfig-vim'
+
     
     " devicons should always be loaded last
     Plug 'ryanoasis/vim-devicons'
@@ -336,7 +344,7 @@ endif
 let g:quantum_black=1
 let g:quantum_italics=1
 
-set background=dark
+" set background=dark
 "colorscheme hemisu
 "colorscheme sweyla721647
 "colorscheme sweyla939829
@@ -344,7 +352,7 @@ set background=dark
 "colorscheme gotham
 "colorscheme SerialExperimentsLain
 "colorscheme dracula
-colorscheme ThemerVim
+" colorscheme quantum
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
@@ -502,9 +510,10 @@ let g:colorizer_startup = 0
 "  colorscheme-switcher.vim
 " ---------------------------------------------------------------------------
 let g:colorscheme_switcher_exclude = [
-            \'blue', 'darkblue', 'default', 'delek', 'desert', 'elflord',
-            \'evening', 'fi', 'gotham256', 'hybrid', 'hybrid-light', 'industry', 'koehler',
-            \'morning', 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'slate', 'torte', 'zellner']
+            \ 'blue', 'darkblue', 'default', 'delek', 'desert', 'elflord',
+            \ 'evening', 'fi', 'gotham256', 'industry', 'koehler', 'morning', 
+            \ 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'slate', 
+            \ 'torte', 'zellner']
 
 " ---------------------------------------------------------------------------
 "  deoplete
@@ -686,6 +695,15 @@ nmap <space> <leader>c<space>
 vmap <space> <leader>c<space>
 
 " ---------------------------------------------------------------------------
+"  night-and-day
+" ---------------------------------------------------------------------------
+let g:nd_themes = [
+  \ ['04:00', 'PaperColor', 'light' , 'PaperColor' ],
+  \ ['11:00', 'quantum',    'dark',   'quantum'],
+  \ ]
+let g:nd_lightline = 1
+
+" ---------------------------------------------------------------------------
 "  notational-fzf-vim
 " ---------------------------------------------------------------------------
 "let g:nv_use_short_pathnames = 1
@@ -707,12 +725,6 @@ vmap <Silent><C-M> <Plug>(IPy-Run)
 nmap <Silent><C-M> <Plug>(IPy-Run)
 
 au FileType python nmap <localleader>rf :IPython<CR>
-
-" ---------------------------------------------------------------------------
-"  operator-flashy
-" ---------------------------------------------------------------------------
-map y <Plug>(operator-flashy)
-nmap Y <Plug>(operator-flashy)$
 
 " ---------------------------------------------------------------------------
 "  vim-markdown
@@ -842,7 +854,7 @@ cmap <C-r> :History:<CR>
 " ---------------------------------------------------------------------------
 "  lightline
 " ---------------------------------------------------------------------------
-let g:lightline = { 'colorscheme': 'ThemerVimLightline' }
+let g:lightline = { 'colorscheme': 'dracula' }
 let g:lightline.tabline          = {'left': [['buffers']], 'right': [['close']]}
 let g:lightline.component_function = { 'percent': 'NoScrollbarForLightline' }
 let g:lightline.component_expand = {'buffers': 'lightline#bufferline#buffers'}
@@ -1050,10 +1062,10 @@ highlight ColorColumn ctermbg=234 guibg=#222222
 " Matching parens style
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
 
-" Highlight color (not working in recent versions)
-hi Search ctermbg=197 ctermfg=233
-hi Search guibg=#14D1DE guifg=#2C2C2C
-hi IncSearch guifg=#67E8F1 guibg=#333333
+" Highlight color
+" hi Search ctermbg=197 ctermfg=233
+" hi Search guibg=#14D1DE guifg=#2C2C2C
+" hi IncSearch guifg=#67E8F1 guibg=#333333
 
 " Conceal characters
 hi Conceal guibg=background guifg=foreground

@@ -6,19 +6,37 @@
 #  cp -r ~/R/path/to/3.x ~/R/path/to/3.y
 #  R -e "update.packages(checkBuilt = TRUE, ask = FALSE)"
 #
+options(continue = "... ")
 options(download.file.method = "libcurl")
-options(dplyr.print_max = 20) 
+options(dplyr.print_max = 5) 
 options(github.user = "khughitt")
+options(help.search.types = c("name", "title", "alias", "concept", "keyword"))
+options(keep.source.pkgs = TRUE)
 options(knitr.duplicate.label = 'allow')
 options(max.print = 100)
 options(menu.graphics = F)
+options(nwarnings = 1000)
+options(pdfviewer = 'zathura')
 options(prompt = "> ")
-options(continue = "... ")
 options(repos = structure(c(CRAN = "http://lib.stat.cmu.edu/R/CRAN/")))
 options(rstudio.markdownToHTML = NULL)
-options(showWarnCalls = T, showErrorCalls = T)
+options(setWidthOnResize = TRUE)
+options(showErrorCalls = TRUE)
+options(showWarnCalls = TRUE)
+options(showNCalls = 100)
+options(try.all.packages  = TRUE)
 options(warning.length = 8170)
+options(warnPartialMatchAttr = TRUE)
+options(warnPartialMatchDollar = TRUE)
+options(warning.length = 5000)
 options(width = 100)
+
+# disabled due to warnings arising from inside packages
+#options(warnPartialMatchArgs = TRUE)
+
+# parallelization defaults for package installation, etc.
+options(mc.cores = min(1, parallel::detectCores() - 4))
+options(Ncpus    = min(1, parallel::detectCores() - 4))
 
 # this may help speed up some plots over ssh (use per-connection)
 #X11.options(type = 'Xlib')

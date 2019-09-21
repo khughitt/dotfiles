@@ -22,6 +22,9 @@ set $term termite
 set $menu rofi -show drun
 set $greenclip rofi -modi "clipboard:greenclip print" -show clipboard -run-command '{cmd}'
 
+# rofi notes
+bindsym $mod+n exec termite -e "zsh -ci 'vim \`fd -t f md ~/d/notes | fzf --exact -1 \`'"
+
 # start dmenu
 #set $menu dmenu_run
 
@@ -32,18 +35,22 @@ set $greenclip rofi -modi "clipboard:greenclip print" -show clipboard -run-comma
 # wallpaper
 #exec_always feh --bg-scale ~/d/linux/backgrounds/02727_mossy_1920x1200.jpg 
 #exec_always feh --bg-scale ~/d/linux/backgrounds/Luetin_1920.jpg
-exec_always feh --bg-scale ~/d/linux/backgrounds/board_black_line_texture_background_wood_55220_1920x1080.jpg
+#exec_always feh --bg-scale ~/d/linux/backgrounds/board_black_line_texture_background_wood_55220_1920x1080.jpg
+exec --no-startup-id ~/d/linux/software/i3-wpd/i3wpd.py ~/d/linux/backgrounds/i3/ .png
 
 # font
 font pango:Droid Sans Mono 10
 
 # window borders
-for_window [class=".*"] border pixel 2
+# for_window [class=".*"] border pixel 2
+for_window [class=".*"] border pixel 0
 hide_edge_borders smart_no_gaps
 
 # gaps
 gaps inner 12
 smart_gaps on
+border_radius 10
+
 #gaps inner all set 20
 #gaps outer current plus 5
 
@@ -77,8 +84,7 @@ client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
 bindsym $mod+Return exec $term
 
 # file browser
-bindsym $mod+n exec termite -e ranger
-
+#bindsym $mod+n exec termite -e ranger
 
 # kill focused window
 bindsym $mod+q kill
@@ -128,97 +134,103 @@ bindsym $mod+Shift+Right move right
 #-------------------------------------------------------------------------------
 # Workspaces
 #-------------------------------------------------------------------------------
-set $exec_i3_groups exec --no-startup-id i3-workspace-groups
-
-# Switch active workspace group
-bindsym $mod+g exec --no-startup-id i3-switch-active-workspace-group
-
-# Move workspace to another group
-bindsym $mod+Shift+g exec --no-startup-id i3-assign-workspace-to-group
-bindsym $mod+1 $exec_i3_groups workspace-number 1
-bindsym $mod+2 $exec_i3_groups workspace-number 2
-bindsym $mod+3 $exec_i3_groups workspace-number 3
-bindsym $mod+4 $exec_i3_groups workspace-number 4
-bindsym $mod+5 $exec_i3_groups workspace-number 5
-bindsym $mod+6 $exec_i3_groups workspace-number 6
-bindsym $mod+7 $exec_i3_groups workspace-number 7
-bindsym $mod+8 $exec_i3_groups workspace-number 8
-bindsym $mod+9 $exec_i3_groups workspace-number 9
-bindsym $mod+0 $exec_i3_groups workspace-number 10
-
-bindsym $mod+Shift+1 $exec_i3_groups move-to-number 1
-bindsym $mod+Shift+2 $exec_i3_groups move-to-number 2
-bindsym $mod+Shift+3 $exec_i3_groups move-to-number 3
-bindsym $mod+Shift+4 $exec_i3_groups move-to-number 4
-bindsym $mod+Shift+5 $exec_i3_groups move-to-number 5
-bindsym $mod+Shift+6 $exec_i3_groups move-to-number 6
-bindsym $mod+Shift+7 $exec_i3_groups move-to-number 7
-bindsym $mod+Shift+8 $exec_i3_groups move-to-number 8
-bindsym $mod+Shift+9 $exec_i3_groups move-to-number 9
-bindsym $mod+Shift+0 $exec_i3_groups move-to-number 10
-
-# default workspace navigation
-bindsym $mod+Control+1 workspace number 1
-bindsym $mod+Control+2 workspace number 2
-bindsym $mod+Control+3 workspace number 3
-bindsym $mod+Control+4 workspace number 4
-bindsym $mod+Control+5 workspace number 5
-bindsym $mod+Control+6 workspace number 6
-bindsym $mod+Control+7 workspace number 7
-bindsym $mod+Control+8 workspace number 8
-bindsym $mod+Control+9 workspace number 9
-bindsym $mod+Control+0 workspace number 10
-
-# Switch to previous workspace in group.
-bindsym $mod+u $exec_i3_groups workspace-prev
-
-# Switch to next workspace in group.
-bindsym $mod+i $exec_i3_groups workspace-next
-
-# Move to previous workspace in group.
-bindsym $mod+Shift+p $exec_i3_groups move-to-prev
-
-# Move to next workspace in group.
-bindsym $mod+Shift+n $exec_i3_groups move-to-next
 
 # switch to workspace
-# bindsym $mod+1 workspace 1
-# bindsym $mod+2 workspace 2
-# bindsym $mod+3 workspace 3
-# bindsym $mod+4 workspace 4
-# bindsym $mod+5 workspace 5
-# bindsym $mod+6 workspace 6
-# bindsym $mod+7 workspace 7
-# bindsym $mod+8 workspace 8
-# bindsym $mod+9 workspace 9
-# bindsym $mod+0 workspace 10
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+5 workspace number 5
+bindsym $mod+6 workspace number 6
+bindsym $mod+7 workspace number 7
+bindsym $mod+8 workspace number 8
+bindsym $mod+9 workspace number 9
+bindsym $mod+0 workspace number 10
 
 # move focused container to workspace
-#bindsym $mod+Shift+1 move container to workspace 📖
-#bindsym $mod+Shift+2 move container to workspace #
-#bindsym $mod+Shift+3 move container to workspace 🌎
-#bindsym $mod+Shift+4 move container to workspace ♫
-# bindsym $mod+Shift+1 move container to workspace 1
-# bindsym $mod+Shift+2 move container to workspace 2
-# bindsym $mod+Shift+3 move container to workspace 3
-# bindsym $mod+Shift+4 move container to workspace 4
-# bindsym $mod+Shift+5 move container to workspace 5
-# bindsym $mod+Shift+6 move container to workspace 6
-# bindsym $mod+Shift+7 move container to workspace 7
-# bindsym $mod+Shift+8 move container to workspace 8
-# bindsym $mod+Shift+9 move container to workspace 9
-# bindsym $mod+Shift+0 move container to workspace 10
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+bindsym $mod+Shift+4 move container to workspace number 4
+bindsym $mod+Shift+5 move container to workspace number 5
+bindsym $mod+Shift+6 move container to workspace number 6
+bindsym $mod+Shift+7 move container to workspace number 7
+bindsym $mod+Shift+8 move container to workspace number 8
+bindsym $mod+Shift+9 move container to workspace number 9
+bindsym $mod+Shift+0 move container to workspace number 10
 
 # move workspace to different monitor
 bindsym $mod+m move workspace to output left
 
 # specify default monitors for first few workspaces
-workspace "1" output HDMI-0
-workspace "2" output HDMI-0
-workspace "3" output HDMI-0
-workspace "4" output DP-1
-workspace "5" output DP-1
-workspace "6" output DP-1
+workspace 1 output HDMI-0
+workspace 2 output HDMI-0
+workspace 3 output HDMI-0
+workspace 4 output HDMI-0
+workspace 5 output DP-1
+workspace 6 output DP-1
+workspace 7 output DP-1
+workspace 8 output DP-1
+
+# rename workspace
+#bindsym $mod+r exec i3-input -F 'Rename workspace to %s' -P 'New name: '
+bindsym $mod+r exec "python ~/bin/renameworkspace.py"
+
+#-------------------------------------------------------------------------------
+# Workspaces (i3-workspace-groups)
+#-------------------------------------------------------------------------------
+#set $exec_i3_groups exec --no-startup-id i3-workspace-groups
+
+# Switch active workspace group
+#bindsym $mod+g exec --no-startup-id i3-switch-active-workspace-group
+
+# Move workspace to another group
+# bindsym $mod+Shift+g exec --no-startup-id i3-assign-workspace-to-group
+# bindsym $mod+1 $exec_i3_groups workspace-number 1
+# bindsym $mod+2 $exec_i3_groups workspace-number 2
+# bindsym $mod+3 $exec_i3_groups workspace-number 3
+# bindsym $mod+4 $exec_i3_groups workspace-number 4
+# bindsym $mod+5 $exec_i3_groups workspace-number 5
+# bindsym $mod+6 $exec_i3_groups workspace-number 6
+# bindsym $mod+7 $exec_i3_groups workspace-number 7
+# bindsym $mod+8 $exec_i3_groups workspace-number 8
+# bindsym $mod+9 $exec_i3_groups workspace-number 9
+# bindsym $mod+0 $exec_i3_groups workspace-number 10
+#
+# bindsym $mod+Shift+1 $exec_i3_groups move-to-number 1
+# bindsym $mod+Shift+2 $exec_i3_groups move-to-number 2
+# bindsym $mod+Shift+3 $exec_i3_groups move-to-number 3
+# bindsym $mod+Shift+4 $exec_i3_groups move-to-number 4
+# bindsym $mod+Shift+5 $exec_i3_groups move-to-number 5
+# bindsym $mod+Shift+6 $exec_i3_groups move-to-number 6
+# bindsym $mod+Shift+7 $exec_i3_groups move-to-number 7
+# bindsym $mod+Shift+8 $exec_i3_groups move-to-number 8
+# bindsym $mod+Shift+9 $exec_i3_groups move-to-number 9
+# bindsym $mod+Shift+0 $exec_i3_groups move-to-number 10
+
+# default workspace navigation
+# bindsym $mod+Control+1 workspace number 1
+# bindsym $mod+Control+2 workspace number 2
+# bindsym $mod+Control+3 workspace number 3
+# bindsym $mod+Control+4 workspace number 4
+# bindsym $mod+Control+5 workspace number 5
+# bindsym $mod+Control+6 workspace number 6
+# bindsym $mod+Control+7 workspace number 7
+# bindsym $mod+Control+8 workspace number 8
+# bindsym $mod+Control+9 workspace number 9
+# bindsym $mod+Control+0 workspace number 10
+
+# Switch to previous workspace in group.
+# bindsym $mod+u $exec_i3_groups workspace-prev
+#
+# # Switch to next workspace in group.
+# bindsym $mod+i $exec_i3_groups workspace-next
+#
+# # Move to previous workspace in group.
+# bindsym $mod+Shift+p $exec_i3_groups move-to-prev
+#
+# # Move to next workspace in group.
+# bindsym $mod+Shift+n $exec_i3_groups move-to-next
 
 #-------------------------------------------------------------------------------
 # Layout
@@ -319,7 +331,7 @@ mode "resize" {
     bindsym Return mode "default"
     bindsym Escape mode "default"
 }
-bindsym $mod+r mode "resize"
+bindsym $mod+shift+r mode "resize"
 
 #
 # Status Bar:
@@ -329,9 +341,10 @@ bar {
     i3bar_command i3bar -t
     colors {
         statusline #e9e9f4
-        background #33333377
-        inactive_workspace #33333377 #33333377 #5c5c5c
-        focused_workspace  #33333377 #33333377 #f37055ff
+        background #222222
+        #background #33333377
+        inactive_workspace #333333ff #333333ff #5c5c5c
+        focused_workspace  #333333ff #333333ff #f37055ff
         #inactive_workspace #32323200 #32323200 #5c5c5c
         #focused_workspace  #ef4e7caa #ef4e7cff #000000ff
         #active_workspace #333333 #333333 #888888
@@ -342,8 +355,9 @@ bar {
 }
 
 # autostart
-exec_always --no-startup-id killall compton; compton
-exec --no-startup-id xrandr --output DP-1 --auto --left-of HDMI-0
+exec_always --no-startup-id killall compton; compton -c
 exec --no-startup-id /usr/lib/geoclue-2.0/demos/agent
+exec --no-startup-id xrandr --output DP-1 --auto --left-of HDMI-0
 exec --no-startup-id blackd
 exec --no-startup-id greenclip daemon
+
