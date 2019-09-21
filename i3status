@@ -20,9 +20,11 @@ order += "sysdata"
 order += "spotify"
 order += "dropboxd_status"
 order += "volume_status"
-order += "wifi"
 order += "pomodoro"
+order += "weather_owm"
 order += "tztime local"
+
+#order += "wifi"
 
 disk "/" {
         format = " %avail "
@@ -59,6 +61,15 @@ volume master {
     command = "pamixer"
 	mixer = "Master"
 	mixer_idx = 0
+}
+
+weather_owm {
+    api_key = fad894c7e52017632199b67e1875ce61 
+    location = (38.92, -77)
+    # icons = {
+    #     '200': "☔"
+    #     '230_232': "🌧"
+    # }
 }
 
 wifi {

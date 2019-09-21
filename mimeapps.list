@@ -9,3 +9,5 @@ application/xhtml+xml=chromium.desktop
 [Added Associations]
 x-scheme-handler/http=chromium.desktop
 x-scheme-handler/https=chromium.desktop
+text/comma-separated-values=visidata.desktop
+text/tab-separated-values=visidata.desktop

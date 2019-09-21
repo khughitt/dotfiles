@@ -42,9 +42,10 @@ if [ ! -e ${XDG_CONFIG_HOME}/gtk-3.0/ ]; then
     mkdir ${XDG_CONFIG_HOME}/gtk-3.0/
 fi
 ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
+ln -s ${PWD}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 
 # ~/.config/xx
-for path in "termcolors" "colorls" "mimeapps.list" "redshift.conf"  \
+for path in "termcolors" "cava" "colorls" "mimeapps.list" "redshift.conf"  \
             "labnote" "pylintrc" "ranger"; do
     ln_s ${PWD}/${path} ${XDG_CONFIG_HOME}/${path}
 done
@@ -81,23 +82,24 @@ ln -s mime ~/.local/share/mime/packages
 update-mime-database ~/.local/share/mime
 
 # Install oh-my-zsh
-if [ "$SH" == "zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" 
-
-    # install biozsh
-    git clone https://github.com/kloetzl/biozsh.git \
-        ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/biozsh 
-
-    # install zsh-nvm
-    git clone https://github.com/lukechilds/zsh-nvm.git \
-        ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-nvm 
-
-    # install git-auto-status
-    mkdir ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/git-auto-status
-    wget https://gist.githubusercontent.com/oshybystyi/475ee7768efc03727f21/raw/4bfd57ef277f5166f3070f11800548b95a501a19/git-auto-status.plugin.zsh \
-        -O ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/git-auto-status/git-auto-status.plugin.zsh
-
-fi
+# TODO: update to use zplugin..
+# if [ "$SH" == "zsh" ]; then
+#     sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+#
+#     # install biozsh
+#     git clone https://github.com/kloetzl/biozsh.git \
+#         ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/biozsh
+#
+#     # install zsh-nvm
+#     git clone https://github.com/lukechilds/zsh-nvm.git \
+#         ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-nvm
+#
+#     # install git-auto-status
+#     mkdir ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/git-auto-status
+#     wget https://gist.githubusercontent.com/oshybystyi/475ee7768efc03727f21/raw/4bfd57ef277f5166f3070f11800548b95a501a19/git-auto-status.plugin.zsh \
+#         -O ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/git-auto-status/git-auto-status.plugin.zsh
+#
+# fi
 
 # rvm
 while
