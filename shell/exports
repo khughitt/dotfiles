@@ -1,25 +1,3 @@
-# environmental variables
-export BROWSER=chromium
-export EDITOR=nvim
-export PATH=$HOME/bin:$PATH
-export XDG_CONFIG_HOME="$HOME/.config"
-
-if type "moar" > /dev/null; then
-  export PAGER=$(which moar)
-fi
-
-# java
-export JAVA_FONTS=/usr/share/fonts/TTF
-#export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Dsun.java2d.opengl=true'
-export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true'
-export _JAVA_AWT_WM_NONREPARENTING=1
-
-# let ncurces know where to find terminfo
-export TERMINFO=~/.terminfo
-
-# remap caps-lock in sway
-export XKB_DEFAULT_OPTIONS=caps:escape
-
 # Predictable SSH authentication socket location.
 # https://unix.stackexchange.com/a/76256/39903
 SOCK="/tmp/ssh-agent-keith-screen"
@@ -30,26 +8,3 @@ if test $SSH_AUTH_SOCK && [ $SSH_AUTH_SOCK != $SOCK ]; then
     export SSH_AUTH_SOCK=$SOCK
 fi
 
-# ibus
-#export GTK_IM_MODULE=ibus
-#export XMODIFIERS=@im=ibus
-#export QT_IM_MODULE=ibus
-
-# less page colors to use for man pages
-export LESS_TERMCAP_mb=$'\E[01;31m'       # begin blinking
-export LESS_TERMCAP_md=$'\E[01;38;5;74m'  # begin bold
-export LESS_TERMCAP_me=$'\E[0m'           # end mode
-export LESS_TERMCAP_se=$'\E[0m'           # end standout-mode
-export LESS_TERMCAP_so=$'\E[38;5;204m'    # begin standout-mode - info/highlight
-export LESS_TERMCAP_ue=$'\E[0m'           # end underline
-export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
-
-# non-conda python binaries (rtichoke, py3status, powerline)
-export PATH=$HOME/.local/bin:$PATH
-
-# rust (xsv)
-export PATH=$HOME/.cargo/bin:$PATH
-
-# CMFinder
-export PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin
-export CMfinder=$HOME/software/cmfinder-0.4.1.9

@@ -4,25 +4,11 @@
 # start profiling zshrc
 # zmodload zsh/zprof 
 
-# check to see if zprofile has been loaded yet
-#if [[ $ZSHRC_LOADED = true ]]; then
-#    return
-#fi
-
 # stop here in non-interactive mode
 [ -z "$PS1" ] && return
 
 # load zplugin
 source ~/.zplugin/bin/zplugin.zsh
-
-#export CASE_SENSITIVE="true"
-
-#for dump in ~/.zcompdump(N.mh+24); do
-#  compinit -u
-#done
-
-#compinit -C
-#autoload -U compinit && compinit
 
 # local settings (early)
 if [ -e ~/.zsh_local_early ]; then
@@ -43,9 +29,8 @@ function xumt() {
     fi
 }
 
-# automatically launch tmux when connecting via SSH
+# automatically launch / reconnect to  tmux when connecting via SSH
 if [[ "$TERM" != (screen|tmux)-* ]] && [ ! -z "$SSH_CLIENT" ]; then
-    # attempt to discover a detached session and attach it, else create a new session
     xumt $TMUX_SESSION
     exit
 fi
@@ -68,7 +53,9 @@ if $vconsole; then
     clear
 fi
 
+#
 # history
+# 
 [ -z "$HISTFILE" ] && HISTFILE="$HOME/.zsh_history"
 
 HISTSIZE=50000
@@ -82,23 +69,16 @@ setopt hist_verify            # show command with history expansion to user befo
 setopt inc_append_history     # add commands to HISTFILE as they are executed
 setopt share_history          # share command history data
 
-# disable auto correction
-unsetopt correct_all
-
-# extended globstring support
-setopt extended_glob
-
-# enter directories by name only
-setopt autocd
+# 
+# general
+#
+unsetopt correct_all          # disable auto correction
+setopt extended_glob          # extended globstring support
+setopt autocd                 # enter directories by name only
+setopt interactivecomments    # recognize comments
 
 # tab completion menu
 zstyle ':completion:*' menu select=4
-
-# lazy-load NVM
-export NVM_LAZY_LOAD=true
-
-# oh-my-zsh plugins
-#[ -z "$plugins" ] && plugins=(archlinux git git-auto-status sudo systemd web-search biozsh zsh-nvm)
 
 # snakemake tab completion support
 #compdef _gnu_generic snakemake
@@ -112,7 +92,6 @@ unset file
 # fasd
 export _FASD_SHELL='dash'
 
-#eval "$(fasd --init auto)"
 fasd_cache="$HOME/.fasd-init-zsh"
 if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
   fasd --init auto >| "$fasd_cache"
@@ -160,45 +139,6 @@ if [ -e ~/.zsh_local_late ]; then
    source ~/.zsh_local_late
 fi
 
-# map caps lock to <Esc>;
-# handled in .xmodmaprc
-#xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
-
-# marker;
-# key bindings conflicts with fzf; disabling for now
-#[[ -s "$HOME/.local/share/marker/marker.sh" ]] && source "$HOME/.local/share/marker/marker.sh"
-
-# pyspark
-#if type "pyspark" > /dev/null && [ ! -z "$CONDA_PREFIX" ]; then
-#    #export SPARK_HOME="/opt/apache-spark"
-#    #source ${SPARK_HOME}/conf/spark-env.sh 
-#    export PYSPARK_PYTHON=${CONDA_PYTHON_EXE}
-#    export PYSPARK_DRIVER_PYTHON=${CONDA_PREFIX}/bin/ipython
-#    source ${CONDA_PREFIX}/lib/python3.7/site-packages/pyspark/bin/load-spark-env.sh 
-
-#    # required for sparklyr local instances to work
-#    #unset SPARK_HOME
-#fi
-
-# torch
-#if [ -e ~/torch/install/bin/torch-activate ]; then
-#    source ~/torch/install/bin/torch-activate
-#fi
-
-# unset lscolors (lsd handles)
-#unset LSCOLORS
-#unset LS_COLORS
-
-# lscolors
-#. /usr/share/LS_COLORS/dircolors.sh
-#
-# rvm
-export PATH="$PATH:$HOME/.rvm/bin"
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
-
-# hide ruby version from ps1
-function ruby_prompt_info() { echo '' }
-
 # enable vi-mode
 bindkey '^P' up-history
 bindkey '^N' down-history
@@ -221,7 +161,7 @@ bindkey "^[^?" backward-kill-word
 #bindkey '^[[Z' reverse-menu-complete
 
 #
-# oh-my-zsh plugins
+# zplugin
 #
 
 # nvm
@@ -230,21 +170,16 @@ zplugin light lukechilds/zsh-nvm
 zplugin snippet OMZ::lib/completion.zsh
 zplugin snippet OMZ::lib/directories.zsh
 zplugin snippet OMZ::lib/git.zsh
-zplugin snippet OMZ::lib/grep.zsh
-zplugin snippet OMZ::lib/spectrum.zsh
-zplugin snippet OMZ::lib/directories.zsh
-zplugin snippet OMZ::plugins/archlinux/archlinux.plugin.zsh
 zplugin snippet OMZ::plugins/git/git.plugin.zsh
-zplugin snippet OMZ::plugins/rvm/rvm.plugin.zsh
-zplugin snippet OMZ::plugins/sudo/sudo.plugin.zsh
 zplugin snippet OMZ::plugins/systemd/systemd.plugin.zsh
 
+# vi mode improvement
 #zplugin snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
 
 # emacs mode improvements
 zplugin snippet OMZ::lib/key-bindings.zsh
 
-# theme
+# prompt
 zplugin ice pick"async.zsh" src"pure.zsh"; zplugin light sindresorhus/pure
 
 # zsh autosuggestions
@@ -255,13 +190,13 @@ zplugin ice pick"async.zsh" src"pure.zsh"; zplugin light sindresorhus/pure
 # zplugin load trapd00r/LS_COLORS
 
 # syntax highlighting
-zplugin light zdharma/fast-syntax-highlighting
+zplugin light "zdharma/fast-syntax-highlighting"
 
 # alias reminders
 zplugin light "djui/alias-tips"
 
 # cntl-z -> fg
-zplugin light mdumitru/fancy-ctrl-z
+zplugin light "mdumitru/fancy-ctrl-z"
 
 # completions
 if is-at-least 5.3; then
@@ -269,21 +204,27 @@ if is-at-least 5.3; then
 else
   zplugin ice blockf
 fi
-zplugin light zsh-users/zsh-completions
+zplugin light "zsh-users/zsh-completions"
 
 # fzf-marks
 zplugin light "urbainvaes/fzf-marks"
 
 # fzf
 export FZF_DEFAULT_COMMAND="fd --type file --color=never"
-
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+if [[ ! "$DISABLE_FZF_AUTO_COMPLETION" == "true" ]]; then
+    [[ $- == *i* ]] && source "~/.fzf/shell/completion.zsh" 2> /dev/null
+fi
 
 # greenclip
 fzf-clipboard() { echo -n "$(greenclip print | fzf -e -i)" | xclip -selection clipboard ;}
 cfg-greenclip() { killall greenclip ; $EDITOR ~/.config/greenclip.cfg && nohup greenclip daemon > /dev/null 2>&1 & }
 rld-greenclip() { killall greenclip ; nohup greenclip daemon > /dev/null 2>&1 & }
 derez-greenclip() { killall greenclip ; rm ~/.cache/greenclip.history && nohup greenclip daemon > /dev/null 2>&1 & }
+
+# kitty completion
+#kitty + complete setup zsh | source /dev/stdin
 
 # location of additional zsh completions
 fpath+=$HOME/d/dotfiles/zsh/
@@ -298,4 +239,3 @@ if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
-ZSHRC_LOADED='true'

@@ -4,6 +4,8 @@
 #
 ################################################################################
 
+alias _='sudo'
+
 # ls
 if type "lsd" > /dev/null; then
     alias ls='lsd --group-dirs=first'
@@ -27,8 +29,10 @@ alias feh='feh --scale-down'
 
 alias m=tldr
 
-# fzf notes
+# fzf
 alias n="vim \`fd -t f md ~/d/notes | fzf -1 --exact\`"
+alias jk="cd \`fasd -d -l -r | fzf -1 --exact\`"
+alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
 
 # config files
 alias vn='vim ~/.config/nvim/init.vim'
