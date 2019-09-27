@@ -1,13 +1,23 @@
 [Default Applications]
 image/jpeg=feh.desktop
 image/png=feh.desktop
-text/plain=leafpad.desktop
-application/wps-office.docx=libreoffice-writer.desktop
-application/pdf=org.pwmt.zathura-pdf-mupdf.desktop
-application/xhtml+xml=chromium.desktop
-
-[Added Associations]
+text/plain=nvim.desktop
+text/html=chromium.desktop
 x-scheme-handler/http=chromium.desktop
 x-scheme-handler/https=chromium.desktop
+x-scheme-handler/about=chromium.desktop
+x-scheme-handler/unknown=chromium.desktop
+
+[Added Associations]
+image/jpeg=gimp.desktop;feh.desktop;
+image/png=gimp.desktop;feh.desktop;
+text/plain=leafpad.desktop;
+audio/mpeg=easytag.desktop;vlc.desktop;
+application/xhtml+xml=chromium-usercreated-1.desktop;
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet=libreoffice-calc.desktop;
+application/vnd.openxmlformats-officedocument.presentationml.presentation=libreoffice-impress.desktop;
+application/vnd.openxmlformats-officedocument.wordprocessingml.document=libreoffice-writer.desktop;
+text/csv=libreoffice-calc.desktop;
+application/pdf=org.pwmt.zathura-pdf-poppler.desktop;
 text/comma-separated-values=visidata.desktop
 text/tab-separated-values=visidata.desktop

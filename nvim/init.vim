@@ -61,7 +61,6 @@ call plug#begin()
     Plug 'andymass/vim-matchup'
     Plug 'bfredl/nvim-ipy'
     Plug 'Alok/notational-fzf-vim'
-    Plug 'bioSyntax/bioSyntax-vim'
     Plug 'chrisbra/csv.vim'
     Plug 'ervandew/supertab'
     Plug 'godlygeek/tabular'
@@ -84,7 +83,6 @@ call plug#begin()
     Plug 'mrk21/yaml-vim'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
-    Plug 'nightsense/night-and-day'
     "Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
     Plug 'psf/black'
     Plug 'qpkorr/vim-bufkill'
@@ -104,13 +102,16 @@ call plug#begin()
     Plug 'vim-syntastic/syntastic'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
-    Plug 'xolox/vim-misc'
     Plug 'xolox/vim-colorscheme-switcher'
+    Plug 'xolox/vim-misc'
+    Plug 'gcavallanti/vim-noscrollbar'
     Plug '/usr/share/vim/vimfiles'
+    " Plug 'vim-pandoc/vim-pandoc'
+    " Plug 'vim-pandoc/vim-pandoc-syntax'
 
     Plug 'glts/vim-textobj-comment'
     Plug 'kana/vim-textobj-user'
-    Plug 'machakann/vim-textobj-delimited'
+    Plug 'tyru/vim-textobj-underscore', { 'branch': 'support-3-cases' }
     Plug 'vim-scripts/argtextobj.vim'
     Plug 'vimtaku/vim-textobj-keyvalue'
 
@@ -128,13 +129,13 @@ call plug#begin()
     Plug 'fcpg/vim-orbital'
     Plug 'fenetikm/falcon'
     Plug 'fmoralesc/molokayo'
-    Plug 'gcavallanti/vim-noscrollbar'
     Plug 'jacoborus/tender.vim'
     Plug 'joshdick/onedark.vim'
     Plug 'liuchengxu/space-vim-dark'
     Plug 'lu-ren/SerialExperimentsLain'
     Plug 'NLKNguyen/papercolor-theme'
     Plug 'reedes/vim-colors-pencil'
+    Plug 'Rigellute/rigel'
     Plug 'sheerun/vim-wombat-scheme'
     Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'tyrannicaltoucan/vim-deep-space'
@@ -145,6 +146,7 @@ call plug#begin()
     Plug 'yuttie/hydrangea-vim'
     Plug 'zanloy/vim-colors-grb256'
 
+    "Plug 'bioSyntax/bioSyntax-vim'
     "Plug 'chriskempson/base16-vim'
     "Plug 'vim-airline/vim-airline'
     "Plug 'severin-lemaignan/vim-minimap'
@@ -162,6 +164,9 @@ call plug#begin()
     "
     " overrides filetype tabstop, etc. options
     "Plug 'editorconfig/editorconfig-vim'
+    
+    " conflicts with lightline-bufferline
+    "Plug 'nightsense/night-and-day'
 
     
     " devicons should always be loaded last
@@ -298,6 +303,8 @@ set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50
             \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
             \,sm:block-blinkwait175-blinkoff150-blinkon175
 
+let $NVIM_TUI_ENABLE_CURSOR_SHAPE = 1
+
 " Easier switching to normal mode
 inoremap jk <Esc>
 
@@ -351,8 +358,8 @@ let g:quantum_italics=1
 "colorscheme sweyla708971
 "colorscheme gotham
 "colorscheme SerialExperimentsLain
-"colorscheme dracula
-" colorscheme quantum
+colorscheme dracula
+"colorscheme quantum
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
@@ -1023,6 +1030,14 @@ let g:tagbar_type_r = {
 " ---------------------------------------------------------------------------
 vmap v <Plug>(expand_region_expand)
 vmap <C-v> <Plug>(expand_region_shrink)
+
+" ---------------------------------------------------------------------------
+"  vim-textobj-underscore 
+" ---------------------------------------------------------------------------
+nmap cid ci_
+nmap cad ca_
+nmap did di_
+nmap dad da_
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options

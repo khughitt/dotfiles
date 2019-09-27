@@ -16,7 +16,6 @@ general {
 
 
 #order += "disk /"
-order += "sysdata"
 order += "spotify"
 order += "dropboxd_status"
 order += "volume_status"
@@ -47,12 +46,8 @@ spotify {
     format_down = " no Spotify "
 }
 
-sysdata {
-    format = "mem: {mem_used}G ({mem_used_percent}%) load: {load1} "
-}
-
 tztime local {
-        format = " %Y-%m-%d %H:%M:%S "
+        format = " %Y-%m-%d %H:%M %P"
 }
 
 volume master {
@@ -66,10 +61,9 @@ volume master {
 weather_owm {
     api_key = fad894c7e52017632199b67e1875ce61 
     location = (38.92, -77)
-    # icons = {
-    #     '200': "☔"
-    #     '230_232': "🌧"
-    # }
+    format = "{city} {icon} {temperature}[ {rain}], {description}"
+    format_temperature = "{icon} [\?color=all {current:.0f}°{unit}] ([\?color=all {max:.0f}°{unit}])"
+    on_click 1 = "exec chromium https://www.wunderground.com/weather/us/dc/washington/KDCWASHI300"
 }
 
 wifi {

@@ -1,7 +1,5 @@
 [Desktop Entry]
 Version=1.0
-Encoding=UTF-8
-Type=Application
-Name=chromium
-NoDisplay=true
-Exec=chromium
+Name=Chromium
+GenericName=Web Browser
+Exec=/usr/bin/chromium

@@ -287,26 +287,31 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 exec_always --no-startup-id termite --name=termite_scratch -t termite_scratch
 for_window[instance="termite_scratch"] move scratchpad
 
+set $scratch_width 1536
+set $scratch_height 864
+set $scratch_x1 2112
+set $scratch_y1 108
+
 bindsym Mod1+Return \
     [instance="python_scratch|r_scratch"] move scratchpad; \
-    [instance="termite_scratch"] scratchpad show, resize set 1200 800; \
-    move position 2280px 140px;
+    [instance="termite_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1;
 
-exec_always --no-startup-id termite -e radian --name=r_scratch -t r_scratch
+exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch -t r_scratch
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
     [instance="python_scratch|termite_scratch"] move scratchpad; \
-    [instance="r_scratch"] scratchpad show, resize set 1200 800; \
-    move position 2280px 140px
+    [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
 
 exec_always --no-startup-id termite -e ipython --name=python_scratch -t python_scratch
 for_window[instance="python_scratch"] move scratchpad
 
 bindsym Mod1+j \
     [instance="r_scratch|termite_scratch"] move scratchpad; \
-    [instance="python_scratch"] scratchpad show, resize set 1200 800; \
-    move position 2280px 140px
+    [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
 
 #
 # Resizing containers:
@@ -337,6 +342,24 @@ bindsym $mod+shift+r mode "resize"
 # Status Bar:
 #
 bar {
+    output HDMI-0
+    output eDP1
+    strip_workspace_numbers yes
+    i3bar_command i3bar -t
+    colors {
+        statusline #e9e9f4
+        background #222222
+        inactive_workspace #333333ff #333333ff #5c5c5c
+        focused_workspace  #333333ff #333333ff #f37055ff
+    }
+    status_command py3status --config ~/.config/i3status/config.right
+}
+
+#
+# Status Bar:
+#
+bar {
+    output DP-1
     strip_workspace_numbers yes
     i3bar_command i3bar -t
     colors {
@@ -350,8 +373,7 @@ bar {
         #active_workspace #333333 #333333 #888888
         #urgent_workspace #eb709b #eb709b #ffffff
     }
-    status_command py3status 
-    #status_command i3status 
+    status_command py3status --config ~/.config/i3status/config.left
 }
 
 # autostart

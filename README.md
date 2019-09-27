@@ -4,11 +4,31 @@ Keith's dotfiles
 Current setup
 -------------
 
- * [Arch Linux](https://www.archlinux.org/)
- * [i3](https://i3wm.org/)
- * [Z shell](http://www.zsh.org/)
- * [termite](https://github.com/thestinger/termite)
- * [rofi](https://github.com/davatorium/rofi)
+* [Arch Linux](https://www.archlinux.org/)
+* [i3](https://i3wm.org/)
+* [ZSH](http://www.zsh.org/)
+* [termite](https://github.com/thestinger/termite)
+* [rofi](https://github.com/davatorium/rofi)
+
+Tools
+ ----
+
+* [Neovim](https://neovim.io/)
+* compton 
+* conda
+* ag
+* fasd
+* fd
+* feh
+* lsd
+* radian 
+* ranger
+* redshift
+* py3status
+* tmux
+* visidata
+* zathura
+* zplugin
 
 Installation
 ------------
