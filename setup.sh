@@ -39,7 +39,7 @@ ln -s ${PWD}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 ln -s ${PWD}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 
 # ~/.config/xx
-for path in "termcolors" "cava" "colorls" "mimeapps.list" "redshift.conf"  \
+for path in "termcolors" "cava" "mimeapps.list" "redshift.conf"  \
             "labnote" "pylintrc" "ranger"; do
     ln_s ${PWD}/${path} ${XDG_CONFIG_HOME}/${path}
 done
@@ -59,8 +59,10 @@ done
 
 # i3, i3status
 ln_s ${PWD}/i3/config ${XDG_CONFIG_HOME}/i3/config
-ln_s ${PWD}/i3/i3status_left ${XDG_CONFIG_HOME}/i3status/config.left
-ln_s ${PWD}/i3/i3status_right ${XDG_CONFIG_HOME}/i3status/config.right
+ln_s ${PWD}/i3/i3status.left ${XDG_CONFIG_HOME}/i3status/config.left
+ln_s ${PWD}/i3/i3status.right ${XDG_CONFIG_HOME}/i3status/config.right
+
+mkdir -p ~/.cache/i3
 
 # compton
 ln -s ${PWD}/compton.conf ${XDG_CONFIG_HOME}/compton/compton.conf
@@ -77,7 +79,7 @@ mkdir -p ~/.vim/tmp/yankring
 
 # Mimetypes
 mkdir -p ~/.local/share/mime
-ln -s mime ~/.local/share/mime/packages
+ln -s ${PWD}/mime ~/.local/share/mime/packages
 update-mime-database ~/.local/share/mime
 
 ln_s ${PWD}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
