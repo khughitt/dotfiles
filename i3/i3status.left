@@ -1,0 +1,39 @@
+#
+# i3status config
+# kh nov.2018
+# 
+# adapted from https://gist.github.com/rafi/6063132
+#
+
+# dracula colorscheme
+general {
+    colors = true
+    color_good = "#09b399"
+    color_degraded = "#f37055"
+    color_bad = "#a067ab"
+    interval = 5
+}
+
+
+#order += "disk /"
+order += "sysdata"
+order += "lm_sensors"
+order += "tztime local"
+
+disk "/" {
+        format = " %avail "
+}
+
+sysdata {
+    format = "mem: {mem_used}G ({mem_used_percent}%) load: {load1} "
+}
+
+lm_sensors {
+    chips = ['nct6779-isa-0290']
+    sensors = ['CPU MB']
+}
+
+tztime local {
+        format = " %Y-%m-%d %H:%M %P"
+}
+
