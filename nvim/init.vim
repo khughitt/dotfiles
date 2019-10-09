@@ -100,6 +100,7 @@ call plug#begin()
     Plug 'tpope/vim-surround'
     Plug 'terryma/vim-expand-region'
     Plug 'vim-syntastic/syntastic'
+    Plug 'vimwiki/vimwiki'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
@@ -358,7 +359,8 @@ let g:quantum_italics=1
 "colorscheme sweyla708971
 "colorscheme gotham
 "colorscheme SerialExperimentsLain
-colorscheme dracula
+"colorscheme dracula
+colorscheme minimalist
 "colorscheme quantum
 
 " terminal color scheme
@@ -1038,6 +1040,16 @@ nmap cid ci_
 nmap cad ca_
 nmap did di_
 nmap dad da_
+
+" ---------------------------------------------------------------------------
+"  VimWiki
+" ---------------------------------------------------------------------------
+let g:vimwiki_list = [{'path': '~/d/notes/',
+                      \ 'syntax': 'markdown', 
+                      \ 'ext': '.md'}]
+
+" only set filetype to vimwiki for files in specified vimwiki path
+let g:vimwiki_global_ext = 0
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options

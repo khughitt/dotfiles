@@ -1,6 +1,6 @@
 # update PATH
 typeset -U PATH path
-export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH
+export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.gem/ruby/2.6.0/bin:$PATH
 
 # environmental variables
 export BROWSER=chromium
