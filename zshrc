@@ -80,6 +80,9 @@ setopt interactivecomments    # recognize comments
 # tab completion menu
 zstyle ':completion:*' menu select=4
 
+# use smart-case completion
+zstyle ':completion:*' matcher-list 'l:|=* r:|=*' 
+
 # snakemake tab completion support
 #compdef _gnu_generic snakemake
 
