@@ -5,12 +5,12 @@
 # adapted from https://gist.github.com/rafi/6063132
 #
 
-# dracula colorscheme
+# onedark
 general {
     colors = true
-    color_good = "#09b399"
-    color_degraded = "#f37055"
-    color_bad = "#a067ab"
+    color_good = "#61afef"
+    color_degraded = "#56b6c2"
+    color_bad = "#56b6c2"
     interval = 5
 }
 
@@ -35,7 +35,7 @@ disk "/" {
 
 pomodoro {
     format = "{mmss}"
-    color_bad = "#09b399"
+    color_bad = "#56b6c2"
 }
 
 spotify {
