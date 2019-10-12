@@ -36,7 +36,8 @@ bindsym $mod+n exec termite -e "zsh -ci 'vim \`fd -t f md ~/d/notes | fzf --exac
 #exec_always feh --bg-scale ~/d/linux/backgrounds/02727_mossy_1920x1200.jpg 
 #exec_always feh --bg-scale ~/d/linux/backgrounds/Luetin_1920.jpg
 #exec_always feh --bg-scale ~/d/linux/backgrounds/board_black_line_texture_background_wood_55220_1920x1080.jpg
-exec --no-startup-id ~/d/linux/software/i3-wpd/i3wpd.py ~/d/linux/backgrounds/i3/ .png
+#exec --no-startup-id ~/d/linux/software/i3-wpd/i3wpd.py ~/d/linux/backgrounds/i3/ .png
+exec_always feh --bg-scale ~/d/linux/backgrounds/02786_lakefornight_1920x1200.jpg 
 
 # font
 font pango:Droid Sans Mono 10
@@ -62,7 +63,12 @@ border_radius 10
 
 # colors [themer]
 # class                 border    backgr.   text      indicator child_border
-client.focused          #a067abff #f37055ff #23292dff #1299adff #a067abff
+# client.focused          #a067abff #f37055ff #23292dff #1299adff #a067abff
+# client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
+
+# colors [onedark]
+# class                   border  backgr. text    indic.   child_border
+client.focused          #a067abff #61afefff #23292dff #56b6c2ff #a067abff
 client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
 
 #-------------------------------------------------------------------------------
@@ -348,9 +354,9 @@ bar {
     i3bar_command i3bar -t
     colors {
         statusline #e9e9f4
-        background #222222
-        inactive_workspace #333333ff #333333ff #5c5c5c
-        focused_workspace  #333333ff #333333ff #f37055ff
+        background #282c34
+        inactive_workspace #282c34ff #282c34ff #abb2bf
+        focused_workspace  #282c34ff #282c34ff #e5c07b
     }
     status_command py3status --config ~/.config/i3status/i3status.right
 }
@@ -364,7 +370,7 @@ bar {
     i3bar_command i3bar -t
     colors {
         statusline #e9e9f4
-        background #222222
+        background #282c34
         #background #33333377
         inactive_workspace #333333ff #333333ff #5c5c5c
         focused_workspace  #333333ff #333333ff #f37055ff

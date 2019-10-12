@@ -6,11 +6,20 @@
 #
 
 # dracula colorscheme
+# general {
+#     colors = true
+#     color_good = "#09b399"
+#     color_degraded = "#f37055"
+#     color_bad = "#a067ab"
+#     interval = 5
+# }
+
+# onedark
 general {
     colors = true
-    color_good = "#09b399"
-    color_degraded = "#f37055"
-    color_bad = "#a067ab"
+    color_good = "#61afef"
+    color_degraded = "#56b6c2"
+    color_bad = "#56b6c2"
     interval = 5
 }
 

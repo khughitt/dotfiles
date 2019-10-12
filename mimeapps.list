@@ -21,3 +21,4 @@ text/csv=libreoffice-calc.desktop;
 application/pdf=org.pwmt.zathura-pdf-poppler.desktop;
 text/comma-separated-values=visidata.desktop
 text/tab-separated-values=visidata.desktop
+text/x-troff-mm=freeplane.desktop;

@@ -57,7 +57,7 @@ noremap  <C-e> <End>
 " ---------------------------------------------------------------------------
 call plug#begin()
     " plugins
-    Plug 'airblade/vim-gitgutter'
+    " Plug 'airblade/vim-gitgutter'
     Plug 'andymass/vim-matchup'
     Plug 'bfredl/nvim-ipy'
     Plug 'Alok/notational-fzf-vim'
@@ -83,7 +83,7 @@ call plug#begin()
     Plug 'mrk21/yaml-vim'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
-    "Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
+    " Plug 'plasticboy/vim-markdown'
     Plug 'psf/black'
     Plug 'qpkorr/vim-bufkill'
     Plug 'raimon49/requirements.txt.vim'
@@ -100,15 +100,13 @@ call plug#begin()
     Plug 'tpope/vim-surround'
     Plug 'terryma/vim-expand-region'
     Plug 'vim-syntastic/syntastic'
-    Plug 'vimwiki/vimwiki'
+    " Plug 'vimwiki/vimwiki'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
     Plug 'gcavallanti/vim-noscrollbar'
     Plug '/usr/share/vim/vimfiles'
-    " Plug 'vim-pandoc/vim-pandoc'
-    " Plug 'vim-pandoc/vim-pandoc-syntax'
 
     Plug 'glts/vim-textobj-comment'
     Plug 'kana/vim-textobj-user'
@@ -169,6 +167,9 @@ call plug#begin()
     " conflicts with lightline-bufferline
     "Plug 'nightsense/night-and-day'
 
+    " Requires +conceal feature not compiled in Arch
+    " Plug 'vim-pandoc/vim-pandoc'
+    " Plug 'vim-pandoc/vim-pandoc-syntax'
     
     " devicons should always be loaded last
     Plug 'ryanoasis/vim-devicons'
@@ -296,6 +297,33 @@ au BufReadPost *
     \   exe "normal! g`\"" |
     \ endif
 
+" Save current view settings on a per-window, per-buffer basis.
+function! AutoSaveWinView()
+    if !exists("w:SavedBufView")
+        let w:SavedBufView = {}
+    endif
+    let w:SavedBufView[bufnr("%")] = winsaveview()
+endfunction
+
+" Restore current view settings.
+function! AutoRestoreWinView()
+    let buf = bufnr("%")
+    if exists("w:SavedBufView") && has_key(w:SavedBufView, buf)
+        let v = winsaveview()
+        let atStartOfFile = v.lnum == 1 && v.col == 0
+        if atStartOfFile && !&diff
+            call winrestview(w:SavedBufView[buf])
+        endif
+        unlet w:SavedBufView[buf]
+    endif
+endfunction
+
+" When switching buffers, preserve window view.
+if v:version >= 700
+    autocmd BufLeave * call AutoSaveWinView()
+    autocmd BufEnter * call AutoRestoreWinView()
+endif
+
 " Remember info about open buffers on close
 set viminfo^=%
 
@@ -360,8 +388,10 @@ let g:quantum_italics=1
 "colorscheme gotham
 "colorscheme SerialExperimentsLain
 "colorscheme dracula
-colorscheme minimalist
+"colorscheme minimalist
 "colorscheme quantum
+colorscheme citylights
+colorscheme onedark
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
@@ -498,7 +528,7 @@ au TermOpen * setlocal nonumber norelativenumber
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
-let g:airline_theme = 'tender'
+let g:airline_theme = 'airline'
 
 " ---------------------------------------------------------------------------
 "  black
@@ -744,12 +774,12 @@ let g:vim_markdown_toc_autofit = 1
 let g:vim_markdown_strikethrough = 1
 let g:vim_markdown_math = 1
 
-au BufNewFile,BufRead *.md set filetype=markdown nofoldenable
+" au BufNewFile,BufRead *.md set filetype=markdown nofoldenable
 au BufNewFile,BufRead *.md set conceallevel=2
 
 " replace tagbar binding
-au FileType markdown nmap <F9> :Toc<CR>
-au FileType markdown imap <F9> :Toc<CR>
+" au FileType markdown nmap <F9> :Toc<CR>
+" au FileType markdown imap <F9> :Toc<CR>
 
 " override default conceal colors
 syntax match Normal /\*/ conceal cchar=∗
@@ -863,7 +893,7 @@ cmap <C-r> :History:<CR>
 " ---------------------------------------------------------------------------
 "  lightline
 " ---------------------------------------------------------------------------
-let g:lightline = { 'colorscheme': 'dracula' }
+let g:lightline = { 'colorscheme': 'onedark' }
 let g:lightline.tabline          = {'left': [['buffers']], 'right': [['close']]}
 let g:lightline.component_function = { 'percent': 'NoScrollbarForLightline' }
 let g:lightline.component_expand = {'buffers': 'lightline#bufferline#buffers'}
@@ -943,13 +973,15 @@ let g:Rout_continue_str = '... '
 " press enter and space bar to send lines and selection to R
 vmap <Space> <Plug>RDSendSelection
 nmap <Space> <Plug>RDSendLine
-
-" au BufNewFile,BufRead *.Rmd,*.R vmap <CR> <Plug>RDSendSelection
-" au BufNewFile,BufRead *.Rmd,*.R nmap <CR> <Plug>RDSendLine
 vmap <CR> <Plug>RDSendSelection
 nmap <CR> <Plug>RDSendLine
+" autocmd FileType rmd    vmap <buffer> <Space> <Plug>RDSendSelection
+" autocmd FileType rmd    nmap <buffer> <Space> <Plug>RDSendLine
+" autocmd FileType rmd    vmap <buffer> <CR> <Plug>RDSendSelection
+" autocmd FileType rmd    nmap <buffer> <CR> <Plug>RDSendLine
 
-nmap <C-Space> ,rp
+" nmap <C-Space> ,rp
+autocmd FileType r,rmd    nmap <buffer> <C-Space> ,rp
 
 " autostart term
 " au FileType r   if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
@@ -1050,6 +1082,17 @@ let g:vimwiki_list = [{'path': '~/d/notes/',
 
 " only set filetype to vimwiki for files in specified vimwiki path
 let g:vimwiki_global_ext = 0
+
+" tagbar integration
+let g:tagbar_type_vimwiki = {
+          \   'ctagstype':'vimwiki'
+          \ , 'kinds':['h:header']
+          \ , 'sro':'&&&'
+          \ , 'kind2scope':{'h':'header'}
+          \ , 'sort':0
+          \ , 'ctagsbin':'~/bin/vwtags.py'
+          \ , 'ctagsargs': 'markdown'
+          \ }
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options

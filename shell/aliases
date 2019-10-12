@@ -58,7 +58,9 @@ alias pcd='yay -Syu --devel'
 alias cs='conda search'
 
 # process management
-alias pg='ps -Af | grep $1 | grep -v grep'
+function pg {
+    ps -Af | grep $1 | grep -v grep
+}
 
 # diff
 alias diff='diff --color=auto'
