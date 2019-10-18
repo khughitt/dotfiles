@@ -26,13 +26,13 @@ options(showWarnCalls = TRUE)
 options(showNCalls = 100)
 options(try.all.packages  = TRUE)
 options(warning.length = 8170)
-options(warnPartialMatchAttr = TRUE)
-options(warnPartialMatchDollar = TRUE)
 options(warning.length = 5000)
 options(width = 100)
 
 # disabled due to warnings arising from inside packages
 #options(warnPartialMatchArgs = TRUE)
+#options(warnPartialMatchAttr = TRUE)
+#options(warnPartialMatchDollar = TRUE)
 
 # parallelization defaults for package installation, etc.
 options(mc.cores = min(1, parallel::detectCores() - 4))

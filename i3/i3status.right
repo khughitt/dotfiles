@@ -10,7 +10,7 @@ general {
     colors = true
     color_good = "#61afef"
     color_degraded = "#56b6c2"
-    color_bad = "#56b6c2"
+    color_bad = "#e06c75"
     interval = 5
 }
 
@@ -19,6 +19,7 @@ general {
 order += "spotify"
 order += "dropboxd_status"
 order += "volume_status"
+order += "sysdata"
 order += "pomodoro"
 order += "weather_owm"
 order += "tztime local"
@@ -44,6 +45,15 @@ spotify {
     button_previous = 5
     format = " {title} by {artist} -> {time} "
     format_down = " no Spotify "
+    color_playing = "#56b6c2"
+    color_paused = "#3c909b"
+    color_offline = "#abb2bf"
+}
+
+sysdata {
+    cpus = ['cpu'] 
+    format = "[\?color=cpu_used_percent CPU: {cpu_used_percent}%] | ‘ ‘[\?color=mem_used_percent Mem: {mem_used} / {mem_total} ‘ ‘{mem_total_unit} ({mem_used_percent}%)]"
+    # format = "mem: {mem_used}G ({mem_used_percent}%) load: {load1} "
 }
 
 tztime local {
@@ -56,6 +66,8 @@ volume master {
     command = "pamixer"
 	mixer = "Master"
 	mixer_idx = 0
+    color_good = "#56b6c2"
+    color_degraded = "#3c909b"
 }
 
 weather_owm {
