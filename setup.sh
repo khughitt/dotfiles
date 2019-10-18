@@ -52,6 +52,10 @@ for path in "agignore" "ansiweatherrc" "ctags" "dir_colors" "gitconfig" \
     ln_s ${PWD}/${path} ~/.${path}
 done
 
+# julia
+mkdir -p ${HOME}/.julia/config
+ln_s ${PWD}/$julia/startup.jl ${HOME}/.julia/config/startup.jl
+
 # ~/.config/xx/config
 for path in "sway" "rofi" "termite"; do
     ln_s ${PWD}/${path} ${XDG_CONFIG_HOME}/${path}/config

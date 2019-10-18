@@ -69,6 +69,7 @@ call plug#begin()
     Plug 'honza/vim-snippets'
     Plug 'itchyny/lightline.vim'
     Plug 'jalvesaq/Nvim-R'
+    Plug 'JuliaEditorSupport/julia-vim'
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
     Plug 'junegunn/fzf.vim'
     Plug 'kshenoy/vim-signature'
@@ -124,15 +125,18 @@ call plug#begin()
     Plug 'davidklsn/vim-sialoquent'
     Plug 'dikiaap/minimalist'
     Plug 'dracula/vim', { 'as': 'dracula' }
+    Plug 'drewtempelmeyer/palenight.vim'
     Plug 'Dru89/vim-adventurous'
     Plug 'fcpg/vim-orbital'
     Plug 'fenetikm/falcon'
     Plug 'fmoralesc/molokayo'
     Plug 'jacoborus/tender.vim'
     Plug 'joshdick/onedark.vim'
+    Plug 'KeitaNakamura/neodark.vim'
     Plug 'liuchengxu/space-vim-dark'
     Plug 'lu-ren/SerialExperimentsLain'
     Plug 'NLKNguyen/papercolor-theme'
+    Plug 'rakr/vim-one'
     Plug 'reedes/vim-colors-pencil'
     Plug 'Rigellute/rigel'
     Plug 'sheerun/vim-wombat-scheme'
@@ -249,6 +253,9 @@ function! ToggleTextWidth()
     set textwidth=99
   endif
 endfunction
+
+" shortcut to insert a space in normal mode
+nnoremap ss i<space><esc>
 
 " ----------------------------------------------------------------------------
 " Moving around, tabs, windows and buffers
@@ -376,9 +383,10 @@ if has("gui_running")
     map! <S-Insert> <MiddleMouse>
 endif
 
-" colorscheme
+" colorscheme settings
 let g:quantum_black=1
 let g:quantum_italics=1
+let g:onedark_terminal_italics=1
 
 " set background=dark
 "colorscheme hemisu
@@ -686,9 +694,12 @@ let g:indent_guides_guide_size  = 1
 " au VimEnter,Colorscheme * :hi IndentGuidesEven guibg=darkgrey ctermbg=darkgrey
 
 " ---------------------------------------------------------------------------
-"
+" julia-vim
+" ---------------------------------------------------------------------------
+" autocmd BufNewFile,BufRead *.jl set syntax=julia
+
+" ---------------------------------------------------------------------------
 " vim-minimap
-"
 " ---------------------------------------------------------------------------
 let g:minimap_highlight='Visual'
 let g:minimap_toggle='<leader>mm'
@@ -1099,7 +1110,7 @@ let g:tagbar_type_vimwiki = {
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd FileType html,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.py set autoindent
 
 " Languge-specific color schemes
