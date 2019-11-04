@@ -24,6 +24,8 @@ alias tree='tree -C'
 
 alias ra=ranger
 
+alias cat=bat
+
 # alias feh='feh --scale-down --auto-zoom'
 alias feh='feh --scale-down'
 

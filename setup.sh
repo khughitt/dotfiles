@@ -16,6 +16,23 @@ function ln_s() {
     fi
 }
 
+# Linuxbrew
+echo "Installing Homebrew..." && sleep 5
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+
+# install tre (requires `brew vendor-install ruby` to be run, first)
+brew install dduan/formulae/tre
+
+# others
+echo "Installing Cargo packages..."
+cargo install du-dust bb tldr
+
+echo "Installing Arch packages..."
+sudo pacman -S bat fasd fd fzf lsd thefuck visidata
+
+echo "Installing Arch packages (AUR)..."
+yay gotop mdcat moar
+
 echo "Setting up dotfiles..."
 
 # Setup zsh

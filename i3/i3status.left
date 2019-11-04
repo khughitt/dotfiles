@@ -1,48 +1,41 @@
 #
-# i3status config
-# kh nov.2018
+# i3status config (left monitor)
+# keith (oct 2019)
 # 
-# adapted from https://gist.github.com/rafi/6063132
-#
 
-# dracula colorscheme
-# general {
-#     colors = true
-#     color_good = "#09b399"
-#     color_degraded = "#f37055"
-#     color_bad = "#a067ab"
-#     interval = 5
-# }
-
-# onedark
+# colorscheme (onedark)
 general {
     colors = true
     color_good = "#61afef"
     color_degraded = "#56b6c2"
-    color_bad = "#56b6c2"
+    color_bad = "#e06c75"
     interval = 5
 }
 
 
-#order += "disk /"
+order += "disk /"
 order += "sysdata"
-order += "lm_sensors"
 order += "tztime local"
 
+#order += "wifi"
+
 disk "/" {
-        format = " %avail "
+    format = " %avail "
 }
 
 sysdata {
-    format = "mem: {mem_used}G ({mem_used_percent}%) load: {load1} "
-}
-
-lm_sensors {
-    chips = ['nct6779-isa-0290']
-    sensors = ['CPU MB']
+    cpus = ['cpu'] 
+    format = "[\?color=cpu_used_percent CPU: {cpu_used_percent}%] | ‘ ‘[\?color=mem_used_percent Mem: {mem_used} / {mem_total} ‘ ‘{mem_total_unit} ({mem_used_percent}%)]"
+    # format = "mem: {mem_used}G ({mem_used_percent}%) load: {load1} "
 }
 
 tztime local {
-        format = " %Y-%m-%d %H:%M %P"
+    format = " %Y-%m-%d %H:%M %P"
 }
+
+wifi {
+#    format = " w: {ssid} ({signal_percent}) "
+    format = " w: {bitrate} ({signal_percent}) "
+}
+
 

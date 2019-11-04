@@ -1,11 +1,9 @@
 #
-# i3status config
-# kh nov.2018
+# i3status config (right monitor)
+# keith (oct 2019)
 # 
-# adapted from https://gist.github.com/rafi/6063132
-#
 
-# onedark
+# colorscheme (onedark)
 general {
     colors = true
     color_good = "#61afef"
@@ -14,21 +12,12 @@ general {
     interval = 5
 }
 
-
-#order += "disk /"
 order += "spotify"
-order += "dropboxd_status"
 order += "volume_status"
-order += "sysdata"
+order += "dropboxd_status"
 order += "pomodoro"
 order += "weather_owm"
 order += "tztime local"
-
-#order += "wifi"
-
-disk "/" {
-        format = " %avail "
-}
 
 #dropboxd_status {
 #    format = " d: {status} "
