@@ -37,7 +37,8 @@ bindsym $mod+n exec termite -e "zsh -ci 'vim \`fd -t f md ~/d/notes | fzf --exac
 #exec_always feh --bg-scale ~/d/linux/backgrounds/Luetin_1920.jpg
 #exec_always feh --bg-scale ~/d/linux/backgrounds/board_black_line_texture_background_wood_55220_1920x1080.jpg
 #exec --no-startup-id ~/d/linux/software/i3-wpd/i3wpd.py ~/d/linux/backgrounds/i3/ .png
-exec_always feh --bg-scale ~/d/linux/backgrounds/02786_lakefornight_1920x1200.jpg 
+# exec_always feh --bg-scale ~/d/linux/backgrounds/02786_lakefornight_1920x1200.jpg
+exec_always feh --bg-scale ~/d/linux/backgrounds/i3/9.png
 
 # font
 font pango:Droid Sans Mono 10
@@ -142,7 +143,7 @@ bindsym $mod+Shift+Right move right
 #-------------------------------------------------------------------------------
 
 # switch to workspace
-bindsym $mod+1 workspace number 1
+bindsym $mod+1 workspace number 1 web
 bindsym $mod+2 workspace number 2
 bindsym $mod+3 workspace number 3
 bindsym $mod+4 workspace number 4
@@ -154,7 +155,7 @@ bindsym $mod+9 workspace number 9
 bindsym $mod+0 workspace number 10
 
 # move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+1 move container to workspace number 1 web
 bindsym $mod+Shift+2 move container to workspace number 2
 bindsym $mod+Shift+3 move container to workspace number 3
 bindsym $mod+Shift+4 move container to workspace number 4
@@ -379,15 +380,10 @@ bar {
     colors {
         statusline #e9e9f4
         background #282c34
-        #background #33333377
         inactive_workspace #333333ff #333333ff #5c5c5c
         focused_workspace  #333333ff #333333ff #f37055ff
-        #inactive_workspace #32323200 #32323200 #5c5c5c
-        #focused_workspace  #ef4e7caa #ef4e7cff #000000ff
-        #active_workspace #333333 #333333 #888888
-        #urgent_workspace #eb709b #eb709b #ffffff
     }
-    status_command py3status --config ~/.config/i3status/i3status.right
+    status_command py3status --config ~/.config/i3status/i3status.left
 }
 
 # autostart
