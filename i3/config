@@ -22,7 +22,7 @@ set $term termite
 set $menu rofi -show drun
 set $greenclip rofi -modi "clipboard:greenclip print" -show clipboard -run-command '{cmd}'
 
-# rofi notes
+# fzf-notes
 bindsym $mod+n exec termite -e "zsh -ci 'vim \`fd -t f md ~/d/notes | fzf --exact -1 \`'"
 
 # start dmenu
@@ -291,41 +291,55 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 #-------------------------------------------------------------------------------
 # Scratchpads
 #-------------------------------------------------------------------------------
-exec_always --no-startup-id termite --name=termite_scratch -t termite_scratch
-for_window[instance="termite_scratch"] move scratchpad
 
 set $scratch_width 1536
 set $scratch_height 864
 set $scratch_x1 2112
 set $scratch_y1 108
 
+#-- terminal --#
+exec_always --no-startup-id termite --name=termite_scratch -t termite_scratch
+for_window[instance="termite_scratch"] move scratchpad
+
 bindsym Mod1+Return \
-    [instance="python_scratch|r_scratch|julia_scratch"] move scratchpad; \
+    [instance="python_scratch|r_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
     [instance="termite_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1;
 
+#-- r console --#
 exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch -t r_scratch
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
-    [instance="python_scratch|termite_scratch|julia_scratch"] move scratchpad; \
+    [instance="python_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
     [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
+#-- python console --#
 exec_always --no-startup-id termite -e ipython --name=python_scratch -t python_scratch
 for_window[instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
-    [instance="r_scratch|termite_scratch|julia_scratch"] move scratchpad; \
+    [instance="r_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
     [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
+#-- julia console --#
 exec_always --no-startup-id termite -e julia --name=julia_scratch -t julia_scratch
 for_window[instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
-    [instance="r_scratch|python_sratch|termite_scratch"] move scratchpad; \
+    [instance="r_scratch|python_sratch|tasks_scratch|termite_scratch"] move scratchpad; \
     [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
+
+#-- tasks --#
+exec_always --no-startup-id termite -e "nvim ~/d/notes/organization/tasks.md" --name=tasks_scratch -t tasks_scratch 
+for_window[instance="tasks_scratch"] move scratchpad
+
+bindsym Mod1+t \
+    [instance="julia_scratch|r_scratch|python_sratch|termite_scratch"] move scratchpad; \
+    [instance="tasks_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
 #
