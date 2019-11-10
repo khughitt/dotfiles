@@ -34,8 +34,9 @@ alias m=tldr
 # open last argument of last command in vim
 alias vv='cmd=$(fc -l -1); vim ${cmd##* }'
 
-# fzf
-alias n="vim \`fd -t f md ~/d/notes | fzf -1 --exact\`"
+# fzf (moved to functions)
+# alias n="vim \`fd -t f md ~/d/notes | fzf -1 --exact\`"
+
 alias jk="cd \`fasd -d -l -r | fzf -1 --exact\`"
 alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
 

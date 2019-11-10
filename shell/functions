@@ -16,6 +16,11 @@ function hv {
     head -n10 $1 | vd -
 }
 
+# fzf notes
+function n {
+    vim `fd -t f md ~/d/notes | grep --color='none' "$1" | fzf -1 --exact`
+}
+
 # vim + ag
 function va {
     nvim $(ag -l $1)
