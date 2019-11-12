@@ -26,6 +26,8 @@ alias ra=ranger
 
 alias cat=bat
 
+alias less='less -NRSi --shift 10'
+
 # alias feh='feh --scale-down --auto-zoom'
 alias feh='feh --scale-down'
 
