@@ -25,6 +25,9 @@ conda install -c black aiohttp
 # radian r console (pip install --user radian)
 conda install jedi 
 
+# for conda r environments:
+conda install r-lintr 
+
 # conda tab completion for zsh
 git clone https://github.com/esc/conda-zsh-completion ~/software/conda-zsh-completion
 
@@ -38,3 +41,11 @@ git clone https://github.com/esc/conda-zsh-completion ~/software/conda-zsh-compl
 # conda install -c ostrokach-forge fd-find 
 # conda install ripgrep
 # conda install rust
+
+# Note: issues may arise relating to termite's terminfo, e.g.:
+# base ❯ infocmp -L 
+# infocmp: couldn't open terminfo file /root/conda/share/terminfo/x/xterm-termite.
+# the work-around is simply to copy or symlink the terminfo file to the exptected
+# location:
+cp /usr/share/terminfo/x/xterm-termite $HOME/conda/share/terminfo/x/
+
