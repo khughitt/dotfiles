@@ -60,14 +60,13 @@ call plug#begin()
     " Plug 'airblade/vim-gitgutter'
     Plug 'andymass/vim-matchup'
     Plug 'bfredl/nvim-ipy'
-    Plug 'Alok/notational-fzf-vim'
     Plug 'chrisbra/csv.vim'
+    Plug 'dense-analysis/ale'
     Plug 'ervandew/supertab'
     Plug 'godlygeek/tabular'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
     Plug 'honza/vim-snippets'
-    Plug 'itchyny/lightline.vim'
     Plug 'jalvesaq/Nvim-R'
     Plug 'JuliaEditorSupport/julia-vim'
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
@@ -79,7 +78,6 @@ call plug#begin()
     Plug 'majutsushi/tagbar'
     Plug 'manabuishii/vim-cwl'
     Plug 'mboughaba/i3config.vim'
-    Plug 'mengelbrecht/lightline-bufferline'
     Plug 'mllg/vim-devtools-plugin'
     Plug 'mrk21/yaml-vim'
     Plug 'nathanaelkane/vim-indent-guides'
@@ -91,17 +89,12 @@ call plug#begin()
     Plug 'scrooloose/nerdcommenter'
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'Shougo/denite.nvim'
-    "Plug 'deoplete-plugins/deoplete-jedi'
-    "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-    "Plug 'Shougo/deoplete-terminal'
     Plug 'Shougo/neomru.vim'
     Plug 'stephpy/vim-yaml'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
     Plug 'terryma/vim-expand-region'
-    Plug 'vim-syntastic/syntastic'
-    " Plug 'vimwiki/vimwiki'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
@@ -111,9 +104,9 @@ call plug#begin()
 
     Plug 'glts/vim-textobj-comment'
     Plug 'kana/vim-textobj-user'
-    Plug 'tyru/vim-textobj-underscore', { 'branch': 'support-3-cases' }
-    Plug 'vim-scripts/argtextobj.vim'
     Plug 'vimtaku/vim-textobj-keyvalue'
+    " Plug 'vim-scripts/argtextobj.vim'
+    " Plug 'tyru/vim-textobj-underscore', { 'branch': 'support-3-cases' }
 
     Plug 'agreco/vim-citylights'
     Plug 'ayu-theme/ayu-vim'
@@ -149,11 +142,12 @@ call plug#begin()
     Plug 'yuttie/hydrangea-vim'
     Plug 'zanloy/vim-colors-grb256'
 
+    Plug 'vim-airline/vim-airline'
+    Plug 'vim-airline/vim-airline-themes'
+
     "Plug 'bioSyntax/bioSyntax-vim'
     "Plug 'chriskempson/base16-vim'
-    "Plug 'vim-airline/vim-airline'
     "Plug 'severin-lemaignan/vim-minimap'
-    "Plug 'vim-airline/vim-airline-themes'
     "Plug 'yuttie/comfortable-motion.vim'
     "Plug 'hkupty/iron.nvim'
     "Plug 'tpope/vim-repeat'
@@ -164,17 +158,25 @@ call plug#begin()
     "Plug 'Shougo/neosnippet.vim'
     "Plug 'Shougo/neosnippet-snippets'
     "Plug 'freitass/todo.txt-vim'
+    "Plug 'Alok/notational-fzf-vim'
+    "Plug 'itchyny/lightline.vim'
+    "Plug 'mengelbrecht/lightline-bufferline'
+    "Plug 'deoplete-plugins/deoplete-jedi'
+    "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+    "Plug 'Shougo/deoplete-terminal'
+    "Plug 'vim-syntastic/syntastic'
+    "Plug 'vimwiki/vimwiki'
     "
     " overrides filetype tabstop, etc. options
     "Plug 'editorconfig/editorconfig-vim'
-    
+
     " conflicts with lightline-bufferline
     "Plug 'nightsense/night-and-day'
 
     " Requires +conceal feature not compiled in Arch
     " Plug 'vim-pandoc/vim-pandoc'
     " Plug 'vim-pandoc/vim-pandoc-syntax'
-    
+
     " devicons should always be loaded last
     Plug 'ryanoasis/vim-devicons'
 call plug#end()
@@ -396,7 +398,7 @@ let g:onedark_terminal_italics=1
 "colorscheme dracula
 "colorscheme minimalist
 "colorscheme quantum
-colorscheme citylights
+" colorscheme citylights
 colorscheme onedark
 
 " terminal color scheme
@@ -533,8 +535,18 @@ au TermOpen * setlocal nonumber norelativenumber
 "  airline
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
+let g:airline#extensions#ale#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
-let g:airline_theme = 'airline'
+let g:airline_theme = 'onedark'
+
+" ---------------------------------------------------------------------------
+"  ale
+" ---------------------------------------------------------------------------
+" nmap <silent> <C-k> <Plug>(ale_previous_wrap)
+" nmap <silent> <C-j> <Plug>(ale_next_wrap)
+let g:ale_fixers = {'r': ['styler', 'trim_whitespace'], 'rmd': ['styler', 'trim_whitespace']}   
+let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
+
 
 " ---------------------------------------------------------------------------
 "  black
@@ -556,8 +568,8 @@ let g:colorizer_startup = 0
 " ---------------------------------------------------------------------------
 let g:colorscheme_switcher_exclude = [
             \ 'blue', 'darkblue', 'default', 'delek', 'desert', 'elflord',
-            \ 'evening', 'fi', 'gotham256', 'industry', 'koehler', 'morning', 
-            \ 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'slate', 
+            \ 'evening', 'fi', 'gotham256', 'industry', 'koehler', 'morning',
+            \ 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'slate',
             \ 'torte', 'zellner']
 
 " ---------------------------------------------------------------------------
@@ -755,11 +767,12 @@ let g:nd_lightline = 1
 "  notational-fzf-vim
 " ---------------------------------------------------------------------------
 "let g:nv_use_short_pathnames = 1
-let g:nv_search_paths = ['~/d/notes', './doc']
-let g:nv_ignore_pattern = ['personal', 'meetings']
-let g:nv_default_extension = '.md'
+" let g:nv_search_paths = ['~/d/notes', './doc']
+" let g:nv_search_paths = ['~/d/notes']
+" let g:nv_ignore_pattern = ['personal', 'meetings']
+" let g:nv_default_extension = '.md'
 
-nnoremap <silent> <c-y> :NV<CR>
+" nnoremap <silent> <c-y> :NV<CR>
 
 " ---------------------------------------------------------------------------
 "  nvim-ipy
@@ -902,26 +915,21 @@ cmap <C-r> :History:<CR>
 " ---------------------------------------------------------------------------
 "  lightline
 " ---------------------------------------------------------------------------
-let g:lightline = { 'colorscheme': 'onedark' }
-let g:lightline.tabline          = {'left': [['buffers']], 'right': [['close']]}
-let g:lightline.component_function = { 'percent': 'NoScrollbarForLightline' }
-let g:lightline.component_expand = {'buffers': 'lightline#bufferline#buffers'}
-let g:lightline.component_type   = {'buffers': 'tabsel'}
-let g:lightline#bufferline#enable_devicons = 1
-let g:lightline#bufferline#show_number  = 1
+" let g:lightline = { 'colorscheme': 'onedark' }
+" let g:lightline.tabline          = {'left': [['buffers']], 'right': [['close']]}
+" let g:lightline.component_function = { 'percent': 'NoScrollbarForLightline' }
+" let g:lightline.component_expand = {'buffers': 'lightline#bufferline#buffers'}
+" let g:lightline.component_type   = {'buffers': 'tabsel'}
+" let g:lightline#bufferline#enable_devicons = 1
+" let g:lightline#bufferline#show_number  = 1
 
 " ---------------------------------------------------------------------------
 "  noscrollbar
 " ---------------------------------------------------------------------------
 " Instead of % show NoScrollbar horizontal scrollbar
-function! NoScrollbarForLightline()
-   return noscrollbar#statusline()
-endfunction
-
-" ---------------------------------------------------------------------------
-"  notational-fzf-vim
-" ---------------------------------------------------------------------------
-let g:nv_search_paths = ['~/d/notes']
+" function! NoScrollbarForLightline()
+"    return noscrollbar#statusline()
+" endfunction
 
 " ---------------------------------------------------------------------------
 "  Nvim-R
@@ -1029,30 +1037,32 @@ let g:SuperTabDefaultCompletionType = "context"
 " ---------------------------------------------------------------------------
 "  syntastic
 " ---------------------------------------------------------------------------
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
-
-let g:syntastic_mode_map = {'mode': 'passive'}
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 0
-let g:syntastic_check_on_wq = 1
-
-" r
-let g:syntastic_enable_r_lintr_checker = 1
-let g:syntastic_r_checkers = ['lintr']
-let g:syntastic_rmd_checkers = ['lintr']
-
-" 2019-09-05: new linter in devel version of lintr:
-"  object_name_linter(styles = c('snake_case'))
-let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
-
-" python
-let g:syntastic_rst_checkers=['sphinx']
-
-" key bindings
-nnoremap <F10> :SyntasticCheck<CR>
+" set statusline+=%#warningmsg#
+" set statusline+=%{SyntasticStatuslineFlag()}
+" set statusline+=%*
+"
+" let g:syntastic_mode_map = {'mode': 'passive'}
+" let g:syntastic_always_populate_loc_list = 1
+" let g:syntastic_auto_loc_list = 1
+" let g:syntastic_check_on_open = 0
+" let g:syntastic_check_on_wq = 1
+"
+" " r
+" let g:syntastic_r_checkers=['lintr']
+" let g:syntastic_rmd_checkers=['lintr']
+"
+" let g:syntastic_enable_r_lintr_checker = 1
+" let g:syntastic_enable_rmd_lintr_checker = 1
+"
+" " 2019-09-05: new linter in devel version of lintr:
+" "  object_name_linter(styles = c('snake_case'))
+" let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
+"
+" " python
+" let g:syntastic_rst_checkers=['sphinx']
+"
+" " key bindings
+" nnoremap <F10> :SyntasticCheck<CR>
 
 " ---------------------------------------------------------------------------
 "  tagbar
@@ -1075,18 +1085,18 @@ vmap v <Plug>(expand_region_expand)
 vmap <C-v> <Plug>(expand_region_shrink)
 
 " ---------------------------------------------------------------------------
-"  vim-textobj-underscore 
+"  vim-textobj-underscore
 " ---------------------------------------------------------------------------
-nmap cid ci_
-nmap cad ca_
-nmap did di_
-nmap dad da_
+" nmap cid ci_
+" nmap cad ca_
+" nmap did di_
+" nmap dad da_
 
 " ---------------------------------------------------------------------------
 "  VimWiki
 " ---------------------------------------------------------------------------
 let g:vimwiki_list = [{'path': '~/d/notes/',
-                      \ 'syntax': 'markdown', 
+                      \ 'syntax': 'markdown',
                       \ 'ext': '.md'}]
 
 " only set filetype to vimwiki for files in specified vimwiki path
@@ -1114,8 +1124,9 @@ autocmd BufRead,BufNewFile *.py set autoindent
 " Languge-specific color schemes
 "au FileType yaml colorscheme sweyla907357
 "au FileType jinja colorscheme SerialExperimentsLain
-"au FileType snakemake colorscheme gotham
-"au FileType rmd colorscheme grb256
+au FileType snakemake colorscheme adventurous
+au FileType r colorscheme dracula
+au FileType rmd colorscheme pencil
 
 au FileType python map <silent> <leader>b obreakpoint()<esc>
 

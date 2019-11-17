@@ -334,7 +334,7 @@ bindsym Mod1+j \
     move position $scratch_x1 $scratch_y1
 
 #-- tasks --#
-exec_always --no-startup-id termite -e "nvim ~/d/notes/organization/tasks.md" --name=tasks_scratch -t tasks_scratch 
+exec_always --no-startup-id termite -e "nvim ~/d/notes/personal/organization/organization-tasks.md" --name=tasks_scratch -t tasks_scratch 
 for_window[instance="tasks_scratch"] move scratchpad
 
 bindsym Mod1+t \
