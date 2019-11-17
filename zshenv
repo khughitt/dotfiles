@@ -19,6 +19,7 @@ export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30
 # fi
 
 # java
+export JAVA_HOME=/usr/lib/jvm/default
 export JAVA_FONTS=/usr/share/fonts/TTF
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true'
 export _JAVA_AWT_WM_NONREPARENTING=1

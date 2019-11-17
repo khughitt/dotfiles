@@ -28,6 +28,8 @@ conda install jedi
 # for conda r environments:
 conda install r-lintr 
 
+# R INSTALL ~/software/colorout
+
 # conda tab completion for zsh
 git clone https://github.com/esc/conda-zsh-completion ~/software/conda-zsh-completion
 
@@ -48,4 +50,5 @@ git clone https://github.com/esc/conda-zsh-completion ~/software/conda-zsh-compl
 # the work-around is simply to copy or symlink the terminfo file to the exptected
 # location:
 cp /usr/share/terminfo/x/xterm-termite $HOME/conda/share/terminfo/x/
+
 

@@ -4,3 +4,7 @@ options.color_current_row = 'reverse 11'
 options.disp_status_fmt = '({sheet.cursorRowIndex},{sheet.cursorColIndex}) ' + options.disp_status_fmt
 options.undo=True
 
+theme('color_negative', 'red', 'color of negative numbers')
+Sheet.colorizers += [ColumnColorizer(2, 'color_negative', 
+                                     lambda s,c,r,v: c and v is not None and isinstance(v.value, (int,float)) and int(v.value) < 0)]
+
