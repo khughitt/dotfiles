@@ -20,7 +20,7 @@ conda install -c conda-forge ncurses csvkit visidata snakemake-minimal
 conda install -c conda-forge pynvim jupyter
 
 # black[d]
-conda install -c black aiohttp
+conda install black aiohttp
 
 # radian r console (pip install --user radian)
 conda install jedi 

@@ -52,6 +52,9 @@ inoremap <C-e> <End>
 noremap  <C-a> <Home>
 noremap  <C-e> <End>
 
+" specify python installation to use
+let g:python3_host_prog = '~/conda/bin/python3'
+
 " ---------------------------------------------------------------------------
 " vim-plug
 " ---------------------------------------------------------------------------
@@ -128,6 +131,7 @@ call plug#begin()
     Plug 'KeitaNakamura/neodark.vim'
     Plug 'liuchengxu/space-vim-dark'
     Plug 'lu-ren/SerialExperimentsLain'
+    Plug 'morhetz/gruvbox'
     Plug 'NLKNguyen/papercolor-theme'
     Plug 'rakr/vim-one'
     Plug 'reedes/vim-colors-pencil'
@@ -387,6 +391,7 @@ endif
 let g:quantum_black=1
 let g:quantum_italics=1
 let g:onedark_terminal_italics=1
+let g:gruvbox_italic=1
 
 " set background=dark
 "colorscheme hemisu
@@ -1031,6 +1036,7 @@ nmap <localleader>sc :call ShowRSource()<CR>
 " ---------------------------------------------------------------------------
 " supertab.vim
 " ---------------------------------------------------------------------------
+let g:SuperTabCrMapping=1
 let g:SuperTabDefaultCompletionType = "<c-n>"
 let g:SuperTabDefaultCompletionType = "context"
 
@@ -1124,9 +1130,9 @@ autocmd BufRead,BufNewFile *.py set autoindent
 " Languge-specific color schemes
 "au FileType yaml colorscheme sweyla907357
 "au FileType jinja colorscheme SerialExperimentsLain
-au FileType snakemake colorscheme adventurous
-au FileType r colorscheme dracula
-au FileType rmd colorscheme pencil
+"au FileType snakemake colorscheme adventurous
+"au FileType r colorscheme pencil
+"au FileType rmd colorscheme onedark
 
 au FileType python map <silent> <leader>b obreakpoint()<esc>
 

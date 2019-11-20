@@ -58,7 +58,7 @@ ln -sf ${DOTS_HOME}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 
 # ~/.config/xx
 for path in "awesome" "cava" "feh" "mimeapps.list" "nvim" "redshift.conf"  \
-            "labnote" "pylintrc" "ranger" "snakemake" "termcolors"; do
+            "labnote" "pylintrc" "ranger" "snakemake" "termcolors" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
