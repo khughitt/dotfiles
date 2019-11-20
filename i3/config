@@ -381,7 +381,7 @@ bar {
         inactive_workspace #282c34ff #282c34ff #abb2bf
         focused_workspace  #282c34ff #282c34ff #e5c07b
     }
-    status_command py3status --config ~/.config/i3status/i3status.right
+    status_command py3status --config ~/.config/i3status/config.right
 }
 
 #
@@ -397,7 +397,7 @@ bar {
         inactive_workspace #333333ff #333333ff #5c5c5c
         focused_workspace  #333333ff #333333ff #f37055ff
     }
-    status_command py3status --config ~/.config/i3status/i3status.left
+    status_command py3status --config ~/.config/i3status/config.left
 }
 
 # autostart
