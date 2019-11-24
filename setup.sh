@@ -13,6 +13,10 @@ mkdir -p $XDG_CONFIG_HOME
 
 # Checks for file or directory and creates a sym link if it doesn't already exist
 function ln_s() {
+    # delete existing symlink if it exists
+    if [[ -e "$2" && -L "$2" ]]; then
+        rm $2
+    fi
     echo "[CREATING] \"$2\""
     ln -sf $1 $2
 }

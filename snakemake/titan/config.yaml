@@ -1,0 +1,5 @@
+jobs: 24
+keep-going: true
+rerun-incomplete: true
+restart-times: 0
+resources: "load=100"
