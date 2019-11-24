@@ -65,6 +65,7 @@ call plug#begin()
     Plug 'bfredl/nvim-ipy'
     Plug 'chrisbra/csv.vim'
     Plug 'dense-analysis/ale'
+    Plug 'ekiim/vim-mathpix'
     Plug 'ervandew/supertab'
     Plug 'godlygeek/tabular'
     Plug 'guns/xterm-color-table.vim'
@@ -83,6 +84,7 @@ call plug#begin()
     Plug 'mboughaba/i3config.vim'
     Plug 'mllg/vim-devtools-plugin'
     Plug 'mrk21/yaml-vim'
+    Plug 'mzlogin/vim-markdown-toc'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
     " Plug 'plasticboy/vim-markdown'
@@ -542,6 +544,7 @@ au TermOpen * setlocal nonumber norelativenumber
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#ale#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#wordcount#enabled = 1
 let g:airline_theme = 'onedark'
 
 " ---------------------------------------------------------------------------
@@ -1082,6 +1085,22 @@ let g:tagbar_type_r = {
         \ 'g:GlobalVariables',
         \ 'v:FunctionVariables',
     \ ]
+\ }
+
+" Add support for markdown files in tagbar.
+let g:tagbar_type_markdown = {
+    \ 'ctagstype': 'markdown',
+    \ 'ctagsbin' : '~/bin/markdown2ctags.py',
+    \ 'ctagsargs' : '-f - --sort=yes --sro=»',
+    \ 'kinds' : [
+        \ 's:sections',
+        \ 'i:images'
+    \ ],
+    \ 'sro' : '»',
+    \ 'kind2scope' : {
+        \ 's' : 'section',
+    \ },
+    \ 'sort': 0,
 \ }
 
 " ---------------------------------------------------------------------------

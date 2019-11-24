@@ -24,12 +24,11 @@ alias tree='tree -C'
 
 alias ra=ranger
 
-alias cat=bat
+alias cat='bat --wrap=never'
 
 alias less='less -NRSi --shift 10'
 
-# alias feh='feh --scale-down --auto-zoom'
-alias feh='feh --scale-down'
+alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
 
 alias m=tldr
 
@@ -87,6 +86,7 @@ alias r=radian
 alias vim=nvim
 alias vmi=nvim
 alias vm='nvim README.Rmd'
+alias lv="vim -c \"normal '0\""
 
 # termbin
 # example usage: echo just testing! | tb
