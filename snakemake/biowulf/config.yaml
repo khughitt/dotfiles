@@ -1,0 +1,7 @@
+max-jobs-per-second: 10
+latency-wait: 15
+keep-going: true
+rerun-incomplete: true
+restart-times: 0
+local-cores: 2
+cluster: "sbatch -c {threads} --mem={cluster.mem} --partition={cluster.partition} --time={cluster.time} -e logs/slurm/{cluster.stderr} -o logs/slurm/{cluster.stdout} -J '{cluster.jobname}'"

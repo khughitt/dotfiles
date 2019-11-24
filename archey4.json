@@ -1,0 +1,45 @@
+{
+	"allow_overriding": true,
+	"suppress_warnings": false,
+	"entries": {
+		"User": true,
+		"Hostname": true,
+		"Model": false,
+		"Distro": true,
+		"Kernel": true,
+		"Uptime": true,
+		"WindowManager": true,
+		"DesktopEnvironment": false,
+		"Shell": true,
+		"Terminal": true,
+		"Packages": true,
+		"Temperature": true,
+		"CPU": true,
+		"GPU": true,
+		"RAM": true,
+		"Disk": true,
+		"LAN_IP": false,
+		"WAN_IP": false
+	},
+	"colors_palette": {
+		"use_unicode": false
+	},
+	"default_strings": {
+		"no_address": "No Address",
+		"not_detected": "Not detected",
+		"virtual_environment": "Virtual Environment",
+		"bare_metal_environment": "Bare-metal Environment"
+	},
+	"ip_settings": {
+		"lan_ip_max_count": 2,
+		"wan_ip_v6_support": true
+	},
+	"temperature": {
+		"char_before_unit": " ",
+		"use_fahrenheit": false
+	},
+	"timeout": {
+		"ipv4_detection": 1,
+		"ipv6_detection": 1
+	}
+}
