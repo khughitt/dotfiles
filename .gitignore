@@ -9,3 +9,4 @@ ranger/tagged
 .netrwhist
 *-local.vim
 tags
+unused
