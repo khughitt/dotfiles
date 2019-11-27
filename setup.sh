@@ -90,8 +90,8 @@ ln_s ${DOTS_HOME}/i3/i3status.right ${XDG_CONFIG_HOME}/i3status/config.right
 
 mkdir -p ~/.cache/i3
 
-# compton
-ln -sf ${DOTS_HOME}/compton.conf ${XDG_CONFIG_HOME}/compton/compton.conf
+# picom
+ln -sf ${DOTS_HOME}/picom.conf ${XDG_CONFIG_HOME}/picom/picom.conf
 
 # copy Xresources to Xdefaults for sway
 ln_s ${DOTS_HOME}/Xresources ~/.Xdefaults

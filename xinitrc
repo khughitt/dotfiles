@@ -39,9 +39,6 @@ if [ "$dvi1" = "connected" ]; then
   xrandr --output DVI-D-1 --auto --left-of HDMI-A-0
 fi
 
-# compositing
-# compton --config ~/.config/compton.conf -b
-
 # enable restart X
 setxkbmap -option terminate:ctrl_alt_bksp
 

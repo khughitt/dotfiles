@@ -1,11 +1,9 @@
 #!/bin/zsh
 #
 # Sets the term colors to those specified in a .Xresources, etc. file
-# for testing new color themes.
 #
 # Keith 2014/05/14
 # https://github.com/khughitt/dotfiles/tree/master/bin/colortest
-#
 #
 
 # not compatible with earlier versions of ZSH
@@ -17,7 +15,6 @@ fi
 # colors
 if [ -n "$1" ]; then
     infile=$1
-    echo "Loading colors from ${1}..."
 
     function setColor() {
         color=$1
@@ -26,15 +23,13 @@ if [ -n "$1" ]; then
         hex=$(grep "color${color} *:" $infile | grep -v "^\!" | \
               grep --color='never' -Eo "#[a-zA-Z0-9]{6}")
 
-        echo $hex
-
         # convert to RGB triplet (0-1000)
         red=$(printf "%.0f" $(( $(echo 0x${hex:1:2}) / 255.0 * 1000 )))
         green=$(printf "%.0f" $(( $(echo 0x${hex:3:2}) / 255.0 * 1000 )))
         blue=$(printf "%.0f" $(( $(echo 0x${hex:5:2}) / 255.0 * 1000 )))
 
         # set color
-        tput initc $color $red $green $blue 
+        tput initc $color $red $green $blue
     }
 
     for i in {0..15}; do

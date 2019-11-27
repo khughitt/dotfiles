@@ -65,6 +65,7 @@ call plug#begin()
     Plug 'bfredl/nvim-ipy'
     Plug 'chrisbra/csv.vim'
     Plug 'dense-analysis/ale'
+    Plug 'drzel/vim-line-no-indicator'
     Plug 'ekiim/vim-mathpix'
     Plug 'ervandew/supertab'
     Plug 'godlygeek/tabular'
@@ -559,7 +560,7 @@ let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes
 " ---------------------------------------------------------------------------
 "  black
 " ---------------------------------------------------------------------------
-au BufWritePre *.py execute ':Black'
+"au BufWritePre *.py execute ':Black'
 
 " ---------------------------------------------------------------------------
 " csv.vim
@@ -938,6 +939,10 @@ cmap <C-r> :History:<CR>
 " function! NoScrollbarForLightline()
 "    return noscrollbar#statusline()
 " endfunction
+function! Noscrollbar(...)
+    let w:airline_section_z = '%{noscrollbar#statusline()}'
+endfunction
+call airline#add_statusline_func('Noscrollbar')
 
 " ---------------------------------------------------------------------------
 "  Nvim-R

@@ -32,6 +32,9 @@ alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/1
 
 alias m=tldr
 
+alias errors="journalctl -b -p err|less"
+alias vacuum="sudo journalctl --vacuum-size=200M"
+
 # open last argument of last command in vim
 alias vv='cmd=$(fc -l -1); vim ${cmd##* }'
 
