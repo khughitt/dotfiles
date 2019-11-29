@@ -151,43 +151,43 @@ bindsym $mod+Shift+Right move right
 #-------------------------------------------------------------------------------
 
 # switch to workspace
-bindsym $mod+1 workspace number 1 web
+bindsym $mod+1 workspace number "1: web"
 bindsym $mod+2 workspace number 2
 bindsym $mod+3 workspace number 3
-bindsym $mod+4 workspace number 4 notes
-bindsym $mod+5 workspace number 5 files
+bindsym $mod+4 workspace number "4: notes"
+bindsym $mod+5 workspace number "5: files"
 bindsym $mod+6 workspace number 6
 bindsym $mod+7 workspace number 7
 bindsym $mod+8 workspace number 8
 bindsym $mod+9 workspace number 9
-bindsym $mod+0 workspace number 10
+bindsym $mod+0 workspace number "10: music"
 
 # move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace number 1 web
+bindsym $mod+Shift+1 move container to workspace number "1: web"
 bindsym $mod+Shift+2 move container to workspace number 2
 bindsym $mod+Shift+3 move container to workspace number 3
-bindsym $mod+Shift+4 move container to workspace number 4 notes
-bindsym $mod+Shift+5 move container to workspace number 5 files
+bindsym $mod+Shift+4 move container to workspace number "4: notes"
+bindsym $mod+Shift+5 move container to workspace number "5: files"
 bindsym $mod+Shift+6 move container to workspace number 6
 bindsym $mod+Shift+7 move container to workspace number 7 
 bindsym $mod+Shift+8 move container to workspace number 8 
 bindsym $mod+Shift+9 move container to workspace number 9
-bindsym $mod+Shift+0 move container to workspace number 10 music
+bindsym $mod+Shift+0 move container to workspace number "10: music"
 
 # move workspace to different monitor
 bindsym $mod+m move workspace to output left
 
 # specify default monitors for first few workspaces
-workspace 1 output HDMI-0
-workspace 2 output HDMI-0
-workspace 3 output HDMI-0
-workspace 4 output HDMI-0
-workspace 5 output HDMI-0
-workspace 6 output DP-1
-workspace 7 output DP-1
-workspace 8 output DP-1
-workspace 9 output DP-1
-workspace 0 output DP-1
+workspace "1: web" output HDMI-0 eDP-1
+workspace 2 output HDMI-0 eDP-1
+workspace 3 output HDMI-0 eDP-1
+workspace "4: notes" output HDMI-0 eDP-1
+workspace "5: files" output HDMI-0 eDP-1
+workspace 6 output DP-1 eDP-1
+workspace 7 output DP-1 eDP-1
+workspace 8 output DP-1 eDP-1
+workspace 9 output DP-1 eDP-1
+workspace "10: music" output DP-1 eDP-1
 
 # rename workspace
 #bindsym $mod+r exec i3-input -F 'Rename workspace to %s' -P 'New name: '
@@ -381,7 +381,7 @@ bindsym $mod+shift+r mode "resize"
 # Status Bar:
 #
 bar {
-    output HDMI-0
+    output HDMI-0 eDP-1
     output eDP1
     strip_workspace_numbers yes
     i3bar_command i3bar -t
