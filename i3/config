@@ -381,7 +381,8 @@ bindsym $mod+shift+r mode "resize"
 # Status Bar:
 #
 bar {
-    output HDMI-0 eDP-1
+    output HDMI-0
+    output eDP-1
     output eDP1
     strip_workspace_numbers yes
     i3bar_command i3bar -t

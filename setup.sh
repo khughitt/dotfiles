@@ -108,6 +108,7 @@ mkdir -p ~/.local/share/mime
 ln -sf ${DOTS_HOME}/mime ~/.local/share/mime/packages
 update-mime-database ~/.local/share/mime
 
+rm ${XDG_CONFIG_HOME}/mimeapps.list
 ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
 
 echo "Done!"
