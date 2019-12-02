@@ -7,10 +7,14 @@ x-scheme-handler/http=chromium.desktop
 x-scheme-handler/https=chromium.desktop
 x-scheme-handler/about=chromium.desktop
 x-scheme-handler/unknown=chromium.desktop
+audio/mpeg=vlc.desktop
+application/pdf=org.pwmt.zathura-pdf-mupdf.desktop
+text/markdown=org.gnome.gedit.desktop
+inode/directory=org.gnome.Nautilus.desktop
 
 [Added Associations]
 image/jpeg=gimp.desktop;feh.desktop;
-image/png=gimp.desktop;feh.desktop;
+image/png=gfeh.desktop;imp.desktop;sxiv.desktop;
 text/plain=leafpad.desktop;
 audio/mpeg=easytag.desktop;vlc.desktop;
 application/xhtml+xml=chromium-usercreated-1.desktop;
@@ -18,7 +22,9 @@ application/vnd.openxmlformats-officedocument.spreadsheetml.sheet=libreoffice-ca
 application/vnd.openxmlformats-officedocument.presentationml.presentation=libreoffice-impress.desktop;
 application/vnd.openxmlformats-officedocument.wordprocessingml.document=libreoffice-writer.desktop;
 text/csv=libreoffice-calc.desktop;
-application/pdf=org.pwmt.zathura-pdf-poppler.desktop;
+application/pdf=org.pwmt.zathura-pdf-poppler.desktop;org.pwmt.zathura-pdf-mupdf.desktop;
 text/comma-separated-values=visidata.desktop
 text/tab-separated-values=visidata.desktop
 text/x-troff-mm=freeplane.desktop;
+inode/directory=easytag.desktop;
+text/markdown=org.gnome.gedit.desktop;
