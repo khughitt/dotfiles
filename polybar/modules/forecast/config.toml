@@ -1,0 +1,5 @@
+# weather forecase settings
+api_key = "REMOVED_OPENWEATHER_API_KEY"
+city_id = "4366164"
+units = "farenheight"
+display_symbol = "°F"

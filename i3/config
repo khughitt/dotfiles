@@ -33,18 +33,18 @@ bindsym $mod+n exec termite -e "zsh -ci 'vim \`fd -t f md ~/d/notes | fzf --exac
 #-------------------------------------------------------------------------------
 
 # wallpaper
+#exec --no-startup-id ~/d/linux/software/i3-wpd/i3wpd.py ~/d/linux/backgrounds/i3/ .png
 #exec_always feh --bg-scale ~/d/linux/backgrounds/02727_mossy_1920x1200.jpg 
 #exec_always feh --bg-scale ~/d/linux/backgrounds/Luetin_1920.jpg
 #exec_always feh --bg-scale ~/d/linux/backgrounds/board_black_line_texture_background_wood_55220_1920x1080.jpg
-#exec --no-startup-id ~/d/linux/software/i3-wpd/i3wpd.py ~/d/linux/backgrounds/i3/ .png
-# exec_always feh --bg-scale ~/d/linux/backgrounds/02786_lakefornight_1920x1200.jpg
-exec_always feh --bg-scale ~/d/linux/backgrounds/i3/9.png
+#exec_always feh --bg-scale ~/d/linux/backgrounds/02786_lakefornight_1920x1200.jpg
+#exec_always feh --bg-scale ~/d/linux/backgrounds/i3/9.png
+# exec_always feh --bg-scale ~/d/linux/backgrounds/nature/Milford_Sound_NZ.jpg
 
 # font
 font pango:Droid Sans Mono 10
 
 # window borders
-# for_window [class=".*"] border pixel 2
 for_window [class=".*"] border pixel 0
 hide_edge_borders smart_no_gaps
 
@@ -62,15 +62,40 @@ border_radius 10
 #client.unfocused        #3a3c4e #282936 #626483 #292d2e #3a3c4e
 #client.urgent           #3a3c4e #ebff87 #626483 #ebff87 #3a3c4e
 
-# colors [themer]
-# class                 border    backgr.   text      indicator child_border
-# client.focused          #a067abff #f37055ff #23292dff #1299adff #a067abff
-# client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
-
 # colors [onedark]
 # class                   border  backgr. text    indic.   child_border
-client.focused          #a067abff #61afefff #23292dff #56b6c2ff #a067abff
-client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
+#client.focused          #a067abff #61afefff #23292dff #56b6c2ff #a067abff
+#client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
+
+# use colors from Xresources
+set_from_resource $fg i3wm.color7 #f0f0f0
+set_from_resource $bg i3wm.color2 #f0f0f0
+
+set_from_resource $c0 i3wm.color0 #f0f0f0
+set_from_resource $c1 i3wm.color1 #f0f0f0
+set_from_resource $c2 i3wm.color2 #f0f0f0
+set_from_resource $c3 i3wm.color3 #f0f0f0
+set_from_resource $c4 i3wm.color4 #f0f0f0
+set_from_resource $c5 i3wm.color5 #f0f0f0
+set_from_resource $c6 i3wm.color6 #f0f0f0
+set_from_resource $c7 i3wm.color7 #f0f0f0
+set_from_resource $c8 i3wm.color8 #f0f0f0
+set_from_resource $c9 i3wm.color9 #f0f0f0
+set_from_resource $c10 i3wm.color10 #f0f0f0
+set_from_resource $c11 i3wm.color11 #f0f0f0
+set_from_resource $c12 i3wm.color12 #f0f0f0
+set_from_resource $c13 i3wm.color13 #f0f0f0
+set_from_resource $c14 i3wm.color14 #f0f0f0
+set_from_resource $c15 i3wm.color15 #f0f0f0
+
+# class                 border  backgr. text indicator child_border
+client.focused          $bg     $c6     $c3  $bg       $bg
+client.focused_inactive $c3     $c1     $fg  $bg       $bg
+client.unfocused        $c1     $c1     $fg  $bg       $bg
+client.urgent           $bg     $bg     $fg  $bg       $bg
+client.placeholder      $bg     $bg     $fg  $bg       $bg
+
+client.background       $bg
 
 #-------------------------------------------------------------------------------
 #  Input
@@ -90,11 +115,11 @@ client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
 # terminal
 #bindsym $mod+Return exec $term
 
-exec_always --no-startup-id termite --name=i3term -t i3term
+exec_always --no-startup-id termite --name=i3term
 for_window[instance="i3term"] move scratchpad
 
 bindsym $mod+Return \
-    exec --no-startup-id termite --name=i3term -t i3term;\
+    exec --no-startup-id termite --name=i3term;\
     [instance="i3term"] scratchpad show;\
     floating toggle
 
@@ -149,6 +174,9 @@ bindsym $mod+Shift+Right move right
 #-------------------------------------------------------------------------------
 # Workspaces
 #-------------------------------------------------------------------------------
+
+# default to stacked layout
+workspace_layout stacked
 
 # switch to workspace
 bindsym $mod+1 workspace number "1: web"
@@ -281,8 +309,15 @@ bindsym $mod+a focus parent
 #bindsym Mod1+backslash [class="Chromium"] focus
 #bindsym Mod1+s [instance="spotify"] focus
 
-# peek
-for_window [class="peek"] floating enable
+# make some things use floating layout by default
+# for_window [window_role="pop-up"]       floating enable
+# for_window [window_role="bubble"]       floating enable
+# for_window [window_role="task_dialog"]  floating enable
+# for_window [window_role="Preferences"]  floating enable
+# for_window [window_type="dialog"]       floating enable
+# for_window [window_type="menu"]         floating enable
+for_window [class="text-input"]         floating enable
+for_window [class="peek"]               floating enable
 
 #
 # Media keys:
@@ -308,7 +343,7 @@ set $scratch_x1 2112
 set $scratch_y1 108
 
 #-- terminal --#
-exec_always --no-startup-id termite --name=termite_scratch -t termite_scratch
+exec_always --no-startup-id termite --name=termite_scratch
 for_window[instance="termite_scratch"] move scratchpad
 
 bindsym Mod1+Return \
@@ -317,7 +352,7 @@ bindsym Mod1+Return \
     move position $scratch_x1 $scratch_y1;
 
 #-- r console --#
-exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch -t r_scratch
+exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
@@ -326,7 +361,7 @@ bindsym Mod1+space \
     move position $scratch_x1 $scratch_y1
 
 #-- python console --#
-exec_always --no-startup-id termite -e ipython --name=python_scratch -t python_scratch
+exec_always --no-startup-id termite -e ipython --name=python_scratch
 for_window[instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
@@ -335,7 +370,7 @@ bindsym Mod1+p \
     move position $scratch_x1 $scratch_y1
 
 #-- julia console --#
-exec_always --no-startup-id termite -e julia --name=julia_scratch -t julia_scratch
+exec_always --no-startup-id termite -e julia --name=julia_scratch
 for_window[instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
@@ -344,7 +379,7 @@ bindsym Mod1+j \
     move position $scratch_x1 $scratch_y1
 
 #-- tasks --#
-exec_always --no-startup-id termite -e "nvim ~/d/notes/personal/organization/organization-tasks.md" --name=tasks_scratch -t tasks_scratch 
+exec_always --no-startup-id termite -e "nvim ~/d/notes/personal/organization/organization-tasks.md" --name=tasks_scratch
 for_window[instance="tasks_scratch"] move scratchpad
 
 bindsym Mod1+t \
@@ -380,41 +415,42 @@ bindsym $mod+shift+r mode "resize"
 #
 # Status Bar:
 #
-bar {
-    output HDMI-0
-    output eDP-1
-    output eDP1
-    strip_workspace_numbers yes
-    i3bar_command i3bar -t
-    colors {
-        statusline #e9e9f4
-        background #282c34
-        inactive_workspace #282c34ff #282c34ff #abb2bf
-        focused_workspace  #282c34ff #282c34ff #e5c07b
-    }
-    status_command py3status --config ~/.config/i3status/config.right
-}
+# bar {
+#     output HDMI-0
+#     output eDP-1
+#     output eDP1
+#     strip_workspace_numbers yes
+#     i3bar_command i3bar -t
+#     colors {
+#         statusline #e9e9f4
+#         background #282c34
+#         inactive_workspace #282c34ff #282c34ff #abb2bf
+#         focused_workspace  #282c34ff #282c34ff #e5c07b
+#     }
+#     status_command py3status --config ~/.config/i3status/config.right
+# }
 
 #
 # Status Bar:
 #
-bar {
-    output DP-1
-    strip_workspace_numbers yes
-    i3bar_command i3bar -t
-    colors {
-        statusline #e9e9f4
-        background #282c34
-        inactive_workspace #333333ff #333333ff #5c5c5c
-        focused_workspace  #333333ff #333333ff #f37055ff
-    }
-    status_command py3status --config ~/.config/i3status/config.left
-}
+# bar {
+#     output DP-1
+#     strip_workspace_numbers yes
+#     i3bar_command i3bar -t
+#     colors {
+#         statusline #e9e9f4
+#         background #282c34
+#         inactive_workspace #333333ff #333333ff #5c5c5c
+#         focused_workspace  #333333ff #333333ff #f37055ff
+#     }
+#     status_command py3status --config ~/.config/i3status/config.left
+# }
 
 # autostart
-exec_always --no-startup-id killall picom; picom -c
-exec --no-startup-id /usr/lib/geoclue-2.0/demos/agent
+# exec --no-startup-id blackd
 exec --no-startup-id xrandr --output DP-1 --auto --left-of HDMI-0
-exec --no-startup-id blackd
+exec_always --no-startup-id killall picom; picom -c -b
+exec_always --no-startup-id $HOME/.config/polybar/launch.sh
+exec --no-startup-id /usr/lib/geoclue-2.0/demos/agent
 exec --no-startup-id greenclip daemon
 

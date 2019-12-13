@@ -21,6 +21,11 @@ function n {
     vim `fd -t f md ~/d/notes | grep --color='none' "$1" | fzf -1 --exact`
 }
 
+# fzf confs
+function c {
+    vim `fd --regex 'conf|init|rc' --exclude Extracted ~/d/dots | grep --color='none' "$1" | fzf -1 --exact`
+}
+
 # vim + ag
 function va {
     nvim $(ag -l $1)

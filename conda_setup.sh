@@ -51,4 +51,9 @@ git clone https://github.com/esc/conda-zsh-completion ~/software/conda-zsh-compl
 # location:
 cp /usr/share/terminfo/x/xterm-termite $HOME/conda/share/terminfo/x/
 
+# things that conda messes with
+
+# 1. polybar / xcbgen
+# https://github.com/polybar/polybar/issues/502
+
 

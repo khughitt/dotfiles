@@ -47,6 +47,13 @@ export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
 PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin
 export CMfinder=$HOME/software/cmfinder-0.4.1.9
 
+# perl
+PATH="/home/keith/perl5/bin${PATH:+:${PATH}}"; export PATH;
+PERL5LIB="/home/keith/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
+PERL_LOCAL_LIB_ROOT="/home/keith/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
+PERL_MB_OPT="--install_base \"/home/keith/perl5\""; export PERL_MB_OPT;
+PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5"; export PERL_MM_OPT;
+
 # ibus
 #export GTK_IM_MODULE=ibus
 #export XMODIFIERS=@im=ibus

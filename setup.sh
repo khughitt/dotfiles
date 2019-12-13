@@ -21,23 +21,6 @@ function ln_s() {
     ln -sf $1 $2
 }
 
-# Linuxbrew
-#echo "Installing Homebrew..." && sleep 5
-#sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
-
-# install tre (requires `brew vendor-install ruby` to be run, first)
-#brew install dduan/formulae/tre
-
-# others
-#echo "Installing Cargo packages..."
-#cargo install du-dust bb tldr
-
-#echo "Installing Arch packages..."
-#sudo pacman -S bat fasd fd fzf lsd thefuck visidata
-
-#echo "Installing Arch packages (AUR)..."
-#yay gotop mdcat moar
-
 echo "Setting up dotfiles..."
 
 # Setup zsh
@@ -60,9 +43,11 @@ fi
 ln -sf ${DOTS_HOME}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 ln -sf ${DOTS_HOME}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 
+ln -s /home/keith/d/dots/gtkrc-2.0 ~/.gtkrc-2.0
+
 # ~/.config/xx
-for path in "awesome" "cava" "feh" "mimeapps.list" "nvim" "redshift.conf"  \
-            "labnote" "pylintrc" "ranger" "snakemake" "termcolors" "zathura"; do
+for path in "awesome" "cava" "dunst" "feh" "mimeapps.list" "nvim" "redshift.conf"  \
+            "labnote" "polybar" "pylintrc" "ranger" "snakemake" "termcolors" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
@@ -70,7 +55,7 @@ done
 for path in "agignore" "ansiweatherrc" "ctags" "dir_colors" "gitconfig" \
             "gitignore_global" "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "xmodmaprc" "Xresources" \
-	        "xprofile"; do
+            "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
 done
 
@@ -83,7 +68,7 @@ for path in "sway" "rofi" "termite"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}/config
 done
 
-# i3, i3status
+# i3
 ln_s ${DOTS_HOME}/i3/config ${XDG_CONFIG_HOME}/i3/config
 ln_s ${DOTS_HOME}/i3/i3status.left ${XDG_CONFIG_HOME}/i3status/config.left
 ln_s ${DOTS_HOME}/i3/i3status.right ${XDG_CONFIG_HOME}/i3status/config.right
@@ -110,6 +95,52 @@ update-mime-database ~/.local/share/mime
 
 rm ${XDG_CONFIG_HOME}/mimeapps.list
 ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
+
+#
+# external dependencies
+#
+
+# arch
+echo "Arch packages:"
+echo "bat fasd fd fzf gotop lsd moar thefuck visidata"
+
+while true
+do
+    read -r -p "Install Arch packages? [Y/n] " input
+
+    case $input in
+       [yY][eE][sS]|[yY])
+    echo "Installing yay AUR helper..."
+
+    cd /tmp
+    git clone https://aur.archlinux.org/yay.git
+    cd yay
+    makepkg -si
+    cd -
+
+    echo "Finished installing yay..."
+
+    echo "Installing Arch packages..."
+    yay -S bat fasd fd fzf gotop-bin lsd moar spicetify-cli thefuck visidata
+
+    ;;
+       [nN][oO]|[nN])
+    echo "Skipping Arch package installation..."
+        ;;
+     *)
+    echo "Invalid input..."
+    ;;
+    esac
+done
+
+# echo 'Installing python packages...'
+# pip install --user colorz
+# pip install --user haishoku
+# pip install --user colorthief
+
+# others
+#echo "Installing Cargo packages..."
+#cargo install du-dust bb tldr
 
 echo "Done!"
 echo "Don't forget to install any necessary fonts, icons, etc."
