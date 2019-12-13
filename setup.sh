@@ -107,29 +107,30 @@ echo "bat fasd fd fzf gotop lsd moar thefuck visidata"
 while true
 do
     read -r -p "Install Arch packages? [Y/n] " input
-
     case $input in
-       [yY][eE][sS]|[yY])
-    echo "Installing yay AUR helper..."
+        [yY][eE][sS]|[yY])
+            # install yay
+            echo "Installing yay AUR helper..."
 
-    cd /tmp
-    git clone https://aur.archlinux.org/yay.git
-    cd yay
-    makepkg -si
-    cd -
+            cd /tmp
+            git clone https://aur.archlinux.org/yay.git
+            cd yay
+            makepkg -si
+            cd -
 
-    echo "Finished installing yay..."
+            echo "Finished installing yay..."
 
-    echo "Installing Arch packages..."
-    yay -S bat fasd fd fzf gotop-bin lsd moar spicetify-cli thefuck visidata
-
-    ;;
+            # install arch packages
+            echo "Installing Arch packages..."
+            yay -S bat fasd fd fzf gotop-bin lsd moar spicetify-cli thefuck visidata
+            ;;
        [nN][oO]|[nN])
-    echo "Skipping Arch package installation..."
-        ;;
-     *)
-    echo "Invalid input..."
-    ;;
+            echo "Skipping Arch package installation..."
+            break
+            ;;
+        *)
+            echo "Invalid input..."
+            ;;
     esac
 done
 
