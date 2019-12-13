@@ -1,0 +1,5 @@
+# weather forecase settings
+api_key = "fad894c7e52017632199b67e1875ce61"
+city_id = "4366164"
+units = "farenheight"
+display_symbol = "°F"

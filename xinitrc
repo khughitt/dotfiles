@@ -76,6 +76,9 @@ autocutsel -fork &
 # sway
 #exec sway >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
 
+# pywal
+wal -R
+
 # ssh-agent
 eval $(ssh-agent)
 

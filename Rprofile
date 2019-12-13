@@ -35,8 +35,8 @@ options(width = 100)
 #options(warnPartialMatchDollar = TRUE)
 
 # parallelization defaults for package installation, etc.
-options(mc.cores = min(1, parallel::detectCores() - 4))
-options(Ncpus    = min(1, parallel::detectCores() - 4))
+options(mc.cores = max(1, parallel::detectCores() - 4))
+options(Ncpus    = max(1, parallel::detectCores() - 4))
 
 # this may help speed up some plots over ssh (use per-connection)
 #X11.options(type = 'Xlib')

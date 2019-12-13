@@ -65,6 +65,7 @@ call plug#begin()
     Plug 'bfredl/nvim-ipy'
     Plug 'chrisbra/csv.vim'
     Plug 'dense-analysis/ale'
+    Plug 'dylanaraps/wal.vim'
     Plug 'drzel/vim-line-no-indicator'
     Plug 'ekiim/vim-mathpix'
     Plug 'ervandew/supertab'
@@ -368,8 +369,8 @@ endif
 " http://sunaku.github.io/vim-256color-bce.html
 set t_ut=""
 
-" enable true colors
-set termguicolors
+" enable true colors (disabled for pywal support)
+" set termguicolors
 
 " use colorscheme for R output
 let g:rout_follow_colorscheme = 1
@@ -407,7 +408,8 @@ let g:gruvbox_italic=1
 "colorscheme minimalist
 "colorscheme quantum
 " colorscheme citylights
-colorscheme onedark
+" colorscheme onedark
+colorscheme wal
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
@@ -546,7 +548,7 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#ale#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#wordcount#enabled = 1
-let g:airline_theme = 'onedark'
+"let g:airline_theme = 'onedark'
 
 " ---------------------------------------------------------------------------
 "  ale
@@ -958,6 +960,9 @@ let R_rconsole_width = 0
 
 " disable syntax highlighting in console output
 let R_hl_term = 0
+
+" TEST set background color for terminal
+let rout_color_normal = 'guibg=#191919'
 
 " devtools load all shortcut
 map ;dl :RLoadPackage<CR>

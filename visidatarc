@@ -1,8 +1,8 @@
 options.use_default_colors = True
-options.command_copy_clipboard = 'xclip'
+#options.command_copy_clipboard = 'xclip'
 options.color_current_row = 'reverse 11'
 options.disp_status_fmt = '({sheet.cursorRowIndex},{sheet.cursorColIndex}) ' + options.disp_status_fmt
-options.disp_float_ndigits = 3
+#options.disp_float_fmt = '%.03f'
 options.undo=True
 
 theme('color_negative', 'red', 'color of negative numbers')

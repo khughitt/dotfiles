@@ -1,13 +1,14 @@
 [options]
+dynamic_title = true
+scrollback_lines = 9192
+
 font = Hack Nerd Font Mono 12
 #font = Droid Sans Mono Nerd Font 12
 #font = Source Code Pro for Powerline Medium 12
 #font = DejaVu Sans Mono Nerd Font 12
 #font = Ubuntu Mono Nerd Font 15
-scrollback_lines = 9192
-# one dark
-[colors]
 
+[colors]
 # special
 foreground      = #abb2bf
 foreground_bold = #abb2bf

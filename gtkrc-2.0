@@ -1,6 +1,6 @@
 gtk-theme-name="Adwaita"
-gtk-icon-theme-name="Crashbit"
-gtk-font-name="Segoe UI 12"
+gtk-icon-theme-name = "Adwaita"
+gtk-font-name = "DejaVu Sans 11"
 gtk-cursor-theme-name="XcursorAero"
 gtk-cursor-theme-size=0
 gtk-toolbar-style=GTK_TOOLBAR_BOTH
@@ -13,4 +13,3 @@ gtk-xft-antialias=1
 gtk-xft-hinting=1
 gtk-xft-hintstyle="hintslight"
 gtk-xft-rgba="rgb"
-include "/home/keith/.gtkrc-2.0.mine"

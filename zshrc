@@ -15,25 +15,8 @@ if [ -e ~/.zsh_local_early ]; then
    source ~/.zsh_local_early
 fi
 
-# tmux helper function
-function xumt() {
-    SESSION_NAME=$(whoami)
-    if [ ! -z "$1" ]; then
-        SESSION_NAME="${SESSION_NAME}_$1"
-    fi
-
-    if tmux has-session -t $SESSION_NAME 2>/dev/null; then
-        tmux attach-session -t $SESSION_NAME
-    else
-        tmux new-session -s $SESSION_NAME
-    fi
-}
-
-# automatically launch / reconnect to  tmux when connecting via SSH
-if [[ "$TERM" != (screen|tmux)-* ]] && [ ! -z "$SSH_CLIENT" ]; then
-    xumt $TMUX_SESSION
-    exit
-fi
+# tmux
+source ~/.shell/tmux
 
 # check if in virtual console
 if [ "$TERM" = "linux" ]; then
@@ -121,6 +104,12 @@ then
     source ~/.shell/urxvt
 fi
 
+# termite dynamic titles
+if [[ $TERM == xterm-termite ]]; then
+  . /etc/profile.d/vte.sh
+  __vte_osc7
+fi
+
 # dir colors
 #eval $(dircolors -b ~/.dir_colors)
 
@@ -185,6 +174,9 @@ zplugin snippet OMZ::lib/key-bindings.zsh
 # prompt
 zplugin ice pick"async.zsh" src"pure.zsh"; zplugin light sindresorhus/pure
 
+# fasd-fzf integration
+zplugin light "wookayin/fzf-fasd"
+
 # zsh autosuggestions
 #zplugin light zsh-users/zsh-autosuggestions
 
@@ -236,6 +228,10 @@ fpath+=$HOME/d/dotfiles/zsh/
 autoload -Uz compinit
 compinit
 zplugin cdreplay -q 
+
+# pywal
+(/usr/bin/cat ~/.cache/wal/sequences &)
+source ~/.cache/wal/colors-tty.sh
 
 # print greeting
 if [ "$vconsole" = false ]; then

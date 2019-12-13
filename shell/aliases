@@ -48,6 +48,8 @@ alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
 alias vn='vim ~/.config/nvim/init.vim'
 alias vz='vim ~/.zshrc'
 
+alias wali='wal --backend haishoku -i'
+
 # manpages in lynx
 # alias man='man --html="lynx --vikeys"'
 

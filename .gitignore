@@ -1,12 +1,12 @@
-shell/private
-vim/black
-vim/tmp
+nvim/.netrwhist
 nvim/tmp
 nvim/plugged
 ranger/history
 ranger/bookmarks
 ranger/tagged
-.netrwhist
-*-local.vim
+shell/private
+spicetify
 tags
 unused
+vim/black
+vim/tmp

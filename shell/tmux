@@ -1,0 +1,20 @@
+# tmux helper function
+function xumt() {
+    SESSION_NAME=xumt
+    if [ ! -z "$1" ]; then
+        SESSION_NAME="${SESSION_NAME}_$1"
+    fi
+
+    if tmux has-session -t $SESSION_NAME 2>/dev/null; then
+        tmux attach-session -t $SESSION_NAME
+    else
+        tmux new-session -s $SESSION_NAME
+    fi
+}
+
+# automatically launch / reconnect to  tmux when connecting via SSH
+if [[ "$TERM" != (screen|tmux)-* ]] && [ ! -z "$SSH_CLIENT" ]; then
+    xumt $TMUX_SESSION
+    exit
+fi
+
