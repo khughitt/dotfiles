@@ -206,16 +206,16 @@ bindsym $mod+Shift+0 move container to workspace number "10: music"
 bindsym $mod+m move workspace to output left
 
 # specify default monitors for first few workspaces
-workspace "1: web" output HDMI-0 eDP-1
-workspace 2 output HDMI-0 eDP-1
-workspace 3 output HDMI-0 eDP-1
-workspace "4: notes" output HDMI-0 eDP-1
-workspace "5: files" output HDMI-0 eDP-1
-workspace 6 output DP-1 eDP-1
-workspace 7 output DP-1 eDP-1
-workspace 8 output DP-1 eDP-1
-workspace 9 output DP-1 eDP-1
-workspace "10: music" output DP-1 eDP-1
+workspace "1: web" output DP-1 eDP-1
+workspace 2 output DP-1 eDP-1
+workspace 3 output DP-1 eDP-1
+workspace "4: notes" output DP-1 eDP-1
+workspace "5: files" output DP-1 eDP-1
+workspace 6 output HDMI-0 eDP-1
+workspace 7 output HDMI-0 eDP-1
+workspace 8 output HDMI-0 eDP-1
+workspace 9 output HDMI-0 eDP-1
+workspace "10: music" output HDMI-0 eDP-1
 
 # rename workspace
 #bindsym $mod+r exec i3-input -F 'Rename workspace to %s' -P 'New name: '
@@ -339,7 +339,7 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 
 set $scratch_width 1536
 set $scratch_height 864
-set $scratch_x1 2112
+set $scratch_x1 192
 set $scratch_y1 108
 
 #-- terminal --#
@@ -434,7 +434,7 @@ bindsym $mod+shift+r mode "resize"
 # Status Bar:
 #
 # bar {
-#     output DP-1
+#     output HDMI-0
 #     strip_workspace_numbers yes
 #     i3bar_command i3bar -t
 #     colors {
@@ -449,7 +449,7 @@ bindsym $mod+shift+r mode "resize"
 # autostart
 # exec --no-startup-id blackd
 exec --no-startup-id xrandr --output DP-1 --auto --left-of HDMI-0
-exec_always --no-startup-id killall picom; picom -c -b
+exec_always --no-startup-id killall picom; picom -bc
 exec_always --no-startup-id $HOME/.config/polybar/launch.sh
 exec --no-startup-id /usr/lib/geoclue-2.0/demos/agent
 exec --no-startup-id greenclip daemon

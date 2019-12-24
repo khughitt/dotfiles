@@ -64,7 +64,8 @@ setopt interactivecomments    # recognize comments
 zstyle ':completion:*' menu select=4
 
 # use smart-case completion
-zstyle ':completion:*' matcher-list 'l:|=* r:|=*' 
+# zstyle ':completion:*' matcher-list 'l:|=* r:|=*' 
+zstyle ':completion:*'  matcher-list 'm:{a-z}={A-Z}'
 
 # snakemake tab completion support
 #compdef _gnu_generic snakemake
@@ -175,7 +176,7 @@ zplugin snippet OMZ::lib/key-bindings.zsh
 zplugin ice pick"async.zsh" src"pure.zsh"; zplugin light sindresorhus/pure
 
 # fasd-fzf integration
-zplugin light "wookayin/fzf-fasd"
+zplugin light "khughitt/fzf-fasd"
 
 # zsh autosuggestions
 #zplugin light zsh-users/zsh-autosuggestions

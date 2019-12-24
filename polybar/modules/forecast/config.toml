@@ -2,4 +2,5 @@
 api_key = "REMOVED_OPENWEATHER_API_KEY"
 city_id = "4366164"
 units = "farenheight"
-display_symbol = "°F"
+#display_symbol = "°F"
+display = "{{ temp_icon }} {{ temp_celcius }}°C ({{ temp_fahrenheit }}°F)"

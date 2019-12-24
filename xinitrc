@@ -12,8 +12,14 @@ fi
 dp1=$(xrandr -q | awk '/^DP-1/ {print $2}')
 edp1=$(xrandr -q | awk '/^eDP-?1/ {print $2}')
 dvi1=$(xrandr -q | awk '/^DVI-D-1/ {print $2}')
-hdmi0=$(xrandr -q | awk '/^HDMI-?0/ {print $2}')
-hdmi1=$(xrandr -q | awk '/^HDMI-?1/ {print $2}')
+
+# hdmi0=$(xrandr -q | awk '/^HDMI-?0/ {print $2}')
+# hdmi1=$(xrandr -q | awk '/^HDMI-?1/ {print $2}')
+
+# titan
+if [ "$hdmi0" = "connected" && "$dp1" = "connected" ]; then
+  xrandr --output DP-1 --auto --left-of HDMI-0
+fi
 
 # laptop + monitor
 if [ "$edp1" = "connected" ]; then
@@ -27,11 +33,6 @@ if [ "$edp1" = "connected" ]; then
         xrandr --output DP-1 --auto --same-as $edp1_id
         xrandr --output $edp1_id --off
     fi
-fi
-
-# two monitors (HDMI/DP-I)
-if [ "$hdmi0" = "connected" && "$dp1" = "connected" ]; then
-  xrandr --output DP-1 --auto --left-of HDMI-0
 fi
 
 # two monitors (HDMI/DVI)
@@ -49,12 +50,7 @@ setxkbmap -option terminate:ctrl_alt_bksp
 # load Xresources
 xrdb -merge ~/.Xresources
 
-# map caps lock to escape
-#setxkbmap -option caps:escape
-#xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
-#xmodmap -e 'clear Lock' -e 'keycode 0x66 = Escape'
-
-# java fix
+# java tiling window manager fix
 export _JAVA_AWT_WM_NONREPARENTING=1
 
 if [ -s ~/.xmodmaprc ]; then
@@ -63,9 +59,6 @@ fi
 
 # sync clipboard buffers
 autocutsel -fork &
-
-# sync primary/clipboard buffers
-#autocutsel -selection PRIMARY -fork &
 
 # awesome
 #exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr
@@ -84,4 +77,3 @@ eval $(ssh-agent)
 
 # i3
 exec i3 >> ~/.cache/i3/stdout 2>> ~/.cache/i3/stderr
-
