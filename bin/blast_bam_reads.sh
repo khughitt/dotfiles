@@ -2,7 +2,7 @@
 ###############################################################################
 #
 # blast_bam_reads.sh
-# Keith Hughitt <user@email.com>
+# Keith Hughitt
 # 2015/12/08
 #
 # BLASTs a random subset of N reads from a .bam file (e.g. unmapped.bam).

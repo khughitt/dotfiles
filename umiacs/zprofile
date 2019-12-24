@@ -11,8 +11,6 @@ source /cbcb/sw/cbcb_profile
 # CBCB Modules
 export MODULEPATH="$MODULEPATH:/cbcb/sw/RedHat-7-x86_64/common/modules/version/dev"
 export CBCB_DEV="/cbcb/sw/RedHat-7-x86_64/dev"
-export CBCB_SW_MAINTAINER_NAME="Keith Hughitt"
-export CBCB_SW_MAINTAINER_EMAIL="user@email.com"
 
 # Load modules
 module add         \
