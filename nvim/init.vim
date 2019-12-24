@@ -63,6 +63,7 @@ call plug#begin()
     " Plug 'airblade/vim-gitgutter'
     Plug 'andymass/vim-matchup'
     Plug 'bfredl/nvim-ipy'
+    Plug 'burneyy/vim-snakemake'
     Plug 'chrisbra/csv.vim'
     Plug 'dense-analysis/ale'
     Plug 'dylanaraps/wal.vim'
@@ -762,6 +763,10 @@ let g:NERDSpaceDelims = 1
 let g:NERDCommentEmptyLines = 1
 let g:NERDTrimTrailingWhitespace = 1
 
+let g:NERDCustomDelimiters = {
+    \ 'snakemake' : { 'left': '#' },
+    \ }
+
 nmap <space> <leader>c<space>
 vmap <space> <leader>c<space>
 
@@ -1043,6 +1048,24 @@ function! ShowRSource()
     execute ":Rinsert " . g:function_name
 endfunction
 
+" loads a saved image associated with the file, if one exists
+function! LoadRDA()
+    " determine expected path of rda file
+    let cwd = expand("%:p")
+    let code_base_dir = resolve(expand($RESEARCH))
+    let rda_base_dir  = "/rda"
+    let rda_path = substitute(cwd, code_base_dir, rda_base_dir, "e")
+    let rda_path = substitute(rda_path, printf("%s$", expand("%:e")), "rda", "e")
+
+    " if rda image exists, load it
+    if filereadable(rda_path)
+        echom printf("Loading %s...", rda_path)
+        call g:SendCmdToR(printf("load('%s')", rda_path))
+    else
+        echom printf("%s does not exist!", rda_path)
+    endif
+endfunction
+
 " au FileType r,rmd nmap <localleader>sc :call ShowRSource()<CR>
 nmap <localleader>sc :call ShowRSource()<CR>
 
@@ -1164,10 +1187,6 @@ autocmd BufRead,BufNewFile *.py set autoindent
 "au FileType rmd colorscheme onedark
 
 au FileType python map <silent> <leader>b obreakpoint()<esc>
-
-" Snakemake syntax highlighting
-au BufNewFile,BufRead Snakefile set syntax=snakemake
-au BufNewFile,BufRead *.snakefile set syntax=snakemake
 
 " Host-specific configuration
 " http://effectif.com/vim/host-specific-vim-config

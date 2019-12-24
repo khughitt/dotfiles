@@ -55,7 +55,7 @@ done
 for path in "agignore" "ansiweatherrc" "ctags" "dir_colors" "gitconfig" \
             "gitignore_global" "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "xmodmaprc" "Xresources" \
-            "xprofile"; do
+            "condarc" "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
 done
 
@@ -76,7 +76,8 @@ ln_s ${DOTS_HOME}/i3/i3status.right ${XDG_CONFIG_HOME}/i3status/config.right
 mkdir -p ~/.cache/i3
 
 # picom
-ln -sf ${DOTS_HOME}/picom.conf ${XDG_CONFIG_HOME}/picom/picom.conf
+mkdir -p ${XDG_CONFIG_HOME}/picom
+ln -sf ${DOTS_HOME}/picom ${XDG_CONFIG_HOME}/picom/picom.conf
 
 # copy Xresources to Xdefaults for sway
 ln_s ${DOTS_HOME}/Xresources ~/.Xdefaults
@@ -102,7 +103,8 @@ ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
 
 # arch
 echo "Arch packages:"
-echo "bat fasd fd fzf gotop lsd moar thefuck visidata"
+echo "bat fasd fd fzf gotop lsd moar powerline ripgrep thefuck tldr visidata"
+echo "polybar nerd-fonts-complete ttf-weather-icons"
 
 while true
 do
@@ -122,7 +124,8 @@ do
 
             # install arch packages
             echo "Installing Arch packages..."
-            yay -S bat fasd fd fzf gotop-bin lsd moar spicetify-cli thefuck visidata
+            yay -S bat fasd fd fzf gotop-bin lsd moar spicetify-cli thefuck visidata \
+                   powerline ripgrep tldr polybar nerd-fonts-complete ttf-weather-icons
             ;;
        [nN][oO]|[nN])
             echo "Skipping Arch package installation..."

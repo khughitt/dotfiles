@@ -6,6 +6,14 @@ options.disp_status_fmt = '({sheet.cursorRowIndex},{sheet.cursorColIndex}) ' + o
 options.undo=True
 
 theme('color_negative', 'red', 'color of negative numbers')
-Sheet.colorizers += [ColumnColorizer(2, 'color_negative', 
+Sheet.colorizers += [ColumnColorizer(2, 'color_negative',
                                      lambda s,c,r,v: c and v is not None and isinstance(v.value, (int,float)) and int(v.value) < 0)]
 
+# hdf5 blosc compression support
+# https://github.com/saulpw/visidata/issues/121
+import h5py
+
+try:
+    import tables
+except ImportError:
+    pass

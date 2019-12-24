@@ -60,7 +60,7 @@ volume master {
 }
 
 weather_owm {
-    api_key = fad894c7e52017632199b67e1875ce61 
+    api_key = env(OWM_KEY)
     location = (38.92, -77)
     format = "{city} {icon} {temperature}[ {rain}], {description}"
     format_temperature = "{icon} [\?color=all {current:.0f}°{unit}] ([\?color=all {max:.0f}°{unit}])"
