@@ -370,7 +370,7 @@ endif
 " http://sunaku.github.io/vim-256color-bce.html
 set t_ut=""
 
-" enable true colors (disabled for pywal support)
+" enable true colors (disabled for pywal support..)
 " set termguicolors
 
 " use colorscheme for R output
