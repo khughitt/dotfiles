@@ -1,6 +1,4 @@
-# weather forecase settings
-api_key = "fad894c7e52017632199b67e1875ce61"
-city_id = "4366164"
+# weather forecast settings
+city_id = "5854571" 
 units = "farenheight"
-#display_symbol = "°F"
 display = "{{ temp_icon }} {{ temp_celcius }}°C ({{ temp_fahrenheit }}°F)"
