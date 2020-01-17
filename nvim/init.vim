@@ -113,8 +113,8 @@ call plug#begin()
     Plug 'glts/vim-textobj-comment'
     Plug 'kana/vim-textobj-user'
     Plug 'vimtaku/vim-textobj-keyvalue'
+    Plug 'tyru/vim-textobj-underscore', { 'branch': 'support-3-cases' }
     " Plug 'vim-scripts/argtextobj.vim'
-    " Plug 'tyru/vim-textobj-underscore', { 'branch': 'support-3-cases' }
 
     Plug 'agreco/vim-citylights'
     Plug 'ayu-theme/ayu-vim'

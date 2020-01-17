@@ -2,7 +2,7 @@ options.use_default_colors = True
 #options.command_copy_clipboard = 'xclip'
 options.color_current_row = 'reverse 11'
 options.disp_status_fmt = '({sheet.cursorRowIndex},{sheet.cursorColIndex}) ' + options.disp_status_fmt
-#options.disp_float_fmt = '%.03f'
+options.disp_float_fmt = '%.03f'
 options.undo=True
 
 theme('color_negative', 'red', 'color of negative numbers')
@@ -11,7 +11,10 @@ Sheet.colorizers += [ColumnColorizer(2, 'color_negative',
 
 # hdf5 blosc compression support
 # https://github.com/saulpw/visidata/issues/121
-import h5py
+try:
+    import h5py
+except ImportError:
+    pass
 
 try:
     import tables
