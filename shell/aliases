@@ -67,6 +67,9 @@ alias cpr="cp -r"
 alias pc='yay -Syu'
 alias pcd='yay -Syu --devel'
 
+# conda
+alias cde='conda deactivate'
+alias ca='conda activate'
 alias cs='conda search'
 
 # process management

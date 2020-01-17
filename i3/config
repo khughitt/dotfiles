@@ -53,6 +53,9 @@ gaps inner 12
 smart_gaps on
 border_radius 10
 
+# keyboard shortcut to toggle borders of current window
+bindsym $mod+Shift+b border toggle
+
 #gaps inner all set 20
 #gaps outer current plus 5
 
