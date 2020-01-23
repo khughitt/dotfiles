@@ -15,6 +15,6 @@ function xumt() {
 # automatically launch / reconnect to  tmux when connecting via SSH
 if [[ "$TERM" != (screen|tmux)-* ]] && [ ! -z "$SSH_CLIENT" ]; then
     xumt $TMUX_SESSION
-    exit
+    # exit
 fi
 
