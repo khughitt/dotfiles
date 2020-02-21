@@ -54,7 +54,6 @@ alias wali='wal --backend haishoku -i'
 # alias man='man --html="lynx --vikeys"'
 
 # matching
-alias g='grep --color=always'
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
 
@@ -71,11 +70,6 @@ alias pcd='yay -Syu --devel'
 alias cde='conda deactivate'
 alias ca='conda activate'
 alias cs='conda search'
-
-# process management
-function pg {
-    ps -Af | grep $1 | grep -v grep
-}
 
 # diff
 alias diff='diff --color=auto'

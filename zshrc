@@ -71,7 +71,7 @@ zstyle ':completion:*'  matcher-list 'm:{a-z}={A-Z}'
 #compdef _gnu_generic snakemake
 
 # additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{aliases,biosyntax,functions,private,exports}; do
+for file in ~/.shell/{aliases,functions,private,exports}; do
     [ -r "$file" ] && source "$file"
 done
 unset file
