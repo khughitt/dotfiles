@@ -8,23 +8,25 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
   unset f
 fi
 
-# detect displays
-dp1=$(xrandr -q | awk '/^DP-1/ {print $2}')
-edp1=$(xrandr -q | awk '/^eDP-?1/ {print $2}')
-dvi1=$(xrandr -q | awk '/^DVI-D-1/ {print $2}')
+# detect displays;
+# note: $() subshell syntax not supported in sh
+xrandrq=`xrandr -q`
 
-# hdmi0=$(xrandr -q | awk '/^HDMI-?0/ {print $2}')
-# hdmi1=$(xrandr -q | awk '/^HDMI-?1/ {print $2}')
+dp1=`echo "$xrandrq" | awk '/^DP-1/ {print $2}'`
+edp1=`echo "$xrandrq" | awk '/^eDP-?1/ {print $2}'`
+dvi1=`echo "$xrandrq" | awk '/^DVI-D-1/ {print $2}'`
+hdmi0=`echo "$xrandrq" | awk '/^HDMI-?0/ {print $2}'`
+hdmi1=`echo "$xrandrq" | awk '/^HDMI-?1/ {print $2}'`
 
 # titan
-if [ "$hdmi0" = "connected" && "$dp1" = "connected" ]; then
-  xrandr --output DP-1 --auto --left-of HDMI-0
+if [ "$hdmi0" = "connected" ] && [ "$dp1" = "connected" ]; then
+  xrandr --output DP-1 --primary --auto --left-of HDMI-0
 fi
 
 # laptop + monitor
 if [ "$edp1" = "connected" ]; then
     # eDP1 / eDP-1
-    edp1_id=$(xrandr -q | awk '/^eDP-?1/ {print $1}')
+    edp1_id=`xrandr -q | awk '/^eDP-?1/ {print $1}'`
 
     if [ "$hdmi1" = "connected" ]; then
         xrandr --output HDMI1 --auto --same-as $edp1_id
@@ -73,7 +75,7 @@ autocutsel -fork &
 wal -R
 
 # ssh-agent
-eval $(ssh-agent)
+eval `pkill ssh-agent && ssh-agent`
 
 # i3
 exec i3 >> ~/.cache/i3/stdout 2>> ~/.cache/i3/stderr

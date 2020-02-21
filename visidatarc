@@ -1,13 +1,33 @@
-options.use_default_colors = True
-#options.command_copy_clipboard = 'xclip'
-options.color_current_row = 'reverse 11'
-options.disp_status_fmt = '({sheet.cursorRowIndex},{sheet.cursorColIndex}) ' + options.disp_status_fmt
-options.disp_float_fmt = '%.03f'
-options.undo=True
+#
+# VisiData configuration
+# KH
+#
 
+# General settings
+options.use_default_colors=True
+options.color_current_row='reverse 11'
+options.disp_status_fmt='({sheet.cursorRowIndex},{sheet.cursorColIndex}) ' + options.disp_status_fmt
+#options.disp_float_fmt='%.03f'
+options.undo=True
+#options.command_copy_clipboard='xclip'
+
+# use different colors for positive and negative values
 theme('color_negative', 'red', 'color of negative numbers')
-Sheet.colorizers += [ColumnColorizer(2, 'color_negative',
-                                     lambda s,c,r,v: c and v is not None and isinstance(v.value, (int,float)) and int(v.value) < 0)]
+
+def is_neg(s, c, r, v):
+    return c and v is not None and isinstance(v.value, (int,float)) and int(v.value) < 0
+
+Sheet.colorizers += [ColumnColorizer(2, 'color_negative', is_neg)]
+
+# File formats
+
+# old api
+# open_feather = open_pandas
+# open_parquet = open_pandas
+
+# new api
+vd.filetype('feather', PandasSheet)
+vd.filetype('parquet', PandasSheet)
 
 # hdf5 blosc compression support
 # https://github.com/saulpw/visidata/issues/121

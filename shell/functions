@@ -8,6 +8,11 @@ function h {
     history -df -100000 | grep $1
 }
 
+# process management
+function pg {
+    ps -Af | grep $1 | grep -v grep
+}
+
 # head helper functions
 function hl {
     head -n10 $1 | less

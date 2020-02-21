@@ -14,7 +14,8 @@
 " General
 " ---------------------------------------------------------------------------
 set hidden           " easy buffer switching
-set isk+=_,$,@,%,#,- " none word dividers
+set isk+=%,#,-       " additional vim word characters
+"set isk-=(,)         " characters to remove from word list
 set cursorline       " highlight current line
 set modeline         " make sure modeline support is enabled
 set noerrorbells     " quiet, please
@@ -70,7 +71,6 @@ call plug#begin()
     Plug 'drzel/vim-line-no-indicator'
     Plug 'ekiim/vim-mathpix'
     Plug 'ervandew/supertab'
-    Plug 'godlygeek/tabular'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
     Plug 'honza/vim-snippets'
@@ -99,6 +99,7 @@ call plug#begin()
     Plug 'Shougo/denite.nvim'
     Plug 'Shougo/neomru.vim'
     Plug 'stephpy/vim-yaml'
+    Plug 'tikhomirov/vim-glsl'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
@@ -112,9 +113,9 @@ call plug#begin()
 
     Plug 'glts/vim-textobj-comment'
     Plug 'kana/vim-textobj-user'
-    Plug 'vimtaku/vim-textobj-keyvalue'
+    "Plug 'vimtaku/vim-textobj-keyvalue'
     Plug 'tyru/vim-textobj-underscore', { 'branch': 'support-3-cases' }
-    " Plug 'vim-scripts/argtextobj.vim'
+    Plug 'vim-scripts/argtextobj.vim'
 
     Plug 'agreco/vim-citylights'
     Plug 'ayu-theme/ayu-vim'
@@ -136,6 +137,7 @@ call plug#begin()
     Plug 'KeitaNakamura/neodark.vim'
     Plug 'liuchengxu/space-vim-dark'
     Plug 'lu-ren/SerialExperimentsLain'
+    Plug 'mhartington/oceanic-next'
     Plug 'morhetz/gruvbox'
     Plug 'NLKNguyen/papercolor-theme'
     Plug 'rakr/vim-one'
@@ -175,6 +177,8 @@ call plug#begin()
     "Plug 'Shougo/deoplete-terminal'
     "Plug 'vim-syntastic/syntastic'
     "Plug 'vimwiki/vimwiki'
+    " Plug 'godlygeek/tabular'
+    " Plug 'neoclide/coc.nvim', {'branch': 'release'}
     "
     " overrides filetype tabstop, etc. options
     "Plug 'editorconfig/editorconfig-vim'
@@ -285,6 +289,10 @@ nnoremap <Tab> :bnext<CR>
 nnoremap <S-Tab> :bprev<CR>
 nnoremap <s-left> :bprev<CR>
 nnoremap <s-right> :bnext<CR>
+
+" Switch to ]b and [b for improved coc.nvim support
+" nnoremap [b :bprevious<CR>
+" nnoremap ]b :bnext<CR>
 
 " Close the current buffer
 map <leader>bd :BD<cr>
@@ -508,7 +516,7 @@ nnoremap <leader>n :nohl<CR>
 " ---------------------------------------------------------------------------
 "  Tab completion
 " ---------------------------------------------------------------------------
-set infercase " case insensitive tab completion
+set infercase  " case insensitive tab completion
 set ignorecase " ignore case search
 set smartcase  " override 'ignorecase' if the search pattern contains upper case
 
@@ -569,6 +577,147 @@ let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes
 " csv.vim
 " ---------------------------------------------------------------------------
 let g:csv_no_conceal = 1
+
+" ---------------------------------------------------------------------------
+" coc.nvim
+" ---------------------------------------------------------------------------
+
+" disable backups (may be neccessary...)
+" https://github.com/neoclide/coc.nvim/issues/649
+" setlocal nobackup
+" setlocal nowritebackup
+
+" Better display for messages
+" set cmdheight=2
+"
+" " You will have bad experience for diagnostic messages when it's default 4000.
+" set updatetime=300
+"
+" " don't give |ins-completion-menu| messages.
+" set shortmess+=c
+"
+" " always show signcolumns
+" set signcolumn=yes
+"
+" " if nvm is set to lazy-load via zplugin, path will need to be manually specified
+" "let g:coc_node_path="/home/keith/.nvm/versions/node/v12.9.1/bin/node"
+"
+" " extensions to install
+" let g:coc_global_extensions = ['coc-r-lsp']
+"
+" " Use tab for trigger completion with characters ahead and navigate.
+" inoremap <silent><expr> <TAB>
+"       \ pumvisible() ? "\<C-n>" :
+"       \ <SID>check_back_space() ? "\<TAB>" :
+"       \ coc#refresh()
+" inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+"
+" function! s:check_back_space() abort
+"   let col = col('.') - 1
+"   return !col || getline('.')[col - 1]  =~# '\s'
+" endfunction
+"
+" " Use <c-space> to trigger completion.
+" inoremap <silent><expr> <c-space> coc#refresh()
+"
+" " Use <cr> to confirm completion, `<C-g>u` means break undo chain at current position.
+" " Coc only does snippet and additional edit on confirm.
+" inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+"
+" " Also allow confirmation using <TAB>
+" inoremap <expr> <TAB> pumvisible() ? "\<C-y>" : "\<C-g>u\<TAB>"
+"
+" " Or use `complete_info` if your vim support it, like:
+" " inoremap <expr> <cr> complete_info()["selected"] != "-1" ? "\<C-y>" : "\<C-g>u\<CR>"
+"
+" " Use `[g` and `]g` to navigate diagnostics
+" nmap <silent> [g <Plug>(coc-diagnostic-prev)
+" nmap <silent> ]g <Plug>(coc-diagnostic-next)
+"
+" " Remap keys for gotos
+" nmap <silent> gd <Plug>(coc-definition)
+" nmap <silent> gy <Plug>(coc-type-definition)
+" nmap <silent> gi <Plug>(coc-implementation)
+" nmap <silent> gr <Plug>(coc-references)
+"
+" " Use K to show documentation in preview window
+" nnoremap <silent> K :call <SID>show_documentation()<CR>
+"
+" function! s:show_documentation()
+"   if (index(['vim','help'], &filetype) >= 0)
+"     execute 'h '.expand('<cword>')
+"   else
+"     call CocAction('doHover')
+"   endif
+" endfunction
+"
+" " Highlight symbol under cursor on CursorHold
+" " 2020-01-28: disabled for now due to conflict with coc-r-lsp
+" " autocmd CursorHold * silent call CocActionAsync('highlight')
+"
+" " Remap for rename current word
+" nmap <leader>rn <Plug>(coc-rename)
+"
+" " Remap for format selected region
+" xmap <leader>f  <Plug>(coc-format-selected)
+" nmap <leader>f  <Plug>(coc-format-selected)
+"
+" augroup mygroup
+"   autocmd!
+"   " Setup formatexpr specified filetype(s).
+"   autocmd FileType typescript,json setl formatexpr=CocAction('formatSelected')
+"   " Update signature help on jump placeholder
+"   autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+" augroup end
+"
+" " Remap for do codeAction of selected region, ex: `<leader>aap` for current paragraph
+" xmap <leader>a  <Plug>(coc-codeaction-selected)
+" nmap <leader>a  <Plug>(coc-codeaction-selected)
+"
+" " Remap for do codeAction of current line
+" nmap <leader>ac  <Plug>(coc-codeaction)
+" " Fix autofix problem of current line
+" nmap <leader>qf  <Plug>(coc-fix-current)
+"
+" " Create mappings for function text object, requires document symbols feature of languageserver.
+" xmap if <Plug>(coc-funcobj-i)
+" xmap af <Plug>(coc-funcobj-a)
+" omap if <Plug>(coc-funcobj-i)
+" omap af <Plug>(coc-funcobj-a)
+"
+" " Use <TAB> for select selections ranges, needs server support, like: coc-tsserver, coc-python
+" nmap <silent> <TAB> <Plug>(coc-range-select)
+" xmap <silent> <TAB> <Plug>(coc-range-select)
+"
+" " Use `:Format` to format current buffer
+" command! -nargs=0 Format :call CocAction('format')
+"
+" " Use `:Fold` to fold current buffer
+" command! -nargs=? Fold :call     CocAction('fold', <f-args>)
+"
+" " use `:OR` for organize import of current buffer
+" command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organizeImport')
+"
+" " Add status line support, for integration with other plugin, checkout `:h coc-status`
+" set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
+"
+" " Using CocList
+" " Show all diagnostics
+" nnoremap <silent> <space>a  :<C-u>CocList diagnostics<cr>
+" " Manage extensions
+" nnoremap <silent> <space>e  :<C-u>CocList extensions<cr>
+" " Show commands
+" nnoremap <silent> <space>c  :<C-u>CocList commands<cr>
+" " Find symbol of current document
+" nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
+" " Search workspace symbols
+" nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
+" " Do default action for next item.
+" nnoremap <silent> <space>j  :<C-u>CocNext<CR>
+" " Do default action for previous item.
+" nnoremap <silent> <space>k  :<C-u>CocPrev<CR>
+" " Resume latest coc list
+" nnoremap <silent> <space>p  :<C-u>CocListResume<CR>
 
 " ---------------------------------------------------------------------------
 "  colorizer
@@ -956,7 +1105,11 @@ call airline#add_statusline_func('Noscrollbar')
 " ---------------------------------------------------------------------------
 let vimrplugin_objbr_place = "console,right"
 
-" Fix issue relating to setwidth
+" fix setkeyw setting messed up by vim.r ftplugin
+"au BufWinEnter * set isk+=%,#,-
+au FileType r,rmd set iskeyword=@,48-57,_
+
+" fix issue relating to setwidth
 " https://github.com/jalvesaq/Nvim-R/issues/81#issuecomment-262651872
 let R_setwidth = 0
 
@@ -1021,7 +1174,8 @@ nmap <CR> <Plug>RDSendLine
 " autocmd FileType rmd    nmap <buffer> <CR> <Plug>RDSendLine
 
 " nmap <C-Space> ,rp
-autocmd FileType r,rmd    nmap <buffer> <C-Space> ,rp
+" disabled; conflicts with coc.nvim
+" autocmd FileType r,rmd    nmap <buffer> <C-Space> ,rp
 
 " autostart term
 " au FileType r   if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
@@ -1145,10 +1299,10 @@ vmap <C-v> <Plug>(expand_region_shrink)
 " ---------------------------------------------------------------------------
 "  vim-textobj-underscore
 " ---------------------------------------------------------------------------
-" nmap cid ci_
-" nmap cad ca_
-" nmap did di_
-" nmap dad da_
+nmap cid ci_
+nmap cad ca_
+nmap did di_
+nmap dad da_
 
 " ---------------------------------------------------------------------------
 "  VimWiki
@@ -1176,7 +1330,7 @@ let g:tagbar_type_vimwiki = {
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType html,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd FileType html,css,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.py set autoindent
 
 " Languge-specific color schemes
