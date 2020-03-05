@@ -56,5 +56,5 @@ Additional Z shell plugins I'm currently using:
 Screenshot
 ----------
 
-![desktop screenshot](misc/2019-09-21_screenshot.png)
+![desktop screenshot](misc/2020-03-05_screenshot.png)
 
