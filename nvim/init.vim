@@ -98,6 +98,7 @@ call plug#begin()
     Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'Shougo/denite.nvim'
     Plug 'Shougo/neomru.vim'
+    Plug 'sslivkoff/vim-scroll-barnacle'
     Plug 'stephpy/vim-yaml'
     Plug 'tikhomirov/vim-glsl'
     Plug 'tmux-plugins/vim-tmux-focus-events'
@@ -108,7 +109,7 @@ call plug#begin()
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
-    Plug 'gcavallanti/vim-noscrollbar'
+    " Plug 'gcavallanti/vim-noscrollbar'
     Plug '/usr/share/vim/vimfiles'
 
     Plug 'glts/vim-textobj-comment'
@@ -914,6 +915,7 @@ let g:NERDTrimTrailingWhitespace = 1
 
 let g:NERDCustomDelimiters = {
     \ 'snakemake' : { 'left': '#' },
+    \ 'rmd': { 'left': '#' }
     \ }
 
 nmap <space> <leader>c<space>
@@ -1095,10 +1097,15 @@ cmap <C-r> :History:<CR>
 " function! NoScrollbarForLightline()
 "    return noscrollbar#statusline()
 " endfunction
-function! Noscrollbar(...)
-    let w:airline_section_z = '%{noscrollbar#statusline()}'
-endfunction
-call airline#add_statusline_func('Noscrollbar')
+" function! Noscrollbar(...)
+"     let w:airline_section_z = '%{noscrollbar#statusline()}'
+" endfunction
+" call airline#add_statusline_func('Noscrollbar')
+
+" ---------------------------------------------------------------------------
+"  vim-scroll-barnacle
+" ---------------------------------------------------------------------------
+highlight link Scrollbar Include
 
 " ---------------------------------------------------------------------------
 "  Nvim-R
