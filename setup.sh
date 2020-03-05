@@ -29,7 +29,7 @@ ln_s ${DOTS_HOME}/zshenv ~/.zshenv
 ln_s ${DOTS_HOME}/shell ~/.shell
 
 # Create needed directories
-for dir in "compton" "gedit" "i3" "i3status" "sway" "rofi" "termite"; do
+for dir in "compton" "gedit" "i3" "i3status" "sway" "termite"; do
     mkdir -p ${XDG_CONFIG_HOME}/${dir}
 done
 
