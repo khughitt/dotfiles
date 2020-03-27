@@ -32,6 +32,8 @@ alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/1
 
 alias m=tldr
 
+alias vi=vim
+
 alias errors="journalctl -b -p err|less"
 alias vacuum="sudo journalctl --vacuum-size=200M"
 
