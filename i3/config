@@ -23,7 +23,10 @@ set $menu rofi -show drun
 set $greenclip rofi -modi "clipboard:greenclip print" -show clipboard -run-command '{cmd}'
 
 # fzf-notes
-bindsym $mod+n exec termite -e "zsh -ci 'vim \`fd -t f md ~/d/notes | fzf --exact -1 \`'"
+# bindsym $mod+n exec termite -e "zsh -ci 'vim \`fd -t f md ~/d/notes | fzf --exact -1 \`'"
+
+# rofi-notes
+bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/rofi-notes.sh"
 
 # start dmenu
 #set $menu dmenu_run
