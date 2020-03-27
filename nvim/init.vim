@@ -1106,6 +1106,7 @@ cmap <C-r> :History:<CR>
 "  vim-scroll-barnacle
 " ---------------------------------------------------------------------------
 highlight link Scrollbar Float
+"highlight link Scrollbar TabLineSel
 
 " ---------------------------------------------------------------------------
 "  Nvim-R
