@@ -23,7 +23,11 @@ function hv {
 
 # fzf notes
 function n {
-    vim `fd -t f md ~/d/notes | grep --color='none' "$1" | fzf -1 --exact`
+    target=`fd -t f md ~/d/notes | grep --color='none' "$1" | fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        vim $target
+    fi
 }
 
 # fzf confs
