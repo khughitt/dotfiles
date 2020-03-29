@@ -10,9 +10,9 @@ font = Hack Nerd Font Mono 12
 
 [colors]
 # special
+# cursor          =
 foreground      = #abb2bf
 foreground_bold = #abb2bf
-cursor          =
 background      = #282c34
 
 # black

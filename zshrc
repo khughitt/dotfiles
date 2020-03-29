@@ -203,6 +203,7 @@ fi
 zplugin light "zsh-users/zsh-completions"
 
 # fzf-marks
+export FZF_MARKS_JUMP="^b"
 zplugin light "urbainvaes/fzf-marks"
 
 # fzf
@@ -212,6 +213,9 @@ export FZF_DEFAULT_COMMAND="fd --type file --color=never"
 if [[ ! "$DISABLE_FZF_AUTO_COMPLETION" == "true" ]]; then
     [[ $- == *i* ]] && source "~/.fzf/shell/completion.zsh" 2> /dev/null
 fi
+
+# navi
+#source <(navi widget zsh)
 
 # greenclip
 fzf-clipboard() { echo -n "$(greenclip print | fzf -e -i)" | xclip -selection clipboard ;}
