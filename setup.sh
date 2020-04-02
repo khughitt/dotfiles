@@ -47,7 +47,8 @@ ln -s /home/keith/d/dots/gtkrc-2.0 ~/.gtkrc-2.0
 
 # ~/.config/xx
 for path in "awesome" "cava" "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
-            "labnote" "polybar" "pylintrc" "ranger" "snakemake" "termcolors" "zathura"; do
+            "labnote" "polybar" "powerline" "pylintrc" "ranger" "snakemake" "spicetify" \
+            "termcolors" "wal" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
