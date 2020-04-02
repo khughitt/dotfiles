@@ -13,8 +13,8 @@
 #
 
 # snakemake log directory to monitor
-#LOGDIR=~/d/r/nih/p3/pipeline/.snakemake/log
-LOGDIR=/data/inc/biowulf/snakemake-logs
+LOGDIR=~/d/r/nih/p3/pipeline/.snakemake/log
+#LOGDIR=/data/inc/biowulf/snakemake-logs
 
 # pgrep snakemake >/dev/null
 
