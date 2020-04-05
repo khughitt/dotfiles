@@ -28,6 +28,9 @@ set $greenclip rofi -modi "clipboard:greenclip print" -show clipboard -run-comma
 # rofi-notes
 bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/rofi-notes.sh"
 
+# bitwig manual
+bindsym $mod+t exec zathura "/mnt/shared/music/doc/manuals/Bitwig Studio User Guide English.pdf
+
 # start dmenu
 #set $menu dmenu_run
 
@@ -454,9 +457,11 @@ bindsym $mod+shift+r mode "resize"
 
 # autostart
 # exec --no-startup-id blackd
-exec --no-startup-id xrandr --output DP-1 --auto --left-of HDMI-0
-exec_always --no-startup-id killall picom; picom -bc
-exec_always --no-startup-id $HOME/.config/polybar/launch.sh
-exec --no-startup-id /usr/lib/geoclue-2.0/demos/agent
-exec --no-startup-id greenclip daemon
+exec --no-startup-id "xrandr --output DP-1 --auto --left-of HDMI-0"
+exec_always --no-startup-id "killall picom; picom -bc"
+exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
+exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
+exec --no-startup-id "greenclip daemon"
+exec --no-startup-id "cadence --minimized"
+exec --no-startup-id "syncthing-gtk -m"
 

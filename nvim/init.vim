@@ -1108,6 +1108,9 @@ cmap <C-r> :History:<CR>
 highlight link Scrollbar Float
 "highlight link Scrollbar TabLineSel
 
+" don't override zz mapping
+let g:sb_patch_keys = 0
+
 " ---------------------------------------------------------------------------
 "  Nvim-R
 " ---------------------------------------------------------------------------

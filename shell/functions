@@ -32,7 +32,7 @@ function n {
 
 # fzf confs
 function c {
-    vim `fd --regex 'conf|init|rc' --exclude Extracted ~/d/dots | grep --color='none' "$1" | fzf -1 --exact`
+    vim `fd --regex 'conf|init|rc' --exclude Extracted ~/.dotfiles | grep --color='none' "$1" | fzf -1 --exact`
 }
 
 # vim + ag

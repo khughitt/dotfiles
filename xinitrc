@@ -65,9 +65,6 @@ autocutsel -fork &
 # awesome
 #exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr
 
-# gnome
-#exec gnome-session
-
 # sway
 #exec sway >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
 
@@ -76,6 +73,9 @@ wal -R
 
 # ssh-agent
 eval `pkill ssh-agent && ssh-agent`
+
+# gnome
+#exec gnome-session
 
 # i3
 exec i3 >> ~/.cache/i3/stdout 2>> ~/.cache/i3/stderr
