@@ -10,3 +10,5 @@ tags
 unused
 vim/black
 vim/tmp
+.stversions
+.stignore
