@@ -60,6 +60,10 @@ for path in "agignore" "ansiweatherrc" "ctags" "dir_colors"  \
     ln_s ${DOTS_HOME}/${path} ~/.${path}
 done
 
+# git
+ln_s ${DOTS_HOME}/git/ignore ${HOME}/.gitignore_global
+ln_s ${DOTS_HOME}/git/config ${HOME}/.gitconfig
+
 # julia
 mkdir -p ${HOME}/.julia/config
 ln_s ${DOTS_HOME}/$julia/startup.jl ${HOME}/.julia/config/startup.jl
