@@ -295,7 +295,7 @@ label = %date% %time%
 type = internal/pulseaudio
 sink = jack_out
 
-click-right = pavucontrol &
+click-right = "pavucontrol &"
 
 #format-volume = <label-volume> <bar-volume>
 format-volume = <label-volume>
