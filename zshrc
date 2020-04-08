@@ -227,7 +227,7 @@ derez-greenclip() { killall greenclip ; rm ~/.cache/greenclip.history && nohup g
 #kitty + complete setup zsh | source /dev/stdin
 
 # location of additional zsh completions
-fpath+=$HOME/d/dotfiles/zsh/
+fpath+=$HOME/.dotfiles/zsh/
 
 # tab completion
 autoload -Uz compinit
@@ -237,6 +237,11 @@ zplugin cdreplay -q
 # pywal
 (/usr/bin/cat ~/.cache/wal/sequences &)
 source ~/.cache/wal/colors-tty.sh
+
+# host-specific settings
+if [ -e ~/.dotfiles/zsh/$HOST.zsh ]; then
+    . ~/.dotfiles/zsh/$HOST.zsh
+fi
 
 # print greeting
 if [ "$vconsole" = false ]; then
