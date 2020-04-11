@@ -379,8 +379,8 @@ endif
 " http://sunaku.github.io/vim-256color-bce.html
 set t_ut=""
 
-" enable true colors (disabled for pywal support..)
-" set termguicolors
+" enable true colors (disable for pywal support)
+set termguicolors
 
 " use colorscheme for R output
 let g:rout_follow_colorscheme = 1
@@ -418,8 +418,9 @@ let g:gruvbox_italic=1
 "colorscheme minimalist
 "colorscheme quantum
 " colorscheme citylights
+" colorscheme wal
 " colorscheme onedark
-colorscheme wal
+colorscheme pencil
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
