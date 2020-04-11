@@ -91,7 +91,7 @@ alias j='fasd_cd -d'
 alias v='f -e nvim'
 
 # git -> hub
-eval "$(hub alias -s)"
+#eval "$(hub alias -s)"
 
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
@@ -235,8 +235,8 @@ compinit
 zplugin cdreplay -q 
 
 # pywal
-(/usr/bin/cat ~/.cache/wal/sequences &)
-source ~/.cache/wal/colors-tty.sh
+#(/bin/cat ~/.cache/wal/sequences &)
+#source ~/.cache/wal/colors-tty.sh
 
 # host-specific settings
 if [ -e ~/.dotfiles/zsh/$HOST.zsh ]; then
@@ -248,3 +248,4 @@ if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
+### End of Zinit's installer chunk

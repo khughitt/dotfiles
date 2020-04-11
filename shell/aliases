@@ -24,6 +24,8 @@ alias tree='tree -C'
 
 alias ra=ranger
 
+alias p=pulseaudio
+
 alias cat='bat --wrap=never'
 
 alias less='less -NRSi --shift 10'

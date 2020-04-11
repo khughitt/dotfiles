@@ -29,8 +29,8 @@ ln_s ${DOTS_HOME}/zshenv ~/.zshenv
 ln_s ${DOTS_HOME}/shell ~/.shell
 
 # Create needed directories
-for dir in "compton" "gedit" "i3" "i3status" "sway" "termite"; do
-    mkdir -p ${XDG_CONFIG_HOME}/${dir}
+for x in "compton" "gedit" "i3" "i3status" "sway"; do
+    mkdir -p ${XDG_CONFIG_HOME}/${x}
 done
 
 # Gedit
@@ -48,7 +48,7 @@ ln -s /home/keith/d/dots/gtkrc-2.0 ~/.gtkrc-2.0
 # ~/.config/xx
 for path in "awesome" "cava" "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
             "labnote" "polybar" "powerline" "pylintrc" "ranger" "snakemake" "spicetify" \
-            "termcolors" "wal" "zathura"; do
+            "termcolors" "termite" "wal" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
@@ -69,7 +69,7 @@ mkdir -p ${HOME}/.julia/config
 ln_s ${DOTS_HOME}/$julia/startup.jl ${HOME}/.julia/config/startup.jl
 
 # ~/.config/xx/config
-for path in "sway" "rofi" "termite"; do
+for path in "sway" "rofi"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}/config
 done
 
