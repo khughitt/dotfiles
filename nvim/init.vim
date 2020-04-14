@@ -1118,8 +1118,7 @@ let g:sb_patch_keys = 0
 let vimrplugin_objbr_place = "console,right"
 
 " fix setkeyw setting messed up by vim.r ftplugin
-"au BufWinEnter * set isk+=%,#,-
-au FileType r,rmd set iskeyword=@,48-57,_
+au FileType r,rmd set iskeyword=@,48-57,_,192-255
 
 " fix issue relating to setwidth
 " https://github.com/jalvesaq/Nvim-R/issues/81#issuecomment-262651872
