@@ -27,6 +27,8 @@ alias ra=ranger
 
 alias p=pulseaudio
 
+alias xc=xclip
+
 alias cat='bat --wrap=never'
 
 alias less='less -NRSi --shift 10'
