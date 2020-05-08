@@ -55,12 +55,13 @@ xrdb -merge ~/.Xresources
 # java tiling window manager fix
 export _JAVA_AWT_WM_NONREPARENTING=1
 
-if [ -s ~/.xmodmaprc ]; then
-    xmodmap ~/.xmodmaprc
-fi
-
 # sync clipboard buffers
 autocutsel -fork &
+
+# fcitx
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
 
 # awesome
 #exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr

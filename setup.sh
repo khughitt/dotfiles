@@ -55,7 +55,7 @@ done
 # ~/.xx
 for path in "agignore" "ansiweatherrc" "ctags" "dir_colors"  \
             "Rprofile" "Renviron" "tmux" "tmux.conf" \
-            "vim" "vimrc" "visidatarc" "xinitrc" "xmodmaprc" "Xresources" \
+            "vim" "vimrc" "visidatarc" "xinitrc" "Xmodmap" "Xresources" \
             "condarc" "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
 done
@@ -101,6 +101,10 @@ update-mime-database ~/.local/share/mime
 
 rm ${XDG_CONFIG_HOME}/mimeapps.list
 ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
+
+# Fontconfig
+mkdir -p $XDG_CONFIG_HOME/fontconfig
+ln_s ${DOTS_HOME}/fonts.conf $XDG_CONFIG_HOME/fontconfig/fonts.conf
 
 #
 # external dependencies
