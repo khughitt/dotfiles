@@ -90,9 +90,6 @@ alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
 alias v='f -e nvim'
 
-# git -> hub
-#eval "$(hub alias -s)"
-
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
@@ -115,17 +112,17 @@ fi
 #eval $(dircolors -b ~/.dir_colors)
 
 # conda
-__conda_setup="$("$HOME/conda/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "$HOME/conda/etc/profile.d/conda.sh" ]; then
-        . "$HOME/conda/etc/profile.d/conda.sh"
-    else
-        export PATH="$HOME/conda/bin:$PATH"
-    fi
-fi
-unset __conda_setup
+# __conda_setup="$("$HOME/conda/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
+# if [ $? -eq 0 ]; then
+#     eval "$__conda_setup"
+# else
+#     if [ -f "$HOME/conda/etc/profile.d/conda.sh" ]; then
+#         . "$HOME/conda/etc/profile.d/conda.sh"
+#     else
+#         export PATH="$HOME/conda/bin:$PATH"
+#     fi
+# fi
+# unset __conda_setup
 
 # local settings (late)
 if [ -e ~/.zsh_local_late ]; then
@@ -217,12 +214,6 @@ fi
 # navi
 #source <(navi widget zsh)
 
-# greenclip
-fzf-clipboard() { echo -n "$(greenclip print | fzf -e -i)" | xclip -selection clipboard ;}
-cfg-greenclip() { killall greenclip ; $EDITOR ~/.config/greenclip.cfg && nohup greenclip daemon > /dev/null 2>&1 & }
-rld-greenclip() { killall greenclip ; nohup greenclip daemon > /dev/null 2>&1 & }
-derez-greenclip() { killall greenclip ; rm ~/.cache/greenclip.history && nohup greenclip daemon > /dev/null 2>&1 & }
-
 # kitty completion
 #kitty + complete setup zsh | source /dev/stdin
 
@@ -247,5 +238,3 @@ fi
 if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
-
-### End of Zinit's installer chunk

@@ -75,7 +75,7 @@ alias pcd='yay -Syu --devel'
 
 # conda
 alias cde='conda deactivate'
-alias ca='conda activate'
+alias ca='source activate'
 alias cs='conda search'
 
 # diff
