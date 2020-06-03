@@ -46,7 +46,7 @@ ln -sf ${DOTS_HOME}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 ln -s /home/keith/d/dots/gtkrc-2.0 ~/.gtkrc-2.0
 
 # ~/.config/xx
-for path in "awesome" "cava" "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
+for path in "awesome" "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
             "labnote" "polybar" "powerline" "pylintrc" "ranger" "snakemake" "spicetify" \
             "termcolors" "termite" "wal" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
@@ -54,7 +54,7 @@ done
 
 # ~/.xx
 for path in "agignore" "ansiweatherrc" "ctags" "dir_colors"  \
-            "Rprofile" "Renviron" "tmux" "tmux.conf" \
+            "plotly" "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "Xmodmap" "Xresources" \
             "condarc" "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
