@@ -55,6 +55,11 @@ xrdb -merge ~/.Xresources
 # java tiling window manager fix
 export _JAVA_AWT_WM_NONREPARENTING=1
 
+# map caps to escape
+if [ -s ~/.Xmodmap ]; then
+    xmodmap ~/.Xmodmap
+fi
+
 # sync clipboard buffers
 autocutsel -fork &
 

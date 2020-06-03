@@ -8,6 +8,10 @@ map ` mark_evaluate
 
 set font "inconsolata 14"
 
+# GUI options
+set guioptions sh
+set show-v-scrollbar true
+
 # Base16 OneDark
 # Author: Lalit Magant (http://github.com/tilal6991)
 set default-bg                  "#282c34"

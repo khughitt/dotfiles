@@ -97,6 +97,10 @@ alias vmi=nvim
 alias vm='nvim README.Rmd'
 alias lv="vim -c \"normal '0\""
 
+# xrandr
+alias 2k="xrandr --output DP-0 --mode 1920x1080"
+alias 4k="xrandr --output DP-0 --mode 3840x2160"
+
 # termbin
 # example usage: echo just testing! | tb
 alias tb="nc termbin.com 9999"
