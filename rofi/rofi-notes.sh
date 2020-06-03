@@ -5,10 +5,12 @@
 #
 NOTES_DIR="/home/keith/d/notes"
 
+cd $NOTES_DIR
+
 if [ -z $@ ]; then
-    fd -t f md $NOTES_DIR
+    fd -t f md
 else
-    target=`fd -t f md $NOTES_DIR | grep --color='none' "$@"`
+    target=`fd -t f md | grep --color='none' "$@"`
 
     if [ -f "$target" ]; then
         coproc termite -e "nvim $target" > /dev/null

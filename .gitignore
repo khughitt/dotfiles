@@ -10,5 +10,6 @@ tags
 unused
 vim/black
 vim/tmp
+.credentials
 .stversions
 .stignore

@@ -2,7 +2,7 @@
 dynamic_title = true
 scrollback_lines = 9192
 
-font = Hack Nerd Font Mono 12
+font = Hack Nerd Font Mono 20
 #font = Droid Sans Mono Nerd Font 12
 #font = Source Code Pro for Powerline Medium 12
 #font = DejaVu Sans Mono Nerd Font 12

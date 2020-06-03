@@ -1,3 +1,5 @@
 configuration {
+    modi: "window,drun,ssh,combi";
     theme: "~/.cache/wal/colors-rofi-dark.rasi";
+    font: "hack 20";
 }
