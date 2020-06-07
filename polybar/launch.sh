@@ -7,16 +7,16 @@ killall -q polybar
 while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 
 # Determine config file to use
-if [[ `hostname` == "Europa" ]]; then
-    CFG="$HOME/.config/polybar/config.europa"
-else
+CFG="$HOME/.config/polybar/config.$(hostname)"
+
+if [ ! -f "$CFG" ]; then
     CFG="$HOME/.config/polybar/config"
 fi
 
-echo `hostname`
-echo $CFG
+echo "LOADING POLYBAR CONFIG: $CFG" 
 
 if type "xrandr"; then
+  # multiple monitors
   for m in $(xrandr --query | grep " connected" | cut -d" " -f1); do
     MONITOR=$m polybar --config=$CFG --reload bar &
   done

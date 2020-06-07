@@ -12,13 +12,19 @@ Xcursor.theme: aero
 !! xft
 !!
 Xft.autohint:  false
-!!Xft.dpi:       96
-Xft.dpi:       192
+Xft.dpi:       96
 Xft.antialias: true
 Xft.hinting:   true
 Xft.hintstyle: hintfull
 Xft.lcdfilter: lcddefault
 Xft.rgba:      rgb
+
+!!
+!! 4k resolution
+!!
+#ifdef SRVR_titan
+    Xft.dpi 192
+#endif
 
 !!
 !! URxvt

@@ -2,5 +2,5 @@ configuration {
     modi: "drun";
     combi-modi: "window,drun,ssh";
     theme: "~/.cache/wal/colors-rofi-dark.rasi";
-    font: "hack 12";
+    font: "hack 26";
 }
