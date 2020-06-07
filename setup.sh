@@ -5,6 +5,18 @@
 #
 DOTS_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+# Determine resolution to use
+HIRES=""
+
+while [[ "$HIRES" != "n" && "$HIRES" != "y" ]]; do
+    read -r -p "Configure system for 4k display? [y|N] " HIRES
+    HIRES="${HIRES,,}"
+
+    if [[ "$HIRES" == "" ]]; then
+        HIRES="n"
+    fi
+done
+
 # Check for configuration directory
 if [ -z $XDG_CONFIG_HOME ]; then
     XDG_CONFIG_HOME=$HOME/.config
@@ -29,7 +41,7 @@ ln_s ${DOTS_HOME}/zshenv ~/.zshenv
 ln_s ${DOTS_HOME}/shell ~/.shell
 
 # Create needed directories
-for x in "compton" "gedit" "i3" "i3status" "sway"; do
+for x in "compton" "gedit" "i3" "rofi" "sway" "termite" "wal"; do
     mkdir -p ${XDG_CONFIG_HOME}/${x}
 done
 
@@ -43,12 +55,12 @@ fi
 ln -sf ${DOTS_HOME}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 ln -sf ${DOTS_HOME}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 
-ln -s /home/keith/d/dots/gtkrc-2.0 ~/.gtkrc-2.0
+ln_s ${DOTS_HOME}/gtkrc-2.0 ~/.gtkrc-2.0
 
 # ~/.config/xx
 for path in "awesome" "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
             "labnote" "polybar" "powerline" "pylintrc" "ranger" "snakemake" "spicetify" \
-            "termcolors" "termite" "wal" "zathura"; do
+            "termcolors" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
@@ -69,15 +81,27 @@ mkdir -p ${HOME}/.julia/config
 ln_s ${DOTS_HOME}/$julia/startup.jl ${HOME}/.julia/config/startup.jl
 
 # ~/.config/xx/config
-for path in "sway" "rofi"; do
+for path in "sway"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}/config
 done
 
-# i3
-ln_s ${DOTS_HOME}/i3/config ${XDG_CONFIG_HOME}/i3/config
-ln_s ${DOTS_HOME}/i3/i3status.left ${XDG_CONFIG_HOME}/i3status/config.left
-ln_s ${DOTS_HOME}/i3/i3status.right ${XDG_CONFIG_HOME}/i3status/config.right
+# 4k configs (i3, rofi, termite)
+if [[ "$HIRES" == "y" ]]; then
+    ln_s ${DOTS_HOME}/i3/config.4k ${XDG_CONFIG_HOME}/i3/config
+    ln_s ${DOTS_HOME}/rofi/config.4k.rasi ${XDG_CONFIG_HOME}/rofi/config.rasi
+    ln_s ${DOTS_HOME}/termite/config.4k ${XDG_CONFIG_HOME}/termite/config
+    ln_s ${DOTS_HOME}/wal/templates.4k ${XDG_CONFIG_HOME}/wal/templates
+else
+    ln_s ${DOTS_HOME}/i3/config ${XDG_CONFIG_HOME}/i3/config
+    ln_s ${DOTS_HOME}/rofi/config.rasi ${XDG_CONFIG_HOME}/rofi/config.rasi
+    ln_s ${DOTS_HOME}/termite/config ${XDG_CONFIG_HOME}/termite/config
+    ln_s ${DOTS_HOME}/wal/templates ${XDG_CONFIG_HOME}/wal/templates
+fi
 
+# wal colorscheme
+ln_s ${DOTS_HOME}/wal/colorschemes ${XDG_CONFIG_HOME}/wal/colorschemes
+
+# create i3 log dir
 mkdir -p ~/.cache/i3
 
 # picom

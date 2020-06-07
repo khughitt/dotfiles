@@ -23,7 +23,7 @@ alert = ${xrdb:color3:#222}
 [bar/bar]
 monitor = ${env:MONITOR:}
 width = 100%
-height = 27
+height = 38
 radius = 0
 fixed-center = false
 
@@ -44,11 +44,11 @@ padding-right = 2
 module-margin-left = 1
 module-margin-right = 2
 
-font-0 = fixed:pixelsize=10;1
-font-1 = unifont:fontformat=truetype:size=8:antialias=false;0
+font-0 = fixed:pixelsize=18;1
+font-1 = unifont:fontformat=truetype:size=16:antialias=false;0
 font-2 = "Pomodoro"
-font-3 = siji:pixelsize=10;1
-font-4 = Weather Icons:size=12;0
+font-3 = siji:pixelsize=16;1
+font-4 = Weather Icons:size=16;0
 font-5 = "NotoEmoji Nerd Font:style=Book"
 font-6 = "DejaVu Sans"
 

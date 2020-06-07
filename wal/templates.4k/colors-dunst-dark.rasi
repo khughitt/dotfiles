@@ -6,7 +6,7 @@
 [global]
     monitor = 0
 
-    geometry = "1920x1-0+0"
+    geometry = "3840x2160-0+0"
 
     # Show multiple notifications in the same box
     separator_height = 0
@@ -25,7 +25,7 @@
     idle_threshold = 120
 
     # Font and typography settings
-    font = Fira Mono 11
+    font = Fira Mono 16
     alignment = center
     word_wrap = yes
 

@@ -1,7 +1,7 @@
 [options]
 dynamic_title = true
 scrollback_lines = 9192
-font = Hack Nerd Font Mono 12
+font = Hack Nerd Font Mono 20
 
 [colors]
 foreground      = #abb2bf
