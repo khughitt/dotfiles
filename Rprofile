@@ -47,6 +47,14 @@ grDevices::X11.options(width = 4.5, height = 4, ypos = 0, xpos = 1000, pointsize
 # tab complete package names and allow fuzzy case completion
 utils::rc.settings(ipck = TRUE, fuzzy = TRUE)
 
+# plotly
+if (file.exists("~/.plotly/.credentials")) {
+  creds = RJSONIO::fromJSON("~/.plotly/.credentials")
+  Sys.setenv("plotly_username" = creds$username)
+  Sys.setenv("plotly_api_key" = creds$api_key)
+  rm(creds)
+}
+
 #
 # radian
 #
