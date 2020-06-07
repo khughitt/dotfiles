@@ -66,7 +66,7 @@ done
 
 # ~/.xx
 for path in "agignore" "ansiweatherrc" "ctags" "dir_colors"  \
-            "plotly" "Rprofile" "Renviron" "tmux" "tmux.conf" \
+            "picomf.conf" "plotly" "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "Xmodmap" "Xresources" \
             "condarc" "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
@@ -103,10 +103,6 @@ ln_s ${DOTS_HOME}/wal/colorschemes ${XDG_CONFIG_HOME}/wal/colorschemes
 
 # create i3 log dir
 mkdir -p ~/.cache/i3
-
-# picom
-mkdir -p ${XDG_CONFIG_HOME}/picom
-ln -sf ${DOTS_HOME}/picom ${XDG_CONFIG_HOME}/picom/picom.conf
 
 # copy Xresources to Xdefaults for sway
 ln_s ${DOTS_HOME}/Xresources ~/.Xdefaults
