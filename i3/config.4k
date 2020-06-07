@@ -392,7 +392,7 @@ bindsym $mod+shift+r mode "resize"
 
 # autostart
 exec --no-startup-id "killall blackd; blackd"
-exec_always --no-startup-id "killall picom; picom -bc"
+exec_always --no-startup-id "killall picom; picom -b"
 exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
 exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
 # exec --no-startup-id "$HOME/.config/polybar/scripts/spotify/launchlistener.sh"
