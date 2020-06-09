@@ -41,7 +41,7 @@ ln_s ${DOTS_HOME}/zshenv ~/.zshenv
 ln_s ${DOTS_HOME}/shell ~/.shell
 
 # Create needed directories
-for x in "compton" "gedit" "i3" "rofi" "sway" "termite" "wal"; do
+for x in "compton" "gedit" "i3" "rofi" "sway" "wal"; do
     mkdir -p ${XDG_CONFIG_HOME}/${x}
 done
 
@@ -60,7 +60,7 @@ ln_s ${DOTS_HOME}/gtkrc-2.0 ~/.gtkrc-2.0
 # ~/.config/xx
 for path in "awesome" "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
             "labnote" "polybar" "powerline" "pylintrc" "ranger" "snakemake" "spicetify" \
-            "termcolors" "zathura"; do
+            "termcolors" "termite" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
@@ -85,16 +85,14 @@ for path in "sway"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}/config
 done
 
-# 4k configs (i3, rofi, termite)
+# 4k configs (i3, rofi, wal )
 if [[ "$HIRES" == "y" ]]; then
     ln_s ${DOTS_HOME}/i3/config.4k ${XDG_CONFIG_HOME}/i3/config
     ln_s ${DOTS_HOME}/rofi/config.4k.rasi ${XDG_CONFIG_HOME}/rofi/config.rasi
-    ln_s ${DOTS_HOME}/termite/config.4k ${XDG_CONFIG_HOME}/termite/config
     ln_s ${DOTS_HOME}/wal/templates.4k ${XDG_CONFIG_HOME}/wal/templates
 else
     ln_s ${DOTS_HOME}/i3/config ${XDG_CONFIG_HOME}/i3/config
     ln_s ${DOTS_HOME}/rofi/config.rasi ${XDG_CONFIG_HOME}/rofi/config.rasi
-    ln_s ${DOTS_HOME}/termite/config ${XDG_CONFIG_HOME}/termite/config
     ln_s ${DOTS_HOME}/wal/templates ${XDG_CONFIG_HOME}/wal/templates
 fi
 

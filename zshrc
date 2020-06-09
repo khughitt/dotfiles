@@ -76,15 +76,6 @@ for file in ~/.shell/{aliases,functions,private,exports}; do
 done
 unset file
 
-# 4k resolution improvements
-DETECT_4K=$(xrandr | grep "connected 3840")                        
-
-if [ "$DETECT_4K" != "" ]; then
-    export GDK_SCALE=2
-    export GDK_DPI_SCALE=0.5
-    export QT_AUTO_SCREEN_SCALE_FACTOR=1
-fi
-
 # fasd
 export _FASD_SHELL='dash'
 
