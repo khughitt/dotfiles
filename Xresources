@@ -6,13 +6,12 @@ Xcursor.theme: aero
 !!
 !! Colour Scheme
 !!
-#include "/home/keith/d/dots/termcolors/dark"
+#include "/home/keith/.dotfiles/termcolors/dark"
 
 !!
 !! xft
 !!
 Xft.autohint:  false
-Xft.dpi:       96
 Xft.antialias: true
 Xft.hinting:   true
 Xft.hintstyle: hintfull
@@ -23,7 +22,8 @@ Xft.rgba:      rgb
 !! 4k resolution
 !!
 #ifdef SRVR_titan
-    Xft.dpi 192
+    Xft.dpi: 192
+    Xcursor.size: 32
 #endif
 
 !!

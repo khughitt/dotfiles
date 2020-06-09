@@ -109,6 +109,7 @@ call plug#begin()
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
+    Plug 'zhaozg/vim-diagram'
     " Plug 'gcavallanti/vim-noscrollbar'
     Plug '/usr/share/vim/vimfiles'
 
@@ -973,6 +974,11 @@ au BufNewFile,BufRead *.md set conceallevel=2
 
 " override default conceal colors
 syntax match Normal /\*/ conceal cchar=∗
+
+" ---------------------------------------------------------------------------
+"  vim-diagram (mermaid)
+" ---------------------------------------------------------------------------
+au BufRead,BufNewFile *.mmd set filetype=sequence
 
 " ---------------------------------------------------------------------------
 "  vpaste.net
