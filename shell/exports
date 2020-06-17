@@ -9,6 +9,7 @@ if test $SSH_AUTH_SOCK && [ $SSH_AUTH_SOCK != $SOCK ]; then
 fi
 
 export NOTES="$HOME/d/notes"
+export FONTCONFIG_PATH=/etc/fonts
 
 # anki font size fix
 # https://changes.ankiweb.net/#/known-issues
