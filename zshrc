@@ -228,6 +228,7 @@ zplugin cdreplay -q
 # pywal
 #(/bin/cat ~/.cache/wal/sequences &)
 #source ~/.cache/wal/colors-tty.sh
+source "${HOME}/.cache/wal/colors.sh"
 
 # host-specific settings
 if [ -e ~/.dotfiles/zsh/$HOST.zsh ]; then
