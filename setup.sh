@@ -66,7 +66,7 @@ done
 
 # ~/.xx
 for path in "agignore" "ansiweatherrc" "ctags" "dir_colors"  \
-            "picomf.conf" "plotly" "Rprofile" "Renviron" "tmux" "tmux.conf" \
+            "picom.conf" "plotly" "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "Xmodmap" "Xresources" \
             "condarc" "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
