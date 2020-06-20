@@ -7,8 +7,8 @@
 # stop here in non-interactive mode
 [ -z "$PS1" ] && return
 
-# load zplugin
-source ~/.zplugin/bin/zplugin.zsh
+# load zinit
+source ~/.zinit/bin/zinit.zsh
 
 # local settings (early)
 if [ -e ~/.zsh_local_early ]; then
@@ -151,57 +151,57 @@ bindkey "^[^?" backward-kill-word
 #bindkey '^[[Z' reverse-menu-complete
 
 #
-# zplugin
+# zinit
 #
 
 # nvm
-zplugin light lukechilds/zsh-nvm
+zinit light lukechilds/zsh-nvm
 
-zplugin snippet OMZ::lib/completion.zsh
-zplugin snippet OMZ::lib/directories.zsh
-zplugin snippet OMZ::lib/git.zsh
-zplugin snippet OMZ::plugins/git/git.plugin.zsh
-zplugin snippet OMZ::plugins/systemd/systemd.plugin.zsh
+zinit snippet OMZ::lib/completion.zsh
+zinit snippet OMZ::lib/directories.zsh
+zinit snippet OMZ::lib/git.zsh
+zinit snippet OMZ::plugins/git/git.plugin.zsh
+zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
 
 # vi mode improvement
-#zplugin snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
+#zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
 
 # emacs mode improvements
-zplugin snippet OMZ::lib/key-bindings.zsh
+zinit snippet OMZ::lib/key-bindings.zsh
 
 # prompt
-zplugin ice pick"async.zsh" src"pure.zsh"; zplugin light sindresorhus/pure
+zinit ice pick"async.zsh" src"pure.zsh"; zinit light sindresorhus/pure
 
 # fasd-fzf integration
-zplugin light "khughitt/fzf-fasd"
+zinit light "khughitt/fzf-fasd"
 
 # zsh autosuggestions
-#zplugin light zsh-users/zsh-autosuggestions
+#zinit light zsh-users/zsh-autosuggestions
 
 # ls colors 
-# zplugin ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
-# zplugin load trapd00r/LS_COLORS
+# zinit ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
+# zinit load trapd00r/LS_COLORS
 
 # syntax highlighting
-zplugin light "zdharma/fast-syntax-highlighting"
+zinit light "zdharma/fast-syntax-highlighting"
 
 # alias reminders
-zplugin light "djui/alias-tips"
+zinit light "djui/alias-tips"
 
 # cntl-z -> fg
-zplugin light "mdumitru/fancy-ctrl-z"
+zinit light "mdumitru/fancy-ctrl-z"
 
 # completions
 if is-at-least 5.3; then
-  zplugin ice lucid wait'0a' blockf
+  zinit ice lucid wait'0a' blockf
 else
-  zplugin ice blockf
+  zinit ice blockf
 fi
-zplugin light "zsh-users/zsh-completions"
+zinit light "zsh-users/zsh-completions"
 
 # fzf-marks
 export FZF_MARKS_JUMP="^b"
-zplugin light "urbainvaes/fzf-marks"
+zinit light "urbainvaes/fzf-marks"
 
 # fzf
 export FZF_DEFAULT_COMMAND="fd --type file --color=never"
@@ -223,12 +223,14 @@ fpath+=$HOME/.dotfiles/zsh/
 # tab completion
 autoload -Uz compinit
 compinit
-zplugin cdreplay -q 
+zinit cdreplay -q 
 
 # pywal
 #(/bin/cat ~/.cache/wal/sequences &)
 #source ~/.cache/wal/colors-tty.sh
-source "${HOME}/.cache/wal/colors.sh"
+if [ -e "${HOME}/.cache/wal/colors.sh" ]; then
+    source "${HOME}/.cache/wal/colors.sh"
+fi
 
 # host-specific settings
 if [ -e ~/.dotfiles/zsh/$HOST.zsh ]; then
@@ -239,3 +241,21 @@ fi
 if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/Users/keith/conda/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/Users/keith/conda/etc/profile.d/conda.sh" ]; then
+        . "/Users/keith/conda/etc/profile.d/conda.sh"
+    else
+        export PATH="/Users/keith/conda/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+### End of Zinit's installer chunk
+### End of Zinit's installer chunk
