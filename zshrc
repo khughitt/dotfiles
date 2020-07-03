@@ -86,6 +86,7 @@ fi
 source "$fasd_cache"
 unset fasd_cache
 
+unalias a
 alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
 alias v='f -e nvim'
@@ -211,6 +212,19 @@ if [[ ! "$DISABLE_FZF_AUTO_COMPLETION" == "true" ]]; then
     [[ $- == *i* ]] && source "~/.fzf/shell/completion.zsh" 2> /dev/null
 fi
 
+# Use fd (https://github.com/sharkdp/fd) instead of the default find
+# command for listing path candidates.
+# - The first argument to the function ($1) is the base path to start traversal
+# - See the source code (completion.{bash,zsh}) for the details.
+_fzf_compgen_path() {
+  fd --hidden --follow --exclude ".git" . "$1"
+}
+
+# Use fd to generate the list for directory completion
+_fzf_compgen_dir() {
+  fd --type d --hidden --follow --exclude ".git" . "$1"
+}
+
 # navi
 #source <(navi widget zsh)
 
@@ -224,6 +238,10 @@ fpath+=$HOME/.dotfiles/zsh/
 autoload -Uz compinit
 compinit
 zinit cdreplay -q 
+
+# disable completion for "play" (wrong application)
+# only need to do once..
+#zinit cdisable play
 
 # pywal
 #(/bin/cat ~/.cache/wal/sequences &)

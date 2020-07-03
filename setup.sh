@@ -65,7 +65,7 @@ for path in "awesome" "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"
 done
 
 # ~/.xx
-for path in "agignore" "ansiweatherrc" "ctags" "dir_colors"  \
+for path in "agignore" "ansiweatherrc" "cookiecutterrc" "ctags" "dir_colors"  \
             "picom.conf" "plotly" "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "Xmodmap" "Xresources" \
             "condarc" "xprofile"; do
