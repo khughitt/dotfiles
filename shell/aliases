@@ -94,7 +94,7 @@ alias r=radian
 # neovim
 alias vim=nvim
 alias vmi=nvim
-alias vm='nvim README.Rmd'
+alias vm='nvim README.*md'
 alias lv="vim -c \"normal '0\""
 
 # xrandr

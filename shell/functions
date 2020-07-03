@@ -21,13 +21,41 @@ function hv {
     head -n10 $1 | vd -
 }
 
+#
 # fzf notes
+# 
+
+# edit note
 function n {
-    target=`fd -t f md ~/d/notes | grep --color='none' "$1" | fzf -1 --exact`
+    pwd=`pwd`
+
+    cd ~/d/notes
+    target=`fd -t f md | grep --color='none' "$1" | fzf -1 --exact`
 
     if [ ! -z "$target" ]; then
         vim $target
     fi
+
+    cd $pwd
+}
+
+# add note
+function a {
+    pwd=`pwd`
+
+    cd ~/d/notes
+
+    # get directory to store note in
+    target=`fd -t d | grep --color='none' "$1" | fzf -1 --exact`
+
+    # prompt user for filename
+    if [ ! -z "$target" ]; then
+        vared -p "Filename? (${target}/XX): " -c fname
+        mkdir -p $fname
+        vim $target/$fname
+    fi
+
+    cd $pwd
 }
 
 # fzf confs
