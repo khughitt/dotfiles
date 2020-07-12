@@ -15,7 +15,6 @@
 " ---------------------------------------------------------------------------
 set hidden           " easy buffer switching
 set isk+=%,#,-       " additional vim word characters
-"set isk-=(,)         " characters to remove from word list
 set cursorline       " highlight current line
 set modeline         " make sure modeline support is enabled
 set noerrorbells     " quiet, please
@@ -23,6 +22,8 @@ set nofoldenable     " disable folding
 set complete+=i      " complete filenames
 set noshowmode       " hide <INSERT>
 filetype indent on   " indent based on filetype
+
+"set isk-=(,)         " characters to remove from word list
 
 " reduce keycode mapping timeout delay
 set ttimeoutlen=5
@@ -69,7 +70,6 @@ call plug#begin()
     Plug 'dense-analysis/ale'
     Plug 'dylanaraps/wal.vim'
     Plug 'drzel/vim-line-no-indicator'
-    Plug 'ekiim/vim-mathpix'
     Plug 'ervandew/supertab'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
@@ -83,41 +83,44 @@ call plug#begin()
     Plug 'lilydjwg/colorizer'
     Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'majutsushi/tagbar'
-    Plug 'manabuishii/vim-cwl'
     Plug 'mboughaba/i3config.vim'
     Plug 'mllg/vim-devtools-plugin'
-    Plug 'mrk21/yaml-vim'
     Plug 'mzlogin/vim-markdown-toc'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
-    " Plug 'plasticboy/vim-markdown'
     Plug 'psf/black'
     Plug 'qpkorr/vim-bufkill'
     Plug 'raimon49/requirements.txt.vim'
-    Plug 'scrooloose/nerdcommenter'
-    Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'Shougo/denite.nvim'
     Plug 'Shougo/neomru.vim'
+    Plug 'scrooloose/nerdcommenter'
     Plug 'sslivkoff/vim-scroll-barnacle'
     Plug 'stephpy/vim-yaml'
-    Plug 'tikhomirov/vim-glsl'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-surround'
-    Plug 'terryma/vim-expand-region'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
     Plug 'zhaozg/vim-diagram'
-    " Plug 'gcavallanti/vim-noscrollbar'
     Plug '/usr/share/vim/vimfiles'
+
+    "Plug 'manabuishii/vim-cwl'
+    "Plug 'mrk21/yaml-vim'
+    "Plug 'plasticboy/vim-markdown'
+
+    "Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+    "Plug 'tikhomirov/vim-glsl'
+    "Plug 'terryma/vim-expand-region'
+    "Plug 'gcavallanti/vim-noscrollbar'
+    "Plug 'ekiim/vim-mathpix'
 
     Plug 'glts/vim-textobj-comment'
     Plug 'kana/vim-textobj-user'
-    "Plug 'vimtaku/vim-textobj-keyvalue'
     Plug 'tyru/vim-textobj-underscore', { 'branch': 'support-3-cases' }
     Plug 'vim-scripts/argtextobj.vim'
+    "Plug 'vimtaku/vim-textobj-keyvalue'
 
     Plug 'agreco/vim-citylights'
     Plug 'ayu-theme/ayu-vim'
@@ -195,6 +198,32 @@ call plug#begin()
     " devicons should always be loaded last
     Plug 'ryanoasis/vim-devicons'
 call plug#end()
+
+" ----------------------------------------------------------------------------
+" Vim Shortcut Helper
+"
+" TODO: create func to open markdown cheatsheet in sidepane / close
+" the buffer if it is already open/visible..
+" ----------------------------------------------------------------------------
+" if bufwinnr("~/d/notes/linux/vim/cheatsheet.md") > 0
+"   echo "Already open"
+" endif
+
+" ----------------------------------------------------------------------------
+"  Scratchpad
+" ----------------------------------------------------------------------------
+function! AddScratchpadEntry ()
+    " find entries heading and move cursor to following line
+    exec ":normal /Entries/\<CR>"
+    normal! 2j
+
+    " add timestamp
+    exec ":put=strftime('~ %c ~')"
+endfunction
+
+autocmd BufNewFile,BufRead s set syntax=scratch
+autocmd BufNewFile,BufRead s set filetype=scratch
+autocmd FileType scratch map <silent><leader>s :call AddScratchpadEntry ()<CR> 
 
 " ----------------------------------------------------------------------------
 "  Backups
@@ -983,6 +1012,39 @@ au BufNewFile,BufRead *.md set conceallevel=2
 syntax match Normal /\*/ conceal cchar=∗
 
 " ---------------------------------------------------------------------------
+"  markdown link helper
+"  https://benjamincongdon.me/blog/2020/06/27/Vim-Tip-Paste-Markdown-Link-with-Automatic-Title-Fetching/
+" ---------------------------------------------------------------------------
+function GetURLTitle(url)
+    " Bail early if the url obviously isn't a URL.
+    if a:url !~ '^https\?://'
+        return ""
+    endif
+
+    " Use Python/BeautifulSoup to get link's page title.
+    let title = system("python3 -c \"import bs4, requests; print(bs4.BeautifulSoup(requests.get('" . a:url . "').content, 'lxml').title.text.strip())\"")
+
+    " Echo the error if getting title failed.
+    if v:shell_error != 0
+        echom title
+        return ""
+    endif
+
+    " Strip trailing newline
+    return substitute(title, '\n', '', 'g')
+endfunction
+
+function PasteMDLink()
+    let url = getreg("+")
+    let title = GetURLTitle(url)
+    let mdLink = printf("[%s](%s)", title, url)
+    execute "normal! a" . mdLink . "\<Esc>"
+endfunction
+
+" Make a keybinding (mnemonic: "mark down paste")
+nmap <Leader>mdp :call PasteMDLink()<cr>
+
+" ---------------------------------------------------------------------------
 "  vim-diagram (mermaid)
 " ---------------------------------------------------------------------------
 au BufRead,BufNewFile *.mmd set filetype=sequence
@@ -1088,6 +1150,10 @@ let g:fzf_layout = { 'window': '10split enew' }
 let g:fzf_layout = { 'down': '~40%' }
 
 cmap <C-r> :History:<CR>
+
+" search notes
+command! -bang Notes call fzf#vim#files('~/d/notes', <bang>0)
+map <localleader>n :Notes<CR>
 
 "nmap <leader><tab> <plug>(fzf-maps-n)
 "xmap <leader><tab> <plug>(fzf-maps-x)
