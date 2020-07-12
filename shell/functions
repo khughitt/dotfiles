@@ -58,6 +58,22 @@ function a {
     cd $pwd
 }
 
+# project todo lists
+alias td="bash ~/d/r/cookiecutter/proj/scripts/todo.sh ~/d/notes/proj"
+
+function tda {
+    pwd=`pwd`
+
+    cd ~/d/notes/proj
+    target=`fd -t f todo.md | grep --color='none' "$1" | fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        vim $target
+    fi
+
+    cd $pwd
+}
+
 # fzf confs
 function c {
     vim `fd --regex 'conf|init|rc' --exclude Extracted ~/.dotfiles | grep --color='none' "$1" | fzf -1 --exact`

@@ -1,9 +1,10 @@
 #
 # R Configuration
+# KH (July 2020)
 #
-# For quick version updates:
+# For quick version upgrades:
 #
-#  cp -r ~/R/path/to/3.x ~/R/path/to/3.y
+#  cp -r ~/R/path/to/4.x ~/R/path/to/4.y
 #  R -e "update.packages(checkBuilt = TRUE, ask = FALSE)"
 #
 options(continue = "... ")
@@ -143,8 +144,11 @@ if (interactive()) {
   # ascii density plot
   try(.env$td <- txtplot::txtdensity, silent = TRUE)
 
-  # Shortcut to load bioconductor
+  # shortcut to load bioconductor
   try(.env$.bc <- BiocManager::install, silent = TRUE)
+
+  # better data summarizations
+  try(.env$s <- skimr::skim, silent = TRUE)
 
   # Prints N objects which use the most memory (in megabytes)
   .env$.top = function(n = 10, digits = 3) {
