@@ -510,7 +510,7 @@ highlight SpecialKey ctermfg=DarkGray ctermbg=Black
 " CriticMarkup highlight
 "
 " ---------------------------------------------------------------------------
-vmap <leader>l c<C-R>=substitute(@", '\v(.*)', '\{==\1==\}\{>><<\}', '')<CR><ESC>
+vmap <leader>l c<C-R>=substitute(@", '\v(.*)', '\{==\1==\}\{>><<\}', '')<ESC>
 
 " ---------------------------------------------------------------------------
 "  Backup and undo
