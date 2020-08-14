@@ -80,7 +80,7 @@ call plug#begin()
     Plug 'junegunn/fzf.vim'
     Plug 'kshenoy/vim-signature'
     Plug 'kana/vim-operator-user'
-    Plug 'lilydjwg/colorizer'
+    "Plug 'lilydjwg/colorizer'
     Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'majutsushi/tagbar'
     Plug 'mboughaba/i3config.vim'
@@ -91,7 +91,8 @@ call plug#begin()
     Plug 'psf/black'
     Plug 'qpkorr/vim-bufkill'
     Plug 'raimon49/requirements.txt.vim'
-    Plug 'Shougo/denite.nvim'
+    Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
+    Plug 'Shougo/denite.nvim', { 'do': ':UpdateRemotePlugins' }
     Plug 'Shougo/neomru.vim'
     Plug 'scrooloose/nerdcommenter'
     Plug 'sslivkoff/vim-scroll-barnacle'
@@ -103,7 +104,7 @@ call plug#begin()
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
-    Plug 'zhaozg/vim-diagram'
+    "Plug 'zhaozg/vim-diagram'
     Plug '/usr/share/vim/vimfiles'
 
     "Plug 'manabuishii/vim-cwl'
@@ -149,6 +150,7 @@ call plug#begin()
     Plug 'reedes/vim-colors-pencil'
     Plug 'Rigellute/rigel'
     Plug 'sheerun/vim-wombat-scheme'
+    Plug 'sonph/onehalf', {'rtp': 'vim/'}
     Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'tyrannicaltoucan/vim-deep-space'
     Plug 'vim-scripts/pyte'
@@ -446,11 +448,11 @@ let g:gruvbox_italic=1
 "colorscheme SerialExperimentsLain
 "colorscheme dracula
 "colorscheme minimalist
-"colorscheme quantum
-" colorscheme citylights
-" colorscheme wal
-" colorscheme onedark
-colorscheme pencil
+"colorscheme citylights
+"colorscheme wal
+"colorscheme onedark
+"colorscheme pencil
+colorscheme quantum
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
@@ -761,7 +763,13 @@ let g:csv_no_conceal = 1
 " ---------------------------------------------------------------------------
 "  colorizer
 " ---------------------------------------------------------------------------
-let g:colorizer_startup = 0
+" let g:colorizer_startup = 0
+
+" ---------------------------------------------------------------------------
+"  vim-hexokinase
+" ---------------------------------------------------------------------------
+"let g:Hexokinase_highlighters = ['backgroundfull']
+let g:Hexokinase_highlighters = ['sign_column']
 
 " ---------------------------------------------------------------------------
 "  colorscheme-switcher.vim
@@ -1011,6 +1019,21 @@ au BufNewFile,BufRead *.md set conceallevel=2
 " override default conceal colors
 syntax match Normal /\*/ conceal cchar=∗
 
+" italic latex work-around
+" https://stackoverflow.com/a/34645680/554531
+syn region math start=/\$\$/ end=/\$\$/
+
+" inline math
+syn match math '\$[^$].\{-}\$'
+
+" actually highlight the region we defined as "math"
+hi link math Statement
+
+" Underline the current line with dashes
+" https://vim.fandom.com/wiki/Underline_using_dashes_automatically
+nnoremap <F5> yyp<c-v>$r-
+inoremap <F5> <Esc>yyp<c-v>$r-A
+
 " ---------------------------------------------------------------------------
 "  markdown link helper
 "  https://benjamincongdon.me/blog/2020/06/27/Vim-Tip-Paste-Markdown-Link-with-Automatic-Title-Fetching/
@@ -1035,10 +1058,24 @@ function GetURLTitle(url)
 endfunction
 
 function PasteMDLink()
+    " generate markdown url
     let url = getreg("+")
     let title = GetURLTitle(url)
     let mdLink = printf("[%s](%s)", title, url)
+
+    " temporarily disable line length limit, if specified
+    if &textwidth != 0
+        let b:oldtextwidth = &textwidth
+        set textwidth=0
+    endif
+    
+    " add link to document
     execute "normal! a" . mdLink . "\<Esc>"
+
+    " restore line length limit
+    if exists("b:oldtextwidth")
+        let &textwidth = b:oldtextwidth
+    endif
 endfunction
 
 " Make a keybinding (mnemonic: "mark down paste")
@@ -1101,17 +1138,18 @@ nnoremap <silent> <leader>g :<C-u>DeniteCursorWord grep:.<CR>
 nnoremap <silent> <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
 
 " navigation
-au FileType denite call s:denite_my_settings()
+autocmd FileType denite call s:denite_my_settings()
+
 function! s:denite_my_settings() abort
     nnoremap <silent><buffer><expr> <CR> denite#do_map('do_action')
-    nnoremap <silent><buffer><expr> d    denite#do_map('do_action', 'delete')
-    nnoremap <silent><buffer><expr> p    denite#do_map('do_action', 'preview')
-    nnoremap <silent><buffer><expr> q    denite#do_map('quit')
-    nnoremap <silent><buffer><expr> i    denite#do_map('open_filter_buffer')
+    nnoremap <silent><buffer><expr> d denite#do_map('do_action', 'delete')
+    nnoremap <silent><buffer><expr> p denite#do_map('do_action', 'preview')
+    nnoremap <silent><buffer><expr> q denite#do_map('quit')
+    nnoremap <silent><buffer><expr> i denite#do_map('open_filter_buffer')
     nnoremap <silent><buffer><expr> <Space> denite#do_map('toggle_select').'j'
 endfunction
 
-au FileType denite-filter call s:denite_filter_my_settings()
+autocmd FileType denite-filter call s:denite_filter_my_settings()
 function! s:denite_filter_my_settings() abort
     imap <silent><buffer> <C-o> <Plug>(denite_filter_quit)
 endfunction
