@@ -1,40 +1,31 @@
 " Vim syntax file
 " Language: Scratchpad
 " Maintainer: Keith Hughitt
-" Latest Revision: July 10, 2020
+" Latest Revision: Aug 15, 2020
+"
 if exists("b:current_syntax")
   finish
 endif
 
+" inherit vim-markdown syntax
+runtime! syntax/markdown.vim
+
 " Date heading
-" syn region scrDateHeading matchgroup=scrSection start="\%(\*\|%\)"    end="\%(\*\|%\)"
-" syn region scrDateHeading start="~" end="~"
-" syn region
-syn match scrDateHeading "^\~.*\~$"
+syn match DateHeading "^\-.*\-$"
 
-" Markdown headings
-syn match  scrHead1       /^.\+\n=\+$/ contains=@Spell
-syn match  scrHead2       /^.\+\n-\+$/ contains=@Spell
+" questions & important
+syn match Question "^?.*$"
+syn match Important "^\!.*$"
 
-" syn keyword scrTodo contained TODO
-
-" Annotations (!, ?, *)
-syn match scrImportant "^\!.*$"
-syn match scrQuestion "^?.*$"
-syn match scrHighlight "\*.*$"
-
-" Separator
-syn match scrSeparator "^---$"
+" #hashtags
+syn match HashTag /#[a-zA-Z0-9.-]\+/
 
 " Highlighting
 let b:current_syntax = "scratch"
 
-hi def link scrComment     Comment
-hi def link scrDateHeading Todo
-hi def link scrImportant   Special
-hi def link scrQuestion    Statement
-hi def link scrHighlight   Type
-hi def link scrHead1       htmlH1
-hi def link scrHead2       htmlH3
-hi def link scrSeparator   Statement
+" Mapping
+hi     link HashTag     Label
+hi def link DateHeading Todo
+hi def link Important   Special
+hi def link Question    Type
 

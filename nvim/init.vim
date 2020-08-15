@@ -220,7 +220,18 @@ function! AddScratchpadEntry ()
     normal! 2j
 
     " add timestamp
-    exec ":put=strftime('~ %c ~')"
+    " exec ":put=strftime('-%c-')"
+    exec ":put=strftime('-%b %d %Y %H:%M:%S-')"
+
+    " add new lines
+    call append(line("."), ["", "", ""])
+
+    " go down two lines
+    " exec ":normal "
+    call cursor(line('.') + 2, 1)
+    
+    " enter insert mode
+    call feedkeys('A', 'n')
 endfunction
 
 autocmd BufNewFile,BufRead s set syntax=scratch
