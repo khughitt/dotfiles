@@ -8,7 +8,7 @@
 " Useful commands:
 "
 " :verbose set <var>?    find where a setting was made
-"
+" :scriptnames           list vimscripts loaded
 
 " ---------------------------------------------------------------------------
 " General
@@ -76,13 +76,12 @@ call plug#begin()
     Plug 'honza/vim-snippets'
     Plug 'jalvesaq/Nvim-R'
     Plug 'JuliaEditorSupport/julia-vim'
+    Plug 'fatih/vim-go'
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
     Plug 'junegunn/fzf.vim'
     Plug 'kshenoy/vim-signature'
     Plug 'kana/vim-operator-user'
-    "Plug 'lilydjwg/colorizer'
     Plug 'MarcWeber/vim-addon-mw-utils'
-    Plug 'majutsushi/tagbar'
     Plug 'mboughaba/i3config.vim'
     Plug 'mllg/vim-devtools-plugin'
     Plug 'mzlogin/vim-markdown-toc'
@@ -99,18 +98,20 @@ call plug#begin()
     Plug 'stephpy/vim-yaml'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
+    Plug 'tpope/vim-repeat'
     Plug 'tpope/vim-surround'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
-    "Plug 'zhaozg/vim-diagram'
     Plug '/usr/share/vim/vimfiles'
 
     "Plug 'manabuishii/vim-cwl'
     "Plug 'mrk21/yaml-vim'
     "Plug 'plasticboy/vim-markdown'
+    " Plug 'majutsushi/tagbar'
 
+    "Plug 'zhaozg/vim-diagram'
     "Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
     "Plug 'tikhomirov/vim-glsl'
     "Plug 'terryma/vim-expand-region'
@@ -120,7 +121,7 @@ call plug#begin()
     Plug 'glts/vim-textobj-comment'
     Plug 'kana/vim-textobj-user'
     Plug 'tyru/vim-textobj-underscore', { 'branch': 'support-3-cases' }
-    Plug 'vim-scripts/argtextobj.vim'
+    "Plug 'vim-scripts/argtextobj.vim'
     "Plug 'vimtaku/vim-textobj-keyvalue'
 
     Plug 'agreco/vim-citylights'
@@ -168,7 +169,6 @@ call plug#begin()
     "Plug 'severin-lemaignan/vim-minimap'
     "Plug 'yuttie/comfortable-motion.vim'
     "Plug 'hkupty/iron.nvim'
-    "Plug 'tpope/vim-repeat'
     "Plug 'hyiltiz/vim-plugins-profile'
     "Plug 'troydm/zoomwintab.vim'
     "Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
@@ -184,8 +184,8 @@ call plug#begin()
     "Plug 'Shougo/deoplete-terminal'
     "Plug 'vim-syntastic/syntastic'
     "Plug 'vimwiki/vimwiki'
-    " Plug 'godlygeek/tabular'
-    " Plug 'neoclide/coc.nvim', {'branch': 'release'}
+    "Plug 'godlygeek/tabular'
+    "Plug 'neoclide/coc.nvim', {'branch': 'release'}
     "
     " overrides filetype tabstop, etc. options
     "Plug 'editorconfig/editorconfig-vim'
@@ -196,6 +196,7 @@ call plug#begin()
     " Requires +conceal feature not compiled in Arch
     " Plug 'vim-pandoc/vim-pandoc'
     " Plug 'vim-pandoc/vim-pandoc-syntax'
+    " Plug 'vim-pandoc/vim-rmarkdown'
 
     " devicons should always be loaded last
     Plug 'ryanoasis/vim-devicons'
@@ -237,6 +238,25 @@ endfunction
 autocmd BufNewFile,BufRead s set syntax=scratch
 autocmd BufNewFile,BufRead s set filetype=scratch
 autocmd FileType scratch map <silent><leader>s :call AddScratchpadEntry ()<CR> 
+
+" similar to above, but for adding simple timestamps to markdown files
+function! AddTimeStamp ()
+    " add timestamp
+    exec ":put=strftime('**%b %d %Y**')"
+
+    " add new lines
+    call append(line("."), ["", "", ""])
+
+    " go down two lines
+    call cursor(line('.') + 2, 1)
+    
+    " enter insert mode
+    call feedkeys('A', 'n')
+    " :startinsert!
+endfunction
+
+autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR> 
+
 
 " ----------------------------------------------------------------------------
 "  Backups
@@ -505,6 +525,7 @@ set clipboard^=unnamed,unnamedplus
 xnoremap p "_dP
 
 " stay at last selected character after yanking text in visual mode
+" 
 vmap y y`]
 
 " paste from primary in normal mode
@@ -603,6 +624,37 @@ au TermOpen * noremap <buffer> <s-tab> <nop>
 au TermOpen * setlocal nonumber norelativenumber
 
 " ---------------------------------------------------------------------------
+"
+" :Scriptnames and :Scratch helper functions
+" https://vim.fandom.com/wiki/List_loaded_scripts
+"
+" ---------------------------------------------------------------------------
+function! s:Scratch (command, ...)
+   redir => lines
+   let saveMore = &more
+   set nomore
+   execute a:command
+   redir END
+   let &more = saveMore
+   call feedkeys("\<cr>")
+   new | setlocal buftype=nofile bufhidden=hide noswapfile
+   put=lines
+   if a:0 > 0
+      execute 'vglobal/'.a:1.'/delete'
+   endif
+   if a:command == 'scriptnames'
+      %substitute#^[[:space:]]*[[:digit:]]\+:[[:space:]]*##e
+   endif
+   silent %substitute/\%^\_s*\n\|\_s*\%$
+   let height = line('$') + 3
+   execute 'normal! z'.height."\<cr>"
+   0
+endfunction
+
+command! -nargs=? Scriptnames call <sid>Scratch('scriptnames', <f-args>)
+command! -nargs=+ Scratch call <sid>Scratch(<f-args>)
+
+" ---------------------------------------------------------------------------
 "  airline
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
@@ -617,8 +669,7 @@ let g:airline#extensions#wordcount#enabled = 1
 " nmap <silent> <C-k> <Plug>(ale_previous_wrap)
 " nmap <silent> <C-j> <Plug>(ale_next_wrap)
 let g:ale_fixers = {'r': ['styler', 'trim_whitespace'], 'rmd': ['styler', 'trim_whitespace']}   
-let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
-
+let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL,object_usage_linter=NULL)"
 
 " ---------------------------------------------------------------------------
 "  black
@@ -930,8 +981,8 @@ let g:indent_guides_guide_size  = 1
 " ---------------------------------------------------------------------------
 " vim-minimap
 " ---------------------------------------------------------------------------
-let g:minimap_highlight='Visual'
-let g:minimap_toggle='<leader>mm'
+" let g:minimap_highlight='Visual'
+" let g:minimap_toggle='<leader>mm'
 
 " ---------------------------------------------------------------------------
 "  neosnippet.vim
@@ -975,8 +1026,9 @@ let g:NERDCustomDelimiters = {
     \ 'rmd': { 'left': '#' }
     \ }
 
-nmap <space> <leader>c<space>
-vmap <space> <leader>c<space>
+" disabled sept 7, 2020 (testing nvim-ipy compat)
+" nmap <space> <leader>c<space>
+" vmap <space> <leader>c<space>
 
 " ---------------------------------------------------------------------------
 "  night-and-day
@@ -997,19 +1049,6 @@ let g:nd_lightline = 1
 " let g:nv_default_extension = '.md'
 
 " nnoremap <silent> <c-y> :NV<CR>
-
-" ---------------------------------------------------------------------------
-"  nvim-ipy
-" ---------------------------------------------------------------------------
-let g:nvim_ipy_perform_mappings = 0
-
-" note: <c-w> <c-r> swaps two vertical buffers
-vmap <Silent><Space> <Plug>(IPy-Run)
-nmap <Silent><Space> <Plug>(IPy-Run)
-vmap <Silent><C-M> <Plug>(IPy-Run)
-nmap <Silent><C-M> <Plug>(IPy-Run)
-
-au FileType python nmap <localleader>rf :IPython<CR>
 
 " ---------------------------------------------------------------------------
 "  vim-markdown
@@ -1040,10 +1079,12 @@ syn match math '\$[^$].\{-}\$'
 " actually highlight the region we defined as "math"
 hi link math Statement
 
-" Underline the current line with dashes
+" underline current line
 " https://vim.fandom.com/wiki/Underline_using_dashes_automatically
-nnoremap <F5> yyp<c-v>$r-
-inoremap <F5> <Esc>yyp<c-v>$r-A
+nnoremap <F5> yyp<c-v>$r=
+inoremap <F5> <Esc>yyp<c-v>$r=A
+nnoremap <leader><F5> yyp<c-v>$r-
+inoremap <leader><F5> <Esc>yyp<c-v>$r-A
 
 " ---------------------------------------------------------------------------
 "  markdown link helper
@@ -1241,128 +1282,6 @@ highlight link Scrollbar Float
 let g:sb_patch_keys = 0
 
 " ---------------------------------------------------------------------------
-"  Nvim-R
-" ---------------------------------------------------------------------------
-let vimrplugin_objbr_place = "console,right"
-
-" fix setkeyw setting messed up by vim.r ftplugin
-au FileType r,rmd set iskeyword=@,48-57,_,192-255
-
-" fix issue relating to setwidth
-" https://github.com/jalvesaq/Nvim-R/issues/81#issuecomment-262651872
-let R_setwidth = 0
-
-" split editor and console top/bottom
-let R_rconsole_width = 0
-
-" disable syntax highlighting in console output
-let R_hl_term = 0
-
-" TEST set background color for terminal
-let rout_color_normal = 'guibg=#191919'
-
-" devtools load all shortcut
-map ;dl :RLoadPackage<CR>
-
-" Emulate Tmux ^az
-function! ZoomWindow()
-    let cpos = getpos(".")
-    tabnew %
-    redraw
-    call cursor(cpos[1], cpos[2])
-    normal! zz
-endfunction
-nmap gz :call ZoomWindow()<CR>
-
-" Exclude object browser from buffer list
-au BufEnter Object_Browser set nobuflisted
-
-" development
-"let R_path = '/usr/local/bin/'
-"let R_cmd = 'R-devel'
-
-" disable <- shortcut
-let R_assign = 0
-
-" enable PDF/Browser support when available
-if $DISPLAY != ""
-    let R_pdfviewer = 'zathura'
-    let vimrplugin_openpdf = 1
-    let vimrplugin_openhtml = 1
-endif
-
-" highlight chunk headers
-let rrst_syn_hl_chunk = 1
-let rmd_syn_hl_chunk = 1
-
-" libraries to always include for autocompletion
-let vimrplugin_start_libs = "base,stats,graphics,grDevices,utils,methods,Biobase,parallel,tidyverse"
-
-" tell nvim-r to expect same prompt format as defined in .Rprofile
-let g:Rout_prompt_str = '> '
-let g:Rout_continue_str = '... '
-
-" press enter and space bar to send lines and selection to R
-vmap <Space> <Plug>RDSendSelection
-nmap <Space> <Plug>RDSendLine
-vmap <CR> <Plug>RDSendSelection
-nmap <CR> <Plug>RDSendLine
-" autocmd FileType rmd    vmap <buffer> <Space> <Plug>RDSendSelection
-" autocmd FileType rmd    nmap <buffer> <Space> <Plug>RDSendLine
-" autocmd FileType rmd    vmap <buffer> <CR> <Plug>RDSendSelection
-" autocmd FileType rmd    nmap <buffer> <CR> <Plug>RDSendLine
-
-" nmap <C-Space> ,rp
-" disabled; conflicts with coc.nvim
-" autocmd FileType r,rmd    nmap <buffer> <C-Space> ,rp
-
-" autostart term
-" au FileType r   if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
-" au FileType rmd if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
-
-" preview data
-" au FileType r,rmd nmap <silent> <LocalLeader>h :call RAction("hh", "@,48-57,_,.")<CR>
-nmap <silent> <LocalLeader>h :call RAction("hh", "@,48-57,_,.")<CR>
-
-" wipe knitr cache and output
-" au FileType r,rmd nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("*_cache/*", recursive=TRUE)')<CR>
-nmap <localleader>kc :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("*_cache/*", recursive=TRUE)')<CR>
-
-" render markdown
-" au FileType r,rmd nmap <localleader>km :call RMakeRmd("github_document")<CR>
-nmap <localleader>km :call RMakeRmd("github_document")<CR>
-
-" show source code for function under cursor
-function! ShowRSource()
-    let g:function_name = expand("<cword>")
-    echom "Showing source code for function: \"" . g:function_name . "\""
-    enew
-    set syntax=r
-    execute ":Rinsert " . g:function_name
-endfunction
-
-" loads a saved image associated with the file, if one exists
-function! LoadRDA()
-    " determine expected path of rda file
-    let cwd = expand("%:p")
-    let code_base_dir = resolve(expand($RESEARCH))
-    let rda_base_dir  = "/rda"
-    let rda_path = substitute(cwd, code_base_dir, rda_base_dir, "e")
-    let rda_path = substitute(rda_path, printf("%s$", expand("%:e")), "rda", "e")
-
-    " if rda image exists, load it
-    if filereadable(rda_path)
-        echom printf("Loading %s...", rda_path)
-        call g:SendCmdToR(printf("load('%s')", rda_path))
-    else
-        echom printf("%s does not exist!", rda_path)
-    endif
-endfunction
-
-" au FileType r,rmd nmap <localleader>sc :call ShowRSource()<CR>
-nmap <localleader>sc :call ShowRSource()<CR>
-
-" ---------------------------------------------------------------------------
 " supertab.vim
 " ---------------------------------------------------------------------------
 let g:SuperTabCrMapping=1
@@ -1402,32 +1321,32 @@ let g:SuperTabDefaultCompletionType = "context"
 " ---------------------------------------------------------------------------
 "  tagbar
 " ---------------------------------------------------------------------------
-nmap <F9> :TagbarToggle<CR>
+" nmap <F9> :TagbarToggle<CR>
 
-let g:tagbar_type_r = {
-    \ 'ctagstype' : 'r',
-    \ 'kinds'     : [
-        \ 'f:Functions',
-        \ 'g:GlobalVariables',
-        \ 'v:FunctionVariables',
-    \ ]
-\ }
+" let g:tagbar_type_r = {
+"     \ 'ctagstype' : 'r',
+"     \ 'kinds'     : [
+"         \ 'f:Functions',
+"         \ 'g:GlobalVariables',
+"         \ 'v:FunctionVariables',
+"     \ ]
+" \ }
 
 " Add support for markdown files in tagbar.
-let g:tagbar_type_markdown = {
-    \ 'ctagstype': 'markdown',
-    \ 'ctagsbin' : '~/bin/markdown2ctags.py',
-    \ 'ctagsargs' : '-f - --sort=yes --sro=»',
-    \ 'kinds' : [
-        \ 's:sections',
-        \ 'i:images'
-    \ ],
-    \ 'sro' : '»',
-    \ 'kind2scope' : {
-        \ 's' : 'section',
-    \ },
-    \ 'sort': 0,
-\ }
+" let g:tagbar_type_markdown = {
+"     \ 'ctagstype': 'markdown',
+"     \ 'ctagsbin' : '~/bin/markdown2ctags.py',
+"     \ 'ctagsargs' : '-f - --sort=yes --sro=»',
+"     \ 'kinds' : [
+"         \ 's:sections',
+"         \ 'i:images'
+"     \ ],
+"     \ 'sro' : '»',
+"     \ 'kind2scope' : {
+"         \ 's' : 'section',
+"     \ },
+"     \ 'sort': 0,
+" \ }
 
 " ---------------------------------------------------------------------------
 "  vim-expand-region
@@ -1454,15 +1373,15 @@ let g:vimwiki_list = [{'path': '~/d/notes/',
 let g:vimwiki_global_ext = 0
 
 " tagbar integration
-let g:tagbar_type_vimwiki = {
-          \   'ctagstype':'vimwiki'
-          \ , 'kinds':['h:header']
-          \ , 'sro':'&&&'
-          \ , 'kind2scope':{'h':'header'}
-          \ , 'sort':0
-          \ , 'ctagsbin':'~/bin/vwtags.py'
-          \ , 'ctagsargs': 'markdown'
-          \ }
+" let g:tagbar_type_vimwiki = {
+"           \   'ctagstype':'vimwiki'
+"           \ , 'kinds':['h:header']
+"           \ , 'sro':'&&&'
+"           \ , 'kind2scope':{'h':'header'}
+"           \ , 'sort':0
+"           \ , 'ctagsbin':'~/bin/vwtags.py'
+"           \ , 'ctagsargs': 'markdown'
+"           \ }
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options
@@ -1478,8 +1397,6 @@ autocmd BufRead,BufNewFile *.py set autoindent
 "au FileType snakemake colorscheme adventurous
 "au FileType r colorscheme pencil
 "au FileType rmd colorscheme onedark
-
-au FileType python map <silent> <leader>b obreakpoint()<esc>
 
 " Host-specific configuration
 " http://effectif.com/vim/host-specific-vim-config
@@ -1509,6 +1426,8 @@ hi Conceal guibg=background guifg=foreground
 
 " Work-around for failing rmarkdown syntax highlighting when jumping around in files
 " https://vim.fandom.com/wiki/Fix_syntax_highlighting
+" https://github.com/vim/vim/issues/2790
+" set redrawtime=10000
 au BufEnter * :syntax sync fromstart
 syntax sync minlines=300
 
