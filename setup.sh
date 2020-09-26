@@ -52,8 +52,8 @@ cp -r ${DOTS_HOME}/gedit/styles ${XDG_CONFIG_HOME}/gedit/
 if [ ! -e ${XDG_CONFIG_HOME}/gtk-3.0/ ]; then
     mkdir ${XDG_CONFIG_HOME}/gtk-3.0/
 fi
-ln -sf ${DOTS_HOME}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
-ln -sf ${DOTS_HOME}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
+ln_s ${DOTS_HOME}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
+ln_s ${DOTS_HOME}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 
 ln_s ${DOTS_HOME}/gtkrc-2.0 ~/.gtkrc-2.0
 
@@ -106,7 +106,7 @@ mkdir -p ~/.cache/i3
 ln_s ${DOTS_HOME}/Xresources ~/.Xdefaults
 
 # scripts, etc.
-ln -sf ${DOTS_HOME}/bin ~/
+ln_s ${DOTS_HOME}/bin ~/
 
 # Vim temp dirs
 mkdir -p ~/.vim/tmp/backup
@@ -114,7 +114,7 @@ mkdir -p ~/.vim/tmp/yankring
 
 # Mimetypes
 mkdir -p ~/.local/share/mime
-ln -sf ${DOTS_HOME}/mime ~/.local/share/mime/packages
+ln_s ${DOTS_HOME}/mime ~/.local/share/mime/packages
 update-mime-database ~/.local/share/mime
 
 rm ${XDG_CONFIG_HOME}/mimeapps.list

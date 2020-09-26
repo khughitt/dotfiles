@@ -87,6 +87,7 @@ source "$fasd_cache"
 unset fasd_cache
 
 unalias a
+unalias s
 alias o='a -e xdg-open'
 alias j='fasd_cd -d' 
 alias v='f -e nvim'
@@ -106,7 +107,7 @@ fi
 # termite dynamic titles
 if [[ $TERM == xterm-termite ]]; then
   . /etc/profile.d/vte.sh
-  __vte_osc7
+  # __vte_osc7
 fi
 
 # dir colors

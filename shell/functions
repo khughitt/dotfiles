@@ -27,7 +27,7 @@ function hv {
 
 # edit note
 function n {
-    pwd=`pwd`
+    wd=`pwd`
 
     cd ~/d/notes
     target=`fd -t f md | grep --color='none' "$1" | fzf -1 --exact`
@@ -36,7 +36,7 @@ function n {
         vim $target
     fi
 
-    cd $pwd
+    cd $wd
 }
 
 # add note
@@ -51,7 +51,6 @@ function a {
     # prompt user for filename
     if [ ! -z "$target" ]; then
         vared -p "Filename? (${target}/XX): " -c fname
-        mkdir -p $fname
         vim $target/$fname
     fi
 
@@ -76,7 +75,14 @@ function tda {
 
 # fzf confs
 function c {
-    vim `fd --regex 'conf|init|rc' --exclude Extracted ~/.dotfiles | grep --color='none' "$1" | fzf -1 --exact`
+    target=`fd --regex 'conf|init|rc|aliases|exports|functions|private|Renviron|Rprofile|rofi-tasks|scratch.vim|zshenv' \
+            --exclude Extracted ~/.dotfiles |\
+            grep --color='none' "$1" |\
+            fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        vim $target
+    fi
 }
 
 # vim + ag
@@ -134,3 +140,31 @@ function ffh265 {
     fi
 }
 
+#
+# checks for some specified gene identifier in several different reference annotations
+# and mapping
+#
+function check_gene {
+    query=$1
+
+    # Strip "LOC" prefix, if present;
+    # "LOC" genes are listed in NCBI genes without the "LOC" prefix
+    # https://www.ncbi.nlm.nih.gov/books/NBK3840/
+    if [ "$1" != "${query#LOC}" ]; then
+        echo "Removing LOC prefix..."
+        query=${query#LOC} 
+    fi
+
+    echo "Checking Ensembl GRCh37 GTF..."
+    zgrep $query /data/ref/human/ensembl/GRCh37/100/Homo_sapiens.GRCh37.87.gtf.gz
+
+    echo "Checking Ensembl GRCh38 GTF..."
+    zgrep $query /data/ref/human/ensembl/GRCh38/100/Homo_sapiens.GRCh38.100.gtf.gz
+
+    echo "Checking HUGO gene symbol mapping..."
+    grep $query /data/ref/human/hugo/genenames_2020-08-08.tsv
+
+    echo "Checking NCBI Genes..." 
+    zgrep $query /data/ref/human/ncbi/Homo_sapiens.gene_info.gz
+}
+ 

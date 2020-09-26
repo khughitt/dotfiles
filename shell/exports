@@ -11,6 +11,8 @@ fi
 export NOTES="$HOME/d/notes"
 export FONTCONFIG_PATH=/etc/fonts
 
+export GOPATH=$HOME/d/go
+
 # anki font size fix
 # https://changes.ankiweb.net/#/known-issues
 export ANKI_NOHIGHDPI=1

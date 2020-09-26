@@ -4,9 +4,6 @@
 " ---------------------------------------------------------------------------
 let vimrplugin_objbr_place = "console,right"
 
-" fix setkeyw setting messed up by vim.r ftplugin
-set iskeyword=@,48-57,_,192-255
-
 " fix issue relating to setwidth
 " https://github.com/jalvesaq/Nvim-R/issues/81#issuecomment-262651872
 let R_setwidth = 0
@@ -19,6 +16,10 @@ let R_hl_term = 0
 
 " TEST set background color for terminal
 let rout_color_normal = 'guibg=#191919'
+
+" use colorscheme for R output
+let g:rout_follow_colorscheme = 1
+let g:Rout_more_colors = 1
 
 " devtools load all shortcut
 map ;dl :RLoadPackage<CR>
@@ -118,3 +119,9 @@ endfunction
 " au FileType r,rmd nmap <localleader>sc :call ShowRSource()<CR>
 nmap <localleader>sc :call ShowRSource()<CR>
 
+" Work-around for failing rmarkdown syntax highlighting when jumping around in files
+" https://vim.fandom.com/wiki/Fix_syntax_highlighting
+" https://github.com/vim/vim/issues/2790
+" set redrawtime=10000
+au BufEnter * :syntax sync fromstart
+syntax sync minlines=300

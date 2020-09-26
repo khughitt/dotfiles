@@ -15,7 +15,7 @@ else
         i3-msg layout splith > /dev/null
 
         coproc zathura ~/d/books/statisticalrethinking2.pdf > /dev/null
-        coproc termite -d $NOTES/courses/statistical-rethinking -e "nvim stat-rethink.md" > /dev/null
+        coproc termite -d $NOTES/knowledge/courses/statistical-rethinking -e "nvim stat-rethink.md" > /dev/null
     elif [ "$@" = "gene-sets" ]; then
         # gene set optimization
         i3empty.py next 1 > /dev/null

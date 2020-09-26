@@ -22,7 +22,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 # Default parameters
-output = '♫ {artist} - {song}'
+output = '{artist}: {song}'
 trunclen = 25
 
 # parameters can be overwritten by args
