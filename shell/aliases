@@ -4,7 +4,9 @@
 #
 ################################################################################
 
+# sudo
 alias _='sudo'
+alias sudo="sudo " # support aliases when using sudo
 
 # ls
 if type "lsd" > /dev/null; then
@@ -20,47 +22,73 @@ alias la='ls -a'
 alias lla='ls -la'
 alias lt='ls --tree'
 alias lr='ls -latr'
+alias ldot='ls -ld .*'
+alias lS='ls -1FSsh'
+alias lart='ls -1Fcart'
+alias lrt='ls -1Fcrt'
 
-alias tree='tree -C'
+# most recent file
+alias new="echo *(.om[1])"
 
-alias ra=ranger
+# du
+alias dud='du -d 1 -h'
+alias duf='du -sh *'
 
-alias p=pulseaudio
+# recursively counts # files in directories and returns a ranked list
+alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
 
-alias xc=xclip
-
-alias cat='bat --wrap=never'
-
-alias less='less -NRSi --shift 10'
-
-alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
-
-alias m=tldr
-
-alias vi=vim
-
-alias errors="journalctl -b -p err|less"
-alias vacuum="sudo journalctl --vacuum-size=200M"
-
-# open last argument of last command in vim
-alias vv='cmd=$(fc -l -1); vim ${cmd##* }'
-
-# fzf (moved to functions)
-# alias n="vim \`fd -t f md ~/d/notes | fzf -1 --exact\`"
+# fasd
+alias jp="j home d r nih"
+alias js="j home shiny"
+alias jn="j /data/nih"
+alias jh="j /data/human"
 
 alias jk="cd \`fasd -d -l -r | fzf -1 --exact\`"
 alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
 
-# config files
-alias vn='vim ~/.config/nvim/init.vim'
-alias vz='vim ~/.zshrc'
+# fd
+alias fda="fd -Luu"
 
+# tree
+alias tree='tree -C'
+
+# ranger
+alias ra=ranger
+
+# cat
+alias cat='bat --wrap=never'
+
+# feh
+alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
+
+# less
+alias less='less -NRSi --shift 10'
+
+# visidata
+alias vp="vd -f pandas"
+
+# xclip
+alias xc=xclip
+
+# neovim
+alias vi=nvim
+alias vim=nvim
+alias vmi=nvim
+alias vm='nvim README.*md'
+alias lv="vim -c \"normal '0\""                         # open most recently edited file / position
+alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}' # open last argument of last command in vim
+
+# journalctl
+alias errors="journalctl -b -p err|less"
+alias vacuum="sudo journalctl --vacuum-size=200M"
+
+# pywal
 alias wali='wal --backend haishoku -i'
 
 # manpages in lynx
 # alias man='man --html="lynx --vikeys"'
 
-# matching
+# grep
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
 
@@ -81,21 +109,12 @@ alias cs='conda search'
 # diff
 alias diff='diff --color=auto'
 
-# support aliases when using sudo
-alias sudo="sudo "
-
 # python
 alias ipy=ipython
 
 # r
 alias R='R --quiet --no-save'
 alias r=radian
-
-# neovim
-alias vim=nvim
-alias vmi=nvim
-alias vm='nvim README.*md'
-alias lv="vim -c \"normal '0\""
 
 # xrandr
 alias 2k="xrandr --output DP-0 --mode 1920x1080"
@@ -105,22 +124,21 @@ alias 4k="xrandr --output DP-0 --mode 3840x2160"
 # example usage: echo just testing! | tb
 alias tb="nc termbin.com 9999"
 
+# google translate
+alias t="trans zh-TW:en"   # to english
+alias tt="trans en:zh-TW"  # to chinese
+
 # Suffix aliases
+# "-s" allows associating file extensions with programs to open them
 alias -s doc=lowriter
 alias -s pdf=zathura
-alias -s html=chromium
-alias -s org=chromium
-alias -s com=chromium
-alias -s Rmd=vim
-
-# from oh-my-zsh common aliases plugin..
+alias -s html=firefox
+alias -s org=firefox
+alias -s com=firefox
+alias -s Rmd=nvim
 
 # Command line head / tail shortcuts
-alias ldot='ls -ld .*'
-alias lS='ls -1FSsh'
-alias lart='ls -1Fcart'
-alias lrt='ls -1Fcrt'
-
+# "-g" = global alias; can be substituted anywhere on the line
 alias -g H='| head'
 alias -g T='| tail'
 alias -g G='| grep'
@@ -131,11 +149,4 @@ alias -g CA="2>&1 | cat -A"
 alias -g NE="2> /dev/null"
 alias -g NUL="> /dev/null 2>&1"
 alias -g P="2>&1| pygmentize -l pytb"
-
-alias dud='du -d 1 -h'
-alias duf='du -sh *'
-
-# recursively counts # files in directories and returns a ranked list
-alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
-
 

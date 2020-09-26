@@ -70,6 +70,7 @@ call plug#begin()
     Plug 'dense-analysis/ale'
     Plug 'dylanaraps/wal.vim'
     Plug 'drzel/vim-line-no-indicator'
+    Plug 'embark-theme/vim', { 'as': 'embark' }
     Plug 'ervandew/supertab'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
@@ -182,7 +183,6 @@ call plug#begin()
     "Plug 'deoplete-plugins/deoplete-jedi'
     "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
     "Plug 'Shougo/deoplete-terminal'
-    "Plug 'vim-syntastic/syntastic'
     "Plug 'vimwiki/vimwiki'
     "Plug 'godlygeek/tabular'
     "Plug 'neoclide/coc.nvim', {'branch': 'release'}
@@ -211,52 +211,6 @@ call plug#end()
 " if bufwinnr("~/d/notes/linux/vim/cheatsheet.md") > 0
 "   echo "Already open"
 " endif
-
-" ----------------------------------------------------------------------------
-"  Scratchpad
-" ----------------------------------------------------------------------------
-function! AddScratchpadEntry ()
-    " find entries heading and move cursor to following line
-    exec ":normal /Entries/\<CR>"
-    normal! 2j
-
-    " add timestamp
-    " exec ":put=strftime('-%c-')"
-    exec ":put=strftime('-%b %d %Y %H:%M:%S-')"
-
-    " add new lines
-    call append(line("."), ["", "", ""])
-
-    " go down two lines
-    " exec ":normal "
-    call cursor(line('.') + 2, 1)
-    
-    " enter insert mode
-    call feedkeys('A', 'n')
-endfunction
-
-autocmd BufNewFile,BufRead s set syntax=scratch
-autocmd BufNewFile,BufRead s set filetype=scratch
-autocmd FileType scratch map <silent><leader>s :call AddScratchpadEntry ()<CR> 
-
-" similar to above, but for adding simple timestamps to markdown files
-function! AddTimeStamp ()
-    " add timestamp
-    exec ":put=strftime('**%b %d %Y**')"
-
-    " add new lines
-    call append(line("."), ["", "", ""])
-
-    " go down two lines
-    call cursor(line('.') + 2, 1)
-    
-    " enter insert mode
-    call feedkeys('A', 'n')
-    " :startinsert!
-endfunction
-
-autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR> 
-
 
 " ----------------------------------------------------------------------------
 "  Backups
@@ -445,10 +399,6 @@ set t_ut=""
 " enable true colors (disable for pywal support)
 set termguicolors
 
-" use colorscheme for R output
-let g:rout_follow_colorscheme = 1
-let g:Rout_more_colors = 1
-
 if has("gui_running")
     set guioptions-=m  " remove menu bar
     set guioptions-=T  " remove toolbar
@@ -463,48 +413,6 @@ if has("gui_running")
     map <S-Insert> <MiddleMouse>
     map! <S-Insert> <MiddleMouse>
 endif
-
-" colorscheme settings
-let g:quantum_black=1
-let g:quantum_italics=1
-let g:onedark_terminal_italics=1
-let g:gruvbox_italic=1
-
-" set background=dark
-"colorscheme hemisu
-"colorscheme sweyla721647
-"colorscheme sweyla939829
-"colorscheme sweyla708971
-"colorscheme gotham
-"colorscheme SerialExperimentsLain
-"colorscheme dracula
-"colorscheme minimalist
-"colorscheme citylights
-"colorscheme wal
-"colorscheme onedark
-"colorscheme pencil
-colorscheme quantum
-
-" terminal color scheme
-" https://github.com/metalelf0/oceanic-next
-"let g:terminal_color_0="#1b2b34"
-"let g:terminal_color_1="#ed5f67"
-"let g:terminal_color_2="#9ac895"
-"let g:terminal_color_3="#fbc963"
-"let g:terminal_color_4="#669acd"
-"let g:terminal_color_5="#c695c6"
-"let g:terminal_color_6="#5fb4b4"
-"let g:terminal_color_7="#c1c6cf"
-"let g:terminal_color_8="#65737e"
-"let g:terminal_color_9="#fa9257"
-"let g:terminal_color_10="#4e5d6b" " #343d46
-"let g:terminal_color_11="#4f5b66"
-"let g:terminal_color_12="#a8aebb"
-"let g:terminal_color_13="#ced4df"
-"let g:terminal_color_14="#ac7967"
-"let g:terminal_color_15="#d9dfea"
-"let g:terminal_color_background="#525252"
-"let g:terminal_color_foreground="#c1c6cf"
 
 " ---------------------------------------------------------------------------
 "  Copy and Paste
@@ -576,6 +484,50 @@ function! StripWhitespace ()
 endfunction
 map ,s :call StripWhitespace ()<CR>
 
+" ----------------------------------------------------------------------------
+"  Scratchpad
+" ----------------------------------------------------------------------------
+function! AddScratchpadEntry ()
+    " find entries heading and move cursor to following line
+    exec ":normal /Entries/\<CR>"
+    normal! 2j
+
+    " add timestamp
+    " exec ":put=strftime('-%c-')"
+    exec ":put=strftime('-%b %d %Y %H:%M:%S-')"
+
+    " add new lines
+    call append(line("."), ["", "", ""])
+
+    " go down two lines
+    " exec ":normal "
+    call cursor(line('.') + 2, 1)
+    
+    " enter insert mode
+    call feedkeys('A', 'n')
+endfunction
+
+" similar to above, but for adding simple timestamps to markdown files
+function! AddTimeStamp ()
+    " add timestamp
+    exec ":put=strftime('**%b %d %Y**')"
+
+    " add new lines
+    call append(line("."), ["", "", ""])
+
+    " go down two lines
+    call cursor(line('.') + 2, 1)
+    
+    " enter insert mode
+    call feedkeys('A', 'n')
+    " :startinsert!
+endfunction
+
+autocmd BufNewFile,BufRead s set syntax=scratch
+autocmd BufNewFile,BufRead s set filetype=scratch
+autocmd FileType scratch map <silent><leader>s :call AddScratchpadEntry ()<CR> 
+autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR> 
+
 " ---------------------------------------------------------------------------
 "  Search Options
 " ---------------------------------------------------------------------------
@@ -625,7 +577,7 @@ au TermOpen * setlocal nonumber norelativenumber
 
 " ---------------------------------------------------------------------------
 "
-" :Scriptnames and :Scratch helper functions
+" Scriptnames helper function
 " https://vim.fandom.com/wiki/List_loaded_scripts
 "
 " ---------------------------------------------------------------------------
@@ -1026,7 +978,7 @@ let g:NERDCustomDelimiters = {
     \ 'rmd': { 'left': '#' }
     \ }
 
-" disabled sept 7, 2020 (testing nvim-ipy compat)
+" disabled sept 7, 2020 (nvim-ipy compat)
 " nmap <space> <leader>c<space>
 " vmap <space> <leader>c<space>
 
@@ -1289,36 +1241,6 @@ let g:SuperTabDefaultCompletionType = "<c-n>"
 let g:SuperTabDefaultCompletionType = "context"
 
 " ---------------------------------------------------------------------------
-"  syntastic
-" ---------------------------------------------------------------------------
-" set statusline+=%#warningmsg#
-" set statusline+=%{SyntasticStatuslineFlag()}
-" set statusline+=%*
-"
-" let g:syntastic_mode_map = {'mode': 'passive'}
-" let g:syntastic_always_populate_loc_list = 1
-" let g:syntastic_auto_loc_list = 1
-" let g:syntastic_check_on_open = 0
-" let g:syntastic_check_on_wq = 1
-"
-" " r
-" let g:syntastic_r_checkers=['lintr']
-" let g:syntastic_rmd_checkers=['lintr']
-"
-" let g:syntastic_enable_r_lintr_checker = 1
-" let g:syntastic_enable_rmd_lintr_checker = 1
-"
-" " 2019-09-05: new linter in devel version of lintr:
-" "  object_name_linter(styles = c('snake_case'))
-" let g:syntastic_r_lintr_linters = "with_defaults(line_length_linter(120),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL)"
-"
-" " python
-" let g:syntastic_rst_checkers=['sphinx']
-"
-" " key bindings
-" nnoremap <F10> :SyntasticCheck<CR>
-
-" ---------------------------------------------------------------------------
 "  tagbar
 " ---------------------------------------------------------------------------
 " nmap <F9> :TagbarToggle<CR>
@@ -1382,6 +1304,15 @@ let g:vimwiki_global_ext = 0
 "           \ , 'ctagsbin':'~/bin/vwtags.py'
 "           \ , 'ctagsargs': 'markdown'
 "           \ }
+"
+
+" ---------------------------------------------------------------------------
+"  Host-specific configuration
+" ---------------------------------------------------------------------------
+let hostfile=$XDG_CONFIG_HOME . '/nvim/' . substitute(hostname(), "\\..*", "", "") . '-local.vim'
+if filereadable(hostfile)
+    exe 'source ' . hostfile
+endif
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options
@@ -1391,43 +1322,43 @@ let g:vimwiki_global_ext = 0
 autocmd FileType html,css,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.py set autoindent
 
-" Languge-specific color schemes
-"au FileType yaml colorscheme sweyla907357
-"au FileType jinja colorscheme SerialExperimentsLain
-"au FileType snakemake colorscheme adventurous
-"au FileType r colorscheme pencil
-"au FileType rmd colorscheme onedark
+" nvim-ipy
+let g:nvim_ipy_perform_mappings = 0
 
-" Host-specific configuration
-" http://effectif.com/vim/host-specific-vim-config
-let hostfile=$XDG_CONFIG_HOME . '/nvim/' . substitute(hostname(), "\\..*", "", "") . '-local.vim'
-if filereadable(hostfile)
-    exe 'source ' . hostfile
-endif
+" ---------------------------------------------------------------------------
+"  Language-specific Options
+" ---------------------------------------------------------------------------
+let g:onedark_terminal_italics=1
+let g:gruvbox_italic=1
+let g:quantum_black=1
+let g:quantum_italics=1
 
-"
-" more colorscheme changes (keep at end of file to ensure these aren't over-ridden)
-"
+colorscheme quantum
+
+" terminal color scheme
+" https://github.com/metalelf0/oceanic-next
+"let g:terminal_color_0="#1b2b34"
+"let g:terminal_color_1="#ed5f67"
+"let g:terminal_color_2="#9ac895"
+"let g:terminal_color_3="#fbc963"
+"let g:terminal_color_4="#669acd"
+"let g:terminal_color_5="#c695c6"
+"let g:terminal_color_6="#5fb4b4"
+"let g:terminal_color_7="#c1c6cf"
+"let g:terminal_color_8="#65737e"
+"let g:terminal_color_9="#fa9257"
+"let g:terminal_color_10="#4e5d6b" " #343d46
+"let g:terminal_color_11="#4f5b66"
+"let g:terminal_color_12="#a8aebb"
+"let g:terminal_color_13="#ced4df"
+"let g:terminal_color_14="#ac7967"
+"let g:terminal_color_15="#d9dfea"
+"let g:terminal_color_background="#525252"
+"let g:terminal_color_foreground="#c1c6cf"
+
 syntax on
 
-" color column
-highlight ColorColumn ctermbg=234 guibg=#222222
-
-" Matching parens style
+hi ColorColumn ctermbg=234 guibg=#222222
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
-
-" Highlight color
-" hi Search ctermbg=197 ctermfg=233
-" hi Search guibg=#14D1DE guifg=#2C2C2C
-" hi IncSearch guifg=#67E8F1 guibg=#333333
-
-" Conceal characters
 hi Conceal guibg=background guifg=foreground
-
-" Work-around for failing rmarkdown syntax highlighting when jumping around in files
-" https://vim.fandom.com/wiki/Fix_syntax_highlighting
-" https://github.com/vim/vim/issues/2790
-" set redrawtime=10000
-au BufEnter * :syntax sync fromstart
-syntax sync minlines=300
 

@@ -63,6 +63,10 @@ fi
 # sync clipboard buffers
 autocutsel -fork &
 
+# sync primary/clipboard
+# autocutsel -fork &
+# autocutsel -fork -s PRIMARY &
+
 # fcitx
 export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx

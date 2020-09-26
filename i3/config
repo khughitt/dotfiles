@@ -44,7 +44,6 @@ hide_edge_borders smart_no_gaps
 # gaps
 gaps inner 12
 smart_gaps on
-border_radius 10
 
 # keyboard shortcut to toggle borders of current window
 bindsym $mod+Shift+b border toggle
@@ -116,6 +115,7 @@ bindsym $mod+Return \
     exec --no-startup-id termite --name=i3term;\
     [instance="i3term"] scratchpad show;\
     floating toggle
+
 
 # file browser
 #bindsym $mod+n exec termite -e ranger
@@ -330,7 +330,8 @@ bindsym Mod1+Return \
     move position $scratch_x1 $scratch_y1;
 
 #-- r console --#
-exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch
+# exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch
+exec_always --no-startup-id termite -e "radian" --name=r_scratch
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \

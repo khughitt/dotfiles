@@ -13,9 +13,10 @@
 #
 
 # snakemake log directory to monitor
+LOGDIR=/data/inc/biowulf/snakemake-logs
 # LOGDIR=~/d/r/nih/p3/pipeline/.snakemake/log
-LOGDIR=~/d/r/nih/fgsea/.snakemake/log
-#LOGDIR=/data/inc/biowulf/snakemake-logs
+# LOGDIR=~/d/r/nih/fgsea/.snakemake/log
+# LOGDIR=~/d/r/nih/nlp/pubtator/.snakemake/log
 
 # pgrep snakemake >/dev/null
 

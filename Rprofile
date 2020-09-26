@@ -11,7 +11,6 @@ options(continue = "... ")
 options(download.file.method = "libcurl")
 options(dplyr.print_max = 5) 
 options(github.user = "khughitt")
-options(help.search.types = c("name", "title", "alias", "concept", "keyword"))
 options(keep.source.pkgs = TRUE)
 options(knitr.duplicate.label = 'allow')
 options(max.print = 100)
@@ -27,7 +26,6 @@ options(showWarnCalls = TRUE)
 options(showNCalls = 100)
 options(try.all.packages  = TRUE)
 options(warning.length = 8170)
-options(warning.length = 5000)
 options(width = 100)
 
 # disabled due to warnings arising from inside packages
@@ -139,6 +137,11 @@ if (interactive()) {
     } else {
       apply(dat, axis, function (x) { sum(is.na(x)) })
     }
+  }
+
+  # number of rows or columns with zero variance
+  .env$z <- function(dat, axis = 1) {
+    sum(apply(dat, axis, var) == 0)
   }
 
   # ascii density plot
