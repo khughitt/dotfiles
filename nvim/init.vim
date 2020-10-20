@@ -88,7 +88,7 @@ call plug#begin()
     Plug 'mzlogin/vim-markdown-toc'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
-    Plug 'psf/black'
+    Plug 'psf/black', { 'branch': 'stable' }
     Plug 'qpkorr/vim-bufkill'
     Plug 'raimon49/requirements.txt.vim'
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
@@ -509,6 +509,12 @@ endfunction
 
 " similar to above, but for adding simple timestamps to markdown files
 function! AddTimeStamp ()
+    " go to top of file
+    normal! gg
+    
+    " then find first empty line and go down one more line
+    exec ":normal /^$/\<CR>"
+
     " add timestamp
     exec ":put=strftime('**%b %d %Y**')"
 

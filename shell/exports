@@ -16,3 +16,6 @@ export GOPATH=$HOME/d/go
 # anki font size fix
 # https://changes.ankiweb.net/#/known-issues
 export ANKI_NOHIGHDPI=1
+
+# zeit
+export ZEIT_DB=~/.config/zeit.db

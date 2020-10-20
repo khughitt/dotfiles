@@ -13,17 +13,14 @@
 #
 
 # snakemake log directory to monitor
-LOGDIR=/data/inc/biowulf/snakemake-logs
-# LOGDIR=~/d/r/nih/p3/pipeline/.snakemake/log
-# LOGDIR=~/d/r/nih/fgsea/.snakemake/log
-# LOGDIR=~/d/r/nih/nlp/pubtator/.snakemake/log
+LOGDIR=~/.log/snakemake/
 
 # pgrep snakemake >/dev/null
 
 # check if snakemake is currently running
 # if so, retrieve the current status from the most recently changed log
 # log=$LOGDIR/$(ls -Art $LOGDIR/*.log | tail -n 1)
-log=$(ls -Art $LOGDIR/*.log | tail -n 1)
+log=$(ls -Art $LOGDIR/*/*.log | tail -n 1)
 
 # number of steps / % complete
 # status=$(grep --color=never "done$" $log | tail -n 1 | sed 's/of/\//' | sed -E 's/(steps | done)//g')
