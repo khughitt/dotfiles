@@ -38,16 +38,18 @@ alias duf='du -sh *'
 alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
 
 # fasd
-alias jp="j home d r nih"
+alias jp="j home d r proj"
+alias jt="j home d r tool"
 alias js="j home shiny"
-alias jn="j /data/nih"
-alias jh="j /data/human"
 
 alias jk="cd \`fasd -d -l -r | fzf -1 --exact\`"
 alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
 
 # fd
 alias fda="fd -Luu"
+
+# count number of files in each subdirectory recursively
+#alias fdc="for x in *; do echo $x; n=`fd . -t f $x | wc -l`; echo \"$x: $n\"; done"
 
 # tree
 alias tree='tree -C'

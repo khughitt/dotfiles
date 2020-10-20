@@ -113,19 +113,6 @@ fi
 # dir colors
 #eval $(dircolors -b ~/.dir_colors)
 
-# conda
-# __conda_setup="$("$HOME/conda/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
-# if [ $? -eq 0 ]; then
-#     eval "$__conda_setup"
-# else
-#     if [ -f "$HOME/conda/etc/profile.d/conda.sh" ]; then
-#         . "$HOME/conda/etc/profile.d/conda.sh"
-#     else
-#         export PATH="$HOME/conda/bin:$PATH"
-#     fi
-# fi
-# unset __conda_setup
-
 # local settings (late)
 if [ -e ~/.zsh_local_late ]; then
    source ~/.zsh_local_late
@@ -263,18 +250,15 @@ fi
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/Users/keith/conda/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+__conda_setup="$('/mnt/storage/conda/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "/Users/keith/conda/etc/profile.d/conda.sh" ]; then
-        . "/Users/keith/conda/etc/profile.d/conda.sh"
+    if [ -f "/mnt/storage/conda/etc/profile.d/conda.sh" ]; then
+        . "/mnt/storage/conda/etc/profile.d/conda.sh"
     else
-        export PATH="/Users/keith/conda/bin:$PATH"
+        export PATH="/mnt/storage/conda/bin:$PATH"
     fi
 fi
 unset __conda_setup
 # <<< conda initialize <<<
-
-### End of Zinit's installer chunk
-### End of Zinit's installer chunk
