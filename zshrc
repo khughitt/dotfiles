@@ -151,6 +151,7 @@ zinit snippet OMZ::lib/directories.zsh
 zinit snippet OMZ::lib/git.zsh
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
+zinit snippet OMZ::plugins/taskwarrior/taskwarrior.plugin.zsh
 
 # vi mode improvement
 #zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
