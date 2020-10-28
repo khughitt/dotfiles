@@ -68,7 +68,7 @@ done
 for path in "agignore" "ansiweatherrc" "cookiecutterrc" "ctags" "dir_colors"  \
             "picom.conf" "plotly" "Rprofile" "Renviron" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "Xmodmap" "Xresources" \
-            "condarc" "xprofile"; do
+            "taskrc" "condarc" "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
 done
 
