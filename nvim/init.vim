@@ -89,13 +89,13 @@ call plug#begin()
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
     Plug 'psf/black', { 'branch': 'stable' }
-    Plug 'qpkorr/vim-bufkill'
     Plug 'raimon49/requirements.txt.vim'
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
+    Plug 'romgrk/barbar.nvim'
     Plug 'Shougo/denite.nvim', { 'do': ':UpdateRemotePlugins' }
     Plug 'Shougo/neomru.vim'
     Plug 'scrooloose/nerdcommenter'
-    Plug 'sslivkoff/vim-scroll-barnacle'
+    " Plug 'sslivkoff/vim-scroll-barnacle'
     Plug 'stephpy/vim-yaml'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
@@ -107,6 +107,7 @@ call plug#begin()
     Plug 'xolox/vim-misc'
     Plug '/usr/share/vim/vimfiles'
 
+    " Plug 'qpkorr/vim-bufkill'
     "Plug 'manabuishii/vim-cwl'
     "Plug 'mrk21/yaml-vim'
     "Plug 'plasticboy/vim-markdown'
@@ -199,6 +200,7 @@ call plug#begin()
     " Plug 'vim-pandoc/vim-rmarkdown'
 
     " devicons should always be loaded last
+    Plug 'kyazdani42/nvim-web-devicons'
     Plug 'ryanoasis/vim-devicons'
 call plug#end()
 
@@ -299,21 +301,21 @@ map <silent> j gj
 map <silent> k gk
 
 " Use bufkill to preserve splits when closing buffers
-cabbrev bd BD
+" cabbrev bd BD
 "map <C-w> :BD<cr>
 
 " Quick buffer switching using tab / shift + arrow keys
-nnoremap <Tab> :bnext<CR>
-nnoremap <S-Tab> :bprev<CR>
-nnoremap <s-left> :bprev<CR>
-nnoremap <s-right> :bnext<CR>
+" nnoremap <Tab> :bnext<CR>
+" nnoremap <S-Tab> :bprev<CR>
+" nnoremap <s-left> :bprev<CR>
+" nnoremap <s-right> :bnext<CR>
 
 " Switch to ]b and [b for improved coc.nvim support
 " nnoremap [b :bprevious<CR>
 " nnoremap ]b :bnext<CR>
 
 " Close the current buffer
-map <leader>bd :BD<cr>
+" map <leader>bd :BD<cr>
 
 " Close all the buffers
 map <leader>ba :1,1000 bd!<cr>
@@ -630,6 +632,15 @@ let g:ale_fixers = {'r': ['styler', 'trim_whitespace'], 'rmd': ['styler', 'trim_
 let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL,object_usage_linter=NULL)"
 
 " ---------------------------------------------------------------------------
+"  barbar.nvim
+" ---------------------------------------------------------------------------
+nnoremap <silent>    <leader>bd :BufferClose<CR>
+nnoremap <silent>    <S-Tab> :BufferPrevious<CR>
+nnoremap <silent>    <Tab> :BufferNext<CR>
+nnoremap <silent>    <S-left> :BufferPrevious<CR>
+nnoremap <silent>    <S-right> :BufferNext<CR>
+
+" ---------------------------------------------------------------------------
 "  black
 " ---------------------------------------------------------------------------
 "au BufWritePre *.py execute ':Black'
@@ -781,11 +792,6 @@ let g:csv_no_conceal = 1
 " nnoremap <silent> <space>p  :<C-u>CocListResume<CR>
 
 " ---------------------------------------------------------------------------
-"  colorizer
-" ---------------------------------------------------------------------------
-" let g:colorizer_startup = 0
-
-" ---------------------------------------------------------------------------
 "  vim-hexokinase
 " ---------------------------------------------------------------------------
 "let g:Hexokinase_highlighters = ['backgroundfull']
@@ -916,11 +922,6 @@ let g:gitgutter_max_signs = 1000
 let g:gitgutter_diff_args = '--ignore-all-space'
 
 " ---------------------------------------------------------------------------
-"  gundo.vim
-" ---------------------------------------------------------------------------
-" nnoremap <F5> :GundoToggle<CR>
-
-" ---------------------------------------------------------------------------
 " indent guides
 " ---------------------------------------------------------------------------
 let g:indent_guides_auto_colors = 0
@@ -928,48 +929,10 @@ let g:indent_guides_auto_colors = 1
 let g:indent_guides_start_level = 2
 let g:indent_guides_guide_size  = 1
 
-" au VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=black    ctermbg=black
-" au VimEnter,Colorscheme * :hi IndentGuidesEven guibg=darkgrey ctermbg=darkgrey
-
 " ---------------------------------------------------------------------------
 " julia-vim
 " ---------------------------------------------------------------------------
 " autocmd BufNewFile,BufRead *.jl set syntax=julia
-
-" ---------------------------------------------------------------------------
-" vim-minimap
-" ---------------------------------------------------------------------------
-" let g:minimap_highlight='Visual'
-" let g:minimap_toggle='<leader>mm'
-
-" ---------------------------------------------------------------------------
-"  neosnippet.vim
-" ---------------------------------------------------------------------------
-" mapping
-"imap <C-k> <Plug>(neosnippet_expand_or_jump)
-"smap <C-k> <Plug>(neosnippet_expand_or_jump)
-"xmap <C-k> <Plug>(neosnippet_expand_target)
-
-" SuperTab like snippets behavior.
-"imap <expr><TAB>
-" \ pumvisible() ? "\<C-n>" :
-" \ neosnippet#expandable_or_jumpable() ?
-" \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
-"smap <expr><TAB> neosnippet#expandable_or_jumpable() ?
-" \ "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
-
-" For conceal markers (disabling; also conceals asterisks in markdown docs...)
-"if has('conceal')
-"  set conceallevel=2 concealcursor=niv
-"endif
-
-"let g:neosnippet#enable_completed_snippet = 1
-"let g:neosnippet#snippets_directory='~/.config/nvim/plugged/vim-snippets/snippets'
-
-" ---------------------------------------------------------------------------
-"  NERDTree
-" ---------------------------------------------------------------------------
-map <C-n> :NERDTreeToggle<CR>
 
 " ---------------------------------------------------------------------------
 "  NERDcommenter
@@ -1217,18 +1180,6 @@ map <localleader>n :Notes<CR>
 " let g:lightline.component_type   = {'buffers': 'tabsel'}
 " let g:lightline#bufferline#enable_devicons = 1
 " let g:lightline#bufferline#show_number  = 1
-
-" ---------------------------------------------------------------------------
-"  noscrollbar
-" ---------------------------------------------------------------------------
-" Instead of % show NoScrollbar horizontal scrollbar
-" function! NoScrollbarForLightline()
-"    return noscrollbar#statusline()
-" endfunction
-" function! Noscrollbar(...)
-"     let w:airline_section_z = '%{noscrollbar#statusline()}'
-" endfunction
-" call airline#add_statusline_func('Noscrollbar')
 
 " ---------------------------------------------------------------------------
 "  vim-scroll-barnacle
