@@ -1,4 +1,4 @@
-R_BROWSER=chromium
+R_BROWSER=firefox
 R_LIBS_USER=~/R/%p-library/%v
 R_HISTFILE=~/.Rhistory
 R_HISTSIZE=5000

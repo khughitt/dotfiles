@@ -48,8 +48,14 @@ alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
 # fd
 alias fda="fd -Luu"
 
+# kord
+alias kord="python ~/.local/fretboard/fretboard.py"
+
 # count number of files in each subdirectory recursively
 #alias fdc="for x in *; do echo $x; n=`fd . -t f $x | wc -l`; echo \"$x: $n\"; done"
+
+# taskwarrior
+alias tw=taskwarrior-tui
 
 # tree
 alias tree='tree -C'
@@ -126,9 +132,12 @@ alias 4k="xrandr --output DP-0 --mode 3840x2160"
 # example usage: echo just testing! | tb
 alias tb="nc termbin.com 9999"
 
+# ranger practice
+alias nautilus="ranger"
+
 # google translate
-alias t="trans zh-TW:en"   # to english
-alias tt="trans en:zh-TW"  # to chinese
+alias tze="trans zh-TW:en"   # to english
+alias tez="trans en:zh-TW"  # to chinese
 
 # Suffix aliases
 # "-s" allows associating file extensions with programs to open them

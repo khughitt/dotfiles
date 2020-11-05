@@ -24,7 +24,7 @@ MINUTE = 60
 
 # DEFAULT CONFIGS
 ICON_TOTAL = "%{u#ffa58f} "
-DATABASE_PATH = HOME_FOLDER + "pomobar.db"
+DATABASE_PATH = HOME_FOLDER + ".config/pomobar.db"
 
 # CUSTOM CONFIGS
 config = configparser.ConfigParser()
