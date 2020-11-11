@@ -22,6 +22,16 @@ function hv {
 }
 
 #
+# taskwarrior
+#
+
+# show tasks for a specific project
+function tp {
+    project=`task projects | head -n-2 | tail -n+5 | awk '{print $1}' | fzf -1 --exact`
+    task project:$project
+}
+
+#
 # fzf notes
 # 
 

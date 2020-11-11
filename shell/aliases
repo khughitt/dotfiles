@@ -38,6 +38,7 @@ alias duf='du -sh *'
 alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
 
 # fasd
+alias jb="j home d r bio"
 alias jp="j home d r proj"
 alias jt="j home d r tool"
 alias js="j home shiny"
@@ -106,8 +107,8 @@ alias rmf="rm -rf"
 alias cpr="cp -r"
 
 # package management
-alias pc='yay -Syu'
-alias pcd='yay -Syu --devel'
+alias yy='yay -Syu'
+alias yd='yay -Syu --devel'
 
 # conda
 alias cde='conda deactivate'

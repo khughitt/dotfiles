@@ -65,6 +65,7 @@ call plug#begin()
     " Plug 'airblade/vim-gitgutter'
     Plug 'andymass/vim-matchup'
     Plug 'bfredl/nvim-ipy'
+    Plug 'bioSyntax/bioSyntax-vim'
     Plug 'burneyy/vim-snakemake'
     Plug 'chrisbra/csv.vim'
     Plug 'dense-analysis/ale'
@@ -162,6 +163,8 @@ call plug#begin()
     Plug 'wimstefan/Lightning'
     Plug 'yuttie/hydrangea-vim'
     Plug 'zanloy/vim-colors-grb256'
+
+    " Plug 'khughitt/sen.nvim'
 
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
