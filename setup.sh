@@ -59,14 +59,14 @@ ln_s ${DOTS_HOME}/gtkrc-2.0 ~/.gtkrc-2.0
 
 # ~/.config/xx
 for path in "awesome" "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
-            "labnote" "polybar" "powerline" "pylintrc" "ranger" "snakemake" "spicetify" \
+            "labnote" "lsd" "polybar" "powerline" "pylintrc" "ranger" "snakemake" "spicetify" \
             "termcolors" "termite" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
 # ~/.xx
 for path in "agignore" "ansiweatherrc" "cookiecutterrc" "ctags" "dir_colors"  \
-            "picom.conf" "plotly" "Rprofile" "Renviron" "tmux" "tmux.conf" \
+            "picom.conf" "plotly" "Rprofile" "Renviron" "sen" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "Xmodmap" "Xresources" \
             "taskrc" "condarc" "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
