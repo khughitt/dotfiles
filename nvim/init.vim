@@ -438,7 +438,7 @@ set clipboard^=unnamed,unnamedplus
 xnoremap p "_dP
 
 " stay at last selected character after yanking text in visual mode
-" 
+"
 vmap y y`]
 
 " paste from primary in normal mode
@@ -507,37 +507,25 @@ function! AddScratchpadEntry ()
     " go down two lines
     " exec ":normal "
     call cursor(line('.') + 2, 1)
-    
+
     " enter insert mode
     call feedkeys('A', 'n')
 endfunction
 
 " similar to above, but for adding simple timestamps to markdown files
 function! AddTimeStamp ()
-    " go to top of file
-    normal! gg
-    
-    " then find first empty line and go down one more line
-    exec ":normal /^$/\<CR>"
-
     " add timestamp
-    exec ":put=strftime('**%b %d %Y**')"
+    call append(line("."), [strftime('%b %d %Y'), "-----------", ""])
+    normal! 3j
 
-    " add new lines
-    call append(line("."), ["", "", ""])
-
-    " go down two lines
-    call cursor(line('.') + 2, 1)
-    
     " enter insert mode
     call feedkeys('A', 'n')
-    " :startinsert!
 endfunction
 
 autocmd BufNewFile,BufRead s set syntax=scratch
 autocmd BufNewFile,BufRead s set filetype=scratch
-autocmd FileType scratch map <silent><leader>s :call AddScratchpadEntry ()<CR> 
-autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR> 
+autocmd FileType scratch map <silent><leader>s :call AddScratchpadEntry ()<CR>
+autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR>
 
 " ---------------------------------------------------------------------------
 "  Search Options
@@ -631,7 +619,7 @@ let g:airline#extensions#wordcount#enabled = 1
 " ---------------------------------------------------------------------------
 " nmap <silent> <C-k> <Plug>(ale_previous_wrap)
 " nmap <silent> <C-j> <Plug>(ale_next_wrap)
-let g:ale_fixers = {'r': ['styler', 'trim_whitespace'], 'rmd': ['styler', 'trim_whitespace']}   
+let g:ale_fixers = {'r': ['styler', 'trim_whitespace'], 'rmd': ['styler', 'trim_whitespace']}
 let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL,object_usage_linter=NULL)"
 
 " ---------------------------------------------------------------------------
@@ -1003,12 +991,20 @@ syn match math '\$[^$].\{-}\$'
 " actually highlight the region we defined as "math"
 hi link math Statement
 
-" underline current line
-" https://vim.fandom.com/wiki/Underline_using_dashes_automatically
-nnoremap <F5> yyp<c-v>$r=
-inoremap <F5> <Esc>yyp<c-v>$r=A
-nnoremap <leader><F5> yyp<c-v>$r-
-inoremap <leader><F5> <Esc>yyp<c-v>$r-A
+" underline current line; useful for markdown headings
+function CreateHeading(char)
+    let size = strwidth(getline('.'))
+    execute "normal! o\<ESC>"
+    execute "normal!" . size . "I" . a:char . "\<ESC>"
+    execute "normal! o\<ESC>"
+    execute "normal! o"
+    call feedkeys('A', 'n')
+endfunction
+
+nnoremap <F5> :call CreateHeading("=")<CR>
+inoremap <F5> <Esc> :call CreateHeading("=")<CR>
+nnoremap <leader><F5> :call CreateHeading("-")<CR>
+inoremap <leader><F5> <Esc>:call CreateHeading("-")<CR>
 
 " ---------------------------------------------------------------------------
 "  markdown link helper
@@ -1044,7 +1040,7 @@ function PasteMDLink()
         let b:oldtextwidth = &textwidth
         set textwidth=0
     endif
-    
+
     " add link to document
     execute "normal! a" . mdLink . "\<Esc>"
 
@@ -1055,7 +1051,7 @@ function PasteMDLink()
 endfunction
 
 " Make a keybinding (mnemonic: "mark down paste")
-nmap <Leader>mdp :call PasteMDLink()<cr>
+nmap <Leader>f :call PasteMDLink()<CR>
 
 " ---------------------------------------------------------------------------
 "  vim-diagram (mermaid)
