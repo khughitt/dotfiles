@@ -137,6 +137,18 @@ bindkey "^[[1;3C" forward-word
 bindkey "^[[1;5C" forward-word
 bindkey "^[^?" backward-kill-word 
 
+# bindkey -s "^N" "notes"
+# bindkey -s "^N" "hw"
+#
+
+# hw() { echo "hello world"; }
+# zle -N hw
+# bindkey "^h" hw
+
+# my-script_widget() my-script its args
+# zle -N my-script_widget
+# bindkey '\ej' my-script_widget
+
 #bindkey '^[[Z' reverse-menu-complete
 
 #
@@ -243,6 +255,13 @@ fi
 if [ -e ~/.dotfiles/zsh/$HOST.zsh ]; then
     . ~/.dotfiles/zsh/$HOST.zsh
 fi
+
+#
+# custom zsh keybindings;
+# should come near end of config to avoid being overwritten
+# 
+zle -N notes
+bindkey "^N" notes
 
 # print greeting
 if [ "$vconsole" = false ]; then

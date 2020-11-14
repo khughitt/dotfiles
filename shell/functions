@@ -36,6 +36,42 @@ function tp {
 # 
 
 # edit note
+function notes {
+    wd=`pwd`
+
+    cd ~/d/notes
+    target=`fd -t f md | grep --color='none' "$1" | fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        vim $target
+    fi
+
+    cd $wd
+}
+
+# journal manager
+# 
+# scans a folder containing project-specific markdown journal entries used to 
+# track daily work on different fronts.
+#
+function jm {
+    wd=`pwd`
+
+    cd ~/d/journal
+    target=`fd -t f md -X ls -t | grep --color='none' "$1" | fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        vim $target
+    fi
+
+    cd $wd
+}
+
+# search notes
+# 
+# searches a collection of markdown notes by filepath and opens the selected
+# entry in vim.
+#
 function n {
     wd=`pwd`
 
