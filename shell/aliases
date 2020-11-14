@@ -52,6 +52,12 @@ alias fda="fd -Luu"
 # kord
 alias kord="python ~/.local/fretboard/fretboard.py"
 
+# notes
+alias n="notes"
+
+# edit configs
+alias zc="nvim ~/.zshrc"
+
 # count number of files in each subdirectory recursively
 #alias fdc="for x in *; do echo $x; n=`fd . -t f $x | wc -l`; echo \"$x: $n\"; done"
 

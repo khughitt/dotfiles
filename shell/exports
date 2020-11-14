@@ -17,5 +17,8 @@ export GOPATH=$HOME/d/go
 # https://changes.ankiweb.net/#/known-issues
 export ANKI_NOHIGHDPI=1
 
+# flask dev mode
+export FLASK_ENV=development
+
 # zeit
 export ZEIT_DB=~/.config/zeit.db
