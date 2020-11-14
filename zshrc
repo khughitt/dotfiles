@@ -67,9 +67,6 @@ zstyle ':completion:*' menu select=4
 # zstyle ':completion:*' matcher-list 'l:|=* r:|=*' 
 zstyle ':completion:*'  matcher-list 'm:{a-z}={A-Z}'
 
-# snakemake tab completion support
-#compdef _gnu_generic snakemake
-
 # additional shell settings (aliases, exports, etc.)
 for file in ~/.shell/{aliases,functions,private,exports}; do
     [ -r "$file" ] && source "$file"
@@ -171,6 +168,12 @@ zinit snippet OMZ::plugins/taskwarrior/taskwarrior.plugin.zsh
 # emacs mode improvements
 zinit snippet OMZ::lib/key-bindings.zsh
 
+# oh-my-zsh completions
+zinit ice as"completion"
+zinit snippet OMZ::plugins/fd/_fd
+zinit ice as"completion"
+zinit snippet OMZ::plugins/pip/_pip
+
 # prompt
 zinit ice pick"async.zsh" src"pure.zsh"; zinit light sindresorhus/pure
 
@@ -239,6 +242,9 @@ fpath+=$HOME/.dotfiles/zsh/
 autoload -Uz compinit
 compinit
 zinit cdreplay -q 
+
+# snakemake tab completion support
+compdef _gnu_generic snakemake
 
 # disable completion for "play" (wrong application)
 # only need to do once..
