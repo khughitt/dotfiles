@@ -47,7 +47,7 @@ module-margin-right = 2
 font-0 = fixed:pixelsize=10;1
 font-1 = unifont:fontformat=truetype:size=8:antialias=false;0
 font-2 = "Pomodoro"
-font-3 = siji:pixelsize=10;1
+font-3 = Siji:pixelsize=10;1
 font-4 = Weather Icons:size=12;0
 font-5 = "NotoEmoji Nerd Font:style=Book"
 font-6 = "DejaVu Sans"

@@ -14,3 +14,5 @@
 	user = khughitt
 [diff]
 	tool = meld
+[init]
+	defaultBranch = trunk

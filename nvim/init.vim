@@ -29,10 +29,6 @@ filetype indent on   " indent based on filetype
 set ttimeoutlen=5
 set timeoutlen=500
 
-" Mouse support
-" https://github.com/neovim/neovim/wiki/Following-HEAD#20170403
-set mouse=a
-
 " Remap leader / localleader
 let mapleader      = ";"
 let g:mapleader    = ";"
@@ -130,7 +126,6 @@ call plug#begin()
     Plug 'agreco/vim-citylights'
     Plug 'ayu-theme/ayu-vim'
     Plug 'challenger-deep-theme/vim'
-    Plug 'connorholyday/vim-snazzy'
     Plug 'cseelus/vim-colors-lucid'
     Plug 'cseelus/vim-colors-tone'
     Plug 'danilo-augusto/vim-afterglow'
@@ -141,30 +136,30 @@ call plug#begin()
     Plug 'Dru89/vim-adventurous'
     Plug 'fcpg/vim-orbital'
     Plug 'fenetikm/falcon'
-    Plug 'fmoralesc/molokayo'
     Plug 'jacoborus/tender.vim'
     Plug 'joshdick/onedark.vim'
     Plug 'KeitaNakamura/neodark.vim'
     Plug 'liuchengxu/space-vim-dark'
     Plug 'lu-ren/SerialExperimentsLain'
-    Plug 'mhartington/oceanic-next'
-    Plug 'morhetz/gruvbox'
     Plug 'NLKNguyen/papercolor-theme'
     Plug 'rakr/vim-one'
     Plug 'reedes/vim-colors-pencil'
     Plug 'Rigellute/rigel'
-    Plug 'sheerun/vim-wombat-scheme'
-    Plug 'sonph/onehalf', {'rtp': 'vim/'}
     Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'tyrannicaltoucan/vim-deep-space'
     Plug 'vim-scripts/pyte'
-    Plug 'vim-scripts/summerfruit256.vim'
     Plug 'whatyouhide/vim-gotham'
     Plug 'wimstefan/Lightning'
-    Plug 'yuttie/hydrangea-vim'
-    Plug 'zanloy/vim-colors-grb256'
+    " Plug 'sonph/onehalf', {'rtp': 'vim/'}
+    " Plug 'connorholyday/vim-snazzy'
+    " Plug 'fmoralesc/molokayo'
+    " Plug 'mhartington/oceanic-next'
+    " Plug 'morhetz/gruvbox'
+    " Plug 'sheerun/vim-wombat-scheme'
+    " Plug 'vim-scripts/summerfruit256.vim'
+    " Plug 'yuttie/hydrangea-vim'
+    " Plug 'zanloy/vim-colors-grb256'
 
-    " Plug 'khughitt/sen.nvim'
 
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
@@ -182,8 +177,6 @@ call plug#begin()
     "Plug 'Shougo/neosnippet-snippets'
     "Plug 'freitass/todo.txt-vim'
     "Plug 'Alok/notational-fzf-vim'
-    "Plug 'itchyny/lightline.vim'
-    "Plug 'mengelbrecht/lightline-bufferline'
     "Plug 'deoplete-plugins/deoplete-jedi'
     "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
     "Plug 'Shougo/deoplete-terminal'
@@ -242,7 +235,6 @@ set whichwrap+=<,>,h,l,[,]      " backspace and cursor keys wrap to
 set shortmess=filtIoOA          " shorten messages
 set report=0                    " tell us about changes
 set nostartofline               " don't jump to the start of line when scrolling
-"set display+=lastline           " don't hide long lines
 
 " ----------------------------------------------------------------------------
 " Visual Cues
@@ -264,20 +256,21 @@ inoremap <M-l> <C-o>l
 " Text Formatting
 " ----------------------------------------------------------------------------
 
-"disablign smart-indent: may be preventing comments from indenting?
+"disabling smart-indent: may be preventing comments from indenting?
 "http://stackoverflow.com/questions/191201/indenting-comments-to-match-code-in-vim
-"set smartindent            " be smart about it
-set nowrap                  " do not wrap lines
-set softtabstop=4           " tab width
+
+set smartindent       " wise indentation
+set nowrap            " do not wrap lines
+set softtabstop=4     " tab width
 set shiftwidth=4
-set shiftround              " round indents to multiple of shift width
+set shiftround        " round indents to multiple of shift width
 set tabstop=4
-set expandtab               " expand tabs to spaces
+set expandtab         " expand tabs to spaces
 set smarttab
-set textwidth=88            " stick to 88 characters or less, when possible
-set formatoptions+=n        " support for numbered/bullet lists
-set virtualedit=block       " allow virtual edit in visual block ..
-set pastetoggle=<F6>        " paste-mode toggle
+set textwidth=88      " stick to 88 characters or less, when possible
+set formatoptions+=n  " support for numbered/bullet lists
+set virtualedit=block " allow virtual edit in visual block ..
+set pastetoggle=<F6>  " paste-mode toggle
 
 " Shortuct to toggle textwidth wrapping
 nmap <silent><localleader>r :call ToggleTextWidth()<CR>
@@ -303,23 +296,6 @@ nnoremap ss i<space><esc>
 map <silent> j gj
 map <silent> k gk
 
-" Use bufkill to preserve splits when closing buffers
-" cabbrev bd BD
-"map <C-w> :BD<cr>
-
-" Quick buffer switching using tab / shift + arrow keys
-" nnoremap <Tab> :bnext<CR>
-" nnoremap <S-Tab> :bprev<CR>
-" nnoremap <s-left> :bprev<CR>
-" nnoremap <s-right> :bnext<CR>
-
-" Switch to ]b and [b for improved coc.nvim support
-" nnoremap [b :bprevious<CR>
-" nnoremap ]b :bnext<CR>
-
-" Close the current buffer
-" map <leader>bd :BD<cr>
-
 " Close all the buffers
 map <leader>ba :1,1000 bd!<cr>
 
@@ -332,9 +308,9 @@ vmap zz ygv<leader>cc`.jP
 
 " Specify the behavior when switching between buffers
 try
-set switchbuf=useopen,usetab,newtab
-    set stal=2
-catch
+    set switchbuf=useopen,usetab,newtab
+        set stal=2
+    catch
 endtry
 
 " create file under cursor
@@ -368,10 +344,8 @@ function! AutoRestoreWinView()
 endfunction
 
 " When switching buffers, preserve window view.
-if v:version >= 700
-    autocmd BufLeave * call AutoSaveWinView()
-    autocmd BufEnter * call AutoRestoreWinView()
-endif
+autocmd BufLeave * call AutoSaveWinView()
+autocmd BufEnter * call AutoRestoreWinView()
 
 " Remember info about open buffers on close
 set viminfo^=%
@@ -381,14 +355,8 @@ set guicursor=n-v-c:block-Cursor/lCursor-blinkon0,
             \i-ci:ver25-Cursor/lCursor,
             \r-cr:hor20-Cursor/lCursor
 
-" Easier switching to normal mode
-inoremap jk <Esc>
-
 " Faster command execution
 nnoremap ! :!
-
-" Sloppyness is okay
-cabbrev qw :wq
 
 " ---------------------------------------------------------------------------
 "  Appearance
@@ -400,6 +368,8 @@ endif
 " fix background bleeding in screen
 " http://sunaku.github.io/vim-256color-bce.html
 set t_ut=""
+
+set background=dark
 
 " enable true colors (disable for pywal support)
 set termguicolors
@@ -438,7 +408,6 @@ set clipboard^=unnamed,unnamedplus
 xnoremap p "_dP
 
 " stay at last selected character after yanking text in visual mode
-"
 vmap y y`]
 
 " paste from primary in normal mode
@@ -448,8 +417,6 @@ noremap <Leader>P "*P
 " ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
 " ----------------------------------------------------------------------------
-
-"set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+
 highlight SpecialKey ctermfg=DarkGray ctermbg=Black
 
 " ---------------------------------------------------------------------------
@@ -475,7 +442,7 @@ inoremap <c-u> <c-g>u<c-u>
 "  paste bug work-around
 "  https://github.com/neovim/neovim/issues/7994#issuecomment-388296360
 " ---------------------------------------------------------------------------
-nnoremap p p`]<Esc>
+" nnoremap p p`]<Esc>
 
 " insert blank line without entering insert mode
 " nmap <c-o> O<Esc> " used to navigate jump list..
@@ -487,7 +454,7 @@ nnoremap p p`]<Esc>
 function! StripWhitespace ()
     exec ':%s/ \+$//gc'
 endfunction
-map ,s :call StripWhitespace ()<CR>
+map <localleader>s :call StripWhitespace ()<CR>
 
 " ----------------------------------------------------------------------------
 "  Scratchpad
@@ -522,8 +489,8 @@ function! AddTimeStamp ()
     call feedkeys('A', 'n')
 endfunction
 
-autocmd BufNewFile,BufRead s set syntax=scratch
-autocmd BufNewFile,BufRead s set filetype=scratch
+autocmd BufNewFile,BufRead titan,io,ganymede set syntax=scratch
+autocmd BufNewFile,BufRead titan,io,ganymede set filetype=scratch
 autocmd FileType scratch map <silent><leader>s :call AddScratchpadEntry ()<CR>
 autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR>
 
@@ -612,7 +579,7 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#ale#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#wordcount#enabled = 1
-"let g:airline_theme = 'onedark'
+let g:airline_theme = 'quantum'
 
 " ---------------------------------------------------------------------------
 "  ale
@@ -943,26 +910,6 @@ let g:NERDCustomDelimiters = {
 " vmap <space> <leader>c<space>
 
 " ---------------------------------------------------------------------------
-"  night-and-day
-" ---------------------------------------------------------------------------
-let g:nd_themes = [
-  \ ['04:00', 'PaperColor', 'light' , 'PaperColor' ],
-  \ ['11:00', 'quantum',    'dark',   'quantum'],
-  \ ]
-let g:nd_lightline = 1
-
-" ---------------------------------------------------------------------------
-"  notational-fzf-vim
-" ---------------------------------------------------------------------------
-"let g:nv_use_short_pathnames = 1
-" let g:nv_search_paths = ['~/d/notes', './doc']
-" let g:nv_search_paths = ['~/d/notes']
-" let g:nv_ignore_pattern = ['personal', 'meetings']
-" let g:nv_default_extension = '.md'
-
-" nnoremap <silent> <c-y> :NV<CR>
-
-" ---------------------------------------------------------------------------
 "  vim-markdown
 " ---------------------------------------------------------------------------
 let g:vim_markdown_folding_disabled = 1
@@ -1168,17 +1115,6 @@ map <localleader>n :Notes<CR>
 "nmap <leader><tab> <plug>(fzf-maps-n)
 "xmap <leader><tab> <plug>(fzf-maps-x)
 "omap <leader><tab> <plug>(fzf-maps-o)
-
-" ---------------------------------------------------------------------------
-"  lightline
-" ---------------------------------------------------------------------------
-" let g:lightline = { 'colorscheme': 'onedark' }
-" let g:lightline.tabline          = {'left': [['buffers']], 'right': [['close']]}
-" let g:lightline.component_function = { 'percent': 'NoScrollbarForLightline' }
-" let g:lightline.component_expand = {'buffers': 'lightline#bufferline#buffers'}
-" let g:lightline.component_type   = {'buffers': 'tabsel'}
-" let g:lightline#bufferline#enable_devicons = 1
-" let g:lightline#bufferline#show_number  = 1
 
 " ---------------------------------------------------------------------------
 "  vim-scroll-barnacle
