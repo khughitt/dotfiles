@@ -49,6 +49,10 @@ setxkbmap -option terminate:ctrl_alt_bksp
 #xset +fp /usr/share/fonts/local
 #xset fp rehash
 
+# siji font support
+xset +fp /home/keith/.fonts
+xset fp rehash
+
 # load Xresources
 xrdb -merge ~/.Xresources
 
