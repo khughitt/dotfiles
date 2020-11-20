@@ -92,7 +92,7 @@ call plug#begin()
     Plug 'Shougo/denite.nvim', { 'do': ':UpdateRemotePlugins' }
     Plug 'Shougo/neomru.vim'
     Plug 'scrooloose/nerdcommenter'
-    " Plug 'sslivkoff/vim-scroll-barnacle'
+    Plug 'sslivkoff/vim-scroll-barnacle'
     Plug 'stephpy/vim-yaml'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
@@ -230,6 +230,7 @@ set wildmode=longest,list       " for filename completion, fill longest and list
 set ruler                       " show the cursor position all the time
 set showcmd                     " show incomplete commands and selection info
 set nolazyredraw                " turn off lazy redraw
+set relativenumber              " enable relative line numbers
 set number                      " line numbers
 set whichwrap+=<,>,h,l,[,]      " backspace and cursor keys wrap to
 set shortmess=filtIoOA          " shorten messages

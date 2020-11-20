@@ -77,7 +77,8 @@ alias cat='bat --wrap=never'
 alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
 
 # less
-alias less='less -NRSi --shift 10'
+#alias less='less -NRSi --shift 10'
+alias less='moar'
 
 # visidata
 alias vp="vd -f pandas"
