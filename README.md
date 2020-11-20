@@ -14,7 +14,7 @@ Tools
  ----
 
 * [Neovim](https://neovim.io/)
-* compton 
+* picom 
 * conda
 * ag
 * fasd
@@ -24,11 +24,11 @@ Tools
 * radian 
 * ranger
 * redshift
-* py3status
+* polybar
 * tmux
 * visidata
 * zathura
-* zplugin
+* zinit
 
 Installation
 ------------
@@ -42,7 +42,7 @@ To install, simply clone this repo and run `setup.sh`:
 Symbolic links will be created in $HOME to all of the major configuration files.
 
 Configuration files are included for both Bash and Z shell. If you plan to use
-Z shell, you will also want to install [zplugin](https://github.com/zdharma/zplugin).
+Z shell, you will also want to install [zinit](https://github.com/zdharma/zinit).
 
 Additional Z shell plugins I'm currently using:
 

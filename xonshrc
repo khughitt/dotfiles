@@ -1,2 +1,0 @@
-source-zsh --sourcer source --suppress-skip-message "echo loading xonsh foreign shell"
-xontrib load bashisms coreutils docker_tabcomplete mpl whole_word_jumping xonda powerline fzf-widgets

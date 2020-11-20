@@ -76,9 +76,6 @@ export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 
-# awesome
-#exec awesome >> ~/.cache/awesome/stdout 2>> ~/.cache/awesome/stderr
-
 # sway
 #exec sway >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
 
