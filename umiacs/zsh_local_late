@@ -1,9 +1,0 @@
-# Remove redundant PATH entries
-#export PATH=$(echo $PATH | sed 's/:\/opt\/local\/bin//g')
-
-# use python 3 for virtualenvwrapper
-export VIRTUALENVWRAPPER_PYTHON=$(which python3)
-
-# work-around (2017/04/08)
-# newgrp command wipes LD_LIBRARY_PATH set in modules
-#export LD_LIBRARY_PATH="/opt/local/stow/gcc-6.2.0/lib64:/opt/local/stow/gcc-6.2.0/lib:/usr/lib64"

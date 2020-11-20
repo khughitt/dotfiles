@@ -1,6 +1,3 @@
-[submodule "awesome/pomodoro"]
-	path = awesome/pomodoro
-	url =https://github.com/nikolavp/awesome-pomodoro 
 [submodule "tmux/plugins/tmux-copycat"]
 	path = tmux/plugins/tmux-copycat
 	url = https://github.com/tmux-plugins/tmux-copycat.git

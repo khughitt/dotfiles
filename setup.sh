@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # dotfiles setup script
-# KH (nov.19)
+# KH
 #
 DOTS_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
@@ -58,9 +58,9 @@ ln_s ${DOTS_HOME}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 ln_s ${DOTS_HOME}/gtkrc-2.0 ~/.gtkrc-2.0
 
 # ~/.config/xx
-for path in "awesome" "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
-            "labnote" "lsd" "polybar" "powerline" "pylintrc" "ranger" "snakemake" "spicetify" \
-            "termcolors" "termite" "zathura"; do
+for path in "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
+            "labnote" "lsd" "polybar" "powerline" "ranger" "snakemake" \
+            "sway" "termcolors" "termite" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
@@ -80,11 +80,6 @@ ln_s ${DOTS_HOME}/git/config ${HOME}/.gitconfig
 mkdir -p ${HOME}/.julia/config
 ln_s ${DOTS_HOME}/$julia/startup.jl ${HOME}/.julia/config/startup.jl
 
-# ~/.config/xx/config
-for path in "sway"; do
-    ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}/config
-done
-
 # 4k configs (i3, rofi, wal )
 if [[ "$HIRES" == "y" ]]; then
     ln_s ${DOTS_HOME}/i3/config.4k ${XDG_CONFIG_HOME}/i3/config
@@ -99,20 +94,22 @@ fi
 # wal colorscheme
 ln_s ${DOTS_HOME}/wal/colorschemes ${XDG_CONFIG_HOME}/wal/colorschemes
 
+# to install pywal alt color algorithms:
+# pip install --user colorz haishoku colorthief
+
 # create i3 log dir
 mkdir -p ~/.cache/i3
 
-# copy Xresources to Xdefaults for sway
+# symlink Xresources to Xdefaults for sway
 ln_s ${DOTS_HOME}/Xresources ~/.Xdefaults
 
 # scripts, etc.
 ln_s ${DOTS_HOME}/bin ~/
 
-# Vim temp dirs
+# create vim backup dir
 mkdir -p ~/.vim/tmp/backup
-mkdir -p ~/.vim/tmp/yankring
 
-# Mimetypes
+# mimetypes
 mkdir -p ~/.local/share/mime
 ln_s ${DOTS_HOME}/mime ~/.local/share/mime/packages
 update-mime-database ~/.local/share/mime
@@ -120,7 +117,7 @@ update-mime-database ~/.local/share/mime
 rm ${XDG_CONFIG_HOME}/mimeapps.list
 ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
 
-# Fontconfig
+# fontconfig
 mkdir -p $XDG_CONFIG_HOME/fontconfig
 ln_s ${DOTS_HOME}/fonts.conf $XDG_CONFIG_HOME/fontconfig/fonts.conf
 
@@ -151,7 +148,7 @@ do
 
             # install arch packages
             echo "Installing Arch packages..."
-            yay -S bat fasd fd fzf gotop-bin lsd moar spicetify-cli thefuck visidata \
+            yay -S bat dust fasd fd fzf gotop-bin lsd moar spicetify-cli thefuck visidata \
                    powerline ripgrep tldr polybar nerd-fonts-complete ttf-weather-icons
             ;;
        [nN][oO]|[nN])
@@ -163,15 +160,6 @@ do
             ;;
     esac
 done
-
-# echo 'Installing python packages...'
-# pip install --user colorz
-# pip install --user haishoku
-# pip install --user colorthief
-
-# others
-#echo "Installing Cargo packages..."
-#cargo install du-dust bb tldr
 
 echo "Done!"
 echo "Don't forget to install any necessary fonts, icons, etc."
