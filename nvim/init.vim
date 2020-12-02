@@ -64,7 +64,9 @@ call plug#begin()
     Plug 'bioSyntax/bioSyntax-vim'
     Plug 'burneyy/vim-snakemake'
     Plug 'chrisbra/csv.vim'
-    Plug 'dense-analysis/ale'
+
+    " Nov 23, 2020: temporarily disabling (ignoring lintr settings..)
+    "Plug 'dense-analysis/ale'
     Plug 'dylanaraps/wal.vim'
     Plug 'drzel/vim-line-no-indicator'
     Plug 'embark-theme/vim', { 'as': 'embark' }
