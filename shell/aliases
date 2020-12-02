@@ -71,7 +71,7 @@ alias tree='tree -C'
 alias ra=ranger
 
 # cat
-alias cat='bat --wrap=never'
+alias cat='bat --wrap=never --paging=never'
 
 # feh
 alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
@@ -146,6 +146,16 @@ alias nautilus="ranger"
 # google translate
 alias tze="trans zh-TW:en"   # to english
 alias tez="trans en:zh-TW"  # to chinese
+
+# zzZz
+alias s0="sleep 3 &&"
+alias s1="sleep 60 &&"
+alias s5="sleep 300 &&"
+alias s10="sleep 600 &&"
+alias s60="sleep 3600 &&"
+
+# suspend
+alias zzz="systemctl suspend"
 
 # Suffix aliases
 # "-s" allows associating file extensions with programs to open them
