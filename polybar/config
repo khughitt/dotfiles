@@ -54,7 +54,8 @@ font-6 = "DejaVu Sans"
 
 modules-left = i3
 modules-center = spotify previous playpause next
-modules-right = pulseaudio memory cpu wlan pomobar snakemake-isrunning weather date
+; modules-right = pulseaudio memory cpu wlan pomobar snakemake-isrunning weather date
+modules-right = memory cpu wlan pomobar snakemake-isrunning weather date
 
 tray-position = right
 tray-padding = 2
