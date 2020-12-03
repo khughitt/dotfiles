@@ -27,6 +27,10 @@ alias lS='ls -1FSsh'
 alias lart='ls -1Fcart'
 alias lrt='ls -1Fcrt'
 
+# cd
+alias dl='cd ~/downloads'
+alias dots='cd ~/.dotfiles'
+
 # most recent file
 alias new="echo *(.om[1])"
 
@@ -48,6 +52,7 @@ alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
 
 # fd
 alias fda="fd -Luu"
+alias fdu="fd -u"
 
 # kord
 alias kord="python ~/.local/fretboard/fretboard.py"
