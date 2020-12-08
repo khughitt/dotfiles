@@ -51,7 +51,7 @@ noremap  <C-a> <Home>
 noremap  <C-e> <End>
 
 " specify python installation to use
-let g:python3_host_prog = '~/conda/bin/python3'
+"let g:python3_host_prog = '~/conda/bin/python3'
 
 " ---------------------------------------------------------------------------
 " vim-plug
@@ -951,10 +951,10 @@ function CreateHeading(char)
     call feedkeys('A', 'n')
 endfunction
 
-nnoremap <F5> :call CreateHeading("=")<CR>
-inoremap <F5> <Esc> :call CreateHeading("=")<CR>
-nnoremap <leader><F5> :call CreateHeading("-")<CR>
-inoremap <leader><F5> <Esc>:call CreateHeading("-")<CR>
+nnoremap <F5> :call CreateHeading("-")<CR>
+inoremap <F5> <Esc>:call CreateHeading("-")<CR>
+nnoremap <leader><F5> :call CreateHeading("=")<CR>
+inoremap <leader><F5> <Esc>:call CreateHeading("=")<CR>
 
 " ---------------------------------------------------------------------------
 "  markdown link helper

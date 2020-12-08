@@ -41,7 +41,7 @@ ln_s ${DOTS_HOME}/zshenv ~/.zshenv
 ln_s ${DOTS_HOME}/shell ~/.shell
 
 # Create needed directories
-for x in "compton" "gedit" "i3" "rofi" "sway" "wal"; do
+for x in "compton" "gedit" "i3" "rofi" "wal"; do
     mkdir -p ${XDG_CONFIG_HOME}/${x}
 done
 
@@ -60,13 +60,13 @@ ln_s ${DOTS_HOME}/gtkrc-2.0 ~/.gtkrc-2.0
 # ~/.config/xx
 for path in "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
             "labnote" "lsd" "polybar" "powerline" "ranger" "snakemake" \
-            "sway" "termcolors" "termite" "zathura"; do
+            "picom.conf" "sway" "termcolors" "termite" "zathura"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
 # ~/.xx
 for path in "agignore" "ansiweatherrc" "cookiecutterrc" "ctags" "dir_colors"  \
-            "picom.conf" "plotly" "Rprofile" "Renviron" "sen" "tmux" "tmux.conf" \
+            "plotly" "Rprofile" "Renviron" "sen" "tmux" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "Xmodmap" "Xresources" \
             "taskrc" "condarc" "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
@@ -97,8 +97,11 @@ ln_s ${DOTS_HOME}/wal/colorschemes ${XDG_CONFIG_HOME}/wal/colorschemes
 # to install pywal alt color algorithms:
 # pip install --user colorz haishoku colorthief
 
-# create i3 log dir
+# create i3 and sway log dirs
 mkdir -p ~/.cache/i3
+mkdir -p ~/.cache/sway
+
+# create pomodoro cache
 
 # symlink Xresources to Xdefaults for sway
 ln_s ${DOTS_HOME}/Xresources ~/.Xdefaults
@@ -127,7 +130,7 @@ ln_s ${DOTS_HOME}/fonts.conf $XDG_CONFIG_HOME/fontconfig/fonts.conf
 
 # arch
 echo "Arch packages:"
-echo "bat fasd fd fzf gotop lsd moar powerline ripgrep thefuck tldr visidata"
+echo "bat fasd fd fzf gotop-bin lsd moar powerline ripgrep thefuck tldr visidata"
 echo "polybar nerd-fonts-complete ttf-weather-icons"
 
 while true
@@ -148,7 +151,7 @@ do
 
             # install arch packages
             echo "Installing Arch packages..."
-            yay -S bat dust fasd fd fzf gotop-bin lsd moar spicetify-cli thefuck visidata \
+            yay -S bat dust fasd fd fzf gotop-bin lsd moar thefuck visidata \
                    powerline ripgrep tldr polybar nerd-fonts-complete ttf-weather-icons
             ;;
        [nN][oO]|[nN])
@@ -163,4 +166,10 @@ done
 
 echo "Done!"
 echo "Don't forget to install any necessary fonts, icons, etc."
+
+#
+# Next steps (for clean install):
+#
+# - zinit
+#
 

@@ -255,7 +255,7 @@ type = custom/script
 interval = 1
 format-prefix = " "
 format = <label>
-exec = python ~/.config/polybar/scripts/spotify_status.py -t 50 -f '{artist}: {song}'
+exec = python ~/.config/polybar/scripts/spotify/spotify_status.py -t 50 -f '{artist}: {song}'
 format-underline = ${xrdb:color5}
 
 [module/eth]

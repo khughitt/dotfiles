@@ -68,7 +68,7 @@ zstyle ':completion:*' menu select=4
 zstyle ':completion:*'  matcher-list 'm:{a-z}={A-Z}'
 
 # additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{aliases,functions,private,exports}; do
+for file in ~/.shell/{aliases,audio,functions,private,exports}; do
     [ -r "$file" ] && source "$file"
 done
 unset file
@@ -276,14 +276,14 @@ fi
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/mnt/storage/conda/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+__conda_setup="$('/home/keith/conda/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "/mnt/storage/conda/etc/profile.d/conda.sh" ]; then
-        . "/mnt/storage/conda/etc/profile.d/conda.sh"
+    if [ -f "/home/keith/conda/etc/profile.d/conda.sh" ]; then
+        . "/home/keith/conda/etc/profile.d/conda.sh"
     else
-        export PATH="/mnt/storage/conda/bin:$PATH"
+        export PATH="/home/keith/conda/bin:$PATH"
     fi
 fi
 unset __conda_setup
