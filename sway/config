@@ -1,6 +1,6 @@
 #
 # sway config
-# kh nov.2018
+# kh dec.2020
 #
 
 #-------------------------------------------------------------------------------
@@ -8,6 +8,8 @@
 #-------------------------------------------------------------------------------
 # Logo key. Use Mod1 for Alt.
 set $mod Mod4
+
+output e-DP1 pos 0 0 res 1920x1080
 
 # Home row direction keys, like vim
 set $left h
@@ -19,38 +21,56 @@ set $right l
 set $term termite
 
 # Your preferred application launcher
-#set $menu rofi -show run
 set $menu rofi -show drun
+
+# rofi-notes
+bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/scripts/rofi-notes.sh"
+
+# rofi-tasks
+bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/rofi/scripts/rofi-tasks.sh"
 
 #-------------------------------------------------------------------------------
 #  Appearance
 #-------------------------------------------------------------------------------
 
-# monitor output
-output HDMI-A-1 pos 1920 0 res 1920x1080
-output HDMI-A-2 pos 0 0 res 1920x1080
-
-
 # wallpaper
-output * bg ~/d/linux/backgrounds/02727_mossy_1920x1200.jpg fill
+#exec_always feh --bg-scale ~/d/linux/backgrounds/nature/Milford_Sound_NZ.jpg
 
 # font
 font pango:Droid Sans Mono 10
 
 # window borders
-for_window [class="^.*"] border pixel 0
+#for_window [class=".*"] border pixel 0
 hide_edge_borders smart_no_gaps
-default_border pixel 2
 
 # gaps
+gaps inner 12
 smart_gaps on
-gaps inner 20
+
+# keyboard shortcut to toggle borders of current window
+bindsym $mod+Shift+b border toggle
+
+#gaps inner all set 20
+#gaps outer current plus 5
 
 # colors [dracula]
-client.focused          #ea51b2 #d1499f #282936 #a1efe4 #ea51b2 
-client.focused_inactive #3a3c4e #626483 #f7f7fb #3a3c4e #3a3c4e
-client.unfocused        #3a3c4e #282936 #626483 #292d2e #3a3c4e
-client.urgent           #3a3c4e #ebff87 #626483 #ebff87 #3a3c4e
+#client.focused          #ea51b2 #d1499f #282936 #a1efe4 #ea51b2 
+#client.focused_inactive #3a3c4e #626483 #f7f7fb #3a3c4e #3a3c4e
+#client.unfocused        #3a3c4e #282936 #626483 #292d2e #3a3c4e
+#client.urgent           #3a3c4e #ebff87 #626483 #ebff87 #3a3c4e
+
+# colors [onedark]
+client.focused          #a067abff #61afefff #23292dff #56b6c2ff #a067abff
+client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
+
+# class                 border  backgr. text indicator child_border
+# client.focused          $bg     $c6     $c3  $bg       $bg
+# client.focused_inactive $c3     $c1     $fg  $bg       $bg
+# client.unfocused        $c1     $c1     $fg  $bg       $bg
+# client.urgent           $bg     $bg     $fg  $bg       $bg
+# client.placeholder      $bg     $bg     $fg  $bg       $bg
+#
+# client.background       $bg
 
 #-------------------------------------------------------------------------------
 #  Input
@@ -67,34 +87,37 @@ client.urgent           #3a3c4e #ebff87 #626483 #ebff87 #3a3c4e
 # general
 #
 
-# terminal
-bindsym $mod+Return exec $term
+# terminal (pre-loaded in background)
+exec_always --no-startup-id termite --name=i3term
+#for_window[instance="i3term"] move scratchpad
+
+bindsym $mod+Return \
+    exec --no-startup-id termite --name=i3term;\
+    [instance="i3term"] scratchpad show;\
+    floating toggle
+
 
 # file browser
-bindsym $mod+n exec termite -e ranger
-
+#bindsym $mod+n exec termite -e ranger
 
 # kill focused window
 bindsym $mod+q kill
 bindsym Mod1+F4 kill
 
-# start your launcher
+# rofi
 bindsym $mod+p exec $menu
 
 # Drag floating windows by holding down $mod and left mouse button.
 # Resize them with right mouse button + $mod.
 # Despite the name, also works for non-floating windows.
-floating_modifier $mod normal
+#floating_modifier $mod normal
+floating_modifier $mod
 
 # reload the configuration file
 bindsym $mod+Shift+c reload
 
-# exit sway (logs you out of your wayland session)
+# exit i3
 bindsym $mod+Shift+e exit
-
-#
-# Moving around
-#
 
 # Move your focus around
 bindsym $mod+$left focus left
@@ -112,49 +135,109 @@ bindsym $mod+Shift+$left move left
 bindsym $mod+Shift+$down move down
 bindsym $mod+Shift+$up move up
 bindsym $mod+Shift+$right move right
+
 # ditto, with arrow keys
 bindsym $mod+Shift+Left move left
 bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
-#
-# Workspaces:
-#
+#-------------------------------------------------------------------------------
+# Workspaces
+#-------------------------------------------------------------------------------
+
+# default to stacked layout
+workspace_layout stacking
 
 # switch to workspace
-bindsym $mod+1 workspace 📖
-bindsym $mod+2 workspace # 
-bindsym $mod+3 workspace 🌎
-bindsym $mod+4 workspace ♫
-bindsym $mod+5 workspace 5
-bindsym $mod+6 workspace 6
-bindsym $mod+7 workspace 7
-bindsym $mod+8 workspace 8
-bindsym $mod+9 workspace 9
-bindsym $mod+0 workspace 10
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+5 workspace number 5
+bindsym $mod+6 workspace number 6
+bindsym $mod+7 workspace number 7
+bindsym $mod+8 workspace number 8
+bindsym $mod+9 workspace number 9
+bindsym $mod+0 workspace number 10
 
 # move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace 📖
-bindsym $mod+Shift+2 move container to workspace #
-bindsym $mod+Shift+3 move container to workspace 🌎
-bindsym $mod+Shift+4 move container to workspace ♫
-bindsym $mod+Shift+5 move container to workspace 5
-bindsym $mod+Shift+6 move container to workspace 6
-bindsym $mod+Shift+7 move container to workspace 7
-bindsym $mod+Shift+8 move container to workspace 8
-bindsym $mod+Shift+9 move container to workspace 9
-bindsym $mod+Shift+0 move container to workspace 10
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+bindsym $mod+Shift+4 move container to workspace number 4
+bindsym $mod+Shift+5 move container to workspace number 5
+bindsym $mod+Shift+6 move container to workspace number 6
+bindsym $mod+Shift+7 move container to workspace number 7 
+bindsym $mod+Shift+8 move container to workspace number 8 
+bindsym $mod+Shift+9 move container to workspace number 9
+bindsym $mod+Shift+0 move container to workspace number 10
 
 # move workspace to different monitor
 bindsym $mod+m move workspace to output left
 
-# default ref workspace to left monitor
-#workspace "📖" output XWAYLAND1
+# rename workspace
+bindsym $mod+r exec "python ~/bin/renameworkspace.py"
 
+#-------------------------------------------------------------------------------
+# Workspaces (i3-workspace-groups)
+#-------------------------------------------------------------------------------
+#set $exec_i3_groups exec --no-startup-id i3-workspace-groups
+
+# Switch active workspace group
+#bindsym $mod+g exec --no-startup-id i3-switch-active-workspace-group
+
+# Move workspace to another group
+# bindsym $mod+Shift+g exec --no-startup-id i3-assign-workspace-to-group
+# bindsym $mod+1 $exec_i3_groups workspace-number 1
+# bindsym $mod+2 $exec_i3_groups workspace-number 2
+# bindsym $mod+3 $exec_i3_groups workspace-number 3
+# bindsym $mod+4 $exec_i3_groups workspace-number 4
+# bindsym $mod+5 $exec_i3_groups workspace-number 5
+# bindsym $mod+6 $exec_i3_groups workspace-number 6
+# bindsym $mod+7 $exec_i3_groups workspace-number 7
+# bindsym $mod+8 $exec_i3_groups workspace-number 8
+# bindsym $mod+9 $exec_i3_groups workspace-number 9
+# bindsym $mod+0 $exec_i3_groups workspace-number 10
 #
+# bindsym $mod+Shift+1 $exec_i3_groups move-to-number 1
+# bindsym $mod+Shift+2 $exec_i3_groups move-to-number 2
+# bindsym $mod+Shift+3 $exec_i3_groups move-to-number 3
+# bindsym $mod+Shift+4 $exec_i3_groups move-to-number 4
+# bindsym $mod+Shift+5 $exec_i3_groups move-to-number 5
+# bindsym $mod+Shift+6 $exec_i3_groups move-to-number 6
+# bindsym $mod+Shift+7 $exec_i3_groups move-to-number 7
+# bindsym $mod+Shift+8 $exec_i3_groups move-to-number 8
+# bindsym $mod+Shift+9 $exec_i3_groups move-to-number 9
+# bindsym $mod+Shift+0 $exec_i3_groups move-to-number 10
+
+# default workspace navigation
+# bindsym $mod+Control+1 workspace number 1
+# bindsym $mod+Control+2 workspace number 2
+# bindsym $mod+Control+3 workspace number 3
+# bindsym $mod+Control+4 workspace number 4
+# bindsym $mod+Control+5 workspace number 5
+# bindsym $mod+Control+6 workspace number 6
+# bindsym $mod+Control+7 workspace number 7
+# bindsym $mod+Control+8 workspace number 8
+# bindsym $mod+Control+9 workspace number 9
+# bindsym $mod+Control+0 workspace number 10
+
+# Switch to previous workspace in group.
+# bindsym $mod+u $exec_i3_groups workspace-prev
+#
+# # Switch to next workspace in group.
+# bindsym $mod+i $exec_i3_groups workspace-next
+#
+# # Move to previous workspace in group.
+# bindsym $mod+Shift+p $exec_i3_groups move-to-prev
+#
+# # Move to next workspace in group.
+# bindsym $mod+Shift+n $exec_i3_groups move-to-next
+
+#-------------------------------------------------------------------------------
 # Layout
-#
+#-------------------------------------------------------------------------------
 
 # You can "split" the current object of your focus with
 # $mod+b or $mod+v, for horizontal and vertical splits
@@ -181,28 +264,19 @@ bindsym $mod+a focus parent
 
 # application shortcuts
 #bindsym Mod1+backslash [class="Chromium"] focus, [app_id='terminal_scratchpad'] move scratchpad
-bindsym Mod1+backslash [class="Chromium"] focus
-bindsym Mod1+s [instance="spotify"] focus
+#bindsym Mod1+backslash [class="Chromium"] focus
+#bindsym Mod1+s [instance="spotify"] focus
 
-#-------------------------------------------------------------------------------
-# Scratchpad
-#-------------------------------------------------------------------------------
+# make some things use floating layout by default
+# for_window [window_role="pop-up"]       floating enable
+# for_window [window_role="bubble"]       floating enable
+# for_window [window_role="task_dialog"]  floating enable
+# for_window [window_role="Preferences"]  floating enable
+# for_window [window_type="dialog"]       floating enable
+# for_window [window_type="menu"]         floating enable
 
-# console terminte (alt + enter)
-exec_always termite --name=terminal_scratchpad
-
-# R terminal (alt + space)
-exec_always termite --name=r_scratchpad -e R
-
-for_window [app_id="terminal_scratchpad"] move scratchpad
-for_window [app_id="r_scratchpad"] move scratchpad
-
-# work-around for wl-clipboard window flashing bug
-# https://github.com/swaywm/sway/issues/926#issuecomment-441185009
-for_window [title="wl-clipboard"] floating enable
-
-bindsym Mod1+Return [app_id="terminal_scratchpad"] scratchpad show, resize set 1440 810
-bindsym Mod1+space [app_id="r_scratchpad"] scratchpad show, resize set 1440 810
+#for_window [class="text-input"]         floating enable
+#for_window [class="peek"]               floating enable
 
 #
 # Media keys:
@@ -217,6 +291,62 @@ bindsym XF86AudioStop exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 bindsym XF86AudioPrev exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Previous"
 bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Next"
 
+
+#-------------------------------------------------------------------------------
+# Scratchpads
+#-------------------------------------------------------------------------------
+
+set $scratch_width 1536
+set $scratch_height 864
+set $scratch_x1 192
+set $scratch_y1 108
+
+#-- terminal --#
+exec_always --no-startup-id termite --name=termite_scratch
+#for_window[instance="termite_scratch"] move scratchpad
+
+bindsym Mod1+Return \
+    [instance="python_scratch|r_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="termite_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1;
+
+#-- r console --#
+# exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch
+exec_always --no-startup-id termite -e "radian" --name=r_scratch
+#for_window[instance="r_scratch"] move scratchpad
+
+bindsym Mod1+space \
+    [instance="python_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
+
+#-- python console --#
+exec_always --no-startup-id termite -e ipython --name=python_scratch
+#for_window[instance="python_scratch"] move scratchpad
+
+bindsym Mod1+p \
+    [instance="r_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
+
+#-- julia console --#
+exec_always --no-startup-id termite -e julia --name=julia_scratch
+#for_window[instance="julia_scratch"] move scratchpad
+
+bindsym Mod1+j \
+    [instance="r_scratch|python_sratch|tasks_scratch|termite_scratch"] move scratchpad; \
+    [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
+
+#-- tasks --#
+exec_always --no-startup-id termite -e "nvim ~/d/notes/personal/organization/organization-tasks.md" --name=tasks_scratch
+#for_window[instance="tasks_scratch"] move scratchpad
+
+bindsym Mod1+t \
+    [instance="julia_scratch|r_scratch|python_sratch|termite_scratch"] move scratchpad; \
+    [instance="tasks_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
+
 #
 # Resizing containers:
 #
@@ -225,43 +355,31 @@ mode "resize" {
     # right will grow the containers width
     # up will shrink the containers height
     # down will grow the containers height
-    bindsym $left resize shrink width 10 px or 10 ppt
-    bindsym $down resize grow height 10 px or 10 ppt
-    bindsym $up resize shrink height 10 px or 10 ppt
-    bindsym $right resize grow width 10 px or 10 ppt
+    bindsym $left resize shrink width 5 px or 5 ppt
+    bindsym $down resize grow height 5 px or 5 ppt
+    bindsym $up resize shrink height 5 px or 5 ppt
+    bindsym $right resize grow width 5 px or 5 ppt
 
     # ditto, with arrow keys
-    bindsym Left resize shrink width 10 px or 10 ppt
-    bindsym Down resize grow height 10 px or 10 ppt
-    bindsym Up resize shrink height 10 px or 10 ppt
-    bindsym Right resize grow width 10 px or 10 ppt
+    bindsym Left resize shrink width 5 px or 5 ppt
+    bindsym Down resize grow height 5 px or 5 ppt
+    bindsym Up resize shrink height 5 px or 5 ppt
+    bindsym Right resize grow width 5 px or 5 ppt
 
     # return to default mode
     bindsym Return mode "default"
     bindsym Escape mode "default"
 }
-bindsym $mod+r mode "resize"
+bindsym $mod+shift+r mode "resize"
 
-#
-# Status Bar:
-#
-# Read `man 5 sway-bar` for more information about this section.
-bar {
-    position top
-    colors {
-        statusline #ffffff
-        background #282936EE
-        inactive_workspace #32323200 #32323200 #5c5c5c
-    }
-}
-
-bar {
-    colors {
-        statusline #e9e9f4
-        background #282936EE
-    }
-    status_command py3status 
-}
-
-include /etc/sway/config.d/*
+# autostart
+exec --no-startup-id "killall blackd; blackd"
+exec_always --no-startup-id "killall picom; picom -b"
+exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
+exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
+# exec --no-startup-id "$HOME/.config/polybar/scripts/spotify/launchlistener.sh"
+exec --no-startup-id "$HOME/.config/polybar/scripts/spotify/py_spotify_listener.py"
+#exec --no-startup-id "cadence-session-start --system-start"
+#exec --no-startup-id "cadence --minimized"
+#exec --no-startup-id "XDG_CURRENT_DESKTOP=GNOME syncthing-gtk -m"
 

@@ -76,11 +76,11 @@ export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 
-# sway
-#exec sway >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
-
 # pywal
 wal -R
+
+# sway
+#exec sway >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
 
 # ssh-agent
 eval `pkill ssh-agent && ssh-agent`
