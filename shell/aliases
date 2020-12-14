@@ -30,7 +30,7 @@ alias lrt='ls -1Fcrt'
 # cd
 alias dl='cd ~/downloads'
 alias dots='cd ~/.dotfiles'
-alias cn='cd ~/d/notes'
+alias cn='cd ~/notes'
 
 # most recent file
 alias new="echo *(.om[1])"
@@ -61,14 +61,16 @@ alias kord="python ~/.local/fretboard/fretboard.py"
 # notes
 alias n="notes"
 
-# edit configs
-alias zc="nvim ~/.zshrc"
-
-# count number of files in each subdirectory recursively
-#alias fdc="for x in *; do echo $x; n=`fd . -t f $x | wc -l`; echo \"$x: $n\"; done"
-
 # taskwarrior
 alias tw=taskwarrior-tui
+alias b="task rc.data.location=~/d/.task/biodat"
+alias m="task rc.data.location=~/d/.task/music"
+alias p="task rc.data.location=~/d/.task/prac"
+alias s="task rc.data.location=~/d/.task/startup"
+alias tl="task rc.data.location=~/d/.task/learning"
+alias tg="task rc.data.location=~/d/.task/goals"
+alias tm="task rc.data.location=~/d/.task/mindful"
+alias tp="task rc.data.location=~/d/.task/personal"
 
 # tree
 alias tree='tree -C'
@@ -83,8 +85,11 @@ alias cat='bat --wrap=never --paging=never'
 alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
 
 # less
-#alias less='less -NRSi --shift 10'
-alias less='moar'
+alias less='less -NRSi --shift 10'
+
+if type "moar" > /dev/null; then
+    alias less='moar'
+fi
 
 # visidata
 alias vp="vd -f pandas"
@@ -107,15 +112,11 @@ alias vacuum="sudo journalctl --vacuum-size=200M"
 # pywal
 alias wali='wal --backend haishoku -i'
 
-# manpages in lynx
-# alias man='man --html="lynx --vikeys"'
-
 # grep
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
 
 # file management
-alias open='mimeopen'
 alias rmf="rm -rf"
 alias cpr="cp -r"
 
@@ -150,7 +151,7 @@ alias tb="nc termbin.com 9999"
 alias tze="trans zh-TW:en"   # to english
 alias tez="trans en:zh-TW"  # to chinese
 
-# zzZz
+# sleep
 alias s0="sleep 3 &&"
 alias s1="sleep 60 &&"
 alias s5="sleep 300 &&"
@@ -160,8 +161,8 @@ alias s60="sleep 3600 &&"
 # suspend
 alias zzz="systemctl suspend"
 
-# Suffix aliases
-# "-s" allows associating file extensions with programs to open them
+# mimetypes
+alias open='mimeopen'
 alias -s doc=lowriter
 alias -s pdf=zathura
 alias -s html=firefox

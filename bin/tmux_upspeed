@@ -1,9 +1,0 @@
-#!/bin/bash
-
-NET=$(ls /sys/class/net/ | awk '{print $1;}' | head -1)
-TXB=$(</sys/class/net/${NET}/statistics/tx_bytes)
-sleep 2 
-TXBN=$(</sys/class/net/${NET}/statistics/tx_bytes)
-TXDIF=$(echo $((TXBN - TXB)) )
-
-echo -e "$((TXDIF / 1024 / 2))"

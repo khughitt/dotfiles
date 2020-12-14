@@ -79,6 +79,7 @@ call plug#begin()
     Plug 'fatih/vim-go'
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
     Plug 'junegunn/fzf.vim'
+    Plug 'junegunn/limelight.vim'
     Plug 'kshenoy/vim-signature'
     Plug 'kana/vim-operator-user'
     Plug 'MarcWeber/vim-addon-mw-utils'
@@ -461,40 +462,8 @@ map <localleader>s :call StripWhitespace ()<CR>
 " ----------------------------------------------------------------------------
 "  Scratchpad
 " ----------------------------------------------------------------------------
-function! AddScratchpadEntry ()
-    " find entries heading and move cursor to following line
-    exec ":normal /Entries/\<CR>"
-    normal! 2j
-
-    " add timestamp
-    " exec ":put=strftime('-%c-')"
-    exec ":put=strftime('-%b %d %Y %H:%M:%S-')"
-
-    " add new lines
-    call append(line("."), ["", "", ""])
-
-    " go down two lines
-    " exec ":normal "
-    call cursor(line('.') + 2, 1)
-
-    " enter insert mode
-    call feedkeys('A', 'n')
-endfunction
-
-" similar to above, but for adding simple timestamps to markdown files
-function! AddTimeStamp ()
-    " add timestamp
-    call append(line("."), [strftime('%b %d %Y'), "-----------", ""])
-    normal! 3j
-
-    " enter insert mode
-    call feedkeys('A', 'n')
-endfunction
-
 autocmd BufNewFile,BufRead titan,io,ganymede set syntax=scratch
 autocmd BufNewFile,BufRead titan,io,ganymede set filetype=scratch
-autocmd FileType scratch map <silent><leader>s :call AddScratchpadEntry ()<CR>
-autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR>
 
 " ---------------------------------------------------------------------------
 "  Search Options
@@ -955,6 +924,18 @@ inoremap <F5> <Esc>:call CreateHeading("-")<CR>
 nnoremap <leader><F5> :call CreateHeading("=")<CR>
 inoremap <leader><F5> <Esc>:call CreateHeading("=")<CR>
 
+" helper function to add a simple markdown timestamp heading
+function! AddTimeStamp ()
+    " add timestamp
+    call append(line("."), [strftime('%b %d %Y'), "-----------", ""])
+    normal! 3j
+
+    " enter insert mode
+    call feedkeys('A', 'n')
+endfunction
+
+autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR>
+
 " ---------------------------------------------------------------------------
 "  markdown link helper
 "  https://benjamincongdon.me/blog/2020/06/27/Vim-Tip-Paste-Markdown-Link-with-Automatic-Title-Fetching/
@@ -1118,6 +1099,14 @@ map <localleader>n :Notes<CR>
 "nmap <leader><tab> <plug>(fzf-maps-n)
 "xmap <leader><tab> <plug>(fzf-maps-x)
 "omap <leader><tab> <plug>(fzf-maps-o)
+
+" ---------------------------------------------------------------------------
+"  Limelight
+" ---------------------------------------------------------------------------
+let g:limelight_bop = '^\n-[A-Z]'
+let g:limelight_eop = '\ze\n^-[A-Z]'
+
+nmap <localleader>l :Limelight!!<CR>
 
 " ---------------------------------------------------------------------------
 "  vim-scroll-barnacle

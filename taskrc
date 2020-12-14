@@ -3,7 +3,7 @@
 #
 
 # Files
-data.location=~/.task
+data.location=~/d/.task/proj
 
 # Color theme
 #include /usr/share/doc/task/rc/dark-16.theme
@@ -11,6 +11,9 @@ data.location=~/.task
 #include /usr/share/doc/task/rc/dark-gray-256.theme
 #include /usr/share/doc/task/rc/dark-gray-blue-256.theme
 include /usr/share/doc/task/rc/solarized-dark-256.theme
+
+# hide configuration overrides
+verbose=blank,label,new-id,affected,edit,special,project,sync,unwait
 
 # taskwarrior-tui
 uda.taskwarrior-tui.task-report.looping=false
