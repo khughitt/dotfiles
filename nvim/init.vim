@@ -984,6 +984,11 @@ endfunction
 map <Leader>f <ESC>:call PasteMDLink()<CR>
 nmap <Leader>f :call PasteMDLink()<CR>
 
+" ----------------------------------------------------------------------------
+"  mindful
+" ----------------------------------------------------------------------------
+set dictionary+=~/.vim/tmp/mindful/tags.txt
+
 " ---------------------------------------------------------------------------
 "  vim-diagram (mermaid)
 " ---------------------------------------------------------------------------
@@ -1121,8 +1126,22 @@ let g:sb_patch_keys = 0
 " supertab.vim
 " ---------------------------------------------------------------------------
 let g:SuperTabCrMapping=1
-let g:SuperTabDefaultCompletionType = "<c-n>"
 let g:SuperTabDefaultCompletionType = "context"
+
+" add support for mindful #tag completion
+function MindfulTagContext()
+    if filereadable(expand('~/.vim/tmp/mindful/tags.txt'))
+        let curline = getline('.')
+        let cnum = col('.')
+        
+        if curline =~ '#\w*\%' . cnum . 'c'
+            return "\<c-x>\<c-k>"
+        endif
+    endif
+endfunction
+
+let g:SuperTabCompletionContexts =
+    \ ['MindfulTagContext', 's:ContextText', 's:ContextDiscover']
 
 " ---------------------------------------------------------------------------
 "  tagbar
