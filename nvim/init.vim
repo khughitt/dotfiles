@@ -232,7 +232,6 @@ set wildmode=longest,list       " for filename completion, fill longest and list
 set ruler                       " show the cursor position all the time
 set showcmd                     " show incomplete commands and selection info
 set nolazyredraw                " turn off lazy redraw
-set relativenumber              " enable relative line numbers
 set number                      " line numbers
 set whichwrap+=<,>,h,l,[,]      " backspace and cursor keys wrap to
 set shortmess=filtIoOA          " shorten messages
@@ -1001,6 +1000,7 @@ function PasteMDLink()
 endfunction
 
 " Make a keybinding (mnemonic: "mark down paste")
+map <Leader>f <ESC>:call PasteMDLink()<CR>
 nmap <Leader>f :call PasteMDLink()<CR>
 
 " ---------------------------------------------------------------------------
@@ -1112,7 +1112,7 @@ let g:fzf_layout = { 'down': '~40%' }
 cmap <C-r> :History:<CR>
 
 " search notes
-command! -bang Notes call fzf#vim#files('~/d/notes', <bang>0)
+command! -bang Notes call fzf#vim#files('~/notes', <bang>0)
 map <localleader>n :Notes<CR>
 
 "nmap <leader><tab> <plug>(fzf-maps-n)
