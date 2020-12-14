@@ -53,26 +53,30 @@ endfunction
 noremap <silent><leader>s :call AddScratchpadEntry ()<CR>
 
 "
-" navigation
+" block navigation and selection
 " 
 function! NextBlock ()
-    " find next block heading and set cursor two lines below
     exec ":normal /-[a-zA-Z0-9 :]\\+-\\n/\<CR>"
     normal! 2j
-    " enter insert mode
-    " call feedkeys('A', 'n')
 endfunction
 
 function! PrevBlock ()
-    " find previous block
     exec ":normal ?-[a-zA-Z0-9 :]\\+-\\n?\<CR>"
     exec ":normal n<CR>"
     normal! 2j
-    " enter insert mode
-    " call feedkeys('A', 'n')
+endfunction
+
+function! YankBlock ()
+    exec ":normal ?-[a-zA-Z0-9 :]\\+-\\n?\<CR>"
+    normal! V
+    exec ":normal /-[a-zA-Z0-9 :]\\+-\\n/\<CR>"
+    normal! k
+    exec ":normal d<CR>"
 endfunction
 
 noremap <silent><c-j> :call NextBlock()<CR>
 noremap <silent><c-k> :call PrevBlock()<CR>
+noremap <silent><leader>y :call YankBlock()<CR>
 inoremap <silent><c-j> <Esc>:call NextBlock()<CR>
 inoremap <silent><c-k> <Esc>:call PrevBlock()<CR>
+inoremap <silent><leader>y <Esc>:call YankBlock()<CR>
