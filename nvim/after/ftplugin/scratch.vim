@@ -27,6 +27,34 @@ for mapping in cmap
     let i += 1
 endfor
 
+"
+" create entry
+"
+function! AddScratchpadEntry ()
+    " find entries heading and move cursor to following line
+    exec ":normal /Entries/\<CR>"
+    normal! 2j
+
+    " add timestamp
+    " exec ":put=strftime('-%c-')"
+    exec ":put=strftime('-%b %d %Y %H:%M:%S-')"
+
+    " add new lines
+    call append(line("."), ["", "", ""])
+
+    " go down two lines
+    " exec ":normal "
+    call cursor(line('.') + 2, 1)
+
+    " enter insert mode
+    call feedkeys('A', 'n')
+endfunction
+
+noremap <silent><leader>s :call AddScratchpadEntry ()<CR>
+
+"
+" navigation
+" 
 function! NextBlock ()
     " find next block heading and set cursor two lines below
     exec ":normal /-[a-zA-Z0-9 :]\\+-\\n/\<CR>"

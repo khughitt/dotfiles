@@ -25,12 +25,6 @@ function hv {
 # taskwarrior
 #
 
-# show tasks for a specific project
-function tp {
-    project=`task projects | head -n-2 | tail -n+5 | awk '{print $1}' | fzf -1 --exact`
-    task project:$project
-}
-
 #
 # fzf notes
 # 
@@ -39,7 +33,7 @@ function tp {
 function notes {
     wd=`pwd`
 
-    cd ~/d/notes
+    cd ~/notes
     target=`fd -t f md | grep --color='none' "$1" | fzf -1 --exact`
 
     if [ ! -z "$target" ]; then
@@ -75,7 +69,7 @@ function jm {
 # function n {
 #     wd=`pwd`
 #
-#     cd ~/d/notes
+#     cd ~/notes
 #     target=`fd -t f md | grep --color='none' "$1" | fzf -1 --exact`
 #
 #     if [ ! -z "$target" ]; then
@@ -89,7 +83,7 @@ function jm {
 function a {
     pwd=`pwd`
 
-    cd ~/d/notes
+    cd ~/notes
 
     # get directory to store note in
     target=`fd -t d | grep --color='none' "$1" | fzf -1 --exact`
@@ -98,22 +92,6 @@ function a {
     if [ ! -z "$target" ]; then
         vared -p "Filename? (${target}/XX): " -c fname
         vim $target/$fname
-    fi
-
-    cd $pwd
-}
-
-# project todo lists
-alias td="bash ~/d/r/cookiecutter/proj/scripts/todo.sh ~/d/notes/proj"
-
-function tda {
-    pwd=`pwd`
-
-    cd ~/d/notes/proj
-    target=`fd -t f todo.md | grep --color='none' "$1" | fzf -1 --exact`
-
-    if [ ! -z "$target" ]; then
-        vim $target
     fi
 
     cd $pwd

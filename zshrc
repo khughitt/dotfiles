@@ -18,24 +18,6 @@ fi
 # tmux
 source ~/.shell/tmux
 
-# check if in virtual console
-if [ "$TERM" = "linux" ]; then
-    export vconsole=true
-else
-    export vconsole=false
-fi
-
-# use Xresrouces to set TTY colors for virtual console sessions
-if $vconsole; then
-    COLORFILE=$(grep --color='never' -o "/.*termcolors/[a-z1-9\-]*" $HOME/.Xresources)
-    _SEDCMD='s/.*\*color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
-    for i in $(sed -n "$_SEDCMD" $COLORFILE | \
-               awk '$1 < 16 {printf "\\e]P%X%s", $1, $2}'); do
-        echo -en "$i"
-    done
-    clear
-fi
-
 #
 # history
 # 
@@ -60,15 +42,16 @@ setopt extended_glob          # extended globstring support
 setopt autocd                 # enter directories by name only
 setopt interactivecomments    # recognize comments
 
-# tab completion menu
-zstyle ':completion:*' menu select=4
-
-# use smart-case completion
-# zstyle ':completion:*' matcher-list 'l:|=* r:|=*' 
-zstyle ':completion:*'  matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' menu select=4                # tab completion menu
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # use smart-case completion
 
 # additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{aliases,audio,functions,private,exports}; do
+for file in ~/.shell/{aliases,audio,functions,private,exports,vconsole}; do
+    [ -r "$file" ] && source "$file"
+done
+
+# nnn
+for file in ~/.dotfiles/nnn/*.zsh; do
     [ -r "$file" ] && source "$file"
 done
 unset file
@@ -95,27 +78,17 @@ alias v='f -e nvim'
 # disable scroll lock
 stty -ixon
 
-# urxvt keybindings
-if [[ "${TERM}" == rxvt-* ]]
-then
-    source ~/.shell/urxvt
-fi
-
 # termite dynamic titles
 if [[ $TERM == xterm-termite ]]; then
   . /etc/profile.d/vte.sh
-  # __vte_osc7
 fi
-
-# dir colors
-#eval $(dircolors -b ~/.dir_colors)
 
 # local settings (late)
 if [ -e ~/.zsh_local_late ]; then
    source ~/.zsh_local_late
 fi
 
-# enable vi-mode
+# fix keybindings
 bindkey '^P' up-history
 bindkey '^N' down-history
 bindkey '^?' backward-delete-char
@@ -123,7 +96,6 @@ bindkey '^h' backward-delete-char
 bindkey '^w' backward-kill-word
 bindkey '^r' history-incremental-search-backward
 
-# fix keybindings
 bindkey "^[[H" beginning-of-line
 bindkey "^A"   beginning-of-line
 bindkey "^[[F" end-of-line
@@ -133,20 +105,6 @@ bindkey "^[[1;5D" backward-word
 bindkey "^[[1;3C" forward-word
 bindkey "^[[1;5C" forward-word
 bindkey "^[^?" backward-kill-word 
-
-# bindkey -s "^N" "notes"
-# bindkey -s "^N" "hw"
-#
-
-# hw() { echo "hello world"; }
-# zle -N hw
-# bindkey "^h" hw
-
-# my-script_widget() my-script its args
-# zle -N my-script_widget
-# bindkey '\ej' my-script_widget
-
-#bindkey '^[[Z' reverse-menu-complete
 
 #
 # zinit
@@ -228,9 +186,6 @@ _fzf_compgen_path() {
 _fzf_compgen_dir() {
   fd --type d --hidden --follow --exclude ".git" . "$1"
 }
-
-# navi
-#source <(navi widget zsh)
 
 # kitty completion
 #kitty + complete setup zsh | source /dev/stdin

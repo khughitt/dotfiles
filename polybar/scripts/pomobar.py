@@ -53,7 +53,7 @@ class Pomodoro:
             GlobalPomodoroCounter.increment_global_pomodoro_counter()
             writeOutput(ICON_TOTAL + GlobalPomodoroCounter.get_pomodoros_done())
             recharge_polybar()
-            os.system("notify-send --urgency=normal Pomodoro finished")
+            os.system("notify-send -t 120000 --urgency=normal Pomodoro finished")
 
 
 class Break:
