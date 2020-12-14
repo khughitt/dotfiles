@@ -1,0 +1,11 @@
+#
+# audio-related commands
+#
+
+# creates a sub-directory with reversed versions of .wav files in the current dir
+function reverse_audio {
+    mkdir rev
+    for x in *.wav; do
+        sox $x rev/${x/.wav/_reversed.wav} reverse;
+    done
+}

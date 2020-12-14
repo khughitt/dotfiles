@@ -72,18 +72,18 @@ function jm {
 # searches a collection of markdown notes by filepath and opens the selected
 # entry in vim.
 #
-function n {
-    wd=`pwd`
-
-    cd ~/d/notes
-    target=`fd -t f md | grep --color='none' "$1" | fzf -1 --exact`
-
-    if [ ! -z "$target" ]; then
-        vim $target
-    fi
-
-    cd $wd
-}
+# function n {
+#     wd=`pwd`
+#
+#     cd ~/d/notes
+#     target=`fd -t f md | grep --color='none' "$1" | fzf -1 --exact`
+#
+#     if [ ! -z "$target" ]; then
+#         vim $target
+#     fi
+#
+#     cd $wd
+# }
 
 # add note
 function a {

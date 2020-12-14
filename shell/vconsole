@@ -1,0 +1,17 @@
+# check if in virtual console
+if [ "$TERM" = "linux" ]; then
+    export vconsole=true
+else
+    export vconsole=false
+fi
+
+# use Xresrouces to set TTY colors for virtual console sessions
+if $vconsole; then
+    COLORFILE=$(grep --color='never' -o "/.*termcolors/[a-z1-9\-]*" $HOME/.Xresources)
+    _SEDCMD='s/.*\*color\([0-9]\{1,\}\).*#\([0-9a-fA-F]\{6\}\).*/\1 \2/p'
+    for i in $(sed -n "$_SEDCMD" $COLORFILE | \
+               awk '$1 < 16 {printf "\\e]P%X%s", $1, $2}'); do
+        echo -en "$i"
+    done
+    clear
+fi

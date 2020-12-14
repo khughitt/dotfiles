@@ -30,6 +30,7 @@ alias lrt='ls -1Fcrt'
 # cd
 alias dl='cd ~/downloads'
 alias dots='cd ~/.dotfiles'
+alias cn='cd ~/d/notes'
 
 # most recent file
 alias new="echo *(.om[1])"
@@ -96,7 +97,7 @@ alias vi=nvim
 alias vim=nvim
 alias vmi=nvim
 alias vm='nvim README.*md'
-alias lv="vim -c \"normal '0\""                         # open most recently edited file / position
+alias vl="vim -c \"normal '0\""                         # open most recently edited file / position
 alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}' # open last argument of last command in vim
 
 # journalctl
@@ -144,9 +145,6 @@ alias 4k="xrandr --output DP-0 --mode 3840x2160"
 # termbin
 # example usage: echo just testing! | tb
 alias tb="nc termbin.com 9999"
-
-# ranger practice
-alias nautilus="ranger"
 
 # google translate
 alias tze="trans zh-TW:en"   # to english
