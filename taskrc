@@ -3,7 +3,7 @@
 #
 
 # Files
-data.location=~/d/.task/proj
+data.location=~/d/.task/default
 
 # Color theme
 #include /usr/share/doc/task/rc/dark-16.theme

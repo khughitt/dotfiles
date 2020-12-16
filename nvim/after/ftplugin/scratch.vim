@@ -56,20 +56,20 @@ noremap <silent><leader>s :call AddScratchpadEntry ()<CR>
 " block navigation and selection
 " 
 function! NextBlock ()
-    exec ":normal /-[a-zA-Z0-9 :]\\+-\\n/\<CR>"
+    exec ":normal /-[a-zA-Z0-9 :,]\\+-\\n/\<CR>"
     normal! 2j
 endfunction
 
 function! PrevBlock ()
-    exec ":normal ?-[a-zA-Z0-9 :]\\+-\\n?\<CR>"
+    exec ":normal ?-[a-zA-Z0-9 :,]\\+-\\n?\<CR>"
     exec ":normal n<CR>"
     normal! 2j
 endfunction
 
 function! YankBlock ()
-    exec ":normal ?-[a-zA-Z0-9 :]\\+-\\n?\<CR>"
+    exec ":normal ?-[a-zA-Z0-9 :,]\\+-\\n?\<CR>"
     normal! V
-    exec ":normal /-[a-zA-Z0-9 :]\\+-\\n/\<CR>"
+    exec ":normal /-[a-zA-Z0-9 :,]\\+-\\n/\<CR>"
     normal! k
     exec ":normal d<CR>"
 endfunction

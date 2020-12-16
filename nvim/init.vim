@@ -101,6 +101,7 @@ call plug#begin()
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-repeat'
     Plug 'tpope/vim-surround'
+    Plug 'tikhomirov/vim-glsl'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
@@ -115,7 +116,6 @@ call plug#begin()
 
     "Plug 'zhaozg/vim-diagram'
     "Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
-    "Plug 'tikhomirov/vim-glsl'
     "Plug 'terryma/vim-expand-region'
     "Plug 'gcavallanti/vim-noscrollbar'
     "Plug 'ekiim/vim-mathpix'
@@ -183,7 +183,6 @@ call plug#begin()
     "Plug 'deoplete-plugins/deoplete-jedi'
     "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
     "Plug 'Shougo/deoplete-terminal'
-    "Plug 'vimwiki/vimwiki'
     "Plug 'godlygeek/tabular'
     "Plug 'neoclide/coc.nvim', {'branch': 'release'}
     "
@@ -209,7 +208,7 @@ call plug#end()
 " TODO: create func to open markdown cheatsheet in sidepane / close
 " the buffer if it is already open/visible..
 " ----------------------------------------------------------------------------
-" if bufwinnr("~/d/notes/linux/vim/cheatsheet.md") > 0
+" if bufwinnr("~/notes/linux/vim/cheatsheet.md") > 0
 "   echo "Already open"
 " endif
 
@@ -1097,13 +1096,9 @@ let g:fzf_layout = { 'down': '~40%' }
 
 cmap <C-r> :History:<CR>
 
-" search notes
+" create a `Notes` command to search notes
 command! -bang Notes call fzf#vim#files('~/notes', <bang>0)
-map <localleader>n :Notes<CR>
-
-"nmap <leader><tab> <plug>(fzf-maps-n)
-"xmap <leader><tab> <plug>(fzf-maps-x)
-"omap <leader><tab> <plug>(fzf-maps-o)
+map <leader>j :Notes<CR>
 
 " ---------------------------------------------------------------------------
 "  Limelight
@@ -1186,28 +1181,6 @@ nmap cid ci_
 nmap cad ca_
 nmap did di_
 nmap dad da_
-
-" ---------------------------------------------------------------------------
-"  VimWiki
-" ---------------------------------------------------------------------------
-let g:vimwiki_list = [{'path': '~/d/notes/',
-                      \ 'syntax': 'markdown',
-                      \ 'ext': '.md'}]
-
-" only set filetype to vimwiki for files in specified vimwiki path
-let g:vimwiki_global_ext = 0
-
-" tagbar integration
-" let g:tagbar_type_vimwiki = {
-"           \   'ctagstype':'vimwiki'
-"           \ , 'kinds':['h:header']
-"           \ , 'sro':'&&&'
-"           \ , 'kind2scope':{'h':'header'}
-"           \ , 'sort':0
-"           \ , 'ctagsbin':'~/bin/vwtags.py'
-"           \ , 'ctagsargs': 'markdown'
-"           \ }
-"
 
 " ---------------------------------------------------------------------------
 "  Host-specific configuration
