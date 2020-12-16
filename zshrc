@@ -68,8 +68,9 @@ unset fasd_cache
 
 unalias a
 unalias s
-alias o='a -e xdg-open'
+unalias zz
 alias j='fasd_cd -d' 
+alias o='f -e mimeopen'
 alias v='f -e nvim'
 
 # make less more friendly for non-text input files, see lesspipe(1)

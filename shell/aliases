@@ -70,6 +70,7 @@ alias s="task rc.data.location=~/d/.task/startup"
 alias tl="task rc.data.location=~/d/.task/learning"
 alias tg="task rc.data.location=~/d/.task/goals"
 alias tm="task rc.data.location=~/d/.task/mindful"
+alias to="task rc.data.location=~/d/.task/opt"
 alias tp="task rc.data.location=~/d/.task/personal"
 
 # tree
@@ -145,7 +146,7 @@ alias 4k="xrandr --output DP-0 --mode 3840x2160"
 
 # termbin
 # example usage: echo just testing! | tb
-alias tb="nc termbin.com 9999"
+# alias tb="nc termbin.com 9999"
 
 # google translate
 alias tze="trans zh-TW:en"   # to english
@@ -159,7 +160,7 @@ alias s10="sleep 600 &&"
 alias s60="sleep 3600 &&"
 
 # suspend
-alias zzz="systemctl suspend"
+alias zz="systemctl suspend"
 
 # mimetypes
 alias open='mimeopen'
@@ -169,6 +170,9 @@ alias -s html=firefox
 alias -s org=firefox
 alias -s com=firefox
 alias -s Rmd=nvim
+
+# tmux
+alias x=xumt
 
 # Command line head / tail shortcuts
 # "-g" = global alias; can be substituted anywhere on the line
