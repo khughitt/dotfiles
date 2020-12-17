@@ -43,10 +43,11 @@ alias duf='du -sh *'
 alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
 
 # fasd
-alias jb="j home d r bio"
-alias jp="j home d r proj"
-alias jt="j home d r tool"
-alias js="j home shiny"
+alias jb="fasd_cd -d home d r bio"
+alias jn="fasd_cd -d notes"
+alias jp="fasd_cd -d home d r proj"
+alias jt="fasd_cd -d home d r tool"
+alias js="fasd_cd -d home shiny"
 
 alias jk="cd \`fasd -d -l -r | fzf -1 --exact\`"
 alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
