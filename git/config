@@ -16,3 +16,5 @@
 	tool = meld
 [init]
 	defaultBranch = trunk
+[credential]
+	helper = cache

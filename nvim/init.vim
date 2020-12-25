@@ -926,7 +926,11 @@ inoremap <leader><F5> <Esc>:call CreateHeading("=")<CR>
 " helper function to add a simple markdown timestamp heading
 function! AddTimeStamp ()
     " add timestamp
-    call append(line("."), [strftime('%b %d %Y'), "-----------", ""])
+    call append(line("."), [strftime('### %b %d %Y'), ""])
+
+    " underline format
+    " call append(line("."), [strftime('%b %d %Y'), "-----------", ""])
+    
     normal! 3j
 
     " enter insert mode

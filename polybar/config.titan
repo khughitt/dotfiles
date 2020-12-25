@@ -52,7 +52,7 @@ font-4 = Weather Icons:size=16;0
 font-5 = "NotoEmoji Nerd Font:style=Book"
 font-6 = "DejaVu Sans"
 
-modules-left = i3
+modules-left = i3 layout_mode
 modules-center = spotify previous playpause next
 ; modules-right = pulseaudio memory cpu wlan pomobar snakemake-isrunning weather date
 modules-right = memory cpu wlan pomobar snakemake-isrunning weather date
@@ -298,8 +298,8 @@ interval = 5
 date =
 date-alt = " %Y-%m-%d"
 
-time = %H:%M
-time-alt = %H:%M:%S
+time = "%I:%M %p"
+time-alt = "%I:%M:%S %p"
 
 format-prefix = 
 format-prefix-foreground = ${colors.foreground-alt}
@@ -430,6 +430,18 @@ menu-2-0 = power off
 menu-2-0-exec = sudo poweroff
 menu-2-1 = cancel
 menu-2-1-exec = menu-open-0
+
+#
+# layout indicator
+# source: https://www.reddit.com/r/i3wm/comments/kf0dpa/visual_indication_of_i3_workspace_layout/gg6xvg8?utm_source=share&utm_medium=web2x&context=3
+#
+# minimum latency is 1 second, unless you set this to 0 and handle polling
+# in an external script
+#
+[module/layout_mode]
+type = custom/script
+exec = i3-msg -t get_tree | jq -r 'recurse(.nodes[];.nodes!=null)|select(.nodes[].focused).layout'
+interval = 1
 
 [settings]
 screenchange-reload = true

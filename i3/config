@@ -38,7 +38,7 @@ bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/ro
 font pango:Droid Sans Mono 10
 
 # window borders
-for_window [class=".*"] border pixel 0
+for_window [class=".*"] border pixel 1
 hide_edge_borders smart_no_gaps
 
 # gaps

@@ -119,6 +119,9 @@ endfunction
 " au FileType r,rmd nmap <localleader>sc :call ShowRSource()<CR>
 nmap <localleader>sc :call ShowRSource()<CR>
 
+" fix keyword separators
+set iskeyword=@,48-57,_,192-255
+
 " Work-around for failing rmarkdown syntax highlighting when jumping around in files
 " https://vim.fandom.com/wiki/Fix_syntax_highlighting
 " https://github.com/vim/vim/issues/2790
