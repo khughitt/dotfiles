@@ -84,7 +84,7 @@ set_from_resource $c14 i3wm.color14 #f0f0f0
 set_from_resource $c15 i3wm.color15 #f0f0f0
 
 # class                 border  backgr. text indicator child_border
-client.focused          $bg     $c6     $c3  $bg       $bg
+client.focused          $bg     $c6     $c3  $c4       $bg
 client.focused_inactive $c3     $c1     $fg  $bg       $bg
 client.unfocused        $c1     $c1     $fg  $bg       $bg
 client.urgent           $bg     $bg     $fg  $bg       $bg
@@ -124,7 +124,8 @@ bindsym $mod+q kill
 bindsym Mod1+F4 kill
 
 # rofi
-bindsym $mod+p exec $menu
+#bindsym $mod+p exec $menu
+bindsym Control+space exec $menu
 
 # Drag floating windows by holding down $mod and left mouse button.
 # Resize them with right mouse button + $mod.
@@ -324,7 +325,7 @@ exec_always --no-startup-id termite --name=termite_scratch
 for_window[instance="termite_scratch"] move scratchpad
 
 bindsym Mod1+Return \
-    [instance="go_scratch|python_scratch|r_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="go_scratch|python_scratch|r_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
     [instance="termite_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1;
 
@@ -333,7 +334,7 @@ exec_always --no-startup-id termite -e "gore" --name=go_scratch
 for_window[instance="go_scratch"] move scratchpad
 
 bindsym Mod1+g \
-    [instance="r_scratch|python_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="r_scratch|python_scratch|termite_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
     [instance="go_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
@@ -343,7 +344,7 @@ exec_always --no-startup-id termite -e "radian" --name=r_scratch
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
-    [instance="go_scratch|python_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="go_scratch|python_scratch|termite_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
     [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
@@ -352,7 +353,7 @@ exec_always --no-startup-id termite -e ipython --name=python_scratch
 for_window[instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
-    [instance="r_scratch|go_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="r_scratch|go_scratch|termite_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
     [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
@@ -361,7 +362,7 @@ exec_always --no-startup-id termite -e julia --name=julia_scratch
 for_window[instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
-    [instance="go_scratch|r_scratch|python_sratch|tasks_scratch|termite_scratch"] move scratchpad; \
+    [instance="go_scratch|r_scratch|python_sratch|tasks_scratch|termite_scratch|mindful_scratch"] move scratchpad; \
     [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
@@ -370,8 +371,17 @@ exec_always --no-startup-id termite -e "nvim ~/d/notes/personal/organization/org
 for_window[instance="tasks_scratch"] move scratchpad
 
 bindsym Mod1+t \
-    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|termite_scratch"] move scratchpad; \
+    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|termite_scratch|mindful_scratch"] move scratchpad; \
     [instance="tasks_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
+
+#-- mindful --#
+exec_always --no-startup-id termite -e "nvim ~/d/s/$HSTNAME" --name=mindful_scratch
+for_window[instance="mindful_scratch"] move scratchpad
+
+bindsym Mod1+m \
+    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|termite_scratch|tasks_scratch"] move scratchpad; \
+    [instance="mindful_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
 #

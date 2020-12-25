@@ -74,6 +74,10 @@ alias tm="task rc.data.location=~/d/.task/mindful"
 alias to="task rc.data.location=~/d/.task/opt"
 alias tp="task rc.data.location=~/d/.task/personal"
 
+# tar
+alias taru="tar xavpf"
+alias tarc="tar czvpf"
+
 # tree
 alias tree='tree -C'
 
@@ -161,7 +165,7 @@ alias s10="sleep 600 &&"
 alias s60="sleep 3600 &&"
 
 # suspend
-alias zz="systemctl suspend"
+alias zzz="systemctl suspend"
 
 # mimetypes
 alias open='mimeopen'

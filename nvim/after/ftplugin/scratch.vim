@@ -36,14 +36,12 @@ function! AddScratchpadEntry ()
     normal! 2j
 
     " add timestamp
-    " exec ":put=strftime('-%c-')"
-    exec ":put=strftime('-%b %d %Y %H:%M:%S-')"
+    exec ":put=strftime('### %b %d %Y %H:%M:%S')"
 
     " add new lines
     call append(line("."), ["", "", ""])
 
     " go down two lines
-    " exec ":normal "
     call cursor(line('.') + 2, 1)
 
     " enter insert mode
@@ -55,21 +53,24 @@ noremap <silent><leader>s :call AddScratchpadEntry ()<CR>
 "
 " block navigation and selection
 " 
+let dateRegEx = "^### \\(Jan\\|Feb\\|Mar\\|Apr\\|May\\|Jun\\|Jul\\|Aug\\|Sep\\|Oct\\|Nov\\|Dec\\)[0-9 :,]\\+\\n"
+
 function! NextBlock ()
-    exec ":normal /-[a-zA-Z0-9 :,]\\+-\\n/\<CR>"
+    echo g:dateRegEx
+    exec ":normal /" . g:dateRegEx . "/\<CR>"
     normal! 2j
 endfunction
 
 function! PrevBlock ()
-    exec ":normal ?-[a-zA-Z0-9 :,]\\+-\\n?\<CR>"
+    exec ":normal ?" . g:dateRegEx . "?\<CR>"
     exec ":normal n<CR>"
     normal! 2j
 endfunction
 
 function! YankBlock ()
-    exec ":normal ?-[a-zA-Z0-9 :,]\\+-\\n?\<CR>"
+    exec ":normal ?" . g:dateRegEx . "?\<CR>"
     normal! V
-    exec ":normal /-[a-zA-Z0-9 :,]\\+-\\n/\<CR>"
+    exec ":normal /" . g:dateRegEx . "/\<CR>"
     normal! k
     exec ":normal d<CR>"
 endfunction

@@ -1,3 +1,14 @@
+################################################################################
+#
+# Functions
+#
+################################################################################
+
+# alias lookup
+function al {
+    alias | grep $1
+}
+
 # relative working directory
 function wd {
     echo ${$(pwd)/$HOME\//}
@@ -165,7 +176,7 @@ function les {
 }
 
 #
-# ffmpeg h.265 video conversion
+# ffmpeg - h.265 video conversion
 # 
 # <input> <start> <duration>
 # 
@@ -188,6 +199,17 @@ function ffh265 {
         cmd="ffmpeg -ss \"$start\" -i $infile -t \"$duration\" -c:v libx265 -crf 28 -preset medium -c:a aac -b:a 192k $outfile"
         echo $cmd
     fi
+}
+
+#
+# ffmpeg - crop video
+# 
+# <input> <start> <stop> "<title>" <output>
+#
+function ffcut {
+    cmd="ffmpeg -i $1 -ss $2 -to $3 -codec copy -metadata title=\"$4\" $5"
+    echo "Running: $cmd"
+    eval $cmd
 }
 
 #

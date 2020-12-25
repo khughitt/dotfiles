@@ -11,7 +11,8 @@ endif
 runtime! syntax/markdown.vim
 
 " Date heading
-syn match DateHeading "^\-.*\-$"
+" syn match DateHeading "^\-.*\-$"
+syn match DateHeading "^### \(Jan\|Feb\|Mar\|Apr\|May\|Jun\|Jul\|Aug\|Sep\|Oct\|Nov\|Dec\)[0-9 :,]\+\n"
 
 " questions & important
 syn match Question "^?.*$"
