@@ -35,7 +35,7 @@ bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/ro
 #exec_always feh --bg-scale ~/d/linux/backgrounds/nature/Milford_Sound_NZ.jpg
 
 # font
-font pango:Droid Sans Mono 10
+font pango:Droid Sans Mono 11
 
 # window borders
 for_window [class=".*"] border pixel 1
@@ -84,7 +84,7 @@ set_from_resource $c14 i3wm.color14 #f0f0f0
 set_from_resource $c15 i3wm.color15 #f0f0f0
 
 # class                 border  backgr. text indicator child_border
-client.focused          $bg     $c6     $c3  $bg       $bg
+client.focused          $bg     $c6     $c3  $c4       $bg
 client.focused_inactive $c3     $c1     $fg  $bg       $bg
 client.unfocused        $c1     $c1     $fg  $bg       $bg
 client.urgent           $bg     $bg     $fg  $bg       $bg
@@ -116,7 +116,6 @@ bindsym $mod+Return \
     [instance="i3term"] scratchpad show;\
     floating toggle
 
-
 # file browser
 #bindsym $mod+n exec termite -e ranger
 
@@ -125,7 +124,7 @@ bindsym $mod+q kill
 bindsym Mod1+F4 kill
 
 # rofi
-bindsym $mod+p exec $menu
+bindsym Control+space exec $menu
 
 # Drag floating windows by holding down $mod and left mouse button.
 # Resize them with right mouse button + $mod.
@@ -325,9 +324,18 @@ exec_always --no-startup-id termite --name=termite_scratch
 for_window[instance="termite_scratch"] move scratchpad
 
 bindsym Mod1+Return \
-    [instance="python_scratch|r_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="go_scratch|python_scratch|r_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
     [instance="termite_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1;
+
+#-- go console --#
+exec_always --no-startup-id termite -e "gore" --name=go_scratch
+for_window[instance="go_scratch"] move scratchpad
+
+bindsym Mod1+g \
+    [instance="r_scratch|python_scratch|termite_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
+    [instance="go_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
 
 #-- r console --#
 # exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch
@@ -335,7 +343,7 @@ exec_always --no-startup-id termite -e "radian" --name=r_scratch
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
-    [instance="python_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="go_scratch|python_scratch|termite_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
     [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
@@ -344,7 +352,7 @@ exec_always --no-startup-id termite -e ipython --name=python_scratch
 for_window[instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
-    [instance="r_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
+    [instance="r_scratch|go_scratch|termite_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
     [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
@@ -353,7 +361,7 @@ exec_always --no-startup-id termite -e julia --name=julia_scratch
 for_window[instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
-    [instance="r_scratch|python_sratch|tasks_scratch|termite_scratch"] move scratchpad; \
+    [instance="go_scratch|r_scratch|python_sratch|tasks_scratch|termite_scratch|mindful_scratch"] move scratchpad; \
     [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
@@ -362,8 +370,17 @@ exec_always --no-startup-id termite -e "nvim ~/d/notes/personal/organization/org
 for_window[instance="tasks_scratch"] move scratchpad
 
 bindsym Mod1+t \
-    [instance="julia_scratch|r_scratch|python_sratch|termite_scratch"] move scratchpad; \
+    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|termite_scratch|mindful_scratch"] move scratchpad; \
     [instance="tasks_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+    move position $scratch_x1 $scratch_y1
+
+#-- mindful --#
+exec_always --no-startup-id termite -e "nvim ~/d/s/$HSTNAME" --name=mindful_scratch
+for_window[instance="mindful_scratch"] move scratchpad
+
+bindsym Mod1+m \
+    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|termite_scratch|tasks_scratch"] move scratchpad; \
+    [instance="mindful_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1
 
 #
@@ -396,8 +413,8 @@ exec --no-startup-id "killall blackd; blackd"
 exec_always --no-startup-id "killall picom; picom -b"
 exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
 exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
-# exec --no-startup-id "$HOME/.config/polybar/scripts/spotify/launchlistener.sh"
 exec --no-startup-id "$HOME/.config/polybar/scripts/spotify/py_spotify_listener.py"
+exec --no-startup-id "fcitx -d"
 #exec --no-startup-id "cadence-session-start --system-start"
 #exec --no-startup-id "cadence --minimized"
 #exec --no-startup-id "XDG_CURRENT_DESKTOP=GNOME syncthing-gtk -m"

@@ -1,6 +1,6 @@
 #
 # i3 config
-# kh april.2019
+# kh dec.2020
 #
 
 #-------------------------------------------------------------------------------
@@ -124,7 +124,6 @@ bindsym $mod+q kill
 bindsym Mod1+F4 kill
 
 # rofi
-#bindsym $mod+p exec $menu
 bindsym Control+space exec $menu
 
 # Drag floating windows by holding down $mod and left mouse button.
