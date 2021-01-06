@@ -1,31 +1,34 @@
 "
 " scratch tag highlighting
-" kh (nov 2020)
+" keith hughitt
 "
 
-" counter to keep track of current tag number
-let i = 1
+" if mindful is install, use to determine tag colors to use
+if executable("stags")
+    " counter to keep track of current tag number
+    let i = 1
 
-let cmap = split(system('stag'), '\n')
+    let cmap = split(system('stag'), '\n')
 
-for mapping in cmap
-    let parts = split(mapping, ', ')
-    let tag = parts[0]
-    let color = parts[1]
+    for mapping in cmap
+        let parts = split(mapping, ', ')
+        let tag = parts[0]
+        let color = parts[1]
 
-    execute('highlight SenTag' . i . ' guifg=' . color)
+        execute('highlight SenTag' . i . ' guifg=' . color)
 
-    " matchadd()
-    " Defines a pattern to be highlighted in the current window (a   
-    " match").  It will be highlighted with {group}
-    " see :help matchadd()
+        " matchadd()
+        " Defines a pattern to be highlighted in the current window (a   
+        " match").  It will be highlighted with {group}
+        " see :help matchadd()
 
-    " \< and \> match the begining and end of a word
-    " see :help /\<
-    call matchadd("SenTag" . i, '\<' . tag . '\>')
+        " \< and \> match the begining and end of a word
+        " see :help /\<
+        call matchadd("SenTag" . i, '\<' . tag . '\>')
 
-    let i += 1
-endfor
+        let i += 1
+    endfor
+endif
 
 "
 " create entry

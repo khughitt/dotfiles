@@ -22,7 +22,6 @@ class WorkspaceRenamer(object):
 
     def getWorkspacePrefix(self):
         workspace = self.findFocusedWorkspace()
-        #  prefix = self.prefixRegex.match(workspace.name)
         prefix = workspace.name.split(':')[0]
         if prefix is None:
             raise LookupError("No workspace name found")
