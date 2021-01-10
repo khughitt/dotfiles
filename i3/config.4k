@@ -21,10 +21,9 @@ set $term termite
 # Your preferred application launcher
 set $menu rofi -show drun
 
-# rofi-notes
-bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/scripts/rofi-notes.sh"
-
-# rofi-tasks
+# rofi custom launchers
+#bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/scripts/rofi-notes.sh"
+bindsym $mod+m exec --no-startup-id rofi -show mindmaps -modi "mindmaps:~/.dotfiles/rofi/scripts/rofi-mindmaps.sh"
 bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/rofi/scripts/rofi-tasks.sh"
 
 #-------------------------------------------------------------------------------
@@ -193,10 +192,10 @@ bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
 # move workspace to different monitor
-bindsym $mod+m move workspace to output left
+# bindsym $mod+m move workspace to output left
 
 # rename workspace
-bindsym $mod+r exec "python ~/bin/renameworkspace.py"
+# bindsym $mod+r exec "python ~/bin/renameworkspace.py"
 
 #-------------------------------------------------------------------------------
 # Workspaces (i3-workspace-groups)
