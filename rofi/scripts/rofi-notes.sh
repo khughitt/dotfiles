@@ -3,7 +3,7 @@
 # rofi notes launcher
 # kh (march 2020)
 #
-NOTES_DIR="/home/keith/d/notes"
+NOTES_DIR="/home/keith/notes"
 
 cd $NOTES_DIR
 

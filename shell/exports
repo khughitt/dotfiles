@@ -8,7 +8,7 @@ if test $SSH_AUTH_SOCK && [ $SSH_AUTH_SOCK != $SOCK ]; then
     export SSH_AUTH_SOCK=$SOCK
 fi
 
-export NOTES="$HOME/d/notes"
+export NOTES="$HOME/notes"
 export FONTCONFIG_PATH=/etc/fonts
 
 export GOPATH=$HOME/d/go
