@@ -29,6 +29,9 @@ export FZF_DEFAULT_OPTS="--exact -1 \
 # https://changes.ankiweb.net/#/known-issues
 export ANKI_NOHIGHDPI=1
 
+# android sdk
+export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
+
 # flask dev mode
 export FLASK_ENV=development
 
