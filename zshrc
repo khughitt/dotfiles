@@ -194,6 +194,9 @@ _fzf_compgen_dir() {
 # location of additional zsh completions
 fpath+=$HOME/.dotfiles/zsh/
 
+# pure prompt
+fpath+=$HOME/.zsh/pure
+
 # tab completion
 autoload -Uz compinit
 compinit

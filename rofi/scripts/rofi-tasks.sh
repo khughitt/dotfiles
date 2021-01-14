@@ -1,10 +1,9 @@
 #!/bin/zsh
 #
-# rofi notes launcher
-# kh (march 2020)
+# rofi tasks launcher
+# kh (jan 2021)
 #
-
-tasks=(bayes dsp gene-sets)
+tasks=(bayes dsp gene-sets shaders)
 
 if [ -z $@ ]; then
     print -l "${tasks[@]}"
@@ -16,6 +15,18 @@ else
 
         coproc zathura ~/d/books/statisticalrethinking2.pdf > /dev/null
         coproc termite -d $NOTES/knowledge/courses/statistical-rethinking -e "nvim stat-rethink.md" > /dev/null
+    elif [ "$@" = "shaders" ]; then
+        # shaders practice
+        i3empty.py next 1 > /dev/null
+        i3-msg layout splith > /dev/null
+
+        # copy template to a new folder
+        workdir=~/d/shaders/prac/`date +"%Y-%m-%d"`
+        cp -r ~/d/shaders/template $workdir
+
+        # launch firefox / vim
+        coproc termite -d $workdir -e "nvim shader.frag" > /dev/null
+        coproc firefox --new-instance -P shaders > /dev/null
     elif [ "$@" = "gene-sets" ]; then
         # gene set optimization
         i3empty.py next 1 > /dev/null
