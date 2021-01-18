@@ -4,11 +4,11 @@
 "
 
 " if mindful is install, use to determine tag colors to use
-if executable("stags")
+if executable("mindful")
     " counter to keep track of current tag number
     let i = 1
 
-    let cmap = split(system('stag'), '\n')
+    let cmap = split(system('mindful --tags'), '\n')
 
     for mapping in cmap
         let parts = split(mapping, ', ')

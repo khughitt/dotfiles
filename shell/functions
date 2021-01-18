@@ -33,10 +33,6 @@ function hv {
 }
 
 #
-# taskwarrior
-#
-
-#
 # fzf notes
 # 
 
@@ -45,7 +41,9 @@ function notes {
     wd=`pwd`
 
     cd ~/notes
-    target=`fd -t f md | grep --color='none' "$1" | fzf -1 --exact`
+
+    fd_cmd="fd -t f md $MINDFUL_FD_ARGS"
+    target=`eval $fd_cmd | grep --color='none' "$1" | fzf -1 --exact`
 
     if [ ! -z "$target" ]; then
         vim $target
@@ -72,24 +70,6 @@ function jm {
     cd $wd
 }
 
-# search notes
-# 
-# searches a collection of markdown notes by filepath and opens the selected
-# entry in vim.
-#
-# function n {
-#     wd=`pwd`
-#
-#     cd ~/notes
-#     target=`fd -t f md | grep --color='none' "$1" | fzf -1 --exact`
-#
-#     if [ ! -z "$target" ]; then
-#         vim $target
-#     fi
-#
-#     cd $wd
-# }
-
 # add note
 function a {
     pwd=`pwd`
@@ -103,37 +83,6 @@ function a {
     if [ ! -z "$target" ]; then
         vared -p "Filename? (${target}/XX): " -c fname
         vim $target/$fname
-    fi
-
-    cd $pwd
-}
-
-# helper function to quickly load a dataset into ipython
-function dat {
-    pwd=`pwd`
-
-    # data directory to scan (clean data only, for now)
-    cd  /data/clean
-
-    target=`fd -t f $1 | fzf -1 --exact`
-
-    # get extension, excluding .gz 
-    filename=${target/.gz/}
-    ext="${filename##*.}"
-
-    # launch ipython and attempt to load the dataset
-    if [ ! -z "$target" ]; then
-        echo "Loading dataset $target..."
-
-        if [ $ext = "feather" ]; then
-            ipython -i -c "import pandas as pd; dat=pd.read_feather('$target');"
-        elif [ $ext = "csv" ]; then
-            ipython -i -c "import pandas as pd; dat=pd.read_csv('$target');"
-        elif [ $ext = "tsv" ]; then
-            ipython -i -c "import pandas as pd; dat=pd.read_csv('$target', sep='\t');"
-        else
-            echo "Unrecognized filetype specified: $ext"
-        fi
     fi
 
     cd $pwd
@@ -159,15 +108,6 @@ function va {
 # zcat | wc -l
 function zcl {
     zcat $1 | wc -l
-}
-
-# number of columns
-function nc {
-    if [[ $1 == *.tsv* ]]; then
-        csvgrep -n -t $1 | wc -l
-    else
-        csvgrep -n $1 | wc -l
-    fi
 }
 
 # feh browse dir
@@ -245,3 +185,48 @@ function check_gene {
     zgrep $query /data/ref/human/ncbi/Homo_sapiens.gene_info.gz
 }
  
+#
+# dataset functions
+#
+
+# number of columns
+function nc {
+    if [[ $1 == *.tsv* ]]; then
+        csvgrep -n -t $1 | wc -l
+    else
+        csvgrep -n $1 | wc -l
+    fi
+}
+
+# helper function to quickly load a dataset into ipython
+function dat {
+    # get current data package dir
+    version=`ls /data/packages | tail -n1`
+    pkgdir="/data/packages/$version"
+
+    # search clean data and most recent data packages
+    fd_cmd="fd . -e .tsv -e .feather -e .parquet -e .csv -e .gz $pkgdir /data/clean"
+    target=`eval $fd_cmd | fzf -1 --exact`
+
+    # get extension, excluding .gz 
+    filename=${target/.gz/}
+    ext="${filename##*.}"
+
+    # launch ipython and attempt to load the dataset
+    if [ ! -z "$target" ]; then
+        echo "Loading dataset $target..."
+
+        if [ $ext = "feather" ]; then
+            ipython -i -c "import pandas as pd; dat=pd.read_feather('$target');"
+        elif [ $ext = "parquet" ]; then
+            ipython -i -c "import pandas as pd; dat=pd.read_parquet('$target');"
+        elif [ $ext = "csv" ]; then
+            ipython -i -c "import pandas as pd; dat=pd.read_csv('$target');"
+        elif [ $ext = "tsv" ]; then
+            ipython -i -c "import pandas as pd; dat=pd.read_csv('$target', sep='\t');"
+        else
+            echo "Unrecognized filetype specified: $ext"
+        fi
+    fi
+}
+

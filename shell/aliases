@@ -61,6 +61,7 @@ alias kord="python ~/.local/fretboard/fretboard.py"
 
 # notes
 alias n="notes"
+alias na="MINDFUL_FD_ARGS='' notes"
 
 # taskwarrior
 alias tw=taskwarrior-tui
