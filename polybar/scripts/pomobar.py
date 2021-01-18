@@ -28,17 +28,17 @@ DATABASE_PATH = HOME_FOLDER + ".config/pomobar.db"
 
 # CUSTOM CONFIGS
 config = configparser.ConfigParser()
-config.read(HOME_FOLDER + '.config/pomobar.conf')
-if config.has_option('DEFAULT', 'ICON_TOTAL'):
-    ICON_TOTAL = config['DEFAULT']['ICON_TOTAL'] + " "
-if config.has_option('PATH', 'DATABASE_PATH'):
-    DATABASE_PATH = config['PATH']['DATABASE_PATH']
+config.read(HOME_FOLDER + ".config/pomobar.conf")
+if config.has_option("DEFAULT", "ICON_TOTAL"):
+    ICON_TOTAL = config["DEFAULT"]["ICON_TOTAL"] + " "
+if config.has_option("PATH", "DATABASE_PATH"):
+    DATABASE_PATH = config["PATH"]["DATABASE_PATH"]
 
 
 class Pomodoro:
     """Normal pomodoro"""
 
-    def __init__(self, duration=25):
+    def __init__(self, duration=55):
         self.duration = int(duration)
         self.ICON = "%{u#8FFFA6} "
 
@@ -136,6 +136,7 @@ class GlobalPomodoroCounter:
 ##############################
 # AUXILIAR FUNCTIONS
 ##############################
+
 
 def kill_another_instances():
     """Kill another instances to avoid collisions"""

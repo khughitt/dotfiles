@@ -11,7 +11,8 @@ fi
 export NOTES="$HOME/notes"
 export FONTCONFIG_PATH=/etc/fonts
 
-export GOPATH=$HOME/d/go
+# go
+export GOPATH="$HOME/go"
 
 # fzf options
 # export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
