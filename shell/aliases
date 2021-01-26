@@ -44,6 +44,7 @@ alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*
 
 # fasd
 alias jb="fasd_cd -d home d r bio"
+alias jd="fasd_cd -d /data"
 alias jn="fasd_cd -d notes"
 alias jp="fasd_cd -d home d r proj"
 alias jt="fasd_cd -d home d r tool"
@@ -61,7 +62,7 @@ alias kord="python ~/.local/fretboard/fretboard.py"
 
 # notes
 alias n="notes"
-alias na="MINDFUL_FD_ARGS='' notes"
+alias no="notes -p"
 
 # taskwarrior
 alias tw=taskwarrior-tui
