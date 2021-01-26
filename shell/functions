@@ -42,8 +42,16 @@ function notes {
 
     cd ~/notes
 
-    fd_cmd="fd -t f md $MINDFUL_FD_ARGS"
-    target=`eval $fd_cmd | grep --color='none' "$1" | fzf -1 --exact`
+    # determine fd command to use
+    fd_cmd="fd -t f md"
+
+    # if "-p" switch is present, exclude personal entries from search results
+    if [[ $1 == "-p" ]]; then
+        fd_cmd="$fd_cmd $MINDFUL_EXCLUDES"
+        shift;
+    fi
+
+    target=`eval $fd_cmd | grep --color='none' "$1" | fzf -1 --exact --preview 'mdcat {}'`
 
     if [ ! -z "$target" ]; then
         vim $target
@@ -51,6 +59,7 @@ function notes {
 
     cd $wd
 }
+
 
 # journal manager
 # 

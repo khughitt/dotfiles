@@ -71,6 +71,7 @@ call plug#begin()
     Plug 'drzel/vim-line-no-indicator'
     Plug 'embark-theme/vim', { 'as': 'embark' }
     Plug 'ervandew/supertab'
+    Plug 'glench/vim-jinja2-syntax'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
     Plug 'honza/vim-snippets'
@@ -88,6 +89,7 @@ call plug#begin()
     Plug 'mzlogin/vim-markdown-toc'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
+    Plug 'pangloss/vim-javascript'
     Plug 'psf/black', { 'branch': 'stable' }
     Plug 'raimon49/requirements.txt.vim'
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
@@ -102,6 +104,7 @@ call plug#begin()
     Plug 'tpope/vim-repeat'
     Plug 'tpope/vim-surround'
     Plug 'tikhomirov/vim-glsl'
+    Plug 'udalov/kotlin-vim'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
@@ -129,6 +132,8 @@ call plug#begin()
     Plug 'agreco/vim-citylights'
     Plug 'ayu-theme/ayu-vim'
     Plug 'challenger-deep-theme/vim'
+    Plug 'cocopon/iceberg.vim'
+    Plug 'co1ncidence/mountaineer.vim'
     Plug 'cseelus/vim-colors-lucid'
     Plug 'cseelus/vim-colors-tone'
     Plug 'danilo-augusto/vim-afterglow'
@@ -144,10 +149,14 @@ call plug#begin()
     Plug 'KeitaNakamura/neodark.vim'
     Plug 'liuchengxu/space-vim-dark'
     Plug 'lu-ren/SerialExperimentsLain'
+    Plug 'nikolvs/vim-sunbather'
     Plug 'NLKNguyen/papercolor-theme'
+    Plug 'owickstrom/vim-colors-paramount'
     Plug 'rakr/vim-one'
+    Plug 'rakr/vim-two-firewatch'
     Plug 'reedes/vim-colors-pencil'
     Plug 'Rigellute/rigel'
+    Plug 'sainnhe/sonokai'
     Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'tyrannicaltoucan/vim-deep-space'
     Plug 'vim-scripts/pyte'
@@ -457,12 +466,6 @@ function! StripWhitespace ()
     exec ':%s/ \+$//gc'
 endfunction
 map <localleader>s :call StripWhitespace ()<CR>
-
-" ----------------------------------------------------------------------------
-"  Scratchpad
-" ----------------------------------------------------------------------------
-autocmd BufNewFile,BufRead titan,io,ganymede set syntax=scratch
-autocmd BufNewFile,BufRead titan,io,ganymede set filetype=scratch
 
 " ---------------------------------------------------------------------------
 "  Search Options
@@ -913,8 +916,6 @@ function CreateHeading(char)
     let size = strwidth(getline('.'))
     execute "normal! o\<ESC>"
     execute "normal!" . size . "I" . a:char . "\<ESC>"
-    execute "normal! o\<ESC>"
-    execute "normal! o"
     call feedkeys('A', 'n')
 endfunction
 
@@ -928,9 +929,6 @@ function! AddTimeStamp ()
     " add timestamp
     call append(line("."), [strftime('### %b %d %Y'), ""])
 
-    " underline format
-    " call append(line("."), [strftime('%b %d %Y'), "-----------", ""])
-    
     normal! 3j
 
     " enter insert mode
@@ -991,6 +989,9 @@ nmap <Leader>f :call PasteMDLink()<CR>
 "  mindful
 " ----------------------------------------------------------------------------
 set dictionary+=~/.vim/tmp/mindful/tags.txt
+
+autocmd BufNewFile,BufRead *.mnd set syntax=mindful
+autocmd BufNewFile,BufRead *.mnd set filetype=mindful
 
 " ---------------------------------------------------------------------------
 "  vim-diagram (mermaid)
