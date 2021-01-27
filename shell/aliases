@@ -57,6 +57,12 @@ alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
 alias fda="fd -Luu"
 alias fdu="fd -u"
 
+# htop
+alias htop=gotop
+
+# kitty
+alias icat="kitty +kitten icat"
+
 # kord
 alias kord="python ~/.local/fretboard/fretboard.py"
 

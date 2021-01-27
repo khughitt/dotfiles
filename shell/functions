@@ -51,26 +51,7 @@ function notes {
         shift;
     fi
 
-    target=`eval $fd_cmd | grep --color='none' "$1" | fzf -1 --exact --preview 'mdcat {}'`
-
-    if [ ! -z "$target" ]; then
-        vim $target
-    fi
-
-    cd $wd
-}
-
-
-# journal manager
-# 
-# scans a folder containing project-specific markdown journal entries used to 
-# track daily work on different fronts.
-#
-function jm {
-    wd=`pwd`
-
-    cd ~/d/journal
-    target=`fd -t f md -X ls -t | grep --color='none' "$1" | fzf -1 --exact`
+    target=`eval $fd_cmd | grep --color='none' "$1" | fzf -1 --exact --preview 'mdcat {}' --preview-window up`
 
     if [ ! -z "$target" ]; then
         vim $target
@@ -95,6 +76,24 @@ function a {
     fi
 
     cd $pwd
+}
+
+# journal manager
+# 
+# scans a folder containing project-specific markdown journal entries used to 
+# track daily work on different fronts.
+#
+function jm {
+    wd=`pwd`
+
+    cd ~/d/journal
+    target=`fd -t f md -X ls -t | grep --color='none' "$1" | fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        vim $target
+    fi
+
+    cd $wd
 }
 
 # fzf confs
