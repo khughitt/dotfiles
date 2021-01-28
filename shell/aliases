@@ -66,6 +66,9 @@ alias icat="kitty +kitten icat"
 # kord
 alias kord="python ~/.local/fretboard/fretboard.py"
 
+# mount
+alias um="sudo umount /mnt/usb"
+
 # notes
 alias n="notes"
 alias no="notes -p"
@@ -159,7 +162,7 @@ alias 4k="xrandr --output DP-0 --mode 3840x2160"
 
 # termbin
 # example usage: echo just testing! | tb
-# alias tb="nc termbin.com 9999"
+alias tb="nc termbin.com 9999"
 
 # google translate
 alias tze="trans zh-TW:en"   # to english

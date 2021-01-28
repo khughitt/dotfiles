@@ -1,6 +1,7 @@
 " ---------------------------------------------------------------------------
 "
 " Neovim Configuration
+" KH (Jan 2021)
 "
 " ---------------------------------------------------------------------------
 
@@ -22,8 +23,6 @@ set nofoldenable     " disable folding
 set complete+=i      " complete filenames
 set noshowmode       " hide <INSERT>
 filetype indent on   " indent based on filetype
-
-"set isk-=(,)         " characters to remove from word list
 
 " reduce keycode mapping timeout delay
 set ttimeoutlen=5
@@ -50,23 +49,16 @@ inoremap <C-e> <End>
 noremap  <C-a> <Home>
 noremap  <C-e> <End>
 
-" specify python installation to use
-"let g:python3_host_prog = '~/conda/bin/python3'
-
 " ---------------------------------------------------------------------------
 " vim-plug
 " ---------------------------------------------------------------------------
 call plug#begin()
     " plugins
-    " Plug 'airblade/vim-gitgutter'
     Plug 'andymass/vim-matchup'
     Plug 'bfredl/nvim-ipy'
     Plug 'bioSyntax/bioSyntax-vim'
-    Plug 'burneyy/vim-snakemake'
+    Plug 'ibab/vim-snakemake'
     Plug 'chrisbra/csv.vim'
-
-    " Nov 23, 2020: temporarily disabling (ignoring lintr settings..)
-    "Plug 'dense-analysis/ale'
     Plug 'dylanaraps/wal.vim'
     Plug 'drzel/vim-line-no-indicator'
     Plug 'embark-theme/vim', { 'as': 'embark' }
@@ -105,30 +97,23 @@ call plug#begin()
     Plug 'tpope/vim-surround'
     Plug 'tikhomirov/vim-glsl'
     Plug 'udalov/kotlin-vim'
+    Plug 'vim-airline/vim-airline'
+    Plug 'vim-airline/vim-airline-themes'
+    Plug 'vim-pandoc/vim-pandoc'
+    Plug 'vim-pandoc/vim-pandoc-syntax'
+    Plug 'vim-pandoc/vim-rmarkdown'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
     Plug '/usr/share/vim/vimfiles'
 
-    " Plug 'qpkorr/vim-bufkill'
-    "Plug 'manabuishii/vim-cwl'
-    "Plug 'mrk21/yaml-vim'
-    "Plug 'plasticboy/vim-markdown'
-    " Plug 'majutsushi/tagbar'
-
-    "Plug 'zhaozg/vim-diagram'
-    "Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
-    "Plug 'terryma/vim-expand-region'
-    "Plug 'gcavallanti/vim-noscrollbar'
-    "Plug 'ekiim/vim-mathpix'
-
+    " textobjs
     Plug 'glts/vim-textobj-comment'
     Plug 'kana/vim-textobj-user'
     Plug 'tyru/vim-textobj-underscore', { 'branch': 'support-3-cases' }
-    "Plug 'vim-scripts/argtextobj.vim'
-    "Plug 'vimtaku/vim-textobj-keyvalue'
 
+    " colorschemes
     Plug 'agreco/vim-citylights'
     Plug 'ayu-theme/ayu-vim'
     Plug 'challenger-deep-theme/vim'
@@ -144,6 +129,7 @@ call plug#begin()
     Plug 'Dru89/vim-adventurous'
     Plug 'fcpg/vim-orbital'
     Plug 'fenetikm/falcon'
+    Plug 'haishanh/night-owl.vim'
     Plug 'jacoborus/tender.vim'
     Plug 'joshdick/onedark.vim'
     Plug 'KeitaNakamura/neodark.vim'
@@ -162,64 +148,37 @@ call plug#begin()
     Plug 'vim-scripts/pyte'
     Plug 'whatyouhide/vim-gotham'
     Plug 'wimstefan/Lightning'
-    " Plug 'sonph/onehalf', {'rtp': 'vim/'}
-    " Plug 'connorholyday/vim-snazzy'
-    " Plug 'fmoralesc/molokayo'
-    " Plug 'mhartington/oceanic-next'
-    " Plug 'morhetz/gruvbox'
-    " Plug 'sheerun/vim-wombat-scheme'
-    " Plug 'vim-scripts/summerfruit256.vim'
-    " Plug 'yuttie/hydrangea-vim'
-    " Plug 'zanloy/vim-colors-grb256'
 
-
-    Plug 'vim-airline/vim-airline'
-    Plug 'vim-airline/vim-airline-themes'
-
-    "Plug 'bioSyntax/bioSyntax-vim'
-    "Plug 'chriskempson/base16-vim'
-    "Plug 'severin-lemaignan/vim-minimap'
+    "Plug 'airblade/vim-gitgutter'
+    "Plug 'qpkorr/vim-bufkill'
+    "Plug 'manabuishii/vim-cwl'
+    "Plug 'mrk21/yaml-vim'
+    "Plug 'plasticboy/vim-markdown'
+    "Plug 'majutsushi/tagbar'
+    "Plug 'zhaozg/vim-diagram'
+    "Plug 'ekiim/vim-mathpix'
     "Plug 'yuttie/comfortable-motion.vim'
-    "Plug 'hkupty/iron.nvim'
-    "Plug 'hyiltiz/vim-plugins-profile'
     "Plug 'troydm/zoomwintab.vim'
     "Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
-    "Plug 'davidoc/taskpaper.vim'
     "Plug 'Shougo/neosnippet.vim'
     "Plug 'Shougo/neosnippet-snippets'
-    "Plug 'freitass/todo.txt-vim'
-    "Plug 'Alok/notational-fzf-vim'
     "Plug 'deoplete-plugins/deoplete-jedi'
     "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
     "Plug 'Shougo/deoplete-terminal'
     "Plug 'godlygeek/tabular'
     "Plug 'neoclide/coc.nvim', {'branch': 'release'}
-    "
-    " overrides filetype tabstop, etc. options
-    "Plug 'editorconfig/editorconfig-vim'
-
-    " conflicts with lightline-bufferline
-    "Plug 'nightsense/night-and-day'
-
-    " Requires +conceal feature not compiled in Arch
-    " Plug 'vim-pandoc/vim-pandoc'
-    " Plug 'vim-pandoc/vim-pandoc-syntax'
-    " Plug 'vim-pandoc/vim-rmarkdown'
+    
+    " Nov 23, 2020: temporarily disabling (ignoring lintr settings..)
+    "Plug 'dense-analysis/ale'
+    
+    "Plug 'sonph/onehalf', {'rtp': 'vim/'}
+    "Plug 'connorholyday/vim-snazzy'
+    "Plug 'fmoralesc/molokayo'
 
     " devicons should always be loaded last
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'ryanoasis/vim-devicons'
 call plug#end()
-
-" ----------------------------------------------------------------------------
-" Vim Shortcut Helper
-"
-" TODO: create func to open markdown cheatsheet in sidepane / close
-" the buffer if it is already open/visible..
-" ----------------------------------------------------------------------------
-" if bufwinnr("~/notes/linux/vim/cheatsheet.md") > 0
-"   echo "Already open"
-" endif
 
 " ----------------------------------------------------------------------------
 "  Backups
@@ -448,16 +407,6 @@ set undodir=~/.vim/tmp/undo
 " enable undo using c-u in insert mode
 " http://vim.wikia.com/wiki/Recover_from_accidental_Ctrl-U
 inoremap <c-u> <c-g>u<c-u>
-
-" ---------------------------------------------------------------------------
-"  paste bug work-around
-"  https://github.com/neovim/neovim/issues/7994#issuecomment-388296360
-" ---------------------------------------------------------------------------
-" nnoremap p p`]<Esc>
-
-" insert blank line without entering insert mode
-" nmap <c-o> O<Esc> " used to navigate jump list..
-" nmap <CR> o<Esc>
 
 " ---------------------------------------------------------------------------
 "  Strip all trailing whitespace in file
@@ -733,7 +682,7 @@ let g:Hexokinase_highlighters = ['sign_column']
 " ---------------------------------------------------------------------------
 let g:colorscheme_switcher_exclude = [
             \ 'blue', 'darkblue', 'default', 'delek', 'desert', 'elflord',
-            \ 'evening', 'fi', 'gotham256', 'industry', 'koehler', 'morning',
+            \ 'evening', 'gotham256', 'industry', 'koehler', 'morning',
             \ 'murphy', 'pablo', 'peachpuff', 'ron', 'shine', 'slate',
             \ 'torte', 'zellner']
 
@@ -1114,6 +1063,13 @@ let g:limelight_eop = '\ze\n^-[A-Z]'
 nmap <localleader>l :Limelight!!<CR>
 
 " ---------------------------------------------------------------------------
+"  vim-pandoc
+" ---------------------------------------------------------------------------
+let g:pandoc#modules#disabled = ["spell"]
+let g:pandoc#syntax#conceal#blacklist = ["codeblock_start", "codeblock_delim",
+                                       \ "atx", "footnote"]
+
+" ---------------------------------------------------------------------------
 "  vim-scroll-barnacle
 " ---------------------------------------------------------------------------
 highlight link Scrollbar Float
@@ -1214,7 +1170,7 @@ let g:gruvbox_italic=1
 let g:quantum_black=1
 let g:quantum_italics=1
 
-colorscheme quantum
+colorscheme palenight
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next

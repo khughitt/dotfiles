@@ -210,11 +210,10 @@ compdef _gnu_generic snakemake
 #zinit cdisable play
 
 # pywal
-#(/bin/cat ~/.cache/wal/sequences &)
-#source ~/.cache/wal/colors-tty.sh
-if [ -e "${HOME}/.cache/wal/colors.sh" ]; then
-    source "${HOME}/.cache/wal/colors.sh"
-fi
+# (/bin/cat ~/.cache/wal/sequences &)
+# if [ -e "${HOME}/.cache/wal/colors.sh" ]; then
+#     source "${HOME}/.cache/wal/colors.sh"
+# fi
 
 # host-specific settings
 if [ -e ~/.dotfiles/zsh/$HOST.zsh ]; then

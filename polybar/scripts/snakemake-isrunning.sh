@@ -32,4 +32,5 @@ if [ "$status" = "" ]; then
     status="Initializing..."
 fi
 
-echo "%{u#8FFFA6}🐍[$status]"
+#echo "%{u#8FFFA6}🐍[$status]"
+echo "🐍[$status]"
