@@ -190,6 +190,9 @@ alias -s Rmd=nvim
 # tmux
 alias x=xumt
 
+# zeit
+alias z='zeit'
+
 # Command line head / tail shortcuts
 # "-g" = global alias; can be substituted anywhere on the line
 alias -g H='| head'

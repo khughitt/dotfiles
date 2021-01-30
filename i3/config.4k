@@ -328,13 +328,13 @@ bindsym Mod1+Return \
     move position $scratch_x1 $scratch_y1;
 
 #-- go console --#
-exec_always --no-startup-id kitty --name=go_scratch gore
-for_window[instance="go_scratch"] move scratchpad
-
-bindsym Mod1+g \
-    [instance="r_scratch|python_scratch|kitty_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
-    [instance="go_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+# exec_always --no-startup-id kitty --name=go_scratch gore
+# for_window[instance="go_scratch"] move scratchpad
+#
+# bindsym Mod1+g \
+#     [instance="r_scratch|python_scratch|kitty_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
+#     [instance="go_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+#     move position $scratch_x1 $scratch_y1
 
 #-- r console --#
 exec_always --no-startup-id kitty --name=r_scratch radian
@@ -364,19 +364,19 @@ bindsym Mod1+j \
     move position $scratch_x1 $scratch_y1
 
 #-- tasks --#
-exec_always --no-startup-id kitty --name=tasks_scratch nvim ~/d/notes/personal/organization/organization-tasks.md
-for_window[instance="tasks_scratch"] move scratchpad
-
-bindsym Mod1+t \
-    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|kitty_scratch|mindful_scratch"] move scratchpad; \
-    [instance="tasks_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+# exec_always --no-startup-id kitty --name=tasks_scratch nvim ~/d/notes/personal/organization/organization-tasks.md
+# for_window[instance="tasks_scratch"] move scratchpad
+#
+# bindsym Mod1+t \
+#     [instance="go_scratch|julia_scratch|r_scratch|python_sratch|kitty_scratch|mindful_scratch"] move scratchpad; \
+#     [instance="tasks_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+#     move position $scratch_x1 $scratch_y1
 
 #-- mindful --#
 exec_always --no-startup-id kitty --name=mindful_scratch nvim ~/d/s/$HSTNAME.mnd
 for_window[instance="mindful_scratch"] move scratchpad
 
-bindsym Mod1+k \
+bindsym Mod1+m \
     [instance="go_scratch|julia_scratch|r_scratch|python_sratch|kitty_scratch|tasks_scratch"] move scratchpad; \
     [instance="mindful_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
     move position $scratch_x1 $scratch_y1

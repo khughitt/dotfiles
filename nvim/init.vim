@@ -101,11 +101,11 @@ call plug#begin()
     Plug 'vim-airline/vim-airline-themes'
     Plug 'vim-pandoc/vim-pandoc'
     Plug 'vim-pandoc/vim-pandoc-syntax'
-    Plug 'vim-pandoc/vim-rmarkdown'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
+    Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
     Plug '/usr/share/vim/vimfiles'
 
     " textobjs
@@ -142,6 +142,7 @@ call plug#begin()
     Plug 'rakr/vim-two-firewatch'
     Plug 'reedes/vim-colors-pencil'
     Plug 'Rigellute/rigel'
+    Plug 'rockerBOO/boo-colorscheme-nvim'
     Plug 'sainnhe/sonokai'
     Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'tyrannicaltoucan/vim-deep-space'
@@ -874,9 +875,15 @@ nnoremap <leader><F5> :call CreateHeading("=")<CR>
 inoremap <leader><F5> <Esc>:call CreateHeading("=")<CR>
 
 " helper function to add a simple markdown timestamp heading
-function! AddTimeStamp ()
+function! AddTimeStamp (as_heading)
     " add timestamp
-    call append(line("."), [strftime('### %b %d %Y'), ""])
+    if a:as_heading 
+        " markdown heading
+        call append(line("."), [strftime('### %b %d %Y'), ""])
+    else
+        " italics
+        call append(line("."), [strftime('_%b %d %Y_'), ""])
+    endif
 
     normal! 3j
 
@@ -884,7 +891,8 @@ function! AddTimeStamp ()
     call feedkeys('A', 'n')
 endfunction
 
-autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR>
+autocmd FileType markdown map <silent><leader>S :call AddTimeStamp(0)<CR>
+autocmd FileType markdown map <silent><leader>s :call AddTimeStamp(1)<CR>
 
 " ---------------------------------------------------------------------------
 "  markdown link helper
@@ -1031,8 +1039,14 @@ call denite#custom#filter('matcher/ignore_globs', 'ignore_globs',
         \   'venv/', 'images/', '*.rda', '*.min.*', 'img/', 'fonts/', '*cache/', '*_files/'])
 
 " find
-call denite#custom#var('file_rec/fd', 'command',
-  \ ['fd', '--type=f', '--follow', '--hidden', '--full-path', '--color=never', '--exclude=.git', ''])
+call denite#custom#var('file/rec', 'command',
+  \ ['fd', '--type', 'f', '--follow', '--hidden', '--full-path', '--color', 'never', '--exclude', '.git', ''])
+call denite#custom#var('directory_rec', 'command',
+  \ ['fd', '--type', 'd', '--follow', '--hidden', '--full-path', '--color', 'never', '--exclude', '.git', ''])
+
+" matchers
+call denite#custom#source('file_mru', 'matchers', ['matcher/fuzzy', 'matcher/project_files'])
+call denite#custom#source('file/rec', 'matchers', ['matcher/cpsm'])
 
 " sorters
 call denite#custom#source('file/rec', 'sorters', ['sorter/sublime'])
@@ -1068,6 +1082,10 @@ nmap <localleader>l :Limelight!!<CR>
 let g:pandoc#modules#disabled = ["spell"]
 let g:pandoc#syntax#conceal#blacklist = ["codeblock_start", "codeblock_delim",
                                        \ "atx", "footnote"]
+
+" make vim-pandoc behave well
+autocmd FileType pandoc setlocal nowrap
+autocmd FileType pandoc setlocal foldcolumn=0
 
 " ---------------------------------------------------------------------------
 "  vim-scroll-barnacle

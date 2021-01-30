@@ -5,6 +5,7 @@ ranger/history
 ranger/bookmarks
 ranger/tagged
 shell/private
+shell/local
 bin
 tags
 unused

@@ -68,6 +68,7 @@ unset fasd_cache
 
 unalias a
 unalias s
+unalias z
 unalias zz
 alias j='fasd_cd -d' 
 alias o='f -e mimeopen'
@@ -216,8 +217,8 @@ compdef _gnu_generic snakemake
 # fi
 
 # host-specific settings
-if [ -e ~/.dotfiles/zsh/$HOST.zsh ]; then
-    . ~/.dotfiles/zsh/$HOST.zsh
+if [ -e ~/.dotfiles/shell/local/$HOST.zsh ]; then
+    . ~/.dotfiles/shell/local/$HOST.zsh
 fi
 
 #
@@ -234,14 +235,14 @@ fi
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/keith/conda/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+__conda_setup="$('$HOME/conda/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "/home/keith/conda/etc/profile.d/conda.sh" ]; then
-        . "/home/keith/conda/etc/profile.d/conda.sh"
+    if [ -f "$HOME/conda/etc/profile.d/conda.sh" ]; then
+        . "$HOME/conda/etc/profile.d/conda.sh"
     else
-        export PATH="/home/keith/conda/bin:$PATH"
+        export PATH="$HOME/conda/bin:$PATH"
     fi
 fi
 unset __conda_setup
