@@ -16,15 +16,6 @@ if type "moar" > /dev/null; then
     export PAGER=$(which moar)
 fi
 
-# AMD threadripper performance optimization
-# https://www.reddit.com/r/MachineLearning/comments/f2pbvz/discussion_workaround_for_mkl_on_amd/
-# https://community.amd.com/thread/228619
-if [ `hostname` = "titan" ]; then
-    export MKL_DEBUG_CPU_TYPE=5
-    export OPENBLAS_CORETYPE=ZEN
-    export OPENBLAS_NUM_THREADS=16
-fi
-
 # use system colors for ls
 export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 

@@ -54,7 +54,8 @@ function notes {
     target=`eval $fd_cmd | grep --color='none' "$1" | fzf -1 --exact --preview 'mdcat {}' --preview-window up`
 
     if [ ! -z "$target" ]; then
-        vim $target
+        echo "Opening $target"
+        $EDITOR $target
     fi
 
     cd $wd
