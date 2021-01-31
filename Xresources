@@ -1,147 +1,37 @@
-!!
-!! xorg
-!! 
+!
+! xorg
+! 
 Xcursor.theme: aero
 
-!!
-!! Colour Scheme
-!!
+!
+! Colour Scheme
+!
 #include "/home/keith/.dotfiles/termcolors/dark"
 
-!!
-!! xft
-!!
-Xft.autohint:  false
+!
+! xft
+!
 Xft.antialias: true
+Xft.autohint:  false
 Xft.hinting:   true
-Xft.hintstyle: hintfull
+Xft.hintstyle: hintmedium
 Xft.lcdfilter: lcddefault
 Xft.rgba:      rgb
 
-!!
-!! 4k resolution
-!!
+!
+! 4k resolution
+!
 #ifdef SRVR_titan
-!! Xft.dpi: 192
     Xft.dpi: 144
     Xcursor.size: 32
 #endif
 
-!!
-!! URxvt
-!!
-!URxvt.background:         [85]#1C1C24
-!URxvt.cursorColor:        #395573
-URxvt.depth:              16
-URxvt*saveLines:          4096
-URxvt*scrollBar_right:    false
-URxvt*scrollBar:          false
-URxvt*scrollTtyOutput:    false
-URxvt*scrollWithBuffer:   true
-URxvt*scrollTtyKeypress:  true
-URxvt*visualBell:         false
-URxvt*borderLess:         false
-URxvt.cursorUnderline:    false
-URxvt.cursorBlink:        false
-!URxvt.lineSpace:          0
-!URxvt.letterSpace:        -1
-!URxvt*skipBuiltinGlyphs:  true
-
-URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-!URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-!URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=22,-misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-
-!URxvt*font:              xft:dejavu sans mono for powerline:regular:pixelsize=16,\
-!                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-!URxvt*boldFont:          xft:dejavu sans mono for powerline:bold:pixelsize=16,\
-!                        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-URxvt*termName:          rxvt-256color
-URxvt.iconFile:          /home/keith/d/linux/.icons/Crashbit/128x128/apps/terminal.png
-
-!! Control + arrow key navigation
-URxvt.keysym.Control-Up:    \033[1;5A
-URxvt.keysym.Control-Down:  \033[1;5B
-URxvt.keysym.Control-Left:  \033[1;5D
-URxvt.keysym.Control-Right: \033[1;5C
-
-!! Shift + page up/down
-URxvt.keysym.Shift-Up: command:\033]720;1\007
-URxvt.keysym.Shift-Down: command:\033]721;1\007
-
-!! Extensions
-!! /usr/share/doc/urxvt-perls/README.md
-URxvt.perl-ext-common:   default,url-select,clipboard,vtwheel,font-size,osc-xterm-clipboard,keyboard-select
-
-
-!! URL launcher
 !
-!  Use Meta-u to activate URL selection mode, then use the following keys:
+! Xterm
 !
-!    j/k:      Select next downward/upward URL (also with arrow keys)
-!    g/G:      Select first/last URL (also with home/end key)
-!    o/Return: Open selected URL in browser, Return: deactivate afterwards
-!    y:        Copy (yank) selected URL and deactivate selection mode
-!    q/Escape: Deactivate URL selection mode
-
-URxvt.url-select.launcher:  chromium
-URxvt.url-select.button:    1
-URxvt.keysym.M-u:           perl:url-select:select_next
-URxvt.url-select.underline: true
-
-!! Clipboard
-URxvt.keysym.M-Escape: perl:keyboard-select:activate
-URxvt.keysym.M-c:      perl:clipboard:copy
-URxvt.keysym.M-v:      perl:clipboard:paste
-URxvt.keysym.M-C-v:    perl:clipboard:paste_escaped
-
-!! Automatically copy selected text from PRIMARY to CLIPBOARD
-!URxvt.clipboard.autocopy: true
-
-!! Font-size adjustments
-URxvt.keysym.C-equal:   perl:font-size:increase
-URxvt.keysym.C-minus:   perl:font-size:decrease
-URxvt.keysym.C-S-equal: perl:font-size:incglobal
-URxvt.keysym.C-S-minus: perl:font-size:decglobal
-
-!!
-!! Xterm
-!!
-XTerm*termName:        xterm-256color
-XTerm*locale:          true
-XTerm*metaSendsEscape: true
-XTerm*saveLines:       4096
-!XTerm*font:            -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
-!XTerm*boldFont:        -misc-stlarch-medium-r-normal--10-100-75-75-c-80-iso10646-1
+XTerm*termName:           xterm-256color
+XTerm*locale:             true
+XTerm*metaSendsEscape:    true
+XTerm*saveLines:          4096
 XTerm*faceName:           xft:dejavu sans mono for powerline:regular:pixelsize=16
 XTerm*faceNameDoublesize: xft:Microsoft YaHei:size=16
-
-! {{{ Quick Reference
-!
-! Scrolling:
-!   Scroll Wheel
-!   Shift-PgUp/PgDn
-!
-! Copy/Paste:
-!   Mouse-Select        : Copy to PRIMARY
-!   Shift + Mouse-Select: Copy to CLIPBOARD
-!
-!   Middle-Click        : Paste from PRIMARY
-!   Shift + Middle-Click: Paste from CLIPBOARD
-!
-!   Ctrl+Shift+V        : Paste from CLIPBOARD
-!   Ctrl+Alt+Shift+V    : Paste from PRIMARY
-!
-! }}}
- 
-! More Konsole/Yakuake-like keybindings:
-! http://blog.ssokolow.com/archives/2011/05/01/modernizing-xterms-paste/
-!*VT100.Translations: #override \
-!                    Shift <Key>Up:              scroll-back(1) \n\
-!                    Shift <Key>Down:            scroll-forw(1) \n\
-!                    ~Meta Shift Ctrl <Key>V:    insert-selection(CLIPBOARD) \n\
-!                     Meta Shift Ctrl <Key>V:    insert-selection(PRIMARY) \n\
-!                    ~Shift <Btn1Up>:            select-end(PRIMARY, CUT_BUFFER0) \n\
-!                     Shift <Btn1Up>:            select-end(CLIPBOARD, CUT_BUFFER1) \n\
-!                    ~Shift ~Ctrl ~Meta <Btn2Up>:insert-selection(PRIMARY, CUT_BUFFER0) \n\
-!                     Shift ~Ctrl ~Meta <Btn2Up>:insert-selection(CLIPBOARD, CUT_BUFFER1)
