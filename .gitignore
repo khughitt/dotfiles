@@ -6,7 +6,12 @@ ranger/bookmarks
 ranger/tagged
 shell/private
 shell/local
+zeit/
+plan/
+dojo/
 bin
+bookmarks
+polybar-forecast
 tags
 unused
 vim/black

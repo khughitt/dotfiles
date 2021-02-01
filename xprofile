@@ -16,8 +16,8 @@
 setxkbmap -option terminate:ctrl_alt_bksp
 
 # map caps lock to escape
-if [ -s ~/.xmodmaprc ]; then
-    xmodmap ~/.xmodmaprc
+if [ -s ~/.Xmodmaprc ]; then
+    xmodmap ~/.Xmodmaprc
 fi
 
 

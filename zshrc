@@ -45,17 +45,6 @@ setopt interactivecomments    # recognize comments
 zstyle ':completion:*' menu select=4                # tab completion menu
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # use smart-case completion
 
-# additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{aliases,audio,functions,private,exports,vconsole}; do
-    [ -r "$file" ] && source "$file"
-done
-
-# nnn
-for file in ~/.dotfiles/nnn/*.zsh; do
-    [ -r "$file" ] && source "$file"
-done
-unset file
-
 # fasd
 export _FASD_SHELL='dash'
 
@@ -73,6 +62,17 @@ unalias zz
 alias j='fasd_cd -d' 
 alias o='f -e mimeopen'
 alias v='f -e nvim'
+
+# additional shell settings (aliases, exports, etc.)
+for file in ~/.shell/{aliases,audio,functions,private,exports,vconsole}; do
+    [ -r "$file" ] && source "$file"
+done
+
+# nnn
+for file in ~/.dotfiles/nnn/*.zsh; do
+    [ -r "$file" ] && source "$file"
+done
+unset file
 
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"

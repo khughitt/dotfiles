@@ -192,6 +192,9 @@ alias x=xumt
 
 # zeit
 alias z='zeit'
+alias zp='zeit track -p '
+alias zl='zeit list'
+alias zt='zeit tracking'
 
 # Command line head / tail shortcuts
 # "-g" = global alias; can be substituted anywhere on the line
