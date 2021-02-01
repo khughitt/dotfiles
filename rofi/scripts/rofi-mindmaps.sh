@@ -8,11 +8,12 @@ MMDIR="/home/keith/d/mindmaps"
 cd $MMDIR
 
 if [ -z $@ ]; then
-    fd -e mm
+    fd -e mm --exclude archive
 else
     target=`fd -e mm | grep --color='none' "$@"`
 
     if [ -f "$target" ]; then
+        target=`realpath $target`
         coproc freeplane $target > /dev/null
     fi
 fi
