@@ -19,9 +19,9 @@ hdmi0=`echo "$xrandrq" | awk '/^HDMI-?0/ {print $2}'`
 hdmi1=`echo "$xrandrq" | awk '/^HDMI-?1/ {print $2}'`
 
 # titan
-if [ "$hdmi0" = "connected" ] && [ "$dp1" = "connected" ]; then
-  xrandr --output DP-1 --primary --auto --left-of HDMI-0
-fi
+if [ "$HOSTNAME" = "titan" ]; then
+    xsetroot -xcf /usr/share/icons/whiteglass/cursors/left_ptr 64
+fi 
 
 # laptop + monitor
 if [ "$edp1" = "connected" ]; then
@@ -65,11 +65,11 @@ if [ -s ~/.Xmodmap ]; then
 fi
 
 # sync clipboard buffers
-autocutsel -fork &
+#autocutsel -fork &
 
 # sync primary/clipboard
-# autocutsel -fork &
-# autocutsel -fork -s PRIMARY &
+autocutsel -fork &
+autocutsel -fork -s PRIMARY &
 
 # fcitx
 export GTK_IM_MODULE=fcitx

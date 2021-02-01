@@ -37,4 +37,4 @@ export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
 export FLASK_ENV=development
 
 # zeit
-export ZEIT_DB=~/.config/zeit.db
+export ZEIT_DB=~/.config/zeit/zeit.db

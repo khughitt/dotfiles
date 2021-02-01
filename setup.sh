@@ -52,15 +52,13 @@ cp -r ${DOTS_HOME}/gedit/styles ${XDG_CONFIG_HOME}/gedit/
 if [ ! -e ${XDG_CONFIG_HOME}/gtk-3.0/ ]; then
     mkdir ${XDG_CONFIG_HOME}/gtk-3.0/
 fi
-ln_s ${DOTS_HOME}/gtkrc-3.0 ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
-ln_s ${DOTS_HOME}/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
-
-ln_s ${DOTS_HOME}/gtkrc-2.0 ~/.gtkrc-2.0
+ln_s ${DOTS_HOME}/gtk-3.0/settings.ini ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
+ln_s ${DOTS_HOME}/gtk-3.0/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 
 # ~/.config/xx
 for path in "dunst" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
             "labnote" "lsd" "polybar" "powerline" "ranger" "snakemake" \
-            "picom.conf" "sway" "termcolors" "termite" "zathura"; do
+            "picom.conf" "sway" "termcolors" "termite" "zathura" "zeit"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
