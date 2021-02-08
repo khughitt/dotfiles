@@ -898,13 +898,10 @@ autocmd FileType markdown map <silent><leader>s :call AddTimeStamp(1)<CR>
 " ---------------------------------------------------------------------------
 "  markdown link helper
 "  https://benjamincongdon.me/blog/2020/06/27/Vim-Tip-Paste-Markdown-Link-with-Automatic-Title-Fetching/
+"
+"  - added support for downloading/inserting image links (kh feb2021)
 " ---------------------------------------------------------------------------
 function GetURLTitle(url)
-    " Bail early if the url obviously isn't a URL.
-    if a:url !~ '^https\?://'
-        return ""
-    endif
-
     " Use Python/BeautifulSoup to get link's page title.
     let title = system("python3 -c \"import bs4, requests; print(bs4.BeautifulSoup(requests.get('" . a:url . "').content, 'lxml').title.text.strip())\"")
 
@@ -918,11 +915,53 @@ function GetURLTitle(url)
     return substitute(title, '\n', '', 'g')
 endfunction
 
+function DownloadImg(url)
+    " create a .img/ directory in dir of markdown file, if not already present
+    let mddir = expand('%:p:h')
+    let imgdir = mddir . "/.img"
+    call mkdir(imgdir, "p", 0755)
+
+    let oldfname = split(a:url, "/")[-1]
+
+    " prompt user for filename
+    let fname = input("Filename? ", oldfname)
+    let fpath = imgdir . "/" . fname
+
+    " attempt to download the image
+    let result = system(printf("curl %s -s -o %s", a:url, fpath))
+
+    " check to see if command succeeded
+    if v:shell_error != 0
+        echom result
+        return ""
+    endif
+
+    " return relative path to image
+    return ".img/" . fname
+endfunction
+
 function PasteMDLink()
     " generate markdown url
     let url = getreg("+")
-    let title = GetURLTitle(url)
-    let mdLink = printf("[%s](%s)", title, url)
+
+    " store here if not a url
+    if url !~ '^https\?://'
+        return ""
+    endif
+
+    " check to see if url points to an image
+    let ext = split(url, "\\.")[-1]
+
+    let imgexts = ['gif', 'jpg', 'jpeg', 'png', 'webp']
+
+    " choose appropriate action based on url type
+    if (index(imgexts, ext) >= 0)
+        let relpath = DownloadImg(url)
+        let mdLink = printf("![](%s)", relpath)
+    else
+        let title = GetURLTitle(url)
+        let mdLink = printf("[%s](%s)", title, url)
+    endif      
 
     " temporarily disable line length limit, if specified
     if &textwidth != 0
