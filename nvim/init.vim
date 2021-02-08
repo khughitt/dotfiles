@@ -61,6 +61,7 @@ call plug#begin()
     Plug 'chrisbra/csv.vim'
     Plug 'dylanaraps/wal.vim'
     Plug 'drzel/vim-line-no-indicator'
+    Plug 'editorconfig/editorconfig-vim'
     Plug 'embark-theme/vim', { 'as': 'embark' }
     Plug 'ervandew/supertab'
     Plug 'glench/vim-jinja2-syntax'
@@ -154,7 +155,7 @@ call plug#begin()
     "Plug 'qpkorr/vim-bufkill'
     "Plug 'manabuishii/vim-cwl'
     "Plug 'mrk21/yaml-vim'
-    Plug 'plasticboy/vim-markdown'
+    "Plug 'plasticboy/vim-markdown'
     "Plug 'majutsushi/tagbar'
     "Plug 'zhaozg/vim-diagram'
     "Plug 'ekiim/vim-mathpix'

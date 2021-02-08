@@ -133,6 +133,8 @@ zinit ice as"completion"
 zinit snippet OMZ::plugins/fd/_fd
 zinit ice as"completion"
 zinit snippet OMZ::plugins/pip/_pip
+zinit ice as"completion"
+zinit snippet https://github.com/esc/conda-zsh-completion/blob/master/_conda 
 
 # prompt
 zinit ice pick"async.zsh" src"pure.zsh"; zinit light sindresorhus/pure
@@ -140,29 +142,15 @@ zinit ice pick"async.zsh" src"pure.zsh"; zinit light sindresorhus/pure
 # fasd-fzf integration
 zinit light "khughitt/fzf-fasd"
 
-# zsh autosuggestions
-#zinit light zsh-users/zsh-autosuggestions
-
 # ls colors 
 # zinit ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
 # zinit load trapd00r/LS_COLORS
-
-# syntax highlighting
-zinit light "zdharma/fast-syntax-highlighting"
 
 # alias reminders
 zinit light "djui/alias-tips"
 
 # cntl-z -> fg
 zinit light "mdumitru/fancy-ctrl-z"
-
-# completions
-if is-at-least 5.3; then
-  zinit ice lucid wait'0a' blockf
-else
-  zinit ice blockf
-fi
-zinit light "zsh-users/zsh-completions"
 
 # fzf-marks
 export FZF_MARKS_JUMP="^b"
@@ -189,9 +177,6 @@ _fzf_compgen_dir() {
   fd --type d --hidden --follow --exclude ".git" . "$1"
 }
 
-# kitty completion
-#kitty + complete setup zsh | source /dev/stdin
-
 # location of additional zsh completions
 fpath+=$HOME/.dotfiles/zsh/
 
@@ -206,9 +191,8 @@ zinit cdreplay -q
 # snakemake tab completion support
 compdef _gnu_generic snakemake
 
-# disable completion for "play" (wrong application)
-# only need to do once..
-#zinit cdisable play
+# kitty completion
+kitty + complete setup zsh | source /dev/stdin
 
 # pywal
 # (/bin/cat ~/.cache/wal/sequences &)
@@ -220,6 +204,13 @@ compdef _gnu_generic snakemake
 if [ -e ~/.dotfiles/shell/local/$HOST.zsh ]; then
     . ~/.dotfiles/shell/local/$HOST.zsh
 fi
+
+# remaining zinit plugins
+zinit wait lucid for \
+ atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
+    zdharma/fast-syntax-highlighting \
+ blockf \
+    zsh-users/zsh-completions
 
 #
 # custom zsh keybindings;
