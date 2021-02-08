@@ -77,6 +77,8 @@ alias no="notes -p"
 alias tw=taskwarrior-tui
 alias b="task rc.data.location=~/d/.task/biodat"
 alias m="task rc.data.location=~/d/.task/music"
+alias mm="task rc.data.location=~/d/.task/mm25"
+alias p3="task rc.data.location=~/d/.task/p3"
 alias p="task rc.data.location=~/d/.task/prac"
 alias tl="task rc.data.location=~/d/.task/learning"
 alias tg="task rc.data.location=~/d/.task/goals"
@@ -192,9 +194,11 @@ alias x=xumt
 
 # zeit
 alias z='zeit'
+alias zf='zeit finish'
 alias zp='zeit track -p '
 alias zl='zeit list'
 alias zt='zeit tracking'
+alias ze="zeit entry `zeit list | tail -1 | awk '{print $1}'| sed -r 's/[[:cntrl:]]\[[0-9]{1,3}m//g'`"
 
 # Command line head / tail shortcuts
 # "-g" = global alias; can be substituted anywhere on the line
