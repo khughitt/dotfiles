@@ -55,6 +55,8 @@ function notes {
 
     if [ ! -z "$target" ]; then
         echo "Opening ~/notes/$target"
+        export las=`realpath ~/notes/$target`
+        export lasd=`dirname $las`
         $EDITOR $target
     fi
 
@@ -73,6 +75,9 @@ function a {
     # prompt user for filename
     if [ ! -z "$target" ]; then
         vared -p "Filename? (${target}/XX): " -c fname
+        echo "Opening ~/notes/$target/$fname"
+        export las=`realpath ~/notes/$target/$fname`
+        export lasd=`dirname $las`
         vim $target/$fname
     fi
 
