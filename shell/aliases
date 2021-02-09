@@ -18,19 +18,20 @@ elif type "colorls" > /dev/null; then
 fi
 
 alias l='ls -l'
-alias la='ls -a'
-alias lla='ls -la'
 alias lt='ls --tree'
 alias lr='ls -latr'
-alias ldot='ls -ld .*'
-alias lS='ls -1FSsh'
-alias lart='ls -1Fcart'
-alias lrt='ls -1Fcrt'
 
 # cd
 alias dl='cd ~/downloads'
 alias dots='cd ~/.dotfiles'
-alias cn='cd ~/notes'
+
+# file management
+alias rmf="rm -rf"
+alias cpr="cp -r"
+
+# grep
+alias grep='grep --color=always'
+alias zgrep='zgrep --color=always'
 
 # most recent file
 alias new="echo *(.om[1])"
@@ -41,17 +42,6 @@ alias duf='du -sh *'
 
 # recursively counts # files in directories and returns a ranked list
 alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
-
-# fasd
-alias jb="fasd_cd -d home d r bio"
-alias jd="fasd_cd -d /data"
-alias jn="fasd_cd -d notes"
-alias jp="fasd_cd -d home d r proj"
-alias jt="fasd_cd -d home d r tool"
-alias js="fasd_cd -d home shiny"
-
-alias jk="cd \`fasd -d -l -r | fzf -1 --exact\`"
-alias e="vim \`fasd -f -l -r | fzf -1 --exact\`"
 
 # fd
 alias fda="fd -Luu"
@@ -75,11 +65,11 @@ alias no="notes -p"
 
 # taskwarrior
 alias tw=taskwarrior-tui
+
 alias b="task rc.data.location=~/d/.task/biodat"
 alias m="task rc.data.location=~/d/.task/music"
 alias mm="task rc.data.location=~/d/.task/mm25"
 alias p3="task rc.data.location=~/d/.task/p3"
-alias p="task rc.data.location=~/d/.task/prac"
 alias tl="task rc.data.location=~/d/.task/learning"
 alias tg="task rc.data.location=~/d/.task/goals"
 alias tm="task rc.data.location=~/d/.task/mindful"
@@ -126,21 +116,13 @@ alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}' # open last argument of 
 
 # journalctl
 alias errors="journalctl -b -p err|less"
-alias vacuum="sudo journalctl --vacuum-size=200M"
+alias vacuum="sudo journalctl --vacuum-size=50M"
 
 # pywal
 alias wali='wal --backend haishoku -i'
 
-# grep
-alias grep='grep --color=always'
-alias zgrep='zgrep --color=always'
-
-# file management
-alias rmf="rm -rf"
-alias cpr="cp -r"
-
 # package management
-alias yy='yay -Syu'
+alias yy='yay'
 alias yd='yay -Syu --devel'
 
 # conda
@@ -167,7 +149,7 @@ alias 4k="xrandr --output DP-0 --mode 3840x2160"
 alias tb="nc termbin.com 9999"
 
 # google translate
-alias tze="trans zh-TW:en"   # to english
+alias tze="trans zh-TW:en"  # to english
 alias tez="trans en:zh-TW"  # to chinese
 
 # sleep

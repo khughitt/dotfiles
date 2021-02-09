@@ -3,7 +3,7 @@
 #
 
 # creates a sub-directory with reversed versions of .wav files in the current dir
-function reverse_audio {
+function audio_reverse {
     mkdir rev
     for x in *.wav; do
         sox $x rev/${x/.wav/_reversed.wav} reverse;
@@ -11,12 +11,12 @@ function reverse_audio {
 }
 
 # converts a stereo audio file to a single-channel mono one
-function audio_to_mono {
+function audio_mono {
     sox $1 ${1/.wav/_left.wav} remix 1-1
 }
 
 # copy most recent bounced audio from bitwig to sample library
-function bw {
+function bitwig_copy_sample {
     # path settings
     # note: using ~/ to indicate home dir won't work on mac
     PROJDIR="$HOME/Music/bitwig/projects"
