@@ -1,0 +1,29 @@
+#
+# fasd
+#
+export _FASD_SHELL='dash'
+
+fasd_cache="$HOME/.fasd-init-zsh"
+if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
+  fasd --init auto >| "$fasd_cache"
+fi
+source "$fasd_cache"
+unset fasd_cache
+
+# remove default aliases
+unalias a
+unalias s
+unalias z
+unalias zz
+
+# and make some of my own
+alias j='fasd_cd -d' 
+alias jb="fasd_cd -d home d r bio"
+alias jd="fasd_cd -d /data"
+alias jn="fasd_cd -d notes"
+alias jp="fasd_cd -d home d r proj"
+alias jt="fasd_cd -d home d r tool"
+alias js="fasd_cd -d home shiny"
+
+alias jk="cd \`fasd -d -l -r | fzf -1 --exact\`"
+alias v="vim \`fasd -f -l -r | fzf -1 --exact\`"

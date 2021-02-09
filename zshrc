@@ -45,26 +45,8 @@ setopt interactivecomments    # recognize comments
 zstyle ':completion:*' menu select=4                # tab completion menu
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # use smart-case completion
 
-# fasd
-export _FASD_SHELL='dash'
-
-fasd_cache="$HOME/.fasd-init-zsh"
-if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
-  fasd --init auto >| "$fasd_cache"
-fi
-source "$fasd_cache"
-unset fasd_cache
-
-unalias a
-unalias s
-unalias z
-unalias zz
-alias j='fasd_cd -d' 
-alias o='f -e mimeopen'
-alias v='f -e nvim'
-
 # additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{aliases,audio,functions,private,exports,vconsole}; do
+for file in ~/.shell/{aliases,audio,fasd,functions,private,exports,vconsole,video}; do
     [ -r "$file" ] && source "$file"
 done
 
@@ -149,12 +131,8 @@ zinit light "khughitt/fzf-fasd"
 # alias reminders
 zinit light "djui/alias-tips"
 
-# cntl-z -> fg
+# cntl-z <-> fg
 zinit light "mdumitru/fancy-ctrl-z"
-
-# fzf-marks
-export FZF_MARKS_JUMP="^b"
-zinit light "urbainvaes/fzf-marks"
 
 # fzf
 export FZF_DEFAULT_COMMAND="fd --type file --color=never"
@@ -211,6 +189,9 @@ zinit wait lucid for \
     zdharma/fast-syntax-highlighting \
  blockf \
     zsh-users/zsh-completions
+
+# autocomplete commands with --help flags
+#source <(cod init $$ zsh)
 
 #
 # custom zsh keybindings;

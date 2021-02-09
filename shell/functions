@@ -24,14 +24,6 @@ function pg {
     ps -Af | grep $1 | grep -v grep
 }
 
-# head helper functions
-function hl {
-    head -n10 $1 | less
-}
-function hv {
-    head -n10 $1 | vd -
-}
-
 #
 # fzf notes
 # 
@@ -104,7 +96,7 @@ function jm {
 
 # fzf confs
 function c {
-    target=`fd --regex 'conf|init|rc|aliases|exports|functions|private|Renviron|Rprofile|rofi-tasks|scratch.vim|zshenv' \
+    target=`fd --regex 'conf|init|rc|aliases|exports|functions|mindful|polybar|private|Renviron|Rprofile|rofi-tasks|zshenv' \
             --exclude Extracted ~/.dotfiles |\
             grep --color='none' "$1" |\
             fzf -1 --exact`
@@ -127,48 +119,6 @@ function zcl {
 # feh browse dir
 function fehd {
     feh –start-at $1
-}
-
-# syntax highlighting in less 
-function les {
-    src-hilite-lesspipe.sh "$1" | less -R
-}
-
-#
-# ffmpeg - h.265 video conversion
-# 
-# <input> <start> <duration>
-# 
-function ffh265 {
-    local infile=$1
-    local ext="${infile##*.}"
-    local outfile=${infile/$ext/mp4}
-
-    # convert entire video
-    if [ $# -eq 1 ]; then
-        cmd="ffmpeg -i $infile -c:v libx265 -crf 28 -preset medium -c:a aac -b:a 192k $outfile"
-        echo $cmd
-    else
-        local start=$2
-        local duration=$3
-
-        # otherwise, if start and duration specified, convert a specific region;
-        # note that when the "-ss" option is used, timestamp gets reset, and so 
-        # a duration (-t) must be used in place of the "-to" switch
-        cmd="ffmpeg -ss \"$start\" -i $infile -t \"$duration\" -c:v libx265 -crf 28 -preset medium -c:a aac -b:a 192k $outfile"
-        echo $cmd
-    fi
-}
-
-#
-# ffmpeg - crop video
-# 
-# <input> <start> <stop> "<title>" <output>
-#
-function ffcut {
-    cmd="ffmpeg -i $1 -ss $2 -to $3 -codec copy -metadata title=\"$4\" $5"
-    echo "Running: $cmd"
-    eval $cmd
 }
 
 #
@@ -204,11 +154,13 @@ function check_gene {
 #
 
 # number of columns
-function nc {
+function ncol {
     if [[ $1 == *.tsv* ]]; then
         csvgrep -n -t $1 | wc -l
-    else
+    elif [[ $1 == *.csv* ]]; then
         csvgrep -n $1 | wc -l
+    else
+        echo "Unsupported format..."
     fi
 }
 
