@@ -419,6 +419,16 @@ endfunction
 map <localleader>s :call StripWhitespace ()<CR>
 
 " ---------------------------------------------------------------------------
+"  Split paragraph into sentences
+" ---------------------------------------------------------------------------
+function! SplitParagraph ()
+    "todo: extend to perform vis selection on spread text and call 'gq'
+    "let line = getline('.')
+    exec ':s/[!\?\.] /.\r\r/g'
+endfunction
+map <localleader>p :call SplitParagraph ()<CR>
+
+" ---------------------------------------------------------------------------
 "  Search Options
 " ---------------------------------------------------------------------------
 set incsearch  " do incremental searching

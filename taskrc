@@ -7,10 +7,10 @@ data.location=~/d/.task/default
 
 # Color theme
 #include /usr/share/doc/task/rc/dark-16.theme
-#include /usr/share/doc/task/rc/dark-256.theme
+include /usr/share/doc/task/rc/dark-256.theme
 #include /usr/share/doc/task/rc/dark-gray-256.theme
 #include /usr/share/doc/task/rc/dark-gray-blue-256.theme
-include /usr/share/doc/task/rc/solarized-dark-256.theme
+#include /usr/share/doc/task/rc/solarized-dark-256.theme
 
 # hide configuration overrides
 verbose=blank,label,new-id,affected,edit,special,project,sync,unwait
