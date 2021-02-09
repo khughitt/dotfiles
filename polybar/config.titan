@@ -67,19 +67,17 @@ exec = ~/.config/polybar/scripts/snakemake-isrunning.sh
 interval = 15
 format-underline = ${xrdb:color7}
 
-[module/zeit]
-type = custom/script
-exec = ~/.config/polybar/scripts/zeit-status.sh
-interval = 15
-format-prefix = " "
-format-underline = ${xrdb:color4}
-
 [module/schedule]
 type = custom/script
 exec = ~/d/opt/plan/plan.py
 interval = 60
-format-prefix = " "
 format-underline = ${xrdb:color6}
+
+[module/zeit]
+type = custom/script
+exec = ~/.config/polybar/scripts/zeit-status.sh
+interval = 15
+format-underline = ${xrdb:color4}
 
 [module/pomobar]
 type = custom/ipc

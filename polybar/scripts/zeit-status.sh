@@ -14,9 +14,9 @@ if ! echo $tracking | grep -q "not running"; then
 
     # determine tag color to use
     color=`mindful --tags | grep --color='never' "#$tag,"`
-    color=`echo ${color##* }`
+    color=`echo ${color##*,}`
 
-    echo "%{u$color}%{F$color}#$tag%{F-} ($time_spent)"
+    echo "%{u$color}%{F$color} #$tag%{F-} ($time_spent)"
 else
     echo "⏳not tracking"
 fi
