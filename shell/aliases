@@ -33,6 +33,10 @@ alias cpr="cp -r"
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
 
+# remote ip addr
+# https://bbs.archlinux.org/viewtopic.php?pid=408739#p408739
+alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1'
+
 # most recent file
 alias new="echo *(.om[1])"
 

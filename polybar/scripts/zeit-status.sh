@@ -5,7 +5,7 @@
 #
 
 # get zeit status and strip ansi colors
-tracking=`zeit tracking | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g'`
+tracking=`zeit tracking --no-colors`
 
 if ! echo $tracking | grep -q "not running"; then
     # get current activity and time spent
