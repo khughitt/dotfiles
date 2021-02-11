@@ -87,7 +87,7 @@ call plug#begin()
     Plug 'raimon49/requirements.txt.vim'
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
     Plug 'romgrk/barbar.nvim'
-    Plug 'Shougo/denite.nvim', { 'do': ':UpdateRemotePlugins' }
+    " Plug 'Shougo/denite.nvim', { 'do': ':UpdateRemotePlugins' }
     Plug 'Shougo/neomru.vim'
     Plug 'scrooloose/nerdcommenter'
     Plug 'sslivkoff/vim-scroll-barnacle'
@@ -825,6 +825,12 @@ let g:indent_guides_guide_size  = 1
 " julia-vim
 " ---------------------------------------------------------------------------
 " autocmd BufNewFile,BufRead *.jl set syntax=julia
+"
+
+" ---------------------------------------------------------------------------
+" LeaderF
+" ---------------------------------------------------------------------------
+let g:Lf_ShortcutF = '<C-P>'
 
 " ---------------------------------------------------------------------------
 "  NERDcommenter
@@ -909,7 +915,7 @@ autocmd FileType markdown map <silent><leader>s :call AddTimeStamp(1)<CR>
 "  markdown link helper
 "  https://benjamincongdon.me/blog/2020/06/27/Vim-Tip-Paste-Markdown-Link-with-Automatic-Title-Fetching/
 "
-"  - added support for downloading/inserting image links (kh feb2021)
+"  modified to include support for downloading/inserting image links (kh feb2021)
 " ---------------------------------------------------------------------------
 function GetURLTitle(url)
     " Use Python/BeautifulSoup to get link's page title.
@@ -938,7 +944,7 @@ function DownloadImg(url)
     let fpath = imgdir . "/" . fname
 
     " attempt to download the image
-    let result = system(printf("curl %s -s -o %s", a:url, fpath))
+    let result = system(printf("curl \"%s\" -s -o %s", a:url, fpath))
 
     " check to see if command succeeded
     if v:shell_error != 0
@@ -961,6 +967,9 @@ function PasteMDLink()
 
     " check to see if url points to an image
     let ext = split(url, "\\.")[-1]
+
+    " strip any url query string following image extension, if present
+    let ext = substitute(ext, "?.*", "", "")
 
     let imgexts = ['gif', 'jpg', 'jpeg', 'png', 'webp']
 
@@ -1045,61 +1054,61 @@ let g:SignatureMap = {
 " ---------------------------------------------------------------------------
 
 " general
-call denite#custom#option('default', {
-            \ 'prompt': '❯',
-            \ 'auto_resize': 1,
-            \ })
+" call denite#custom#option('default', {
+"             \ 'prompt': '❯',
+"             \ 'auto_resize': 1,
+"             \ })
 
 " key bindings
-nnoremap <silent> <C-p> :<C-u>Denite file/rec file_mru<CR>
-nnoremap <silent> <leader>/ :<C-u>Denite grep:.<CR>
-nnoremap <silent> <leader>g :<C-u>DeniteCursorWord grep:.<CR>
-nnoremap <silent> <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
-
-" navigation
-autocmd FileType denite call s:denite_my_settings()
-
-function! s:denite_my_settings() abort
-    nnoremap <silent><buffer><expr> <CR> denite#do_map('do_action')
-    nnoremap <silent><buffer><expr> d denite#do_map('do_action', 'delete')
-    nnoremap <silent><buffer><expr> p denite#do_map('do_action', 'preview')
-    nnoremap <silent><buffer><expr> q denite#do_map('quit')
-    nnoremap <silent><buffer><expr> i denite#do_map('open_filter_buffer')
-    nnoremap <silent><buffer><expr> <Space> denite#do_map('toggle_select').'j'
-endfunction
-
-autocmd FileType denite-filter call s:denite_filter_my_settings()
-function! s:denite_filter_my_settings() abort
-    imap <silent><buffer> <C-o> <Plug>(denite_filter_quit)
-endfunction
-
-" file/rec
-call denite#custom#var('file/rec', 'command',
-  \ ['ag', '--follow', '--nocolor', '--nogroup', '--ignore', '*.pyc', '-g', ''])
-
-call denite#custom#var('grep', 'command', ['ag'])
-call denite#custom#var('grep', 'default_opts', ['-i', '--vimgrep'])
-call denite#custom#var('grep', 'recursive_opts', [])
-call denite#custom#var('grep', 'pattern_opt', [])
-call denite#custom#var('grep', 'separator', ['--'])
-call denite#custom#var('grep', 'final_opts', [])
-
-call denite#custom#filter('matcher/ignore_globs', 'ignore_globs',
-        \ [ '.git/', '.snakemake/', '__pycache__/',
-        \   'venv/', 'images/', '*.rda', '*.min.*', 'img/', 'fonts/', '*cache/', '*_files/'])
-
-" find
-call denite#custom#var('file/rec', 'command',
-  \ ['fd', '--type', 'f', '--follow', '--hidden', '--full-path', '--color', 'never', '--exclude', '.git', ''])
-call denite#custom#var('directory_rec', 'command',
-  \ ['fd', '--type', 'd', '--follow', '--hidden', '--full-path', '--color', 'never', '--exclude', '.git', ''])
-
-" matchers
-call denite#custom#source('file_mru', 'matchers', ['matcher/fuzzy', 'matcher/project_files'])
-call denite#custom#source('file/rec', 'matchers', ['matcher/cpsm'])
-
-" sorters
-call denite#custom#source('file/rec', 'sorters', ['sorter/sublime'])
+" nnoremap <silent> <C-p> :<C-u>Denite file/rec file_mru<CR>
+" nnoremap <silent> <leader>/ :<C-u>Denite grep:.<CR>
+" nnoremap <silent> <leader>g :<C-u>DeniteCursorWord grep:.<CR>
+" nnoremap <silent> <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
+"
+" " navigation
+" autocmd FileType denite call s:denite_my_settings()
+"
+" function! s:denite_my_settings() abort
+"     nnoremap <silent><buffer><expr> <CR> denite#do_map('do_action')
+"     nnoremap <silent><buffer><expr> d denite#do_map('do_action', 'delete')
+"     nnoremap <silent><buffer><expr> p denite#do_map('do_action', 'preview')
+"     nnoremap <silent><buffer><expr> q denite#do_map('quit')
+"     nnoremap <silent><buffer><expr> i denite#do_map('open_filter_buffer')
+"     nnoremap <silent><buffer><expr> <Space> denite#do_map('toggle_select').'j'
+" endfunction
+"
+" autocmd FileType denite-filter call s:denite_filter_my_settings()
+" function! s:denite_filter_my_settings() abort
+"     imap <silent><buffer> <C-o> <Plug>(denite_filter_quit)
+" endfunction
+"
+" " file/rec
+" call denite#custom#var('file/rec', 'command',
+"   \ ['ag', '--follow', '--nocolor', '--nogroup', '--ignore', '*.pyc', '-g', ''])
+"
+" call denite#custom#var('grep', 'command', ['ag'])
+" call denite#custom#var('grep', 'default_opts', ['-i', '--vimgrep'])
+" call denite#custom#var('grep', 'recursive_opts', [])
+" call denite#custom#var('grep', 'pattern_opt', [])
+" call denite#custom#var('grep', 'separator', ['--'])
+" call denite#custom#var('grep', 'final_opts', [])
+"
+" call denite#custom#filter('matcher/ignore_globs', 'ignore_globs',
+"         \ [ '.git/', '.snakemake/', '__pycache__/',
+"         \   'venv/', 'images/', '*.rda', '*.min.*', 'img/', 'fonts/', '*cache/', '*_files/'])
+"
+" " find
+" call denite#custom#var('file/rec', 'command',
+"   \ ['fd', '--type', 'f', '--follow', '--hidden', '--full-path', '--color', 'never', '--exclude', '.git', ''])
+" call denite#custom#var('directory_rec', 'command',
+"   \ ['fd', '--type', 'd', '--follow', '--hidden', '--full-path', '--color', 'never', '--exclude', '.git', ''])
+"
+" " matchers
+" call denite#custom#source('file_mru', 'matchers', ['matcher/fuzzy', 'matcher/project_files'])
+" call denite#custom#source('file/rec', 'matchers', ['matcher/cpsm'])
+"
+" " sorters
+" call denite#custom#source('file/rec', 'sorters', ['sorter/sublime'])
 
 " default action.
 " call denite#custom#kind('file', 'default_action', 'split')
