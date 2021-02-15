@@ -74,6 +74,7 @@ call plug#begin()
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
     Plug 'junegunn/fzf.vim'
     Plug 'junegunn/limelight.vim'
+    Plug 'junegunn/vim-emoji'
     Plug 'kshenoy/vim-signature'
     Plug 'kana/vim-operator-user'
     Plug 'MarcWeber/vim-addon-mw-utils'
@@ -150,6 +151,7 @@ call plug#begin()
     Plug 'vim-scripts/pyte'
     Plug 'whatyouhide/vim-gotham'
     Plug 'wimstefan/Lightning'
+    Plug 'wlemuel/vim-tldr'
 
     "Plug 'airblade/vim-gitgutter'
     "Plug 'qpkorr/vim-bufkill'
@@ -1136,6 +1138,23 @@ let g:limelight_eop = '\ze\n^-[A-Z]'
 nmap <localleader>l :Limelight!!<CR>
 
 " ---------------------------------------------------------------------------
+" vim-emoji
+"
+" " emojis
+" https://www.webfx.com/tools/emoji-cheat-sheet/
+" 
+" replace :emoji_name: into emojis
+" map ;e %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
+"
+" ---------------------------------------------------------------------------
+" enable completion
+set completefunc=emoji#complete
+
+
+
+
+
+" ---------------------------------------------------------------------------
 "  vim-pandoc
 " ---------------------------------------------------------------------------
 let g:pandoc#modules#disabled = ["spell"]
@@ -1247,7 +1266,8 @@ let g:gruvbox_italic=1
 let g:quantum_black=1
 let g:quantum_italics=1
 
-colorscheme palenight
+"colorscheme palenight
+colorscheme pencil
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next

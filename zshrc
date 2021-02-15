@@ -46,7 +46,7 @@ zstyle ':completion:*' menu select=4                # tab completion menu
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # use smart-case completion
 
 # additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{aliases,audio,fasd,functions,private,exports,vconsole,video}; do
+for file in ~/.shell/{fasd,aliases,audio,functions,private,exports,vconsole,video}; do
     [ -r "$file" ] && source "$file"
 done
 
@@ -170,7 +170,9 @@ zinit cdreplay -q
 compdef _gnu_generic snakemake
 
 # kitty completion
-kitty + complete setup zsh | source /dev/stdin
+if type "kitty" > /dev/null; then
+    kitty + complete setup zsh | source /dev/stdin
+fi
 
 # pywal
 # (/bin/cat ~/.cache/wal/sequences &)
@@ -189,6 +191,9 @@ zinit wait lucid for \
     zdharma/fast-syntax-highlighting \
  blockf \
     zsh-users/zsh-completions
+
+# set fast-syntax-highlighting theme
+fast-theme q-jmnemonic &> /dev/null
 
 # autocomplete commands with --help flags
 #source <(cod init $$ zsh)
