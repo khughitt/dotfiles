@@ -184,7 +184,7 @@ alias zf='zeit finish'
 alias zp='zeit track -p '
 alias zl='zeit list'
 alias zt='zeit tracking'
-alias ze="zeit entry `zeit list | tail -1 | awk '{print $1}'| sed -r 's/[[:cntrl:]]\[[0-9]{1,3}m//g'`"
+alias ze="zeit entry \`zeit list | tail -1 | awk '{print $1}'| sed -r 's/[[:cntrl:]]\[[0-9]{1,3}m//g'\`"
 
 # Command line head / tail shortcuts
 # "-g" = global alias; can be substituted anywhere on the line

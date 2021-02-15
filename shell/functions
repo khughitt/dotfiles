@@ -96,13 +96,26 @@ function jm {
 
 # fzf confs
 function c {
-    target=`fd --regex 'conf|init|rc|aliases|exports|functions|mindful|polybar|private|Renviron|Rprofile|rofi-tasks|zshenv' \
-            --exclude Extracted ~/.dotfiles |\
+    target=`fd -t f \
+            --regex 'conf|init|rc|aliases|exports|functions|mindful|polybar|private|Renviron|Rprofile|rofi-tasks|\.sh|zshenv' \
+            --exclude "tpm" --exclude "tmux-*" --exclude "Extracted" \
+            ~/.dotfiles |\
             grep --color='none' "$1" |\
             fzf -1 --exact`
 
     if [ ! -z "$target" ]; then
         vim $target
+    fi
+}
+
+# cheatsheets
+function C {
+    target=`ls ~/.config/cheat/cheatsheets/personal |\
+            grep --color='none' "$1" |\
+            fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        vim ~/.config/cheat/cheatsheets/personal/$target
     fi
 }
 
