@@ -1004,6 +1004,16 @@ map <Leader>f <ESC>:call PasteMDLink()<CR>
 nmap <Leader>f :call PasteMDLink()<CR>
 
 " ----------------------------------------------------------------------------
+" uuid generator
+" ----------------------------------------------------------------------------
+function UUIDgen()
+    let uuid = system("python -c 'import shortuuid; print(shortuuid.ShortUUID().random(length=8))'")
+    let uuid = substitute(uuid, '\n', '', 'g')
+
+    execute "normal! i" . uuid . "\<Esc>"
+endfunction
+
+" ----------------------------------------------------------------------------
 "  mindful
 " ----------------------------------------------------------------------------
 set dictionary+=~/.vim/tmp/mindful/tags.txt

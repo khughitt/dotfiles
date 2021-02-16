@@ -110,7 +110,7 @@ function c {
 
 # cheatsheets
 function C {
-    target=`ls ~/.config/cheat/cheatsheets/personal |\
+    target=`ls ~/.config/cheat/cheatsheets/personal/ |\
             grep --color='none' "$1" |\
             fzf -1 --exact`
 
