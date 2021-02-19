@@ -1,0 +1,18 @@
+Pandas
+======
+
+Iteration
+---------
+
+```
+# iterate over rows as dicts
+dat.to_dict(orient="records")
+```
+
+Grouping / Summarization
+------------------------
+
+```
+# group by -> sum
+dat.groupby('tag').agg(sum)
+```

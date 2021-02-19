@@ -1,0 +1,17 @@
+# file management
+cntl + alt + s  collect & save
+
+# panel focus
+alt  + s    toggle track solo
+cntl + k    toggle device window
+ctrl + p    toggle project panel
+d           focus device panel
+alt + d     toggle device panel
+
+# arranger
+shift + l   toggle arranger loop
+
+# editor
+ctrl + j    consolidate
+shift + d   double content
+
