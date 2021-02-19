@@ -70,17 +70,6 @@ alias no="notes -p"
 # taskwarrior
 alias tw=taskwarrior-tui
 
-alias b="task rc.data.location=~/d/.task/biodat"
-alias m="task rc.data.location=~/d/.task/music"
-alias mm="task rc.data.location=~/d/.task/mm25"
-alias p3="task rc.data.location=~/d/.task/p3"
-alias tl="task rc.data.location=~/d/.task/learning"
-alias tg="task rc.data.location=~/d/.task/goals"
-alias tm="task rc.data.location=~/d/.task/mindful"
-alias to="task rc.data.location=~/d/.task/opt"
-alias tp="task rc.data.location=~/d/.task/personal"
-alias ts="task rc.data.location=~/d/.task/startup"
-
 # tar
 alias taru="tar xavpf"
 alias tarc="tar czvpf"

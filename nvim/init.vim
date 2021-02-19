@@ -65,6 +65,7 @@ call plug#begin()
     Plug 'embark-theme/vim', { 'as': 'embark' }
     Plug 'ervandew/supertab'
     Plug 'glench/vim-jinja2-syntax'
+    Plug 'junegunn/goyo.vim'
     Plug 'guns/xterm-color-table.vim'
     Plug 'henrik/vim-indexed-search'
     Plug 'honza/vim-snippets'

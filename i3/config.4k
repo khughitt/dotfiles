@@ -353,7 +353,7 @@ bindsym Mod1+j \
     move absolute position center;
 
 #-- mindful --#
-exec_always --no-startup-id kitty --name=mindful_scratch nvim ~/d/s/$HSTNAME.mnd
+exec_always --no-startup-id kitty --name=mindful_scratch nvim +'colorscheme neodark' ~/d/s/$HSTNAME.mnd
 for_window[instance="mindful_scratch"] move scratchpad
 
 bindsym Mod1+m \
