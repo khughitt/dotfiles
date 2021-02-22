@@ -1153,17 +1153,13 @@ nmap <localleader>l :Limelight!!<CR>
 "
 " " emojis
 " https://www.webfx.com/tools/emoji-cheat-sheet/
-" 
-" replace :emoji_name: into emojis
-" map ;e %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
-"
+" "
 " ---------------------------------------------------------------------------
 " enable completion
-set completefunc=emoji#complete
+" set completefunc=emoji#complete
 
-
-
-
+" replace :emoji_name: into emojis
+map <leader>e %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
 
 " ---------------------------------------------------------------------------
 "  vim-pandoc
