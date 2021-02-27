@@ -974,7 +974,7 @@ function PasteMDLink()
     " strip any url query string following image extension, if present
     let ext = substitute(ext, "?.*", "", "")
 
-    let imgexts = ['gif', 'jpg', 'jpeg', 'png', 'webp']
+    let imgexts = ['gif', 'jpg', 'jpeg', 'png', 'webp', 'svg']
 
     " choose appropriate action based on url type
     if (index(imgexts, ext) >= 0)
@@ -1159,7 +1159,11 @@ nmap <localleader>l :Limelight!!<CR>
 " set completefunc=emoji#complete
 
 " replace :emoji_name: into emojis
-map <leader>e %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
+function! AddEmojis ()
+    exec ':%s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g'
+endfunction
+
+map <leader>e :call AddEmojis ()<CR>
 
 " ---------------------------------------------------------------------------
 "  vim-pandoc
