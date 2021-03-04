@@ -899,10 +899,10 @@ function! AddTimeStamp (as_heading)
     " add timestamp
     if a:as_heading 
         " markdown heading
-        call append(line("."), [strftime('### %b %d %Y'), ""])
+        call append(line("."), [strftime('### %b %d %Y %H:%M:%S'), ""])
     else
         " italics
-        call append(line("."), [strftime('_%b %d %Y_'), ""])
+        call append(line("."), [strftime('_%b %d %Y %H:%M:%S_'), ""])
     endif
 
     normal! 3j
