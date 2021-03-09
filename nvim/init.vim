@@ -914,6 +914,14 @@ endfunction
 autocmd FileType markdown map <silent><leader>S :call AddTimeStamp(0)<CR>
 autocmd FileType markdown map <silent><leader>s :call AddTimeStamp(1)<CR>
 
+" helper function to add an 'Overview' header section
+function! AddOverviewHeader ()
+    call append(line(".") - 1, ["Overview", "--------", ""])
+    call feedkeys('A', 'n')
+endfunction
+
+autocmd FileType markdown map <silent><leader>o :call AddOverviewHeader()<CR>
+
 " ---------------------------------------------------------------------------
 "  markdown link helper
 "  https://benjamincongdon.me/blog/2020/06/27/Vim-Tip-Paste-Markdown-Link-with-Automatic-Title-Fetching/
