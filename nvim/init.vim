@@ -154,6 +154,9 @@ call plug#begin()
     Plug 'wimstefan/Lightning'
     Plug 'wlemuel/vim-tldr'
 
+    " mindful
+    Plug '~/.config/nvim/plugged/mindful.vim'
+
     "Plug 'airblade/vim-gitgutter'
     "Plug 'qpkorr/vim-bufkill'
     "Plug 'manabuishii/vim-cwl'

@@ -40,6 +40,9 @@ alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 |
 # most recent file
 alias new="echo *(.om[1])"
 
+# cat
+alias cm='cat README.md'
+
 # du
 alias dud='du -d 1 -h'
 alias duf='du -sh *'
