@@ -1,0 +1,2 @@
+# add text to top of file
+sed -i '1s/^/<added text> /' file
