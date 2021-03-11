@@ -24,6 +24,21 @@ function pg {
     ps -Af | grep $1 | grep -v grep
 }
 
+# glslviewer
+# note: may want to remove --headless option when working more on animated shaders..
+function gls {
+    outfile="output/${1/.frag/.png}"
+    
+    glslviewer $1 \
+        -w 1080 \
+        -h 1080 \
+        -s 1 \
+        --headless \
+        -o $outfile
+
+    icat $outfile 
+}
+
 #
 # fzf notes
 # 
@@ -54,9 +69,6 @@ function notes {
 
         # open file in editor
         $EDITOR $target
-
-        # update access date/counter in db
-        ( mindful --update-entry $target & )
     fi
 
     cd $wd

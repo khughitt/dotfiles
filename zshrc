@@ -167,7 +167,7 @@ compinit
 zinit cdreplay -q 
 
 # snakemake tab completion support
-compdef _gnu_generic snakemake
+compdef _gnu_generic snakemake mindful
 
 # kitty completion
 if type "kitty" > /dev/null; then

@@ -364,8 +364,8 @@ bindsym Mod1+m \
     move absolute position center;
 
 #-- qutebrowser (dashboard) --#
-set $dashboard_width 1920
-set $dashboard_height 1080
+set $dashboard_width 2880
+set $dashboard_height 1620
 
 exec_always --no-startup-id qutebrowser
 for_window[instance="qutebrowser"] move scratchpad
