@@ -896,31 +896,22 @@ inoremap <leader><F5> <Esc>:call CreateHeading("=")<CR>
 
 " helper function to add a simple markdown timestamp heading
 function! AddTimeStamp (as_heading)
-    " add timestamp
-    if a:as_heading 
-        " markdown heading
-        call append(line("."), [strftime('### %b %d %Y %H:%M:%S'), ""])
-    else
-        " italics
-        call append(line("."), [strftime('_%b %d %Y %H:%M:%S_'), ""])
-    endif
-
+    call append(line("."), [strftime('_%b %d %Y %H:%M:%S_'), ""])
     normal! 3j
-
-    " enter insert mode
     call feedkeys('A', 'n')
 endfunction
 
-autocmd FileType markdown map <silent><leader>S :call AddTimeStamp(0)<CR>
-autocmd FileType markdown map <silent><leader>s :call AddTimeStamp(1)<CR>
+autocmd FileType markdown map <silent><leader>s :call AddTimeStamp()<CR>
 
-" helper function to add an 'Overview' header section
-function! AddOverviewHeader ()
-    call append(line(".") - 1, ["Overview", "--------", ""])
+" helper function to add an commonly-used header sections
+function! AddMarkdownHeader (text)
+    let under = repeat("-", strlen(a:text))
+    call append(line(".") - 1, [a:text, under, ""])
     call feedkeys('A', 'n')
 endfunction
 
-autocmd FileType markdown map <silent><leader>o :call AddOverviewHeader()<CR>
+autocmd FileType markdown map <silent><leader>o :call AddMarkdownHeader("Overview")<CR>
+autocmd FileType markdown map <silent><leader>o :call AddMarkdownHeader("References")<CR>
 
 " ---------------------------------------------------------------------------
 "  markdown link helper
