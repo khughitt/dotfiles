@@ -47,9 +47,16 @@ function notes {
 
     if [ ! -z "$target" ]; then
         echo "Opening ~/notes/$target"
+        
+        # for convenience, keep track of last-accessed file/dir
         export las=`realpath ~/notes/$target`
-        export lasd=`dirname $las`
+        export dlas=`dirname $las`
+
+        # open file in editor
         $EDITOR $target
+
+        # update access date/counter in db
+        ( mindful --update-entry $target & )
     fi
 
     cd $wd
@@ -61,6 +68,8 @@ function a {
 
     cd ~/notes
 
+    date
+
     # get directory to store note in
     target=`fd -t d | grep --color='none' "$1" | fzf -1 --exact`
 
@@ -71,6 +80,9 @@ function a {
         export las=`realpath ~/notes/$target/$fname`
         export lasd=`dirname $las`
         vim $target/$fname
+
+        echo 'yeeee'
+        date
     fi
 
     cd $pwd
