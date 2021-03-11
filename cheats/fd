@@ -1,0 +1,2 @@
+# find recent files
+fd --changed-within 5days
