@@ -119,10 +119,10 @@ function jm {
 }
 
 # fzf confs
+# --regex 'conf|init|rc|aliases|exports|functions|mindful\.vim|polybar|private|Renviron|Rprofile|rofi-tasks|\.sh|zshenv' \
 function c {
     target=`fd . "$HOME/.dotfiles" -t f \
-            --regex 'conf|init|rc|aliases|exports|functions|mindful\.vim|polybar|private|Renviron|Rprofile|rofi-tasks|\.sh|zshenv' \
-            --exclude "tpm" --exclude "tmux-*" --exclude "Extracted"`
+            --exclude "tpm" --exclude "tmux-*" --exclude "Extracted" --exclude "*.xml" --exclude "*.png" --exclude "*.desktop"`
     target="$target\n$HOME/.dotfiles/nvim/plugged/mindful.vim/syntax/mindful.vim\n$HOME/.dotfiles/nvim/plugged/mindful.vim/after/ftplugin/mindful.vim"
 
     target=`echo $target |\
