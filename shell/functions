@@ -120,10 +120,12 @@ function jm {
 
 # fzf confs
 function c {
-    target=`fd -t f \
-            --regex 'conf|init|rc|aliases|exports|functions|mindful|polybar|private|Renviron|Rprofile|rofi-tasks|\.sh|zshenv' \
-            --exclude "tpm" --exclude "tmux-*" --exclude "Extracted" \
-            ~/.dotfiles |\
+    target=`fd . "$HOME/.dotfiles" -t f \
+            --regex 'conf|init|rc|aliases|exports|functions|mindful\.vim|polybar|private|Renviron|Rprofile|rofi-tasks|\.sh|zshenv' \
+            --exclude "tpm" --exclude "tmux-*" --exclude "Extracted"`
+    target="$target\n$HOME/.dotfiles/nvim/plugged/mindful.vim/syntax/mindful.vim\n$HOME/.dotfiles/nvim/plugged/mindful.vim/after/ftplugin/mindful.vim"
+
+    target=`echo $target |\
             grep --color='none' "$1" |\
             fzf -1 --exact`
 
