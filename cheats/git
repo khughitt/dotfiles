@@ -1,0 +1,15 @@
+# find all binaries in repo history
+# https://stackoverflow.com/questions/27931520/git-find-all-binary-files-in-history
+git log --all --numstat \
+    | grep '^-' \
+    | cut -f3 \
+    | sed -r 's|(.*)\{(.*) => (.*)\}(.*)|\1\2\4\n\1\3\4|g' \
+    | sort -u
+
+# remove file from history
+bfg --delete-files YOUR-FILE-WITH-SENSITIVE-DATA
+git reflog expire --expire=now --all && git gc --prune=now --aggressive
+git push --force
+
+# search history for a deleted file
+git log --all --full-history -- "**/thefile.*"
