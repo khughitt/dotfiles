@@ -16,6 +16,12 @@ Filtering & Masking
 x.isin([..])    # is in 
 ~x.isin([..])   # not in
 
+# filter rows by column value membership
+df.loc[df['column_name'].isin(some_values)]
+
+# ~match()
+B.reset_index().set_index('c').loc[A.c, 'index'].values
+
 Grouping / Summarization
 ------------------------
 

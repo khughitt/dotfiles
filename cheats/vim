@@ -1,0 +1,7 @@
+# show all highlight groups
+:so $VIMRUNTIME/syntax/hitest.vim
+
+# match "b" in abc
+syn match TestMatch /b\(c\)\@=\&\(a\)\@<=b/
+
+
