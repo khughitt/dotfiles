@@ -1,0 +1,2 @@
+# check for errors
+systemctl --failed

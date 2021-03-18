@@ -1,0 +1,6 @@
+# benchmark python code
+%timeit print('hi')
+
+# benchmark system command
+import os
+%timeit -n10 -r5 os.system('...')

@@ -1,0 +1,14 @@
+# if statement conditional on grep 
+if ! echo $foo | grep -q "not running"; then echo 'yes'; fi
+
+# split by " " and get last element
+# https://stackoverflow.com/questions/3162385/how-to-split-a-string-in-shell-and-get-the-last-field
+foo="one two three"
+
+echo ${foo##* }
+
+${foo  <-- from variable foo
+  ##   <-- greedy front trim
+  *    <-- matches anything
+       <-- until the last ' '
+}

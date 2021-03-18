@@ -1,0 +1,78 @@
+# useful locations
+data => /var/lib/mysql/[databasename]/
+logs => /var/log/mysql.[log|err] and /var/log/mysql/error.log
+cfg  => /etc/mysql/my.cnf
+
+# status info
+SHOW STATUS;
+
+# enable slow query logging
+http://dev.mysql.com/doc/refman/5.1/en/slow-query-log.html
+
+long_query_time  =  2
+log-slow-queries = /var/log/mysql-slow.log
+
+SHOW STATUS LIKE '%slow_queries%';
+
+# check table engine type
+SHOW TABLE STATUS;
+SHOW TABLE STATUS WHERE Name = 'image';
+
+mysqlshow –status db_name;
+
+# analyze a query
+EXPLAIN [query];
+
+# show table construction/index info
+SHOW CREATE TABLE images;
+
+# show query results as rows
+SHOW CREATE TABLE images\G
+
+# query caching
+query_cache_type = 1
+
+# set query cache to 16 MB
+query_cache_size = 16M
+
+# nename multiple tables
+RENAME TABLE image TO images,
+    datasource TO datasources,
+    observatory TO observatories,
+    instrument TO instruments,
+    detector TO detectors,
+    measurement TO measurements;
+    
+# list duplicate entries
+SELECT filename, COUNT(filename) as count FROM images GROUP BY filename HAVING count > 1 ORDER BY count;
+
+# remove duplicates
+ALTER IGNORE TABLE images ADD UNIQUE INDEX filename_idx(filename);
+DROP INDEX filename_idx ON images;
+
+# show indexes on a table use
+SHOW INDEXES FROM images;
+
+# alternate way to add unique index (must not already have redundant entries)
+CREATE UNIQUE INDEX movieid_idx ON youtube(movieId);
+
+# fill gaps in a database table
+# http://stackoverflow.com/questions/1841104/mysql-auto-increment-filling-the-holes
+# Must use MySQL CLI to run
+CREATE TEMPORARY TABLE tmp
+(
+    id INT UNSIGNED auto_increment,
+    oldId INT UNSIGNED,
+    PRIMARY KEY(id)
+);
+
+INSERT INTO tmp (oldId) SELECT id FROM images ORDER BY id ASC;
+    
+UPDATE images, tmp SET images.id = tmp.id WHERE images.id = tmp.oldId;
+
+# reset an auto-increment field
+ALTER TABLE images auto_increment=1;
+
+# set timezone to UTC
+SET @@session.time_zone = '+00:00'
+SELECT @@global.time_zone, @@session.time_zone;

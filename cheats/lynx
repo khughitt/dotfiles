@@ -1,0 +1,2 @@
+# Print HTTP headers
+lynx -head -dump <url> 

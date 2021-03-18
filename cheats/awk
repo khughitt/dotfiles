@@ -1,0 +1,8 @@
+# randomly sample lines from a file
+awk 'OFS=" " {print $1,$2,$3}' cytoscape_edges.txt | sed 1d | sample -r 5% > edgelist.ncol
+
+# create new column by converting existing column to fraction of whole
+awk -F',' 'NR==FNR{a = a + $2;next} {c = ($2/a);print $1,$2, c}' file.csv file.csv
+
+# add a column with a set value between cols 1 & 2
+awk '$1 = $1 FS "default_value"' FS=, OFS=, file.csv > file.csv.new

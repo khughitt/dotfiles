@@ -1,0 +1,19 @@
+# 
+# keyboard shortcuts
+#
+c-h  # backspace
+
+# history, etc. expansions
+!!        # last command
+!*        # last command's parameters
+!^        # last command's first parameter
+!$        # last command's last parameter
+cntl-q    # "parks" a command you are typing (saves it and starts a new cmd)
+cntl-x-e  # edit cmd in $EDITOR
+
+*(m0)     # last modified today
+*(m-4)    # last modified <4 days ago
+
+# delete last word
+<c-w>
+<alt-backspace>
