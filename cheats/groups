@@ -1,0 +1,15 @@
+# check existing groups
+cat /etc/group
+
+# get groups for current user
+groups
+
+# add an existing user to a group
+sudo usermod -a -g <group> <user> 
+
+# create a new group with a specific gid
+sudo groupadd -g 1006 <group>
+
+# change gid of existing group
+sudo groupmod -g 1009 <group>
+

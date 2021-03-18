@@ -1,0 +1,3 @@
+# determine actual memory usage for an application
+pmap -x <pid>
+pmap -x `ps -ef | grep 'terminator' | head -1 | awk '{print $2}'`

@@ -1,0 +1,2 @@
+# set installation prefix to $HOME without a configure file
+make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH=$HOME"

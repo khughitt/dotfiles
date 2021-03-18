@@ -1,0 +1,5 @@
+# join two tab-separated tables
+join file1 file12 -t $'\t'
+
+# join two tab-separated tables, specifying columns to use
+join -1 1 -2 1 file1 file2 -t $'\t'
