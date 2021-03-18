@@ -89,7 +89,6 @@ call plug#begin()
     Plug 'raimon49/requirements.txt.vim'
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
     Plug 'romgrk/barbar.nvim'
-    " Plug 'Shougo/denite.nvim', { 'do': ':UpdateRemotePlugins' }
     Plug 'Shougo/neomru.vim'
     Plug 'scrooloose/nerdcommenter'
     Plug 'sslivkoff/vim-scroll-barnacle'
@@ -102,8 +101,6 @@ call plug#begin()
     Plug 'udalov/kotlin-vim'
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
-    " Plug 'vim-pandoc/vim-pandoc'
-    " Plug 'vim-pandoc/vim-pandoc-syntax'
     Plug 'wellle/targets.vim'
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
@@ -175,6 +172,8 @@ call plug#begin()
     "Plug 'Shougo/deoplete-terminal'
     "Plug 'godlygeek/tabular'
     "Plug 'neoclide/coc.nvim', {'branch': 'release'}
+    "Plug 'vim-pandoc/vim-pandoc'
+    "Plug 'vim-pandoc/vim-pandoc-syntax'
     
     " Nov 23, 2020: temporarily disabling (ignoring lintr settings..)
     "Plug 'dense-analysis/ale'
@@ -836,7 +835,11 @@ let g:indent_guides_guide_size  = 1
 " ---------------------------------------------------------------------------
 " LeaderF
 " ---------------------------------------------------------------------------
-let g:Lf_ShortcutF = '<C-P>'
+let g:Lf_ShortcutF = '<c-f>'
+let g:Lf_WindowPosition = 'popup'
+let g:Lf_PreviewInPopup = 1
+
+noremap <c-p> :<C-U><C-R>=printf("Leaderf --nowrap mru %s", "")<CR><CR>
 
 " ---------------------------------------------------------------------------
 "  NERDcommenter
@@ -883,6 +886,106 @@ syn match math '\$[^$].\{-}\$'
 
 " actually highlight the region we defined as "math"
 hi link math Statement
+
+" ---------------------------------------------------------------------------
+"  markdown link helper
+"  https://benjamincongdon.me/blog/2020/06/27/Vim-Tip-Paste-Markdown-Link-with-Automatic-Title-Fetching/
+"
+"  modified to include support for downloading/inserting image links (kh feb2021)
+" ---------------------------------------------------------------------------
+function GetURLTitle(url)
+    " Use Python/BeautifulSoup to get link's page title.
+    let title = system("python3 -c \"import bs4, requests; print(bs4.BeautifulSoup(requests.get('" . a:url . "').content, 'lxml').title.text.strip())\"")
+
+    " Echo the error if getting title failed.
+    if v:shell_error != 0
+        echom title
+        return ""
+    endif
+
+    " Strip trailing newline
+    return substitute(title, '\n', '', 'g')
+endfunction
+
+function DownloadImg(url)
+    " create a .img/ directory in dir of markdown file, if not already present
+    let mddir = expand('%:p:h')
+    let imgdir = mddir . "/.img"
+    call mkdir(imgdir, "p", 0755)
+
+    let oldfname = split(a:url, "/")[-1]
+
+    " prompt user for filename
+    let fname = input("Filename? ", oldfname)
+    let fpath = imgdir . "/" . fname
+
+    " attempt to download the image
+    let result = system(printf("curl \"%s\" -s -o %s", a:url, fpath))
+
+    " check to see if command succeeded
+    if v:shell_error != 0
+        echom result
+        return ""
+    endif
+
+    " return relative path to image
+    return ".img/" . fname
+endfunction
+
+function PasteMDLink()
+    " generate markdown url
+    let url = getreg("+")
+
+    " store here if not a url
+    if url !~ '^https\?://'
+        return ""
+    endif
+
+    " check to see if url points to an image
+    let ext = split(url, "\\.")[-1]
+
+    " strip any url query string following image extension, if present
+    let ext = substitute(ext, "?.*", "", "")
+
+    let imgexts = ['gif', 'jpg', 'jpeg', 'png', 'webp', 'svg']
+
+    " choose appropriate action based on url type
+    if (index(imgexts, ext) >= 0)
+        let relpath = DownloadImg(url)
+        let mdLink = printf("![](%s)", relpath)
+    else
+        let title = GetURLTitle(url)
+        let mdLink = printf("[%s](%s)", title, url)
+    endif      
+
+    " temporarily disable line length limit, if specified
+    if &textwidth != 0
+        let b:oldtextwidth = &textwidth
+        set textwidth=0
+    endif
+
+    " add link to document
+    execute "normal! a" . mdLink . "\<Esc>"
+
+    " restore line length limit
+    if exists("b:oldtextwidth")
+        let &textwidth = b:oldtextwidth
+    endif
+endfunction
+
+" Make a keybinding (mnemonic: "mark down paste")
+map <Leader>f <ESC>:call PasteMDLink()<CR>
+nmap <Leader>f :call PasteMDLink()<CR>
+
+" ----------------------------------------------------------------------------
+" uuid generator
+" ----------------------------------------------------------------------------
+function UUIDgen()
+    let uuid = system("python -c 'import shortuuid; print(shortuuid.ShortUUID().random(length=6))'")
+    let uuid = substitute(uuid, '\n', '', 'g')
+
+    execute "normal! i" . uuid . "\<Esc>"
+endfunction
 
 " ----------------------------------------------------------------------------
 "  mindful
@@ -931,70 +1034,6 @@ let g:SignatureMap = {
     \ 'ListLocalMarks'     :  "m/",
     \ 'ListLocalMarkers'   :  "m?"
     \ }
-
-" ---------------------------------------------------------------------------
-"  denite
-" ---------------------------------------------------------------------------
-
-" general
-" call denite#custom#option('default', {
-"             \ 'prompt': '❯',
-"             \ 'auto_resize': 1,
-"             \ })
-
-" key bindings
-" nnoremap <silent> <C-p> :<C-u>Denite file/rec file_mru<CR>
-" nnoremap <silent> <leader>/ :<C-u>Denite grep:.<CR>
-" nnoremap <silent> <leader>g :<C-u>DeniteCursorWord grep:.<CR>
-" nnoremap <silent> <leader>r :<C-u>Denite -resume -cursor-pos=+1<CR>
-"
-" " navigation
-" autocmd FileType denite call s:denite_my_settings()
-"
-" function! s:denite_my_settings() abort
-"     nnoremap <silent><buffer><expr> <CR> denite#do_map('do_action')
-"     nnoremap <silent><buffer><expr> d denite#do_map('do_action', 'delete')
-"     nnoremap <silent><buffer><expr> p denite#do_map('do_action', 'preview')
-"     nnoremap <silent><buffer><expr> q denite#do_map('quit')
-"     nnoremap <silent><buffer><expr> i denite#do_map('open_filter_buffer')
-"     nnoremap <silent><buffer><expr> <Space> denite#do_map('toggle_select').'j'
-" endfunction
-"
-" autocmd FileType denite-filter call s:denite_filter_my_settings()
-" function! s:denite_filter_my_settings() abort
-"     imap <silent><buffer> <C-o> <Plug>(denite_filter_quit)
-" endfunction
-"
-" " file/rec
-" call denite#custom#var('file/rec', 'command',
-"   \ ['ag', '--follow', '--nocolor', '--nogroup', '--ignore', '*.pyc', '-g', ''])
-"
-" call denite#custom#var('grep', 'command', ['ag'])
-" call denite#custom#var('grep', 'default_opts', ['-i', '--vimgrep'])
-" call denite#custom#var('grep', 'recursive_opts', [])
-" call denite#custom#var('grep', 'pattern_opt', [])
-" call denite#custom#var('grep', 'separator', ['--'])
-" call denite#custom#var('grep', 'final_opts', [])
-"
-" call denite#custom#filter('matcher/ignore_globs', 'ignore_globs',
-"         \ [ '.git/', '.snakemake/', '__pycache__/',
-"         \   'venv/', 'images/', '*.rda', '*.min.*', 'img/', 'fonts/', '*cache/', '*_files/'])
-"
-" " find
-" call denite#custom#var('file/rec', 'command',
-"   \ ['fd', '--type', 'f', '--follow', '--hidden', '--full-path', '--color', 'never', '--exclude', '.git', ''])
-" call denite#custom#var('directory_rec', 'command',
-"   \ ['fd', '--type', 'd', '--follow', '--hidden', '--full-path', '--color', 'never', '--exclude', '.git', ''])
-"
-" " matchers
-" call denite#custom#source('file_mru', 'matchers', ['matcher/fuzzy', 'matcher/project_files'])
-" call denite#custom#source('file/rec', 'matchers', ['matcher/cpsm'])
-"
-" " sorters
-" call denite#custom#source('file/rec', 'sorters', ['sorter/sublime'])
-
-" default action.
-" call denite#custom#kind('file', 'default_action', 'split')
 
 " ---------------------------------------------------------------------------
 "  fzf.vim

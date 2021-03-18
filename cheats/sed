@@ -1,2 +1,14 @@
 # add text to top of file
 sed -i '1s/^/<added text> /' file
+
+# Print a specific line in a file
+sed -n '15p' file.txt
+
+# Print from line m to n in a file
+sed -n '3,10p' file.txt
+
+# delete lines containing str
+sed -i '/foo/d' ./infile
+
+# strip ansi colors
+somescript | sed -r "s/[[:cntrl:]]\[[0-9]{1,3}m//g"

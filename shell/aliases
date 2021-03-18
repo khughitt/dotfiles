@@ -63,12 +63,13 @@ alias icat="kitty +kitten icat"
 # kord
 alias kord="python ~/.local/fretboard/fretboard.py"
 
-# mount
-alias um="sudo umount /mnt/usb"
-
-# notes
+# mindful
+alias s='vim ~/notes/mindful.mnd'
 alias n="notes"
 alias no="notes -p"
+
+# mount
+alias um="sudo umount /mnt/usb"
 
 # taskwarrior
 alias tw=taskwarrior-tui
@@ -173,13 +174,17 @@ alias -s Rmd=nvim
 # tmux
 alias x=xumt
 
+# xmodmap
+alias xm="xmodmap ~/.Xmodmap"
+
 # zeit
 alias z='zeit'
 alias zf='zeit finish'
 alias zp='zeit track -p '
 alias zl='zeit list'
 alias zt='zeit tracking'
-alias ze="zeit entry \`zeit list | tail -1 | awk '{print $1}'| sed -r 's/[[:cntrl:]]\[[0-9]{1,3}m//g'\`"
+alias ze="zeit entry \`zeit --no-colors list | tail -1 | awk '{print \$1}'\`"
+alias zrm="zeit erase \`zeit --no-colors list | tail -1 | awk '{print \$1}'\`"
 
 # Command line head / tail shortcuts
 # "-g" = global alias; can be substituted anywhere on the line

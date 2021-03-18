@@ -50,7 +50,7 @@ function notes {
     cd ~/notes
 
     # determine fd command to use
-    fd_cmd="fd -t f md"
+    fd_cmd="fd -e md -e mnd"
 
     # if "-p" switch is present, exclude personal entries from search results
     if [[ $1 == "-p" ]]; then
@@ -80,8 +80,6 @@ function a {
 
     cd ~/notes
 
-    date
-
     # get directory to store note in
     target=`fd -t d | grep --color='none' "$1" | fzf -1 --exact`
 
@@ -92,9 +90,6 @@ function a {
         export las=`realpath ~/notes/$target/$fname`
         export lasd=`dirname $las`
         vim $target/$fname
-
-        echo 'yeeee'
-        date
     fi
 
     cd $pwd
