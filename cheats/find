@@ -1,2 +1,32 @@
 # count the number of files in each sub-directory
 find . -type f | cut -d/ -f2 | sort | uniq -c
+
+# Find files modified in last day (-mtime +1 -> _older_ than one day)
+find / -mtime -1 -print 
+find . \! -type f -mtime -1 -print | wc -l
+
+# Last 0.1 days, within home
+find ~ -mtime -0.1 -print
+
+# Find only directories in current directory that were modified in last day
+find . \! -type f -mtime -1 -maxdepth 1 -print | wc -l
+
+# Delete empty sub-directories of present dir
+find . -maxdepth 1 -type d -empty -exec rmdir {} \;
+
+# Find files that have not been accessed for over 400 days
+find . -maxdepth 2 -type f -atime +400
+
+# Delete files older than N days 
+find /var/www/tmp/ -mtime +5 -delete
+find -name *.jpg -mtime +15 -delete
+
+# Get a space-delimited string representing a list of files
+find . -type f | tr "\n" " "
+
+#Finished version
+for file in $(find . -size -800k | cut -c3- | sed 1d); do rm ${file}; done
+
+# Get the total size for a list of files from find
+find . -name "*adaptertrim.fastq" -print0 | du --files0-from=- -hc --apparent-size
+find . -name "*.fastq" -print0 | du --files0-from=- -hc | tail -n1

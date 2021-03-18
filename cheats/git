@@ -1,3 +1,12 @@
+# Undo push
+git reset --soft "HEAD^"  # undos local commit
+git push -f               # pushes previous commit
+
+# Testing out someone else's fork
+git remote add wafels https://github.com/wafels/sunpy.git
+git fetch wafels
+git checkout wafels/master
+
 # find all binaries in repo history
 # https://stackoverflow.com/questions/27931520/git-find-all-binary-files-in-history
 git log --all --numstat \

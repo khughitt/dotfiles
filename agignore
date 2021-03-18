@@ -1,6 +1,4 @@
-*.html
 *.min.js
-*.js
 *.pyc
 *.rda
 *.tsv
