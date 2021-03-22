@@ -64,7 +64,7 @@ alias icat="kitty +kitten icat"
 alias kord="python ~/.local/fretboard/fretboard.py"
 
 # mindful
-alias s='vim ~/notes/mindful.mnd'
+alias m='vim ~/notes/mindful.mnd'
 alias n="notes"
 alias no="notes -p"
 
