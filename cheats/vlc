@@ -1,0 +1,130 @@
+ 	Toggle fullscreen
+ESC 	Leave fullscreen/close dialogue
+space 	Play/pause
++ 	Faster
+- 	Slower
+= 	Normal rate
+] 	Faster (fine)
+[ 	Slower (fine)
+N 	Next track
+P 	Previous track
+S 	Stop
+T 	Position/time
+Shift + Left Arrow 	Jump 5 seconds back
+Shift + Right Arrow 	Jump 5 seconds forward
+Alt + Left Arrow 	Jump 10 sec. back
+Alt + Right Arrow 	Jump 10 sec. forward
+Control + Left Arrow 	Jump 1 minute back
+Control + Right Arrow 	Jump 1 minute forward
+Control + Alt + Left Arrow 	Jump 5 minutes back
+Control + Alt + Right Arrow 	Jump 5 minutes forward
+E 	Next frame 	1.0 and over
+Enter 	Select menu entry (DVD)
+Arrows 	Navigate menus (DVD)
+Shift + M 	Disc menu
+Shift + O 	Title prev
+Shift + B 	Title next
+Shift + P 	Chapter prev
+Shift + N 	Chapter next
+Ctrl + Q 	Quit
+Ctrl + Up Arrow 	Volume up
+Ctrl + Down Arrow 	Volume down
+M 	Mute
+H 	Subtitle delay up
+G 	Subtitle delay down
+Shift + H 	history forward Subtitle sync / bookmark audio timestamp
+Shift + J 	Subtitle sync / bookmark subtitle timestamp
+Shift + K 	Subtitle sync / synchronize audio & subtitle timestamps
+Ctrl + Shift + K 	Subtitle sync / reset audio & subtitle synchronization
+K 	Audio delay up OR next subtitle-track (or none) (??????????????)
+J 	Audio delay down
+B 	Cycle audio track
+Shift + A 	Cycle audio device
+Alt + V 	video menu Cycle subtitle track in reverse order 	English translation
+V 	Cycle subtitle track
+Shift + V 	Toggle subtitles
+X 	Cycle next program Service ID
+Shift + X 	Cycle previous program Service ID
+A 	Cycle aspect ratio
+C 	Cycle cropping ratio
+O 	original video size toggle autoscaling 	pads video by adding black borders
+Alt + O 	Increase scale factor
+Alt + Shift + O 	Decrease scale factor
+D 	cycle deinterlace filters Toggle deinterlacing
+Shift + D 	Cycle deinterlace modes
+I 	interface show Show controller in fullscreen
+Shift + S 	Snapshot
+Shift + R 	Record
+Z 	cycle zoom Zoom
+Shift + Z 	Un-zoom
+W 	Wallpaper 	only works with video output DirectX
+Alt + R 	Crop one pixel from the top of the video
+Alt + Shift + R 	Uncrop one pixel from the top of the video
+Alt + D 	Crop one pixel from the left of the video
+Alt + Shift + D 	Uncrop one pixel from the left of the video
+Alt + C 	Crop one pixel from the bottom of the video
+Alt + Shift + C 	Uncrop one pixel from the bottom of the video
+Alt + F 	Crop one pixel from the right of the video
+Alt + Shift + F 	Uncrop one pixel from the right of the video
+R 	Random
+L 	loop Normal/loop/repeat
+Page Up 	Shrink the viewpoint of view (360 °)
+Page Down 	Expand the viewpoint of view (360 °)
+Alt + 1 	1:4 quarter
+Alt + 2 	1:2 half
+Alt + 3 	1:1 original
+Alt + 4 	2:1 double
+Ctrl + F1 	Set playlist bookmark 1
+Ctrl + F2 	Set playlist bookmark 2
+Ctrl + F3 	Set playlist bookmark 3
+Ctrl + F4 	Set playlist bookmark 4
+Ctrl + F5 	Set playlist bookmark 5
+Ctrl + F6 	Set playlist bookmark 6
+Ctrl + F7 	Set playlist bookmark 7
+Ctrl + F8 	Set playlist bookmark 8
+Ctrl + F9 	Set playlist bookmark 9
+Ctrl + F10 	Set playlist bookmark 10
+F1 	Play playlist bookmark 1
+F2 	Play playlist bookmark 2
+F3 	Play playlist bookmark 3
+F4 	Play playlist bookmark 4
+F5 	Play playlist bookmark 5
+F6 	Play playlist bookmark 6
+F7 	Play playlist bookmark 7
+F8 	Play playlist bookmark 8
+F9 	Play playlist bookmark 9
+F10 	Play playlist bookmark 10
+Ctrl + W 	Clear the playlist
+Ctrl + 0 	Reset subtitles scale
+Ctrl + Mouse wheel up 	Scale down subtitles text
+Ctrl + Mouse wheel down 	Scale up subtitles text
+Ctrl + A 	Advanced controls
+Ctrl + B 	Bookmarks
+Ctrl + C 	Open capture device
+Ctrl + D 	Open disc
+Ctrl + E 	Extended settings
+Ctrl + F 	Open Folder/Directory
+Ctrl + H 	Hide/show menus 	a.k.a Minimal view, like in Acrobat Reader
+Ctrl + I 	Media Information
+Ctrl + J 	Codecs Information
+Ctrl + L 	Hide/Show playlist
+Ctrl + M 	Messages
+Ctrl + N 	Open network stream
+Ctrl + O 	Open File
+Ctrl + P 	Preferences
+Ctrl + R 	Convert/Save
+Ctrl + S 	Streaming
+Ctrl + T 	Goto Time
+Ctrl + U 	Dock/Undock playlist
+Ctrl + V 	Paste Location/Paste MRL
+Ctrl + Shift + W 	VLM configurator
+Ctrl + X 	Load playlist
+Ctrl + Y 	Save playlist
+Shift + G 	History back[Please check this]
+Alt + A 	Audio menu 	English translation
+Alt + H 	Help menu 	English translation
+Alt + I 	View menu 	English translation
+Alt + L 	Playback menu 	English translation
+Alt + M 	Media menu 	English translation
+Alt + S 	Tools menu 	English translation
+Alt + T 	tools menu Subtitle menu 	English translation 

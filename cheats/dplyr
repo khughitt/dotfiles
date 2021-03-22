@@ -1,0 +1,4 @@
+# summarize_all
+dat %>%
+  group_by(symbol) %>%
+  summarize(across(everything(), max))
