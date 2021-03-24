@@ -2,3 +2,11 @@
 dat %>%
   group_by(symbol) %>%
   summarize(across(everything(), max))
+
+# select by string variable
+dat %>%
+    select(!!var_name)
+
+# arrange by string variable
+dat %>%
+    arrange(!!sym(var_name))
