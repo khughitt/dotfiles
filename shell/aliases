@@ -46,6 +46,7 @@ alias cm='cat README.md'
 # du
 alias dud='du -d 1 -h'
 alias duf='du -sh *'
+alias dus='du -sh'
 
 # recursively counts # files in directories and returns a ranked list
 alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
