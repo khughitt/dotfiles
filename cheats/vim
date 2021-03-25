@@ -1,3 +1,6 @@
+# yank a single character
+vy
+
 # show all highlight groups
 # see also: https://vim.fandom.com/wiki/Xterm256_color_names_for_console_Vim
 :so $VIMRUNTIME/syntax/hitest.vim

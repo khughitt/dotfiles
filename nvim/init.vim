@@ -76,6 +76,7 @@ call plug#begin()
     Plug 'junegunn/fzf.vim'
     Plug 'junegunn/limelight.vim'
     Plug 'junegunn/vim-emoji'
+    Plug 'KabbAmine/vCoolor.vim'
     Plug 'kshenoy/vim-signature'
     Plug 'kana/vim-operator-user'
     Plug 'MarcWeber/vim-addon-mw-utils'
