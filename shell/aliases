@@ -54,6 +54,7 @@ alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*
 # fd
 alias fda="fd -Luu"
 alias fdu="fd -u"
+alias fdr="fd --changed-within 7days"
 
 # htop
 alias htop=gotop

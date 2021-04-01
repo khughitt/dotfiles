@@ -10,20 +10,50 @@ Iteration
 # iterate over rows as dicts
 dat.to_dict(orient="records")
 
+# iterate over rows
+for index, row in df.iterrows():
+    ...
+
+Creation
+--------
+
+# dict of columns
+pd.DataFrame.from_dict(d)
+
+# dict of rows
+pd.DataFrame.from_dict(d, orient='index')
+
+Joins
+-----
+
+# inner join by similar column(s)
+a.merge(b)
+a.merge(b, on=['foo'])
+
 Filtering & Masking
 -------------------
 
+# membership
 x.isin([..])    # is in 
 ~x.isin([..])   # not in
 
 # filter rows by column value membership
 df.loc[df['column_name'].isin(some_values)]
 
-# ~match()
+# ~R's match()
 B.reset_index().set_index('c').loc[A.c, 'index'].values
+
+# endswith
+x[x.foo.str.endswith('bar')]
 
 Grouping / Summarization
 ------------------------
 
 # group by -> sum
 dat.groupby('tag').agg(sum)
+
+# group by -> sort
+dat.groupby('seed').apply(pd.DataFrame.sort_values, 'tag')
+
+# group by -> count -> max -> sample
+dat.groupby(["path", "seed"]).count().max(axis=1).groupby("path").sample(1)
