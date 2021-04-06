@@ -14,6 +14,15 @@ cntl-x-e  # edit cmd in $EDITOR
 *(m0)     # last modified today
 *(m-4)    # last modified <4 days ago
 
+# global variable substitution
+${x//pattern/replacement}
+
+# first 10 characters of variable
+${x:0:10}
+
+# everything except the first 10 characters
+${x:10:999}
+
 # delete last word
 <c-w>
 <alt-backspace>
