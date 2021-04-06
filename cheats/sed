@@ -2,13 +2,19 @@
 sed -i '1s/^/<added text> /' file
 
 # Print a specific line in a file
-sed -n '15p' file.txt
+sed -n '15p' file
 
 # Print from line m to n in a file
-sed -n '3,10p' file.txt
+sed -n '3,10p' file
 
 # delete lines containing str
-sed -i '/foo/d' ./infile
+sed -i '/foo/d' file
+
+# delete a specific line
+sed -i '2d' file
+
+# delete multiple lines
+sed -i '2d;5d;8d' file
 
 # strip ansi colors
 somescript | sed -r "s/[[:cntrl:]]\[[0-9]{1,3}m//g"

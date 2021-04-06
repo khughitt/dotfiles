@@ -1,0 +1,2 @@
+# start qtconsole from notebook
+%qtconsole
