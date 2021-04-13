@@ -1,0 +1,17 @@
+# status info
+curl localhost:5984 | jq
+
+# get a list of all dbs
+curl -X GET http://<user>:<pass>@localhost:5984/_all_dbs
+
+# create db "wiki"
+curl -X PUT http://<user>:<pass>@localhost:5984/wiki
+
+# delete db "wiki"
+curl -X DELETE http://<user>:<pass>@localhost:5984/wiki
+
+# list all docs for "wiki"
+curl -X GET http://<user>:<pass>@localhost:5984/wiki/_all_docs
+
+# get document by id
+curl -X GET http://<user>:<pass>@localhost:5984/<db>/<id>

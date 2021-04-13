@@ -1,3 +1,6 @@
+# ~strict mode
+set -euo pipefail 
+
 # if statement conditional on grep 
 if ! echo $foo | grep -q "not running"; then echo 'yes'; fi
 

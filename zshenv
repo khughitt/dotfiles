@@ -5,7 +5,7 @@ typeset -U PATH path
 export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.gem/ruby/2.7.0/bin:$HOME/go/bin:$HOME/.yarn/bin:$PATH
 
 # environmental variables
-export BROWSER=chromium
+export BROWSER=firefox
 export EDITOR=nvim
 export PAGER=less
 export PDFVIEWER=zathura

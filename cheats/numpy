@@ -1,0 +1,12 @@
+# create NaN matrix
+a = np.empty((3, 3,))
+a.fill(np.nan)
+
+# matrix of zeros
+np.zeros(12).reshape(3, 4)
+
+# stack vector rows
+np.vstack((a, b))
+
+# get indices with non-zero values for both of two vectors
+ind = np.where(np.logical_not((np.vstack((vec1, vec2)) == 0).all(axis=0)))

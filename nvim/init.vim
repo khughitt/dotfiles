@@ -80,6 +80,7 @@ call plug#begin()
     Plug 'kshenoy/vim-signature'
     Plug 'kana/vim-operator-user'
     Plug 'MarcWeber/vim-addon-mw-utils'
+    Plug 'maxmellon/vim-jsx-pretty'
     Plug 'mboughaba/i3config.vim'
     Plug 'mllg/vim-devtools-plugin'
     Plug 'mzlogin/vim-markdown-toc'
@@ -375,8 +376,6 @@ endif
 " unnamed        CLIPBOARD (shift-control v)
 " unnamedplus    PRIMARY   (middlemouse)
 " autoselect    Automatically save visual selections
-"set clipboard=unnamed,autoselect
-"set clipboard=unnamed
 
 " switching to unnamedplus to allow pasting to chromium, etc. in wayland
 set clipboard^=unnamed,unnamedplus
@@ -391,6 +390,15 @@ vmap y y`]
 " paste from primary in normal mode
 noremap <Leader>p "*p
 noremap <Leader>P "*P
+
+" preserve primary buffer on exit
+" https://stackoverflow.com/questions/6453595/prevent-vim-from-clearing-the-clipboard-on-exit
+autocmd VimLeave * call system("xsel -ip", getreg('+'))
+
+" ----------------------------------------------------------------------------
+"  Refresh syntax when saving new files
+" ----------------------------------------------------------------------------
+au BufWritePost * if &syntax == '' | :filetype detect | endif
 
 " ----------------------------------------------------------------------------
 "   Highlight Trailing Whitespace
@@ -455,7 +463,7 @@ set smartcase  " override 'ignorecase' if the search pattern contains upper case
 set isfname-==
 
 " ---------------------------------------------------------------------------
-"  terminal
+"  Terminal
 " ---------------------------------------------------------------------------
 tnoremap <C-h> <C-\><C-n><C-w>h
 tnoremap <C-j> <C-\><C-n><C-w>j
