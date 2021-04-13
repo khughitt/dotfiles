@@ -39,6 +39,14 @@ function gls {
     icat $outfile 
 }
 
+# copy kitty terminfo to conda envs
+function conda_kitty {
+    for x in ~/conda/envs/*/share/terminfo/x; do 
+        echo $x; 
+        cp /usr/share/terminfo/x/xterm-kitty $x;
+    done
+}
+
 #
 # fzf notes
 # 
@@ -117,6 +125,7 @@ function jm {
 # --regex 'conf|init|rc|aliases|exports|functions|mindful\.vim|polybar|private|Renviron|Rprofile|rofi-tasks|\.sh|zshenv' \
 function c {
     target=`fd . "$HOME/.dotfiles" -t f \
+            --no-ignore-vcs \
             --exclude "tpm" --exclude "tmux-*" --exclude "Extracted" --exclude "*.xml" --exclude "*.png" --exclude "*.desktop"`
     target="$target\n$HOME/.dotfiles/nvim/plugged/mindful.vim/syntax/mindful.vim\n$HOME/.dotfiles/nvim/plugged/mindful.vim/after/ftplugin/mindful.vim"
 

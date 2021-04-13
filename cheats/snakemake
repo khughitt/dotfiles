@@ -1,0 +1,2 @@
+# preserve temp wrapper scripts
+snakemake --skip-script-cleanup

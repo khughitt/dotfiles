@@ -4,6 +4,13 @@ Selection
 # get index as an integer
 ind = df.index[df["col"] == val].tolist()[0]
 
+# get upper triangular matrix indices
+ind = np.triu_indices(5)         # incl. diagonal
+ind = np.triu_indices(5, k=1)    # excl. diagonal
+
+# extract values of indices as 1d array
+dat.values[ind]
+
 Iteration
 ---------
 
@@ -30,6 +37,15 @@ Joins
 a.merge(b)
 a.merge(b, on=['foo'])
 
+# rbind
+df = pd.concat([a, b])
+
+# cbind
+df = pd.concat([a, b], axis=1)
+
+# cbind (numpy)
+df = np.concatenate((a,b), axis=1)
+
 Filtering & Masking
 -------------------
 
@@ -42,6 +58,9 @@ df.loc[df['column_name'].isin(some_values)]
 
 # filter columns by name
 dat.loc[:, ~dat.columns.isin(cols_to_remove)]
+
+# ~R's where()
+np.where(dat['foo'] > 1)
 
 # ~R's match()
 B.reset_index().set_index('c').loc[A.c, 'index'].values
@@ -60,3 +79,22 @@ dat.groupby('seed').apply(pd.DataFrame.sort_values, 'tag')
 
 # group by -> count -> max -> sample
 dat.groupby(["path", "seed"]).count().max(axis=1).groupby("path").sample(1)
+
+Matrix operations
+-----------------
+
+# set diagonal to zero
+mat.values[tuple([np.arange(mat.shape[0])] * 2)] = 0
+
+# convert count matrix to a co-occurence matrix
+a.T.dot(a)
+
+Reshaping
+---------
+
+# dataframe -> 1d ndarray
+dat.values.ravel()
+
+# dataframe -> 1d ndarray (upper-triangular matrix only, excluding diagonal)
+ind = np.triu_indices(5, k=1)
+dat.values[ind]

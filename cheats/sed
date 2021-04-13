@@ -18,3 +18,6 @@ sed -i '2d;5d;8d' file
 
 # strip ansi colors
 somescript | sed -r "s/[[:cntrl:]]\[[0-9]{1,3}m//g"
+
+# replace word at end of line
+sed 's/#foo$/bar/' file
