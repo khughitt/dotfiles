@@ -1,3 +1,6 @@
+# add user to existing group
+usermod -a -G docker keith
+
 # Change user name
 killall -u old
 id old
@@ -5,3 +8,4 @@ usermod -l new old
 groupmod -n new old
 usermod -d /home/new -m new
 usermod -c “New Real Name” new
+

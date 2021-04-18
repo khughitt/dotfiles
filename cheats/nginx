@@ -1,0 +1,2 @@
+# stop nginx
+_ nginx -s stop
