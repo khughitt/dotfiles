@@ -1,0 +1,35 @@
+# build an image
+docker build .
+
+# list all images
+docker images
+
+# list containers
+docker ps -a
+
+# run a container
+docker run <name or id>
+
+# open tty in a running container
+docker exec -it <container id> /bin/zsh
+
+# commit changes made to a container
+docker commit -a 'Keith Hughitt' -m 'Initial commit' 
+
+# set name and tag for an image
+docker tag <image id> repo:tag
+
+# list unused containers
+docker container ls -a --filter status=exited --filter status=created 
+
+# remove all stopped containers
+docker container prune 
+
+# launch docker compose & build needed containers
+docker-compose up --build
+
+# stop docker compose & removed orphaned containers
+docker-compose down --remove-orphans
+
+# get the ip addr of a running container
+docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 

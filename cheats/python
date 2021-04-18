@@ -1,3 +1,9 @@
+# flatten nested lists (itertools)
+list(itertools.chain(*regular_list))
+
+# flatten nested lists (sum)
+sum(regular_list, [])
+
 # regex
 \s  whitespace
 \W  non-word character

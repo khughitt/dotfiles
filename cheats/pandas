@@ -80,6 +80,12 @@ dat.groupby('seed').apply(pd.DataFrame.sort_values, 'tag')
 # group by -> count -> max -> sample
 dat.groupby(["path", "seed"]).count().max(axis=1).groupby("path").sample(1)
 
+Counting
+--------
+
+# convert a list to a series of frequencies
+pd.Series(['a', 'a', 'b', 'c']).value_counts()
+
 Matrix operations
 -----------------
 
