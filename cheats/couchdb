@@ -15,3 +15,6 @@ curl -X GET http://<user>:<pass>@localhost:5984/wiki/_all_docs
 
 # get document by id
 curl -X GET http://<user>:<pass>@localhost:5984/<db>/<id>
+
+# get views for a db
+curl -X GET http://<user>:<pass>@localhost:5984/<db>/_design_docs

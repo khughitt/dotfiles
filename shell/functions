@@ -24,6 +24,11 @@ function pg {
     ps -Af | grep $1 | grep -v grep
 }
 
+# docker tty
+function dty {
+    docker exec -it $1 /bin/bash
+}
+
 # glslviewer
 # note: may want to remove --headless option when working more on animated shaders..
 function gls {
@@ -126,7 +131,7 @@ function jm {
 function c {
     target=`fd . "$HOME/.dotfiles" -t f \
             --no-ignore-vcs \
-            --exclude "tpm" --exclude "tmux-*" --exclude "Extracted" --exclude "*.xml" --exclude "*.png" --exclude "*.desktop"`
+            --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" --exclude "*.xml" --exclude "*.png" --exclude "*.desktop"`
     target="$target\n$HOME/.dotfiles/nvim/plugged/mindful.vim/syntax/mindful.vim\n$HOME/.dotfiles/nvim/plugged/mindful.vim/after/ftplugin/mindful.vim"
 
     target=`echo $target |\

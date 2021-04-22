@@ -33,3 +33,6 @@ docker-compose down --remove-orphans
 
 # get the ip addr of a running container
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 
+
+# copy file from inside container to host
+docker cp <container>:from/file.txt to.txt
