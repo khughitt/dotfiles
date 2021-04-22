@@ -51,7 +51,7 @@ font-5 = "NotoEmoji Nerd Font:style=Book"
 
 modules-left = i3 layout_mode
 modules-center = spotify previous playpause next
-modules-right = pulseaudio memory cpu wlan schedule zeit pomobar snakemake-isrunning weather date
+modules-right = pulseaudio memory cpu wlan zeit pomobar snakemake-isrunning weather date
 
 tray-position = right
 tray-padding = 2
@@ -67,11 +67,11 @@ exec = ~/.config/polybar/scripts/snakemake-isrunning.sh
 interval = 15
 format-underline = ${xrdb:color7}
 
-[module/schedule]
-type = custom/script
-exec = ~/d/opt/plan/plan.py
-interval = 60
-format-underline = ${xrdb:color6}
+; [module/schedule]
+; type = custom/script
+; exec = ~/d/opt/plan/plan.py
+; interval = 60
+; format-underline = ${xrdb:color6}
 
 [module/zeit]
 type = custom/script

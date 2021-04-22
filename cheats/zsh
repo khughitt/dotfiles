@@ -26,3 +26,7 @@ ${x:10:999}
 # delete last word
 <c-w>
 <alt-backspace>
+
+# check to see what options are set
+setopt
+unsetopt

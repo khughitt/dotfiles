@@ -13,7 +13,7 @@ if ! echo $tracking | grep -q "not running"; then
     time_spent=`echo ${tracking##* }`
 
     # determine tag color to use
-    color=`mindful --tags | grep --color='never' "#$tag,"`
+    color=`mnd --tags | grep --color='never' "#$tag,"`
     color=`echo ${color##*,}`
 
     # testing...

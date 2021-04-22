@@ -25,6 +25,10 @@ alias lr='ls -latr'
 alias dl='cd ~/downloads'
 alias dots='cd ~/.dotfiles'
 
+# docker
+alias doc='docker'
+alias dps='docker ps -a'
+
 # file management
 alias rmf="rm -rf"
 alias cpr="cp -r"
@@ -72,6 +76,9 @@ alias no="notes -p"
 
 # mount
 alias um="sudo umount /mnt/usb"
+
+# netstat
+alias netp="sudo netstat -plant"
 
 # taskwarrior
 alias tw=taskwarrior-tui
@@ -124,7 +131,7 @@ alias vacuum="sudo journalctl --vacuum-size=50M"
 alias wali='wal --backend haishoku -i'
 
 # package management
-alias yy='yay'
+alias y='yay'
 alias yd='yay -Syu --devel'
 
 # conda
