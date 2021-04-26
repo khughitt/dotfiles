@@ -7,3 +7,7 @@ sum(regular_list, [])
 # regex
 \s  whitespace
 \W  non-word character
+
+# combine dicts
+{**x, **y}
+x | y # python 3.9

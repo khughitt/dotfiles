@@ -1181,8 +1181,9 @@ endif
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType html,css,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd FileType html,css,javascript,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.py set autoindent
+autocmd BufRead,BufNewFile *.har set ft=json
 
 " nvim-ipy
 let g:nvim_ipy_perform_mappings = 0
@@ -1196,7 +1197,8 @@ let g:quantum_black=1
 let g:quantum_italics=1
 
 "colorscheme palenight
-colorscheme pencil
+"colorscheme pencil
+colorscheme quantum
 
 " terminal color scheme
 " https://github.com/metalelf0/oceanic-next
