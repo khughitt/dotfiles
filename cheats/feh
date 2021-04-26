@@ -1,0 +1,2 @@
+# browse images in a folder
+feh -g 640x480 -d -S filename /path/to/directory
