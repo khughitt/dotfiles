@@ -32,6 +32,9 @@ export CHEAT_USE_FZF=true
 # https://changes.ankiweb.net/#/known-issues
 export ANKI_NOHIGHDPI=1
 
+# sdcv dicts
+export STARDICT_DATA_DIR="$HOME/d/chinese/dict"
+
 # android sdk
 export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
 
