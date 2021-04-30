@@ -169,6 +169,13 @@ function fehd {
     feh –start-at $1
 }
 
+# translate 
+function tt {
+    sdcv -c $1
+    echo "------------------------\n"
+    trans zh-TW:en $1
+}
+
 #
 # checks for some specified gene identifier in several different reference annotations
 # and mapping
