@@ -31,6 +31,12 @@ docker-compose up --build
 # stop docker compose & removed orphaned containers
 docker-compose down --remove-orphans
 
+# run a single container with docker compose
+docker-compose run <id>
+
+# stop a single container with docker compose
+docker-compose rm -sv <service>
+
 # get the ip addr of a running container
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 
 

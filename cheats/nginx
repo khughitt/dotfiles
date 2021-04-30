@@ -1,2 +1,10 @@
 # stop nginx
 _ nginx -s stop
+
+# location matching
+~    # case sensitive regex match
+~*   # case insensitive regex match
+
+# directives
+try_files a b .. =404   # checks for existence of files in specified order; 
+                        # last parameter can be "code" (in this case, "=404")
