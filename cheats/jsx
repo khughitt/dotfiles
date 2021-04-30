@@ -1,8 +1,9 @@
-// adding class and style attributes to elements
-// https://reactjs.org/docs/faq-styling.html
-render() {
-  return <span className="menu navigation-menu">Menu</span>
-}
+// embedding js expressions in jsx
+const name = 'foo'
+const elem = <h1>{name}</h1>
+
+// specifying attributes
+const elem = <span className="menu nav">Menu</span>
 
 // dynamic class
 render() {
@@ -13,7 +14,7 @@ render() {
   return <span className={className}>Menu</span>
 }
 
-// style attrs
+// dynamic style attrs
 const divStyle = {
   color: 'blue',
   backgroundImage: 'url(' + imgUrl + ')',
@@ -22,4 +23,3 @@ const divStyle = {
 function HelloWorldComponent() {
   return <div style={divStyle}>Hello World!</div>;
 }
-

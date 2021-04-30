@@ -5,7 +5,9 @@ vy
 # see also: https://vim.fandom.com/wiki/Xterm256_color_names_for_console_Vim
 :so $VIMRUNTIME/syntax/hitest.vim
 
+# print hex for a single hilite group
+:hi Normal
+
 # match "b" in abc
 syn match TestMatch /b\(c\)\@=\&\(a\)\@<=b/
-
 
