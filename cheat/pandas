@@ -30,6 +30,15 @@ pd.DataFrame.from_dict(d)
 # dict of rows
 pd.DataFrame.from_dict(d, orient='index')
 
+# fix column types after creating from dicts, etc.
+df = df.astype({"access_count": int, "date_created": "datetime64[ns]"})
+
+Dates
+-----
+
+# convert date column to unix timestamps
+df.datetime.values.astype(np.int64) // 10 ** 9
+
 To Dict
 -------
 
@@ -43,6 +52,9 @@ Joins
 a.merge(b)
 a.merge(b, on=['foo'])
 
+# join on index
+a.join(b)
+
 # rbind
 df = pd.concat([a, b])
 
@@ -52,12 +64,21 @@ df = pd.concat([a, b], axis=1)
 # cbind (numpy)
 df = np.concatenate((a,b), axis=1)
 
+Adding & Removing Rows/Cols
+---------------------------
+
+df.insert(0, "foo", [0, 1, 2])
+df.insert(0, "foo", [0, 1, 2], allow_duplicates = True)
+
 Filtering & Masking
 -------------------
 
 # membership
 x.isin([..])    # is in 
 ~x.isin([..])   # not in
+
+# find indices present in one dataframe but not another
+a.index[~a.index.isin(b.index)]
 
 # filter rows by column value membership
 df.loc[df['column_name'].isin(some_values)]
@@ -116,3 +137,11 @@ dat.values.ravel()
 # dataframe -> 1d ndarray (upper-triangular matrix only, excluding diagonal)
 ind = np.triu_indices(5, k=1)
 dat.values[ind]
+
+Plotting
+--------
+
+# density plot for column "score"
+import matplotlib.pyplot as plt
+ax = dat.score.plot.kde()
+plt.show()

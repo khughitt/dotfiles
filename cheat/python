@@ -11,3 +11,7 @@ sum(regular_list, [])
 # combine dicts
 {**x, **y}
 x | y # python 3.9
+
+# get current timestamp
+import time
+ts = time.time()
