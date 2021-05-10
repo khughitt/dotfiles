@@ -1,0 +1,2 @@
+# remove a package but not its dependencies
+pacman -Rdd

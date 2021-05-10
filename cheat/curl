@@ -1,0 +1,8 @@
+# use remote filename 
+curl -O url 
+
+# follow redirects
+curl -L url
+
+# resume download
+curl -C - url
