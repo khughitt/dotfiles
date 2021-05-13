@@ -1,2 +1,8 @@
+# get info on a package
+pacman -Si
+
 # remove a package but not its dependencies
 pacman -Rdd
+
+# view dependency tree of a package
+pactree

@@ -16,15 +16,14 @@ set $up k
 set $right l
 
 # Your preferred terminal emulator
-set $term termite
+set $term kitty
 
 # Your preferred application launcher
 set $menu rofi -show drun
 
-# rofi-notes
-bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/scripts/rofi-notes.sh"
-
-# rofi-tasks
+# rofi custom launchers
+#bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/scripts/rofi-notes.sh"
+bindsym $mod+m exec --no-startup-id rofi -show mindmaps -modi "mindmaps:~/.dotfiles/rofi/scripts/rofi-mindmaps.sh"
 bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/rofi/scripts/rofi-tasks.sh"
 
 #-------------------------------------------------------------------------------
@@ -35,7 +34,7 @@ bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/ro
 #exec_always feh --bg-scale ~/d/linux/backgrounds/nature/Milford_Sound_NZ.jpg
 
 # font
-font pango:Droid Sans Mono 11
+font pango:Droid Sans Mono 12
 
 # window borders
 for_window [class=".*"] border pixel 1
@@ -108,16 +107,16 @@ client.background       $bg
 #
 
 # terminal (pre-loaded in background)
-exec_always --no-startup-id termite --name=i3term
+exec_always --no-startup-id kitty --name=i3term
 for_window[instance="i3term"] move scratchpad
 
 bindsym $mod+Return \
-    exec --no-startup-id termite --name=i3term;\
+    exec --no-startup-id kitty --name=i3term;\
     [instance="i3term"] scratchpad show;\
     floating toggle
 
 # file browser
-#bindsym $mod+n exec termite -e ranger
+#bindsym $mod+n exec kitty nnn
 
 # kill focused window
 bindsym $mod+q kill
@@ -193,7 +192,7 @@ bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
 # move workspace to different monitor
-bindsym $mod+m move workspace to output left
+#bindsym $mod+m move workspace to output left
 
 # rename workspace
 bindsym $mod+r exec "python ~/bin/renameworkspace.py"
@@ -267,7 +266,9 @@ bindsym $mod+v splitv
 # Switch the current container between different layout styles
 bindsym $mod+s layout stacking
 bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
+bindsym $mod+e layout toggle splitv stacking
+
+#bindsym $mod+e layout toggle split
 
 # Make the current focus fullscreen
 bindsym $mod+f fullscreen
@@ -314,74 +315,76 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 # Scratchpads
 #-------------------------------------------------------------------------------
 
+
 set $scratch_width 1536
 set $scratch_height 864
-set $scratch_x1 192
-set $scratch_y1 108
 
 #-- terminal --#
-exec_always --no-startup-id termite --name=termite_scratch
-for_window[instance="termite_scratch"] move scratchpad
+exec_always --no-startup-id kitty --name=kitty_scratch
+for_window[instance="kitty_scratch"] move scratchpad
 
 bindsym Mod1+Return \
-    [instance="go_scratch|python_scratch|r_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
-    [instance="termite_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1;
-
-#-- go console --#
-exec_always --no-startup-id termite -e "gore" --name=go_scratch
-for_window[instance="go_scratch"] move scratchpad
-
-bindsym Mod1+g \
-    [instance="r_scratch|python_scratch|termite_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
-    [instance="go_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+    [instance="go_scratch|python_scratch|r_scratch|julia_scratch|mindful_scratch|qutebrowser"] move scratchpad; \
+    [instance="kitty_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
 
 #-- r console --#
-# exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch
-exec_always --no-startup-id termite -e "radian" --name=r_scratch
+exec_always --no-startup-id kitty --name=r_scratch radian
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
-    [instance="go_scratch|python_scratch|termite_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
-    [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+    [instance="go_scratch|python_scratch|kitty_scratch|julia_scratch|mindful_scratch|qutebrowser"] move scratchpad; \
+    [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
 
 #-- python console --#
-exec_always --no-startup-id termite -e ipython --name=python_scratch
+exec_always --no-startup-id kitty --name=python_scratch ipython
 for_window[instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
-    [instance="r_scratch|go_scratch|termite_scratch|tasks_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
-    [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+    [instance="r_scratch|go_scratch|kitty_scratch|julia_scratch|mindful_scratch|qutebrowser"] move scratchpad; \
+    [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
 
 #-- julia console --#
-exec_always --no-startup-id termite -e julia --name=julia_scratch
+exec_always --no-startup-id kitty --name=julia_scratch julia
 for_window[instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
-    [instance="go_scratch|r_scratch|python_sratch|tasks_scratch|termite_scratch|mindful_scratch"] move scratchpad; \
-    [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
-
-#-- tasks --#
-exec_always --no-startup-id termite -e "nvim ~/d/notes/personal/organization/organization-tasks.md" --name=tasks_scratch
-for_window[instance="tasks_scratch"] move scratchpad
-
-bindsym Mod1+t \
-    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|termite_scratch|mindful_scratch"] move scratchpad; \
-    [instance="tasks_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+    [instance="go_scratch|r_scratch|python_sratch|kitty_scratch|mindful_scratch|qutebrowser"] move scratchpad; \
+    [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
 
 #-- mindful --#
-exec_always --no-startup-id termite -e "nvim ~/d/s/$HSTNAME" --name=mindful_scratch
+exec_always --no-startup-id kitty --name=mindful_scratch nvim +'colorscheme neodark' ~/d/s/$HSTNAME.mnd
 for_window[instance="mindful_scratch"] move scratchpad
 
 bindsym Mod1+m \
-    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|termite_scratch|tasks_scratch"] move scratchpad; \
-    [instance="mindful_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|kitty_scratch|qutebrowser"] move scratchpad; \
+    [instance="mindful_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
+
+#-- qutebrowser (dashboard) --#
+set $dashboard_width 2880
+set $dashboard_height 1620
+
+exec_always --no-startup-id qutebrowser
+for_window[instance="qutebrowser"] move scratchpad
+
+bindsym Mod1+d \
+    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|kitty_scratch|mindful_scratch"] move scratchpad; \
+    [instance="qutebrowser"] scratchpad show, resize set $dashboard_width $dashboard_height, \
+    move absolute position center;
+
+#-- go console --#
+# exec_always --no-startup-id kitty --name=go_scratch gore
+# for_window[instance="go_scratch"] move scratchpad
+#
+# bindsym Mod1+g \
+#     [instance="r_scratch|python_scratch|kitty_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
+#     [instance="go_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
+#     move position $scratch_x1 $scratch_y1
+
 
 #
 # Resizing containers:
@@ -413,9 +416,9 @@ exec --no-startup-id "killall blackd; blackd"
 exec_always --no-startup-id "killall picom; picom -b"
 exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
 exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
-exec --no-startup-id "$HOME/.config/polybar/scripts/spotify/py_spotify_listener.py"
+exec --no-startup-id "~/.config/polybar/scripts/spotify/py_spotify_listener.py"
 exec --no-startup-id "fcitx -d"
-#exec --no-startup-id "cadence-session-start --system-start"
-#exec --no-startup-id "cadence --minimized"
+exec --no-startup-id "/mnt/storage/conda/envs/dashboard/bin/python ~/d/sen/dashboard/app.py"
+#exec --no-startup-id "$HOME/bin/xmodmap-on-input-change.sh"
 #exec --no-startup-id "XDG_CURRENT_DESKTOP=GNOME syncthing-gtk -m"
 

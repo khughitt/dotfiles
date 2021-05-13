@@ -131,8 +131,10 @@ function jm {
 function c {
     target=`fd . "$HOME/.dotfiles" -t f \
             --no-ignore-vcs \
-            --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" --exclude "*.xml" --exclude "*.png" --exclude "*.desktop"`
-    target="$target\n$HOME/.dotfiles/nvim/plugged/mindful.vim/syntax/mindful.vim\n$HOME/.dotfiles/nvim/plugged/mindful.vim/after/ftplugin/mindful.vim"
+            --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" \
+            --exclude "*.xml" --exclude "*.png" --exclude "*.desktop" \
+            --exclude "plugged" --exclude "black"`
+    #target="$target\n$HOME/.dotfiles/nvim/plugged/mindful.vim/syntax/mindful.vim\n$HOME/.dotfiles/nvim/plugged/mindful.vim/after/ftplugin/mindful.vim"
 
     target=`echo $target |\
             grep --color='none' "$1" |\

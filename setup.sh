@@ -92,6 +92,10 @@ fi
 # wal colorscheme
 ln_s ${DOTS_HOME}/wal/colorschemes ${XDG_CONFIG_HOME}/wal/colorschemes
 
+# cheats
+mkdir -p ${XDG_CONFIG_HOME}/cheat/cheatsheets
+ln -s ${DOTS_HOME}/cheat/ ${XDG_CONFIG_HOME}/cheat/cheatsheets/personal
+
 # to install pywal alt color algorithms:
 # pip install --user colorz haishoku colorthief
 
