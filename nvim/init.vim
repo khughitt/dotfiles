@@ -59,8 +59,9 @@ call plug#begin()
     Plug 'bioSyntax/bioSyntax-vim'
     Plug 'ibab/vim-snakemake'
     Plug 'chrisbra/csv.vim'
-    Plug 'dylanaraps/wal.vim'
     Plug 'drzel/vim-line-no-indicator'
+    Plug 'dstein64/nvim-scrollview', { 'branch': 'main' }
+    Plug 'dylanaraps/wal.vim'
     Plug 'editorconfig/editorconfig-vim'
     Plug 'embark-theme/vim', { 'as': 'embark' }
     Plug 'ervandew/supertab'
@@ -93,7 +94,6 @@ call plug#begin()
     Plug 'romgrk/barbar.nvim'
     Plug 'Shougo/neomru.vim'
     Plug 'scrooloose/nerdcommenter'
-    Plug 'sslivkoff/vim-scroll-barnacle'
     Plug 'stephpy/vim-yaml'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
@@ -120,7 +120,6 @@ call plug#begin()
     Plug 'ayu-theme/ayu-vim'
     Plug 'challenger-deep-theme/vim'
     Plug 'cocopon/iceberg.vim'
-    Plug 'co1ncidence/mountaineer.vim'
     Plug 'cseelus/vim-colors-lucid'
     Plug 'cseelus/vim-colors-tone'
     Plug 'danilo-augusto/vim-afterglow'
