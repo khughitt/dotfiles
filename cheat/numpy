@@ -10,3 +10,6 @@ np.vstack((a, b))
 
 # get indices with non-zero values for both of two vectors
 ind = np.where(np.logical_not((np.vstack((vec1, vec2)) == 0).all(axis=0)))
+
+# sample n values from an array
+np.random.choice(arr, 3)

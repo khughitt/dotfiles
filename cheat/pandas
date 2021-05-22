@@ -70,6 +70,8 @@ Adding & Removing Rows/Cols
 df.insert(0, "foo", [0, 1, 2])
 df.insert(0, "foo", [0, 1, 2], allow_duplicates = True)
 
+df['foo'] = 1
+
 Filtering & Masking
 -------------------
 
@@ -95,11 +97,30 @@ B.reset_index().set_index('c').loc[A.c, 'index'].values
 # endswith
 x[x.foo.str.endswith('bar')]
 
+# find indices of string in column
+df.foo.str.find('bar')
+
+# return boolean series indicating regex presence in column
+df.foo.str.find('bar|baz')
+df.foo.str.find('bar|baz', na=False)  # ignore missing vals in column
+
+# multiple conditions (wrap each in parens)
+x[(x.foo > 3) & (x.bar < 10)]
+
 Min/Max
 -------
 
 # get indices of column with max value for each row
 df.idxmax(axis=1)
+
+Sort
+----
+
+# sort by column
+dat.sort_values('foo')
+
+# sort by column (descending)
+dat.sort_values('foo', ascending=False)
 
 Grouping / Summarization
 ------------------------
@@ -107,11 +128,17 @@ Grouping / Summarization
 # group by -> sum
 dat.groupby('tag').agg(sum)
 
+# group by -> count
+dat.groupby('tag').agg('count')
+
 # group by -> sort
 dat.groupby('seed').apply(pd.DataFrame.sort_values, 'tag')
 
 # group by -> count -> max -> sample
 dat.groupby(["path", "seed"]).count().max(axis=1).groupby("path").sample(1)
+
+# get first item from each group
+df.groupby('foo').first()
 
 Counting
 --------
@@ -137,6 +164,10 @@ dat.values.ravel()
 # dataframe -> 1d ndarray (upper-triangular matrix only, excluding diagonal)
 ind = np.triu_indices(5, k=1)
 dat.values[ind]
+
+# pivot long -> wide
+df.pivot_table(index='patient', columns='obs', values='score', fill_value=0)
+#df.pivot(index='patient', columns='obs', values='score')
 
 Plotting
 --------
