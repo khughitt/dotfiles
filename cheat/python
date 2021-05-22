@@ -15,3 +15,9 @@ x | y # python 3.9
 # get current timestamp
 import time
 ts = time.time()
+
+# load yaml
+import yaml
+
+with open('cfg.yml') as fp:
+    cfg = yaml.load(fp, Loader=yaml.FullLoader)
