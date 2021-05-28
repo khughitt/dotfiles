@@ -158,7 +158,7 @@ function C {
 
 # vim + ag
 function va {
-    nvim $(ag -l $1)
+    $EDITOR $(ag -l $1)
 }
 
 # zcat | wc -l
