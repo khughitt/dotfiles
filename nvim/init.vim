@@ -87,6 +87,7 @@ call plug#begin()
     Plug 'mzlogin/vim-markdown-toc'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
+    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
     Plug 'pangloss/vim-javascript'
     Plug 'psf/black', { 'branch': 'stable' }
     Plug 'raimon49/requirements.txt.vim'
@@ -867,6 +868,20 @@ let g:NERDCustomDelimiters = {
 " vmap <space> <leader>c<space>
 
 " ---------------------------------------------------------------------------
+"  treesitter.nvim
+" ---------------------------------------------------------------------------
+lua <<EOF
+require'nvim-treesitter.configs'.setup {
+  ensure_installed = "maintained",
+  ignore_install = {  },
+  highlight = {
+    enable = true,
+    disable = { 'rmd' },
+  },
+}
+EOF
+
+" ---------------------------------------------------------------------------
 "  vim-markdown
 " ---------------------------------------------------------------------------
 let g:vim_markdown_folding_disabled = 1
@@ -1225,4 +1240,3 @@ syntax on
 hi ColorColumn ctermbg=234 guibg=#222222
 hi MatchParen cterm=bold ctermbg=none ctermfg=red
 hi Conceal guibg=background guifg=foreground
-

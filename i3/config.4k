@@ -417,7 +417,7 @@ exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
 exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
 exec --no-startup-id "~/.config/polybar/scripts/spotify/py_spotify_listener.py"
 exec --no-startup-id "fcitx -d"
-exec --no-startup-id "/mnt/storage/conda/envs/dashboard/bin/python ~/d/sen/dashboard/app.py"
+#exec --no-startup-id "/mnt/storage/conda/envs/dashboard/bin/python ~/d/sen/dashboard/app.py"
 #exec --no-startup-id "$HOME/bin/xmodmap-on-input-change.sh"
 #exec --no-startup-id "XDG_CURRENT_DESKTOP=GNOME syncthing-gtk -m"
 
