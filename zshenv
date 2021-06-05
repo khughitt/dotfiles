@@ -2,7 +2,7 @@
 # note: 'typeset -U' specifies that only the first occurence of any duplicates should be
 #        kept in an array variable.
 typeset -U PATH path
-export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.gem/ruby/2.7.0/bin:$HOME/go/bin:$HOME/.yarn/bin:$PATH
+export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.local/share/gem/ruby/3.0.0/bin:$HOME/go/bin:$HOME/.yarn/bin:$PATH
 
 # environmental variables
 export BROWSER=firefox
