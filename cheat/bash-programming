@@ -1,6 +1,9 @@
 # ~strict mode
 set -euo pipefail 
 
+# redirect stderr to stdout
+cmd 2>&1
+
 # if statement conditional on grep 
 if ! echo $foo | grep -q "not running"; then echo 'yes'; fi
 

@@ -21,10 +21,10 @@ Xft.rgba:      rgb
 !
 ! 4k resolution
 !
-#ifdef SRVR_titan
-    Xft.dpi: 144
-    Xcursor.size: 48
-#endif
+!#ifdef SRVR_titan
+!    Xft.dpi: 144
+!    Xcursor.size: 48
+!#endif
 
 !
 ! Xterm

@@ -18,7 +18,7 @@ dvi1=`echo "$xrandrq" | awk '/^DVI-D-1/ {print $2}'`
 hdmi0=`echo "$xrandrq" | awk '/^HDMI-?0/ {print $2}'`
 hdmi1=`echo "$xrandrq" | awk '/^HDMI-?1/ {print $2}'`
 
-# titan
+# large cursor
 if [ "$HOSTNAME" = "titan" ]; then
     xsetroot -xcf /usr/share/icons/whiteglass/cursors/left_ptr 64
 fi 
