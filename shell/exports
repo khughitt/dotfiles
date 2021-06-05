@@ -11,6 +11,9 @@ fi
 export NOTES="$HOME/notes"
 export FONTCONFIG_PATH=/etc/fonts
 
+# hostname
+export HOSTNAME=`hostname`
+
 # go
 export GOPATH="$HOME/go"
 
