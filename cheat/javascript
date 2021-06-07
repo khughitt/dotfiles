@@ -4,3 +4,7 @@ array1.map(x => x * 2);
 
 # find minimum value of an array of numbers
 Math.min(...arr)
+
+# equality
+a === b  # strict equality (type + value)
+a == b   # loose equality (performs type coercion)
