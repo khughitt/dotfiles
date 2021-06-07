@@ -5,6 +5,12 @@ git push -f               # pushes previous commit
 # reset to a specific commit
 git reset <commit>
 
+# search history for a specific string
+git log -S password
+
+# update submodules
+git pull --recurse-submodules
+
 # Testing out someone else's fork
 git remote add wafels https://github.com/wafels/sunpy.git
 git fetch wafels
