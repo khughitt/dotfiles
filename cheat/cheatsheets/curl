@@ -1,0 +1,20 @@
+# use remote filename 
+curl -O url 
+
+# follow redirects
+curl -L url
+
+# resume download
+curl -C - url
+
+# send a request with headers specified in a file
+curl -H @headers.txt http://localhost:5984/_session
+
+# headers.txt
+GET /_session HTTP/1.1
+Host: localhost:5984
+Accept: application/json
+Content-Type: application/json; charset=utf-8
+X-Auth-CouchDB-Roles: users,blogger
+X-Auth-CouchDB-UserName: foo
+X-Auth-CouchDB-Token: 22047ebd7c4ec67dfbcbad7213a693249dbfbf86

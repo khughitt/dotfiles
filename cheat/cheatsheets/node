@@ -1,0 +1,15 @@
+#
+# Add EC6 support to a project via babel
+#
+npm install --save-dev @babel/core @babel/cli @babel/preset-env 
+
+# modify package.json
+"scripts": {
+    "babel": "./node_modules/.bin/babel",
+    "babel-node": "./node_modules/.bin/babel-node"
+}
+
+# .babelrc
+{
+  "presets" : [ "@babel/env" ]
+}

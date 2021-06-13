@@ -25,6 +25,9 @@ alias lr='ls -latr'
 alias dl='cd ~/downloads'
 alias dots='cd ~/.dotfiles'
 
+# cheat
+alias ch=cheat
+
 # docker
 alias doc='docker'
 alias dps='docker ps -a'
