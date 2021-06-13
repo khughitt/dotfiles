@@ -56,7 +56,7 @@ ln_s ${DOTS_HOME}/gtk-3.0/settings.ini ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 ln_s ${DOTS_HOME}/gtk-3.0/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 
 # ~/.config/xx
-for path in "dunst" "fcitx" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
+for path in "cheat" "dunst" "fcitx" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
             "labnote" "lsd" "polybar" "powerline" "ranger" "snakemake" \
             "picom.conf" "sway" "termcolors" "termite" "zathura" "zeit"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
@@ -91,10 +91,6 @@ fi
 
 # wal colorscheme
 ln_s ${DOTS_HOME}/wal/colorschemes ${XDG_CONFIG_HOME}/wal/colorschemes
-
-# cheats
-mkdir -p ${XDG_CONFIG_HOME}/cheat/cheatsheets
-ln -s ${DOTS_HOME}/cheat/ ${XDG_CONFIG_HOME}/cheat/cheatsheets/personal
 
 # to install pywal alt color algorithms:
 # pip install --user colorz haishoku colorthief

@@ -1,0 +1,5 @@
+# initialize a project
+yarn init
+
+# add global
+yarn global add

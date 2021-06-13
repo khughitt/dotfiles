@@ -128,7 +128,7 @@ function jm {
 
 # fzf confs
 # --regex 'conf|init|rc|aliases|exports|functions|mindful\.vim|polybar|private|Renviron|Rprofile|rofi-tasks|\.sh|zshenv' \
-function c {
+function C {
     target=`fd . "$HOME/.dotfiles" -t f \
             --no-ignore-vcs \
             --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" \
@@ -146,7 +146,7 @@ function c {
 }
 
 # cheatsheets
-function C {
+function c {
     target=`ls ~/.config/cheat/cheatsheets/personal/ |\
             grep --color='none' "$1" |\
             fzf -1 --exact`

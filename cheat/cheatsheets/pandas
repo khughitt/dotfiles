@@ -79,6 +79,9 @@ Filtering & Masking
 x.isin([..])    # is in 
 ~x.isin([..])   # not in
 
+# get values in list that are present in columns of a dataframe
+set(a).intersection(df.columns)
+
 # find indices present in one dataframe but not another
 a.index[~a.index.isin(b.index)]
 

@@ -1195,7 +1195,7 @@ endif
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType html,css,javascript,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd FileType html,css,javascript,javascriptreact,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.py set autoindent
 autocmd BufRead,BufNewFile *.har set ft=json
 
