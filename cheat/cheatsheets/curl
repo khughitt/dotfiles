@@ -7,10 +7,15 @@ curl -L url
 # resume download
 curl -C - url
 
+# send json from file
+curl -d @file.json url
+
+#
 # send a request with headers specified in a file
+# 
 curl -H @headers.txt http://localhost:5984/_session
 
-# headers.txt
+# <headers.txt>
 GET /_session HTTP/1.1
 Host: localhost:5984
 Accept: application/json

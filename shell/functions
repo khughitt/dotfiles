@@ -147,12 +147,12 @@ function C {
 
 # cheatsheets
 function c {
-    target=`ls ~/.config/cheat/cheatsheets/personal/ |\
+    target=`ls ~/.config/cheat/cheatsheets/ |\
             grep --color='none' "$1" |\
             fzf -1 --exact`
 
     if [ ! -z "$target" ]; then
-        vim ~/.config/cheat/cheatsheets/personal/$target
+        vim ~/.config/cheat/cheatsheets/$target
     fi
 }
 

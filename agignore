@@ -6,3 +6,8 @@
 *.svg
 *.RData
 *.mm
+*.html
+*.min.css
+*.map
+*.ipynb
+node_modules/

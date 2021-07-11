@@ -1,0 +1,24 @@
+# PCA
+prcomp(t(dat), scale = TRUE)
+
+pca_dat <- pca$x[, 1:2]
+colnames(pca_dat) <- c("PC1", "PC2")
+
+# compute variance explained
+var_explained <- round(summary(pca)$importance[2, 1:2] * 100, 2)
+
+# add labels and plot
+pca_dat <- pca_dat %>%
+  as.data.frame() %>%
+  rownames_to_column('row_label')
+
+plt <- ggplot(pca_dat, aes(x = PC1, y = PC2)) +
+  geom_point() +
+  xlab(sprintf("PC1 (%.2f%% variance)", var_explained[1])) +
+  ylab(sprintf("PC2 (%.2f%% variance)", var_explained[2]))
+
+# UMAP
+library(uwot)
+umap(t(dat), n_neighbors = 15, n_components = 2, init = 'spectral', scale = FALSE,
+     min_dist = 0.01)
+

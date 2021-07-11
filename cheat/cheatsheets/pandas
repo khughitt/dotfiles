@@ -33,6 +33,9 @@ pd.DataFrame.from_dict(d, orient='index')
 # fix column types after creating from dicts, etc.
 df = df.astype({"access_count": int, "date_created": "datetime64[ns]"})
 
+# dataframe of random uniform values
+df = pd.DataFrame(np.random.rand(3, 4))
+
 Dates
 -----
 

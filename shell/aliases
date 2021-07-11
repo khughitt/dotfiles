@@ -31,6 +31,9 @@ alias ch=cheat
 # docker
 alias doc='docker'
 alias dps='docker ps -a'
+alias up='docker-compose up --build'
+alias down='docker-compose down --remove-orphans'
+alias docl='docker logs -f'
 
 # file management
 alias rmf="rm -rf"
