@@ -3,18 +3,32 @@
 # rofi tasks launcher
 # kh (jan 2021)
 #
-tasks=(bayes dsp gene-sets shaders)
+tasks=(abstract-algebra bayes complexity dsp gene-sets shaders)
 
 if [ -z $@ ]; then
     print -l "${tasks[@]}"
 else
-    if [ "$@" = "bayes" ]; then
+    if [ "$@" = "abstract-algebra" ]; then
+        # intro to complexity course
+        i3empty.py next 1 > /dev/null
+        i3-msg layout splith > /dev/null
+
+        coproc termite -d $NOTES/knowledge/courses/visual-group-theory -e "nvim README.md" > /dev/null
+        coproc chromium https://www.youtube.com/watch?v=UwTQdOop-nU > /dev/null
+    elif [ "$@" = "bayes" ]; then
         # rethinking statistics
         i3empty.py next 1 > /dev/null
         i3-msg layout splith > /dev/null
 
         coproc zathura ~/d/books/statisticalrethinking2.pdf > /dev/null
         coproc termite -d $NOTES/knowledge/courses/statistical-rethinking -e "nvim README.md" > /dev/null
+    elif [ "$@" = "complexity" ]; then
+        # intro to complexity course
+        i3empty.py next 1 > /dev/null
+        i3-msg layout splith > /dev/null
+
+        coproc termite -d $NOTES/knowledge/courses/intro-to-complexity -e "nvim README.md" > /dev/null
+        coproc chromium https://www.complexityexplorer.org/courses/119-introduction-to-complexity/segments/11742?summary > /dev/null
     elif [ "$@" = "shaders" ]; then
         # shaders practice
         i3empty.py next 1 > /dev/null

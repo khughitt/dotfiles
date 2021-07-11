@@ -6,3 +6,6 @@ pacman -Rdd
 
 # view dependency tree of a package
 pactree
+
+# list installed packages
+pacman -Qe

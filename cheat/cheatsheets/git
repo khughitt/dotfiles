@@ -2,14 +2,26 @@
 git reset --soft "HEAD^"  # undos local commit
 git push -f               # pushes previous commit
 
+# Undo delete file (uncommitted)
+git checkout HEAD <file>
+
 # reset to a specific commit
 git reset <commit>
 
 # search history for a specific string
 git log -S password
 
+# initialize submodules
+git submodule update --init --recursive
+
 # update submodules
 git pull --recurse-submodules
+
+# list all branches
+git branch -a
+
+# fetch all remote branches
+git fetch --all
 
 # Testing out someone else's fork
 git remote add wafels https://github.com/wafels/sunpy.git
@@ -29,5 +41,18 @@ bfg --delete-files YOUR-FILE-WITH-SENSITIVE-DATA
 git reflog expire --expire=now --all && git gc --prune=now --aggressive
 git push --force
 
+# remove a single file without deleting it
+git rm --cached <file>
+
+# remove a directory without deleting it
+git rm --cached -r <dir>
+
 # search history for a deleted file
 git log --all --full-history -- "**/thefile.*"
+
+# rename "master" -> "main" (assuming branch has been renamed on github..)
+git branch -m master main
+git fetch origin
+git branch -u origin/main main 
+git remote set-head origin -a
+git remote prune origin

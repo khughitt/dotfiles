@@ -89,7 +89,7 @@ call plug#begin()
     Plug 'ncm2/float-preview.nvim'
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
     Plug 'pangloss/vim-javascript'
-    Plug 'psf/black', { 'branch': 'stable' }
+    Plug 'psf/black', { 'branch': 'stable', 'for': 'python' }
     Plug 'raimon49/requirements.txt.vim'
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
     Plug 'romgrk/barbar.nvim'
@@ -1195,7 +1195,7 @@ endif
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType html,css,javascript,javascriptreact,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd FileType html,css,javascript,javascriptreact,json,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
 autocmd BufRead,BufNewFile *.py set autoindent
 autocmd BufRead,BufNewFile *.har set ft=json
 

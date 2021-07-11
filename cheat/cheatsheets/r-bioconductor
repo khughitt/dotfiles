@@ -1,0 +1,28 @@
+#
+# org.Hs.eg.db
+#
+
+# genes -> cytogenetic bands
+AnnotationDbi::select(org.Hs.eg.db, columns=c('MAP'), keys='KIF14', keytype='SYMBOL')
+
+#
+# biomaRt
+#
+
+# setup
+library("biomaRt")
+mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+
+# info
+listDatasets(mart)
+listAttributes(mart)
+
+x <- listAttributes(mart)
+x[grepl("go_", x$name),]
+
+# go terms
+library(GO.db)
+
+res <- getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "go_id"), 
+             filters = "hgnc_symbol", values = "KIF14", mart = mart)
+AnnotationDbi::select(GO.db, keys=res$go_id, columns=c("TERM"))

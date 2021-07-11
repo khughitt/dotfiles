@@ -4,6 +4,9 @@ list(itertools.chain(*regular_list))
 # flatten nested lists (sum)
 sum(regular_list, [])
 
+# start a web server
+python3 -m http.server 7800
+
 # regex
 \s  whitespace
 \W  non-word character
@@ -21,3 +24,10 @@ import yaml
 
 with open('cfg.yml') as fp:
     cfg = yaml.load(fp, Loader=yaml.FullLoader)
+
+# from json
+x =  '{"foo": "bar"}'
+json.loads(x)
+
+# to json
+json.dumps({'foo': 'bar'})
