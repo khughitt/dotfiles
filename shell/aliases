@@ -8,6 +8,9 @@
 alias _='sudo'
 alias sudo="sudo " # support aliases when using sudo
 
+# ag
+alias agl='ag -l'
+
 # ls
 if type "lsd" > /dev/null; then
     alias ls='lsd --group-dirs=first'
@@ -30,7 +33,7 @@ alias ch=cheat
 
 # docker
 alias doc='docker'
-alias dps='docker ps -a'
+alias dps='docker ps -a --format="table {{.ID}}\t\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
 alias up='docker-compose up --build'
 alias down='docker-compose down --remove-orphans'
 alias docl='docker logs -f'
@@ -60,6 +63,9 @@ alias dus='du -sh'
 
 # recursively counts # files in directories and returns a ranked list
 alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
+
+# locate
+alias locate=plocate
 
 # fd
 alias fda="fd -Luu"

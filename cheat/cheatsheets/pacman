@@ -9,3 +9,7 @@ pactree
 
 # list installed packages
 pacman -Qe
+
+# find out who owns a file
+pacman -Qo <file>
+pkgfile <file>

@@ -1,6 +1,9 @@
 # ~strict mode
 set -euo pipefail 
 
+# string equality
+[ "$a" = "$b" ]
+
 # redirect stderr to stdout
 cmd 2>&1
 

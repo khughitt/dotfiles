@@ -1,6 +1,9 @@
 # count the number of files in each sub-directory
 find . -type f | cut -d/ -f2 | sort | uniq -c
 
+# find files _not_ owned by a particular user
+find . \! -user keith -print
+
 # Find files modified in last day (-mtime +1 -> _older_ than one day)
 find / -mtime -1 -print 
 find . \! -type f -mtime -1 -print | wc -l

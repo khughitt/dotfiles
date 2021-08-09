@@ -1,6 +1,9 @@
 # status info
 curl localhost:5984 | jq
 
+# settings
+curl -X GET http://<user>:<pass>@localhost:5984/_node/nonode@nohost/_config
+
 # get a list of all dbs
 curl -X GET http://<user>:<pass>@localhost:5984/_all_dbs
 

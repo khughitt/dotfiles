@@ -1,0 +1,10 @@
+# ggplot dark theme
+theme_dark <- function(base_font_size = 18) {
+  ggdark::dark_theme_gray(base_size = base_font_size) +
+    theme(axis.text.x = element_text(angle = 90),
+          legend.background = element_rect(fill = NA),
+          plot.background = element_rect(fill = "#222222"),
+          panel.border = element_rect(colour = "#333333", fill = NA, size = 1),
+          panel.grid.major = element_line(color = "#555555", size = 0.2),
+          panel.grid.minor = element_line(color = "#555555", size = 0.2))
+}

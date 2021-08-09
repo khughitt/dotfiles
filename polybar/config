@@ -50,12 +50,12 @@ font-2 = "Pomodoro"
 font-3 = Siji:pixelsize=10;1
 font-4 = Weather Icons:size=12;0
 font-5 = "NotoEmoji Nerd Font:style=Book"
-font-6 = "DejaVu Sans"
+font-6 = "DejaVu Sans:style=Book"
 
 modules-left = i3
 modules-center = spotify previous playpause next
 ; modules-right = pulseaudio memory cpu wlan pomobar snakemake-isrunning weather date
-modules-right = memory cpu wlan pomobar snakemake-isrunning weather date
+modules-right = memory cpu wlan pomobar weather date
 
 tray-position = right
 tray-padding = 2

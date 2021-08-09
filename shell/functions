@@ -253,3 +253,8 @@ function dat {
     fi
 }
 
+# Fahrenheit to Celsius
+function ftoc {
+  echo "scale=2;(5/9)*($1-32)" | bc
+}
+

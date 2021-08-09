@@ -51,7 +51,8 @@ font-5 = "NotoEmoji Nerd Font:style=Book"
 
 modules-left = i3 layout_mode
 modules-center = spotify previous playpause next
-modules-right = pulseaudio memory cpu wlan zeit pomobar snakemake-isrunning weather date
+; modules-right = pulseaudio memory cpu wlan zeit pomobar snakemake-isrunning weather date
+modules-right = pulseaudio memory cpu wlan zeit pomobar weather date
 
 tray-position = right
 tray-padding = 2

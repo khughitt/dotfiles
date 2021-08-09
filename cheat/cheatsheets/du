@@ -1,0 +1,4 @@
+# find folders with a lot of files
+# https://unix.stackexchange.com/a/122871/39903
+du --inodes -S | sort -rh | sed -n \
+        '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'
