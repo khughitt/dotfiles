@@ -1,0 +1,6 @@
+// inspect elements that dissapear
+// https://stackoverflow.com/a/67830701/554531
+1. Open "Elements" tab
+2. Press `cntl-shift-p`
+3. Type the word "focused"
+4. Select "Emulate a focused page" from the the menu

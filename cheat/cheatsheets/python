@@ -1,3 +1,6 @@
+# ipython x pdb
+from IPython import embed; embed()
+
 # flatten nested lists (itertools)
 list(itertools.chain(*regular_list))
 
@@ -10,6 +13,29 @@ python3 -m http.server 7800
 # regex
 \s  whitespace
 \W  non-word character
+
+# regex matching;
+# match: left-anchored
+# search: anywhere
+re = re.compile(r".*foo")
+re.match(target)
+re.search(target)
+
+# findall
+re.findall("(.*\.png|.*\.jpg|.*\.jpeg|.*\.svg)", x)
+
+# re match obj
+matches = re.search(regex)
+
+if matches:
+    ...
+
+for m in matches:
+    ... 
+
+matches.group(1)
+matches.groups()
+matches.groupdict()
 
 # combine dicts
 {**x, **y}

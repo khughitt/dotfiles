@@ -165,6 +165,12 @@ done
 echo "Done!"
 echo "Don't forget to install any necessary fonts, icons, etc."
 
+echo "Other post-setup steps:"
+echo "https://github.com/junegunn/vim-plug"
+echo "https://github.com/tmux-plugins/tpm"
+echo "https://github.com/zdharma/zinit"
+echo "https://github.com/clvv/fasd"
+
 #
 # Next steps (for clean install):
 #

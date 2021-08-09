@@ -1,3 +1,23 @@
+# create a new proj
+npm init
+
+# create a new proj (longer version)
+# source: @bitandbang
+npx license mit > LICENSE
+npx gitignore node
+npx covgen YOUR_EMAIL_ADDRESS
+npm init -y
+
+# create a new react proj (create-react-app x pnpm)
+pnpx create-react-app my-project
+
+# start a server
+# "scripts": {
+#    "start": "node index.js"
+# }
+npm start
+
+############################################
 #
 # Add EC6 support to a project via babel
 #
@@ -13,3 +33,4 @@ npm install --save-dev @babel/core @babel/cli @babel/preset-env
 {
   "presets" : [ "@babel/env" ]
 }
+############################################

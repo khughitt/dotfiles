@@ -324,7 +324,7 @@ exec_always --no-startup-id kitty --name=kitty_scratch
 for_window[instance="kitty_scratch"] move scratchpad
 
 bindsym Mod1+Return \
-    [instance="go_scratch|python_scratch|r_scratch|julia_scratch|mindful_scratch|qutebrowser"] move scratchpad; \
+    [instance="go_scratch|python_scratch|r_scratch|julia_scratch|mindful_scratch|node_scratch|qutebrowser"] move scratchpad; \
     [instance="kitty_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
 
@@ -333,7 +333,7 @@ exec_always --no-startup-id kitty --name=r_scratch radian
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
-    [instance="go_scratch|python_scratch|kitty_scratch|julia_scratch|mindful_scratch|qutebrowser"] move scratchpad; \
+    [instance="go_scratch|python_scratch|kitty_scratch|julia_scratch|mindful_scratch|node_scratch|qutebrowser"] move scratchpad; \
     [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
 
@@ -342,7 +342,7 @@ exec_always --no-startup-id kitty --name=python_scratch ipython
 for_window[instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
-    [instance="r_scratch|go_scratch|kitty_scratch|julia_scratch|mindful_scratch|qutebrowser"] move scratchpad; \
+    [instance="r_scratch|go_scratch|kitty_scratch|julia_scratch|mindful_scratch|node_scratch|qutebrowser"] move scratchpad; \
     [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
 
@@ -351,7 +351,7 @@ exec_always --no-startup-id kitty --name=julia_scratch julia
 for_window[instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
-    [instance="go_scratch|r_scratch|python_sratch|kitty_scratch|mindful_scratch|qutebrowser"] move scratchpad; \
+    [instance="go_scratch|r_scratch|python_sratch|kitty_scratch|mindful_scratch|node_scratch|qutebrowser"] move scratchpad; \
     [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
 
@@ -360,8 +360,17 @@ exec_always --no-startup-id kitty --name=mindful_scratch nvim +'colorscheme neod
 for_window[instance="mindful_scratch"] move scratchpad
 
 bindsym Mod1+m \
-    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|kitty_scratch|qutebrowser"] move scratchpad; \
+    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|kitty_scratch|node_scratch|qutebrowser"] move scratchpad; \
     [instance="mindful_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
+
+#-- node.js --#
+exec_always --no-startup-id kitty --name=node_scratch node
+for_window[instance="node_scratch"] move scratchpad
+
+bindsym Mod1+n \
+    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|kitty_scratch|mindful_scratch|qutebrowser"] move scratchpad; \
+    [instance="node_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
 
 #-- qutebrowser (dashboard) --#

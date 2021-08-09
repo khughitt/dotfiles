@@ -108,6 +108,7 @@ call plug#begin()
     Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
+    Plug 'yuezk/vim-js'
     Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
     Plug '/usr/share/vim/vimfiles'
 
@@ -178,7 +179,7 @@ call plug#begin()
     "Plug 'vim-pandoc/vim-pandoc-syntax'
     
     " Nov 23, 2020: temporarily disabling (ignoring lintr settings..)
-    "Plug 'dense-analysis/ale'
+    Plug 'dense-analysis/ale'
     
     "Plug 'sonph/onehalf', {'rtp': 'vim/'}
     "Plug 'connorholyday/vim-snazzy'

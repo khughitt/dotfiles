@@ -1,7 +1,10 @@
 # add user to existing group
 usermod -a -G docker keith
 
-# Change user name
+# create a new group
+groupadd wheel
+
+# change user name
 killall -u old
 id old
 usermod -l new old

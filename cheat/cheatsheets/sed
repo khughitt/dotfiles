@@ -1,5 +1,6 @@
 # add text to top of file
 sed -i '1s/^/<added text> /' file
+sed -i "1 i <added text>" file
 
 # Print a specific line in a file
 sed -n '15p' file

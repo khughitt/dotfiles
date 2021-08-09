@@ -2,9 +2,68 @@
 # function on every element in the calling array.
 [1, 2, 3].map(x => x * 2);
 
-# extract field from array of associative arrays
+# add item to array
+a.push('foo')
+
+# array foreach
+a.forEach((item) => { console.log(item); })
+a.forEach((item, ind) => { console.log(item); })
+
+# "continue" in foreach loop
+a.forEach((item) => {
+    if (...) {
+        // continue
+        return
+    }
+}
+
+# iterate over key, value pairs for object (~object "foreach")
+for (const [key, value] of Object.entries(obj)) {
+  console.log(`${key}: ${value}`);
+}
+
+# get values for object
+Object.values(obj)
+
+# check "length" of object
+Object.keys(obj).length
+
+# check if item is in array
+arr.includes('foo')
+
+# array intersection
+a.filter(val => b.includes(val));
+
+# items in one array and not another (~set difference)
+a.filter(item => !b.includes(item)));
+
+# extract a single field from each object in an array
 let arr = [{'title': 'hi'}, {'title': 'bye'}]
 arr.map(x => x.title)
+
+# find index of item in array
+arr.indexOf('foo')
+
+# map from array of objects to an array of objects
+arr.map(x => ({ foo: x.bar }));
+
+# subset array
+arr.slice(0,3);
+
+# check if item in array
+arr.includes(x)
+
+# concatenate arrays
+const b = a.concat(b);
+
+# check if key in obj
+"key" in obj
+
+# check array equality (ordered)
+JSON.stringify(a) == JSON.stringify(b);
+
+# check array equality (any order)
+JSON.stringify(a.sort()) == JSON.stringify(b.sort());
 
 # find minimum value of an array of numbers
 Math.min(...arr)
@@ -12,3 +71,9 @@ Math.min(...arr)
 # equality
 a === b  # strict equality (type + value)
 a == b   # loose equality (performs type coercion)
+
+# trim whitespace
+str.trim()
+
+# sum array of numbers
+[1, 2, 3, 4].reduce((a, b) => a + b, 0)

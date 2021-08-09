@@ -1,0 +1,3 @@
+# setup react/three env
+pnpx create-react-app <name>
+pnpm add three three-stdlib three-spritetext @react-three/fiber bootstrap

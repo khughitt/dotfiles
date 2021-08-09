@@ -8,6 +8,10 @@ git checkout HEAD <file>
 # reset to a specific commit
 git reset <commit>
 
+# save changes in detached head
+git branch alt-history
+git checkout alt-history
+
 # search history for a specific string
 git log -S password
 

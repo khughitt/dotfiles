@@ -1,2 +1,8 @@
 # find recent files
 fd --changed-within 5days
+
+# find files in a specified directory
+fd . <dir> -t f
+
+# count total number of files in each sub-directory, recursively
+for x in `ls -d */`; do echo $x; fd -a . $x -t f | wc -l; done
