@@ -92,6 +92,9 @@ alias um="sudo umount /mnt/usb"
 # netstat
 alias netp="sudo netstat -plant"
 
+# python
+alias ph='python -m "http.server"'
+
 # taskwarrior
 alias tw=taskwarrior-tui
 

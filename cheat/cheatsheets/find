@@ -1,8 +1,11 @@
 # count the number of files in each sub-directory
 find . -type f | cut -d/ -f2 | sort | uniq -c
 
-# find files _not_ owned by a particular user
+# find files not _owned_ by a particular user
 find . \! -user keith -print
+
+# find files not _readable_ by a particular user (incl. broken symlinks)
+find . ! -readable -ls
 
 # Find files modified in last day (-mtime +1 -> _older_ than one day)
 find / -mtime -1 -print 

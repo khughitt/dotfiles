@@ -1,6 +1,9 @@
 # build an image
 docker build .
 
+# build an image (clean)
+docker build --no-cache .
+
 # list all images
 docker images
 
