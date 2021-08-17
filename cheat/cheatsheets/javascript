@@ -17,6 +17,12 @@ a.forEach((item) => {
     }
 }
 
+# create a sequence of numbers (~range())
+[...Array(5).keys()]
+
+# create an array of a specified size
+Array(5).fill(0);
+
 # iterate over key, value pairs for object (~object "foreach")
 for (const [key, value] of Object.entries(obj)) {
   console.log(`${key}: ${value}`);
@@ -36,6 +42,11 @@ a.filter(val => b.includes(val));
 
 # items in one array and not another (~set difference)
 a.filter(item => !b.includes(item)));
+
+# filter *object* by key
+Object.fromEntries(
+  Object.entries(obj).filter(([key, value]) => allowed.includes(key))
+);
 
 # extract a single field from each object in an array
 let arr = [{'title': 'hi'}, {'title': 'bye'}]
@@ -77,3 +88,14 @@ str.trim()
 
 # sum array of numbers
 [1, 2, 3, 4].reduce((a, b) => a + b, 0)
+
+# sort an array of objects by object value (in-place)
+entries.sort((a, b) => (a.similarity > b.similarity) ? 1 : -1);
+
+# convert array of numbers to a ranking
+# https://stackoverflow.com/a/65681883/554531
+const sorted = [...arr].sort((a, b) => b - a);
+return arr.map((x) => sorted.indexOf(x) + 1);
+
+# print current date
+console.log(Date())
