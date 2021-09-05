@@ -225,10 +225,13 @@ function ncol {
 function dat {
     # get current data package dir
     version=`ls /data/packages | tail -n1`
-    pkgdir="/data/packages/$version"
+    searchpaths="/data/packages/$version"
+
+    # include project data results as well
+    searchpaths="$searchpaths /data/proj"
 
     # search clean data and most recent data packages
-    fd_cmd="fd . -e .tsv -e .feather -e .parquet -e .csv -e .gz $pkgdir /data/clean"
+    fd_cmd="fd . -e .tsv -e .feather -e .parquet -e .csv -e .gz $searchpaths /data/clean"
     target=`eval $fd_cmd | fzf -1 --exact`
 
     # get extension, excluding .gz 
