@@ -1,3 +1,12 @@
+Basics
+------
+
+# rows
+axis = 0
+
+# columns
+axis = 1
+
 Selection
 ---------
 
@@ -10,6 +19,9 @@ ind = np.triu_indices(5, k=1)    # excl. diagonal
 
 # extract values of indices as 1d array
 dat.values[ind]
+
+# drop column
+dat.drop('col', axis=1)
 
 Iteration
 ---------

@@ -1,8 +1,14 @@
 # ~strict mode
 set -euo pipefail 
 
+# file/dir exists
+[ -e "$path" ]
+
 # string equality
 [ "$a" = "$b" ]
+
+# string not null
+[ -z "$a" ]
 
 # redirect stderr to stdout
 cmd 2>&1
@@ -21,3 +27,6 @@ ${foo  <-- from variable foo
   *    <-- matches anything
        <-- until the last ' '
 }
+
+# date formatting
+now=`date +%Y-%m-%d`

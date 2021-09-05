@@ -25,13 +25,27 @@ curl -X GET http://<user>:<pass>@localhost:5984/<db>/_design_docs
 # get reduced view
 curl -X GET http://<user>:<pass>@localhost:5984/<db>/_design/<ddoc>/_view/<view_name> -G -d group=true | jq
 
+# put a single doc
+curl -X PUT http://<user>:<pass>@localhost:5984/<db>/<doc_id> \
+    -H "Content-Type: application/json" \
+    -d @doc.json
+
+# put multiple docs
+curl -X PUT http://<user>:<pass>@localhost:5984/<db>/_bulk_docs \
+    -H "Content-Type: application/json" \
+    -d @docs.json
+
 # print config section
 curl http://$COUCHDB_USER:$COUCHDB_PASS@localhost:5984/_node/_local/_config/httpd
 
 # create a new database and limit access to a specific user
-curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASS@localhost:5984/settings-$USERHEX
+curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASS@localhost:5984/<db>
 
-# limit access to user
-curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASS@localhost:5984/settings-$USERHEX/_security \
-      -H "Content-Type: application/json" \
-      -d "{\"admins\": { \"names\": [], \"roles\": [] }, \"members\": { \"names\": [\"$USEREMAIL\"], \"roles\": [] } }"
+curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASS@localhost:5984/<db>/_security \
+    -H "Content-Type: application/json" \
+    -d "{\"admins\": { \"names\": [], \"roles\": [] }, \"members\": { \"names\": [\"$USEREMAIL\"], \"roles\": [] } }"
+
+# upload json file
+curl -X PUT ... \
+    -H "Content-Type: application/json" \
+    -d @file.json

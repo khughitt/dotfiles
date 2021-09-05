@@ -1,3 +1,6 @@
+# get element by id
+document.getElementById(id);
+
 # The map() method creates a new array populated with the results of calling a provided
 # function on every element in the calling array.
 [1, 2, 3].map(x => x * 2);
@@ -9,7 +12,7 @@ a.push('foo')
 a.forEach((item) => { console.log(item); })
 a.forEach((item, ind) => { console.log(item); })
 
-# "continue" in foreach loop
+# "continue" in forEach loop (for regular for loops, just use "continue"..)
 a.forEach((item) => {
     if (...) {
         // continue
@@ -48,6 +51,10 @@ Object.fromEntries(
   Object.entries(obj).filter(([key, value]) => allowed.includes(key))
 );
 
+# filter object of the form {'key1': 2, 'key2':5, ..}, to find all keys with values
+# matching some constraint..
+Object.entries(obj).filter(([key, value]) => value > 1).map(x => x[0])
+
 # extract a single field from each object in an array
 let arr = [{'title': 'hi'}, {'title': 'bye'}]
 arr.map(x => x.title)
@@ -57,6 +64,21 @@ arr.indexOf('foo')
 
 # map from array of objects to an array of objects
 arr.map(x => ({ foo: x.bar }));
+
+# map from array of objects to an array of objects (dynamic keys)
+arr.map(x => ({[x.key]:x.val}))
+
+# convert an array of {key:value} pairs to a single combined object
+Object.assign({}, ...arr);
+
+# copy array (shallow)
+arr.slice()
+
+# copy object (shallow)
+Object.assign({}, obj);
+
+# array->unique
+Array.from(new Set(...))
 
 # subset array
 arr.slice(0,3);
@@ -86,11 +108,26 @@ a == b   # loose equality (performs type coercion)
 # trim whitespace
 str.trim()
 
+# split string by space
+str.split(" ");
+
+# convert string to a character array
+str.split("");
+
+# collapse an array into a string
+arr.join("");
+
 # sum array of numbers
 [1, 2, 3, 4].reduce((a, b) => a + b, 0)
 
-# sort an array of objects by object value (in-place)
-entries.sort((a, b) => (a.similarity > b.similarity) ? 1 : -1);
+# count the number of occurrences of each value in an array
+# https://stackoverflow.com/a/5669730/554531
+arr.reduce(function (acc, curr) {
+    return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc
+}, {});
+
+# sort an array of objects by object value (decreasing / in-place)
+entries.sort((a, b) => (a.similarity < b.similarity) ? 1 : -1);
 
 # convert array of numbers to a ranking
 # https://stackoverflow.com/a/65681883/554531

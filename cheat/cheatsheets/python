@@ -45,6 +45,10 @@ x | y # python 3.9
 import time
 ts = time.time()
 
+# get current date in specified format
+import datetime
+datetime.datetime.now().strftime("%Y-%m-%d")
+
 # load yaml
 import yaml
 
