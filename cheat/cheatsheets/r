@@ -22,3 +22,5 @@ library(uwot)
 umap(t(dat), n_neighbors = 15, n_components = 2, init = 'spectral', scale = FALSE,
      min_dist = 0.01)
 
+# sweep (ex: cpm normalization)
+dat[, -1] <- sweep(dat[, -1], 2, colSums(dat[, -1]), '/') * 1E6

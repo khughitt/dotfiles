@@ -1,0 +1,39 @@
+# angle brackets
+\langle
+\rangle
+
+# arrows
+\leftarrow
+\longleftarrow
+\Leftarrow
+\leftrightarrow
+
+# inequalities
+\approx
+\sim
+\propto
+\neq
+
+# multiplication / times
+\times
+
+# sets
+\in
+\notin
+
+# proper subset
+\subset
+
+# subset
+\subseteq
+
+# infinity
+\infty
+
+# ℝ
+\mathbb{R}
+
+# stylized letters
+\mathcal{A}
+\mathfrak{B}
+\mathbb{C}

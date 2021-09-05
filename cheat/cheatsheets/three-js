@@ -1,3 +1,11 @@
 # setup react/three env
 pnpx create-react-app <name>
 pnpm add three three-stdlib three-spritetext @react-three/fiber bootstrap
+
+# BufferGeometry
+# - base geometry class
+# - includes several _attribute_ arrays: position, color, uv, etc.
+# - each index in the arrays corresponds to the attributes for a single vertex
+
+# modifying geom vertices (set, setX, setXYZ, etc.)
+geom.attributes.position.setXYZ(ind, val)
