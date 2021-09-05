@@ -1,15 +1,15 @@
 " ---------------------------------------------------------------------------
 "
 " Neovim Configuration
-" KH (Jan 2021)
+" KH (Aug 2021)
 "
 " ---------------------------------------------------------------------------
-
 "
 " Useful commands:
 "
 " :verbose set <var>?    find where a setting was made
 " :scriptnames           list vimscripts loaded
+"
 
 " ---------------------------------------------------------------------------
 " General
@@ -22,6 +22,7 @@ set noerrorbells     " quiet, please
 set nofoldenable     " disable folding
 set complete+=i      " complete filenames
 set noshowmode       " hide <INSERT>
+
 filetype indent on   " indent based on filetype
 
 " reduce keycode mapping timeout delay
@@ -53,64 +54,56 @@ noremap  <C-e> <End>
 " vim-plug
 " ---------------------------------------------------------------------------
 call plug#begin()
-    " plugins
+    " general
     Plug 'andymass/vim-matchup'
-    Plug 'bfredl/nvim-ipy'
-    Plug 'bioSyntax/bioSyntax-vim'
-    Plug 'ibab/vim-snakemake'
-    Plug 'chrisbra/csv.vim'
-    Plug 'drzel/vim-line-no-indicator'
+    Plug 'ggandor/lightspeed.nvim'
     Plug 'dstein64/nvim-scrollview', { 'branch': 'main' }
     Plug 'dylanaraps/wal.vim'
     Plug 'editorconfig/editorconfig-vim'
-    Plug 'embark-theme/vim', { 'as': 'embark' }
     Plug 'ervandew/supertab'
-    Plug 'glench/vim-jinja2-syntax'
-    Plug 'junegunn/goyo.vim'
-    Plug 'guns/xterm-color-table.vim'
-    Plug 'henrik/vim-indexed-search'
-    Plug 'honza/vim-snippets'
-    Plug 'jalvesaq/Nvim-R'
-    Plug 'JuliaEditorSupport/julia-vim'
-    Plug 'fatih/vim-go'
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
     Plug 'junegunn/fzf.vim'
-    Plug 'junegunn/limelight.vim'
     Plug 'junegunn/vim-emoji'
     Plug 'KabbAmine/vCoolor.vim'
     Plug 'kshenoy/vim-signature'
     Plug 'kana/vim-operator-user'
-    Plug 'MarcWeber/vim-addon-mw-utils'
-    Plug 'maxmellon/vim-jsx-pretty'
-    Plug 'mboughaba/i3config.vim'
-    Plug 'mllg/vim-devtools-plugin'
-    Plug 'mzlogin/vim-markdown-toc'
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ncm2/float-preview.nvim'
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-    Plug 'pangloss/vim-javascript'
-    Plug 'psf/black', { 'branch': 'stable', 'for': 'python' }
-    Plug 'raimon49/requirements.txt.vim'
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
     Plug 'romgrk/barbar.nvim'
-    Plug 'Shougo/neomru.vim'
     Plug 'scrooloose/nerdcommenter'
-    Plug 'stephpy/vim-yaml'
     Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-repeat'
     Plug 'tpope/vim-surround'
-    Plug 'tikhomirov/vim-glsl'
-    Plug 'udalov/kotlin-vim'
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
     Plug 'wellle/targets.vim'
-    Plug 'wincent/terminus'
     Plug 'xolox/vim-colorscheme-switcher'
     Plug 'xolox/vim-misc'
-    Plug 'yuezk/vim-js'
     Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
     Plug '/usr/share/vim/vimfiles'
+
+    " language support
+    Plug 'bioSyntax/bioSyntax-vim'
+    Plug 'ibab/vim-snakemake'
+    Plug 'chrisbra/csv.vim'
+    Plug 'glench/vim-jinja2-syntax'
+    Plug 'jalvesaq/Nvim-R'
+    Plug 'JuliaEditorSupport/julia-vim'
+    Plug 'fatih/vim-go'
+    Plug 'pangloss/vim-javascript'
+    Plug 'mllg/vim-devtools-plugin'
+    Plug 'mzlogin/vim-markdown-toc'
+    Plug 'maxmellon/vim-jsx-pretty'
+    Plug 'mboughaba/i3config.vim'
+    Plug 'psf/black', { 'branch': 'stable', 'for': 'python' }
+    Plug 'raimon49/requirements.txt.vim'
+    Plug 'stephpy/vim-yaml'
+    Plug 'tikhomirov/vim-glsl'
+    Plug 'udalov/kotlin-vim'
+    Plug 'yuezk/vim-js'
 
     " textobjs
     Plug 'glts/vim-textobj-comment'
@@ -120,31 +113,27 @@ call plug#begin()
     " colorschemes
     Plug 'agreco/vim-citylights'
     Plug 'ayu-theme/ayu-vim'
-    Plug 'challenger-deep-theme/vim'
-    Plug 'cocopon/iceberg.vim'
+    Plug 'christianchiarulli/nvcode-color-schemes.vim'
     Plug 'cseelus/vim-colors-lucid'
     Plug 'cseelus/vim-colors-tone'
     Plug 'danilo-augusto/vim-afterglow'
-    Plug 'davidklsn/vim-sialoquent'
+    Plug 'dense-analysis/ale'
     Plug 'dikiaap/minimalist'
     Plug 'dracula/vim', { 'as': 'dracula' }
     Plug 'drewtempelmeyer/palenight.vim'
     Plug 'Dru89/vim-adventurous'
+    Plug 'embark-theme/vim', { 'as': 'embark' }
     Plug 'fcpg/vim-orbital'
     Plug 'fenetikm/falcon'
-    Plug 'haishanh/night-owl.vim'
     Plug 'jacoborus/tender.vim'
-    Plug 'joshdick/onedark.vim'
+    Plug 'navarasu/onedark.nvim'
     Plug 'KeitaNakamura/neodark.vim'
-    Plug 'liuchengxu/space-vim-dark'
-    Plug 'lu-ren/SerialExperimentsLain'
     Plug 'nikolvs/vim-sunbather'
     Plug 'NLKNguyen/papercolor-theme'
     Plug 'owickstrom/vim-colors-paramount'
     Plug 'rakr/vim-one'
     Plug 'rakr/vim-two-firewatch'
     Plug 'reedes/vim-colors-pencil'
-    Plug 'Rigellute/rigel'
     Plug 'rockerBOO/boo-colorscheme-nvim'
     Plug 'sainnhe/sonokai'
     Plug 'tyrannicaltoucan/vim-quantum'
@@ -157,34 +146,41 @@ call plug#begin()
     " mindful
     Plug '~/.config/nvim/plugged/mindful.vim'
 
+    " disabled plugins
     "Plug 'airblade/vim-gitgutter'
     "Plug 'qpkorr/vim-bufkill'
     "Plug 'manabuishii/vim-cwl'
     "Plug 'mrk21/yaml-vim'
     "Plug 'plasticboy/vim-markdown'
-    "Plug 'majutsushi/tagbar'
+    "Plug 'MarcWeber/vim-addon-mw-utils'
     "Plug 'zhaozg/vim-diagram'
     "Plug 'ekiim/vim-mathpix'
     "Plug 'yuttie/comfortable-motion.vim'
     "Plug 'troydm/zoomwintab.vim'
     "Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+    "Plug 'Shougo/neomru.vim'
     "Plug 'Shougo/neosnippet.vim'
     "Plug 'Shougo/neosnippet-snippets'
-    "Plug 'deoplete-plugins/deoplete-jedi'
-    "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-    "Plug 'Shougo/deoplete-terminal'
     "Plug 'godlygeek/tabular'
     "Plug 'neoclide/coc.nvim', {'branch': 'release'}
     "Plug 'vim-pandoc/vim-pandoc'
     "Plug 'vim-pandoc/vim-pandoc-syntax'
+    "Plug 'bfredl/nvim-ipy'
+    "Plug 'drzel/vim-line-no-indicator'
+    "Plug 'junegunn/goyo.vim'
+    "Plug 'guns/xterm-color-table.vim'
+    "Plug 'honza/vim-snippets'
+    "Plug 'junegunn/limelight.vim'
+    "Plug 'wincent/terminus'
     
-    " Nov 23, 2020: temporarily disabling (ignoring lintr settings..)
-    Plug 'dense-analysis/ale'
+    "Plug 'challenger-deep-theme/vim'
+    "Plug 'cocopon/iceberg.vim'
+    "Plug 'davidklsn/vim-sialoquent'
+    "Plug 'haishanh/night-owl.vim'
+    "Plug 'liuchengxu/space-vim-dark'
+    "Plug 'lu-ren/SerialExperimentsLain'
+    "Plug 'Rigellute/rigel'
     
-    "Plug 'sonph/onehalf', {'rtp': 'vim/'}
-    "Plug 'connorholyday/vim-snazzy'
-    "Plug 'fmoralesc/molokayo'
-
     " devicons should always be loaded last
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'ryanoasis/vim-devicons'
@@ -241,10 +237,10 @@ inoremap <M-l> <C-o>l
 
 set smartindent       " wise indentation
 set nowrap            " do not wrap lines
-set softtabstop=4     " tab width
-set shiftwidth=4
+set softtabstop=2     " tab width
+set shiftwidth=2
 set shiftround        " round indents to multiple of shift width
-set tabstop=4
+set tabstop=2
 set expandtab         " expand tabs to spaces
 set smarttab
 set textwidth=88      " stick to 88 characters or less, when possible
@@ -266,7 +262,7 @@ function! ToggleTextWidth()
 endfunction
 
 " shortcut to insert a space in normal mode
-nnoremap ss i<space><esc>
+" nnoremap ss i<space><esc>
 
 " ----------------------------------------------------------------------------
 " Moving around, tabs, windows and buffers
@@ -714,105 +710,6 @@ let g:colorscheme_switcher_exclude = [
             \ 'torte', 'zellner']
 
 " ---------------------------------------------------------------------------
-"  deoplete
-" ---------------------------------------------------------------------------
-
-"
-" key bindings:
-"
-" tab next
-" c-n next
-" c-p prev
-" c-y select
-"
-
-"
-" abbreviations:
-"
-" [↑]  after cursor
-" [↓]  before cursor
-" [*]  in changes
-" [F]  file
-" [T]  tag
-" [ns] neosnippet
-"
-
-"
-" TODO: normalize behavior between zsh + fzf and deoplete
-"
-" 1. autocomplete expressions upon <tab> when only a single match exists
-" 2. include relative filepaths without having to include prefix "./"
-" 3. don't include typed expression at all (currently cycles through it, even though
-"    it's not displayed..)
-" 4. automatically insert first match upon opening deoplete menu; currently
-"    insertion only occurs upon cycling of completion choices.
-" 5. automatically refresh completion candidates after additional characters are typed.
-" 6. When entering a filepath, exclude all other completions (can just <tab> expand
-"    filepath very quickly that way, esp. if only one sub-dir at each level..)
-
-" enable at start-up
-"let g:deoplete#enable_at_startup = 1
-
-" only show popup upon request
-"let g:deoplete#disable_auto_complete = 1
-
-" call deoplete#custom#var('around', {
-"     \   'range_above': 25,
-"     \   'range_below': 25,
-"     \   'mark_above': '[↑]',
-"     \   'mark_below': '[↓]',
-"     \   'mark_changes': '[*]',
-"     \})
-
-" number of results to show
-" call deoplete#custom#option({'max_list': 10})
-
-" use <tab> / <s-tab> to cycle through completions
-" function! s:check_back_space() abort "{{{
-"   let col = col('.') - 1
-"   return !col || getline('.')[col - 1]  =~ '\s'
-" endfunction"}}}
-
-" inoremap <silent><expr> <TAB>
-"       \ pumvisible() ? "\<C-n>" :
-"       \ <SID>check_back_space() ? "\<TAB>" :
-"       \ deoplete#manual_complete()
-"
-" inoremap <silent><expr><S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-"
-" " automatically select the first match
-" set completeopt+=noinsert
-"
-" " don't insert a newline when selecting with <Enter>
-" inoremap <expr> <CR> (pumvisible() ? "\<c-y>" : "\<CR>")
-"
-" " matchers
-" " head   - exact matches
-" " length - don't show typed word
-" call deoplete#custom#source('_', 'matchers', ['matcher_head', 'terminal', 'matcher_length'])
-"
-" " sort results alphabetically
-" call deoplete#custom#source('_', 'sorters', ['sorter_word'])
-"
-" " disable the candidates in Comment/String syntaxes.
-" call deoplete#custom#source('_', 'disabled_syntaxes', ['Comment', 'String'])
-"
-" " prioritize file matches when present
-" call deoplete#custom#source('file', 'rank', 9999)
-"
-" " disable buffer source
-" let g:deoplete#ignore_sources = {}
-" let g:deoplete#ignore_sources._ = ['buffer']
-"
-" " shortcuts
-" call deoplete#custom#option('candidate_marks', ['A', 'S', 'D', 'F', 'G'])
-" inoremap <expr><m-a>  deoplete#insert_candidate(0)
-" inoremap <expr><m-s>  deoplete#insert_candidate(1)
-" inoremap <expr><m-d>  deoplete#insert_candidate(2)
-" inoremap <expr><m-f>  deoplete#insert_candidate(3)
-" inoremap <expr><m-g>  deoplete#insert_candidate(4)
-
-" ---------------------------------------------------------------------------
 " float-preview.nvim
 " ---------------------------------------------------------------------------
 let g:float_preview#docked = 1
@@ -840,7 +737,6 @@ let g:indent_guides_guide_size  = 1
 " julia-vim
 " ---------------------------------------------------------------------------
 " autocmd BufNewFile,BufRead *.jl set syntax=julia
-"
 
 " ---------------------------------------------------------------------------
 " LeaderF
@@ -873,7 +769,7 @@ let g:NERDCustomDelimiters = {
 " ---------------------------------------------------------------------------
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = "maintained",
+  ensure_installed = { "bash", "c", "cmake", "cpp", "css", "dockerfile", "go", "json", "julia", "lua", "latex", "r", "toml", "yaml" },
   ignore_install = {  },
   highlight = {
     enable = true,
@@ -883,133 +779,25 @@ require'nvim-treesitter.configs'.setup {
 EOF
 
 " ---------------------------------------------------------------------------
-"  vim-markdown
+"   nvcode-color-schemes
 " ---------------------------------------------------------------------------
-let g:vim_markdown_folding_disabled = 1
-let g:vim_markdown_frontmatter = 1
-let g:vim_markdown_toc_autofit = 1
-let g:vim_markdown_strikethrough = 1
-let g:vim_markdown_math = 1
+let g:nvcode_termcolors=256
 
-" au BufNewFile,BufRead *.md set filetype=markdown nofoldenable
-au BufNewFile,BufRead *.md set conceallevel=2
+syntax on
+colorscheme onedark
 
-" replace tagbar binding
-" au FileType markdown nmap <F9> :Toc<CR>
-" au FileType markdown imap <F9> :Toc<CR>
-
-" override default conceal colors
-syntax match Normal /\*/ conceal cchar=∗
-
-" italic latex work-around
-" https://stackoverflow.com/a/34645680/554531
-syn region math start=/\$\$/ end=/\$\$/
-
-" inline math
-syn match math '\$[^$].\{-}\$'
-
-" actually highlight the region we defined as "math"
-hi link math Statement
+" checks if your terminal has 24-bit color support
+if (has("termguicolors"))
+    set termguicolors
+    hi LineNr ctermbg=NONE guibg=NONE
+endif
 
 " ---------------------------------------------------------------------------
-"  markdown link helper
-"  https://benjamincongdon.me/blog/2020/06/27/Vim-Tip-Paste-Markdown-Link-with-Automatic-Title-Fetching/
-"
-"  modified to include support for downloading/inserting image links (kh feb2021)
+"  onedark.nvim
 " ---------------------------------------------------------------------------
-function GetURLTitle(url)
-    " Use Python/BeautifulSoup to get link's page title.
-    let title = system("python3 -c \"import bs4, requests; print(bs4.BeautifulSoup(requests.get('" . a:url . "').content, 'lxml').title.text.strip())\"")
-
-    " Echo the error if getting title failed.
-    if v:shell_error != 0
-        echom title
-        return ""
-    endif
-
-    " Strip trailing newline
-    return substitute(title, '\n', '', 'g')
-endfunction
-
-function DownloadImg(url)
-    " create a .img/ directory in dir of markdown file, if not already present
-    let mddir = expand('%:p:h')
-    let imgdir = mddir . "/.img"
-    call mkdir(imgdir, "p", 0755)
-
-    let oldfname = split(a:url, "/")[-1]
-
-    " prompt user for filename
-    let fname = input("Filename? ", oldfname)
-    let fpath = imgdir . "/" . fname
-
-    " attempt to download the image
-    let result = system(printf("curl \"%s\" -s -o %s", a:url, fpath))
-
-    " check to see if command succeeded
-    if v:shell_error != 0
-        echom result
-        return ""
-    endif
-
-    " return relative path to image
-    return ".img/" . fname
-endfunction
-
-function PasteMDLink()
-    " generate markdown url
-    let url = getreg("+")
-
-    " store here if not a url
-    if url !~ '^https\?://'
-        return ""
-    endif
-
-    " check to see if url points to an image
-    let ext = split(url, "\\.")[-1]
-
-    " strip any url query string following image extension, if present
-    let ext = substitute(ext, "?.*", "", "")
-
-    let imgexts = ['gif', 'jpg', 'jpeg', 'png', 'webp', 'svg']
-
-    " choose appropriate action based on url type
-    if (index(imgexts, ext) >= 0)
-        let relpath = DownloadImg(url)
-        let mdLink = printf("![](%s)", relpath)
-    else
-        let title = GetURLTitle(url)
-        let mdLink = printf("[%s](%s)", title, url)
-    endif      
-
-    " temporarily disable line length limit, if specified
-    if &textwidth != 0
-        let b:oldtextwidth = &textwidth
-        set textwidth=0
-    endif
-
-    " add link to document
-    execute "normal! a" . mdLink . "\<Esc>"
-
-    " restore line length limit
-    if exists("b:oldtextwidth")
-        let &textwidth = b:oldtextwidth
-    endif
-endfunction
-
-" Make a keybinding (mnemonic: "mark down paste")
-map <Leader>f <ESC>:call PasteMDLink()<CR>
-nmap <Leader>f :call PasteMDLink()<CR>
-
-" ----------------------------------------------------------------------------
-" uuid generator
-" ----------------------------------------------------------------------------
-function UUIDgen()
-    let uuid = system("python -c 'import shortuuid; print(shortuuid.ShortUUID().random(length=6))'")
-    let uuid = substitute(uuid, '\n', '', 'g')
-
-    execute "normal! i" . uuid . "\<Esc>"
-endfunction
+lua <<EOF
+require('onedark').setup()
+EOF
 
 " ----------------------------------------------------------------------------
 "  mindful
@@ -1019,10 +807,17 @@ set dictionary+=~/.vim/tmp/mindful/tags.txt
 autocmd BufNewFile,BufRead *.mnd set syntax=mindful
 autocmd BufNewFile,BufRead *.mnd set filetype=mindful
 
+" ----------------------------------------------------------------------------
+"  vim-matchup
+" ----------------------------------------------------------------------------
+"  temp work-around (sept 1, 2021)
+"  https://github.com/vim/vim/issues/2049#issuecomment-829424555
+set mmp=30000 
+
 " ---------------------------------------------------------------------------
 "  vim-diagram (mermaid)
 " ---------------------------------------------------------------------------
-au BufRead,BufNewFile *.mmd set filetype=sequence
+" au BufRead,BufNewFile *.mmd set filetype=sequence
 
 " ---------------------------------------------------------------------------
 "  vpaste.net
@@ -1084,11 +879,11 @@ nmap <localleader>l :Limelight!!<CR>
 " ---------------------------------------------------------------------------
 " vim-emoji
 "
-" " emojis
 " https://www.webfx.com/tools/emoji-cheat-sheet/
-" "
+"
 " ---------------------------------------------------------------------------
-" enable completion
+" enable completion (currently not working..)
+" set omnifunc=syntaxcomplete#Complete
 " set completefunc=emoji#complete
 
 " replace :emoji_name: into emojis
@@ -1101,22 +896,13 @@ map <leader>e :call AddEmojis ()<CR>
 " ---------------------------------------------------------------------------
 "  vim-pandoc
 " ---------------------------------------------------------------------------
-let g:pandoc#modules#disabled = ["spell"]
-let g:pandoc#syntax#conceal#blacklist = ["codeblock_start", "codeblock_delim",
+" let g:pandoc#modules#disabled = ["spell"]
+" let g:pandoc#syntax#conceal#blacklist = ["codeblock_start", "codeblock_delim",
                                        \ "atx", "footnote"]
 
 " make vim-pandoc behave well
-autocmd FileType pandoc setlocal nowrap
-autocmd FileType pandoc setlocal foldcolumn=0
-
-" ---------------------------------------------------------------------------
-"  vim-scroll-barnacle
-" ---------------------------------------------------------------------------
-highlight link Scrollbar Float
-"highlight link Scrollbar TabLineSel
-
-" don't override zz mapping
-let g:sb_patch_keys = 0
+" autocmd FileType pandoc setlocal nowrap
+" autocmd FileType pandoc setlocal foldcolumn=0
 
 " ---------------------------------------------------------------------------
 " supertab.vim
@@ -1138,36 +924,6 @@ endfunction
 
 let g:SuperTabCompletionContexts =
     \ ['MindfulTagContext', 's:ContextText', 's:ContextDiscover']
-
-" ---------------------------------------------------------------------------
-"  tagbar
-" ---------------------------------------------------------------------------
-" nmap <F9> :TagbarToggle<CR>
-
-" let g:tagbar_type_r = {
-"     \ 'ctagstype' : 'r',
-"     \ 'kinds'     : [
-"         \ 'f:Functions',
-"         \ 'g:GlobalVariables',
-"         \ 'v:FunctionVariables',
-"     \ ]
-" \ }
-
-" Add support for markdown files in tagbar.
-" let g:tagbar_type_markdown = {
-"     \ 'ctagstype': 'markdown',
-"     \ 'ctagsbin' : '~/bin/markdown2ctags.py',
-"     \ 'ctagsargs' : '-f - --sort=yes --sro=»',
-"     \ 'kinds' : [
-"         \ 's:sections',
-"         \ 'i:images'
-"     \ ],
-"     \ 'sro' : '»',
-"     \ 'kind2scope' : {
-"         \ 's' : 'section',
-"     \ },
-"     \ 'sort': 0,
-" \ }
 
 " ---------------------------------------------------------------------------
 "  vim-expand-region
@@ -1196,45 +952,24 @@ endif
 " ---------------------------------------------------------------------------
 
 " Language-specific options
-autocmd FileType html,css,javascript,javascriptreact,json,markdown,ruby,r,rmd,jinja,yaml setlocal softtabstop=2 shiftwidth=2 tabstop=2
+autocmd FileType vimscript setlocal softtabstop=4 shiftwidth=4 tabstop=4
 autocmd BufRead,BufNewFile *.py set autoindent
 autocmd BufRead,BufNewFile *.har set ft=json
 
 " nvim-ipy
-let g:nvim_ipy_perform_mappings = 0
+" let g:nvim_ipy_perform_mappings = 0
 
 " ---------------------------------------------------------------------------
 "  Language-specific Options
 " ---------------------------------------------------------------------------
-let g:onedark_terminal_italics=1
+"let g:onedark_terminal_italics=1
 let g:gruvbox_italic=1
 let g:quantum_black=1
 let g:quantum_italics=1
 
 "colorscheme palenight
 "colorscheme pencil
-colorscheme quantum
-
-" terminal color scheme
-" https://github.com/metalelf0/oceanic-next
-"let g:terminal_color_0="#1b2b34"
-"let g:terminal_color_1="#ed5f67"
-"let g:terminal_color_2="#9ac895"
-"let g:terminal_color_3="#fbc963"
-"let g:terminal_color_4="#669acd"
-"let g:terminal_color_5="#c695c6"
-"let g:terminal_color_6="#5fb4b4"
-"let g:terminal_color_7="#c1c6cf"
-"let g:terminal_color_8="#65737e"
-"let g:terminal_color_9="#fa9257"
-"let g:terminal_color_10="#4e5d6b" " #343d46
-"let g:terminal_color_11="#4f5b66"
-"let g:terminal_color_12="#a8aebb"
-"let g:terminal_color_13="#ced4df"
-"let g:terminal_color_14="#ac7967"
-"let g:terminal_color_15="#d9dfea"
-"let g:terminal_color_background="#525252"
-"let g:terminal_color_foreground="#c1c6cf"
+"colorscheme quantum
 
 syntax on
 
