@@ -95,6 +95,9 @@ alias netp="sudo netstat -plant"
 # python
 alias ph='python -m "http.server"'
 
+# rofi
+alias rt='nvim ~/.dotfiles/rofi/scripts/rofi-tasks.sh'
+
 # taskwarrior
 alias tw=taskwarrior-tui
 
