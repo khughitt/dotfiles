@@ -4,4 +4,5 @@ configuration {
     //theme: "~/.cache/wal/colors-rofi-dark.rasi";
     font: "hack 12";
 }
-@theme "/usr/share/rofi/themes/blue.rasi"
+//@theme "/usr/share/rofi/themes/blue.rasi"
+@theme "/usr/share/rofi/themes/purple.rasi"

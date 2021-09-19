@@ -70,7 +70,7 @@ else
         i3empty.py next 1 > /dev/null
         i3-msg layout stacking > /dev/null
         coproc kitty -d ~/d/three-js > /dev/null
-        coproc kitty -d $NOTES/tech/web/ nvim three-js.md > /dev/null
+        coproc kitty -d $NOTES/tech/web/three-js nvim next-steps.md > /dev/null
         coproc firefox -new-window "https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene" > /dev/null
     elif [ "$@" = "planets" ]; then
         i3empty.py next 1 > /dev/null

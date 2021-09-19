@@ -71,6 +71,7 @@ call plug#begin()
     Plug 'ncm2/float-preview.nvim'
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
+    " slow with multiple mnd tabs open?..
     Plug 'romgrk/barbar.nvim'
     Plug 'scrooloose/nerdcommenter'
     Plug 'tmux-plugins/vim-tmux-focus-events'
@@ -208,7 +209,8 @@ set showcmd                     " show incomplete commands and selection info
 set nolazyredraw                " turn off lazy redraw
 set number                      " line numbers
 set whichwrap+=<,>,h,l,[,]      " backspace and cursor keys wrap to
-set shortmess=filtIoOA          " shorten messages
+set shortmess=aF                " shorten messages
+set cmdheight=2                 " shorten messages
 set report=0                    " tell us about changes
 set nostartofline               " don't jump to the start of line when scrolling
 
@@ -562,8 +564,6 @@ let g:csv_no_conceal = 1
 " setlocal nobackup
 " setlocal nowritebackup
 
-" Better display for messages
-" set cmdheight=2
 "
 " " You will have bad experience for diagnostic messages when it's default 4000.
 " set updatetime=300

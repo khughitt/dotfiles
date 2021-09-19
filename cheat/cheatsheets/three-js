@@ -1,11 +1,62 @@
-# setup react/three env
-pnpx create-react-app <name>
-pnpm add three three-stdlib three-spritetext @react-three/fiber bootstrap
+# 
+# basic setup
+# 
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 10;
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight); 
+document.body.appendChild(renderer.domElement);
+
+scene.add(...);
+
+function animate() {
+  requestAnimationFrame( animate );
+  ...
+  renderer.render( scene, camera );
+}
+animate();
+
+# transformations ("TRS")
+.position # translation
+.rotation # rotation
+.scale    # scaling
+
+# coordinates / positioning 
+# default camera pos: front-to-back (towards -z) with +y above.
+x left/right
+y top/bottom
+z forward/backward ("-z" towards screen)
+
+# rotating a plane
+x forward/backward
+y about vertical axis on screen
+z corners moving in circles (see same face of place)
 
 # BufferGeometry
 # - base geometry class
 # - includes several _attribute_ arrays: position, color, uv, etc.
 # - each index in the arrays corresponds to the attributes for a single vertex
 
+# setup react/three env
+pnpx create-react-app <name>
+pnpm add three three-stdlib three-spritetext @react-three/fiber bootstrap
+
 # modifying geom vertices (set, setX, setXYZ, etc.)
 geom.attributes.position.setXYZ(ind, val)
+
+# ShaderMaterial
+# https://medium.com/@sidiousvic/how-to-use-shaders-as-materials-in-three-js-660d4cc3f12a
+const uniforms = {
+  u_resolution: { value: { x: null, y: null } },
+  u_time: { value: 0.0 },
+  u_mouse: { value: { x: null, y: null } },
+}
+
+const materialInnner = new THREE.ShaderMaterial({
+  vertexShader: vShader,
+  fragmentShader: fShader,
+  uniforms;
+})
+

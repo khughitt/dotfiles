@@ -117,7 +117,7 @@ function jm {
     wd=`pwd`
 
     cd ~/d/journal
-    target=`fd -t f md -X ls -t | grep --color='none' "$1" | fzf -1 --exact`
+    target=`fd -t f md -X /bin/ls -t | grep --color='none' "$1" | fzf -1 --exact`
 
     if [ ! -z "$target" ]; then
         vim $target
@@ -147,7 +147,7 @@ function C {
 
 # cheatsheets
 function c {
-    target=`ls ~/.config/cheat/cheatsheets/ |\
+    target=`/bin/ls ~/.config/cheat/cheatsheets/ |\
             grep --color='none' "$1" |\
             fzf -1 --exact`
 
@@ -224,7 +224,7 @@ function ncol {
 # helper function to quickly load a dataset into ipython
 function dat {
     # get current data package dir
-    version=`ls /data/packages | tail -n1`
+    version=`/bin/ls /data/packages | tail -n1`
     searchpaths="/data/packages/$version"
 
     # include project data results as well
