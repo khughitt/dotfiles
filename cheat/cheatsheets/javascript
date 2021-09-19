@@ -1,6 +1,9 @@
 # get element by id
 document.getElementById(id);
 
+# imports
+# https://colinricardo.substack.com/p/named-export-vs-default-export
+
 # The map() method creates a new array populated with the results of calling a provided
 # function on every element in the calling array.
 [1, 2, 3].map(x => x * 2);
@@ -55,6 +58,10 @@ Object.fromEntries(
 # matching some constraint..
 Object.entries(obj).filter(([key, value]) => value > 1).map(x => x[0])
 
+# convert an array of objects to a single object: 
+# [{key: xx, val:yy},..] => {xx: yy,..}
+arr.reduce((obj, item) => (obj[item.key] = item.value, obj) ,{});
+
 # extract a single field from each object in an array
 let arr = [{'title': 'hi'}, {'title': 'bye'}]
 arr.map(x => x.title)
@@ -78,7 +85,7 @@ arr.slice()
 Object.assign({}, obj);
 
 # array->unique
-Array.from(new Set(...))
+Array.from(new Set(arr))
 
 # subset array
 arr.slice(0,3);
@@ -117,6 +124,9 @@ str.split("");
 # collapse an array into a string
 arr.join("");
 
+# replace all occurrences of "foo" in a string
+a.replace(/foo/g, 'bar');
+
 # sum array of numbers
 [1, 2, 3, 4].reduce((a, b) => a + b, 0)
 
@@ -136,3 +146,7 @@ return arr.map((x) => sorted.indexOf(x) + 1);
 
 # print current date
 console.log(Date())
+
+# localStorage; getItem() returns null if item not found
+localStorage.setItem('foo', JSON.stringify(obj));
+JSON.parse(localStorage.getItem('foo'))

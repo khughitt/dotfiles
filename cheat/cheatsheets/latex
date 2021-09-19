@@ -37,3 +37,7 @@
 \mathcal{A}
 \mathfrak{B}
 \mathbb{C}
+
+# dot above
+\dot{x}
+\ddot{x}

@@ -1,0 +1,26 @@
+//
+// https://www.shaderific.com/glsl-functions
+//
+
+//
+// "gentype" ~> float/vec2/vec3/vec4
+// 
+
+// returns 0/1, if below/above cutoff
+step(cutoff, val)
+
+// given a range and a value, interpolates the value between the range
+smoothstep(lower, upper, val)
+
+// mix: weighted linear intepreation between two values
+// x×(1−a)+y×a.
+// 1d
+float mix(float x, float y, float a)  
+// vec2-4 versions ~> gradients, etc.
+//  vec3 mix(vec3 x, vec3 y, vec3 a)
+//  vec3 mix(vec3 x, vec3 y, float a)
+
+// clamp (clip between min/max..)
+gentype clamp(gentype x, gentype min, gentype max)
+
+# vi:syntax=glsl

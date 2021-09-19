@@ -180,10 +180,11 @@ alias tze="trans zh-TW:en"  # to english
 alias tez="trans en:zh-TW"  # to chinese
 
 # sleep
-alias s0="sleep 3 &&"
 alias s1="sleep 60 &&"
 alias s5="sleep 300 &&"
 alias s10="sleep 600 &&"
+alias s15="sleep 900 &&"
+alias s30="sleep 1800 &&"
 alias s60="sleep 3600 &&"
 
 # suspend

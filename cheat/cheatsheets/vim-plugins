@@ -1,3 +1,12 @@
+# profiling vim plugins
+# https://stackoverflow.com/questions/12213597/how-to-see-which-plugins-are-making-vim-slow
+:profile start profile.log
+:profile func *
+:profile file *
+" do some actions..
+:profile pause
+:noautocmd qall!
+
 # LeaderF
 <c-f> search files
 <c-p> search mru
@@ -17,3 +26,6 @@
 
 # vim-emoji
 ;e    replace all `:emoji:` instances in current buffer
+
+# vCoolor
+<alt-c>  open color picker
