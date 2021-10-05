@@ -1,5 +1,13 @@
-# get element by id
-document.getElementById(id);
+# DOM
+var elem = document.getElementById(id)
+var elem = document.createElement("div")
+document.head.appendChild(elem)
+elem.setAttribute("id", "foo")
+elem.remove()
+
+# width / height
+elem.offsetWidth;
+elem.offsetHeight;
 
 # imports
 # https://colinricardo.substack.com/p/named-export-vs-default-export
@@ -112,8 +120,11 @@ Math.min(...arr)
 a === b  # strict equality (type + value)
 a == b   # loose equality (performs type coercion)
 
-# trim whitespace
+# strip / trim whitespace
 str.trim()
+
+# starts with
+str.startsWith("foo")
 
 # split string by space
 str.split(" ");

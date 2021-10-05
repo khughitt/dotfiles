@@ -1,2 +1,5 @@
 // port forwarding (from target port 5984 to host 8888)
 ssh <addr> -L 8888:localhost:5984
+
+// ssh-copy-id
+ssh-copy-id -i ~/.ssh/id_rsa.pub user@host

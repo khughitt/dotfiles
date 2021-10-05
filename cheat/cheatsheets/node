@@ -11,6 +11,11 @@ npm init -y
 # create a new react proj (create-react-app x pnpm)
 pnpx create-react-app my-project
 
+# parcel
+# yarn global add parcel-bundler
+yarn init -y
+parcel index.html
+
 # start a server
 # "scripts": {
 #    "start": "node index.js"

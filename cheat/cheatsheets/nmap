@@ -1,0 +1,2 @@
+# find ips addresses on local net
+nmap -v -sn 192.168.0.0/16

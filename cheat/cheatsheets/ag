@@ -4,5 +4,8 @@ ag -0 -l foo | xargs -0 sed -i 's/foo/bar/'
 # ignore html files
 ag --ignore "*.html" foo
 
+# max depth
+ag --depth 1 foo
+
 # find files that *don't* match some expr
 ag -L foo

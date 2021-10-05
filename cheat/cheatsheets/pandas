@@ -151,6 +151,7 @@ dat.groupby('tag').agg('count')
 
 # group by -> sort
 dat.groupby('seed').apply(pd.DataFrame.sort_values, 'tag')
+dat.groupby('seed').sort_values('tag')
 
 # group by -> count -> max -> sample
 dat.groupby(["path", "seed"]).count().max(axis=1).groupby("path").sample(1)

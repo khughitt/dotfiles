@@ -11,5 +11,5 @@ pactree
 pacman -Qe
 
 # find out who owns a file
-pacman -Qo <file>
-pkgfile <file>
+pacman -Qo /bin/foo
+pkgfile foo

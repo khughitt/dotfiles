@@ -17,6 +17,12 @@
 # multiplication / times
 \times
 
+# integration
+\int_{from}^{to} 
+
+# limits
+\[ \lim_{x\to\infty} f(x) \]
+
 # sets
 \in
 \notin

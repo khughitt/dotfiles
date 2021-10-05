@@ -1,2 +1,2 @@
-# check what is using ports
+# check what is using ports ("net-tools" package)
 netstat -plant

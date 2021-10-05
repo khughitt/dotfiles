@@ -1,0 +1,18 @@
+# install nvm (zinit)
+zinit light lukechilds/zsh-nvm
+
+# list installed
+nvm ls
+
+# list available
+nvm ls-remote
+
+# install node
+nvm install node
+nvm install <version>
+
+# choose version to use
+nvm use <version>
+
+# upgrade nvm
+nvm upgrade
