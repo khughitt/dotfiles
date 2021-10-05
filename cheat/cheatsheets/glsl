@@ -1,10 +1,9 @@
-//
-// https://www.shaderific.com/glsl-functions
-//
-
-//
-// "gentype" ~> float/vec2/vec3/vec4
 // 
+// funcs: https://www.shaderific.com/glsl-functions
+//
+// canvas-sketch foo.js --hot
+// canvas-sketch foo.js --new --open
+//
 
 // returns 0/1, if below/above cutoff
 step(cutoff, val)
@@ -12,15 +11,31 @@ step(cutoff, val)
 // given a range and a value, interpolates the value between the range
 smoothstep(lower, upper, val)
 
-// mix: weighted linear intepreation between two values
-// x×(1−a)+y×a.
-// 1d
-float mix(float x, float y, float a)  
-// vec2-4 versions ~> gradients, etc.
-//  vec3 mix(vec3 x, vec3 y, vec3 a)
-//  vec3 mix(vec3 x, vec3 y, float a)
+// weighted linear intepreation between two values (x * (1−a) + y * a)
+float mix(x, y, a)  
+
+// triangle wave
+abs(2.0 * fract(x) - 1.0)
 
 // clamp (clip between min/max..)
-gentype clamp(gentype x, gentype min, gentype max)
+clamp(x, min, max)
+
+//
+// basic vertex shader
+//
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+
+//
+// basic fragment shader
+//
+varying vec2 vUv;
+void main() {
+  // ex. color based on uv coords
+  gl_FragColor = vec4( vec3( vUv, 0. ), 1. );
+}
 
 # vi:syntax=glsl

@@ -61,3 +61,18 @@ json.loads(x)
 
 # to json
 json.dumps({'foo': 'bar'})
+
+# download file with urllib.request
+import urllib.request
+
+with urllib.request.urlopen("http://<remote>") as fp:
+    dat = fp.read()
+
+with open("/path/to/<local>", "wb") as fp:
+    fp.write(dat)
+
+# md5sum
+import hashlib
+
+source = '<input..>'.encode()
+md5 = hashlib.md5(source).hexdigest()

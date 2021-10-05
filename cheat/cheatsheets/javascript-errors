@@ -1,5 +1,13 @@
 // "Uncaught SyntaxError: import declarations may only appear at top level of a module"
-- for script blocks, add `type=module`
+// or
+// Uncaught SyntaxError: Unexpected token 'export'
+for script blocks/includes, add `type=module`
 
 // "TypeError: SimplexNoise is not a constructor"
-- missing surround "{ }" in require?..
+missing surround "{ }" in require?..
+
+// javascript module export class not defined
+// not sure about this one yet... occurs when attempting to import js classes using
+// "<script>" tags with "type='module'", and a class exported via `export default class
+// XX`..
+// switching to node/parcel for now to keep things simple..

@@ -1,0 +1,7 @@
+# get a list of devices (card/dev ~> "hw=c.d")
+arecord -l
+
+# jack2
+jack_control
+a2j_control
+qjackctl

@@ -31,6 +31,9 @@ docker container ls -a --filter status=exited --filter status=created
 # remove all stopped containers
 docker container prune 
 
+# free up space
+docker system prune -a -f
+
 # launch docker compose & build needed containers
 docker-compose up --build
 
