@@ -18,5 +18,8 @@ syn match TestMatch /b\(c\)\@=\&\(a\)\@<=b/
 :set nu
 :set nu!
 
+# sort selected lines
+:sort
+
 # specify syntax at bottom of a file
 # vi:syntax=glsl
