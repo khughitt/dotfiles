@@ -41,12 +41,9 @@ ln_s ${DOTS_HOME}/zshenv ~/.zshenv
 ln_s ${DOTS_HOME}/shell ~/.shell
 
 # Create needed directories
-for x in "compton" "gedit" "i3" "rofi" "wal"; do
+for x in "compton" "i3" "rofi" "wal"; do
     mkdir -p ${XDG_CONFIG_HOME}/${x}
 done
-
-# Gedit
-cp -r ${DOTS_HOME}/gedit/styles ${XDG_CONFIG_HOME}/gedit/
 
 # Gtk 3.0
 if [ ! -e ${XDG_CONFIG_HOME}/gtk-3.0/ ]; then
@@ -58,7 +55,7 @@ ln_s ${DOTS_HOME}/gtk-3.0/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 # ~/.config/xx
 for path in "cheat" "dunst" "fcitx" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
             "labnote" "lsd" "polybar" "powerline" "ranger" "snakemake" \
-            "picom.conf" "sway" "termcolors" "termite" "zathura" "zeit"; do
+            "picom.conf" "sway" "termcolors" "zathura" "zeit"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
