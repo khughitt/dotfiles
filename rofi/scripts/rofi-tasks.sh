@@ -88,10 +88,10 @@ else
     elif [ "$@" = "l-systems" ]; then
         i3empty.py next 1 > /dev/null
         i3-msg layout stacking > /dev/null
-        coproc kitty -d ~/d/l-systems/00-hello nvim index.html > /dev/null
-        coproc kitty -d ~/d/l-systems/00-hello python -m 'http.server' 8001 > /dev/null
+        coproc kitty -d ~/d/l-systems/00-hello nvim index.js > /dev/null
+        coproc kitty -d ~/d/l-systems/00-hello parcel index.html > /dev/null
         coproc zathura ~/d/books/abop.pdf > /dev/null
         coproc kitty -d $NOTES/books nvim -c "colorscheme $ALT2" algorithmic-beauty-of-plants.md > /dev/null
-        coproc kitty -d $NOTES/tech/procedural-generation/nature nvim -c "colorscheme $ALT1" l-systems.md > /dev/null
+        coproc kitty -d $NOTES/tech/procedural-generation/l-systems nvim -c "colorscheme $ALT1" next-steps.md > /dev/null
     fi
 fi 

@@ -144,13 +144,13 @@ interval = 3
 warn-percentage = 80
 
 format = <label>
-format-prefix = " "
+;format-prefix = " "
 format-prefix-foreground = ${colors.foreground-alt}
 format-underline = ${xrdb:color4}
 label = %percentage_used%%
 
 format-warn = <label-warn>
-format-warn-prefix = " "
+;format-warn-prefix = " "
 format-warn-prefix-foreground = ${alert}
 format-warn-underline = ${alert}
 label-warn = " %percentage_used%%"
@@ -219,7 +219,7 @@ date =
 date-alt = " %Y-%m-%d"
 time = "%I:%M %p"
 time-alt = "%I:%M:%S %p"
-format-prefix = 
+; format-prefix = 
 format-prefix-foreground = ${colors.foreground-alt}
 format-underline = ${xrdb:color4}
 label = %date% %time%

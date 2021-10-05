@@ -127,14 +127,12 @@ function jm {
 }
 
 # fzf confs
-# --regex 'conf|init|rc|aliases|exports|functions|mindful\.vim|polybar|private|Renviron|Rprofile|rofi-tasks|\.sh|zshenv' \
 function C {
     target=`fd . "$HOME/.dotfiles" -t f \
             --no-ignore-vcs \
             --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" \
             --exclude "*.xml" --exclude "*.png" --exclude "*.desktop" \
             --exclude "plugged" --exclude "black"`
-    #target="$target\n$HOME/.dotfiles/nvim/plugged/mindful.vim/syntax/mindful.vim\n$HOME/.dotfiles/nvim/plugged/mindful.vim/after/ftplugin/mindful.vim"
 
     target=`echo $target |\
             grep --color='none' "$1" |\
