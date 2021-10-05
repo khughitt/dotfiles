@@ -10,6 +10,7 @@ alias sudo="sudo " # support aliases when using sudo
 
 # ag
 alias agl='ag -l'
+alias agd='ag --depth'
 
 # ls
 if type "lsd" > /dev/null; then
@@ -85,6 +86,7 @@ alias kord="python ~/.local/fretboard/fretboard.py"
 alias m='vim ~/notes/mindful.mnd'
 alias n="notes"
 alias no="notes -p"
+alias nd="cd ~/notes && cd \`fd -t d | grep --color='none' \"$1\" | fzf -1 --exact\`"
 
 # mount
 alias um="sudo umount /mnt/usb"
@@ -92,8 +94,9 @@ alias um="sudo umount /mnt/usb"
 # netstat
 alias netp="sudo netstat -plant"
 
-# python
+# httpd
 alias ph='python -m "http.server"'
+alias pa='parcel'
 
 # rofi
 alias rt='nvim ~/.dotfiles/rofi/scripts/rofi-tasks.sh'

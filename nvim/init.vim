@@ -61,6 +61,7 @@ call plug#begin()
     Plug 'dylanaraps/wal.vim'
     Plug 'editorconfig/editorconfig-vim'
     Plug 'ervandew/supertab'
+    Plug 'JoosepAlviste/nvim-ts-context-commentstring'
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
     Plug 'junegunn/fzf.vim'
     Plug 'junegunn/vim-emoji'
@@ -209,8 +210,9 @@ set showcmd                     " show incomplete commands and selection info
 set nolazyredraw                " turn off lazy redraw
 set number                      " line numbers
 set whichwrap+=<,>,h,l,[,]      " backspace and cursor keys wrap to
-set shortmess=aF                " shorten messages
-set cmdheight=2                 " shorten messages
+" set shortmess=aF                " shorten messages
+set shortmess+=F                " shorten messages
+set cmdheight=1                 " default cmdline height
 set report=0                    " tell us about changes
 set nostartofline               " don't jump to the start of line when scrolling
 
@@ -698,7 +700,8 @@ let g:csv_no_conceal = 1
 "  vim-hexokinase
 " ---------------------------------------------------------------------------
 "let g:Hexokinase_highlighters = ['backgroundfull']
-let g:Hexokinase_highlighters = ['sign_column']
+"let g:Hexokinase_highlighters = ['sign_column']
+let g:Hexokinase_highlighters = ['foregroundfull']
 
 " ---------------------------------------------------------------------------
 "  colorscheme-switcher.vim
@@ -774,6 +777,9 @@ require'nvim-treesitter.configs'.setup {
   highlight = {
     enable = true,
     disable = { 'rmd' },
+  },
+  context_commentstring = {
+    enable = true
   },
 }
 EOF
@@ -951,25 +957,20 @@ endif
 "  Language-specific Options
 " ---------------------------------------------------------------------------
 
-" Language-specific options
 autocmd FileType vimscript setlocal softtabstop=4 shiftwidth=4 tabstop=4
 autocmd BufRead,BufNewFile *.py set autoindent
 autocmd BufRead,BufNewFile *.har set ft=json
+autocmd FileType markdown,mindful setlocal nonumber
 
 " nvim-ipy
 " let g:nvim_ipy_perform_mappings = 0
 
 " ---------------------------------------------------------------------------
-"  Language-specific Options
+"  Coloscheme options
 " ---------------------------------------------------------------------------
-"let g:onedark_terminal_italics=1
 let g:gruvbox_italic=1
 let g:quantum_black=1
 let g:quantum_italics=1
-
-"colorscheme palenight
-"colorscheme pencil
-"colorscheme quantum
 
 syntax on
 
