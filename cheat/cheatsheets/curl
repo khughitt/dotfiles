@@ -10,6 +10,9 @@ curl -C - url
 # send json from file
 curl -d @file.json url
 
+# post request
+curl -X POST -d @query.txt url
+
 #
 # send a request with headers specified in a file
 # 

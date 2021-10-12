@@ -23,6 +23,12 @@
 # limits
 \[ \lim_{x\to\infty} f(x) \]
 
+# grad
+\nabla
+
+# partial derivative
+\partial
+
 # sets
 \in
 \notin

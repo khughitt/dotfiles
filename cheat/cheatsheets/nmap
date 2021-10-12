@@ -1,2 +1,5 @@
 # find ips addresses on local net
-nmap -v -sn 192.168.0.0/16
+nmap -sn 192.168.0.0/16
+
+# check specific port
+nmap -p 123 192.168.0.0/16
