@@ -112,6 +112,9 @@ np.where(dat['foo'] > 1)
 # ~R's match()
 B.reset_index().set_index('c').loc[A.c, 'index'].values
 
+# contains
+df.foo.str.contains('bar', na=False)  # ignore missing vals in column
+
 # endswith
 x[x.foo.str.endswith('bar')]
 
@@ -120,7 +123,6 @@ df.foo.str.find('bar')
 
 # return boolean series indicating regex presence in column
 df.foo.str.find('bar|baz')
-df.foo.str.find('bar|baz', na=False)  # ignore missing vals in column
 
 # multiple conditions (wrap each in parens)
 x[(x.foo > 3) & (x.bar < 10)]
@@ -187,6 +189,11 @@ dat.values[ind]
 # pivot long -> wide
 df.pivot_table(index='patient', columns='obs', values='score', fill_value=0)
 #df.pivot(index='patient', columns='obs', values='score')
+
+Printing
+--------
+
+df.to_markdown()
 
 Plotting
 --------

@@ -15,6 +15,7 @@ elem.offsetHeight;
 # The map() method creates a new array populated with the results of calling a provided
 # function on every element in the calling array.
 [1, 2, 3].map(x => x * 2);
+["a", "b", "c"].map((x, ind) => {...})
 
 # add item to array
 a.push('foo')
@@ -83,6 +84,10 @@ arr.map(x => ({ foo: x.bar }));
 # map from array of objects to an array of objects (dynamic keys)
 arr.map(x => ({[x.key]:x.val}))
 
+# array of strings => string-indexed object of empty arrays
+# ex. "['a', 'b', 'c']" => "{a: [], b: [], c: []}"
+arr.reduce((a,b) => (a[b] = [], a), {})
+
 # convert an array of {key:value} pairs to a single combined object
 Object.assign({}, ...arr);
 
@@ -127,10 +132,13 @@ str.trim()
 str.startsWith("foo")
 
 # split string by space
-str.split(" ");
+str.split(" ")
 
 # convert string to a character array
-str.split("");
+str.split("")
+
+# check if string contains a given substring
+str.includes("foo")
 
 # collapse an array into a string
 arr.join("");

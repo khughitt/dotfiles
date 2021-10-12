@@ -1,0 +1,7 @@
+from fastapi import FastAPI, Query
+from typing import List, Optional
+app = FastAPI()
+
+@app.post("/foo")
+async def foo(p1: str, p2: List[str], query: Optional[str] = Query(None, regex="^[%0-9a-z\-]*$")):
+    print(p1)
