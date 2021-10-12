@@ -86,7 +86,7 @@ alias kord="python ~/.local/fretboard/fretboard.py"
 alias m='vim ~/notes/mindful.mnd'
 alias n="notes"
 alias no="notes -p"
-alias nd="cd ~/notes && cd \`fd -t d | grep --color='none' \"$1\" | fzf -1 --exact\`"
+alias nd="notes_dir"
 
 # mount
 alias um="sudo umount /mnt/usb"

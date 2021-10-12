@@ -20,7 +20,7 @@ unalias zz
 alias j='fasd_cd -d' 
 alias jb="fasd_cd -d $HOME d biodat"
 alias jd="fasd_cd -d /data"
-alias jn="fasd_cd -d notes"
+alias jn="fasd_cd -d $HOME/notes"
 alias jp="fasd_cd -d home d/r/proj"
 alias js="fasd_cd -d home shiny"
 

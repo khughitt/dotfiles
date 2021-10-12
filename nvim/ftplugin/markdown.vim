@@ -130,8 +130,8 @@ function PasteMDLink()
 endfunction
 
 " Make a keybinding (mnemonic: "mark down paste")
-map <Leader>f <ESC>:call PasteMDLink()<CR>
-nmap <Leader>f :call PasteMDLink()<CR>
+map <Leader>f <ESC>:call PasteMDLink()<CR><CR>
+nmap <Leader>f :call PasteMDLink()<CR><CR>
 
 " ----------------------------------------------------------------------------
 " uuid generator

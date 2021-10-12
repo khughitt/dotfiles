@@ -87,6 +87,25 @@ function notes {
     cd $wd
 }
 
+function notes_dir {
+    cd ~/notes
+
+    # determine fd command to use
+    fd_cmd="fd -t d"
+
+    # if "-p" switch is present, exclude personal entries from search results
+    if [[ $1 == "-p" ]]; then
+        fd_cmd="$fd_cmd $MINDFUL_EXCLUDES"
+        shift;
+    fi
+
+    target=`eval $fd_cmd | grep --color='none' "$1" | fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        cd "$HOME/notes/$target"
+    fi
+}
+
 # add note
 function a {
     pwd=`pwd`
