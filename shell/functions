@@ -9,6 +9,23 @@ function al {
     alias | grep $1
 }
 
+# function lookup
+function fu {
+  lines=`ag --no-number "^function" ~/.shell/functions`
+
+  echo $lines | while read line; do 
+    # parse function name
+    func=$(echo $line | sed 's/function //' | cut -d ' ' -f1);
+
+    # get function definition
+    def=`type -af $func`
+  
+    if echo $def | grep -q $1; then
+      echo $def
+    fi
+  done
+}
+
 # relative working directory
 function wd {
     echo ${$(pwd)/$HOME\//}
@@ -176,6 +193,20 @@ function c {
 # vim + ag
 function va {
     $EDITOR $(ag -l $1)
+}
+
+# vim + fzf
+function vI {
+    target=`fd -t f \
+            --exclude "*.svg" --exclude "*.png"`
+
+    target=`echo $target |\
+            grep --color='none' "$1" |\
+            fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        vim $target
+    fi
 }
 
 # zcat | wc -l
