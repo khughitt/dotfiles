@@ -156,8 +156,9 @@ alias y='yay'
 alias yd='yay -Syu --devel'
 
 # conda
+#alias ca='source activate'
 alias cde='conda deactivate'
-alias ca='source activate'
+alias ca='conda activate'
 alias cs='conda search'
 
 # diff

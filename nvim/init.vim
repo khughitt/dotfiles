@@ -75,7 +75,6 @@ call plug#begin()
     " slow with multiple mnd tabs open?..
     Plug 'romgrk/barbar.nvim'
     Plug 'scrooloose/nerdcommenter'
-    Plug 'tmux-plugins/vim-tmux-focus-events'
     Plug 'tomtom/tlib_vim'
     Plug 'tpope/vim-repeat'
     Plug 'tpope/vim-surround'
@@ -538,6 +537,22 @@ let g:airline_theme = 'quantum'
 let g:ale_fixers = {'r': ['styler', 'trim_whitespace'], 'rmd': ['styler', 'trim_whitespace']}
 let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL,object_usage_linter=NULL)"
 
+" use quickfix list instead of loclist
+let g:ale_set_loclist = 0
+let g:ale_set_quickfix = 1
+
+" create shortcut to toggle quickfix visibility
+" https://stackoverflow.com/a/63162084/554531
+function! ToggleQuickFix()
+    if empty(filter(getwininfo(), 'v:val.quickfix'))
+        copen
+    else
+        cclose
+    endif
+endfunction
+
+nnoremap <silent> <F2> :call ToggleQuickFix()<cr>
+
 " ---------------------------------------------------------------------------
 "  barbar.nvim
 " ---------------------------------------------------------------------------
@@ -869,6 +884,9 @@ let g:fzf_layout = { 'window': '10split enew' }
 let g:fzf_layout = { 'down': '~40%' }
 
 cmap <C-r> :History:<CR>
+
+" Ag
+map <leader>a :Ag<CR>
 
 " create a `Notes` command to search notes
 command! -bang Notes call fzf#vim#files('~/notes', <bang>0)

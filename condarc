@@ -3,7 +3,6 @@ channels:
   - bioconda
   - defaults
 anaconda_upload: true
-sat_solver: pycryptosat
 allow_conda_downgrades: true
 auto_activate_base: false
 channel_priority: strict
