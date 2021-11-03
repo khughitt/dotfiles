@@ -296,7 +296,7 @@ function dat {
             ipython -i -c "import pandas as pd; dat=pd.read_parquet('$target');"
         elif [ $ext = "csv" ]; then
             ipython -i -c "import pandas as pd; dat=pd.read_csv('$target');"
-        elif [ $ext = "tsv" ]; then
+        elif [ $ext = "tsv" ] || [ $ext = "txt" ]; then
             ipython -i -c "import pandas as pd; dat=pd.read_csv('$target', sep='\t');"
         else
             echo "Unrecognized filetype specified: $ext"
