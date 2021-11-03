@@ -4,11 +4,26 @@ https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html
 # ipython x pdb
 from IPython import embed; embed()
 
+# launch qtconsole from a notebook
+%qtconsole
+
 # flatten nested lists (itertools)
 list(itertools.chain(*regular_list))
 
 # flatten nested lists (sum)
 sum(regular_list, [])
+
+# sort list of objects/dicts by key (in place)
+lst.sort(key=lambda x: x['foo'], reverse=True)
+
+# sort list of objects/dicts by key (out of place)
+sorted(lst, key=lambda x: x['foo'], reverse=True)
+
+# chunk list
+# https://stackoverflow.com/a/312464/554531
+def chunks(lst, n):
+  for i in range(0, len(lst), n):
+      yield lst[i:i + n]
 
 # start a web server
 python3 -m http.server 7800
@@ -44,6 +59,9 @@ matches.groupdict()
 {**x, **y}
 x | y # python 3.9
 
+# filter dict ("x[0]" key, "x[1]" value)
+dict(filter(lambda x: x[1] == 'foo', mydict.items()))
+
 # get current timestamp
 import time
 ts = time.time()
@@ -58,12 +76,27 @@ import yaml
 with open('cfg.yml') as fp:
     cfg = yaml.load(fp, Loader=yaml.FullLoader)
 
-# from json
+# json string -> python
 x =  '{"foo": "bar"}'
 json.loads(x)
 
-# to json
+# convert json to string
 json.dumps({'foo': 'bar'})
+
+# write json to file
+with open('out.json', 'w') as fp:
+    json.dump({'foo': 'bar'}, fp)
+
+# dealing with numpy datatype encoding 
+# https://stackoverflow.com/a/65151218/554531
+import json
+import numpy as np
+
+def np_encoder(object):
+    if isinstance(object, np.generic):
+        return object.item()
+
+json.dumps(obj, default=np_encoder)
 
 # download file with urllib.request
 import urllib.request
@@ -74,8 +107,20 @@ with urllib.request.urlopen("http://<remote>") as fp:
 with open("/path/to/<local>", "wb") as fp:
     fp.write(dat)
 
+# adding request headers
+headers = {"User-Agent": "XX"}
+req = urllib.request.Request("http://<remote>", headers=headers)
+
+with urllib.request.urlopen(req) as response:
+  res = json.loads(response.read())
+
 # md5sum
 import hashlib
 
 source = '<input..>'.encode()
 md5 = hashlib.md5(source).hexdigest()
+
+# pickle
+import pickle
+pickle.dump(obj, open("out.p", "wb"))
+pickle.load(open("out.p", "rb"))

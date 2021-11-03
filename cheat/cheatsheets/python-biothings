@@ -1,0 +1,5 @@
+# convert gene ids
+# fields: https://docs.mygene.info/en/latest/doc/query_service.html
+from biothings_client import get_client
+mg = get_client("gene")
+mg.querymany(symbols, scopes="symbol", species=9606, fields="entrezgene,summary", as_dataframe=True)

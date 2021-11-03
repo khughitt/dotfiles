@@ -7,6 +7,12 @@ axis = 0
 # columns
 axis = 1
 
+Series
+------
+
+# rename series
+dat.name = 'foo'
+
 Selection
 ---------
 
@@ -47,6 +53,9 @@ df = df.astype({"access_count": int, "date_created": "datetime64[ns]"})
 
 # dataframe of random uniform values
 df = pd.DataFrame(np.random.rand(3, 4))
+
+# zeros
+df = pd.DataFrame(np.zeros((3, 4)))
 
 Dates
 -----
@@ -90,9 +99,11 @@ df['foo'] = 1
 Filtering & Masking
 -------------------
 
-# membership
+# membership / "includes"
 x.isin([..])    # is in 
 ~x.isin([..])   # not in
+
+pd.Series(['a', 'b', 'c']).isin(df.col)
 
 # get values in list that are present in columns of a dataframe
 set(a).intersection(df.columns)
@@ -121,17 +132,48 @@ x[x.foo.str.endswith('bar')]
 # find indices of string in column
 df.foo.str.find('bar')
 
+# get rows corresponding to a string match
+ dat[dat.foo.str.lower().str.find('bar') != -1]
+
 # return boolean series indicating regex presence in column
 df.foo.str.find('bar|baz')
 
 # multiple conditions (wrap each in parens)
 x[(x.foo > 3) & (x.bar < 10)]
 
+# remove duplicates
+df[~df.duplicated()]
+
+Type Conversion
+---------------
+
+# bool -> int (in place)
+df.replace({False: 0, True: 1}, inplace=True)
+
 Min/Max
 -------
 
 # get indices of column with max value for each row
 df.idxmax(axis=1)
+
+Normalization / Scaling
+-----------------------
+
+# min-max scaling
+(df - df.min()) / (df.max() - df.min())
+
+# mean-center
+df.apply(lambda x: x - x.mean())
+
+# min-max scaling (numpy / scikit)
+from sklearn import preprocessing
+mat = df.to_numpy()
+scaler = preprocessing.MinMaxScaler().fit(mat)
+scaled_mat = scaler.transform(mat)
+
+# standardization (numpy / scikit)
+scaler = preprocessing.StandardScaler().fit(mat)
+scaled_mat = scaler.transform(mat)
 
 Sort
 ----
@@ -151,6 +193,9 @@ dat.groupby('tag').agg(sum)
 # group by -> count
 dat.groupby('tag').agg('count')
 
+# group by -> count unique
+dat.groupby('tag').foo.nunique().reset_index()
+
 # group by -> sort
 dat.groupby('seed').apply(pd.DataFrame.sort_values, 'tag')
 dat.groupby('seed').sort_values('tag')
@@ -160,6 +205,11 @@ dat.groupby(["path", "seed"]).count().max(axis=1).groupby("path").sample(1)
 
 # get first item from each group
 df.groupby('foo').first()
+
+Sampling
+--------
+
+df.sample(10, random_state=321)
 
 Counting
 --------
@@ -188,7 +238,15 @@ dat.values[ind]
 
 # pivot long -> wide
 df.pivot_table(index='patient', columns='obs', values='score', fill_value=0)
-#df.pivot(index='patient', columns='obs', values='score')
+
+# pivot long -> wide (binary)
+df['presence'] = 1
+df.pivot_table(index='patient', columns='obs', values='presence', fill_value=0)
+
+Renaming
+--------
+
+df.rename(columns={"from": "to", ...})
 
 Printing
 --------
@@ -202,3 +260,4 @@ Plotting
 import matplotlib.pyplot as plt
 ax = dat.score.plot.kde()
 plt.show()
+

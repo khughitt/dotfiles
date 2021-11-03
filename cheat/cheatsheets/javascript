@@ -12,6 +12,9 @@ elem.offsetHeight;
 # imports
 # https://colinricardo.substack.com/p/named-export-vs-default-export
 
+# round
+num.toFixed(2)
+
 # The map() method creates a new array populated with the results of calling a provided
 # function on every element in the calling array.
 [1, 2, 3].map(x => x * 2);
@@ -162,6 +165,15 @@ entries.sort((a, b) => (a.similarity < b.similarity) ? 1 : -1);
 # https://stackoverflow.com/a/65681883/554531
 const sorted = [...arr].sort((a, b) => b - a);
 return arr.map((x) => sorted.indexOf(x) + 1);
+
+# timestamp -> date string
+new Date(ts * 1e3).toISOString()
+
+# date formatting (~strftime)
+# https://www.npmjs.com/package/dateformat
+import dateFormat from "dateformat";
+var now = new Date()
+dateFormat(now, "YY/mm/dd");
 
 # print current date
 console.log(Date())

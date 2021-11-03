@@ -1,0 +1,28 @@
+# string concatenation
+"foo" * "bar"
+
+# join filepaths
+joinpath("dir", "subdir")
+
+###########################
+#
+# Tables.jl
+#
+###########################
+
+# load feather/arrow file
+using Arrow;
+dat = Arrow.Table('data.feather')
+
+# convert to dataframe
+using DataFrames
+DataFrame(dat)
+
+# row-wise access
+rows = Tables.rows(x)
+
+# column-wise access
+columns = Tables.columns(x)
+
+Tables.columnnames(x)
+Tables.getcolumn(columns, col)

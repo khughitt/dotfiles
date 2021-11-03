@@ -10,11 +10,21 @@ set -euo pipefail
 # string not null
 [ -z "$a" ]
 
+# replace file extension in a string
+echo "${file%.old}.new"
+echo "${file%.*}.new"
+
 # redirect stderr to stdout
 cmd 2>&1
 
 # if statement conditional on grep 
 if ! echo $foo | grep -q "not running"; then echo 'yes'; fi
+
+# iterate over a list of strings (newline after list is important..)
+for x in a b c
+do
+  echo $x;
+done
 
 # split by " " and get last element
 # https://stackoverflow.com/questions/3162385/how-to-split-a-string-in-shell-and-get-the-last-field

@@ -1,0 +1,7 @@
+# add column to existing dataset
+.data(mat, function(d, i) {
+  d.foo = vals[i]
+})
+
+# get colors from external array
+.attr("fill", function(d, i) { return colors[i]})

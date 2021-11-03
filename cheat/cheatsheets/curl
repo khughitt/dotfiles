@@ -5,7 +5,7 @@ curl -O url
 curl -L url
 
 # resume download
-curl -C - url
+curl -C - -O url
 
 # send json from file
 curl -d @file.json url

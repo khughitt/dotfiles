@@ -1,13 +1,19 @@
 # get info
 mimeopen -D<somefile>.html 
 
+# user overrides
+vi ~/.config/mimeapps.list
+
 # query default mimetype
 xdg-mime query default x-scheme-handler/http
 xdg-mime query default x-scheme-handler/https
 
-# update default mimetype
-xdg-mime default chromium.desktop 'x-scheme-handler/http'
-xdg-mime default chromium.desktop 'x-scheme-handler/https'
+# list available applications
+fd desktop /usr/share/applications
+
+# set default mimetype
+xdg-mime default firefox.desktop 'x-scheme-handler/http'
+xdg-mime default firefox.desktop 'x-scheme-handler/https'
 
 # add mimetype
 mkdir -p ~/.local/share/mime/packages

@@ -3,3 +3,6 @@ conda install jupyter ipython black neovim
 
 # remove env
 conda remove --name myenv --all
+
+# clean-up unused packages
+conda clean -a
