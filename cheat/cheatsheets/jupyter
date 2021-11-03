@@ -1,2 +1,5 @@
 # start qtconsole from notebook
 %qtconsole
+
+# generate notebook config
+jupyter notebook --generate-config

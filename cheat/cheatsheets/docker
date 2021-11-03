@@ -50,7 +50,7 @@ docker-compose run <id>
 # stop a single container with docker compose
 docker-compose rm -sv <service>
 
-# get the ip addr of a running container
+# get the ip addr and port of a running container
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 
 
 # copy file from inside container to host

@@ -15,6 +15,9 @@ git checkout alt-history
 # search history for a specific string
 git log -S password
 
+# search history for [D]eleted file with name "foo"
+git log --all --stat --diff-filter=D --oneline | grep "foo"
+
 # initialize submodules
 git submodule update --init --recursive
 
