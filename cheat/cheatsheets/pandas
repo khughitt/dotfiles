@@ -96,6 +96,9 @@ df.insert(0, "foo", [0, 1, 2], allow_duplicates = True)
 
 df['foo'] = 1
 
+# add a "rank" column (1-n)
+df['rank'] = list(range(1, df.shape[0] + 1))
+
 Filtering & Masking
 -------------------
 
@@ -146,6 +149,9 @@ df[~df.duplicated()]
 
 Type Conversion
 ---------------
+
+# string/object -> int
+df['foo'] = df['foo'].astype('int64')
 
 # bool -> int (in place)
 df.replace({False: 0, True: 1}, inplace=True)

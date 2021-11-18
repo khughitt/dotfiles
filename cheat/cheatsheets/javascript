@@ -128,6 +128,9 @@ Math.min(...arr)
 a === b  # strict equality (type + value)
 a == b   # loose equality (performs type coercion)
 
+# lower/upper case
+str.toLowerCase()
+
 # strip / trim whitespace
 str.trim()
 
@@ -146,8 +149,16 @@ str.includes("foo")
 # collapse an array into a string
 arr.join("");
 
-# replace all occurrences of "foo" in a string
+# replace all occurrences of "foo" in a string (regex)
 a.replace(/foo/g, 'bar');
+
+# regex match
+var re = /\w+/g;
+var str = 'foo bar';
+var arr = str.match(re);
+
+# regex match multiple
+let arr = [...str.matchAll(re)];
 
 # sum array of numbers
 [1, 2, 3, 4].reduce((a, b) => a + b, 0)
@@ -177,6 +188,17 @@ dateFormat(now, "YY/mm/dd");
 
 # print current date
 console.log(Date())
+
+# async request
+fetch(url)
+
+# load file syncronously
+import { readFileSync } from 'fs';
+readFileSync('foo');
+
+# get filename portion of filepath
+var path = require('path');
+path.parse(file).base;
 
 # localStorage; getItem() returns null if item not found
 localStorage.setItem('foo', JSON.stringify(obj));

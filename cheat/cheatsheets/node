@@ -8,8 +8,11 @@ npx gitignore node
 npx covgen YOUR_EMAIL_ADDRESS
 npm init -y
 
+# create a new react proj (npm)
+npx create-react-app my-proj
+
 # create a new react proj (create-react-app x pnpm)
-pnpx create-react-app my-project
+pnpx create-react-app my-proj
 
 # parcel
 # yarn global add parcel-bundler
