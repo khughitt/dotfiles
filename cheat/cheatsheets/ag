@@ -9,3 +9,6 @@ ag --depth 1 foo
 
 # find files that *don't* match some expr
 ag -L foo
+
+# limit search to files matching pattern
+ag -u -G 'metadata\.tsv$' MM

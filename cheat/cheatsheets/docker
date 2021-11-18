@@ -10,6 +10,9 @@ docker images
 # list containers
 docker ps -a
 
+# stop all running containers
+docker kill $(docker ps -q)
+
 # run a container
 docker run <name or id>
 

@@ -1,0 +1,5 @@
+# specify output path
+wget <url> -O /foo/bar.txt
+
+# specify output directory
+wget <url> -P /dir

@@ -124,3 +124,8 @@ md5 = hashlib.md5(source).hexdigest()
 import pickle
 pickle.dump(obj, open("out.p", "wb"))
 pickle.load(open("out.p", "rb"))
+
+# replace
+str.replace('foo', 'bar')
+str.replace('foo', 'bar', 1)
+
