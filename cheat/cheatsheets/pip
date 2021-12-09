@@ -1,0 +1,3 @@
+# list installed
+pip list
+pip freeze

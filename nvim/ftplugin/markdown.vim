@@ -1,3 +1,9 @@
+" wrap lines without inserting breaks
+set wrap
+set linebreak
+set textwidth=0
+set wrapmargin=0
+
 " underline current line; useful for markdown headings
 function CreateHeading(char)
     let size = strwidth(getline('.'))

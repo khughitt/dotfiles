@@ -76,6 +76,10 @@ import yaml
 with open('cfg.yml') as fp:
     cfg = yaml.load(fp, Loader=yaml.FullLoader)
 
+# read json from file
+with open('file.json') as fp:
+  x = json.load(fp)
+
 # json string -> python
 x =  '{"foo": "bar"}'
 json.loads(x)

@@ -8,7 +8,7 @@ map ` mark_evaluate
 
 set font "inconsolata 14"
 
-set recolor true
+# set recolor true
 
 set default-bg '#11171d'
 set default-fg '#a8a8a8'

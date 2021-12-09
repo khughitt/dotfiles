@@ -144,6 +144,37 @@ function a {
     cd $pwd
 }
 
+# preview note
+function np {
+    wd=`pwd`
+
+    cd ~/notes
+
+    # determine fd command to use
+    fd_cmd="fd -e md -e mnd"
+
+    # if "-p" switch is present, exclude personal entries from search results
+    if [[ $1 == "-p" ]]; then
+        fd_cmd="$fd_cmd $MINDFUL_EXCLUDES"
+        shift;
+    fi
+
+    target=`eval $fd_cmd | grep --color='none' "$1" | fzf -1 --exact --preview 'mdcat {}' --preview-window up`
+
+    if [ ! -z "$target" ]; then
+        echo "Opening ~/notes/$target"
+        
+        # for convenience, keep track of last-accessed file/dir
+        export las=`realpath ~/notes/$target`
+        export dlas=`dirname $las`
+
+        # open file in editor
+        pandoc $target -o /tmp/preview.pdf && zathura /tmp/preview.pdf
+    fi
+
+    cd $wd
+}
+
 # journal manager
 # 
 # scans a folder containing project-specific markdown journal entries used to 

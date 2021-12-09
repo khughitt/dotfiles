@@ -1,0 +1,12 @@
+# toggle input method (depends on gtk/qt/etc. support);
+# remapped from original <c-space> to avoid collision with rofi
+<c-space>
+
+# switch between chinese/english, when chinese input is active
+<shift>
+
+# switch between input methods
+<c-shift>
+
+# page forward/backword
+-/=

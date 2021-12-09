@@ -123,6 +123,7 @@ bindsym $mod+q kill
 bindsym Mod1+F4 kill
 
 # rofi
+#bindsym Control+space exec $menu
 bindsym Control+space exec $menu
 
 # Drag floating windows by holding down $mod and left mouse button.
@@ -277,7 +278,7 @@ bindsym $mod+f fullscreen
 bindsym $mod+Shift+space floating toggle
 
 # Swap focus between the tiling area and the floating area
-bindsym $mod+space focus mode_toggle
+# bindsym $mod+space focus mode_toggle
 
 # move focus to the parent container
 bindsym $mod+a focus parent
@@ -426,8 +427,8 @@ exec_always --no-startup-id "killall picom; picom -b"
 exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
 exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
 exec --no-startup-id "~/.config/polybar/scripts/spotify/py_spotify_listener.py"
-exec --no-startup-id "fcitx -d"
 exec --no-startup-id "dunst"
+exec --no-startup-id "fcitx5 -d"
 #exec --no-startup-id "/mnt/storage/conda/envs/dashboard/bin/python ~/d/sen/dashboard/app.py"
 #exec --no-startup-id "$HOME/bin/xmodmap-on-input-change.sh"
 #exec --no-startup-id "XDG_CURRENT_DESKTOP=GNOME syncthing-gtk -m"

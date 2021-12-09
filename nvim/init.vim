@@ -50,6 +50,9 @@ inoremap <C-e> <End>
 noremap  <C-a> <Home>
 noremap  <C-e> <End>
 
+" enable mouse wheel in terminal, etc.
+set mouse="a"
+
 " ---------------------------------------------------------------------------
 " vim-plug
 " ---------------------------------------------------------------------------
@@ -99,7 +102,6 @@ call plug#begin()
     Plug 'mzlogin/vim-markdown-toc'
     Plug 'maxmellon/vim-jsx-pretty'
     Plug 'mboughaba/i3config.vim'
-    Plug 'psf/black', { 'branch': 'stable', 'for': 'python' }
     Plug 'raimon49/requirements.txt.vim'
     Plug 'stephpy/vim-yaml'
     Plug 'tikhomirov/vim-glsl'
@@ -173,6 +175,7 @@ call plug#begin()
     "Plug 'honza/vim-snippets'
     "Plug 'junegunn/limelight.vim'
     "Plug 'wincent/terminus'
+    " Plug 'psf/black', { 'branch': 'stable', 'for': 'python' }
     
     "Plug 'challenger-deep-theme/vim'
     "Plug 'cocopon/iceberg.vim'
@@ -565,7 +568,7 @@ nnoremap <silent>    <S-right> :BufferNext<CR>
 " ---------------------------------------------------------------------------
 "  black
 " ---------------------------------------------------------------------------
-au BufWritePre *.py execute ':Black'
+" au BufWritePre *.py execute ':Black'
 
 " ---------------------------------------------------------------------------
 " csv.vim
