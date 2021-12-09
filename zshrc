@@ -205,6 +205,12 @@ fast-theme q-jmnemonic &> /dev/null
 zle -N notes
 bindkey "^N" notes
 
+# directory-specific command history
+# https://github.com/natethinks/jog
+function zshaddhistory() {
+	echo "${1%%$'\n'}|${PWD}   " >> ~/.zsh_history_ext
+}
+
 # print greeting
 if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33

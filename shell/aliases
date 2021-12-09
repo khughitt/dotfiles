@@ -28,6 +28,7 @@ alias lr='ls -latr'
 # cd
 alias dl='cd ~/downloads'
 alias dots='cd ~/.dotfiles'
+alias cdd='cd $dlas'
 
 # cheat
 alias ch=cheat
@@ -46,6 +47,9 @@ alias cpr="cp -r"
 # grep
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
+
+# jog
+alias jg='eval `jog | fzf`'
 
 # remote ip addr
 # https://bbs.archlinux.org/viewtopic.php?pid=408739#p408739
@@ -71,6 +75,7 @@ alias locate=plocate
 # fd
 alias fda="fd -Luu"
 alias fdu="fd -u"
+alias fdl="fd -l | sort -k6M -k7n"
 alias fdr="fd --changed-within 7days"
 
 # htop

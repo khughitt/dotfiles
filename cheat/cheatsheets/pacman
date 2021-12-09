@@ -10,6 +10,9 @@ pactree
 # list installed packages
 pacman -Qe
 
+# clear pacman cache
+pacman -Sc
+
 # find out who owns a file
 pacman -Qo /bin/foo
 pkgfile foo

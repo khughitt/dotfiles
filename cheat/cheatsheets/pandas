@@ -29,6 +29,9 @@ dat.values[ind]
 # drop column
 dat.drop('col', axis=1)
 
+# drop missing
+dat.dropna()
+
 Iteration
 ---------
 
@@ -62,6 +65,12 @@ Dates
 
 # convert date column to unix timestamps
 df.datetime.values.astype(np.int64) // 10 ** 9
+
+# convert timestamp column to datetime
+pd.to_datetime(df['ts'], unit='s')
+
+# get all rows for a specific date
+df[df['date'].dt.normalize() == '2021-12-07']
 
 To Dict
 -------

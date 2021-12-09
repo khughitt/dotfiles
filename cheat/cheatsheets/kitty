@@ -1,2 +1,7 @@
+# https://sw.kovidgoyal.net/kitty/overview/#other-keyboard-shortcuts
+
 # load scrollback buffer into $PAGER
 ctrl+shift+h
+
+# clipboard manager
+ctrl+;
