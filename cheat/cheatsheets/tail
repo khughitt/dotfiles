@@ -1,0 +1,2 @@
+# get all lines starting from line matching "foo"
+tail file.txt -n +`grep --color=never -n 'foo' file.txt |  cut -f1 -d:`

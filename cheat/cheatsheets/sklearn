@@ -1,2 +1,0 @@
-# cosine similarity
-sklearn.metrics.pairwise.cosine_similarity(X)

@@ -16,3 +16,16 @@ pacman -Sc
 # find out who owns a file
 pacman -Qo /bin/foo
 pkgfile foo
+
+# rank mirrors
+# requires "pacman-contrib";
+# manually edit to limit to a specific country
+sed -i 's/^#Server/Server/' /etc/pacman.d/mirrorlist.pacnew
+rankmirrors -n 6 /etc/pacman.d/mirrorlist.pacnew > /etc/pacman.d/mirrorlist
+
+#
+# trouble-shooting
+# 
+
+# signature "unknown trust"
+pacman -Sy archlinux-keyring
