@@ -51,7 +51,7 @@ noremap  <C-a> <Home>
 noremap  <C-e> <End>
 
 " enable mouse wheel in terminal, etc.
-set mouse="a"
+set mouse=a
 
 " ---------------------------------------------------------------------------
 " vim-plug
@@ -537,7 +537,12 @@ let g:airline_theme = 'quantum'
 " ---------------------------------------------------------------------------
 " nmap <silent> <C-k> <Plug>(ale_previous_wrap)
 " nmap <silent> <C-j> <Plug>(ale_next_wrap)
-let g:ale_fixers = {'r': ['styler', 'trim_whitespace'], 'rmd': ['styler', 'trim_whitespace']}
+let g:ale_fixers = {
+  \ 'r': ['styler', 'trim_whitespace'], 
+  \ 'rmd': ['styler', 'trim_whitespace'],
+  \ 'python': ['pyright']
+\}
+
 let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL,object_usage_linter=NULL)"
 
 " use quickfix list instead of loclist
@@ -713,6 +718,7 @@ let g:csv_no_conceal = 1
 " nnoremap <silent> <space>k  :<C-u>CocPrev<CR>
 " " Resume latest coc list
 " nnoremap <silent> <space>p  :<C-u>CocListResume<CR>
+
 
 " ---------------------------------------------------------------------------
 "  vim-hexokinase
