@@ -1,3 +1,6 @@
+# mamba
+conda install mamba -n base -c conda-forge
+
 # python projects
 conda install jupyter ipython black neovim
 

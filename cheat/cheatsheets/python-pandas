@@ -168,7 +168,7 @@ df.replace({False: 0, True: 1}, inplace=True)
 Min/Max
 -------
 
-# get indices of column with max value for each row
+# get indices of column with max value for each row (~which.max)
 df.idxmax(axis=1)
 
 Normalization / Scaling

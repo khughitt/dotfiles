@@ -1,0 +1,24 @@
+##########################
+#
+# dimension reduction
+#
+##########################
+
+# PCA
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2, whiten=False, random_state=1)
+
+# fit & transform separately; useful to get variance explained, etc.
+pca = pca.fit(X)
+dat = pca.transform(X)
+pca.explained_variance_ratio_
+
+# fit & get transformed data in one step
+dat = pca.fit_transform(X)
+
+##########################
+#
+# similarity metrics
+#
+##########################
+sklearn.metrics.pairwise.cosine_similarity(X)

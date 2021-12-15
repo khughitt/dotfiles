@@ -1,5 +1,5 @@
-# PCA
-prcomp(t(dat), scale = TRUE)
+# PCA (column-wise)
+pca <- prcomp(t(dat), scale = TRUE)
 
 pca_dat <- pca$x[, 1:2]
 colnames(pca_dat) <- c("PC1", "PC2")
@@ -24,3 +24,16 @@ umap(t(dat), n_neighbors = 15, n_components = 2, init = 'spectral', scale = FALS
 
 # sweep (ex: cpm normalization)
 dat[, -1] <- sweep(dat[, -1], 2, colSums(dat[, -1]), '/') * 1E6
+
+# recursively update one list, using another
+modifyList(a, b)
+
+# json
+jsonlite::read_json('input.json')
+jsonlite::write_json('output.json')
+
+# yaml
+yaml::read_yaml(file)
+
+# iso 8601 date
+strftime(as.POSIXlt(Sys.time(), "UTC"), "%Y-%m-%dT%H:%M:%S%z")
