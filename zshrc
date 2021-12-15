@@ -229,6 +229,10 @@ else
     fi
 fi
 unset __conda_setup
+
+if [ -f "/mnt/storage/conda/etc/profile.d/mamba.sh" ]; then
+    . "/mnt/storage/conda/etc/profile.d/mamba.sh"
+fi
 # <<< conda initialize <<<
 
 # tabtab source for packages
