@@ -1,0 +1,23 @@
+# https://manpages.ubuntu.com/manpages/xenial/man1/zathura.1.html
+<tab> table of contents
+
+a   adjust to page-fit
+s   adjust to width
+d   side-by-side
+r   rotate
+
+f highlight links; <num> to follow
+
+c-o go backward in jump list
+c-i go forward in jump list
+
+n= zoom to size n
+mX     Set a quickmark to a letter or number X
+'X     Goto quickmark saved at letter or number X
+
+C-r black bg
+
+# commands
+bmark   Save a bookmark
+bdelete Delete a bookmark
+blist   List bookmarks

@@ -1,0 +1,5 @@
+# lookup by property
+jq ".parent.child" foo.json
+
+# no color
+jq --monochrome-output
