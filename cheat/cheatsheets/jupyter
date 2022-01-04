@@ -6,3 +6,15 @@
 
 # generate notebook config
 jupyter notebook --generate-config
+
+# specify plot parameters
+from matplotlib import pyplot as plt
+plt.rcParams['figure.figsize'] = [12, 10]
+plt.rcParams['figure.dpi'] = 96
+
+# print dataframes in a for-loop
+for df in dfs:
+  display(df)
+
+# print all rows
+pd.set_option('display.max_rows', None)

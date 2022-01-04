@@ -10,6 +10,9 @@ pactree
 # list installed packages
 pacman -Qe
 
+# list files in package
+pacman -Ql pkg
+
 # clear pacman cache
 pacman -Sc
 
@@ -29,3 +32,6 @@ rankmirrors -n 6 /etc/pacman.d/mirrorlist.pacnew > /etc/pacman.d/mirrorlist
 
 # signature "unknown trust"
 pacman -Sy archlinux-keyring
+
+# signature from "xx" is invalid
+pacman-key --refresh-keys

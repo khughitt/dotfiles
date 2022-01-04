@@ -40,6 +40,9 @@ alias up='docker-compose up --build'
 alias down='docker-compose down --remove-orphans'
 alias docl='docker logs -f'
 
+# dojo
+alias doe='cd ~/d/dojo/exercises'
+
 # file management
 alias rmf="rm -rf"
 alias cpr="cp -r"
@@ -88,7 +91,7 @@ alias icat="kitty +kitten icat"
 alias kord="python ~/.local/fretboard/fretboard.py"
 
 # mindful
-alias m='vim ~/notes/mindful.mnd'
+alias m='mnd'
 alias n="notes"
 alias no="notes -p"
 alias nd="notes_dir"

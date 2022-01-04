@@ -1,8 +1,6 @@
 configuration {
     modi: "drun";
-    combi-modi: "window,drun,ssh,tasks:~/.dotfiles/rofi/scripts/rofi-tasks.sh";
-    //theme: "~/.cache/wal/colors-rofi-dark.rasi";
+    combi-modi: "window,drun,ssh,proj:proj:~/d/software/rofi-proj/rofi-proj.py";
     font: "hack 12";
 }
-//@theme "/usr/share/rofi/themes/blue.rasi"
 @theme "/usr/share/rofi/themes/purple.rasi"

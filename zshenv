@@ -43,6 +43,12 @@ export LESS_TERMCAP_so=$'\E[38;5;204m'    # begin standout-mode - info/highlight
 export LESS_TERMCAP_ue=$'\E[0m'           # end underline
 export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
 
+# python stubs
+export MYPYPATH=".config/stubs"
+
+# rofi x proj
+export ROFI_PROJ_DIR="$HOME/d/proj"
+
 # CMFinder
 PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin
 export CMfinder=$HOME/software/cmfinder-0.4.1.9

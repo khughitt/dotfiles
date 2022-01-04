@@ -1,3 +1,15 @@
+# sed regex syntax
+sed 's/[[:digit:]]/foo/'
+sed 's/[[:alpha:]]/foo/'
+sed 's/[[:alnum:]]/foo/'
+
+# +
+sed 's/[[:alnum:]]\{1,\}/foo/'   # linux
+
+# support "+", etc. regex syntax
+sed -r 's/[[:alnum:]]+/foo/'   # linux
+sed -E 's/[[:alnum:]]+/foo/'   # mac
+
 # add text to top of file
 sed -i '1s/^/<added text> /' file
 sed -i "1 i <added text>" file

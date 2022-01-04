@@ -188,7 +188,7 @@ fi
 # remaining zinit plugins
 zinit wait lucid for \
  atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
-    zdharma/fast-syntax-highlighting \
+    zdharma-continuum/fast-syntax-highlighting \
  blockf \
     zsh-users/zsh-completions
 
@@ -230,8 +230,8 @@ else
 fi
 unset __conda_setup
 
-if [ -f "/mnt/storage/conda/etc/profile.d/mamba.sh" ]; then
-    . "/mnt/storage/conda/etc/profile.d/mamba.sh"
+if [ -f "/mnt/ssd2/conda/etc/profile.d/mamba.sh" ]; then
+    . "/mnt/ssd2/conda/etc/profile.d/mamba.sh"
 fi
 # <<< conda initialize <<<
 

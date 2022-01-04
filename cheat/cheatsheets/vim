@@ -1,6 +1,10 @@
 # yank a single character
 vy
 
+# go to start/end of line when wrapping is enabled
+g0
+g$
+
 # show all highlight groups
 # see also: https://vim.fandom.com/wiki/Xterm256_color_names_for_console_Vim
 :so $VIMRUNTIME/syntax/hitest.vim
@@ -10,9 +14,6 @@ nvim --clean
 
 # print hex for a single hilite group
 :hi Normal
-
-# match "b" in abc
-syn match TestMatch /b\(c\)\@=\&\(a\)\@<=b/
 
 # toggle line numbers
 :set nu

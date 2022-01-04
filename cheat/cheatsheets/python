@@ -1,9 +1,6 @@
 # type hints cheatsheet
 https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html
 
-# ipython x pdb
-from IPython import embed; embed()
-
 # launch qtconsole from a notebook
 %qtconsole
 
@@ -29,8 +26,10 @@ def chunks(lst, n):
 python3 -m http.server 7800
 
 # regex
-\s  whitespace
-\W  non-word character
+\s       whitespace
+\W       non-word character
+(?<!\s)  current position is _not_ preceded by a whitespace character
+
 
 # regex matching;
 # match: left-anchored
@@ -38,6 +37,9 @@ python3 -m http.server 7800
 re = re.compile(r".*foo")
 re.match(target)
 re.search(target)
+
+if (re.search('foo')):
+  print('found!')
 
 # findall
 re.findall("(.*\.png|.*\.jpg|.*\.jpeg|.*\.svg)", x)
@@ -70,11 +72,13 @@ ts = time.time()
 import datetime
 datetime.datetime.now().strftime("%Y-%m-%d")
 
-# load yaml
-import yaml
-
+# read yaml file
 with open('cfg.yml') as fp:
     cfg = yaml.load(fp, Loader=yaml.FullLoader)
+
+# write yaml file
+with open('foo.yml', 'w') as fp:
+    yaml.dump(dict, fp)
 
 # read json from file
 with open('file.json') as fp:
@@ -133,3 +137,11 @@ pickle.load(open("out.p", "rb"))
 str.replace('foo', 'bar')
 str.replace('foo', 'bar', 1)
 
+# set random seed
+random.seed(321)
+
+# update sys.path (e.g. after "pip -e" installing a package)
+# https://stackoverflow.com/a/25384923/554531
+import site
+from importlib import reload
+reload(site)

@@ -4,7 +4,7 @@ fd --changed-within 5days
 # find files in a specified directory
 fd . <dir> -t f
 
-# sort directories by recency
+# sort results by recency
 fd -l | sort -k6M -k7n | tail
 
 # count total number of files in each sub-directory, recursively

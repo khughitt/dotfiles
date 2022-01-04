@@ -1,4 +1,4 @@
 # weather forecast settings
-city_id = "5819881" 
+city_id = "5454711" 
 units = "farenheight"
 display = "{{ temp_icon }} {{ temp_celcius }}°C ({{ temp_fahrenheit }}°F)"
