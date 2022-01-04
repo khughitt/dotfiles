@@ -1,0 +1,8 @@
+# match "b" in abc
+syn match TestMatch /b\(c\)\@=\&\(a\)\@<=b/
+
+# printf
+let var = printf('foo %s', 'bar')
+
+# path to current file
+let path = expand("%:p")

@@ -1,0 +1,12 @@
+# get layout for current workspace
+i3-save-tree
+
+# get layout for all workspaces
+i3-msg -t get_tree | jq
+i3-msg -t get_tree | jq --monochrome-output | vim -
+
+# set focus by title
+i3-msg "[title=\"foo\"] focus"
+
+# create a stacking container within a split
+i3-msg "split v, layout stacking"
