@@ -20,6 +20,9 @@ abs(2.0 * fract(x) - 1.0)
 // clamp (clip between min/max..)
 clamp(x, min, max)
 
+// exponentiation
+pow(x, 2)
+
 //
 // basic vertex shader
 //

@@ -20,6 +20,9 @@ listAttributes(mart)
 x <- listAttributes(mart)
 x[grepl("go_", x$name),]
 
+# get all gene ids
+getBM(attributes = c("hgnc_symbol", "entrezgene_id"), filters = "hgnc_symbol", values = "*", mart = mart)
+
 # go terms
 library(GO.db)
 

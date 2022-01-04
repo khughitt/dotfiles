@@ -1,3 +1,6 @@
+# ipython x pdb
+from IPython import embed; embed()
+
 # benchmark python code
 %timeit print('hi')
 

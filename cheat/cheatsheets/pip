@@ -1,3 +1,9 @@
 # list installed
 pip list
 pip freeze
+
+# list user-installed
+python -m pip list --user
+
+# list user-installed (outdated)
+python -m pip list --user -o

@@ -79,6 +79,10 @@ export XMODIFIERS=@im=fcitx
 # fcitx (kitty support)
 export GLFW_IM_MODULE=ibus
 
+# gnome keyring
+eval $(gnome-keyring-daemon --start)
+export SSH_AUTH_SOCK
+
 # pywal
 wal -R
 

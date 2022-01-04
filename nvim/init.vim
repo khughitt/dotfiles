@@ -988,6 +988,7 @@ autocmd FileType vimscript setlocal softtabstop=4 shiftwidth=4 tabstop=4
 autocmd BufRead,BufNewFile *.py set autoindent
 autocmd BufRead,BufNewFile *.har set ft=json
 autocmd FileType markdown,mindful setlocal nonumber
+autocmd FileType javascript let b:did_indent = 1
 
 " nvim-ipy
 " let g:nvim_ipy_perform_mappings = 0

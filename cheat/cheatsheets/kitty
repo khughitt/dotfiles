@@ -1,7 +1,14 @@
+# copy terminfo over
+kitty +kitten ssh myserver
+
+# keyboard shortcuts
 # https://sw.kovidgoyal.net/kitty/overview/#other-keyboard-shortcuts
 
 # load scrollback buffer into $PAGER
 ctrl+shift+h
+
+# choose url to launch
+ctrl+shift+e
 
 # clipboard manager
 ctrl+;

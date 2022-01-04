@@ -1,7 +1,7 @@
-// "Uncaught SyntaxError: import declarations may only appear at top level of a module"
-// or
+// Uncaught SyntaxError: import declarations may only appear at top level of a module"
+// Uncaught SyntaxError: Cannot use import statement outside a module
 // Uncaught SyntaxError: Unexpected token 'export'
-for script blocks/includes, add `type=module`
+add `type=module`
 
 // "TypeError: SimplexNoise is not a constructor"
 missing surround "{ }" in require?..
@@ -11,3 +11,20 @@ missing surround "{ }" in require?..
 // "<script>" tags with "type='module'", and a class exported via `export default class
 // XX`..
 // switching to node/parcel for now to keep things simple..
+
+// https://stackoverflow.com/a/69899085/554531
+// solution 1
+<script type="module" src=".."></script>
+
+// solution 2 (add to package.json) 
+{
+  "type": "module",
+}
+
+// GET http://localhost:8000/foo net::ERR_ABORTED 404 (File not found)
+// add ".js" extension in import call;
+// (node can check automatically, but browser will not..)
+
+// Uncaught TypeError: Failed to resolve module specifier "three". Relative references must start with either "/", "./", or "../".
+// first, check to make sure path has a leader "." or "/", otherwise, try importing as:
+import * as THREE from 'three.js';

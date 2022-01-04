@@ -13,6 +13,9 @@ Series
 # rename series
 dat.name = 'foo'
 
+# convert dataframe to a series
+pd.Series(dat.values.ravel())
+
 Selection
 ---------
 
@@ -89,10 +92,13 @@ a.merge(b, on=['foo'])
 a.join(b)
 
 # rbind
-df = pd.concat([a, b])
+pd.concat([a, b])
 
 # cbind
-df = pd.concat([a, b], axis=1)
+pd.concat([a, b], axis=1)
+pd.concat([a, b.set_index(a.index)], axis=1)
+pd.concat([a.reset_index(), b.reset_index()], axis=1).set_index("index")
+pd.concat([a.reset_index(Drop=True), b.reset_index(Drop=True)], axis=1)
 
 # cbind (numpy)
 df = np.concatenate((a,b), axis=1)
@@ -128,6 +134,9 @@ df.loc[df['column_name'].isin(some_values)]
 
 # filter columns by name
 dat.loc[:, ~dat.columns.isin(cols_to_remove)]
+
+# subset rows & columns using boolean mask
+dat.loc[row_sums >= 0, col_sums <= 100]
 
 # ~R's where()
 np.where(dat['foo'] > 1)
@@ -189,6 +198,14 @@ scaled_mat = scaler.transform(mat)
 # standardization (numpy / scikit)
 scaler = preprocessing.StandardScaler().fit(mat)
 scaled_mat = scaler.transform(mat)
+
+Variance
+--------
+
+# along rows
+df.var(1)
+df.var(1).plot.kde()
+df.var(1).plot.kde(logx=True)
 
 Sort
 ----
@@ -261,6 +278,7 @@ df.pivot_table(index='patient', columns='obs', values='presence', fill_value=0)
 Renaming
 --------
 
+df.columns = [...]
 df.rename(columns={"from": "to", ...})
 
 Printing

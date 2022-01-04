@@ -30,6 +30,7 @@ docker exec -it <container id> /bin/zsh
 docker commit -a 'Keith Hughitt' -m 'Initial commit' 
 
 # set name and tag for an image
+docker tag <image id> tag
 docker tag <image id> repo:tag
 
 # list unused containers

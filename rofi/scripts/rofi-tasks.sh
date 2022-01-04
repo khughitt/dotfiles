@@ -43,7 +43,7 @@ else
         workdir=~/d/shaders/prac/`date +"%Y-%m-%d"`
         cp -r ~/d/shaders/template $workdir
 
-        # launch firefox / vim
+        # launch browser / vim
         coproc kitty -d $workdir nvim shader.frag > /dev/null
         coproc firefox --new-instance -P shaders > /dev/null
     elif [ "$@" = "gene-sets" ]; then
@@ -87,11 +87,12 @@ else
         coproc kitty -d $NOTES/art/generative-art/ nvim generative-art.md > /dev/null
     elif [ "$@" = "l-systems" ]; then
         i3empty.py next 1 > /dev/null
-        i3-msg layout stacking > /dev/null
-        coproc kitty -d ~/d/l-systems/00-hello nvim index.js > /dev/null
-        coproc kitty -d ~/d/l-systems/00-hello parcel index.html > /dev/null
+        i3-msg layout splith > /dev/null
+        coproc kitty -d ~/d/l-systems/three-lsystem > /dev/null
+        coproc kitty --title abop -d $NOTES/books nvim -c "colorscheme $ALT2" algorithmic-beauty-of-plants.md > /dev/null
+        sleep 0.2 > /dev/null
+
+        i3-msg "split v, layout stacking" > /dev/null
         coproc zathura ~/d/books/abop.pdf > /dev/null
-        coproc kitty -d $NOTES/books nvim -c "colorscheme $ALT2" algorithmic-beauty-of-plants.md > /dev/null
-        coproc kitty -d $NOTES/tech/procedural-generation/l-systems nvim -c "colorscheme $ALT1" next-steps.md > /dev/null
     fi
 fi 

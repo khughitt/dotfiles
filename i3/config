@@ -18,13 +18,13 @@ set $right l
 # Your preferred terminal emulator
 set $term kitty
 
-# Your preferred application launcher
+#-------------------------------------------------------------------------------
+# Rofi
+#-------------------------------------------------------------------------------
 set $menu rofi -show drun
 
-# rofi custom launchers
-#bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/scripts/rofi-notes.sh"
 bindsym $mod+m exec --no-startup-id rofi -show mindmaps -modi "mindmaps:~/.dotfiles/rofi/scripts/rofi-mindmaps.sh"
-bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/rofi/scripts/rofi-tasks.sh"
+bindsym $mod+t exec --no-startup-id rofi -show proj -modi "proj:~/d/software/rofi-proj/rofi-proj.py" 
 
 #-------------------------------------------------------------------------------
 #  Appearance
@@ -114,6 +114,11 @@ bindsym $mod+Return \
     exec --no-startup-id kitty --name=i3term;\
     [instance="i3term"] scratchpad show;\
     floating toggle
+
+# screenshot
+bindsym --release Print exec scrot
+bindsym --release $mod+Print exec "scrot --select"
+
 
 # file browser
 #bindsym $mod+n exec kitty nnn

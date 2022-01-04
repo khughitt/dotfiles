@@ -1,2 +1,10 @@
 # preserve temp wrapper scripts
 snakemake --skip-script-cleanup
+
+# keep-going / restart
+snakemake --keep-going --restart-times 5
+snakemake -k -T 5
+
+# debug r scripts
+message(snakemake)
+save.image()
