@@ -119,6 +119,9 @@ ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
 mkdir -p $XDG_CONFIG_HOME/fontconfig
 ln_s ${DOTS_HOME}/fonts.conf $XDG_CONFIG_HOME/fontconfig/fonts.conf
 
+# install tpm
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+
 #
 # external dependencies
 #
@@ -164,7 +167,6 @@ echo "Don't forget to install any necessary fonts, icons, etc."
 
 echo "Other post-setup steps:"
 echo "https://github.com/junegunn/vim-plug"
-echo "https://github.com/tmux-plugins/tpm"
 echo "https://github.com/zdharma/zinit"
 echo "https://github.com/clvv/fasd"
 
