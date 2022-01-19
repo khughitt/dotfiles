@@ -75,11 +75,15 @@ alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*
 # locate
 alias locate=plocate
 
+# lit-walk
+alias lw="lit-walk"
+alias lwd="lit-walk --config='~/.config/lit/config-dev.yml'"
+
 # fd
 alias fda="fd -Luu"
 alias fdu="fd -u"
 alias fdl="fd -l | sort -k6M -k7n"
-alias fdr="fd --changed-within 7days"
+alias fdr="fd -l --changed-within 5days | csvcut -d ' ' -S -c6-9 | csvlook -HI"
 
 # htop
 alias htop=gotop
@@ -91,7 +95,7 @@ alias icat="kitty +kitten icat"
 alias kord="python ~/.local/fretboard/fretboard.py"
 
 # mindful
-alias m='mnd'
+alias m='mindful'
 alias n="notes"
 alias no="notes -p"
 alias nd="notes_dir"
