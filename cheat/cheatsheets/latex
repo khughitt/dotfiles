@@ -27,7 +27,7 @@
 \nabla
 
 # partial derivative
-\partial
+\frac { \partial f } { \partial x }
 
 # sets
 \in
@@ -42,7 +42,7 @@
 # infinity
 \infty
 
-# ℝ
+# ℝ (real numbers)
 \mathbb{R}
 
 # stylized letters

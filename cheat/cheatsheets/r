@@ -28,12 +28,19 @@ dat[, -1] <- sweep(dat[, -1], 2, colSums(dat[, -1]), '/') * 1E6
 # recursively update one list, using another
 modifyList(a, b)
 
+# read file as a string
+readr::read_file('file.txt')
+
 # json
 jsonlite::read_json('input.json')
 jsonlite::write_json('output.json')
 
 # yaml
 yaml::read_yaml(file)
+
+# get filename / extension
+tools::file_ext("file.txt")
+tools::file_path_sans_ext("file.txt")
 
 # iso 8601 date
 strftime(as.POSIXlt(Sys.time(), "UTC"), "%Y-%m-%dT%H:%M:%S%z")

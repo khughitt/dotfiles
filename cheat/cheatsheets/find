@@ -36,3 +36,7 @@ for file in $(find . -size -800k | cut -c3- | sed 1d); do rm ${file}; done
 # Get the total size for a list of files from find
 find . -name "*adaptertrim.fastq" -print0 | du --files0-from=- -hc --apparent-size
 find . -name "*.fastq" -print0 | du --files0-from=- -hc | tail -n1
+
+# copy specific files from a directory tree, preserving directory structure
+# https://unix.stackexchange.com/a/107647/39903
+find . -name '*.csv' -exec cp --parents \{\} /target \;

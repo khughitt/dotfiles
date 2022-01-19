@@ -1,0 +1,8 @@
+# list buckets
+lsobj -l
+
+# make bucket
+mkobj <name>
+
+# copy files to bucket
+cpobj <from> <bucket_name>:

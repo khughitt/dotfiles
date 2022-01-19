@@ -16,3 +16,6 @@ ind = np.where(np.logical_not((np.vstack((vec1, vec2)) == 0).all(axis=0)))
 
 # sample n values from an array
 np.random.choice(arr, 3)
+
+# quantiles
+np.quantile(dat, np.arange(0, 1.01, 0.05))

@@ -13,6 +13,9 @@ pacman -Qe
 # list files in package
 pacman -Ql pkg
 
+# list packages installed from AUR
+pacman -Qm
+
 # clear pacman cache
 pacman -Sc
 

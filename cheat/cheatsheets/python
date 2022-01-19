@@ -37,6 +37,7 @@ python3 -m http.server 7800
 re = re.compile(r".*foo")
 re.match(target)
 re.search(target)
+re.sub(pattern, replace, str)
 
 if (re.search('foo')):
   print('found!')
@@ -137,8 +138,15 @@ pickle.load(open("out.p", "rb"))
 str.replace('foo', 'bar')
 str.replace('foo', 'bar', 1)
 
+# f-string decimal place formatting
+f"{foo:.2f}"
+
 # set random seed
 random.seed(321)
+
+# reload module
+import importlib
+importlib.reload(foo)
 
 # update sys.path (e.g. after "pip -e" installing a package)
 # https://stackoverflow.com/a/25384923/554531

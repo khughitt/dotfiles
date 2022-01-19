@@ -114,6 +114,11 @@ df['foo'] = 1
 # add a "rank" column (1-n)
 df['rank'] = list(range(1, df.shape[0] + 1))
 
+Replacing values
+----------------
+
+df.loc[0, 'column'] = 'foo'
+
 Filtering & Masking
 -------------------
 
@@ -159,7 +164,7 @@ df.foo.str.find('bar')
 # return boolean series indicating regex presence in column
 df.foo.str.find('bar|baz')
 
-# multiple conditions (wrap each in parens)
+# multiple conditions (wrap each in parens, use "&" / "|")
 x[(x.foo > 3) & (x.bar < 10)]
 
 # remove duplicates
@@ -179,6 +184,9 @@ Min/Max
 
 # get indices of column with max value for each row (~which.max)
 df.idxmax(axis=1)
+
+# get the N largest values in a dataframe overall
+df.stack().sort_values(ascending=False).iloc[:n]
 
 Normalization / Scaling
 -----------------------
@@ -293,4 +301,10 @@ Plotting
 import matplotlib.pyplot as plt
 ax = dat.score.plot.kde()
 plt.show()
+
+Write
+-----
+
+# exclude index
+dat.to_csv(index=False)
 

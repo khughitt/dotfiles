@@ -2,4 +2,9 @@
 # fields: https://docs.mygene.info/en/latest/doc/query_service.html
 from biothings_client import get_client
 mg = get_client("gene")
-mg.querymany(symbols, scopes="symbol", species=9606, fields="entrezgene,summary", as_dataframe=True)
+
+# symbol -> entrez
+mg.querymany(["CRP", "TNF"], scopes="symbol", species=9606, fields="entrezgene,summary", as_dataframe=True)
+
+# entrez -> symbols
+mg.querymany([1401, 7124], scopes="entrezgene", species=9606, fields="symbol,summary", as_dataframe=True)
