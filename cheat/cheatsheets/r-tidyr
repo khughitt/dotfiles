@@ -1,0 +1,6 @@
+# wide to long
+df %>%
+  pivot_longer(cols, names_to='xx', values_to='yy')
+
+df %>%
+  pivot_longer(!col, names_to='xx', values_to='yy')

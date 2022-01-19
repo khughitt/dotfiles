@@ -1,2 +1,10 @@
 # browse images in a folder
 feh -g 640x480 -d -S filename /path/to/directory
+
+# fit to window
+feh --scale-down --auto-zoom
+
+#
+# keyboard shortcuts
+#
+/   zoom to fit
