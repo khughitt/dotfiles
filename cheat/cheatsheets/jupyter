@@ -12,6 +12,11 @@ import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = [12, 10]
 plt.rcParams['figure.dpi'] = 96
 
+# print markdown/latex
+from IPython.display import Markdown, Latex
+display(Markdown("..."))
+display(Latex("..."))
+
 # print all rows
 pd.set_option('display.max_rows', None)
 

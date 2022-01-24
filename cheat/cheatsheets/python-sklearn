@@ -26,9 +26,13 @@ tsne_dat = TSNE(n_components=2, perplexity=30.0, metric='euclidean',
                 learning_rate='auto', init='random').fit_transform(dat)
 
 ##########################
-#
+# data
+##########################
+from sklearn.datasets.samples_generator import make_blobs
+x, _ = make_blobs(n_samples=1000, centers=5, cluster_std=1)
+
+##########################
 # scale
-#
 ##########################
 
 # standardize
@@ -60,7 +64,6 @@ num_clust = 5
 
 sc = SpectralClustering(num_clust, eigen_solver='arpack', affinity='rbf', n_init=100, assign_labels='discretize')
 sc.fit_predict(dat)  
-
 
 # using pre-computered similarity scores
 sc = SpectralClustering(.., affinity='precomputed')

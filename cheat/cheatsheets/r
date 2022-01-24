@@ -44,3 +44,6 @@ tools::file_path_sans_ext("file.txt")
 
 # iso 8601 date
 strftime(as.POSIXlt(Sys.time(), "UTC"), "%Y-%m-%dT%H:%M:%S%z")
+
+# color map from list of colors
+colorRampPalette(c('red', 'blue'))(100)

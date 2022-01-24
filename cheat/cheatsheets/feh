@@ -1,5 +1,12 @@
 # browse images in a folder
+# -d  include filename
+# -S  sort
+# -g  fixed geometry
 feh -g 640x480 -d -S filename /path/to/directory
+
+# browse images in a folder
+# --start-at  starting image
+feh --start-at .
 
 # fit to window
 feh --scale-down --auto-zoom
