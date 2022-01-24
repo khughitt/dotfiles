@@ -7,6 +7,9 @@ curl -L url
 # resume download
 curl -C - -O url
 
+# save file to specific directory
+curl --create-dirs -O --output-dir <dir> <url>
+
 # send json from file
 curl -d @file.json url
 

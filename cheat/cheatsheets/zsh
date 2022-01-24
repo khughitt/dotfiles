@@ -30,3 +30,7 @@ ${x:10:999}
 # check to see what options are set
 setopt
 unsetopt
+
+# fix: compinit "insecure directories"
+# https://stackoverflow.com/a/22753363/554531
+compaudit | xargs chmod g-w

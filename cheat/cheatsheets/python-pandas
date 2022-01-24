@@ -38,12 +38,12 @@ dat.dropna()
 Iteration
 ---------
 
-# iterate over rows as dicts
-dat.to_dict(orient="records")
-
-# iterate over rows
+# iterate over rows as tuples
 for index, row in df.iterrows():
     ...
+
+# iterate over rows as dicts
+dat.to_dict(orient="records")
 
 Creation
 --------
@@ -173,8 +173,9 @@ df[~df.duplicated()]
 Type Conversion
 ---------------
 
-# string/object -> int
+# string/object -> int/category
 df['foo'] = df['foo'].astype('int64')
+df['foo'] = df['foo'].astype('category')
 
 # bool -> int (in place)
 df.replace({False: 0, True: 1}, inplace=True)
