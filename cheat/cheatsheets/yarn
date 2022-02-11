@@ -3,3 +3,6 @@ yarn init
 
 # add global
 yarn global add
+
+# upgrade packages
+yarn upgrade

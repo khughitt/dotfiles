@@ -1,9 +1,23 @@
 # set viz defaults
-sns.set(style=”whitegrid”, palette=”flare”, color_codes=True)
-sns.mpl.rc(“figure”, figsize=(10,6))
+sns.set(style="whitegrid", palette="flare", color_codes=True)
+sns.mpl.rc("figure", figsize=(12, 8))
+
+# scatterplot + color column
+sns.scatterplot(data=.., x="x", y="y", hue="color_col")
+
+# add title to scatterplot
+sns.scatterplot(...).set(title='foo')
 
 # heatmap
 sns.heatmap(df)
 
 # biclustering heatmap
 sns.clustermap(df)
+
+# change figure size:
+# 1. "axes-level" plots (e.g. scatterplot)
+sns.set(rc={"figure.figsize":(12, 8)})  # 1600 x 1200px
+
+# 2. "figure-level" plots (e.g. lmplot)
+sns.lmplot(..., height=8, aspect=1.5)
+

@@ -8,6 +8,10 @@ np.zeros(12).reshape(3, 4)
 # random uniform matrix in [0, 1]
 np.random.rand(3, 4)
 
+# count number of nonzero values along rows/cols
+np.count_nonzero(arr, axis=1)
+np.count_nonzero(np.array(mat), axis=1)
+
 # stack vector rows
 np.vstack((a, b))
 
