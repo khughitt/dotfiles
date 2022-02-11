@@ -47,7 +47,11 @@ export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
 export MYPYPATH=".config/stubs"
 
 # rofi x proj
-export ROFI_PROJ_DIR="$HOME/d/proj"
+export ROFI_PROJ_DIR="$HOME/d/dotfiles/rofi/rofi-proj"
+
+# eco x labnote
+export ECO_CONF_DIR="$HOME/d/eco/config"
+export ECO_DATA_DIR="/mnt/ssd2"
 
 # CMFinder
 PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin

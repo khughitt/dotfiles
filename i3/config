@@ -41,7 +41,7 @@ for_window [class=".*"] border pixel 1
 hide_edge_borders smart_no_gaps
 
 # gaps
-gaps inner 12
+gaps inner 8
 smart_gaps on
 
 # keyboard shortcut to toggle borders of current window
