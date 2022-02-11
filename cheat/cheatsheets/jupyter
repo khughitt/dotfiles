@@ -23,3 +23,7 @@ pd.set_option('display.max_rows', None)
 # print dataframes in a for-loop
 for df in dfs:
   display(df)
+
+# disable scrolling for a particular chunk's output
+1. select output
+2. `shift-O`

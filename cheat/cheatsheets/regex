@@ -1,1 +1,3 @@
-?:   # non-capturing group
+?:    # non-capturing group
+[^a]  # not "a"
+

@@ -11,7 +11,7 @@ curl -C - -O url
 curl --create-dirs -O --output-dir <dir> <url>
 
 # send json from file
-curl -d @file.json url
+curl -H 'Content-Type: application/json' -d @file.json url
 
 # post request
 curl -X POST -d @query.txt url

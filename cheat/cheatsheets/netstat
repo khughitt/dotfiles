@@ -1,2 +1,5 @@
 # check what is using ports ("net-tools" package)
 netstat -plant
+
+# another way to check port usage
+lsof -Pnl +M -i4

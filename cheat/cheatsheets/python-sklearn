@@ -22,8 +22,10 @@ dat = pca.fit_transform(X)
 # t-SNE
 #
 from sklearn.manifold import TSNE
-tsne_dat = TSNE(n_components=2, perplexity=30.0, metric='euclidean', 
-                learning_rate='auto', init='random').fit_transform(dat)
+
+tsne = TSNE(n_components=2, perplexity=30.0, metric='euclidean', learning_rate='auto',
+            init='random')
+tsne_df = pd.DataFrame(tsne.fit_transform(dat), columns = ['TSNE1', 'TSNE2'])
 
 ##########################
 # data

@@ -35,6 +35,14 @@ readr::read_file('file.txt')
 jsonlite::read_json('input.json')
 jsonlite::write_json('output.json')
 
+# json - create a list of dicts
+df = data.frame(from=c('a', 'b'), to=c('c', 'd'))
+jsonlite::toJSON(df)
+
+# or..
+lst = list(list('from'='a', 'to'='b'), list('from'='c', 'to'='d'))
+jsonlite::toJSON(lst)
+
 # yaml
 yaml::read_yaml(file)
 
