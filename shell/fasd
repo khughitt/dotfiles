@@ -18,7 +18,7 @@ unalias zz
 
 # and make some of my own
 alias j='fasd_cd -d' 
-alias jb="fasd_cd -d $HOME d biodat"
+alias je="fasd_cd -d $HOME/d/eco"
 alias jd="fasd_cd -d /data"
 alias jn="fasd_cd -d $HOME/notes"
 alias jp="fasd_cd -d home d/r/proj"

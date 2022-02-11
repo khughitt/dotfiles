@@ -46,6 +46,11 @@ function dty {
     docker exec -it $1 /bin/bash
 }
 
+# pandoc + mermaid
+function merp {
+  pandoc -t html --mathjax -F mermaid-filter -o ${1/.md/.html} $1 
+}
+
 # glslviewer
 # note: may want to remove --headless option when working more on animated shaders..
 function gls {
@@ -138,6 +143,7 @@ function a {
         echo "Opening ~/notes/$target/$fname"
         export las=`realpath ~/notes/$target/$fname`
         export lasd=`dirname $las`
+        echo "Overview\n--------\n\nReferences\n----------\n" > $target/$fname
         vim $target/$fname
     fi
 
@@ -243,11 +249,6 @@ function vI {
 # zcat | wc -l
 function zcl {
     zcat $1 | wc -l
-}
-
-# feh browse dir
-function fehd {
-    feh –start-at $1
 }
 
 # translate 
