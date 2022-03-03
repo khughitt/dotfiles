@@ -26,6 +26,11 @@ do
   echo $x;
 done
 
+# print a sequence of numbers with leading zeros
+for i in $(seq -w 01 09); do
+  echo $i
+done
+
 # split by " " and get last element
 # https://stackoverflow.com/questions/3162385/how-to-split-a-string-in-shell-and-get-the-last-field
 foo="one two three"

@@ -7,6 +7,10 @@
 :profile pause
 :noautocmd qall!
 
+# fzf
+;a  # ag
+;j  # notes
+
 # LeaderF
 <c-f> search files
 <c-p> search mru

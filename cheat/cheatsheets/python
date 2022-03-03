@@ -77,6 +77,9 @@ ts = time.time()
 import datetime
 datetime.datetime.now().strftime("%Y-%m-%d")
 
+# convert unix timestamp to datetime
+datetime.fromtimestamp(..)
+
 # read yaml file
 with open('cfg.yml') as fp:
     cfg = yaml.load(fp, Loader=yaml.FullLoader)
@@ -145,6 +148,16 @@ str.replace('foo', 'bar', 1)
 # f-string decimal place formatting
 f"{foo:.2f}"
 
+# f-string leading zeros
+f"{123:06}"
+
+# recursive directory walk (does not include hidden files)
+for file in glob.iglob('**/**', recursive=True):
+     print(file)
+
+# recursive directory walk (includes hidden files)
+list(pathlib.Path("path/").glob("**/*.*"))
+
 # set random seed
 random.seed(321)
 
@@ -157,3 +170,7 @@ importlib.reload(foo)
 import site
 from importlib import reload
 reload(site)
+
+# profile script
+python -m cProfile -o profile.log <script>
+snakeviz profile.log

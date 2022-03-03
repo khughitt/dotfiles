@@ -52,6 +52,9 @@ Object.values(obj)
 # check "length" of object
 Object.keys(obj).length
 
+# get last value in an object
+Object.values(obj).slice(-1)[0]
+
 # check if item is in array
 arr.includes('foo')
 

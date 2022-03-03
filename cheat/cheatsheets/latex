@@ -6,6 +6,8 @@
 \leftarrow
 \longleftarrow
 \Leftarrow
+
+# double arrow
 \leftrightarrow
 
 # inequalities
@@ -29,27 +31,52 @@
 # partial derivative
 \frac { \partial f } { \partial x }
 
-# sets
+# sets (∈/∉)
 \in
 \notin
 
-# proper subset
+# sets
+\cup      # union
+\bigcup
+\cap      # intersection
+\bigcap
+
+# set differences ("\")
+\setminus
+
+# proper subset (⊂)
 \subset
 
-# subset
+# subset (⊆)
 \subseteq
+
+# empty set
+\emptyset
+\varnothing   # amssymb
 
 # infinity
 \infty
+
+# text formatting
+\textbf{}
+\textit{}
+\underline{}
 
 # ℝ (real numbers)
 \mathbb{R}
 
 # stylized letters
-\mathcal{A}
+# https://en.wikibooks.org/wiki/LaTeX/Mathematics#Formatting_mathematics_symbols
+\mathcal{A}   # calligraphic / fancy
 \mathfrak{B}
 \mathbb{C}
 
 # dot above
 \dot{x}
 \ddot{x}
+
+# spacing
+\                # single space
+\hspace{1cm}     # 1cm space 
+\break
+\hfill\break

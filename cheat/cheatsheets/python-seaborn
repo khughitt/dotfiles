@@ -5,6 +5,11 @@ sns.mpl.rc("figure", figsize=(12, 8))
 # scatterplot + color column
 sns.scatterplot(data=.., x="x", y="y", hue="color_col")
 
+# color palettes
+sns.color_palette("Set2")
+sns.color_palette("magma", 20)
+sns.color_palette("viridis", 10).as_hex()
+
 # add title to scatterplot
 sns.scatterplot(...).set(title='foo')
 
@@ -13,6 +18,13 @@ sns.heatmap(df)
 
 # biclustering heatmap
 sns.clustermap(df)
+
+# biclustering heatmap (row colors, disable column clustering)
+row_colors = pd.DataFrame({
+  "var1": ["#ff0000", ...],
+  "var2": ["#00ff00", ...],
+})
+sns.clustermap(df, col_cluster=False, row_colors=row_colors)
 
 # change figure size:
 # 1. "axes-level" plots (e.g. scatterplot)
