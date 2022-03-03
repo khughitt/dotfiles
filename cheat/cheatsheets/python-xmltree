@@ -1,0 +1,18 @@
+# load xml
+import xml.etree.ElementTree as ET
+tree = ET.parse('...')
+root = tree.getroot()
+
+# iterate over children
+for child in elem:
+  ...
+
+# get child nodes as a list
+list(elem)
+
+# find elements
+elem.find(".//Element")
+elem.findall(".//Element")
+
+# find element with attribute equal to..
+elem.find(".//Element[@attr='value']")

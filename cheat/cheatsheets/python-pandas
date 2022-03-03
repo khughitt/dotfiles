@@ -38,9 +38,10 @@ dat.dropna()
 Iteration
 ---------
 
-# iterate over rows as tuples
+# iterate over rows as tuple/series
 for index, row in df.iterrows():
-    ...
+    row.foo
+    row[0]
 
 # iterate over rows as dicts
 dat.to_dict(orient="records")
@@ -178,8 +179,12 @@ df.foo.str.find('bar|baz')
 # multiple conditions (wrap each in parens, use "&" / "|")
 x[(x.foo > 3) & (x.bar < 10)]
 
-# remove duplicates
+# remove duplicates (index not considered)
 df[~df.duplicated()]
+df.drop_duplicates()
+
+# remove duplicate indices
+df[~df.index.duplicated(keep='first')]
 
 Type Conversion
 ---------------

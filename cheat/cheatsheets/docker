@@ -45,6 +45,9 @@ docker system prune -a -f
 # launch docker compose & build needed containers
 docker-compose up --build
 
+# bring up a single service
+docker-compose start foo
+
 # stop docker compose & removed orphaned containers
 docker-compose down --remove-orphans
 

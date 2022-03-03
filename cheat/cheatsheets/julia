@@ -1,14 +1,61 @@
+#
+# basics
+#
+
 # string concatenation
 "foo" * "bar"
+
+# str -> int
+parse(Int64, "5000")
+
+# arrays
+a = Int32[3, 5, 9]
+a[1]
 
 # join filepaths
 joinpath("dir", "subdir")
 
-###########################
+# check type
+typeof(x)
+
+# distributions
+randn(N)
+
+# tuples
+(1, 2, 3)
+(a=1, b=2, c=3)
+
+# map
+map(x -> func(x, ...), vec)
+
+#
+# packages
+#
+
+# Add BioJulia
+registry add https://github.com/BioJulia/BioJuliaRegistry.git
+
+# update packages
+update
+
+#
+# environments
+#
+activate .
+
+#
+# DataFrames
+#
+using DataFrames
+
+df = DataFrame(CSV.File(...))
+
+for col in names(df):
+  ...
+
 #
 # Tables.jl
 #
-###########################
 
 # load feather/arrow file
 using Arrow;
