@@ -128,7 +128,7 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # arch
 echo "Arch packages:"
-echo "bat fasd fd fzf gotop-bin lsd moar powerline ripgrep thefuck tldr visidata"
+echo "bat fasd fd fzf gotop-bin lsd moar powerline ripgrep thefuck tk tldr visidata"
 echo "polybar nerd-fonts-complete ttf-weather-icons"
 
 while true

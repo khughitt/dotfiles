@@ -304,14 +304,15 @@ function ncol {
 # helper function to quickly load a dataset into ipython
 function dat {
     # get current data package dir
-    version=`/bin/ls /data/packages | tail -n1`
-    searchpaths="/data/packages/$version"
+    # version=`/bin/ls /data/packages | tail -n1`
+    # searchpaths="/data/packages/$version"
+    searchpaths="/data/packages"
 
-    # include project data results as well
-    searchpaths="$searchpaths /data/proj"
+    # include project data and clearn data folders as well
+    searchpaths="$searchpaths /data/proj /data/clean"
 
     # search clean data and most recent data packages
-    fd_cmd="fd . -e .tsv -e .feather -e .parquet -e .csv -e .gz $searchpaths /data/clean"
+    fd_cmd="fd . -e .tsv -e .feather -e .parquet -e .csv -e .gz $searchpaths"
     target=`eval $fd_cmd | fzf -1 --exact`
 
     # get extension, excluding .gz 
@@ -333,6 +334,25 @@ function dat {
         else
             echo "Unrecognized filetype specified: $ext"
         fi
+    fi
+}
+
+# similar to dat, but limited to datapackages and including preview pane
+function datp {
+    # get current data package dir
+    # version=`/bin/ls /data/packages | tail -n1`
+    # searchpaths="/data/packages/$version"
+    searchpaths="/data/packages"
+
+    # search clean data and most recent data packages
+    fd_cmd="fd datapackage $searchpaths --exclude archive"
+    target=`eval $fd_cmd | fzf -1 --exact --preview 'eco info {}'`
+
+    # launch ipython and attempt to load the dataset
+    if [ ! -z "$target" ]; then
+        echo "Loading $target..."
+
+        ipython -i -c "from eco.entities.datapackage import DataPackage; pkg=DataPackage('$target'); dat=pkg.get_resource();"
     fi
 }
 

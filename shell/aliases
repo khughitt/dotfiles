@@ -11,6 +11,7 @@ alias sudo="sudo " # support aliases when using sudo
 # ag
 alias agl='ag -l'
 alias agd='ag --depth'
+alias agu='ag -u'
 
 # ls
 if type "lsd" > /dev/null; then
@@ -105,6 +106,9 @@ alias um="sudo umount /mnt/usb"
 
 # netstat
 alias netp="sudo netstat -plant"
+
+# pwd
+alias px="pwd | xsel"
 
 # httpd
 alias ph='python -m "http.server"'

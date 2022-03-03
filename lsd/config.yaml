@@ -2,3 +2,10 @@ color:
   when: auto
 indicators: false
 
+blocks:
+  - permission
+  - user
+  #- group
+  - size
+  - date
+  - name
