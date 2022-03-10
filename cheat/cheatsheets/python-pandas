@@ -16,6 +16,9 @@ dat.name = 'foo'
 # convert dataframe to a series
 pd.Series(dat.values.ravel())
 
+# convert a series to a dataframe
+series.to_frame()
+
 Selection
 ---------
 
@@ -31,6 +34,9 @@ dat.values[ind]
 
 # drop column
 dat.drop('col', axis=1)
+
+# drop first column
+dat.iloc[: , 1:]
 
 # drop missing
 dat.dropna()

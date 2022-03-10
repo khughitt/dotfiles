@@ -10,6 +10,9 @@ curl -C - -O url
 # save file to specific directory
 curl --create-dirs -O --output-dir <dir> <url>
 
+# save file to a specific path
+curl -L --output <path> <url>
+
 # send json from file
 curl -H 'Content-Type: application/json' -d @file.json url
 
