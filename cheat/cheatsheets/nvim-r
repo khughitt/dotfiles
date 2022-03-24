@@ -1,0 +1,74 @@
+# Nvim-R
+# https://github.com/jalvesaq/Nvim-R/blob/master/doc/Nvim-R.txt
+
+# Start/Close
+rf Start R (default)
+rc Start R (custom)
+rq Close R (no save)
+rw Close R (save workspace)
+
+# Send
+
+## File
+aa  File
+ae  File (echo)
+ao  File (open .Rout)
+
+## Block
+bb  Block (cur)
+be  Block (cur, echo)
+bd  Block (cur, down)
+ba  Block (cur, echo and down)
+
+## Function
+ff  Function (cur)
+fe  Function (cur, echo)
+fd  Function (cur and down)
+fa  Function (cur, echo and down)
+
+## Selection
+ss  Selection
+se  Selection (echo)
+sd  Selection (and down)
+sa  Selection (echo and down)
+
+## Paragraph
+pp  Paragraph
+pe  Paragraph (echo)
+pd  Paragraph (and down)
+pa  Paragraph (echo and down)
+
+# Line
+l  Line
+d  Line (and down)
+q  Line (and new one)
+
+# Control
+#
+rl    List space
+rr    Clear console
+rm    Clear all
+
+rp    Object (print)
+rn    Object (names)
+rt    Object (str)
+
+ra    Arguments (cur)
+re    Example (cur)
+rh    Help (cur)
+
+rs    Summary (cur)
+rg    Plot (cur)
+rb    Plot and summary (cur)
+
+ro    Update Object Browser
+rd    Set working directory (cur file path)
+
+gn    Go to next R chunk
+gN    Go to previous R chunk
+
+# tags / omnilist
+#
+:RBuildTags    Build R tags file
+:RUpdateObjList    Build omniList (loaded packages)
+:RUpdateObjListAll    Build omniList (installed packages)

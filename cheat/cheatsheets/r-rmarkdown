@@ -1,0 +1,14 @@
+# figure defaults (knitr defaults: 7, 7, 1, 72)
+knitr::opts_chunk$set(
+  fig.width = 4.8,
+  fig.height = 3.6,
+  fig.retina = 1,
+  dpi = 384
+)
+
+# ggplot high-res theme
+theme_bw_high_res <- function (base_size = 8, base_line_size = 0.4, base_rect_size = 0.4) { 
+	theme_bw(base_size = base_size) %+replace% 
+    theme(plot.title = element_text(size = 8, vjust = 0), 
+          legend.text = element_text(size = 6))
+}

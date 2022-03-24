@@ -41,6 +41,13 @@ a.forEach((item) => {
 # create an array of a specified size
 Array(5).fill(0);
 
+# check for key in object
+# includes object prototype keys
+'key' in obj
+
+# more specific way to check
+obj.hasOwnProperty('key')
+
 # iterate over key, value pairs for object (~object "foreach")
 for (const [key, value] of Object.entries(obj)) {
   console.log(`${key}: ${value}`);
@@ -131,6 +138,9 @@ Math.min(...arr)
 a === b  # strict equality (type + value)
 a == b   # loose equality (performs type coercion)
 
+# type
+typeof x
+
 # lower/upper case
 str.toLowerCase()
 
@@ -148,6 +158,9 @@ str.split("")
 
 # check if string contains a given substring
 str.includes("foo")
+
+# ends with?
+str.endsWith(".png")
 
 # collapse an array into a string
 arr.join("");

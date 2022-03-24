@@ -10,6 +10,9 @@
 # double arrow
 \leftrightarrow
 
+# equivalence
+\equiv
+
 # inequalities
 \approx
 \sim
@@ -68,8 +71,8 @@
 # stylized letters
 # https://en.wikibooks.org/wiki/LaTeX/Mathematics#Formatting_mathematics_symbols
 \mathcal{A}   # calligraphic / fancy
-\mathfrak{B}
-\mathbb{C}
+\mathfrak{B}  # calligraphic / fraktur
+\mathbb{C}    # ℝ style
 
 # dot above
 \dot{x}

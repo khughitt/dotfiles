@@ -8,3 +8,6 @@ theme_dark <- function(base_font_size = 18) {
           panel.grid.major = element_line(color = "#555555", size = 0.2),
           panel.grid.minor = element_line(color = "#555555", size = 0.2))
 }
+
+# save fig
+ggsave('foo.png', width=1080, height=1080, units='px', dpi=300)

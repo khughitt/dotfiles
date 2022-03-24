@@ -55,3 +55,6 @@ strftime(as.POSIXlt(Sys.time(), "UTC"), "%Y-%m-%dT%H:%M:%S%z")
 
 # color map from list of colors
 colorRampPalette(c('red', 'blue'))(100)
+
+# generate all n-tuple combinations of vector elements
+combn(vec, 2)

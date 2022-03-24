@@ -10,3 +10,6 @@ i3-msg "[title=\"foo\"] focus"
 
 # create a stacking container within a split
 i3-msg "split v, layout stacking"
+
+# toggle floating
+<super>-<shift>-<space>

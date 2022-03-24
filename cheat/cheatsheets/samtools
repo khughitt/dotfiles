@@ -1,0 +1,5 @@
+# sort
+samtools sort in.sam -o sorted.bam
+
+# print header
+samtools view -H in.bam
