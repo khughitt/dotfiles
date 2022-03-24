@@ -1,0 +1,2 @@
+# coltypes short version (ex. char-numeric-factor)
+read_csv(..., col_types='cnf')

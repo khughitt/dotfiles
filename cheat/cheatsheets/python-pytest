@@ -1,0 +1,2 @@
+# launch pdb on failure
+pytest --pdb

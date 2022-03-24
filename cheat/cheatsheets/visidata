@@ -1,2 +1,12 @@
 # yank column
 zy
+
+# copy row
+y
+gy
+
+# copy cell
+zy
+
+# copy cell (clipboard)
+zY

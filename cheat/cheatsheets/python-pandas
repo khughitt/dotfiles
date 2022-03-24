@@ -55,10 +55,10 @@ dat.to_dict(orient="records")
 Creation
 --------
 
-# dict of columns
+# dict of columns / list of row dicts
 pd.DataFrame.from_dict(d)
 
-# dict of rows
+# dict of row dicts
 pd.DataFrame.from_dict(d, orient='index')
 
 # set index + index name at time of creation
@@ -135,7 +135,14 @@ df['rank'] = list(range(1, df.shape[0] + 1))
 Replacing values
 ----------------
 
+# replace a single value
 df.loc[0, 'column'] = 'foo'
+
+# replace values in all columns
+df.replace({'from': 'to', 'foo': 'bar'})
+
+# replace values in a single column
+df.replace({'colname': {'from': 'to', 'foo': 'bar'}})
 
 Filtering & Masking
 -------------------
@@ -201,6 +208,13 @@ df['foo'] = df['foo'].astype('category')
 
 # bool -> int (in place)
 df.replace({False: 0, True: 1}, inplace=True)
+
+Strings
+-------
+
+# memory efficient string type;
+# note: much more minimal functionality, e.g. no string concatenation implemented atm..
+pd.read_csv(..., dtype={'foo': 'string[pyarrow]'})
 
 Min/Max
 -------
