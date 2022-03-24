@@ -17,7 +17,10 @@ if type "moar" > /dev/null; then
 fi
 
 # use system colors for ls
-export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+#export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+
+# LS_COLORS
+export LS_COLORS="$(vivid generate one-dark)"
 
 # java
 export JAVA_HOME=/usr/lib/jvm/default
@@ -49,9 +52,9 @@ export MYPYPATH=".config/stubs"
 # rofi x proj
 export ROFI_PROJ_DIR="$HOME/d/dotfiles/rofi/rofi-proj"
 
-# eco x labnote
-export ECO_CONF_DIR="$HOME/d/eco/config"
-export ECO_DATA_DIR="/mnt/ssd2"
+# nodes-web
+export NODES_CONF_DIR="$HOME/d/eco/config"
+export NODES_DATA_DIR="/mnt/ssd2"
 
 # CMFinder
 PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin

@@ -40,6 +40,7 @@ alias dps='docker ps -a --format="table {{.ID}}\t\t{{.Names}}\t{{.Image}}\t{{.St
 alias up='docker-compose up --build'
 alias down='docker-compose down --remove-orphans'
 alias docl='docker logs -f'
+alias dk='docker kill `docker ps -q`'
 
 # dojo
 alias doe='cd ~/d/dojo/exercises'
@@ -176,7 +177,7 @@ alias yd='yay -Syu --devel'
 #alias ca='source activate'
 alias cde='conda deactivate'
 alias ca='conda activate'
-alias cs='conda search'
+alias cs='mamba search'
 
 # diff
 alias diff='diff --color=auto'
@@ -209,6 +210,7 @@ alias s20="sleep 1200 &&"
 alias s25="sleep 1500 &&"
 alias s30="sleep 1800 &&"
 alias s60="sleep 3600 &&"
+alias s120="sleep 7200 &&"
 
 # suspend
 alias zzz="systemctl suspend"
@@ -249,4 +251,3 @@ alias -g CA="2>&1 | cat -A"
 alias -g NE="2> /dev/null"
 alias -g NUL="> /dev/null 2>&1"
 alias -g P="2>&1| pygmentize -l pytb"
-

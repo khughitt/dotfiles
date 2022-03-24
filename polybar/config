@@ -55,7 +55,7 @@ font-6 = "DejaVu Sans:style=Book"
 modules-left = i3
 modules-center = spotify previous playpause next
 ; modules-right = pulseaudio memory cpu wlan pomobar snakemake-isrunning weather date
-modules-right = memory cpu wlan pomobar weather date
+modules-right = memory cpu wlan pomobar snakemake-isrunning weather date
 
 tray-position = right
 tray-padding = 2
@@ -133,24 +133,24 @@ label-mode-foreground = ${xrdb:color4}
 label-mode-background = ${xrdb:color2}
 
 ; focused = Active workspace on focused monitor
-label-focused = %index%
+label-focused = %name%
 label-focused-background = ${xrdb:color0}
 label-focused-underline = ${xrdb:color6}
 label-focused-foreground = ${xrdb:color6}
 label-focused-padding = 2
 
 ; unfocused = Inactive workspace on any monitor
-label-unfocused = %index%
+label-unfocused = %name%
 label-unfocused-padding = 2
 
 ; visible = Active workspace on unfocused monitor
-label-visible = %index%
+label-visible = %name%
 label-visible-background = ${self.label-focused-background}
 label-visible-underline = ${self.label-focused-underline}
 label-visible-padding = ${self.label-focused-padding}
 
 ; urgent = Workspace with urgency hint set
-label-urgent = %index%
+label-urgent = %name%
 label-urgent-background = ${colors.alert}
 label-urgent-padding = 2
 

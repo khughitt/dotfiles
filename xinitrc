@@ -64,11 +64,10 @@ if [ -s ~/.Xmodmap ]; then
     xmodmap ~/.Xmodmap
 fi
 
-# sync clipboard buffers
-#autocutsel -fork &
-
-# sync primary/clipboard
+# sync clipboard
 autocutsel -fork &
+
+# sync primary
 autocutsel -fork -s PRIMARY &
 
 # fcitx
