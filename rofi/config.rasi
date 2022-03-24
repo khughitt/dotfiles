@@ -3,4 +3,4 @@ configuration {
     combi-modi: "window,drun,ssh,proj:proj:~/d/software/rofi-proj/rofi-proj.py";
     font: "hack 12";
 }
-@theme "/usr/share/rofi/themes/purple.rasi"
+@import "~/.cache/wal/colors-rofi-dark"

@@ -361,3 +361,7 @@ function ftoc {
   echo "scale=2;(5/9)*($1-32)" | bc
 }
 
+# jq | less
+function jql {
+  cat $1 | jq -C | /bin/less -R
+}
