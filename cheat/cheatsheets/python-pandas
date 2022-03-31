@@ -153,6 +153,12 @@ x.isin([..])    # is in
 
 pd.Series(['a', 'b', 'c']).isin(df.col)
 
+# get rows where index is "xx" (must use a list, even for single indices..)
+df.loc[["xx"]]
+
+# select a single row by index, and columns by boolean mask
+x.loc[id][x.loc[id] == 1]
+
 # get values in list that are present in columns of a dataframe
 set(a).intersection(df.columns)
 
@@ -348,12 +354,29 @@ Plotting
 
 # density plot for column "score"
 import matplotlib.pyplot as plt
-ax = dat.score.plot.kde()
+ax = dat.score.plot.kde(title='...')
 plt.show()
+
+ax.figure.savefig('out.png', dpi=300)
 
 Write
 -----
 
 # exclude index
 dat.to_csv(index=False)
+
+Troubleshooting
+---------------
+
+> ValueError: cannot reindex from a duplicate axis
+
+# This means that one of the dataframes being operated on has non-unique index values.
+# To check:
+df.index.is_unique
+
+> IndexingError: Unalignable boolean Series provided as indexer (index of the boolean
+> Series and of the indexed object do not match).
+
+# Series indices don't match; use ndarray instead
+series[mask.values]
 

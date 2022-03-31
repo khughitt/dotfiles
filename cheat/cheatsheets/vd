@@ -1,0 +1,34 @@
+# quick ref
+man vd
+
+#
+# types
+#
+"#"  # integer
+"%"  # float
+"$"  # currency
+
+#
+# appearance
+#
+g_  # fit columns
+
+#
+# sorting
+#
+[   # ascending
+]   # descending
+
+#
+# filtering
+#
+<select rows> "
+
+#
+# copying  
+#
+zy # yank column
+y  # copy row
+gy # copy row (clipboard)
+zy # copy cell
+zY # copy cell (clipboard)

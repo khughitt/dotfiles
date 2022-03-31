@@ -1,0 +1,6 @@
+import umap
+reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric='cosine', densmap=True,
+                    random_state=321)
+embedding = reducer.fit_transform(dat)
+
+# vi:syntax=python

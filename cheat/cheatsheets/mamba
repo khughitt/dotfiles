@@ -1,0 +1,5 @@
+# install mamba
+conda install mamba -n base -c conda-forge
+
+# clean mamba cache
+mamba clean -i

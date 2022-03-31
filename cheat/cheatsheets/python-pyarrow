@@ -1,0 +1,34 @@
+#
+# pyarrow
+# 
+# https://arrow.apache.org/docs/python/getstarted.html
+# https://arrow.apache.org/cookbook/py/
+# https://arrow.apache.org/blog/2019/10/13/introducing-arrow-flight/
+#
+
+# creation (arrays)
+import pyarrow as pa
+pa.array([1, 2, 3], type=pa.int8())
+
+# creation (tables)
+a = pa.array([1, 2, 3], type=pa.int8())
+b = pa.array(['a', 'b', 'c'], pa.string())
+pa.table([a, b], names=['col1', 'col2'])
+
+# read/write table (parquest)
+import pyarrow.parquet as pq
+
+pq.write_table(tbl, 'out.parquet')
+pq.read_table('out.parquet')
+
+#
+# compute functions
+#
+import pyarrow.compute as pc
+
+# value counts
+pc.value_counts(tbl['foo'])
+
+# other..
+# group_by()
+# aggregate()

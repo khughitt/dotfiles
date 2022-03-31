@@ -1,6 +1,3 @@
-# mamba
-conda install mamba -n base -c conda-forge
-
 # python projects
 conda install jupyter ipython black neovim
 
@@ -12,3 +9,11 @@ conda env export > environment.yml
 
 # clean-up unused packages
 conda clean -a
+
+#
+# trouble-shooting
+#
+
+# "none of the providers can be installed.." 
+# may be an issue with python 3.10; try using 3.9
+mamba install python=3.9.12
