@@ -40,9 +40,16 @@ x, _ = make_blobs(n_samples=1000, centers=5, cluster_std=1)
 # standardize
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
-scaler.fit(dat)
-scaler.mean_
-scaler.transform(dat)
+scaler.fit_transform(dat)
+
+# min-max scaling
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+scaler.fit_transform(dat)
+
+# for 1d ndarray
+scaled = scaler.fit_transform(arr.reshape(-1, 1))
+scaled.T[0]
 
 ##########################
 #

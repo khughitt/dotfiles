@@ -204,6 +204,7 @@ dateFormat(now, "YY/mm/dd");
 
 # print current date
 console.log(Date())
+console.log(Date().toISOString())
 
 # async request
 fetch(url)

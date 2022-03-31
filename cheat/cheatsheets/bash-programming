@@ -7,12 +7,24 @@ set -euo pipefail
 # string equality
 [ "$a" = "$b" ]
 
+# numeric equality
+[ "$a" -eq "$b" ]
+
+# numeric inequalities
+[ "$a" -gt "$b" ]
+[ "$a" -ge "$b" ]
+[ "$a" -lt "$b" ]
+[ "$a" -le "$b" ]
+
 # string not null
 [ -z "$a" ]
 
 # replace file extension in a string
 echo "${file%.old}.new"
 echo "${file%.*}.new"
+
+# remove file extension
+echo "${file%.*}"
 
 # redirect stderr to stdout
 cmd 2>&1
@@ -45,3 +57,6 @@ ${foo  <-- from variable foo
 
 # date formatting
 now=`date +%Y-%m-%d`
+
+# convert lowercase to uppercase
+echo $x | tr '[:lower:]' '[:upper:]'

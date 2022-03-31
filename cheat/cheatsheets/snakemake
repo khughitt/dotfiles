@@ -8,3 +8,7 @@ snakemake -k -T 5
 # debug r scripts
 message(snakemake)
 save.image()
+
+# accessing config variables in a "shell" section;
+# leave out quotation marks surrounding keys
+"ls {config[foo]}"
