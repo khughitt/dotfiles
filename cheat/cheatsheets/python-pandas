@@ -124,6 +124,7 @@ df = np.concatenate((a,b), axis=1)
 Adding & Removing Rows/Cols
 ---------------------------
 
+# add column at left side
 df.insert(0, "foo", [0, 1, 2])
 df.insert(0, "foo", [0, 1, 2], allow_duplicates = True)
 

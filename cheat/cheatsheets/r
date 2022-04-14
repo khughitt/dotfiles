@@ -58,3 +58,10 @@ colorRampPalette(c('red', 'blue'))(100)
 
 # generate all n-tuple combinations of vector elements
 combn(vec, 2)
+
+# print stack trace
+traceback()
+
+# enter debugger for a specific function
+debugonce(pkg:::foo)
+debug(pkg:::foo)

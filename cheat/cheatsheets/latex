@@ -60,6 +60,12 @@
 # infinity
 \infty
 
+# up tack / falsum / independence of random variables (⊥)
+\bot
+
+# perpendicular (⊥)
+\perp
+
 # text formatting
 \textbf{}
 \textit{}
