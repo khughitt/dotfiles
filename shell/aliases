@@ -110,6 +110,7 @@ alias netp="sudo netstat -plant"
 
 # pwd
 alias px="pwd | xsel"
+alias xp=px
 
 # httpd
 alias ph='python -m "http.server"'
