@@ -227,6 +227,39 @@ function c {
     fi
 }
 
+# gene notes
+function gn {
+    target=`/bin/ls ~/notes/knowledge/biology/genes/symbols |\
+            grep --color='none' "$1" |\
+            fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        vim ~/notes/knowledge/biology/genes/symbols/$target
+    fi
+}
+
+function gna {
+    pwd=`pwd`
+
+    cd ~/notes/knowledge/biology/genes/symbols
+
+    # prompt user for filename
+    vared -p "Filename?: " -c fname
+    echo "Opening $fname"
+
+    export las=`realpath ./$fname`
+    export lasd=`dirname $las`
+
+    # extract gene symbol from filename and conver to uppercase
+    gene=`echo "${fname%.*}" | tr '[:lower:]' '[:upper:]'`
+    echo "# ${gene}\n" > $fname
+
+    echo "Overview\n--------\n\nReferences\n----------\n" >> $fname
+    vim $fname
+
+    cd $pwd
+}
+
 # vim + ag
 function va {
     $EDITOR $(ag -l $1)
