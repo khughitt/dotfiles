@@ -109,8 +109,8 @@ alias um="sudo umount /mnt/usb"
 alias netp="sudo netstat -plant"
 
 # pwd
-alias px="pwd | xsel"
-alias xp=px
+alias xp='pwd | xsel'
+alias px='cd $(xsel -p)'
 
 # httpd
 alias ph='python -m "http.server"'
@@ -168,7 +168,7 @@ alias errors="journalctl -b -p err|less"
 alias vacuum="sudo journalctl --vacuum-size=50M"
 
 # pywal
-alias wali='wal --backend haishoku -i'
+alias wali='wal -i ~/d/linux/backgrounds/me --backend haishoku'
 
 # package management
 alias y='yay'
