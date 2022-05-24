@@ -1,0 +1,14 @@
+# add vst2/vst3 path
+yabridgectl add
+
+# remove path
+yabridgectl rm
+
+# list known paths
+yabridgectl list
+
+# sync changes
+yabridgectl sync
+
+# status overview
+yabridgectl status

@@ -5,6 +5,12 @@
 d   side-by-side
 r   rotate
 
+# navigation
+J   page down
+K   page up
+j   scroll down
+k   scroll up
+
 # zoom
 +   zoom in
 -   zoom out
@@ -12,6 +18,7 @@ r   rotate
 n=  zoom to size <n>
 a   adjust to page-fit
 s   adjust to width
+P   center page
 
 # links
 f highlight links; <num> to follow

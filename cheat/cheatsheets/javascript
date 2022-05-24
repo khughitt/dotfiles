@@ -220,3 +220,7 @@ path.parse(file).base;
 # localStorage; getItem() returns null if item not found
 localStorage.setItem('foo', JSON.stringify(obj));
 JSON.parse(localStorage.getItem('foo'))
+
+# math / funcs
+Math.PI
+Math.cos()
