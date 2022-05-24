@@ -7,10 +7,10 @@ killall -q polybar
 while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 
 # Determine config file to use
-CFG="$HOME/.config/polybar/config.$(hostname)"
+CFG="$HOME/.config/polybar/config.$(hostname).ini"
 
 if [ ! -f "$CFG" ]; then
-    CFG="$HOME/.config/polybar/config"
+    CFG="$HOME/.config/polybar/config.ini"
 fi
 
 echo "LOADING POLYBAR CONFIG: $CFG" 

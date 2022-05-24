@@ -6,7 +6,7 @@
 #-------------------------------------------------------------------------------
 # Variables
 #-------------------------------------------------------------------------------
-# Logo key. Use Mod1 for Alt.
+# super/Logo key. Use Mod1 for Alt.
 set $mod Mod4
 
 # Home row direction keys, like vim
@@ -122,6 +122,9 @@ bindsym --release $mod+Print exec "scrot --select"
 
 # file browser
 #bindsym $mod+n exec kitty nnn
+
+# wallpaper switcher
+bindsym $mod+n exec wali
 
 # kill focused window
 bindsym $mod+q kill
