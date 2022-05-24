@@ -59,6 +59,9 @@ colorRampPalette(c('red', 'blue'))(100)
 # generate all n-tuple combinations of vector elements
 combn(vec, 2)
 
+# convert a dataframe of factors to a numeric matrix
+data.matrix(df)
+
 # print stack trace
 traceback()
 

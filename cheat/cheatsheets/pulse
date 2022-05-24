@@ -1,0 +1,7 @@
+# restart
+pulseaudio -k
+pulseaudio --start
+
+# or..
+pulseaudio --check
+pulseaudio -D

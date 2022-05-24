@@ -38,3 +38,11 @@ pacman -Sy archlinux-keyring
 
 # signature from "xx" is invalid
 pacman-key --refresh-keys
+
+# install old version of aur pkg
+g clone https://aur.archlinux.org/foo.git/
+cd foo
+git log  # lookup desired version
+gco <commit>
+makepkg -si
+
