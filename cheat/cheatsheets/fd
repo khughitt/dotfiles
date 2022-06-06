@@ -1,5 +1,6 @@
-# find recent files
+# find recent/older files
 fd --changed-within 5days
+fd --changed-before 5days
 
 # find files in a specified directory
 fd . <dir> -t f

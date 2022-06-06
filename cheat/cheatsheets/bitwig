@@ -22,6 +22,9 @@ f2          toggle automation
 <alt-1>     octave down
 <alt-2>     octave up
 
+<alt-r>         reverse
+<shift-alt-r>   reverse pattern
+
 # custom
 <shift-alt-a>   toggle automation for all track
 

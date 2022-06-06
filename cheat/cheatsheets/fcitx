@@ -1,6 +1,6 @@
 # toggle input method (depends on gtk/qt/etc. support);
 # remapped from original <c-space> to avoid collision with rofi
-<c-space>
+<super-space>
 
 # switch between chinese/english, when chinese input is active
 <shift>
