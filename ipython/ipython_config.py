@@ -607,6 +607,10 @@
 # c.StoreMagics.autorestore = False
 c.AliasManager.user_aliases = [("l", "ls -lh")]
 
+#get_ipython().magics_manager().register_alias('pp', 'paste')
+c.MagicsManager.register_alias("p", "paste")
+#c.InteractiveShellApp.exec_lines = ['%alias_magic p paste']
+
 # work-around: silence ipython debugging-related logging
 import logging
 

@@ -19,14 +19,15 @@ function audio_mono {
 function bitwig_copy_sample {
     # path settings
     # note: using ~/ to indicate home dir won't work on mac
-    PROJDIR="$HOME/Music/bitwig/projects"
-    SAMPLEDIR="$HOME/Music/samples/KH"
+    PROJDIR="$HOME/music/bitwig/Projects"
+    SAMPLEDIR="$HOME/music/samples/KH"
 
     cwd=`pwd`
     cd "$PROJDIR"
  
     # find most recent .wav file in project folder
-    target=`fd -e wav --exec stat -f "%m%t%N" | sort -nr | head -1 | cut -f2`
+    #target=`fd -e wav --exec stat -f "%m%t%N" | sort -nr | head -1 | cut -f2`
+    target=`fd -e wav -X ls -t | head -1`
 
     # choose sample dir to copy file to
     sample_dir=`fd . -t d -d 1 $SAMPLEDIR | grep --color='none' "$1" | fzf -1 --exact`
@@ -34,7 +35,7 @@ function bitwig_copy_sample {
     if [ ! -z "$target" ]; then
         # prompt user to choose a filename and copy file over
         echo "Copying $target..."
-        vared -p "Filename? $sample_dir/" -c fname
+        vared -p "Filename? $sample_dir" -c fname
         cp $target $sample_dir/$fname
     fi
 

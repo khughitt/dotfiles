@@ -64,6 +64,7 @@ call plug#begin()
     Plug 'dylanaraps/wal.vim'
     Plug 'editorconfig/editorconfig-vim'
     Plug 'ervandew/supertab'
+    Plug 'godlygeek/tabular'
     Plug 'JoosepAlviste/nvim-ts-context-commentstring'
     Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
     Plug 'junegunn/fzf.vim'
@@ -164,7 +165,6 @@ call plug#begin()
     "Plug 'Shougo/neomru.vim'
     "Plug 'Shougo/neosnippet.vim'
     "Plug 'Shougo/neosnippet-snippets'
-    "Plug 'godlygeek/tabular'
     "Plug 'neoclide/coc.nvim', {'branch': 'release'}
     "Plug 'vim-pandoc/vim-pandoc'
     "Plug 'vim-pandoc/vim-pandoc-syntax'
