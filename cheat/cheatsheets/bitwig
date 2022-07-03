@@ -1,6 +1,12 @@
 # file management
 cntl + alt + s  collect & save
 
+# piano roll
+f    switch between drum view / piano
+
+# devices
+?           popup browser
+
 # panel focus
 alt  + s    toggle track solo
 cntl + k    toggle device window

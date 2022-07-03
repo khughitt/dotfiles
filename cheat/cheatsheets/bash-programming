@@ -19,6 +19,9 @@ set -euo pipefail
 # string not null
 [ -z "$a" ]
 
+# string starts with
+[[ "$a" =~ ^foo.* ]]
+
 # replace file extension in a string
 echo "${file%.old}.new"
 echo "${file%.*}.new"

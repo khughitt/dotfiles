@@ -25,6 +25,11 @@ g_  # fit columns
 <select rows> "
 
 #
+# hide columns
+#
+-  # hide current col
+
+#
 # copying  
 #
 zy # yank column

@@ -4,6 +4,9 @@ kitty +kitten ssh myserver
 # keyboard shortcuts
 # https://sw.kovidgoyal.net/kitty/overview/#other-keyboard-shortcuts
 
+# neovim pager
+# https://github.com/kovidgoyal/kitty/issues/719#issuecomment-1120383920
+
 # load scrollback buffer into $PAGER
 ctrl+shift+h
 

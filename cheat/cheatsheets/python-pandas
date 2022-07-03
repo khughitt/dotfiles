@@ -11,13 +11,13 @@ Series
 ------
 
 # rename series
-dat.name = 'foo'
+df.name = 'foo'
 
-# convert dataframe to a series
-pd.Series(dat.values.ravel())
+# convert dfaframe to a series
+pd.Series(df.values.ravel())
 
-# convert a series to a dataframe
-series.to_frame()
+# convert a series to a dfaframe
+s.to_frame()
 
 Selection
 ---------
@@ -30,48 +30,59 @@ ind = np.triu_indices(5)         # incl. diagonal
 ind = np.triu_indices(5, k=1)    # excl. diagonal
 
 # extract values of indices as 1d array
-dat.values[ind]
+df.values[ind]
 
 # drop column
-dat.drop('col', axis=1)
+df.drop('col', axis=1)
 
 # drop first column
-dat.iloc[: , 1:]
+df.iloc[: , 1:]
+
+# drop index
+df.reset_index(Drop=True)
 
 # drop missing
-dat.dropna()
+df.dropna()
 
 Iteration
 ---------
 
-# iterate over rows as tuple/series
+# iterate over rows as series
 for index, row in df.iterrows():
     row.foo
     row[0]
 
 # iterate over rows as dicts
-dat.to_dict(orient="records")
+df.to_dict(orient="records")
+
+# iterate over columns
+for cname, col in df.items():
+  print(col)
+
+# iterate over items in a series
+for index, value in s.items():
+  ...
 
 Creation
 --------
 
 # dict of columns / list of row dicts
-pd.DataFrame.from_dict(d)
+pd.dfaFrame.from_dict(d)
 
 # dict of row dicts
-pd.DataFrame.from_dict(d, orient='index')
+pd.dfaFrame.from_dict(d, orient='index')
 
 # set index + index name at time of creation
-pd.DataFrame(..., index=pd.Series([...], name='foo'))
+pd.dfaFrame(..., index=pd.Series([...], name='foo'))
 
 # fix column types after creating from dicts, etc.
-df = df.astype({"access_count": int, "date_created": "datetime64[ns]"})
+df = df.astype({"access_count": int, "dfe_created": "dfetime64[ns]"})
 
-# dataframe of random uniform values
-df = pd.DataFrame(np.random.rand(3, 4))
+# dfaframe of random uniform values
+df = pd.dfaFrame(np.random.rand(3, 4))
 
 # zeros
-df = pd.DataFrame(np.zeros((3, 4)))
+df = pd.dfaFrame(np.zeros((3, 4)))
 
 Saving
 ------
@@ -79,17 +90,17 @@ Saving
 # move index to column with specified name
 df.reset_index().rename(columns={"index": "foo"}).to_feather(...)
 
-Dates
+dfes
 -----
 
-# convert date column to unix timestamps
-df.datetime.values.astype(np.int64) // 10 ** 9
+# convert dfe column to unix timestamps
+df.dfetime.values.astype(np.int64) // 10 ** 9
 
-# convert timestamp column to datetime
-pd.to_datetime(df['ts'], unit='s')
+# convert timestamp column to dfetime
+pd.to_dfetime(df['ts'], unit='s')
 
-# get all rows for a specific date
-df[df['date'].dt.normalize() == '2021-12-07']
+# get all rows for a specific dfe
+df[df['dfe'].dt.normalize() == '2021-12-07']
 
 To Dict
 -------
@@ -160,26 +171,29 @@ df.loc[["xx"]]
 # select a single row by index, and columns by boolean mask
 x.loc[id][x.loc[id] == 1]
 
-# get values in list that are present in columns of a dataframe
+# get values in list that are present in columns of a dfaframe
 set(a).intersection(df.columns)
 
-# find indices present in one dataframe but not another
+# find indices present in one dfaframe but not another
 a.index[~a.index.isin(b.index)]
 
 # filter rows by column value membership
 df.loc[df['column_name'].isin(some_values)]
 
 # filter columns by name
-dat.loc[:, ~dat.columns.isin(cols_to_remove)]
+df.loc[:, ~df.columns.isin(cols_to_remove)]
 
 # subset rows & columns using boolean mask
-dat.loc[row_sums >= 0, col_sums <= 100]
+df.loc[row_sums >= 0, col_sums <= 100]
 
 # ~R's where()
-np.where(dat['foo'] > 1)
+np.where(df['foo'] > 1)
 
 # ~R's match()
-B.reset_index().set_index('foo').loc[A.coo, 'index'].values
+B.reset_index().set_index('foo').loc[A.foo, 'index'].values
+
+# get indices of series items present in a list
+s[s.isin(lst)].index
 
 # contains
 df.foo.str.contains('bar', na=False)  # ignore missing vals in column
@@ -191,7 +205,7 @@ x[x.foo.str.endswith('bar')]
 df.foo.str.find('bar')
 
 # get rows corresponding to a string match
- dat[dat.foo.str.lower().str.find('bar') != -1]
+ df[df.foo.str.lower().str.find('bar') != -1]
 
 # return boolean series indicating regex presence in column
 df.foo.str.find('bar|baz')
@@ -229,14 +243,14 @@ Min/Max
 # get indices of column with max value for each row (~which.max)
 df.idxmax(axis=1)
 
-# get the N largest values in a dataframe overall
+# get the N largest values in a dfaframe overall
 df.stack().sort_values(ascending=False).iloc[:n]
 
 Rank
 ----
 
 # rank along columns (ascending=True by default, so higher values -> higher ranks)
-DataFrame.rank(axis=0)
+dfaFrame.rank(axis=0)
 
 Normalization / Scaling
 -----------------------
@@ -269,10 +283,10 @@ Sort
 ----
 
 # sort by column
-dat.sort_values('foo')
+df.sort_values('foo')
 
 # sort by column (descending)
-dat.sort_values('foo', ascending=False)
+df.sort_values('foo', ascending=False)
 
 # sort columns by name
 df = df.sort_index(axis=1)
@@ -281,20 +295,20 @@ Grouping / Summarization
 ------------------------
 
 # group by -> sum
-dat.groupby('tag').agg(sum)
+df.groupby('tag').agg(sum)
 
 # group by -> count
-dat.groupby('tag').agg('count')
+df.groupby('tag').agg('count')
 
 # group by -> count unique
-dat.groupby('tag').foo.nunique().reset_index()
+df.groupby('tag').foo.nunique().reset_index()
 
 # group by -> sort
-dat.groupby('seed').apply(pd.DataFrame.sort_values, 'tag')
-dat.groupby('seed').sort_values('tag')
+df.groupby('seed').apply(pd.dfaFrame.sort_values, 'tag')
+df.groupby('seed').sort_values('tag')
 
 # group by -> count -> max -> sample
-dat.groupby(["path", "seed"]).count().max(axis=1).groupby("path").sample(1)
+df.groupby(["path", "seed"]).count().max(axis=1).groupby("path").sample(1)
 
 # get first item from each group
 df.groupby('foo').first()
@@ -320,17 +334,17 @@ Matrix operations
 mat.values[tuple([np.arange(mat.shape[0])] * 2)] = 0
 
 # convert count matrix to a co-occurence matrix
-a.T.dot(a)
+A.T.dot(a)
 
 Reshaping
 ---------
 
-# dataframe -> 1d ndarray
-dat.values.ravel()
+# dfaframe -> 1d ndarray
+df.values.ravel()
 
-# dataframe -> 1d ndarray (upper-triangular matrix only, excluding diagonal)
+# dfaframe -> 1d ndarray (upper-triangular matrix only, excluding diagonal)
 ind = np.triu_indices(5, k=1)
-dat.values[ind]
+df.values[ind]
 
 # pivot long -> wide
 df.pivot_table(index='patient', columns='obs', values='score', fill_value=0)
@@ -355,7 +369,7 @@ Plotting
 
 # density plot for column "score"
 import matplotlib.pyplot as plt
-ax = dat.score.plot.kde(title='...')
+ax = df.score.plot.kde(title='...')
 plt.show()
 
 ax.figure.savefig('out.png', dpi=300)
@@ -364,14 +378,14 @@ Write
 -----
 
 # exclude index
-dat.to_csv(index=False)
+df.to_csv(index=False)
 
 Troubleshooting
 ---------------
 
 > ValueError: cannot reindex from a duplicate axis
 
-# This means that one of the dataframes being operated on has non-unique index values.
+# This means that one of the dfaframes being operated on has non-unique index values.
 # To check:
 df.index.is_unique
 

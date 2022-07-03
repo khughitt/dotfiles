@@ -1,0 +1,3 @@
+# specify earlier start/end time
+zp <proj> --begin "-1:00"
+zf --finish "-0:15"

@@ -3,3 +3,6 @@ netstat -plant
 
 # another way to check port usage
 lsof -Pnl +M -i4
+
+# check a specific port
+netstat -an | grep <port>
