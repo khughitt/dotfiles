@@ -329,6 +329,9 @@ function ncol {
         csvgrep -n -t $1 | wc -l
     elif [[ $1 == *.csv* ]]; then
         csvgrep -n $1 | wc -l
+    elif [[ $1 == *.feather ]]; then
+        python -c \
+          "import sys; import pandas as pd; print(pd.read_feather(sys.argv[1]).shape[1])" $1
     else
         echo "Unsupported format..."
     fi

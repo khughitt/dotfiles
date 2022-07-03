@@ -14,9 +14,11 @@ endfunction
 
 " helper function to add a simple markdown timestamp heading
 function! AddTimeStamp ()
+    " call append(line("."), [strftime('_%b %d %Y %H:%M:%S_'), ""])
+    normal! gg
     call append(line("."), [strftime('_%b %d %Y %H:%M:%S_'), ""])
-    normal! 3j
-    call feedkeys('A', 'n')
+    "normal! 3j
+    "call feedkeys('A', 'n')
 endfunction
 
 " helper function to add an commonly-used header sections

@@ -1,5 +1,5 @@
 # ag + xargs + sed
-ag -0 -l foo | xargs -0 sed -i 's/foo/bar/'
+ag -0 -l foo | xargs -0 sed -i 's/foo/bar/g'
 
 # open matches in nvim
 ag -0 -l foo | xargs -0 nvim
