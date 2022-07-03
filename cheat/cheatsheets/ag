@@ -1,6 +1,9 @@
 # ag + xargs + sed
 ag -0 -l foo | xargs -0 sed -i 's/foo/bar/'
 
+# open matches in nvim
+ag -0 -l foo | xargs -0 nvim
+
 # ignore html files
 ag --ignore "*.html" foo
 
@@ -12,3 +15,6 @@ ag -L foo
 
 # limit search to files matching pattern
 ag -u -G 'metadata\.tsv$' MM
+
+# invert search
+ag -v 'not foo..'

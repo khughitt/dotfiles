@@ -1,3 +1,6 @@
+# get a specific column from each list in a list-of-lists
+lapply(lst, '[[', 'foo')
+
 # PCA (column-wise)
 pca <- prcomp(t(dat), scale = TRUE)
 
@@ -59,8 +62,21 @@ colorRampPalette(c('red', 'blue'))(100)
 # generate all n-tuple combinations of vector elements
 combn(vec, 2)
 
+# get classes of each column
+sapply(df, class)
+
+# convert dataframe to numeric matrix
+# "data.matrix(df)" should work, but incorrectly converts double columns to integers in
+# some cases..
+x <- matrix(as.numeric(unlist(df)), nrow=nrow(df))
+colnames(x) <- colnames(df)
+rownames(x) <- rownames(df)
+
 # convert a dataframe of factors to a numeric matrix
 data.matrix(df)
+
+# compute ranks for each column in a dataframe
+do.call(cbind, lapply(df, rank))
 
 # print stack trace
 traceback()

@@ -8,7 +8,7 @@ https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html
 list(itertools.chain(list1, list2, list3, ...))
 list(itertools.chain(*[list1, list2, list3, ...]))
 
-# flatten nested lists (itertools)
+# flatten/collapse nested lists (itertools)
 list(itertools.chain(*regular_list))
 
 # flatten nested lists (sum)
@@ -141,7 +141,7 @@ import pickle
 pickle.dump(obj, open("out.p", "wb"))
 pickle.load(open("out.p", "rb"))
 
-# replace
+# replace (see re.sub for regex replaces)
 str.replace('foo', 'bar')
 str.replace('foo', 'bar', 1)
 

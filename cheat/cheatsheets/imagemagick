@@ -1,2 +1,5 @@
 # combine two images side-by-side (resizing height to 480)
 convert +append left.png right.png -resize x480 out.png
+
+# rotate 90 degrees clockwise
+convert in.jpg -rotate 90 out.png
