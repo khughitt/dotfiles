@@ -46,7 +46,7 @@ zstyle ':completion:*' menu select=4                # tab completion menu
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # use smart-case completion
 
 # additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{fasd,aliases,audio,functions,private,exports,vconsole,video}; do
+for file in ~/.shell/{fasd,aliases,audio,functions,nodes,private,exports,vconsole,video}; do
     [ -r "$file" ] && source "$file"
 done
 

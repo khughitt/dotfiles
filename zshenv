@@ -53,7 +53,7 @@ export MYPYPATH=".config/stubs"
 export ROFI_PROJ_DIR="$HOME/d/dotfiles/rofi/rofi-proj"
 
 # nodes-web
-export NODES_CONF_DIR="$HOME/d/eco/config"
+export NODES_CONF_DIR="$HOME/d/nodes/config"
 export NODES_DATA_DIR="/mnt/ssd2"
 
 # CMFinder

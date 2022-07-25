@@ -382,13 +382,13 @@ function datp {
 
     # search clean data and most recent data packages
     fd_cmd="fd datapackage $searchpaths --exclude archive"
-    target=`eval $fd_cmd | fzf -1 --exact --preview 'eco info {}'`
+    target=`eval $fd_cmd | fzf -1 --exact --preview 'nodes info {}'`
 
     # launch ipython and attempt to load the dataset
     if [ ! -z "$target" ]; then
         echo "Loading $target..."
 
-        ipython -i -c "from eco.entities.datapackage import DataPackage; pkg=DataPackage('$target'); dat=pkg.get_resource();"
+        ipython -i -c "from nodes.nodes import DataFrameNode; pkg=DataFrameNode.from_pkg('$target');"
     fi
 }
 
