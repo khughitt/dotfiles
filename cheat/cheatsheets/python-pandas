@@ -75,6 +75,9 @@ pd.dfaFrame.from_dict(d, orient='index')
 # set index + index name at time of creation
 pd.dfaFrame(..., index=pd.Series([...], name='foo'))
 
+# specify column type at time of creation
+pd.DataFrame({'foo': pd.Series(['a', 'b', 'c'], dtype='category'), ...})
+
 # fix column types after creating from dicts, etc.
 df = df.astype({"access_count": int, "dfe_created": "dfetime64[ns]"})
 
@@ -87,8 +90,10 @@ df = pd.dfaFrame(np.zeros((3, 4)))
 Saving
 ------
 
-# move index to column with specified name
-df.reset_index().rename(columns={"index": "foo"}).to_feather(...)
+# move index to column with specified name prior to saving;
+# this approach avoids issues if the index is unnamed or a column exists with its name
+df = df.reset_index()
+df = df.rename(columns={df.columns[0]: "foo"}).to_feather(...)
 
 dfes
 -----
@@ -114,6 +119,9 @@ Joins
 # inner join by similar column(s)
 a.merge(b)
 a.merge(b, on=['foo'])
+
+# outer join
+a.merge(b, on='col', how='outer')
 
 # join on index
 a.join(b)
@@ -271,6 +279,9 @@ scaled_mat = scaler.transform(mat)
 scaler = preprocessing.StandardScaler().fit(mat)
 scaled_mat = scaler.transform(mat)
 
+# scale so that rows sum to "1"
+df.div(df.sum(axis=1), axis=0)
+
 Variance
 --------
 
@@ -282,7 +293,7 @@ df.var(1).plot.kde(logx=True)
 Sort
 ----
 
-# sort by column
+# sort (arrange) by column
 df.sort_values('foo')
 
 # sort by column (descending)
@@ -334,7 +345,7 @@ Matrix operations
 mat.values[tuple([np.arange(mat.shape[0])] * 2)] = 0
 
 # convert count matrix to a co-occurence matrix
-A.T.dot(a)
+df.T.dot(df)
 
 Reshaping
 ---------

@@ -32,7 +32,7 @@ g_  # fit columns
 #
 # copying  
 #
-zy # yank column
+gzy  # yank column for selected rows
 y  # copy row
 gy # copy row (clipboard)
 zy # copy cell

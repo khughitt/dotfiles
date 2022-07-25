@@ -7,6 +7,9 @@
 :profile pause
 :noautocmd qall!
 
+# vim-emoji
+;e    replace all `:emoji:` instances in current buffer
+
 # fzf
 ;a  # ag
 ;j  # notes
@@ -27,9 +30,6 @@
 
 # indent guides
 :IndentGuidesToggle
-
-# vim-emoji
-;e    replace all `:emoji:` instances in current buffer
 
 # vCoolor
 <alt-c>  open color picker

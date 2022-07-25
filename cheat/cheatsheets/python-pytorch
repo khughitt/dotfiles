@@ -1,0 +1,8 @@
+# convert tensor to ndarray
+tensor.numpy()
+
+# convert tensor to a list
+tensor.tolist()
+
+# create a tensor with random normal values
+torch.randn(1, 3)

@@ -6,19 +6,19 @@ knitr::opts_chunk$set(
   dpi = 384
 )
 
+# default to kable() for table output
+```
+output:
+  html_document:
+    df_print: kable
+```
+
 # table of contents
 ```
 output:
   html_document:
     toc: true
     toc_depth: 2
-```
-
-# default to kable() for table output
-```
-output:
-  html_document:
-    df_print: kable
 ```
 
 # ggplot high-res theme
