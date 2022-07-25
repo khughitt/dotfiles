@@ -1,0 +1,6 @@
+name: "complexity"
+
+left:
+  - "kitty -d $NOTES/knowledge/courses/intro-to-complexity nvim README.md"
+right:
+  - "$BROWSER --new-window https://www.complexityexplorer.org/courses/119-introduction-to-complexity/segments/11742?summary"

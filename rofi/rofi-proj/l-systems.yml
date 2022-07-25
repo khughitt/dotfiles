@@ -1,0 +1,14 @@
+#
+# unused:
+#
+# kitty -d ~/d/l-systems/00-hello yarn start
+# kitty -d $NOTES/tech/procedural-generation/l-systems nvim -c "colorscheme $ALT1" next-steps.md
+#
+name: "l-systems"
+
+left:
+  - "kitty -d ~/d/l-systems/02-three-lsystem/"
+  - "zathura ~/d/books/abop.pdf"
+right:
+  - "kitty -d ~/notes/books nvim -c \"colorscheme%20nord\" algorithmic-beauty-of-plants.md"
+

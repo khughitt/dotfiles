@@ -1,0 +1,7 @@
+name: "three.js"
+
+left:
+  - "kitty -d ~/d/three-js"
+  - "kitty -d $NOTES/tech/web/three-js nvim next-steps.md"
+right:
+  - "$BROWSER --new-window https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene"

@@ -1,0 +1,8 @@
+#
+#
+name: "causal-inference"
+
+left:
+  - "kitty -d ~/notes/knowledge/stats-ml/causal-inference/study-group/"
+right:
+  - "zathura ~/d/books/causal-inference.pdf"

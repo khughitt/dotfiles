@@ -1,0 +1,7 @@
+name: "advanced-data-analysis"
+
+left:
+  - "kitty -d ~/notes/books/advanced-data-analysis-from-an-elementary-pov"
+
+right:
+  - "zathura ~/d/books/advanced-data-analysis-shalizi.pdf"

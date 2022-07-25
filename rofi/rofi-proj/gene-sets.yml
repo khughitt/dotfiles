@@ -1,0 +1,5 @@
+name: gene-sets
+left:
+  - "kitty -d ~/d/r/nih/gene-sets"
+right:
+  - "kitty -d $NOTES/biodat/gene-sets nvim gene-set-optimization.md"

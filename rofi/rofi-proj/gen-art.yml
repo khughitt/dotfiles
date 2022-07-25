@@ -1,0 +1,7 @@
+name: "gen-art"
+
+left:
+  - "kitty -d ~/d/gen-art/01-hi nvim index.html"
+  - "kitty -d $NOTES/art/generative-art/ nvim generative-art.md"
+right:
+  - "kitty -d ~/d/gen-art/01-hi python -m 'http.server' 8001"

@@ -1,0 +1,10 @@
+#
+#
+name: "topological-manifolds"
+
+left:
+    - "kitty -d ~/notes/knowledge/math/topology"
+    - "kitty -d ~/notes/books nvim -c \"colorscheme%20nord\" introduction-to-topological-manifolds.md"
+
+right:
+  - "zathura ~/d/books/2011_Book_Introduction_to_Topological_Manifolds_2e.pdf"
