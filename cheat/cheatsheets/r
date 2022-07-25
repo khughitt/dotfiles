@@ -26,7 +26,7 @@ umap(t(dat), n_neighbors = 15, n_components = 2, init = 'spectral', scale = FALS
      min_dist = 0.01)
 
 # sweep (ex: cpm normalization)
-dat[, -1] <- sweep(dat[, -1], 2, colSums(dat[, -1]), '/') * 1E6
+dat <- sweep(dat, 2, colSums(dat), '/') * 1E6
 
 # recursively update one list, using another
 modifyList(a, b)
@@ -84,3 +84,6 @@ traceback()
 # enter debugger for a specific function
 debugonce(pkg:::foo)
 debug(pkg:::foo)
+
+# aheatmap
+aheatmap(dat, color = viridis(100), Colv = FALSE, labCol = '', annRow = annot_df)

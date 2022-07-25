@@ -2,6 +2,9 @@
 fd --changed-within 5days
 fd --changed-before 5days
 
+# limit depths
+fd -d 1
+
 # find files in a specified directory
 fd . <dir> -t f
 

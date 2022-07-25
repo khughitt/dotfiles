@@ -1,3 +1,8 @@
-# specify earlier start/end time
+# begin proj with an earlier start time
 zp <proj> --begin "-1:00"
+
+# end proj with an earlier finish time
 zf --finish "-0:15"
+
+# edit end time for existing entry
+zeit entry <uuid> -s "2022-07-21T20:15:00-07:00"

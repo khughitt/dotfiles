@@ -1,34 +1,64 @@
 #
 # pyarrow
-# 
 # https://arrow.apache.org/docs/python/getstarted.html
-# https://arrow.apache.org/cookbook/py/
-# https://arrow.apache.org/blog/2019/10/13/introducing-arrow-flight/
 #
 
-# creation (arrays)
+# arrays & tables
 import pyarrow as pa
-pa.array([1, 2, 3], type=pa.int8())
 
-# creation (tables)
 a = pa.array([1, 2, 3], type=pa.int8())
-b = pa.array(['a', 'b', 'c'], pa.string())
-pa.table([a, b], names=['col1', 'col2'])
+b = pa.array([
 
-# read/write table (parquest)
+tbl = pa.table([a, b], names=['col1' 'col2'])
+
+# dataset
+import pyarrow.dataset as ds
+
+# data types (https://arrow.apache.org/docs/python/api/datatypes.html)
+pa.bool_()
+pa.int8()
+pa.int16()
+pa.int32()
+pa.int64()
+pa.uint8(), .., pa.uint64()
+float16(), .., pa.float64()
+date32/64()
+time32/64()
+timestamp()
+string()
+large_string()
+list_()
+map_()
+struct()
+dictionary()
+field()
+utf8()
+binary()
+
+# parquet (default: snappy)
 import pyarrow.parquet as pq
 
+pq.read_table('in.parquet')
 pq.write_table(tbl, 'out.parquet')
-pq.read_table('out.parquet')
 
-#
-# compute functions
-#
-import pyarrow.compute as pc
+# feather (default: lz4)
+import pyarrow.feather as ft
 
-# value counts
-pc.value_counts(tbl['foo'])
+ft.read_table('in.feather')
+ft.write_feather(tbl, 'out.feather', compression='lz4')
 
-# other..
-# group_by()
-# aggregate()
+# pandas x series
+arr.to_pandas()
+pa.Array.from_pandas(s)
+
+# pandas x dataframes
+tbl.to_pandas()
+pa.Table.from_pandas(df)
+pa.Schema.from_pandas(df)
+
+# streaming
+# https://wesmckinney.com/blog/arrow-streaming-columnar/
+batch = pa.RecordBatch.from_pandas(df)
+
+sink = pa.InMemoryOutputStream()
+stream_writer = pa.StreamWriter(sink, batch.schema)

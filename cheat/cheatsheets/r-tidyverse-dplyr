@@ -10,3 +10,10 @@ dat %>%
 # arrange by string variable
 dat %>%
     arrange(!!sym(var_name))
+
+# rbind multiple tibbles
+bind_rows(df1, df2, ..)
+
+# drop duplicates
+dat %>%
+  distinct()

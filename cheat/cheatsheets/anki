@@ -1,5 +1,13 @@
 # Review count colors
-
 - **blue**: new cards
 - **red**: cards being learned
 - **green**: cards due for review
+
+# keyboard shortcuts
+<space>   # show answer
+1   # 1st answer
+2   # 2nd answer
+3   # 3rd answer
+4   # 4th answer
+
+e   # edit

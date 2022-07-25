@@ -20,6 +20,9 @@ lst.sort(key=lambda x: x['foo'], reverse=True)
 # sort list of objects/dicts by key (out of place)
 sorted(lst, key=lambda x: x['foo'], reverse=True)
 
+# create a dict from lists of keys/values
+dict(zip(k, v))
+
 # chunk list
 # https://stackoverflow.com/a/312464/554531
 def chunks(lst, n):
@@ -79,6 +82,9 @@ datetime.datetime.now().strftime("%Y-%m-%d")
 
 # convert unix timestamp to datetime
 datetime.fromtimestamp(..)
+
+# get file mtime (cross-platform)
+os.path.getmtime("foo.txt")
 
 # read yaml file
 with open('cfg.yml') as fp:

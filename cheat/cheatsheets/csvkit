@@ -1,0 +1,6 @@
+# list sheets
+in2csv -n in.xls
+
+# convert xls
+in2csv in.xls > out.csv
+in2csv in.xls | csvformat -T > out.tsv

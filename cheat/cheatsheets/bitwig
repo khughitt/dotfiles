@@ -35,7 +35,7 @@ f2          toggle automation
 <shift-alt-a>   toggle automation for all track
 
 # looping
-<ctl-l>     loop selected region (select _track_ region)
+<ctl-l> / r     loop selected region (select _track_ region)
 
 # colors (missing audio samples indicators)
 yellow - sample is outside of project
