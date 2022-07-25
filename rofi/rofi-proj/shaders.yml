@@ -1,0 +1,7 @@
+name: shaders
+
+left:
+  - "cp -r ~/d/shaders/template ~/d/shaders/prac/`date +\"%Y-%m-%d\"`"
+  - "kitty -d ~/d/shaders/prac/`date +\"%Y-%m-%d\"` nvim shader.frag"
+right:
+  - "$BROWSER --new-window -P shaders"

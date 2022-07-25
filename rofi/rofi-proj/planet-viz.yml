@@ -1,0 +1,6 @@
+name: "planet-viz"
+left:
+  - "kitty -d ~/d/three-js/00-sphere/src nvim App.js"
+  - "kitty -d $NOTES/tech/procedural-generation/ nvim planets.md"
+right:
+  - "kitty -d ~/d/three-js/00-sphere yarn start"

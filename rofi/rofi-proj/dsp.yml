@@ -1,0 +1,6 @@
+name: "dsp"
+
+left:
+  - "kitty -d $NOTES/courses/audio-signal-processing nvim audio-signal-processing.md"
+right:
+  - "$BROWSER https://www.coursera.org/learn/audio-signal-processing/home/welcome"

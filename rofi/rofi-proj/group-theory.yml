@@ -1,0 +1,6 @@
+name: "group-theory"
+
+left: 
+  - "kitty -d $NOTES/knowledge/courses/visual-group-theory nvim README.md"
+right:
+  - "$BROWSER --new-window https://www.youtube.com/watch?v=UwTQdOop-nU"

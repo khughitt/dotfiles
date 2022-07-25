@@ -1,0 +1,4 @@
+name: coex
+
+left:
+  - "kitty -d $NOTES/work/umd nvim coex-networks.md"
