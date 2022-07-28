@@ -337,39 +337,39 @@ function ncol {
     fi
 }
 
-# helper function to quickly load a dataset into ipython
-function dat {
-    # get current data package dir
-    # version=`/bin/ls /data/packages | tail -n1`
-    # searchpaths="/data/packages/$version"
-    searchpaths="/data/packages"
+# opens a specified dataset in ipython
+function o {
+    # get extension, excluding .gz 
+    filename=${1/.gz/}
+    ext="${filename##*.}"
 
-    # include project data and clearn data folders as well
-    searchpaths="$searchpaths /data/proj /data/clean"
+    if [ $ext = "feather" ]; then
+        ipython -i -c "import pandas as pd; df=pd.read_feather('$1'); df;"
+    elif [ $ext = "parquet" ]; then
+        ipython -i -c "import pandas as pd; df=pd.read_parquet('$1'); df;"
+    elif [ $ext = "csv" ]; then
+        ipython -i -c "import pandas as pd; df=pd.read_csv('$1'); df;"
+    elif [ $ext = "tsv" ] || [ $ext = "txt" ]; then
+        ipython -i -c "import pandas as pd; df=pd.read_csv('$1', sep='\t'); df;"
+    else
+        echo "Unrecognized filetype specified: $ext"
+    fi
+}
+
+# helper function to quickly find and load a dataset from a set of known
+# locations into ipython
+function dat {
+    # data directories to search
+    searchpaths="/data/packages /data/proj /data/clean"
 
     # search clean data and most recent data packages
     fd_cmd="fd . -e .tsv -e .feather -e .parquet -e .csv -e .gz $searchpaths"
     target=`eval $fd_cmd | fzf -1 --exact`
 
-    # get extension, excluding .gz 
-    filename=${target/.gz/}
-    ext="${filename##*.}"
-
     # launch ipython and attempt to load the dataset
     if [ ! -z "$target" ]; then
         echo "Loading dataset $target..."
-
-        if [ $ext = "feather" ]; then
-            ipython -i -c "import pandas as pd; dat=pd.read_feather('$target');"
-        elif [ $ext = "parquet" ]; then
-            ipython -i -c "import pandas as pd; dat=pd.read_parquet('$target');"
-        elif [ $ext = "csv" ]; then
-            ipython -i -c "import pandas as pd; dat=pd.read_csv('$target');"
-        elif [ $ext = "tsv" ] || [ $ext = "txt" ]; then
-            ipython -i -c "import pandas as pd; dat=pd.read_csv('$target', sep='\t');"
-        else
-            echo "Unrecognized filetype specified: $ext"
-        fi
+        o $target
     fi
 }
 
