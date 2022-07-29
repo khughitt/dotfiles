@@ -11,9 +11,6 @@ list(itertools.chain(*[list1, list2, list3, ...]))
 # flatten/collapse nested lists (itertools)
 list(itertools.chain(*regular_list))
 
-# flatten nested lists (sum)
-sum(regular_list, [])
-
 # sort list of objects/dicts by key (in place)
 lst.sort(key=lambda x: x['foo'], reverse=True)
 
@@ -34,19 +31,21 @@ python3 -m http.server 7800
 
 # regex
 \s       whitespace
+\w       word character ([a-zA-Z0-9_])
 \W       non-word character
+\b       empty string
 (?<!\s)  current position is _not_ preceded by a whitespace character
 
 
 # regex matching;
 # match: left-anchored
 # search: anywhere
-re = re.compile(r".*foo")
-re.match(target)
-re.search(target)
-re.sub(pattern, replace, str)
+regex = re.compile(r".*foo")
+regex.match(target)
+regex.search(target)
+regex.sub(pattern, replace, str)
 
-if (re.search('foo')):
+if (regex.search('foo')):
   print('found!')
 
 # findall
@@ -84,7 +83,11 @@ datetime.datetime.now().strftime("%Y-%m-%d")
 datetime.fromtimestamp(..)
 
 # get file mtime (cross-platform)
-os.path.getmtime("foo.txt")
+mtime = os.path.getmtime("foo.txt")
+
+# number of seconds since modification?
+now = datetime.datetime.now().timestamp()
+now - mtime
 
 # read yaml file
 with open('cfg.yml') as fp:

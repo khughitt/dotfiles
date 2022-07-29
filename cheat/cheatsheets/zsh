@@ -34,3 +34,6 @@ unsetopt
 # fix: compinit "insecure directories"
 # https://stackoverflow.com/a/22753363/554531
 compaudit | xargs chmod g-w
+
+# zinit
+zinit update --all
