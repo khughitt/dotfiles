@@ -16,11 +16,7 @@ if ! echo $tracking | grep -q "not running"; then
     color=`mindful tags --colors | grep --color='never' "#$tag,"`
     color=`echo ${color##*,}`
 
-    # testing...
-    monitor_power=$(xset -q|grep Monitor|awk '{print $3;}')
-    foo="bar"
-
     echo "%{u$color}%{F$color} #$tag%{F-} ($time_spent)"
 else
-    echo "⏳not tracking $monitor_power $foo"
+    echo "⏳not tracking"
 fi

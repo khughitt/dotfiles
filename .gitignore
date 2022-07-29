@@ -12,7 +12,7 @@ mindful/
 dojo/
 bin
 bookmarks
-polybar-forecast
+polybar/modules/forecast
 tags
 unused
 vim/black

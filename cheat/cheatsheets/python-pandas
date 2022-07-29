@@ -78,6 +78,9 @@ pd.dfaFrame(..., index=pd.Series([...], name='foo'))
 # specify column type at time of creation
 pd.DataFrame({'foo': pd.Series(['a', 'b', 'c'], dtype='category'), ...})
 
+# specify column type at time of creation (from_dict)
+pd.DataFrame.from_dict(..).astype({'foo': 'string'})
+
 # fix column types after creating from dicts, etc.
 df = df.astype({"access_count": int, "dfe_created": "dfetime64[ns]"})
 
@@ -192,6 +195,7 @@ df.loc[df['column_name'].isin(some_values)]
 df.loc[:, ~df.columns.isin(cols_to_remove)]
 
 # subset rows & columns using boolean mask
+df.loc[:, col_sums <= 100]
 df.loc[row_sums >= 0, col_sums <= 100]
 
 # ~R's where()
@@ -240,6 +244,9 @@ df.replace({False: 0, True: 1}, inplace=True)
 
 Strings
 -------
+
+# create dataframe with a string column
+pd.DataFrame({'str_col': pd.Series(lst, dtype='string')})
 
 # memory efficient string type;
 # note: much more minimal functionality, e.g. no string concatenation implemented atm..
