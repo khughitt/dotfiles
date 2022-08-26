@@ -87,6 +87,10 @@ alias fdu="fd -u"
 alias fdl="fd -l | sort -k6M -k7n"
 alias fdr="fd -l --changed-within 5days | csvcut -d ' ' -S -c6-9 | csvlook -HI"
 
+alias fd1="fd --changed-within 1days"
+alias fd3="fd --changed-within 3days"
+alias fd5="fd --changed-within 5days"
+
 # htop
 alias htop=gotop
 

@@ -1,0 +1,8 @@
+name: "nonlinear-dynamics"
+
+left:
+  - "kitty -d ~/notes/books/nonlinear-dynamics-concise-intro"
+  - "kitty julia"
+
+right:
+  - "zathura ~/d/books/2022_Nonlinear-Dynamics-A-Concise-Introduction-Interlaced-with-Code.pdf"
