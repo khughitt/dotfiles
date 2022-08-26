@@ -1,0 +1,12 @@
+# JULY 10, 2022
+# Initial support for loading Nodes data packages...
+function datn {
+    # get packages and strip titles
+    target=`nodes list --paths | fzf -1 --exact --preview 'nodes info {}'`
+
+    # launch ipython and attempt to load the dataset
+    if [ ! -z "$target" ]; then
+        echo "Loading $target..."
+        ipython -i -c "from nodes.nodes import DataFrameNode; node=DataFrameNode.from_pkg('$target');"
+    fi
+}

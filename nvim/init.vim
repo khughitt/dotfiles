@@ -814,7 +814,8 @@ EOF
 let g:nvcode_termcolors=256
 
 syntax on
-colorscheme onedark
+"colorscheme onedark
+colorscheme quantum
 
 " checks if your terminal has 24-bit color support
 if (has("termguicolors"))
@@ -825,9 +826,9 @@ endif
 " ---------------------------------------------------------------------------
 "  onedark.nvim
 " ---------------------------------------------------------------------------
-lua <<EOF
-require('onedark').setup()
-EOF
+"lua <<EOF
+"require('onedark').setup()
+"EOF
 
 " ----------------------------------------------------------------------------
 "  mindful

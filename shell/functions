@@ -36,6 +36,12 @@ function h {
     history -df -100000 | grep $1
 }
 
+# mkdir & cd into it
+function mdd {
+  mkdir -p $1
+  cd $1
+}
+
 # process management
 function pg {
     ps -Af | grep $1 | grep -v grep
