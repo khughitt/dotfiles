@@ -1,3 +1,49 @@
 # rustup
 rustup install stable
 rustup default stable
+rustup update
+
+# type conversion
+let f = i as f32;   # int -> float
+let x: u32 = x.trim().parse().expect("not a number");  # str -> int
+
+# shadowing 
+# - overrides previous value, within scope
+# - uses "let" each time
+# - type can differ
+let x = 3;
+..
+let x = x + 1;
+
+# mut
+# - value can be changed without need to use "let"
+# - type cannot change
+let mut x = 3;
+x = x + 1;
+
+# tuples
+let tup = (1, 2.0, 'a');  # create
+tup.0                     # indexing
+let (a, b, c) = tup;      # destructure
+
+# arrays
+let arr = ['a', 'b', 'c'];
+let arr: [u32; 3] = [1, 2, 3];
+let ones = [1; n];
+arr[0]
+for elem in a { ... }
+
+# strings
+"foo"                # string literal (immutable, fixed length)
+s = String::from("foo")  # String type (mutable, variable length)
+
+s.push_str("..")  # append
+
+# vectors
+
+# number ranges
+(1..5)
+(1..5).rev()
+
+# ternary assignment
+let x = if .. { a } else { b };

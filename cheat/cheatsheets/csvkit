@@ -1,3 +1,5 @@
+# see also: xsv
+
 # list sheets
 in2csv -n in.xls
 

@@ -1,0 +1,12 @@
+# run cargo nightly
+cargo +nightly
+
+# project basics
+cargo new foo    # create proj
+cargo build      # build
+cargo run        # run
+cargo check      # check if proj compiles
+cargo update     # update deps
+
+# dependency docs
+cargo doc --open

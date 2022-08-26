@@ -1,3 +1,4 @@
 ?:    # non-capturing group
 [^a]  # not "a"
+\b    # word boundary (ex. r'\bfoo\b')
 
