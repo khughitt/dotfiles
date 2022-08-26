@@ -1,0 +1,10 @@
+# trim video
+1. drag video preview to timeline
+2. mouseover left/right edges to adjust
+3. drag clipped region so that left-side is at start of timeline
+
+# crop video
+1. select video
+2. "filters"
+3. "+"
+4. "crop"

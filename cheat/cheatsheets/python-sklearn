@@ -58,6 +58,10 @@ scaled.T[0]
 ##########################
 sklearn.metrics.pairwise.cosine_similarity(X)
 
+# jaccard index
+from sklearn.metrics import pairwise_distances
+1 - pairwise.pairwise_distances(df.to_numpy(), metric = "jaccard")
+
 ##########################
 #
 # clustering

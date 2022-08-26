@@ -87,3 +87,16 @@ debug(pkg:::foo)
 
 # aheatmap
 aheatmap(dat, color = viridis(100), Colv = FALSE, labCol = '', annRow = annot_df)
+
+# cosine similarity
+# source: https://stats.stackexchange.com/a/367216/18331
+mat <- as.matrix(df)
+sim <- mat / sqrt(rowSums(mat * mat))
+sim <- sim %*% t(sim)
+
+# matrix inverse
+solve(A)
+
+# imputation
+missMethods::impute_mean(mat, type = 'rowwise')  # mean value
+as.matrix(VIM::kNN(mat)[, 1:ncol(mat)])          # k-NN

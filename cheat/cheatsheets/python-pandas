@@ -128,6 +128,7 @@ a.merge(b, on='col', how='outer')
 
 # join on index
 a.join(b)
+pd.merge(a, b, left_index=True, right_index=True)
 
 # rbind
 pd.concat([a, b])
@@ -249,7 +250,9 @@ Strings
 pd.DataFrame({'str_col': pd.Series(lst, dtype='string')})
 
 # memory efficient string type;
-# note: much more minimal functionality, e.g. no string concatenation implemented atm..
+# notes (jul 2022): 
+# 1. much more minimal functionality, e.g. no string concatenation implemented atm
+# 2. can run into "offset overflow" issues when attempting to mask large datasets
 pd.read_csv(..., dtype={'foo': 'string[pyarrow]'})
 
 Min/Max
@@ -391,6 +394,12 @@ ax = df.score.plot.kde(title='...')
 plt.show()
 
 ax.figure.savefig('out.png', dpi=300)
+
+Load Data
+---------
+
+# from clipboard
+pd.read_clipboard(sep='\t')
 
 Write
 -----

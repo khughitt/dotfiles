@@ -84,6 +84,11 @@
 \dot{x}
 \ddot{x}
 
+# hat above
+\hat{}
+\bar{}
+\tilde{}
+
 # spacing
 \                # single space
 \hspace{1cm}     # 1cm space 

@@ -1,3 +1,5 @@
+# note: some zsh-specific syntax may be present 
+
 # ~strict mode
 set -euo pipefail 
 
@@ -63,3 +65,14 @@ now=`date +%Y-%m-%d`
 
 # convert lowercase to uppercase
 echo $x | tr '[:lower:]' '[:upper:]'
+
+# array length (zsh)
+x=(a b c)
+$#x
+
+# generate a random integer
+$RANDOM
+
+# choose a random item from an array
+x=(a b c)
+echo $x[$RANDOM % $#x + 1]

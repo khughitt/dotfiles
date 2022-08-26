@@ -4,6 +4,9 @@ https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html
 # launch qtconsole from a notebook
 %qtconsole
 
+# get unique list items (preserving order)
+list(dict.fromkeys(x)) 
+
 # combine multiple lists
 list(itertools.chain(list1, list2, list3, ...))
 list(itertools.chain(*[list1, list2, list3, ...]))
