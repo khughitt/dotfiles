@@ -1,6 +1,9 @@
 # create a new proj
 npm init
 
+# install deps from package.json
+npm install
+
 # create a new proj (longer version)
 # source: @bitandbang
 npx license mit > LICENSE
@@ -10,6 +13,9 @@ npm init -y
 
 # create a new react proj (npm)
 npx create-react-app my-proj
+
+# clear npx cache
+npx clear-npx-cache
 
 # create a new react proj (create-react-app x pnpm)
 pnpx create-react-app my-proj

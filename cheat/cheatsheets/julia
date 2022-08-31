@@ -29,6 +29,16 @@ randn(N)
 map(x -> func(x, ...), vec)
 
 #
+# matrices
+#
+
+# create a random matrix
+X = reshape(randn(3 * 4), (3, 4))
+
+# dim / shape
+size(X)
+
+#
 # packages
 #
 
@@ -41,7 +51,12 @@ update
 #
 # environments
 #
-activate .
+pkg> 
+  activate .   # activate env in current dir
+  st           # status
+pkg>
+  activate .
+  instantiate  # instantiate someone else's project
 
 #
 # DataFrames

@@ -85,6 +85,13 @@ traceback()
 debugonce(pkg:::foo)
 debug(pkg:::foo)
 
+# set breakpoint
+utils::setBreakpoint('file.R', 99)
+
+# print variable memory usage
+# http://stackoverflow.com/questions/1395270/determining-memory-usage-of-objects
+sort( sapply(ls(),function(x){object.size(get(x))}))
+
 # aheatmap
 aheatmap(dat, color = viridis(100), Colv = FALSE, labCol = '', annRow = annot_df)
 
