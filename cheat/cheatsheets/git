@@ -12,6 +12,12 @@ git push origin v1.0
 # reset to a specific commit
 git reset <commit>
 
+# show all changes to a single file
+git rev-list HEAD --oneline <file>
+
+# show what changed in a single file for a specific commit
+git show <commit> -- <file>
+
 # save changes in detached head
 git branch alt-history
 git checkout alt-history
@@ -67,3 +73,6 @@ git fetch origin
 git branch -u origin/main main 
 git remote set-head origin -a
 git remote prune origin
+
+# delete local branch
+git branch --delete foo

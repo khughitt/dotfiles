@@ -1,8 +1,19 @@
+# views
+<shift-tab>     toggle arrangement / editor
+o               toggle arranger
+a               automation
+t               focus track
+
 # file management
 cntl + alt + s  collect & save
 
 # piano roll
 f    switch between drum view / piano
+
+# show multiple tracks together
+# 1. in bottom left TRACK/CLIP section, choose "TRACK"
+#   - select the "TRACKS" tab
+# 2. cntl-click the tracks to display
 
 # devices
 ?           popup browser
@@ -27,6 +38,8 @@ f2          toggle automation
 # notes
 <alt-1>     octave down
 <alt-2>     octave up
+
+<alt-q>     quantize dialog
 
 <alt-r>         reverse
 <shift-alt-r>   reverse pattern

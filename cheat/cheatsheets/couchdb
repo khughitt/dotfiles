@@ -13,14 +13,20 @@ curl -X PUT http://<user>:<pass>@localhost:5984/wiki
 # delete db "wiki"
 curl -X DELETE http://<user>:<pass>@localhost:5984/wiki
 
-# list all docs for "wiki"
-curl -X GET http://<user>:<pass>@localhost:5984/wiki/_all_docs
+# list all docs for "db"
+curl -X GET http://<user>:<pass>@localhost:5984/<db>/_all_docs
+
+# retrieve contents of all docs in db
+curl -X GET http://<user>:<pass>@localhost:5984/<db>/_all_docs?include_docs=true
 
 # get document by id
 curl -X GET http://<user>:<pass>@localhost:5984/<db>/<id>
 
 # get views for a db
 curl -X GET http://<user>:<pass>@localhost:5984/<db>/_design_docs
+
+# query a single view
+curl -X GET http://<user>:<pass>@localhost:5984/<db>/_design_docs/<design_doc_id>/_view/<view_name>
 
 # get reduced view
 curl -X GET http://<user>:<pass>@localhost:5984/<db>/_design/<ddoc>/_view/<view_name> -G -d group=true | jq

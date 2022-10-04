@@ -1,0 +1,69 @@
+# penguins
+using DataFrames
+using PalmerPenguins
+df = DataFrame(PalmerPenguins.load())
+
+# basics
+size(df)
+nrow(df)
+ncol(df)
+
+df.foo
+
+names(df)
+
+describe(df)
+show(df)
+
+first(df, 5)
+last(df, 5)
+
+# rename columns
+rename!(df, :old => :new)
+rename!(df, [:new1, :new2, ..., :newn])
+
+# select columns
+select(df, "foo")
+select(df, ["foo", "bar"])
+select(df, r"regex")
+
+# get all columns _except_ one
+df[:, Not(:foo)]
+
+# select columns starting with "foo"
+df[:, filter(col -> startswith(col, "foo"), names(df))]
+
+# indexing
+df[1, :]
+df[1, "foo"]
+df[:, "foo"]
+df[1:5, ["foo", "bar"]]
+
+# filter rows
+filter(row -> row.foo == 'bar', df)
+filter(row -> row.foo == 'bar' && row.x < 5, df)
+
+# apply
+map(x -> sum(x .== 0), eachrow(mat))
+
+# cbind
+[a b]
+hcat(a, b)
+
+# transpose
+permutedims(df, 1)
+
+# load csv
+using CSV
+df = DataFrame(CSV.File(...))
+
+# save csv
+CSV.write("out.csv", df)
+
+# convert to matrix
+Matrix(df)
+Matrix{T}(df)
+
+# sum along rows/cols
+sum(Matrix(df), dims=2)
+sum(Matrix(df), dims=1)

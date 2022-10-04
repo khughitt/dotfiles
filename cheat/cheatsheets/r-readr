@@ -1,2 +1,5 @@
 # coltypes short version (ex. char-numeric-factor)
 read_csv(..., col_types='cnf')
+
+# specify col type for a single column
+read_csv(..., col_types = cols(foo = "c"))
