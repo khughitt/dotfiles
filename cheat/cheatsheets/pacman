@@ -46,3 +46,6 @@ git log  # lookup desired version
 gco <commit>
 makepkg -si
 
+# downgrade
+# https://github.com/archlinux-downgrade/downgrade
+

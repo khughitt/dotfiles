@@ -7,12 +7,19 @@ dat %>%
 dat %>%
     select(!!var_name)
 
+# select columns whose names contain ".."
+dat %>%
+  select(matches("foo"))
+
 # arrange by string variable
 dat %>%
     arrange(!!sym(var_name))
 
 # rbind multiple tibbles
 bind_rows(df1, df2, ..)
+
+# cbind / join multiple tables
+purrr::reduce(tbls, dplyr::full_join, by = 'id')
 
 # drop duplicates
 dat %>%

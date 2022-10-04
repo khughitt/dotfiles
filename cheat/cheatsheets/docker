@@ -19,7 +19,7 @@ docker run <name or id>
 # run a container, specify volumes, port, etc.
 docker run --rm -p 80:3838 -v /from:/to <container id>
 
-# run a container without exiting..
+# run a container without exiting
 docker run -dit <image id>
 docker exec -it <container id> /bin/bash
 
@@ -56,6 +56,9 @@ docker-compose run <id>
 
 # stop a single container with docker compose
 docker-compose rm -sv <service>
+
+# rebuild a single container with compose
+docker-compose up -d --build <container>
 
 # get the ip addr and port of a running container
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 

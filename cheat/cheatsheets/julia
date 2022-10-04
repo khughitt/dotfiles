@@ -1,16 +1,39 @@
-#
-# basics
-#
-
-# string concatenation
-"foo" * "bar"
-
 # str -> int
 parse(Int64, "5000")
 
-# arrays
+# arrays (vectors are 1d arrays; matrices are 2d arrays)
 a = Int32[3, 5, 9]
 a[1]
+a[2:end]
+size(a)
+length(a)
+
+# broadcasting
+a = [1, 0, 2, 3]
+a .> 1
+sum(a .!= 0)
+
+# boolean masking
+a[a .> 0]
+
+# \in
+"foo" in a
+"foo" ∈ a
+
+# \notin
+!("foo" in a)
+"foo" ∉ a
+
+# set diff
+setdiff(a, b)
+
+# looping
+for i [1:1:10;]
+  print(i)
+end
+
+# lambda funcs
+x -> x^2 + 1
 
 # join filepaths
 joinpath("dir", "subdir")
@@ -26,7 +49,14 @@ randn(N)
 (a=1, b=2, c=3)
 
 # map
+map(ceil, [0.1, 0.2])
 map(x -> func(x, ...), vec)
+
+# string concatenation
+"foo" * "bar"
+
+# regex replace
+replace(s, r"regex" => "bar")
 
 #
 # matrices
@@ -37,6 +67,9 @@ X = reshape(randn(3 * 4), (3, 4))
 
 # dim / shape
 size(X)
+
+# convert 1 x n matrix to vector
+vec(X)
 
 #
 # packages
@@ -59,16 +92,6 @@ pkg>
   instantiate  # instantiate someone else's project
 
 #
-# DataFrames
-#
-using DataFrames
-
-df = DataFrame(CSV.File(...))
-
-for col in names(df):
-  ...
-
-#
 # Tables.jl
 #
 
@@ -88,4 +111,5 @@ columns = Tables.columns(x)
 
 Tables.columnnames(x)
 Tables.getcolumn(columns, col)
+
 

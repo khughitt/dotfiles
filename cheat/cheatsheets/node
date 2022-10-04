@@ -4,6 +4,12 @@ npm init
 # install deps from package.json
 npm install
 
+# update install packages
+npm update
+
+# install most recent version of react
+npm install react react-dom
+
 # create a new proj (longer version)
 # source: @bitandbang
 npx license mit > LICENSE

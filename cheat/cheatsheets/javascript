@@ -150,6 +150,9 @@ str.trim()
 # starts with
 str.startsWith("foo")
 
+# substring
+str.substring(1, 5)
+
 # split string by space
 str.split(" ")
 

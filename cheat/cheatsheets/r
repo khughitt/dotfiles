@@ -53,6 +53,9 @@ yaml::read_yaml(file)
 tools::file_ext("file.txt")
 tools::file_path_sans_ext("file.txt")
 
+# today
+strftime(Sys.time(), "%Y-%m-%d")
+
 # iso 8601 date
 strftime(as.POSIXlt(Sys.time(), "UTC"), "%Y-%m-%dT%H:%M:%S%z")
 
