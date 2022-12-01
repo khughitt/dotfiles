@@ -12,3 +12,6 @@ save.image()
 # accessing config variables in a "shell" section;
 # leave out quotation marks surrounding keys
 "ls {config[foo]}"
+
+# referring to config in "shell" rules
+# {config[foo]}

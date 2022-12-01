@@ -1,0 +1,6 @@
+# normalize volume
+# "loudness normalize" normalizes _percieved_ loudness
+"Effect" -> "Volume and Compression" -> "Normalize"
+
+# crop / trim
+<c-t>

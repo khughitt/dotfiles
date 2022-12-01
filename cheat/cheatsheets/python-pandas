@@ -22,6 +22,13 @@ s.to_frame()
 Selection
 ---------
 
+# select single column as a series
+df['col']
+
+# select columns by name
+df[['col']]
+df[['col1', 'col2']]
+
 # get index as an integer
 ind = df.index[df["col"] == val].tolist()[0]
 
@@ -268,7 +275,13 @@ Rank
 ----
 
 # rank along columns (ascending=True by default, so higher values -> higher ranks)
-dfaFrame.rank(axis=0)
+df.rank(axis=0)
+
+Apply
+-----
+
+# ex. row means
+df.apply(lambda x: x.mean(), axis=1)
 
 Normalization / Scaling
 -----------------------
@@ -297,7 +310,7 @@ Variance
 
 # along rows
 df.var(1)
-df.var(1).plot.kde()
+df.var(1).plot.kde(title='..')
 df.var(1).plot.kde(logx=True)
 
 Sort
@@ -421,4 +434,3 @@ df.index.is_unique
 
 # Series indices don't match; use ndarray instead
 series[mask.values]
-

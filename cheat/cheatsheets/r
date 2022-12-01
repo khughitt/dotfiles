@@ -62,8 +62,14 @@ strftime(as.POSIXlt(Sys.time(), "UTC"), "%Y-%m-%dT%H:%M:%S%z")
 # color map from list of colors
 colorRampPalette(c('red', 'blue'))(100)
 
+# ColorBrewer palettes
+RColorBrewer::brewer.pal(12, "Set3")
+
 # generate all n-tuple combinations of vector elements
 combn(vec, 2)
+
+# get size of all pairwise intersections for each pair of vectors in a list
+crossprod(table(stack(lst)))
 
 # get classes of each column
 sapply(df, class)
@@ -110,3 +116,7 @@ solve(A)
 # imputation
 missMethods::impute_mean(mat, type = 'rowwise')  # mean value
 as.matrix(VIM::kNN(mat)[, 1:ncol(mat)])          # k-NN
+
+# write xlsx files (openxlsx does not depend on java like the xlsx package..)
+tbls <- list(a=df1, b=df2, ...)
+openxlsx::write.xlsx(tbls, file="out.xlsx")

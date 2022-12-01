@@ -9,6 +9,7 @@ pactree
 
 # list installed packages
 pacman -Qe
+pacman -Qn
 
 # list files in package
 pacman -Ql pkg
@@ -48,4 +49,7 @@ makepkg -si
 
 # downgrade
 # https://github.com/archlinux-downgrade/downgrade
+
+# older packages no longer in cache can be found on the Arch Linux Archive, e.g.:
+# https://archive.archlinux.org/repos/2022/10/01/core/os/x86_64/
 

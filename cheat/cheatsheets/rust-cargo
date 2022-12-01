@@ -3,10 +3,14 @@ cargo +nightly
 
 # project basics
 cargo new foo    # create proj
+cargo add foo    # add dep
 cargo build      # build
 cargo run        # run
 cargo check      # check if proj compiles
 cargo update     # update deps
+
+# pass args to run
+cargo run -- <args>
 
 # dependency docs
 cargo doc --open

@@ -8,6 +8,12 @@ man vd
 "%"  # float
 "$"  # currency
 
+# increase float precision
+# https://github.com/saulpw/visidata/issues/275#issuecomment-484098561
+1. press "C" to open the ColumSheet
+2. modify `fmtstr` for the desired column (default: "%0.2f")
+  - to apply to multiple columns, select `fmtstr` and type `ge`
+
 #
 # appearance
 #

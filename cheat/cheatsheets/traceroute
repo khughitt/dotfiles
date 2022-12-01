@@ -1,0 +1,9 @@
+traceroute www.google.com
+
+# additional info
+route
+
+# tcpdump
+_ tcpdump --list-interfaces
+_ tcpdump -i 1 -n
+_ tcpdump -i 2 -n

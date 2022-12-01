@@ -1,3 +1,10 @@
+# appearance
+<ctrl-shift-+>  increase gui scaling
+<ctrl-shift-->  decrease gui scaling
+
+# transport
+f9   toggle record
+
 # views
 <shift-tab>     toggle arrangement / editor
 o               toggle arranger
@@ -31,6 +38,7 @@ shift + l   toggle arranger loop
 # editor
 ctrl + j    consolidate
 shift + d   double content
+g           make legato
 
 # function keys
 f2          toggle automation
@@ -49,6 +57,9 @@ f2          toggle automation
 
 # looping
 <ctl-l> / r     loop selected region (select _track_ region)
+
+# record multiple takes 
+# "play" -> "post-recording action" -> "record into next.."
 
 # colors (missing audio samples indicators)
 yellow - sample is outside of project

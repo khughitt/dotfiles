@@ -1,0 +1,6 @@
+# rotate logs
+journalctl --rotate
+
+# clean up rotated logs
+journalctl --vacuum-size=100M
+journalctl --vacuum-time=2weeks

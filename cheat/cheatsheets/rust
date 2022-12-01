@@ -39,7 +39,26 @@ s = String::from("foo")  # String type (mutable, variable length)
 
 s.push_str("..")  # append
 
+s.split('_')
+s.split_whitespace()
+s.lines()
+
 # vectors
+# https://doc.rust-lang.org/std/vec/
+let v: Vec<i32> = vec![];
+let v = vec![1, 2, 3, 4, 5];
+let v = vec![0; 10]; // ten zeroes
+
+v.len();
+
+for x in v.iter() {...}
+for (i, x) in v.iter().enumerate() {...}
+
+v.push(5);
+let val = v.pop();
+
+v[3];
+v[2] = v[2] + 1;
 
 # number ranges
 (1..5)
@@ -47,3 +66,22 @@ s.push_str("..")  # append
 
 # ternary assignment
 let x = if .. { a } else { b };
+
+# read file contents
+use std::fs;
+
+let contents = fs::read_to_string("in.txt")
+    .expect("Unable to find file!");
+
+# examples of iterating over lines in a file:
+# - https://stackoverflow.com/a/45882510/554531
+# - https://doc.rust-lang.org/rust-by-example/std_misc/file/read_lines.html#read_lines
+
+# iterate over lines in file
+if let Ok(lines) = read_lines("in.txt") {
+    for line in lines {
+        if let Ok(txt) = line {
+            println!("{}", txt);
+        }
+    }
+}

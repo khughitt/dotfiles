@@ -4,3 +4,7 @@ df %>%
 
 df %>%
   pivot_longer(!col, names_to='xx', values_to='yy')
+
+# long to wide
+df %>%
+  pivot_wider(id_cols = zz, names_from = xx, values_from = yy)
