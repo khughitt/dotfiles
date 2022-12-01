@@ -44,7 +44,7 @@ map <silent><leader>r :call AddMarkdownHeader("References")<CR>
 " ---------------------------------------------------------------------------
 function GetURLTitle(url)
     " Use Python/BeautifulSoup to get link's page title.
-    let title = system("python3 -c \"import bs4, requests; print(bs4.BeautifulSoup(requests.get('" . a:url . "').content, 'lxml').title.text.strip())\"")
+    let title = system("python3 -c \"import bs4, requests, warnings; warnings.filterwarnings('ignore'); print(bs4.BeautifulSoup(requests.get('" . a:url . "').content, 'lxml').title.text.strip())\"")
 
     " Echo the error if getting title failed.
     if v:shell_error != 0

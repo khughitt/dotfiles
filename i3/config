@@ -131,7 +131,6 @@ bindsym $mod+q kill
 bindsym Mod1+F4 kill
 
 # rofi
-#bindsym Control+space exec $menu
 bindsym Control+space exec $menu
 
 # Drag floating windows by holding down $mod and left mouse button.

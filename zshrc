@@ -3,6 +3,9 @@
 #
 # start profiling zshrc
 # zmodload zsh/zprof 
+#
+# location of dotfiles
+DOTFILES="$HOME/.dotfiles"
 
 # stop here in non-interactive mode
 [ -z "$PS1" ] && return
@@ -51,7 +54,7 @@ for file in ~/.shell/{fasd,aliases,audio,functions,nodes,private/*,exports,vcons
 done
 
 # nnn
-for file in ~/.dotfiles/nnn/*.zsh; do
+for file in $DOTFILES/nnn/*.zsh; do
     [ -r "$file" ] && source "$file"
 done
 unset file
@@ -156,7 +159,7 @@ _fzf_compgen_dir() {
 }
 
 # location of additional zsh completions
-fpath+=$HOME/.dotfiles/zsh/
+fpath+=$DOTFILES/zsh/
 
 # pure prompt
 fpath+=$HOME/.zsh/pure
@@ -181,8 +184,8 @@ fi
 # fi
 
 # host-specific settings
-if [ -e ~/.dotfiles/shell/local/$HOST.zsh ]; then
-    . ~/.dotfiles/shell/local/$HOST.zsh
+if [ -e $DOTFILES/shell/local/$HOST.zsh ]; then
+    . $DOTFILES/shell/local/$HOST.zsh
 fi
 
 # remaining zinit plugins
@@ -238,3 +241,13 @@ fi
 # tabtab source for packages
 # uninstall by removing these lines
 [[ -f ~/.config/tabtab/zsh/__tabtab.zsh ]] && . ~/.config/tabtab/zsh/__tabtab.zsh || true
+
+# Load a few important annexes, without Turbo
+# (this is currently required for annexes)
+zinit light-mode for \
+    zdharma-continuum/zinit-annex-as-monitor \
+    zdharma-continuum/zinit-annex-bin-gem-node \
+    zdharma-continuum/zinit-annex-patch-dl \
+    zdharma-continuum/zinit-annex-rust
+
+### End of Zinit's installer chunk

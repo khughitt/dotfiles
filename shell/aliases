@@ -28,7 +28,7 @@ alias lr='ls -latr'
 
 # cd
 alias dl='cd ~/downloads'
-alias dots='cd ~/.dotfiles'
+alias dots='cd $DOTFILES'
 alias cdd='cd $dlas'
 
 # cheat
@@ -90,6 +90,7 @@ alias fdr="fd -l --changed-within 5days | csvcut -d ' ' -S -c6-9 | csvlook -HI"
 alias fd1="fd --changed-within 1days"
 alias fd3="fd --changed-within 3days"
 alias fd5="fd --changed-within 5days"
+alias fd10="fd --changed-within 10days"
 
 # htop
 alias htop=gotop
@@ -114,7 +115,7 @@ alias netp="sudo netstat -plant"
 
 # pwd
 alias xp='pwd | xsel'
-alias px='cd $(xsel -p)'
+alias px='cd "$(xsel -p)"'
 
 # httpd
 alias ph='python -m "http.server"'
@@ -172,7 +173,8 @@ alias errors="journalctl -b -p err|less"
 alias vacuum="sudo journalctl --vacuum-size=50M"
 
 # pywal
-alias wali='wal -i ~/d/linux/backgrounds/me --backend haishoku'
+alias wali='wal -i ~/d/linux/backgrounds/3440 --backend haishoku'
+alias wali2k='wal -i ~/d/linux/backgrounds/1920 --backend haishoku'
 
 # package management
 alias y='yay'
