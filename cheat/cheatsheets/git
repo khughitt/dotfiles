@@ -34,6 +34,12 @@ git submodule update --init --recursive
 # update submodules
 git pull --recurse-submodules
 
+# add upstream
+git remote add upstream <repo>
+
+# list remotes
+git remote -v
+
 # list all branches
 git branch -a
 

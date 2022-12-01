@@ -13,6 +13,11 @@ output:
     df_print: kable
 ```
 
+# yaml date
+```
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+```
+
 # table of contents
 ```
 output:

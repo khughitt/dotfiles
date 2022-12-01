@@ -1,0 +1,5 @@
+# device info
+nmcli d show <dev>
+
+# disable ipv6
+nmcli d modify <dev> ipv6.method "disabled"

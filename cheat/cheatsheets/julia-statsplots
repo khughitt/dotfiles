@@ -1,0 +1,2 @@
+# density
+density(vec(x), title="", xlabel="")

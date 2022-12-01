@@ -10,9 +10,16 @@ for child in elem:
 # get child nodes as a list
 list(elem)
 
+# get attribute
+elem.get('foo')
+
 # find elements
-elem.find(".//Element")
-elem.findall(".//Element")
+elem.find("child")
+elem.find(".//elem")
+elem.findall(".//elem")
+
+# find element and get text, if matched
+elem.findtext('child', default=None)
 
 # find element with attribute equal to..
 elem.find(".//Element[@attr='value']")
