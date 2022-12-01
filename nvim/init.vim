@@ -92,12 +92,13 @@ call plug#begin()
 
     " language support
     Plug 'bioSyntax/bioSyntax-vim'
-    Plug 'ibab/vim-snakemake'
     Plug 'chrisbra/csv.vim'
+    Plug 'dense-analysis/ale'
+    Plug 'fatih/vim-go'
     Plug 'glench/vim-jinja2-syntax'
+    Plug 'ibab/vim-snakemake'
     Plug 'jalvesaq/Nvim-R'
     Plug 'JuliaEditorSupport/julia-vim'
-    Plug 'fatih/vim-go'
     Plug 'pangloss/vim-javascript'
     Plug 'mllg/vim-devtools-plugin'
     Plug 'mzlogin/vim-markdown-toc'
@@ -121,7 +122,6 @@ call plug#begin()
     Plug 'cseelus/vim-colors-lucid'
     Plug 'cseelus/vim-colors-tone'
     Plug 'danilo-augusto/vim-afterglow'
-    Plug 'dense-analysis/ale'
     Plug 'dikiaap/minimalist'
     Plug 'dracula/vim', { 'as': 'dracula' }
     Plug 'drewtempelmeyer/palenight.vim'
@@ -223,7 +223,7 @@ set nostartofline               " don't jump to the start of line when scrolling
 " ----------------------------------------------------------------------------
 set showmatch              " brackets/braces that is
 set mat=5                  " duration to show matching brace (1/10 sec)
-set colorcolumn=89         " show right margin
+set colorcolumn=100        " show right margin
 set novisualbell           " no thank you
 
 " ----------------------------------------------------------------------------
@@ -249,7 +249,7 @@ set shiftround        " round indents to multiple of shift width
 set tabstop=2
 set expandtab         " expand tabs to spaces
 set smarttab
-set textwidth=88      " stick to 88 characters or less, when possible
+set textwidth=100     " stick to 100 characters or less, when possible
 set formatoptions+=n  " support for numbered/bullet lists
 set virtualedit=block " allow virtual edit in visual block ..
 set pastetoggle=<F6>  " paste-mode toggle
@@ -263,7 +263,7 @@ function! ToggleTextWidth()
   elseif exists("b:oldtextwidth")
     let &textwidth = b:oldtextwidth
   else
-    set textwidth=99
+    set textwidth=100
   endif
 endfunction
 
@@ -542,6 +542,8 @@ let g:ale_fixers = {
   \ 'rmd': ['styler', 'trim_whitespace'],
   \ 'python': ['pyright']
 \}
+
+let g:ale_linters = {'rust': ['analyzer']}
 
 let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL,object_usage_linter=NULL)"
 

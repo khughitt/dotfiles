@@ -207,7 +207,7 @@ function jm {
 
 # fzf confs
 function C {
-    target=`fd . "$HOME/.dotfiles" -t f \
+    target=`fd . "$DOTFILES" -t f \
             --no-ignore-vcs \
             --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" \
             --exclude "*.xml" --exclude "*.png" --exclude "*.desktop" \
@@ -350,13 +350,13 @@ function o {
     ext="${filename##*.}"
 
     if [ $ext = "feather" ]; then
-        ipython -i -c "import pandas as pd; df=pd.read_feather('$1'); df;"
+        ipython -i -c "import pandas as pd; dat=pd.read_feather('$1'); dat;"
     elif [ $ext = "parquet" ]; then
-        ipython -i -c "import pandas as pd; df=pd.read_parquet('$1'); df;"
+        ipython -i -c "import pandas as pd; dat=pd.read_parquet('$1'); dat;"
     elif [ $ext = "csv" ]; then
-        ipython -i -c "import pandas as pd; df=pd.read_csv('$1'); df;"
+        ipython -i -c "import pandas as pd; dat=pd.read_csv('$1'); dat;"
     elif [ $ext = "tsv" ] || [ $ext = "txt" ]; then
-        ipython -i -c "import pandas as pd; df=pd.read_csv('$1', sep='\t'); df;"
+        ipython -i -c "import pandas as pd; dat=pd.read_csv('$1', sep='\t'); dat;"
     else
         echo "Unrecognized filetype specified: $ext"
     fi

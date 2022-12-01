@@ -1,12 +1,12 @@
 #
-# i3 config
-# kh dec.2020
+# i3 config (~4k)
+# kh sep.2022
 #
 
 #-------------------------------------------------------------------------------
 # Variables
 #-------------------------------------------------------------------------------
-# Logo key. Use Mod1 for Alt.
+# super/Logo key. Use Mod1 for Alt.
 set $mod Mod4
 
 # Home row direction keys, like vim
@@ -18,13 +18,13 @@ set $right l
 # Your preferred terminal emulator
 set $term kitty
 
-# Your preferred application launcher
+#-------------------------------------------------------------------------------
+# Rofi
+#-------------------------------------------------------------------------------
 set $menu rofi -show drun
 
-# rofi custom launchers
-#bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/scripts/rofi-notes.sh"
 bindsym $mod+m exec --no-startup-id rofi -show mindmaps -modi "mindmaps:~/.dotfiles/rofi/scripts/rofi-mindmaps.sh"
-bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/rofi/scripts/rofi-tasks.sh"
+bindsym $mod+t exec --no-startup-id rofi -show proj -modi "proj:~/d/software/rofi-proj/rofi-proj.py" 
 
 #-------------------------------------------------------------------------------
 #  Appearance
@@ -34,10 +34,10 @@ bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/ro
 #exec_always feh --bg-scale ~/d/linux/backgrounds/nature/Milford_Sound_NZ.jpg
 
 # font
-font pango:Droid Sans Mono 16
+font pango:Droid Sans Mono 14
 
 # window borders
-for_window [class=".*"] border pixel 0
+for_window [class=".*"] border pixel 1
 hide_edge_borders smart_no_gaps
 
 # gaps
@@ -115,8 +115,16 @@ bindsym $mod+Return \
     [instance="i3term"] scratchpad show;\
     floating toggle
 
+# screenshot
+bindsym --release Print exec scrot
+bindsym --release $mod+Print exec "scrot --select"
+
+
 # file browser
 #bindsym $mod+n exec kitty nnn
+
+# wallpaper switcher
+bindsym $mod+n exec wali
 
 # kill focused window
 bindsym $mod+q kill
@@ -195,7 +203,7 @@ bindsym $mod+Shift+0 move container to workspace number 10
 # bindsym $mod+m move workspace to output left
 
 # rename workspace
-# bindsym $mod+r exec "python ~/bin/renameworkspace.py"
+bindsym $mod+r exec "python ~/bin/renameworkspace.py"
 
 #-------------------------------------------------------------------------------
 # Workspaces (i3-workspace-groups)
@@ -277,7 +285,7 @@ bindsym $mod+f fullscreen
 bindsym $mod+Shift+space floating toggle
 
 # Swap focus between the tiling area and the floating area
-bindsym $mod+space focus mode_toggle
+# bindsym $mod+space focus mode_toggle
 
 # move focus to the parent container
 bindsym $mod+a focus parent
@@ -323,7 +331,7 @@ exec_always --no-startup-id kitty --name=kitty_scratch
 for_window[instance="kitty_scratch"] move scratchpad
 
 bindsym Mod1+Return \
-    [instance="go_scratch|python_scratch|r_scratch|julia_scratch|qutebrowser"] move scratchpad; \
+    [instance="go_scratch|python_scratch|r_scratch|julia_scratch|node_scratch|qutebrowser"] move scratchpad; \
     [instance="kitty_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
 
@@ -332,7 +340,7 @@ exec_always --no-startup-id kitty --name=r_scratch radian
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
-    [instance="go_scratch|python_scratch|kitty_scratch|julia_scratch|qutebrowser"] move scratchpad; \
+    [instance="go_scratch|python_scratch|kitty_scratch|julia_scratch|node_scratch|qutebrowser"] move scratchpad; \
     [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
 
@@ -341,7 +349,7 @@ exec_always --no-startup-id kitty --name=python_scratch ipython
 for_window[instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
-    [instance="r_scratch|go_scratch|kitty_scratch|julia_scratch|qutebrowser"] move scratchpad; \
+    [instance="r_scratch|go_scratch|kitty_scratch|julia_scratch|node_scratch|qutebrowser"] move scratchpad; \
     [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
 
@@ -350,28 +358,37 @@ exec_always --no-startup-id kitty --name=julia_scratch julia
 for_window[instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
-    [instance="go_scratch|r_scratch|python_sratch|kitty_scratch|qutebrowser"] move scratchpad; \
+    [instance="go_scratch|r_scratch|python_scratch|kitty_scratch|node_scratch|qutebrowser"] move scratchpad; \
     [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
 
-#-- qutebrowser (dashboard) --#
-set $dashboard_width 2880
-set $dashboard_height 1620
+#-- node.js --#
+exec_always --no-startup-id kitty --name=node_scratch node
+for_window[instance="node_scratch"] move scratchpad
 
-exec_always --no-startup-id qutebrowser
-for_window[instance="qutebrowser"] move scratchpad
-
-bindsym Mod1+d \
-    [instance="go_scratch|julia_scratch|r_scratch|python_sratch|kitty_scratch"] move scratchpad; \
-    [instance="qutebrowser"] scratchpad show, resize set $dashboard_width $dashboard_height, \
+bindsym Mod1+n \
+    [instance="go_scratch|julia_scratch|r_scratch|python_scratch|kitty_scratch|qutebrowser"] move scratchpad; \
+    [instance="node_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
     move absolute position center;
+
+#-- qutebrowser (dashboard) --#
+# set $dashboard_width 2880
+# set $dashboard_height 1620
+#
+# exec_always --no-startup-id qutebrowser
+# for_window[instance="qutebrowser"] move scratchpad
+#
+# bindsym Mod1+d \
+#     [instance="go_scratch|julia_scratch|r_scratch|python_scratch|kitty_scratch|mindful_scratch"] move scratchpad; \
+#     [instance="qutebrowser"] scratchpad show, resize set $dashboard_width $dashboard_height, \
+#     move absolute position center;
 
 #-- go console --#
 # exec_always --no-startup-id kitty --name=go_scratch gore
 # for_window[instance="go_scratch"] move scratchpad
 #
 # bindsym Mod1+g \
-#     [instance="r_scratch|python_scratch|kitty_scratch|julia_scratch"] move scratchpad; \
+#     [instance="r_scratch|python_scratch|kitty_scratch|julia_scratch|mindful_scratch"] move scratchpad; \
 #     [instance="go_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
 #     move position $scratch_x1 $scratch_y1
 
@@ -407,7 +424,8 @@ exec_always --no-startup-id "killall picom; picom -b"
 exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
 exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
 exec --no-startup-id "~/.config/polybar/scripts/spotify/py_spotify_listener.py"
-exec --no-startup-id "fcitx -d"
+exec --no-startup-id "dunst"
+exec --no-startup-id "fcitx5 -d"
 #exec --no-startup-id "/mnt/storage/conda/envs/dashboard/bin/python ~/d/sen/dashboard/app.py"
 #exec --no-startup-id "$HOME/bin/xmodmap-on-input-change.sh"
 #exec --no-startup-id "XDG_CURRENT_DESKTOP=GNOME syncthing-gtk -m"

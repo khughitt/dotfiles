@@ -7,7 +7,7 @@
 #  cp -r ~/R/path/to/4.x ~/R/path/to/4.y
 #  R -e "update.packages(checkBuilt = TRUE, ask = FALSE)"
 #
-options(browser = "google-chrome-stable")
+options(browser = "brave")
 options(continue = "... ")
 options(download.file.method = "libcurl")
 options(dplyr.print_max = 5) 
