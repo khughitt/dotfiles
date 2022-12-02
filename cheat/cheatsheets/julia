@@ -1,12 +1,24 @@
 # str -> int
 parse(Int64, "5000")
 
+# if statements
+if x < 5
+  ..
+elseif x < 10
+  ..
+else
+  ...
+end
+
 # arrays (vectors are 1d arrays; matrices are 2d arrays)
 a = Int32[3, 5, 9]
 a[1]
 a[2:end]
 size(a)
 length(a)
+
+# create an empty Int array
+a = Int[]
 
 # broadcasting
 a = [1, 0, 2, 3]
@@ -52,11 +64,26 @@ randn(N)
 map(ceil, [0.1, 0.2])
 map(x -> func(x, ...), vec)
 
+#
+# strings
+#
+
 # string concatenation
 "foo" * "bar"
 
+# split
+
 # regex replace
 replace(s, r"regex" => "bar")
+
+# read file contents
+f = open("in.txt", "r")
+txt = read(f, String)
+
+# or..
+for lines in readlines(f)
+  ...
+end
 
 #
 # matrices

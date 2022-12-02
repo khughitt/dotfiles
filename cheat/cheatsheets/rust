@@ -49,6 +49,12 @@ let v: Vec<i32> = vec![];
 let v = vec![1, 2, 3, 4, 5];
 let v = vec![0; 10]; // ten zeroes
 
+v[2..]
+v[..5]
+v[0..4]
+v[0..=4]   # inclusive end
+v[..]
+
 v.len();
 
 for x in v.iter() {...}
@@ -85,3 +91,6 @@ if let Ok(lines) = read_lines("in.txt") {
         }
     }
 }
+
+# closures (~lambdas)
+|val| val + x
