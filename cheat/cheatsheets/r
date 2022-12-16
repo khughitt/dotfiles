@@ -27,6 +27,7 @@ umap(t(dat), n_neighbors = 15, n_components = 2, init = 'spectral', scale = FALS
 
 # sweep (ex: cpm normalization)
 dat <- sweep(dat, 2, colSums(dat), '/') * 1E6
+dat <- sweep(dat, 2, colSums(dat, na.rm = TRUE), '/') * 1E6
 
 # recursively update one list, using another
 modifyList(a, b)
