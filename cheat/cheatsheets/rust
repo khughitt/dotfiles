@@ -3,9 +3,21 @@ rustup install stable
 rustup default stable
 rustup update
 
+rustup toolchain install nightly
+rustup run nightly rustc
+rustup update
+
+# basic types
+u8 u16 u32 u64 u128
+i8 i16 i32 i64 i128
+f32 f64
+bool
+char
+
 # type conversion
 let f = i as f32;   # int -> float
-let x: u32 = x.trim().parse().expect("not a number");  # str -> int
+let x: u32 = x.trim().parse().expect("not a number");   # str -> int
+let c = str.chars().next().expect("string is empty!");  # string -> char
 
 # shadowing 
 # - overrides previous value, within scope
@@ -34,18 +46,59 @@ arr[0]
 for elem in a { ... }
 
 # strings
-"foo"                # string literal (immutable, fixed length)
+"foo"                    # string literal (immutable, fixed length)
 s = String::from("foo")  # String type (mutable, variable length)
+
+s.chars()          # get iterator to characters in string
+
+s.len();           # length in _bytes_
+s.chars().count()  # length in _chars_
+
+s.as_bytes()[i];  # indexing (ascii only)
+&s[2..4];         # substring / slice (ascii only)
+
+&str              # return type for string slice
+
+# substring 
+let substr: String = s.chars().skip(start).take(num_chars).collect();
+
+# create a vector of chars
+let chars:Vec<char> = s.trim().chars().collect();
+
+# vector of chars to string
+use std::iter::FromIterator;
+let s = String::from_iter(c);
+
+for(i, ch) in s.chars().enumerate() {
+}
+
+let (a, b) = s.split_at(10);  # split string at position
 
 s.push_str("..")  # append
 
 s.split('_')
 s.split_whitespace()
 s.lines()
+s.trim()  # strip
+
+# split and create vec of parts
+let parts: Vec<&str> = "a b c".split(' ').collect();
+
+# get intersection of characters in two strings as a vec
+let a: HashSet<char> = s1.chars().collect();
+let b: HashSet<char> = s2.chars().collect();
+let mut intersection = a.intersection(&b).collect::<Vec<_>>();
+
+# HashSet from iter
+use std::iter::FromIterator;
+let ab = HashSet::<&char>::from_iter(a.intersection(&b));
+
+# Or..
+let xx:HashSet<u16> = x.into_iter().collect();
 
 # vectors
 # https://doc.rust-lang.org/std/vec/
-let v: Vec<i32> = vec![];
+let mut v: Vec<i32> = vec![];
 let v = vec![1, 2, 3, 4, 5];
 let v = vec![0; 10]; // ten zeroes
 
@@ -55,7 +108,7 @@ v[0..4]
 v[0..=4]   # inclusive end
 v[..]
 
-v.len();
+v.len();   # cector length / size
 
 for x in v.iter() {...}
 for (i, x) in v.iter().enumerate() {...}
@@ -66,12 +119,45 @@ let val = v.pop();
 v[3];
 v[2] = v[2] + 1;
 
+v.reverse();
+
 # number ranges
 (1..5)
 (1..5).rev()
 
+# min
+cmp::min(1, 2)
+
+# HashMaps (~dicts)
+use std::collections::HashMap;
+let mut map = HashMap::new();
+
+map.insert("a".to_string(), 5);
+map["a"]
+
+map.contains_key("key")
+map.remove("a")
+
+for (key, val) in &h {
+  ...
+}
+
+# modify vector inside hashmap
+h.get_mut(&key).map(|v| v.push("foo"));
+
+# get a copy of hashmap keys; useful for modifying hashmap contents in a loop
+let k: Vec<u8> = h.keys().cloned().collect();
+
+# HashMap from array
+let solar_distance = HashMap::from([
+    ("Mercury", 0.4),
+    ("Venus", 0.7),
+    ("Earth", 1.0),
+    ("Mars", 1.5),
+]);
+
 # ternary assignment
-let x = if .. { a } else { b };
+let x = uf .. { a } else { b };
 
 # read file contents
 use std::fs;
@@ -79,18 +165,30 @@ use std::fs;
 let contents = fs::read_to_string("in.txt")
     .expect("Unable to find file!");
 
-# examples of iterating over lines in a file:
-# - https://stackoverflow.com/a/45882510/554531
-# - https://doc.rust-lang.org/rust-by-example/std_misc/file/read_lines.html#read_lines
-
 # iterate over lines in file
-if let Ok(lines) = read_lines("in.txt") {
-    for line in lines {
-        if let Ok(txt) = line {
-            println!("{}", txt);
-        }
-    }
+let lines = contents.lines();
+for line in lines {
+  ...
+}
+
+# functions
+fn foo() -> u16 {
+  return 1
+}
+
+fn is_even(a:u32) -> bool {
+  a % 2 == 0   # "return" omitted for expressions
 }
 
 # closures (~lambdas)
 |val| val + x
+
+# iterators
+iter.collect::<Vec<_>>();  # convert to vec
+
+# usize -> int
+let b: u16 = a as u16;
+
+# print
+println!("{}", x);
+println!("{:?}", vec);
