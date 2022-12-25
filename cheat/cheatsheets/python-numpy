@@ -5,6 +5,9 @@ a.fill(np.nan)
 # matrix of zeros
 np.zeros(12).reshape(3, 4)
 
+# matrix to array
+m.A1
+
 # random uniform matrix in [0, 1]
 np.random.rand(3, 4)
 

@@ -2,6 +2,18 @@
 # sparse matrices
 #
 
+# create empty csr matrix
+mat = csr_matrix((m, n), dtype=..)
+
 # get indices of non-zero columns for each row in a csr matrix
 # https://stackoverflow.com/a/24792612/554531
 np.split(mat.indices, mat.indptr[1:-1])
+
+# helper func to compute correlation matrix for a sparse csr matrix
+# https://stackoverflow.com/a/38727681/554531
+def sparse_corr(A):
+    N = A.shape[0]
+    C=((A.T*A -(sum(A).T*sum(A)/N))/(N-1)).todense()
+    V=np.sqrt(np.mat(np.diag(C)).T*np.mat(np.diag(C)))
+    COR = np.divide(C,V+1e-119)
+    return COR
