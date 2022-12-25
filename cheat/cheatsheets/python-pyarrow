@@ -56,6 +56,19 @@ tbl.to_pandas()
 pa.Table.from_pandas(df)
 pa.Schema.from_pandas(df)
 
+# combine multiple dataframes into a single parquet file (more memory-efficient than pd.concat)
+from pyarrow.parquet import ParquetWriter
+
+tbl = pa.Table.from_pandas(first_df)
+pqwriter = ParquetWriter('out.parquet', tbl.schema)
+pqwriter.write_table(tbl)
+
+for infile in remaining_files:
+    tbl = pa.Table.from_pandas(pd.read_feather(infile))
+    pqwriter.write_table(tbl)
+
+pqwriter.close()
+
 # streaming
 # https://wesmckinney.com/blog/arrow-streaming-columnar/
 batch = pa.RecordBatch.from_pandas(df)

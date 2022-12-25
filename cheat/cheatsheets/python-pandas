@@ -187,6 +187,13 @@ pd.Series(['a', 'b', 'c']).isin(df.col)
 # get rows where index is "xx" (must use a list, even for single indices..)
 df.loc[["xx"]]
 
+# get column as series for all rows matching an index;
+# if only a single row matches, then the value for that row/col is returned instead of a Series
+df.loc[ind, "col"]
+
+# same thing, but always returns a DataFrame, regardless of the number of matches
+df.loc[[ind]][["col"]]
+
 # select a single row by index, and columns by boolean mask
 x.loc[id][x.loc[id] == 1]
 
@@ -262,14 +269,23 @@ pd.DataFrame({'str_col': pd.Series(lst, dtype='string')})
 # 2. can run into "offset overflow" issues when attempting to mask large datasets
 pd.read_csv(..., dtype={'foo': 'string[pyarrow]'})
 
+Memory
+------
+
+# useful for memory used due to column data type & optmizing types
+df.memory_usage(deep=True)
+
 Min/Max
 -------
 
 # get indices of column with max value for each row (~which.max)
 df.idxmax(axis=1)
 
-# get the N largest values in a dfaframe overall
+# get the N largest values in a dataframe overall
 df.stack().sort_values(ascending=False).iloc[:n]
+
+# get min of two or more cols
+df[['a','b']].min(axis=1)
 
 Rank
 ----
