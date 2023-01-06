@@ -107,6 +107,9 @@ alias n="notes"
 alias no="notes -p"
 alias nd="notes_dir"
 
+# data
+alias D="data_dir"
+
 # mount
 alias um="sudo umount /mnt/usb"
 
@@ -195,6 +198,9 @@ alias ipy=ipython
 # r
 alias R='R --quiet --no-save'
 alias r=radian
+
+# rust
+alias rc=rustc
 
 # xrandr
 alias 2k="xrandr --output DP-0 --mode 1920x1080"

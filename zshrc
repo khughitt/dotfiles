@@ -106,6 +106,8 @@ zinit snippet OMZ::lib/git.zsh
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
 zinit snippet OMZ::plugins/taskwarrior/taskwarrior.plugin.zsh
+zinit snippet OMZ::plugins/pip
+#zinit snippet OMZ::plugins/poetry
 
 # vi mode improvement
 #zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
@@ -116,8 +118,8 @@ zinit snippet OMZ::lib/key-bindings.zsh
 # oh-my-zsh completions
 zinit ice as"completion"
 zinit snippet OMZ::plugins/fd/_fd
-zinit ice as"completion"
-zinit snippet OMZ::plugins/pip/_pip
+#zinit ice as"completion"
+#zinit snippet OMZ::plugins/pip/_pip
 zinit ice as"completion"
 zinit snippet https://github.com/esc/conda-zsh-completion/blob/master/_conda 
 

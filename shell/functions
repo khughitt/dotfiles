@@ -115,6 +115,7 @@ function notes {
     cd $wd
 }
 
+# quick hop to a specific notes dir
 function notes_dir {
     cd ~/notes
 
@@ -131,6 +132,20 @@ function notes_dir {
 
     if [ ! -z "$target" ]; then
         cd "$HOME/notes/$target"
+    fi
+}
+
+# quick hop to a specific data dir (limit to project data to speed things up..)
+function data_dir {
+    cd /data/proj
+
+    # determine fd command to use
+    fd_cmd="fd -t d"
+
+    target=`eval $fd_cmd | grep --color='none' "$1" | fzf -1 --exact`
+
+    if [ ! -z "$target" ]; then
+        cd "/data/proj/$target"
     fi
 }
 

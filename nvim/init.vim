@@ -58,7 +58,7 @@ set mouse=a
 " ---------------------------------------------------------------------------
 call plug#begin()
     " general
-    Plug 'andymass/vim-matchup'
+    "Plug 'andymass/vim-matchup'
     Plug 'ggandor/lightspeed.nvim'
     Plug 'dstein64/nvim-scrollview', { 'branch': 'main' }
     Plug 'dylanaraps/wal.vim'
@@ -129,6 +129,7 @@ call plug#begin()
     Plug 'embark-theme/vim', { 'as': 'embark' }
     Plug 'fcpg/vim-orbital'
     Plug 'fenetikm/falcon'
+    Plug 'haishanh/night-owl.vim'
     Plug 'jacoborus/tender.vim'
     Plug 'navarasu/onedark.nvim'
     Plug 'KeitaNakamura/neodark.vim'
@@ -180,7 +181,6 @@ call plug#begin()
     "Plug 'challenger-deep-theme/vim'
     "Plug 'cocopon/iceberg.vim'
     "Plug 'davidklsn/vim-sialoquent'
-    "Plug 'haishanh/night-owl.vim'
     "Plug 'liuchengxu/space-vim-dark'
     "Plug 'lu-ren/SerialExperimentsLain'
     "Plug 'Rigellute/rigel'
@@ -765,7 +765,7 @@ let g:indent_guides_guide_size  = 1
 " ---------------------------------------------------------------------------
 " julia-vim
 " ---------------------------------------------------------------------------
-" autocmd BufNewFile,BufRead *.jl set syntax=julia
+autocmd BufNewFile,BufRead *.jl set syntax=julia
 
 " ---------------------------------------------------------------------------
 " LeaderF
@@ -845,7 +845,7 @@ autocmd BufNewFile,BufRead *.mnd set filetype=mindful
 " ----------------------------------------------------------------------------
 "  temp work-around (sept 1, 2021)
 "  https://github.com/vim/vim/issues/2049#issuecomment-829424555
-set mmp=30000 
+"set mmp=30000 
 
 " ---------------------------------------------------------------------------
 "  vim-diagram (mermaid)
