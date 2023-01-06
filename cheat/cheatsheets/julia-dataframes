@@ -23,7 +23,7 @@ rename!(df, :old => :new)
 rename!(df, [:new1, :new2, ..., :newn])
 
 # select columns
-select(df, "foo")
+select(df, "foo")  # returns 1-d dataframe; use indexing to retrieve column as vector/array
 select(df, ["foo", "bar"])
 select(df, r"regex")
 
@@ -35,6 +35,8 @@ df[:, filter(col -> startswith(col, "foo"), names(df))]
 
 # indexing
 df[1, :]
+df[:, 1]
+df[:, end]
 df[1, "foo"]
 df[:, "foo"]
 df[1:5, ["foo", "bar"]]
@@ -53,7 +55,7 @@ hcat(a, b)
 # transpose
 permutedims(df, 1)
 
-# load csv
+# read/load csv
 using CSV
 df = DataFrame(CSV.File(...))
 
@@ -67,3 +69,9 @@ Matrix{T}(df)
 # sum along rows/cols
 sum(Matrix(df), dims=2)
 sum(Matrix(df), dims=1)
+
+# copy to clipboard
+# https://stackoverflow.com/a/56745303/554531
+clipboard(sprint(show, "text/tab-separated-values", df))
+clipboard(sprint(show, "text/csv", df))
+clipboard(sprint(show, "text/latex", df))

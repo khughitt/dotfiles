@@ -253,11 +253,14 @@ names!(df, [:a, :b, :c])   # set names
 
 # load feather/arrow file
 using Arrow;
-dat = Arrow.Table('data.feather')
+dat = Arrow.Table("data.feather")
 
 # convert to dataframe
 using DataFrames
 DataFrame(dat)
+
+# all at once
+df = DataFrame(Arrow.Table("data.feather"))
 
 # row-wise access
 rows = Tables.rows(x)
@@ -268,4 +271,6 @@ columns = Tables.columns(x)
 Tables.columnnames(x)
 Tables.getcolumn(columns, col)
 
+# copy variable to clipboard
+clipboard(x)
 

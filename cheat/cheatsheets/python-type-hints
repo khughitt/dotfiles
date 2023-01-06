@@ -1,0 +1,15 @@
+# indicate variable type has changed
+# note: "type(xx) == .." and "type(xx) in [...]" will not work
+if type(xx) is <type>:
+  ...
+
+# show type in mypy debugger
+reveal_type(x)
+
+# indiciating to type checker that a variable is a particular type.
+# the function does not actually change the type of the variable; it just tells mypy what to expect
+from typing import cast
+cast(str, x)
+
+# _assert_ that a variable's type has changed (another approach?)
+assert isinstance(x, str) 

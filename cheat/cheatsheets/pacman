@@ -8,8 +8,9 @@ pacman -Rdd
 pactree
 
 # list installed packages
-pacman -Qe
-pacman -Qn
+pacman -Q    # everything
+pacman -Qe   # explicitly installed
+pacman -Qn   # native installed
 
 # list files in package
 pacman -Ql pkg
