@@ -23,6 +23,15 @@ sorted(lst, key=lambda x: x['foo'], reverse=True)
 # create a dict from lists of keys/values
 dict(zip(k, v))
 
+# default dicts
+from collections import defaultdict
+
+d = defaultdict(list)  # default "[]"
+d = defaultdict(int)   # default "0"
+
+for k,v in d.items():   
+  ..
+
 # chunk list
 # https://stackoverflow.com/a/312464/554531
 def chunks(lst, n):
@@ -170,8 +179,9 @@ for file in glob.iglob('**/**', recursive=True):
 # recursive directory walk (includes hidden files)
 list(pathlib.Path("path/").glob("**/*.*"))
 
-# set random seed
+# random sample (with seed)
 random.seed(321)
+random.sample(lst, 5)
 
 # reload module
 import importlib

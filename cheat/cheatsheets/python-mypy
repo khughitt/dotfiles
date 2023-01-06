@@ -1,7 +1,0 @@
-# indicate variable type has changed
-# note: "type(xx) == .." and "type(xx) in [...]" will not work
-if type(xx) is <type>:
-  ...
-
-# sometimes, it may be necessary to explicitly _assert_ that a variable's type has changed..
-assert isinstance(x, str) 

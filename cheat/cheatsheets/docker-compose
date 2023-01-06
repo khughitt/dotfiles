@@ -1,0 +1,3 @@
+# pass host environmental variable
+environment:
+  - FOO

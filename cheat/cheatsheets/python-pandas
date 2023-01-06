@@ -25,7 +25,7 @@ Selection
 # select single column as a series
 df['col']
 
-# select columns by name
+# select one or more columns as a dataframe
 df[['col']]
 df[['col1', 'col2']]
 
@@ -269,6 +269,12 @@ pd.DataFrame({'str_col': pd.Series(lst, dtype='string')})
 # 2. can run into "offset overflow" issues when attempting to mask large datasets
 pd.read_csv(..., dtype={'foo': 'string[pyarrow]'})
 
+Categories
+----------
+
+# drop unused levels
+df.foo = df.foo.cat.remove_unused_categories()
+
 Memory
 ------
 
@@ -286,6 +292,11 @@ df.stack().sort_values(ascending=False).iloc[:n]
 
 # get min of two or more cols
 df[['a','b']].min(axis=1)
+
+Clip
+---
+
+df.clip(0, 3)
 
 Rank
 ----
@@ -345,20 +356,29 @@ Grouping / Summarization
 ------------------------
 
 # group by -> sum
-df.groupby('tag').agg(sum)
+df.groupby('foo').sum()
 
 # group by -> count
-df.groupby('tag').agg('count')
+df.groupby('foo').count()
+df.foo.value_counts().sort_values(ascending=False)
+
+# group by -> count (limit to a single column)
+df.[['foo', 'bar']].groupby("foo").count().sort_values("bar")
 
 # group by -> count unique
-df.groupby('tag').foo.nunique().reset_index()
+df.groupby('foo').foo.nunique().reset_index()
+
+# group by -> xx
+df.groupby('foo').agg(sum)
+df.groupby('foo').agg('sum')
+df.groupby('foo').agg(lambda x: np.sum(x))
 
 # group by -> sort
-df.groupby('seed').apply(pd.dfaFrame.sort_values, 'tag')
-df.groupby('seed').sort_values('tag')
+df.groupby('foo').apply(pd.dfaFrame.sort_values, 'bar')
+df.groupby('foo').sort_values('bar')
 
 # group by -> count -> max -> sample
-df.groupby(["path", "seed"]).count().max(axis=1).groupby("path").sample(1)
+df.groupby(["path", "foo"]).count().max(axis=1).groupby("path").sample(1)
 
 # get first item from each group
 df.groupby('foo').first()
@@ -389,10 +409,10 @@ df.T.dot(df)
 Reshaping
 ---------
 
-# dfaframe -> 1d ndarray
+# df -> 1d ndarray
 df.values.ravel()
 
-# dfaframe -> 1d ndarray (upper-triangular matrix only, excluding diagonal)
+# df -> 1d ndarray (upper-triangular matrix only, excluding diagonal)
 ind = np.triu_indices(5, k=1)
 df.values[ind]
 
@@ -400,8 +420,13 @@ df.values[ind]
 df.pivot_table(index='patient', columns='obs', values='score', fill_value=0)
 
 # pivot long -> wide (binary)
-df['presence'] = 1
-df.pivot_table(index='patient', columns='obs', values='presence', fill_value=0)
+df['presence'] = True
+mat = df.pivot_table(index='patient', columns='obs', values='presence', fill_value=False)
+
+# if some values are missing in the wide matrix, these will show up as `NaN`s, before
+# being filled with "False" in the example below.. the result is that the type of the wide
+# matrix will be floats/"objects" instead of "bool", as expected.. to fix, cast type back to bool:
+mat = mat.astype(bool)
 
 Renaming
 --------
