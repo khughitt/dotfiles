@@ -5,6 +5,9 @@
 # create empty csr matrix
 mat = csr_matrix((m, n), dtype=..)
 
+# load sparse matrix
+scipy.sparse.load_npz()
+
 # get indices of non-zero columns for each row in a csr matrix
 # https://stackoverflow.com/a/24792612/554531
 np.split(mat.indices, mat.indptr[1:-1])

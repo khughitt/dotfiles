@@ -1,0 +1,2 @@
+# add development dependency
+poetry add -G dev ..

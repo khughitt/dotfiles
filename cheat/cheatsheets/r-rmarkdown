@@ -32,3 +32,12 @@ theme_bw_high_res <- function (base_size = 8, base_line_size = 0.4, base_rect_si
     theme(plot.title = element_text(size = 8, vjust = 0), 
           legend.text = element_text(size = 6))
 }
+
+# detect output format ["html"|"latex"|"docx"]
+opts_knit$get("rmarkdown.pandoc.to")
+
+# unicode characters in pdf output
+# https://stackoverflow.com/a/25262737/554531
+if (opts_knit$get("rmarkdown.pandoc.to") == "latex") {
+  opts_chunk$set(dev='cairo_pdf', dev.args=list(cairo_pdf = list(family='Times New Roman')))
+}

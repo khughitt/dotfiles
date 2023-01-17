@@ -87,6 +87,11 @@ Dict{String, Integer}("a" => 1, "b" => 2)
 Dict(zip(k, v))
 
 # looping
+for i in 1:5
+  println(i)
+end
+
+# from:step:to
 for i in [1:1:10;]
   print(i)
 end
