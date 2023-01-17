@@ -1,0 +1,3 @@
+# dev mode
+textual console            # term1
+textual run --dev app.py   # term2
