@@ -11,6 +11,12 @@ feh --start-at .
 # fit to window
 feh --scale-down --auto-zoom
 
+# set wallpaper
+feh --bg-scale <img>
+feh --bg-max <img>
+feh --bg-center <img>
+feh --bg-fill <img>
+
 #
 # keyboard shortcuts
 #

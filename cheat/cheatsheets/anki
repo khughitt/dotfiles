@@ -3,11 +3,20 @@
 - **red**: cards being learned
 - **green**: cards due for review
 
+# katex cheatsheet
+# https://katex.org/docs/supported.html
+
 # keyboard shortcuts
 <space>   # show answer
 1   # 1st answer
 2   # 2nd answer
 3   # 3rd answer
 4   # 4th answer
-
 e   # edit
+<c-z>  # go back to previous card
+
+# change card type
+"Browse" -> select card(s) -> "Notes" -> "Change Note Type"
+
+# reset progress
+"Browse" -> select card(s) -> "Cards" -> "Forget"

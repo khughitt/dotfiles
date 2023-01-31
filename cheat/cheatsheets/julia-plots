@@ -1,0 +1,14 @@
+# line plot
+using Plots
+plot(x, y)
+plot(x, y, title="...", label=["x-axis", "y-axis"], linewidth=2)
+
+# overplotting / modifying an existing plot
+plot!(...)
+
+# scatter plot
+plot(x, y, seriestype=:scatter, ms=1)
+
+# save plot
+savefig("plot.png")
+savefig(p, "plot.png")

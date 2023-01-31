@@ -114,6 +114,10 @@ sim <- sim %*% t(sim)
 # matrix inverse
 solve(A)
 
+# upper / lower triangular matrix
+X[upper.tri(X, diag=FALSE)]
+X[lower.tri(X, diag=FALSE)]
+
 # imputation
 missMethods::impute_mean(mat, type = 'rowwise')  # mean value
 as.matrix(VIM::kNN(mat)[, 1:ncol(mat)])          # k-NN

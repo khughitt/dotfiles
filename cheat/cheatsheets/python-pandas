@@ -449,11 +449,12 @@ plt.show()
 
 ax.figure.savefig('out.png', dpi=300)
 
-Load Data
+Clipboard
 ---------
 
-# from clipboard
 pd.read_clipboard(sep='\t')
+df.to_clipboard()
+df.foo.to_clipboard()
 
 Write
 -----
