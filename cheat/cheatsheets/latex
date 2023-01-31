@@ -92,6 +92,9 @@
 \bar{}
 \tilde{}
 
+# vectors
+\vec{}
+
 # spacing
 \                # single space
 \hspace{1cm}     # 1cm space 

@@ -7,3 +7,6 @@ python -m pip list --user
 
 # list user-installed (outdated)
 python -m pip list --user -o
+
+# show installed package version
+pip show numba

@@ -2,6 +2,9 @@
 a = np.empty((3, 3,))
 a.fill(np.nan)
 
+# concatenate arrays
+np.concatenate([a, b])
+
 # matrix of zeros
 np.zeros(12).reshape(3, 4)
 

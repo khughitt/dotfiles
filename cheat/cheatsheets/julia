@@ -159,6 +159,10 @@ NamedTuple{(:num, :from, :to), Tuple{UInt8, UInt8, UInt8}}
 map(ceil, [0.1, 0.2])
 map(x -> func(x, ...), vec)
 
+# mean
+using Statistics
+mean(x)
+
 #
 # strings
 #

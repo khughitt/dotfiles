@@ -1,3 +1,9 @@
 # dev mode
 textual console            # term1
 textual run --dev app.py   # term2
+
+# find a widget by selector
+x.query_one("#foo")
+
+# set focus
+app.set_focus(widget)
