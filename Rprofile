@@ -155,7 +155,7 @@ if (interactive()) {
   try(.env$s <- skimr::skim, silent = TRUE)
 
   # Prints N objects which use the most memory (in megabytes)
-  .env$.top = function(n = 10, digits = 3) {
+  .env$.top <- function(n = 10, digits = 3) {
     vars <- ls(.GlobalEnv)
 
     if (length(vars) > 0) {

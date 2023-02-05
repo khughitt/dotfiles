@@ -13,6 +13,8 @@ set font "inconsolata 14"
 set default-bg '#11171d'
 set default-fg '#a8a8a8'
 
+set guioptions='v'
+
 set recolor-lightcolor '#11171d'
 set recolor-darkcolor '#a8a8a8'
 
