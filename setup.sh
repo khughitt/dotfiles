@@ -23,6 +23,9 @@ if [ -z $XDG_CONFIG_HOME ]; then
 fi
 mkdir -p $XDG_CONFIG_HOME
 
+# Create completions cache dir
+mkdir -p $HOME/.cache/zinit/completions
+
 # Checks for file or directory and creates a sym link if it doesn't already exist
 function ln_s() {
     # delete existing symlink if it exists

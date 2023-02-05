@@ -107,7 +107,7 @@ zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
 zinit snippet OMZ::plugins/taskwarrior/taskwarrior.plugin.zsh
 zinit snippet OMZ::plugins/pip
-#zinit snippet OMZ::plugins/poetry
+zinit snippet OMZ::plugins/poetry
 
 # vi mode improvement
 #zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
@@ -167,17 +167,11 @@ fpath+=$DOTFILES/zsh/
 fpath+=$HOME/.zsh/pure
 
 # tab completion
-autoload -Uz compinit
-compinit
+autoload -Uz compinit && compinit
 zinit cdreplay -q 
 
 # snakemake tab completion support
 compdef _gnu_generic snakemake mindful
-
-# kitty completion
-if type "kitty" > /dev/null; then
-    kitty + complete setup zsh | source /dev/stdin
-fi
 
 # pywal
 # (/bin/cat ~/.cache/wal/sequences &)

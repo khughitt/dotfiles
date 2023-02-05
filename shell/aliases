@@ -184,7 +184,6 @@ alias y='yay'
 alias yd='yay -Syu --devel'
 
 # conda
-#alias ca='source activate'
 alias cde='conda deactivate'
 alias ca='conda activate'
 alias cs='mamba search'
@@ -194,6 +193,7 @@ alias diff='diff --color=auto'
 
 # python
 alias ipy=ipython
+alias psh='poetry shell'
 
 # r
 alias R='R --quiet --no-save'
@@ -207,7 +207,7 @@ alias 2k="xrandr --output DP-0 --mode 1920x1080"
 alias 4k="xrandr --output DP-0 --mode 3840x2160"
 
 # termbin
-# example usage: echo just testing! | tb
+# ex. echo foo | tb
 alias tb="nc termbin.com 9999"
 
 # google translate
@@ -258,7 +258,6 @@ alias -g H='| head'
 alias -g T='| tail'
 alias -g G='| grep'
 alias -g L="| less"
-alias -g M="| most"
 alias -g LL="2>&1 | less"
 alias -g CA="2>&1 | cat -A"
 alias -g NE="2> /dev/null"

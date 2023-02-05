@@ -1,42 +1,7 @@
+# lit-walk (config)
 data_dir: /home/keith/.lit
 
-keywords:
-  min_size: 3
-  min_freq: 50
-  exclude:
-    - MM25
-    - "Starred (back-burner)"
-    - P3
-    - Important
-    - "MM Review (June 2020)"
-    - "Level Up 🧠"
+notes_dir: /home/keith/d/notes/lit
 
-# additional stop words to include when analyzing article similarity, etc.
-stopwords: ["tig", "org", "cin", "geo", "analysis", "mass", "read", "review", "core",
-  "package", "life", "technology", "training", "www", "000", "10", "11", "11", "12",
-  "13", "14", "15", "16", "20", "30", "50", "95", "ability", "able", "according",
-  "account", "accurate", "accurately", "achieved", "action", "additional", "aim",
-  "apply", "approach", "approach", "approaches", "available", "background", "based",
-  "different", "expression", "high", "identified", "important", "improve", "known",
-  "large", "including", "level", "line", "method", "methods", "multiple", "new", "non",
-  "novel", "potential", "present", "provide", "related", "research", "results", "set",
-  "specific", "studies", "study", "reveal", "propose", "recent", "role", "type", "use",
-  "'s", "''", "type", "compare", "control", "demonstrate", "involve", "number",
-  "sample", "suggest", "year", "drive", "e.g.", "efficacy", "effective", "effort",
-  "furthermore", "presence", "recently", "-specific", "uncover", "underlie", "useful",
-  "widely", "work", "previously", "previous", "possible", "overall", "outcome", "occur",
-  "help"]
-
-# TF-IDF settings
-tfidf:
-  min_df: 3
-  max_df: 0.75
-  max_features: 500
-
-tokenization:
-  min_length: 2
-  
-# development mode
-dev_mode:
-  enabled: false
-  subsample: 500
+dev_mode: false
+dev_mode_subsample: 100
