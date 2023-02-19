@@ -76,7 +76,6 @@ call plug#begin()
     Plug 'ncm2/float-preview.nvim'
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
-    " slow with multiple mnd tabs open?..
     Plug 'romgrk/barbar.nvim'
     Plug 'scrooloose/nerdcommenter'
     Plug 'tomtom/tlib_vim'
@@ -351,11 +350,6 @@ endif
 " http://sunaku.github.io/vim-256color-bce.html
 set t_ut=""
 
-set background=dark
-
-" enable true colors (disable for pywal support)
-set termguicolors
-
 if has("gui_running")
     set guioptions-=m  " remove menu bar
     set guioptions-=T  " remove toolbar
@@ -530,7 +524,7 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#ale#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#wordcount#enabled = 1
-let g:airline_theme = 'quantum'
+let g:airline_theme='nord'
 
 " ---------------------------------------------------------------------------
 "  ale
@@ -815,16 +809,6 @@ EOF
 " ---------------------------------------------------------------------------
 let g:nvcode_termcolors=256
 
-syntax on
-"colorscheme onedark
-colorscheme quantum
-
-" checks if your terminal has 24-bit color support
-if (has("termguicolors"))
-    set termguicolors
-    hi LineNr ctermbg=NONE guibg=NONE
-endif
-
 " ---------------------------------------------------------------------------
 "  onedark.nvim
 " ---------------------------------------------------------------------------
@@ -1000,8 +984,24 @@ autocmd FileType javascript let b:did_indent = 1
 "  Coloscheme options
 " ---------------------------------------------------------------------------
 let g:gruvbox_italic=1
-let g:quantum_black=1
 let g:quantum_italics=1
+let g:one_allow_italics=1
+let g:quantum_black=1
+
+" "set background=dark
+set background=light
+
+"colorscheme onedark
+"colorscheme quantum
+"colorscheme lightning
+"colorscheme paramount
+colorscheme nord
+
+" enable 24-bit color support (disable for pywal support)
+if (has("termguicolors"))
+    set termguicolors
+    hi LineNr ctermbg=NONE guibg=NONE
+endif
 
 syntax on
 

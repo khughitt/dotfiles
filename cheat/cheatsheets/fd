@@ -11,5 +11,9 @@ fd . <dir> -t f
 # sort results by recency
 fd -l | sort -k6M -k7n | tail
 
+# size
+fd -S "+10k"
+fd -S "-1m"
+
 # count total number of files in each sub-directory, recursively
 for x in `ls -d */`; do echo $x; fd -Luu . $x -t f | wc -l; done

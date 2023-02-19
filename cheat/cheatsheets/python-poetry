@@ -1,2 +1,11 @@
 # add development dependency
 poetry add -G dev ..
+
+# launch shell
+poetry shell
+
+# install deps
+poetry install
+
+# list packages
+poetry show

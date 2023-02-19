@@ -1,3 +1,11 @@
+# log-scale
+scale_x_continuous(trans = 'log2')
+
+# facet_wrap
+ggplot(df, aes(x)) +
+  geom_density() +
+  facet_wrap(~foo, ncol = 5)
+
 # ggplot dark theme
 theme_dark <- function(base_font_size = 18) {
   ggdark::dark_theme_gray(base_size = base_font_size) +

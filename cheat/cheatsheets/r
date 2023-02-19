@@ -1,6 +1,9 @@
 # get a specific column from each list in a list-of-lists
 lapply(lst, '[[', 'foo')
 
+# specify factor level order
+ordered(df$foo, levels = c("small", "med", "large"))
+
 # PCA (column-wise)
 pca <- prcomp(t(dat), scale = TRUE)
 
@@ -119,7 +122,8 @@ X[upper.tri(X, diag=FALSE)]
 X[lower.tri(X, diag=FALSE)]
 
 # imputation
-missMethods::impute_mean(mat, type = 'rowwise')  # mean value
+missMethods::impute_median(mat)                  # median value (columns)
+missMethods::impute_mean(mat, type = 'rowwise')  # mean value (rows)
 as.matrix(VIM::kNN(mat)[, 1:ncol(mat)])          # k-NN
 
 # write xlsx files (openxlsx does not depend on java like the xlsx package..)
