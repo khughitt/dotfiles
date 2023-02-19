@@ -11,6 +11,9 @@ o               toggle arranger
 a               automation
 t               focus track
 
+# note colors
+# right click a blank area of editor
+
 # file management
 cntl + alt + s  collect & save
 
