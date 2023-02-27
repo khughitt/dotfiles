@@ -1,0 +1,3 @@
+# sparsity
+# https://slowkow.com/notes/sparse-matrix/
+length(m@x) / m@Dim[1] / m@Dim[2]

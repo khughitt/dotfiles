@@ -1,0 +1,58 @@
+#
+# pp (preprocessing)
+#
+pp.calculate_qc_metrics
+pp.filter_cells
+pp.filter_genes
+pp.log1p
+pp.normalize_total
+pp.neighbors(adata, n_neighbors=10, n_pcs=10)
+
+# variance filtering
+pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
+pl.highly_variable_genes(adata)
+adata = adata[:, adata.var.highly_variable]
+
+# batch adjust
+pp.combat(adata, key, covariates)
+
+#
+# tl (tools)
+#
+tl.pca(adata, n_comps=2, svd_solver="arpack")
+tl.tsne(adata, n_pcs=2, perplexity=30, metric="euclidean")
+tl.umap(adata, min_dist=0.5, spread=1.0, n_components=2, alpha=1.0)
+
+tl.leiden
+tl.louvain
+
+#
+# pl (plotting)
+#
+pl.scatter
+pl.heatmap
+pl.violin
+pl.clustermap
+
+# pca
+tl.pca(adata)
+pl.pca(adata, color="CST3")
+pl.pca_variance_ratio(adata, log=True)
+
+# umap
+pp.neighbors(..)
+tl.umap(adata)
+pl.umap(adata, color=['CST3', 'NKG7', 'PPBP'], use_raw=False)
+
+# clustering
+pp.neighbors(..)
+tl.leiden(adata)
+pl.umap(adata, color=['leiden', 'CST3', 'NKG7'])
+
+# marker genes (methods: ['logreg', 't-test', 'wilcoxon', 't-test_overestim_var'])
+tl.rank_genes_groups(adata, 'leiden', method='wilcoxon', use_raw=True)
+pl.rank_genes_groups(adata, n_genes=25, sharey=False)
+
+# sources
+# 1. https://scanpy.readthedocs.io/en/stable/api.html
+# 2. https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html

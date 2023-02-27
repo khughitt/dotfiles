@@ -1,14 +1,29 @@
 # tensor creation examples
+tensor([[1, 2], [3, 4]])
+torch.from_numpy(arr)
+
 torch.ones(shape)
 torch.rand(shape)
 torch.zeros(shape)
 
-torch.from_numpy(arr)
+torch.ones_like(t)
+torch.rand_like(t)
 
 # info
 tensor.shape
 tensor.dtype
 tensor.device
+
+# join
+torch.cat([t1, ..., tn], dim=1)
+
+# matrix multiplication
+x @ y
+x.matmul(y)
+
+# element-wise product
+x * y
+x.mul(y)
 
 # export
 tensor.numpy()
@@ -19,5 +34,6 @@ tensor.cuda()
 
 # transfer tensor to specific gpu
 cuda = torch.device('cuda') 
+
 torch.tensor(..., device=cuda)
 torch.tensor(...).to(device=cuda)
