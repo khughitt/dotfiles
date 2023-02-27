@@ -1,5 +1,6 @@
 # Nvim-R
 # https://github.com/jalvesaq/Nvim-R/blob/master/doc/Nvim-R.txt
+# :RDebugInfo
 
 # Start/Close
 rf Start R (default)
