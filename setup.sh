@@ -78,6 +78,9 @@ ln_s ${DOTS_HOME}/git/config ${HOME}/.gitconfig
 mkdir -p ${HOME}/.julia/config
 ln_s ${DOTS_HOME}/$julia/startup.jl ${HOME}/.julia/config/startup.jl
 
+# r
+ln_s ${DOTS_HOME}/lintr ${HOME}/.lintr
+
 # 4k configs (i3, rofi, wal )
 if [[ "$HIRES" == "y" ]]; then
     ln_s ${DOTS_HOME}/i3/config.4k ${XDG_CONFIG_HOME}/i3/config

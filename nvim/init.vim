@@ -92,7 +92,6 @@ call plug#begin()
     " language support
     Plug 'bioSyntax/bioSyntax-vim'
     Plug 'chrisbra/csv.vim'
-    Plug 'dense-analysis/ale'
     Plug 'fatih/vim-go'
     Plug 'glench/vim-jinja2-syntax'
     Plug 'ibab/vim-snakemake'
@@ -103,6 +102,7 @@ call plug#begin()
     Plug 'mzlogin/vim-markdown-toc'
     Plug 'maxmellon/vim-jsx-pretty'
     Plug 'mboughaba/i3config.vim'
+    Plug 'neoclide/coc.nvim', {'branch': 'release'}
     Plug 'raimon49/requirements.txt.vim'
     Plug 'stephpy/vim-yaml'
     Plug 'tikhomirov/vim-glsl'
@@ -521,41 +521,10 @@ command! -nargs=+ Scratch call <sid>Scratch(<f-args>)
 "  airline
 " ---------------------------------------------------------------------------
 let g:airline_powerline_fonts = 1
-let g:airline#extensions#ale#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#wordcount#enabled = 1
-let g:airline_theme='nord'
-
-" ---------------------------------------------------------------------------
-"  ale
-" ---------------------------------------------------------------------------
-" nmap <silent> <C-k> <Plug>(ale_previous_wrap)
-" nmap <silent> <C-j> <Plug>(ale_next_wrap)
-let g:ale_fixers = {
-  \ 'r': ['styler', 'trim_whitespace'], 
-  \ 'rmd': ['styler', 'trim_whitespace'],
-  \ 'python': ['pyright']
-\}
-
-let g:ale_linters = {'rust': ['analyzer']}
-
-let g:ale_r_lintr_options = "with_defaults(line_length_linter(100),single_quotes_linter=NULL,commented_code_linter=NULL,object_name_linter=NULL,object_usage_linter=NULL)"
-
-" use quickfix list instead of loclist
-let g:ale_set_loclist = 0
-let g:ale_set_quickfix = 1
-
-" create shortcut to toggle quickfix visibility
-" https://stackoverflow.com/a/63162084/554531
-function! ToggleQuickFix()
-    if empty(filter(getwininfo(), 'v:val.quickfix'))
-        copen
-    else
-        cclose
-    endif
-endfunction
-
-nnoremap <silent> <F2> :call ToggleQuickFix()<cr>
+let g:airline#extensions#coc#enabled = 1
+let g:airline_theme='quantum'
 
 " ---------------------------------------------------------------------------
 "  barbar.nvim
@@ -585,22 +554,17 @@ let g:csv_no_conceal = 1
 " setlocal nobackup
 " setlocal nowritebackup
 
-"
-" " You will have bad experience for diagnostic messages when it's default 4000.
-" set updatetime=300
-"
+set updatetime=300
+
 " " don't give |ins-completion-menu| messages.
 " set shortmess+=c
-"
-" " always show signcolumns
-" set signcolumn=yes
-"
-" " if nvm is set to lazy-load via zplugin, path will need to be manually specified
-" "let g:coc_node_path="/home/keith/.nvm/versions/node/v12.9.1/bin/node"
-"
-" " extensions to install
-" let g:coc_global_extensions = ['coc-r-lsp']
-"
+
+" always show signcolumns
+set signcolumn=yes
+
+" if nvm is set to lazy-load via zplugin, path will need to be manually specified
+"let g:coc_node_path="/home/keith/.nvm/versions/node/v12.9.1/bin/node"
+
 " " Use tab for trigger completion with characters ahead and navigate.
 " inoremap <silent><expr> <TAB>
 "       \ pumvisible() ? "\<C-n>" :
@@ -992,10 +956,10 @@ let g:quantum_black=1
 set background=light
 
 "colorscheme onedark
-"colorscheme quantum
+"colorscheme nord
 "colorscheme lightning
 "colorscheme paramount
-colorscheme nord
+colorscheme quantum
 
 " enable 24-bit color support (disable for pywal support)
 if (has("termguicolors"))
