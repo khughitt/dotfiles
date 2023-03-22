@@ -69,6 +69,9 @@
 # perpendicular (⊥)
 \perp
 
+# function compose
+\circ
+
 # text formatting
 \textbf{}
 \textit{}

@@ -1,0 +1,5 @@
+# high-res figs (https://plotly.com/r/configuration-options/)
+# format: png|svg|jpeg|webp
+fig <- plot_ly(...)
+config(fig, toImageButtonOptions = list(format = 'svg', filename = 'img', width = 1400, height = 1000, scale = 1)) %>%
+  layout(...)
