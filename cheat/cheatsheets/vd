@@ -14,6 +14,9 @@ man vd
 2. modify `fmtstr` for the desired column (default: "%0.2f")
   - to apply to multiple columns, select `fmtstr` and type `ge`
 
+# scientific notation
+".3e"
+
 #
 # appearance
 #

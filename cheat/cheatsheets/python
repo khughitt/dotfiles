@@ -186,6 +186,9 @@ list(pathlib.Path("path/").glob("**/*.*"))
 path = pathlib.Path(..)
 path.mkdir(mode=0o755, parents=True, exist_ok=True)
 
+# pathlib basics
+path.joinpath("foo")
+
 # create a temp dir
 import tempfile
 tempfile.mkdtemp
