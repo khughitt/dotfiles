@@ -35,6 +35,9 @@ dat <- sweep(dat, 2, colSums(dat, na.rm = TRUE), '/') * 1E6
 # recursively update one list, using another
 modifyList(a, b)
 
+# convert a list to a two column dataframe
+stack(lst)
+
 # read file as a string
 readr::read_file('file.txt')
 

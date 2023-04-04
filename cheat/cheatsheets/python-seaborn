@@ -13,6 +13,9 @@ sns.color_palette("viridis", 10).as_hex()
 # add title to scatterplot
 sns.scatterplot(...).set(title='foo')
 
+# density plot
+sns.kdeplot(.., log_scale=True)
+
 # heatmap
 sns.heatmap(df)
 

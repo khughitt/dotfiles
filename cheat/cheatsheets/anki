@@ -14,6 +14,7 @@
 4   # 4th answer
 e   # edit
 <c-z>  # go back to previous card
+<c-del> # delete card (browse)
 
 # change card type
 "Browse" -> select card(s) -> "Notes" -> "Change Note Type"
