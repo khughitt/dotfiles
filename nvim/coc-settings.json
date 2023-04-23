@@ -1,3 +1,6 @@
 {
-  "suggest.noselect": false
+  "suggest.autoTrigger": "none",
+  "suggest.noselect": false,
+  "signature.target": "echo",
+  "inlayHint.enable": false
 }

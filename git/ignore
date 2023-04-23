@@ -1,4 +1,5 @@
 .project
 .pydevproject
+.pyc
 node_modules
 unused

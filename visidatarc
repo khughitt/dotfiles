@@ -7,7 +7,7 @@
 options.use_default_colors=True
 options.color_current_row='reverse 11'
 options.disp_status_fmt='({sheet.cursorRowIndex},{sheet.cursorColIndex}) ' + options.disp_status_fmt
-#options.disp_float_fmt='%.03f'
+options.disp_float_fmt='{:.3e}'
 options.undo=True
 #options.command_copy_clipboard='xclip'
 

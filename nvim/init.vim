@@ -756,7 +756,7 @@ let g:NERDCustomDelimiters = {
 " ---------------------------------------------------------------------------
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = { "bash", "c", "cmake", "cpp", "css", "dockerfile", "go", "json", "julia", "lua", "latex", "r", "toml", "yaml" },
+  ensure_installed = { "bash", "c", "cmake", "cpp", "css", "dockerfile", "go", "json", "julia", "lua", "latex", "r", "rust", "toml", "yaml" },
   ignore_install = {  },
   highlight = {
     enable = true,
