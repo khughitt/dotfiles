@@ -1,3 +1,6 @@
+# figure settings
+sc.settings.set_figure_params(dpi=192, dpi_save=300, figsize=(9, 6), fontsize=11, format='png')
+
 #
 # pp (preprocessing)
 #

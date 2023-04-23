@@ -1,6 +1,9 @@
 # copy terminfo over
 kitty +kitten ssh myserver
 
+# list available fonts
+kitty +list-fonts
+
 # keyboard shortcuts
 # https://sw.kovidgoyal.net/kitty/overview/#other-keyboard-shortcuts
 
