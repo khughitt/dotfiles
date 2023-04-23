@@ -26,6 +26,9 @@ alias l='ls -l'
 alias lt='ls --tree'
 alias lr='ls -latr'
 
+# ln
+alias lns='ln -s'
+
 # cd
 alias dl='cd ~/downloads'
 alias dots='cd $DOTFILES'
