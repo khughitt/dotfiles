@@ -1,5 +1,5 @@
 # log-scale
-scale_x_continuous(trans = 'log2')
+scale_x_continuous(trans = "log2")
 
 # facet_wrap
 ggplot(df, aes(x)) +
@@ -18,4 +18,4 @@ theme_dark <- function(base_font_size = 18) {
 }
 
 # save fig
-ggsave('foo.png', width=1080, height=1080, units='px', dpi=300)
+ggsave("foo.png", width = 1080, height = 1080, units = "px", dpi = 300)

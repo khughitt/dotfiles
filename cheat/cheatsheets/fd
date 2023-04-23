@@ -8,6 +8,9 @@ fd -d 1
 # find files in a specified directory
 fd . <dir> -t f
 
+# copy
+fd -e foo -x cp {} to/
+
 # sort results by recency
 fd -l | sort -k6M -k7n | tail
 

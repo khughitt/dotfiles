@@ -5,6 +5,9 @@
 # transport
 f9   toggle record
 
+pgup    prev track
+pgdn    next track
+
 # views
 <shift-tab>     toggle arrangement / editor
 o               toggle arranger
