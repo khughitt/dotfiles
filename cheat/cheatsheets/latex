@@ -22,6 +22,9 @@
 # multiplication / times
 \times
 
+# tensor product
+\otimes
+
 # integration
 \int_{from}^{to} 
 

@@ -7,14 +7,16 @@
 # https://katex.org/docs/supported.html
 
 # keyboard shortcuts
-<space>   # show answer
+<space>   # show answer / answer "good"
 1   # 1st answer
 2   # 2nd answer
 3   # 3rd answer
 4   # 4th answer
 e   # edit
+<c-d> # change deck of note
 <c-z>  # go back to previous card
 <c-del> # delete card (browse)
+<esc>   # close browse/edit/add window
 
 # change card type
 "Browse" -> select card(s) -> "Notes" -> "Change Note Type"

@@ -352,6 +352,7 @@ Sort
 
 # sort (arrange) by column
 df.sort_values('foo')
+df.sort_values(['foo', 'bar'])
 
 # sort by column (descending)
 df.sort_values('foo', ascending=False)

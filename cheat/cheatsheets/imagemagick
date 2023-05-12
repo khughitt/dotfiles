@@ -9,3 +9,9 @@ identify -format '%[EXIF:*]' in.png
 
 # remove exif orientation (in-place)
 mogrify -auto-orient in.png
+
+# append (vertically)
+convert a.png b.png -append out.png
+
+# append (horizontally)
+convert a.png b.png +append out.png
