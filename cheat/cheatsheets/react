@@ -1,0 +1,2 @@
+# environment variables (must prefix with "REACT_APP_")
+process.env.REACT_APP_FOO
