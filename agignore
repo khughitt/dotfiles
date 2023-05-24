@@ -10,4 +10,5 @@
 *.min.css
 *.map
 *.ipynb
+*.zip
 node_modules/
