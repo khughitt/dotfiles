@@ -124,6 +124,9 @@ solve(A)
 X[upper.tri(X, diag=FALSE)]
 X[lower.tri(X, diag=FALSE)]
 
+# make matrix symmetric
+X[lower.tri(X)] = t(X)[lower.tri(X)]
+
 # imputation
 missMethods::impute_median(mat)                  # median value (columns)
 missMethods::impute_mean(mat, type = 'rowwise')  # mean value (rows)

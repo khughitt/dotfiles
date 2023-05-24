@@ -1,0 +1,6 @@
+name: probabilistic-ml
+
+left:
+  - "zathura ~/d/books/2023_Probabilstic_Machine_Learning_2_Advanced_Topics.pdf"
+right:
+  - "kitty -d $NOTES/knowledge/stats-ml"

@@ -10,6 +10,10 @@
 # double arrow
 \leftrightarrow
 
+# parens
+\left( 
+\right)
+
 # equivalence
 \equiv
 
@@ -103,6 +107,7 @@
 
 # spacing
 \                # single space
+\\               # line break
 \hspace{1cm}     # 1cm space 
 \break
 \hfill\break
