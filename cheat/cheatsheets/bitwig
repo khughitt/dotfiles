@@ -39,7 +39,8 @@ d           focus device panel
 alt + d     toggle device panel
 
 # arranger
-shift + l   toggle arranger loop
+cntl + l   loop selected region
+r          toggle arranger loop
 
 # editor
 ctrl + j    consolidate

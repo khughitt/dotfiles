@@ -2,6 +2,10 @@
 using Plots
 plot(x, y)
 plot(x, y, title="...", label=["x-axis", "y-axis"], linewidth=2)
+plot(t, [a b], title="...", xlabel="time", label=["a" "b"])
+
+# vertical / side-by-side
+plot(t, [a b], xlabel="time", label=["a" "b"], layout=(2, 1))
 
 # overplotting / modifying an existing plot
 plot!(...)

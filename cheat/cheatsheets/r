@@ -135,3 +135,29 @@ as.matrix(VIM::kNN(mat)[, 1:ncol(mat)])          # k-NN
 # write xlsx files (openxlsx does not depend on java like the xlsx package..)
 tbls <- list(a=df1, b=df2, ...)
 openxlsx::write.xlsx(tbls, file="out.xlsx")
+
+# multimodality
+nmode_bw <- diff(range(x)) / 6
+multimode::nmodes(x, bw = nmode_bw)
+
+multimode::modetest(x, method='...')$p.value
+silverman.test(x, 1)@p_value
+dip.test(x)$p.value
+
+# parallel apply
+library(doParallel)
+
+MAX_THREADS <- max(1, detectCores() - 2)
+cl <- makeCluster(MAX_THREADS, outfile = "")
+registerDoParallel(cl)
+
+clusterExport(cl, c('vars_used_inside_loop'))
+
+tmp_ <- clusterCall(cl, function() {
+  library("libraries needed..")
+})
+
+res <- parApply(cl, df, 1, function(x) {
+  ...
+})
+stopCluster(cl)

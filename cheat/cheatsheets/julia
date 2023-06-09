@@ -71,6 +71,8 @@ first(s)
 
 in("foo", s)
 
+union(s1, s2)
+
 intersect(s1, s2)
 intersect([1, 2, 3],  [2, 3, 4])
 
@@ -245,41 +247,8 @@ pkg>
   activate .
   instantiate  # instantiate someone else's project
 
-#
-# DataFrames.jl
-#
-using DataFrames
-df = DataFrame(a=1:4, b=["a", "b", "c", "d"])
-
-df.a
-
-names(df) # colnames; there is no support for named row indices in DataFrames.jl..
-names!(df, [:a, :b, :c])   # set names
-
-#
-# Tables.jl
-#
-
-# load feather/arrow file
-using Arrow;
-dat = Arrow.Table("data.feather")
-
-# convert to dataframe
-using DataFrames
-DataFrame(dat)
-
-# all at once
-df = DataFrame(Arrow.Table("data.feather"))
-
-# row-wise access
-rows = Tables.rows(x)
-
-# column-wise access
-columns = Tables.columns(x)
-
-Tables.columnnames(x)
-Tables.getcolumn(columns, col)
-
 # copy variable to clipboard
 clipboard(x)
 
+# read whitespace-delimited file
+using DelimitedFiles
