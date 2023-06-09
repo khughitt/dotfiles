@@ -1,5 +1,10 @@
-# penguins
+#
+# DataFrames.jl
+#
 using DataFrames
+df = DataFrame(a=1:4, b=["a", "b", "c", "d"])
+
+# penguins
 using PalmerPenguins
 df = DataFrame(PalmerPenguins.load())
 
@@ -15,6 +20,7 @@ names(df)
 describe(df)
 show(df)
 
+# head/tail
 first(df, 5)
 last(df, 5)
 
@@ -42,11 +48,19 @@ df[:, "foo"]
 df[1:5, ["foo", "bar"]]
 
 # filter rows
-filter(row -> row.foo == 'bar', df)
-filter(row -> row.foo == 'bar' && row.x < 5, df)
+filter(row -> row.foo == "bar", df)
+filter(row -> row.foo in ["bar", "baz"], df)
+filter(row -> row.foo == "bar" && row.x < 5, df)
+
+# sorting
+sort!(df, :foo)
+sort!(df, [:foo, :bar], rev = true)
 
 # apply
 map(x -> sum(x .== 0), eachrow(mat))
+
+# joins
+innerjoin(a, b, on = :id)
 
 # cbind
 [a b]

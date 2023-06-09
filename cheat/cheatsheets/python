@@ -63,6 +63,9 @@ if (regex.search('foo')):
 # findall
 re.findall("(.*\.png|.*\.jpg|.*\.jpeg|.*\.svg)", x)
 
+# regex split
+re.split(pattern, string)
+
 # re match obj
 matches = re.search(regex)
 

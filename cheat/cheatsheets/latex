@@ -107,7 +107,7 @@
 
 # spacing
 \                # single space
-\\               # line break
+\\               # line break / newline
 \hspace{1cm}     # 1cm space 
 \break
 \hfill\break

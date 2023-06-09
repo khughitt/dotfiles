@@ -18,9 +18,23 @@ dat %>%
 # rbind multiple tibbles
 bind_rows(df1, df2, ..)
 
-# cbind / join multiple tables
+# cbind / join list of tables
 purrr::reduce(tbls, dplyr::full_join, by = 'id')
 
 # drop duplicates
 dat %>%
   distinct()
+
+# pivot wide to long
+df %>%
+  pivot_longer(everything(), names_to = 'xx', values_to = 'yy')
+
+df %>%
+  pivot_longer(c("col1", "col2",...), names_to = 'xx', values_to = 'yy')
+
+df %>%
+  pivot_longer(!col, names_to = 'xx', values_to = 'yy')
+
+# long to wide
+df %>%
+  pivot_wider(id_cols = zz, names_from = xx, values_from = yy)

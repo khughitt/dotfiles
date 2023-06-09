@@ -23,3 +23,8 @@ e   # edit
 
 # reset progress
 "Browse" -> select card(s) -> "Cards" -> "Forget"
+
+# find and replace
+1. browse
+2. select notes to search
+3. right click -> "notes" -> "find and replace"

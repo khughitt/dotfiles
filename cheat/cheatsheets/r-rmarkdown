@@ -6,6 +6,9 @@ knitr::opts_chunk$set(
   dpi = 384
 )
 
+# printing messages to console in recent knitr versions..
+```{r message = NA, warning = NA}```
+
 # default to kable() for table output
 ```
 output:
@@ -41,3 +44,8 @@ opts_knit$get("rmarkdown.pandoc.to")
 if (opts_knit$get("rmarkdown.pandoc.to") == "latex") {
   opts_chunk$set(dev='cairo_pdf', dev.args=list(cairo_pdf = list(family='Times New Roman')))
 }
+
+# copy html to specified location after rendering
+```{r copy_html, include=FALSE, echo=FALSE}
+system(sprintf('(sleep 10 && cp README.html %s) &', out_dir))
+```
