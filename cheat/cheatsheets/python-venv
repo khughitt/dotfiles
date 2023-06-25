@@ -1,0 +1,9 @@
+# create
+python -m venv path/to/venv
+
+# use
+path/to/venv/bin/python
+path/to/venv/bin/pip
+
+# activate
+source <venv>/bin/activate

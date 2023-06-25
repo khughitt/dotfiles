@@ -11,7 +11,7 @@ Series
 ------
 
 # rename series
-df.name = 'foo'
+df.name = "foo"
 
 # convert dataframe to a series
 pd.Series(df.values.ravel())
@@ -23,11 +23,11 @@ Selection
 ---------
 
 # select single column as a series
-df['col']
+df["col"]
 
 # select one or more columns as a dataframe
-df[['col']]
-df[['col1', 'col2']]
+df[["col"]]
+df[["col1", "col2"]]
 
 # get index as an integer
 ind = df.index[df["col"] == val].tolist()[0]
@@ -40,7 +40,7 @@ ind = np.triu_indices(5, k=1)    # excl. diagonal
 df.values[ind]
 
 # drop column
-df.drop('col', axis=1)
+df.drop("col", axis=1)
 
 # drop first column
 df.iloc[: , 1:]
@@ -77,16 +77,16 @@ Creation
 pd.DataFrame.from_dict(d)
 
 # dict of row dicts
-pd.DataFrame.from_dict(d, orient='index')
+pd.DataFrame.from_dict(d, orient="index")
 
 # set index + index name at time of creation
-pd.DataFrame(..., index=pd.Series([...], name='foo'))
+pd.DataFrame(..., index=pd.Series([...], name="foo"))
 
 # specify column type at time of creation
-pd.DataFrame({'foo': pd.Series(['a', 'b', 'c'], dtype='category'), ...})
+pd.DataFrame({"foo": pd.Series(["a", "b", "c"], dtype="category"), ...})
 
 # specify column type at time of creation (from_dict)
-pd.DataFrame.from_dict(..).astype({'foo': 'string'})
+pd.DataFrame.from_dict(..).astype({"foo": "string"})
 
 # fix column types after creating from dicts, etc.
 df = df.astype({"access_count": int, "date_created": "datetime64[ns]"})
@@ -112,10 +112,10 @@ dates
 df.datetime.values.astype(np.int64) // 10 ** 9
 
 # convert timestamp column to datetime
-pd.to_datetime(df['ts'], unit='s')
+pd.to_datetime(df["ts"], unit="s")
 
 # get all rows for a specific date
-df[df['date'].dt.normalize() == '2021-12-07']
+df[df["date"].dt.normalize() == "2021-12-07"]
 
 To Dict
 -------
@@ -128,10 +128,10 @@ Joins
 
 # inner join by similar column(s)
 a.merge(b)
-a.merge(b, on=['foo'])
+a.merge(b, on=["foo"])
 
 # outer join
-a.merge(b, on='col', how='outer')
+a.merge(b, on="col", how="outer")
 
 # join on index
 a.join(b)
@@ -158,10 +158,10 @@ Adding & Removing Rows/Cols
 df.insert(0, "foo", [0, 1, 2])
 df.insert(0, "foo", [0, 1, 2], allow_duplicates = True)
 
-df['foo'] = 1
+df["foo"] = 1
 
 # add a "rank" column (1-n)
-df['rank'] = list(range(1, df.shape[0] + 1))
+df["rank"] = list(range(1, df.shape[0] + 1))
 
 Moving cols
 -----------
@@ -174,13 +174,13 @@ Replacing values
 ----------------
 
 # replace a single value
-df.loc[0, 'column'] = 'foo'
+df.loc[0, "column"] = "foo"
 
 # replace values in all columns
-df.replace({'from': 'to', 'foo': 'bar'})
+df.replace({"from": "to", "foo": "bar"})
 
 # replace values in a single column
-df.replace({'colname': {'from': 'to', 'foo': 'bar'}})
+df.replace({"colname": {"from": "to", "foo": "bar"}})
 
 Filtering & Masking
 -------------------
@@ -189,7 +189,7 @@ Filtering & Masking
 x.isin([..])    # is in 
 ~x.isin([..])   # not in
 
-pd.Series(['a', 'b', 'c']).isin(df.col)
+pd.Series(["a", "b", "c"]).isin(df.col)
 
 # get rows where index is "xx" (must use a list, even for single indices..)
 df.loc[["xx"]]
@@ -211,7 +211,7 @@ set(a).intersection(df.columns)
 a.index[~a.index.isin(b.index)]
 
 # filter rows by column value membership
-df.loc[df['column_name'].isin(some_values)]
+df.loc[df["column_name"].isin(some_values)]
 
 # filter columns by name
 df.loc[:, ~df.columns.isin(cols_to_remove)]
@@ -221,28 +221,28 @@ df.loc[:, col_sums <= 100]
 df.loc[row_sums >= 0, col_sums <= 100]
 
 # ~R's where()
-np.where(df['foo'] > 1)
+np.where(df["foo"] > 1)
 
 # ~R's match()
-B.reset_index().set_index('foo').loc[A.foo, 'index'].values
+B.reset_index().set_index("foo").loc[A.foo, "index"].values
 
 # get indices of series items present in a list
 s[s.isin(lst)].index
 
 # contains
-df.foo.str.contains('bar', na=False)  # ignore missing vals in column
+df.foo.str.contains("bar", na=False)  # ignore missing vals in column
 
 # endswith
-x[x.foo.str.endswith('bar')]
+x[x.foo.str.endswith("bar")]
 
 # find indices of string in column
-df.foo.str.find('bar')
+df.foo.str.find("bar")
 
 # get rows corresponding to a string match
- df[df.foo.str.lower().str.find('bar') != -1]
+ df[df.foo.str.lower().str.find("bar") != -1]
 
 # return boolean series indicating regex presence in column
-df.foo.str.find('bar|baz')
+df.foo.str.find("bar|baz")
 
 # multiple conditions (wrap each in parens, use "&" / "|")
 x[(x.foo > 3) & (x.bar < 10)]
@@ -252,14 +252,14 @@ df[~df.duplicated()]
 df.drop_duplicates()
 
 # remove duplicate indices
-df[~df.index.duplicated(keep='first')]
+df[~df.index.duplicated(keep="first")]
 
 Type Conversion
 ---------------
 
 # string/object -> int/category
-df['foo'] = df['foo'].astype('int64')
-df['foo'] = df['foo'].astype('category')
+df["foo"] = df["foo"].astype("int64")
+df["foo"] = df["foo"].astype("category")
 
 # bool -> int (in place)
 df.replace({False: 0, True: 1}, inplace=True)
@@ -268,13 +268,13 @@ Strings
 -------
 
 # create dataframe with a string column
-pd.DataFrame({'str_col': pd.Series(lst, dtype='string')})
+pd.DataFrame({"str_col": pd.Series(lst, dtype="string")})
 
 # memory efficient string type;
 # notes (jul 2022): 
 # 1. much more minimal functionality, e.g. no string concatenation implemented atm
 # 2. can run into "offset overflow" issues when attempting to mask large datasets
-pd.read_csv(..., dtype={'foo': 'string[pyarrow]'})
+pd.read_csv(..., dtype={"foo": "string[pyarrow]"})
 
 Categories
 ----------
@@ -298,7 +298,7 @@ df.idxmax(axis=1)
 df.stack().sort_values(ascending=False).iloc[:n]
 
 # get min of two or more cols
-df[['a','b']].min(axis=1)
+df[["a","b"]].min(axis=1)
 
 Clip
 ---
@@ -344,18 +344,18 @@ Variance
 
 # along rows
 df.var(1)
-df.var(1).plot.kde(title='..')
+df.var(1).plot.kde(title="..")
 df.var(1).plot.kde(logx=True)
 
 Sort
 ----
 
 # sort (arrange) by column
-df.sort_values('foo')
-df.sort_values(['foo', 'bar'])
+df.sort_values("foo")
+df.sort_values(["foo", "bar"])
 
 # sort by column (descending)
-df.sort_values('foo', ascending=False)
+df.sort_values("foo", ascending=False)
 
 # sort columns by name
 df = df.sort_index(axis=1)
@@ -364,35 +364,38 @@ Grouping / Summarization
 ------------------------
 
 # group by -> sum
-df.groupby('foo').sum()
+df.groupby("foo").sum()
 
 # group by -> count
-df.groupby('foo').count()
+df.groupby("foo").count()
 df.foo.value_counts().sort_values(ascending=False)
 
 # group by -> count (limit to a single column)
-df.[['foo', 'bar']].groupby("foo").count().sort_values("bar")
+df.[["foo", "bar"]].groupby("foo").count().sort_values("bar")
 
 # group by -> count unique
-df.groupby('foo').foo.nunique().reset_index()
+df.groupby("foo").foo.nunique().reset_index()
 
 # group by -> xx
-df.groupby('foo').agg(sum)
-df.groupby('foo').agg('sum')
-df.groupby('foo').agg(lambda x: np.sum(x))
+df.groupby("foo").agg(sum)
+df.groupby("foo").agg("sum")
+df.groupby("foo").agg(lambda x: np.sum(x))
 
 # group by -> sort
-df.groupby('foo').apply(pd.DataFrame.sort_values, 'bar')
-df.groupby('foo').sort_values('bar')
+df.groupby("foo").apply(pd.DataFrame.sort_values, "bar")
+df.groupby("foo").sort_values("bar")
 
 # group by -> count -> max -> sample
 df.groupby(["path", "foo"]).count().max(axis=1).groupby("path").sample(1)
 
 # get first item from each group
-df.groupby('foo').first()
+df.groupby("foo").first()
+
+# top n by group
+df.sort_values("foo", ascending = False).groupby("grp").head(5)
 
 # ~ungroup()
-df.groupby('foo').first().reset_index()
+df.groupby("foo").first().reset_index()
 
 Sampling
 --------
@@ -403,7 +406,7 @@ Counting
 --------
 
 # convert a list to a series of frequencies
-pd.Series(['a', 'a', 'b', 'c']).value_counts()
+pd.Series(["a", "a", "b", "c"]).value_counts()
 
 Matrix operations
 -----------------
@@ -425,11 +428,11 @@ ind = np.triu_indices(5, k=1)
 df.values[ind]
 
 # pivot long -> wide
-df.pivot_table(index='patient', columns='obs', values='score', fill_value=0)
+df.pivot_table(index="patient", columns="obs", values="score", fill_value=0)
 
 # pivot long -> wide (binary)
-df['presence'] = True
-mat = df.pivot_table(index='patient', columns='obs', values='presence', fill_value=False)
+df["presence"] = True
+mat = df.pivot_table(index="patient", columns="obs", values="presence", fill_value=False)
 
 # if some values are missing in the wide matrix, these will show up as `NaN`s, before
 # being filled with "False" in the example below.. the result is that the type of the wide
@@ -452,15 +455,15 @@ Plotting
 
 # density plot for column "score"
 import matplotlib.pyplot as plt
-ax = df.score.plot.kde(title='...')
+ax = df.score.plot.kde(title="...")
 plt.show()
 
-ax.figure.savefig('out.png', dpi=300)
+ax.figure.savefig("out.png", dpi=300)
 
 Clipboard
 ---------
 
-pd.read_clipboard(sep='\t')
+pd.read_clipboard(sep="\t")
 df.to_clipboard()
 df.foo.to_clipboard()
 

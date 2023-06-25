@@ -1,3 +1,4 @@
 # pass host environmental variable
 environment:
-  - FOO
+  - XYZ
+  - FOO=$BAR

@@ -92,6 +92,7 @@
 \mathcal{A}   # calligraphic / fancy
 \mathfrak{B}  # calligraphic / fraktur
 \mathbb{C}    # ℝ style
+\mathbf{x}    # vectors
 
 # dot above
 \dot{x}
