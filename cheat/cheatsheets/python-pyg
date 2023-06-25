@@ -1,0 +1,44 @@
+# setup
+import torch
+from torch_geometric.data import Data
+
+# graph instances (torch_geometric.data.Data)
+data.x
+data.y
+data.keys
+data.num_edges
+data.num_nodes
+data.edge_attrs()
+data.node_attrs()
+data.is_directed()
+data.has_self_loops()
+
+# send to gpu
+device = torch.device('cuda')
+data = data.to(device)
+
+# create (unweighted/undirected)
+edge_index = torch.tensor([[..from..], [..to..]], dtype=torch.long)
+x = torch.tensor([[0], [1], [2]], dtype=torch.float)
+data = Data(x=x, edge_index=edge_index)
+
+# load example datasets;
+# https://pytorch-geometric.readthedocs.io/en/latest/modules/datasets.html
+from torch_geometric.datasets import PPI
+dataset = PPI(root="/data/proj/pyg/enzymes")
+
+from torch_geometric.datasets import Planetoid
+dataset = Planetoid(root="/data/proj/pyg/enzymes", name="PubMed")
+
+# interacting with datasets
+dataset.num_classes
+
+len(dataset)
+data = dataset[0]
+
+# mini-batches
+from torch_geometric.loader import DataLoader
+loader = DataLoader(dataset, batch_size=32, shuffle=True)
+
+for batch in loader:
+  ...

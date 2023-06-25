@@ -1,2 +1,8 @@
 # environment variables (must prefix with "REACT_APP_")
 process.env.REACT_APP_FOO
+
+# create react app
+npx create-react-app my-app
+
+# update react app
+npm install react-scripts@latest

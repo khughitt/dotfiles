@@ -6,6 +6,7 @@ npm install
 
 # update install packages
 npm update
+npm update foo
 
 # install most recent version of react
 npm install react react-dom

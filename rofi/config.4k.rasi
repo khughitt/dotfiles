@@ -3,4 +3,5 @@ configuration {
     combi-modi: "window,drun,ssh";
     theme: "~/.cache/wal/colors-rofi-dark.rasi";
     font: "hack 26";
+    opacity: 0.8;
 }

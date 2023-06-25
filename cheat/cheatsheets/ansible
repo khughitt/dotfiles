@@ -1,3 +1,6 @@
 # ansible-playbook
 -b  --become
 -K  --ask-become-pass
+
+# list installed collections
+ansible-galaxy collection list

@@ -5,6 +5,9 @@ git push -f               # pushes previous commit
 # undo delete file (uncommitted)
 git checkout HEAD <file>
 
+# revert all changes
+git checkout .
+
 # create & push a tag
 git tag -a v1.0 -m "..."
 git push origin v1.0

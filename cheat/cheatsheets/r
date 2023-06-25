@@ -144,6 +144,9 @@ multimode::modetest(x, method='...')$p.value
 silverman.test(x, 1)@p_value
 dip.test(x)$p.value
 
+# hypergeometric test (over-representation p-val)
+1.0 - phyper(num_pos_sample - 1, num_pos_bg, num_neg_bg, sample_size, lower.tail = TRUE)
+
 # parallel apply
 library(doParallel)
 
@@ -161,3 +164,6 @@ res <- parApply(cl, df, 1, function(x) {
   ...
 })
 stopCluster(cl)
+
+# logistic regression
+glm(y ~ x, family = "binomial")
