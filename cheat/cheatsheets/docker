@@ -10,6 +10,9 @@ docker images
 # list containers
 docker ps -a
 
+# stop a single container
+docker kill <container_id>
+
 # stop all running containers
 docker kill $(docker ps -q)
 
@@ -65,3 +68,6 @@ docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}
 
 # copy file from inside container to host
 docker cp <container>:from/file.txt to.txt
+
+# keep container open/running
+ENTRYPOINT ["tail", "-f", "/dev/null"]

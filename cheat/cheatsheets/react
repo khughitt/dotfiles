@@ -6,3 +6,6 @@ npx create-react-app my-app
 
 # update react app
 npm install react-scripts@latest
+
+# pass environmental variables to dockerized react app
+CMD echo "REACT_APP_API_URI=${REACT_APP_API_URI}" > .env

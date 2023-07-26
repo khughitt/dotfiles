@@ -1,5 +1,5 @@
 # get a specific column from each list in a list-of-lists
-lapply(lst, '[[', 'foo')
+lapply(lst, "[[", "foo")
 
 # specify factor level order
 ordered(df$foo, levels = c("small", "med", "large"))
@@ -16,7 +16,7 @@ var_explained <- round(summary(pca)$importance[2, 1:2] * 100, 2)
 # add labels and plot
 pca_dat <- pca_dat %>%
   as.data.frame() %>%
-  rownames_to_column('row_label')
+  rownames_to_column("row_label")
 
 plt <- ggplot(pca_dat, aes(x = PC1, y = PC2)) +
   geom_point() +
@@ -25,12 +25,12 @@ plt <- ggplot(pca_dat, aes(x = PC1, y = PC2)) +
 
 # UMAP
 library(uwot)
-umap(t(dat), n_neighbors = 15, n_components = 2, init = 'spectral', scale = FALSE,
+umap(t(dat), n_neighbors = 15, n_components = 2, init = "spectral", scale = FALSE,
      min_dist = 0.01)
 
 # sweep (ex: cpm normalization)
-dat <- sweep(dat, 2, colSums(dat), '/') * 1E6
-dat <- sweep(dat, 2, colSums(dat, na.rm = TRUE), '/') * 1E6
+dat <- sweep(dat, 2, colSums(dat), "/") * 1E6
+dat <- sweep(dat, 2, colSums(dat, na.rm = TRUE), "/") * 1E6
 
 # recursively update one list, using another
 modifyList(a, b)
@@ -39,18 +39,18 @@ modifyList(a, b)
 stack(lst)
 
 # read file as a string
-readr::read_file('file.txt')
+readr::read_file("file.txt")
 
 # json
-jsonlite::read_json('input.json')
-jsonlite::write_json('output.json')
+jsonlite::read_json("input.json")
+jsonlite::write_json("output.json")
 
 # json - create a list of dicts
-df = data.frame(from=c('a', 'b'), to=c('c', 'd'))
+df = data.frame(from=c("a", "b"), to=c("c", "d"))
 jsonlite::toJSON(df)
 
 # or..
-lst = list(list('from'='a', 'to'='b'), list('from'='c', 'to'='d'))
+lst = list(list("from"="a", "to"="b"), list("from"="c", "to"="d"))
 jsonlite::toJSON(lst)
 
 # yaml
@@ -67,7 +67,7 @@ strftime(Sys.time(), "%Y-%m-%d")
 strftime(as.POSIXlt(Sys.time(), "UTC"), "%Y-%m-%dT%H:%M:%S%z")
 
 # color map from list of colors
-colorRampPalette(c('red', 'blue'))(100)
+colorRampPalette(c("red", "blue"))(100)
 
 # ColorBrewer palettes
 RColorBrewer::brewer.pal(12, "Set3")
@@ -102,14 +102,14 @@ debugonce(pkg:::foo)
 debug(pkg:::foo)
 
 # set breakpoint
-utils::setBreakpoint('file.R', 99)
+utils::setBreakpoint("file.R", 99)
 
 # print variable memory usage
 # http://stackoverflow.com/questions/1395270/determining-memory-usage-of-objects
 sort( sapply(ls(),function(x){object.size(get(x))}))
 
 # aheatmap
-aheatmap(dat, color = viridis(100), Colv = FALSE, labCol = '', annRow = annot_df)
+aheatmap(dat, color = viridis(100), Colv = FALSE, labCol = "", annRow = annot_df)
 
 # cosine similarity
 # source: https://stats.stackexchange.com/a/367216/18331
@@ -129,7 +129,7 @@ X[lower.tri(X)] = t(X)[lower.tri(X)]
 
 # imputation
 missMethods::impute_median(mat)                  # median value (columns)
-missMethods::impute_mean(mat, type = 'rowwise')  # mean value (rows)
+missMethods::impute_mean(mat, type = "rowwise")  # mean value (rows)
 as.matrix(VIM::kNN(mat)[, 1:ncol(mat)])          # k-NN
 
 # write xlsx files (openxlsx does not depend on java like the xlsx package..)
@@ -140,7 +140,7 @@ openxlsx::write.xlsx(tbls, file="out.xlsx")
 nmode_bw <- diff(range(x)) / 6
 multimode::nmodes(x, bw = nmode_bw)
 
-multimode::modetest(x, method='...')$p.value
+multimode::modetest(x, method="...")$p.value
 silverman.test(x, 1)@p_value
 dip.test(x)$p.value
 
@@ -154,7 +154,7 @@ MAX_THREADS <- max(1, detectCores() - 2)
 cl <- makeCluster(MAX_THREADS, outfile = "")
 registerDoParallel(cl)
 
-clusterExport(cl, c('vars_used_inside_loop'))
+clusterExport(cl, c("vars_used_inside_loop"))
 
 tmp_ <- clusterCall(cl, function() {
   library("libraries needed..")

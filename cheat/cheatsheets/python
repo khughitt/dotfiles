@@ -102,6 +102,9 @@ datetime.datetime.now().strftime("%Y-%m-%d")
 # convert unix timestamp to datetime
 datetime.fromtimestamp(..)
 
+# datetime to ISO-8601 date
+dt.isoformat()
+
 # get file mtime (cross-platform)
 mtime = os.path.getmtime("foo.txt")
 

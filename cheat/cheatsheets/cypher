@@ -1,0 +1,3 @@
+# get all nodes;
+# https://stackoverflow.com/a/39437520/554531
+MATCH (n) RETURN (n)

@@ -12,6 +12,9 @@ g$
 # clean run
 nvim --clean
 
+# show error, etc. messages
+:messages
+
 # print hex for a single hilite group
 :hi Normal
 

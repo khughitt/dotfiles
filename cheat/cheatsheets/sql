@@ -1,0 +1,2 @@
+# select unique
+SELECT DISTINCT(x) FROM y;

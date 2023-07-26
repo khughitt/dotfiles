@@ -105,7 +105,7 @@ Saving
 df = df.reset_index()
 df = df.rename(columns={df.columns[0]: "foo"}).to_feather(...)
 
-dates
+Dates
 -----
 
 # convert date column to unix timestamps
@@ -162,6 +162,9 @@ df["foo"] = 1
 
 # add a "rank" column (1-n)
 df["rank"] = list(range(1, df.shape[0] + 1))
+
+# add row
+df = pd.concat([df, row_df], ignore_index=True)
 
 Moving cols
 -----------
@@ -294,7 +297,7 @@ Min/Max
 # get indices of column with max value for each row (~which.max)
 df.idxmax(axis=1)
 
-# get the N largest values in a dataframe overall
+# get indices & values for the N largest values in a (matrix) dataframe
 df.stack().sort_values(ascending=False).iloc[:n]
 
 # get min of two or more cols
@@ -471,7 +474,11 @@ Write
 -----
 
 # exclude index
-df.to_csv(index=False)
+df.to_csv(..., index=False)
+
+# force quotes for csv output
+import csv
+df.to_csv(..., quoting=csv.QUOTE_ALL)
 
 Troubleshooting
 ---------------

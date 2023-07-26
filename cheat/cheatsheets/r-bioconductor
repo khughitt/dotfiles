@@ -1,9 +1,8 @@
-#
-# org.Hs.eg.db
-#
-
 # genes -> cytogenetic bands
 AnnotationDbi::select(org.Hs.eg.db, columns=c('MAP'), keys='KIF14', keytype='SYMBOL')
+
+# gene lengths
+width(genes(TxDb.Hsapiens.UCSC.hg38.knownGene))
 
 # load gene set
 geneIds(getGmt(infile))

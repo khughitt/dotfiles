@@ -1,0 +1,47 @@
+# psql
+# use single quotes around values in SQL statements
+\help   # help
+\l      # list dbs
+\c db   # connect to "db"
+\dt     # show tables
+\d tbl  # describe table
+\d+ tbl # describe table "+"
+
+# add "postgres" user
+psql -U postgres
+
+# create db
+psql -c 'create database foo'
+
+# interact with pg docker container
+docker exec -it <container> /bin/bash
+su -l postgres
+psql ..
+
+# from host
+psql -h db.localhost -U postgres
+
+# create new user + db
+createuser --interactive
+createdb dbName
+psql -d dbName
+
+# psycopg python adaptor
+conn = psycopg.connect(host="<host>", dbname="...", user="postgres", password="...")
+
+# once connected, api is similar to sqlite3:
+cur = conn.cursor()
+cur.execute("...")
+cur.fetchone()
+
+conn.commit()
+cur.close()
+
+# rollback failed transaction
+rollback;
+conn.rollback()
+
+# collapse multiple rows into a single string
+SELECT id, string_agg(foo, ', ') AS foo_list 
+  FROM tbl 
+  GROUP BY id;

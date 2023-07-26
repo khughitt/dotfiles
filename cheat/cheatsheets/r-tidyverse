@@ -38,3 +38,11 @@ df %>%
 # long to wide
 df %>%
   pivot_wider(id_cols = zz, names_from = xx, values_from = yy)
+
+#
+# filtering
+#
+
+# string matching
+df %>%
+  filter(str_detect(foo, "^bar"))

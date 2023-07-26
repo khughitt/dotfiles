@@ -2,3 +2,6 @@
 environment:
   - XYZ
   - FOO=$BAR
+
+# keep container running
+command: "tail -f /dev/null"
