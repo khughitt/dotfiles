@@ -110,6 +110,12 @@ arr.slice()
 # copy object (shallow)
 Object.assign({}, obj);
 
+# change object key
+obj['new'] = obj['old'];
+delete obj['old'];
+
+console.log(obj); // { newKey: 'value' }
+
 # array->unique
 Array.from(new Set(arr))
 
