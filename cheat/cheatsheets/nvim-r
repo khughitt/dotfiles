@@ -50,7 +50,7 @@ rl    List space
 rr    Clear console
 rm    Clear all
 
-rp    Object (print)
+rp    Object (print) # <,-o>
 rn    Object (names)
 rt    Object (str)
 

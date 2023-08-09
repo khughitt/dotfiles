@@ -1,2 +1,8 @@
 # select unique
 SELECT DISTINCT(x) FROM y;
+
+# create db
+CREATE DATABASE x;
+
+# drop db
+DROP DATABASE x;

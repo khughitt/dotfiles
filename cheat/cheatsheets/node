@@ -4,6 +4,9 @@ npm init
 # install deps from package.json
 npm install
 
+# downgrade / install specific version
+npm install foo@1.0.0
+
 # update install packages
 npm update
 npm update foo

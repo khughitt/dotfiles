@@ -162,6 +162,9 @@ req = urllib.request.Request("http://<remote>", headers=headers)
 with urllib.request.urlopen(req) as response:
   res = json.loads(response.read())
 
+# url decode
+urllib.parse.unquote
+
 # md5sum
 import hashlib
 md5 = hashlib.md5(s.encode("utf-8")).hexdigest()
@@ -194,6 +197,7 @@ path.mkdir(mode=0o755, parents=True, exist_ok=True)
 
 # pathlib basics
 path.joinpath("foo")
+path.expanduser()
 
 # create a temp dir
 import tempfile

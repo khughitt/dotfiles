@@ -1,0 +1,12 @@
+# input = document-term frequency matrix
+lda <- LDA(X, num_topics, control = list(seed = 321))
+lda <- LDA(X, num_topics, method = "Gibbs", control = list(seed = 321))
+
+# top 10 terms for each topic
+terms(lda, 10)
+
+# most likely topic for each doc
+topics(lda, 1)
+
+# topic x term probabilities matrix
+posterior(lda)$terms

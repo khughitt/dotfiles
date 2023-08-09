@@ -1,0 +1,16 @@
+# simple alphanumeric tokenization (base python)
+regex = re.compile(r"[\w\d]+", re.UNICODE)
+tokens = [match.group() for match in regex.finditer()]
+
+# term-freq -> corpus
+gensim.matutils.Dense2Corpus(documents_columns=False)  # ndarray
+gensim.matutils.Scipy2Corpus()  # ndarray / scipy.sparse
+
+# tokenization
+gensim.utils.simple_tokenize("..")
+
+# tokenization + basic pre-processing (lowercase, length filtering, strip accents)
+gensim.utils.simple_preprocess(doc, min_len=2, max_len=50)
+
+# filter tokens in dictionary (min # docs, max ratio docs)
+dictionary.filter_extremes(no_below=5, no_above=0.5)

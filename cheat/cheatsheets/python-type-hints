@@ -13,3 +13,11 @@ cast(str, x)
 
 # _assert_ that a variable's type has changed (another approach?)
 assert isinstance(x, str) 
+
+# pydantic: support dict["key"] style access
+# https://stackoverflow.com/a/62561069/554531
+class Foo(BaseModel):
+    some_list: Optional[list[str]] = []
+
+    def __getitem__(self, item):
+        return getattr(self, item)
