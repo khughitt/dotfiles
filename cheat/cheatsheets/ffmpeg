@@ -8,3 +8,6 @@ ffmpeg -framerate 1 -pattern_type glob -i '*.png' -c:v libx264 -r 30 -pix_fmt yu
 // split an audio file into multiple pieces
 // https://unix.stackexchange.com/a/283547/39903
 ffmpeg -i in.wav -f segment -segment_time 900 -c copy out-%02d.wav
+
+// flac -> mp3
+ffmpeg -i in.flac -ab 320k out.mp3

@@ -5,6 +5,9 @@ fd --changed-before 5days
 # limit depths
 fd -d 1
 
+# exclude pattern
+fd -E foo
+
 # find files in a specified directory
 fd . <dir> -t f
 

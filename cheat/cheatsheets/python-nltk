@@ -1,0 +1,9 @@
+# tokenization (nltk)
+nltk.tokenize.RegexpTokenizer
+tokenizer = RegexpTokenizer(r'\w+')
+tokenizer.tokenize(doc)
+
+# lemmatization (nltk)
+from nltk.stem.wordnet import WordNetLemmatizer
+lemmatizer = WordNetLemmatizer()
+lemmatizer.lemmatize(word)

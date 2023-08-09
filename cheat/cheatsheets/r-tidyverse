@@ -43,6 +43,6 @@ df %>%
 # filtering
 #
 
-# string matching
+# string matching (starts with, ends with, regex..)
 df %>%
   filter(str_detect(foo, "^bar"))

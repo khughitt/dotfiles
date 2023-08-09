@@ -2,6 +2,9 @@
 git reset --soft "HEAD^"  # undos local commit
 git push -f               # pushes previous commit
 
+# unstage file
+git reset <file>
+
 # undo delete file (uncommitted)
 git checkout HEAD <file>
 
