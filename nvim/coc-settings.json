@@ -2,5 +2,18 @@
   "suggest.autoTrigger": "none",
   "suggest.noselect": false,
   "signature.target": "echo",
-  "inlayHint.enable": false
+  "inlayHint.enable": false,
+  "languageserver": {
+    "julia": {
+      "command": "/usr/bin/julia",
+      "args" : ["--startup-file=no", "--history-file=no", "-e",
+      "using LanguageServer;\n       using Pkg;\n       import StaticLint;\n       import SymbolServer;\n       env_path = dirname(Pkg.Types.Context().env.project_file);\n       server = LanguageServer.LanguageServerInstance(stdin, stdout, env_path, \"\");\n       server.runlinter = true;\n       run(server);" ],
+      "filetypes": ["julia"]
+    }
+  },
+  "workspace.ignoredFolders": [
+    "$HOME",
+    "$HOME/.cargo/**",
+    "$HOME/.rustup/**"
+  ],
 }
