@@ -8,6 +8,7 @@ shell/private
 shell/local
 zeit/
 plan/
+mime/x-wine-extension-*
 mindful/
 dojo/
 bin
@@ -17,6 +18,7 @@ tags
 unused
 vim/black
 vim/tmp
+_archive
 .credentials
 .stversions
 .stignore

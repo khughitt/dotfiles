@@ -243,6 +243,9 @@ alias -s Rmd=nvim
 # tmux
 alias x=xumt
 
+# virtual env
+alias dea=deactivate
+
 # xmodmap
 alias xm="xmodmap ~/.Xmodmap"
 
