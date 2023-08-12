@@ -1,7 +1,8 @@
 name: shaders
 
+setup:
+  - "cp -r ~/d/art/shaders/template ~/d/art/shaders/prac/{today}"
 left:
-  - "cp -r ~/d/shaders/template ~/d/shaders/prac/`date +\"%Y-%m-%d\"`"
-  - "kitty -d ~/d/shaders/prac/`date +\"%Y-%m-%d\"` nvim shader.frag"
+  - "kitty -d ~/d/art/shaders/prac/{today} nvim shader.frag"
 right:
-  - "$BROWSER --new-window -P shaders"
+  - "$BROWSER --new-window --profile-directory='shaders'"
