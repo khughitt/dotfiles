@@ -5,6 +5,8 @@
 #
 DOTS_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+echo "Installing dotfiles relative to: $DOTS_HOME..."
+
 # Determine resolution to use
 HIRES=""
 
@@ -170,15 +172,11 @@ done
 
 echo "Done!"
 echo "Don't forget to install any necessary fonts, icons, etc."
+echo ""
 
 echo "Other post-setup steps:"
-echo "https://github.com/junegunn/vim-plug"
-echo "https://github.com/zdharma/zinit"
-echo "https://github.com/clvv/fasd"
-
-#
-# Next steps (for clean install):
-#
-# - zinit
-#
-
+echo ""
+echo "1. Adjust \$DOTFILES environmental variable in zshrc as needed"
+echo "2. Install vim-plug (https://github.com/junegunn/vim-plug)"
+echo "3. Install zinit (https://github.com/zdharma-continuum/zinit)"
+echo "4. Install fasd (https://github.com/clvv/fasd)"
