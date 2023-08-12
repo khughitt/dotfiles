@@ -24,10 +24,10 @@ set $term termite
 set $menu rofi -show drun
 
 # rofi-notes
-bindsym $mod+n exec rofi -show notes -modi "notes:~/.dotfiles/rofi/scripts/rofi-notes.sh"
+bindsym $mod+n exec rofi -show notes -modi "notes:$DOTFILES/rofi/scripts/rofi-notes.sh"
 
 # rofi-tasks
-bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:~/.dotfiles/rofi/scripts/rofi-tasks.sh"
+bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:$DOTFILES/rofi/scripts/rofi-tasks.sh"
 
 #-------------------------------------------------------------------------------
 #  Appearance

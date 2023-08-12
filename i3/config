@@ -23,7 +23,7 @@ set $term kitty
 #-------------------------------------------------------------------------------
 set $menu rofi -show drun
 
-bindsym $mod+m exec --no-startup-id rofi -show mindmaps -modi "mindmaps:~/.dotfiles/rofi/scripts/rofi-mindmaps.sh"
+bindsym $mod+m exec --no-startup-id rofi -show mindmaps -modi "mindmaps:$DOTFILES/rofi/scripts/rofi-mindmaps.sh"
 bindsym $mod+t exec --no-startup-id rofi -show proj -modi "proj:~/d/software/rofi-proj/rofi-proj.py" 
 
 #-------------------------------------------------------------------------------

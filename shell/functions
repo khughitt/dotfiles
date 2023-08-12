@@ -422,3 +422,17 @@ function ftoc {
 function jql {
   cat $1 | jq -C | /bin/less -R
 }
+
+# virtual env launcher
+function venv {
+  wd=`pwd`
+
+  cd ~/venv/
+  target=`/bin/ls -t | grep --color='none' "$1" | fzf -1 --exact`
+
+  if [ ! -z "$target" ]; then
+    source ~/venv/$target/bin/activate
+  fi
+
+  cd $wd
+}
