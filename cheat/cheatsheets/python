@@ -207,6 +207,16 @@ tempfile.mkdtemp
 random.seed(321)
 random.sample(lst, 5)
 
+# hex <-> rgb colors
+# https://stackoverflow.com/a/71804445/554531
+# rgb_to_hex((255, 255, 195))
+def rgb_to_hex(rgb):
+    return '%02x%02x%02x' % rgb
+
+# hex_to_rgb('ffffc3')
+def hex_to_rgb(hexa):
+    return tuple(int(hexa[i:i+2], 16)  for i in (0, 2, 4))
+
 # reload module
 import importlib
 importlib.reload(foo)

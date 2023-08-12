@@ -6,3 +6,6 @@ CREATE DATABASE x;
 
 # drop db
 DROP DATABASE x;
+
+# add value to existing enum
+ALTER TYPE enum_name ADD VALUE '...';
