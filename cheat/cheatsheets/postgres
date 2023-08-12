@@ -7,6 +7,8 @@
 \d tbl  # describe table
 \d+ tbl # describe table "+"
 
+\dT+ <enum>  # show all enum levels
+
 # add "postgres" user
 psql -U postgres
 
