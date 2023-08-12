@@ -17,5 +17,3 @@ nmap <silent> <localleader>p <Plug>(IPy-WordObjInfo)
 nmap <silent> <localleader>cc <Plug>(IPy-RunAll)
 
 nmap <localleader>rf :IPython<CR>
-
-

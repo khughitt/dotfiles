@@ -56,7 +56,7 @@ set mouse=a
 " ---------------------------------------------------------------------------
 " vim-plug
 " ---------------------------------------------------------------------------
-call plug#begin()
+call plug#begin("~/.config/nvim/plugged/")
     " general
     "Plug 'andymass/vim-matchup'
     Plug 'ggandor/lightspeed.nvim'
@@ -97,12 +97,13 @@ call plug#begin()
     Plug 'ibab/vim-snakemake'
     Plug 'jalvesaq/Nvim-R'
     Plug 'JuliaEditorSupport/julia-vim'
-    Plug 'pangloss/vim-javascript'
+    Plug 'leafgarland/typescript-vim'
     Plug 'mllg/vim-devtools-plugin'
     Plug 'mzlogin/vim-markdown-toc'
     Plug 'maxmellon/vim-jsx-pretty'
     Plug 'mboughaba/i3config.vim'
     Plug 'neoclide/coc.nvim', {'branch': 'release'}
+    Plug 'pangloss/vim-javascript'
     Plug 'raimon49/requirements.txt.vim'
     Plug 'stephpy/vim-yaml'
     Plug 'tikhomirov/vim-glsl'
@@ -140,6 +141,7 @@ call plug#begin()
     Plug 'reedes/vim-colors-pencil'
     Plug 'rockerBOO/boo-colorscheme-nvim'
     Plug 'sainnhe/sonokai'
+    Plug 'sonjiku/yawnc.nvim'
     Plug 'tyrannicaltoucan/vim-quantum'
     Plug 'tyrannicaltoucan/vim-deep-space'
     Plug 'vim-scripts/pyte'
@@ -266,8 +268,8 @@ function! ToggleTextWidth()
   endif
 endfunction
 
-" shortcut to insert a space in normal mode
-" nnoremap ss i<space><esc>
+" shortcut to add a space in normal mode
+nnoremap ss a<space><esc>
 
 " ----------------------------------------------------------------------------
 " Moving around, tabs, windows and buffers
@@ -549,6 +551,9 @@ let g:csv_no_conceal = 1
 " coc.nvim
 " ---------------------------------------------------------------------------
 
+" install extensions
+" :CocInstall coc-json coc-tsserver coc-r-lsp coc-pyright coc-julia coc-rust-analyzer
+
 " disable backups (may be neccessary...)
 " https://github.com/neoclide/coc.nvim/issues/649
 " setlocal nobackup
@@ -756,7 +761,7 @@ let g:NERDCustomDelimiters = {
 " ---------------------------------------------------------------------------
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = { "bash", "c", "cmake", "cpp", "css", "dockerfile", "go", "json", "julia", "lua", "latex", "r", "rust", "toml", "yaml" },
+  ensure_installed = { "bash", "c", "cmake", "cpp", "css", "dockerfile", "go", "javascript", "json", "julia", "lua", "latex", "r", "rust", "toml", "tsx", "typescript", "yaml" },
   ignore_install = {  },
   highlight = {
     enable = true,
@@ -955,11 +960,12 @@ let g:quantum_black=1
 " "set background=dark
 set background=light
 
-"colorscheme onedark
+colorscheme onedark
 "colorscheme nord
 "colorscheme lightning
-"colorscheme paramount
-colorscheme quantum
+" colorscheme paramount
+" colorscheme yawnc
+" colorscheme quantum
 
 " enable 24-bit color support (disable for pywal support)
 if (has("termguicolors"))
