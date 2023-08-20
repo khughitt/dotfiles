@@ -1,0 +1,15 @@
+# lemmatize
+nlp = stanza.Pipeline(lang='en', processors='tokenize,pos,lemma', 
+                      download_method=stanza.DownloadMethod.REUSE_RESOURCES)
+
+out_docs = nlp([stanza.Document([], text=d) for d in docs])
+
+lemma_docs:list[str] = []
+
+for doc in out_docs:
+  for sentence in doc.sentences:
+    lemma_docs.append(" ".join([word.lemma for word in sentence.words if word.lemma is not None]))
+
+# tokenization (traditional chinese)
+stanza.download("zh-hant")
+nlp = stanza.Pipeline("zh-hant", processors="tokenize")

@@ -7,3 +7,6 @@ tokenizer.tokenize(doc)
 from nltk.stem.wordnet import WordNetLemmatizer
 lemmatizer = WordNetLemmatizer()
 lemmatizer.lemmatize(word)
+
+# stemmer comparison
+# https://stackoverflow.com/a/24663617/554531
