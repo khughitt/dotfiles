@@ -37,3 +37,6 @@ compaudit | xargs chmod g-w
 
 # zinit
 zinit update --all
+
+# expand symlink
+readlink -f ..

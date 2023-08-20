@@ -1,0 +1,2 @@
+# assert type
+const b:string = a as string

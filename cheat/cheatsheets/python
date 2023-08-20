@@ -105,6 +105,10 @@ datetime.fromtimestamp(..)
 # datetime to ISO-8601 date
 dt.isoformat()
 
+# add/subtract from datetime
+from datetime import timedelta
+t0 = t1 - timedelta(days=7)
+
 # get file mtime (cross-platform)
 mtime = os.path.getmtime("foo.txt")
 
@@ -209,13 +213,11 @@ random.sample(lst, 5)
 
 # hex <-> rgb colors
 # https://stackoverflow.com/a/71804445/554531
-# rgb_to_hex((255, 255, 195))
-def rgb_to_hex(rgb):
-    return '%02x%02x%02x' % rgb
+def rgb_to_hex(rgb:tuple[int, int, int]) -> str:
+    return '#%02x%02x%02x' % rgb
 
-# hex_to_rgb('ffffc3')
-def hex_to_rgb(hexa):
-    return tuple(int(hexa[i:i+2], 16)  for i in (0, 2, 4))
+def hex_to_rgb(hexa:str) -> tuple[int, int, int]:
+    return tuple(int(hexa[i:i+2], 16)  for i in (1, 3, 5))
 
 # reload module
 import importlib
@@ -230,3 +232,8 @@ reload(site)
 # profile script
 python -m cProfile -o profile.log <script>
 snakeviz profile.log
+
+# nested dictionary indexing
+from functools import reduce
+path = ['root', 'a']
+reduce(lambda arr, ind: arr[ind], path, tree)

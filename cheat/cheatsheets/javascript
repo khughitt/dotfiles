@@ -147,6 +147,9 @@ a == b   # loose equality (performs type coercion)
 # type
 typeof x
 
+# array?
+Array.isArray(x)
+
 # lower/upper case
 str.toLowerCase()
 
@@ -194,6 +197,11 @@ arr.reduce(function (acc, curr) {
     return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc
 }, {});
 
+# nested/dynamic object indexing
+const path = ["root", "a"]
+const tree = {"root": {"a": [1,2,3], "b": [3,4,5]}}
+path.reduce((obj, ind) => obj[ind], tree)
+
 # sort an array of objects by object value (decreasing / in-place)
 entries.sort((a, b) => (a.similarity < b.similarity) ? 1 : -1);
 
@@ -204,6 +212,16 @@ return arr.map((x) => sorted.indexOf(x) + 1);
 
 # timestamp -> date string
 new Date(ts * 1e3).toISOString()
+
+# iso date -> human-readible
+const opts:Intl.DateTimeFormatOptions = { year: "numeric", month: "long", day: "numeric" }
+new Date("2023-08-13T03:30:04").toLocaleDateString(undefined, opts)
+
+# substract time from date (milliseconds)
+new Date(t1 - 7 * 24 * 3600 * 1000)
+
+# coerce date to a number (needed for typescript time deltas..)
+let dateInt = +new Date();
 
 # date formatting (~strftime)
 # https://www.npmjs.com/package/dateformat
