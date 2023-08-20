@@ -268,8 +268,8 @@ function! ToggleTextWidth()
   endif
 endfunction
 
-" shortcut to add a space in normal mode
-nnoremap ss a<space><esc>
+" shortcut to add a space in normal mode; conflicts with sneak..
+" nnoremap ss a<space><esc>
 
 " ----------------------------------------------------------------------------
 " Moving around, tabs, windows and buffers
