@@ -11,6 +11,7 @@ export PAGER=less
 export PDFVIEWER=zathura
 export SYSTEMD_EDITOR=nvim
 export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_STATE_HOME="$HOME/.local/state"
 
 if type "moar" > /dev/null; then
     export PAGER=$(which moar)
