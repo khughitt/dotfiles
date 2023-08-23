@@ -152,7 +152,7 @@ _G.packer_plugins = {
   ["mindful.vim"] = {
     loaded = true,
     path = "/home/keith/.local/share/nvim/site/pack/packer/start/mindful.vim",
-    url = "/home/keith/.config/nvim/plugged/mindful.vim"
+    url = "/home/keith/.config/nvim/user/mindful.vim"
   },
   nerdcommenter = {
     loaded = true,
@@ -204,6 +204,13 @@ _G.packer_plugins = {
     loaded = true,
     path = "/home/keith/.local/share/nvim/site/pack/packer/start/requirements.txt.vim",
     url = "https://github.com/raimon49/requirements.txt.vim"
+  },
+  snakemake = {
+    loaded = false,
+    needs_bufread = true,
+    only_cond = false,
+    path = "/home/keith/.local/share/nvim/site/pack/packer/opt/snakemake/misc/vim",
+    url = "https://github.com/snakemake/snakemake"
   },
   supertab = {
     loaded = true,
@@ -328,10 +335,26 @@ _G.packer_plugins = {
 }
 
 time([[Defining packer_plugins]], false)
+-- Runtimepath customization
+time([[Runtimepath customization]], true)
+vim.o.runtimepath = vim.o.runtimepath .. ",/home/keith/.local/share/nvim/site/pack/packer/opt/snakemake/misc/vim"
+time([[Runtimepath customization]], false)
 -- Config for: remember.nvim
 time([[Config for remember.nvim]], true)
  require('remember') 
 time([[Config for remember.nvim]], false)
+vim.cmd [[augroup packer_load_aucmds]]
+vim.cmd [[au!]]
+  -- Filetype lazy-loads
+time([[Defining lazy-load filetype autocommands]], true)
+vim.cmd [[au FileType snakemake ++once lua require("packer.load")({'snakemake'}, { ft = "snakemake" }, _G.packer_plugins)]]
+time([[Defining lazy-load filetype autocommands]], false)
+vim.cmd("augroup END")
+vim.cmd [[augroup filetypedetect]]
+time([[Sourcing ftdetect script at: /home/keith/.local/share/nvim/site/pack/packer/opt/snakemake/misc/vim/ftdetect/snakemake.vim]], true)
+vim.cmd [[source /home/keith/.local/share/nvim/site/pack/packer/opt/snakemake/misc/vim/ftdetect/snakemake.vim]]
+time([[Sourcing ftdetect script at: /home/keith/.local/share/nvim/site/pack/packer/opt/snakemake/misc/vim/ftdetect/snakemake.vim]], false)
+vim.cmd("augroup END")
 
 _G._packer.inside_compile = false
 if _G._packer.needs_bufread == true then
