@@ -42,6 +42,7 @@ return require('packer').startup(function(use)
   use 'udalov/kotlin-vim'
   use 'yuezk/vim-js'
   use { 'neoclide/coc.nvim', branch = 'release'}
+  use {'snakemake/snakemake', rtp='misc/vim', ft='snakemake'}
 
   -- textobjs
   use 'kana/vim-textobj-user'
@@ -60,7 +61,7 @@ return require('packer').startup(function(use)
   use 'nvim-tree/nvim-web-devicons'
   use 'ryanoasis/vim-devicons'
 
-  use '~/.config/nvim/plugged/mindful.vim'
+  use '~/.config/nvim/user/mindful.vim'
 
   -- maybe..
   -- use 'nathanaelkane/vim-indent-guides'
