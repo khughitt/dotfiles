@@ -5,14 +5,17 @@ fd --changed-before 5days
 # limit depths
 fd -d 1
 
+# file extension
+fd -e pdf
+
 # exclude pattern
 fd -E foo
 
 # find files in a specified directory
 fd . <dir> -t f
 
-# copy
-fd -e foo -x cp {} to/
+# copy (see "find" notes for example that preserves directory structure..)
+fd -e csv -x cp {} to/
 
 # sort results by recency
 fd -l | sort -k6M -k7n | tail

@@ -188,9 +188,19 @@ vim.opt.shiftround = true             -- round indents to multiple of shift widt
 vim.opt.shiftwidth = 2
 vim.opt.softtabstop = 2               -- tab width
 vim.opt.tabstop = 2
-vim.opt.textwidth = 120               -- stick to 120 characters or less, when possible
+vim.opt.textwidth = 100               -- wrap lines at 100 characters, when asked
 vim.opt.virtualedit = {"block"}       -- allow virtual edit in visual block ..
 vim.opt.wrap = false                  -- do not wrap lines
+
+-- when wrapping is on, wrap backspace, cursor keys, etc.
+vim.opt.whichwrap:append ({
+  ['<'] = true,
+  ['>'] = true,
+  ['['] = true,
+  [']'] = true,
+  h = true,
+  l = true,
+})
 
 -- copy and comment current line
 vim.keymap.set('n', 'zz', 'yy<leader>ccp')
@@ -201,6 +211,21 @@ vim.keymap.set('', '<localleader>s', [[ <cmd>%s/ \+$//gc<cr> ]])
 
 -- split paragraph into sentences
 vim.keymap.set('', '<localleader>p', [[ :s/[!\?\.] /.\r\r/g ]])
+
+-- Shortuct to toggle textwidth wrapping
+vim.cmd([[
+function! ToggleTextWidth()
+  if &textwidth != 0
+    let b:oldtextwidth = &textwidth
+    set textwidth=0
+  elseif exists("b:oldtextwidth")
+    let &textwidth = b:oldtextwidth
+  else
+    set textwidth=100
+  endif
+endfunction
+]])
+vim.keymap.set('n', '<localleader>r', ':call ToggleTextWidth()<cr>', { silent = true })
 
 -- ---------------------------------------------------------------------------
 --  Copy and Paste
@@ -249,7 +274,7 @@ require('lualine').setup {
 -- barbar.nvim
 -----------------------------------------------------------------------------
 local map = vim.api.nvim_set_keymap
-local opts = { noremap = true, silent = true }
+local opts = { silent = true }
 
 map('n', '<leader>bd', '<cmd>BufferClose<cr>', opts)
 map('n', '<s-tab>', '<cmd>BufferPrevious<cr>', opts)
