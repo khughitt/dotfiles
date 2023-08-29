@@ -4,6 +4,8 @@ return require('packer').startup(function(use)
 
   use 'JoosepAlviste/nvim-ts-context-commentstring'
   use 'ervandew/supertab'
+  -- disabling until i have the chance to adjust keybindings..
+  --use 'ggandor/leap.nvim'
   use 'godlygeek/tabular'
   use 'junegunn/fzf.vim'
   use 'junegunn/vim-emoji'
@@ -41,6 +43,7 @@ return require('packer').startup(function(use)
   use 'tikhomirov/vim-glsl'
   use 'udalov/kotlin-vim'
   use 'yuezk/vim-js'
+  use 'folke/which-key.nvim'
   use { 'neoclide/coc.nvim', branch = 'release'}
   use {'snakemake/snakemake', rtp='misc/vim', ft='snakemake'}
 
