@@ -7,6 +7,16 @@
 :profile pause
 :noautocmd qall!
 
+# leap.nvim
+s                 forward search
+S                 backward search
+s{char}<space>    target char at end of line
+s<space><space>   jump to an empty line
+s<enter>          repeat the last search
+s<enter><enter>   traverse matches
+x                 move lhs visual bound
+X                 move rhs visual bound
+
 # vim-emoji
 ;e    replace all `:emoji:` instances in current buffer
 

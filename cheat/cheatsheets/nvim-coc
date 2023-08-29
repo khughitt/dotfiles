@@ -1,2 +1,5 @@
 # select yaml schema
 :CocCommand yaml.selectSchema
+
+[g  # prev error
+]g  # next error
