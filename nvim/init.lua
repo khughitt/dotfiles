@@ -106,7 +106,6 @@ vim.keymap.set('', 'k', 'gk', {silent = true})
 -- ---------------------------------------------------------------------------
 --  Search Options
 -- ---------------------------------------------------------------------------
-vim.opt.hlsearch = false  -- avoid highlighting when reloading vimrc
 vim.opt.ignorecase = true -- ignore case
 vim.opt.smartcase = true  -- enforce case when pattern contains uppercase chars
 
@@ -203,8 +202,8 @@ vim.opt.whichwrap:append ({
 })
 
 -- copy and comment current line
-vim.keymap.set('n', 'zz', 'yy<leader>ccp')
-vim.keymap.set('v', 'zz', 'ygv<leader>cc`.jP')
+vim.keymap.set('n', 'zz', 'yy<leader>ccp', { remap = true })
+vim.keymap.set('v', 'zz', 'ygv<leader>cc`.jP', { remap = true })
 
 -- strip all trailing whitespace in file
 vim.keymap.set('', '<localleader>s', [[ <cmd>%s/ \+$//gc<cr> ]])
@@ -271,6 +270,11 @@ require('lualine').setup {
 }
 
 -----------------------------------------------------------------------------
+-- which-key (testing)
+-----------------------------------------------------------------------------
+require("which-key").setup {}
+
+-----------------------------------------------------------------------------
 -- barbar.nvim
 -----------------------------------------------------------------------------
 local map = vim.api.nvim_set_keymap
@@ -281,6 +285,12 @@ map('n', '<s-tab>', '<cmd>BufferPrevious<cr>', opts)
 map('n', '<tab>', '<cmd>BufferNext<cr>', opts)
 map('n', '<s-left>', '<cmd>BufferPrevious<cr>', opts)
 map('n', '<s-right>', '<cmd>BufferNext<cr>', opts)
+
+-- ---------------------------------------------------------------------------
+-- coc.nvim
+-- ---------------------------------------------------------------------------
+vim.keymap.set('n', '[g', '<Plug>(coc-diagnostic-prev)', {silent = true})
+vim.keymap.set('n', ']g', '<Plug>(coc-diagnostic-next)', {silent = true})
 
 -- ---------------------------------------------------------------------------
 -- csv.vim
@@ -327,6 +337,11 @@ vim.g.Lf_WindowPosition = 'popup'
 vim.g.Lf_PreviewInPopup = 1
 
 vim.keymap.set('', '<c-p>', [[ :<c-u><c-r>=printf("Leaderf --nowrap mru %s", "")<cr><cr> ]])
+
+-- ----------------------------------------------------------------------------
+--  leap
+-- ----------------------------------------------------------------------------
+require('leap').add_default_mappings()
 
 -- ----------------------------------------------------------------------------
 --  mindful
@@ -415,6 +430,7 @@ vim.keymap.set('n', 'dad', 'da_', { remap = true })
 --  Language-specific Options
 -- ---------------------------------------------------------------------------
 vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.jl', command = 'set syntax=julia' })
+vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.md', command = 'set syntax=markdown' })
 vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.har', command = 'set ft=json' })
 vim.api.nvim_create_autocmd('FileType', { pattern = 'javascript', command = 'let b:did_indent = 1' })
 vim.api.nvim_create_autocmd('FileType', { pattern = 'vimscript', command = 'setlocal softtabstop=4 shiftwidth=4 tabstop=4' })
