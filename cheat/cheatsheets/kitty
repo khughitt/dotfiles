@@ -4,6 +4,10 @@ kitty +kitten ssh myserver
 # list available fonts
 kitty +list-fonts
 
+# copy & paste rectange
+ctrl+shift+v   # start selection; click & drag mouse to select region..
+ctrl+shift+c   # copy selected text
+
 # keyboard shortcuts
 # https://sw.kovidgoyal.net/kitty/overview/#other-keyboard-shortcuts
 

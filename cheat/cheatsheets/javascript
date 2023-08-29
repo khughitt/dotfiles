@@ -213,9 +213,12 @@ return arr.map((x) => sorted.indexOf(x) + 1);
 # timestamp -> date string
 new Date(ts * 1e3).toISOString()
 
-# iso date -> human-readible
+# iso date string -> Date object
+new Date("2023-08-13T03:30:04")
+
+# format date
 const opts:Intl.DateTimeFormatOptions = { year: "numeric", month: "long", day: "numeric" }
-new Date("2023-08-13T03:30:04").toLocaleDateString(undefined, opts)
+date.toLocaleDateString(undefined, opts)
 
 # substract time from date (milliseconds)
 new Date(t1 - 7 * 24 * 3600 * 1000)
