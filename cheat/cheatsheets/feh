@@ -17,6 +17,9 @@ feh --bg-max <img>
 feh --bg-center <img>
 feh --bg-fill <img>
 
+# set walpaper to wal bg
+feh --bg-center "$(< "${HOME}/.cache/wal/wal")"
+
 #
 # keyboard shortcuts
 #
