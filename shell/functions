@@ -241,7 +241,7 @@ function C {
 function c {
     target=`/bin/ls ~/.config/cheat/cheatsheets/ |\
             grep --color='none' "$1" |\
-            fzf -1 --exact`
+            fzf -1 --exact --preview 'bat ~/.config/cheat/cheatsheets/{}' --preview-window up`
 
     if [ ! -z "$target" ]; then
         vim ~/.config/cheat/cheatsheets/$target
@@ -413,7 +413,14 @@ function datp {
     fi
 }
 
-# Fahrenheit to Celsius
+# remove background
+function walirm {
+  img=$(basename `cat ${HOME}/.cache/wal/wal`)
+  fd $img -x rm
+  wali
+}
+
+# fahrenheit to celsius
 function ftoc {
   echo "scale=2;(5/9)*($1-32)" | bc
 }
