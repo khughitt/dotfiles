@@ -144,6 +144,11 @@ _G.packer_plugins = {
     path = "/home/keith/.local/share/nvim/site/pack/packer/start/kotlin-vim",
     url = "https://github.com/udalov/kotlin-vim"
   },
+  ["leap.nvim"] = {
+    loaded = true,
+    path = "/home/keith/.local/share/nvim/site/pack/packer/start/leap.nvim",
+    url = "https://github.com/ggandor/leap.nvim"
+  },
   ["lualine.nvim"] = {
     loaded = true,
     path = "/home/keith/.local/share/nvim/site/pack/packer/start/lualine.nvim",
@@ -331,6 +336,11 @@ _G.packer_plugins = {
     loaded = true,
     path = "/home/keith/.local/share/nvim/site/pack/packer/start/vim-yaml",
     url = "https://github.com/stephpy/vim-yaml"
+  },
+  ["which-key.nvim"] = {
+    loaded = true,
+    path = "/home/keith/.local/share/nvim/site/pack/packer/start/which-key.nvim",
+    url = "https://github.com/folke/which-key.nvim"
   }
 }
 
