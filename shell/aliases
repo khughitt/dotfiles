@@ -4,14 +4,98 @@
 #
 ################################################################################
 
-# sudo
-alias _='sudo'
-alias sudo="sudo " # support aliases when using sudo
-
 # ag
 alias agl='ag -l'
 alias agd='ag --depth'
 alias agu='ag -u'
+
+# cat
+alias cat='bat --wrap=never --paging=never'
+
+# cd
+alias dl='cd ~/downloads'
+alias dots='cd $DOTFILES'
+alias cdd='cd $dlas'
+
+# conda
+alias cde='conda deactivate'
+alias ca='conda activate'
+alias cs='mamba search'
+
+# cp
+alias cpr="cp -r"
+
+# diff
+alias diff='diff --color=auto'
+
+# docker
+alias doc='docker'
+alias docb='docker-compose up --build'
+alias dps='docker ps -a --format="table {{.ID}}\t\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
+alias up='docker-compose up --build'
+alias down='docker-compose down --remove-orphans'
+alias docl='docker logs -f'
+alias dk='docker kill `docker ps -q`'
+
+# du
+alias dud='du -d 1 -h'
+alias duf='du -sh *'
+alias dus='du -sh'
+
+# recursively counts # files in directories and returns a ranked list
+# https://unix.stackexchange.com/a/122871/39903
+alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
+
+# feh
+alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
+alias fehd='feh -g 640x480 -d -S filename .'
+
+# fd
+alias fda="fd -Luu"
+alias fdu="fd -u"
+alias fdl="fd -l | sort -k6M -k7n"
+alias fdr="fd -l --changed-within 5days | csvcut -d ' ' -S -c6-9 | csvlook -HI"
+
+alias fd1="fd --changed-within 1days"
+alias fd3="fd --changed-within 3days"
+alias fd5="fd --changed-within 5days"
+alias fd10="fd --changed-within 10days"
+
+# grep
+alias -g G='| grep'  # "-g" = global alias; can be substituted anywhere on the line
+alias grep='grep --color=always'
+alias zgrep='zgrep --color=always'
+
+# htop
+alias htop=gotop
+
+# httpd
+alias ph='python -m "http.server"'
+alias pa='parcel'
+
+# kitty
+alias icat="kitty +kitten icat"
+
+# "jog"; re-run command specific to current directory
+# https://github.com/natethinks/jog/blob/master/jog
+alias jog='grep -v jog ~/.zsh_history_ext | grep -a --color=never "$PWD   " | cut -f1 -d"|" | tail | fzf'
+
+# journalctl
+alias errors="journalctl -b -p err|less"
+alias vacuum="sudo journalctl --vacuum-size=50M"
+
+# less
+alias less='moar'
+
+# lit-walk
+alias lw="lit-walk"
+alias lwd="lit-walk --config='~/.config/lit/config-dev.yml'"
+
+# ln
+alias lns='ln -s'
+
+# locate
+alias locate=plocate
 
 # ls
 if type "lsd" > /dev/null; then
@@ -26,142 +110,14 @@ alias l='ls -l'
 alias lt='ls --tree'
 alias lr='ls -latr'
 
-# ln
-alias lns='ln -s'
-
-# cd
-alias dl='cd ~/downloads'
-alias dots='cd $DOTFILES'
-alias cdd='cd $dlas'
-
-# cheat
-alias ch=cheat
-
-# docker
-alias doc='docker'
-alias dps='docker ps -a --format="table {{.ID}}\t\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
-alias up='docker-compose up --build'
-alias down='docker-compose down --remove-orphans'
-alias docl='docker logs -f'
-alias dk='docker kill `docker ps -q`'
-
-# dojo
-alias doe='cd ~/d/dojo/exercises'
-
-# file management
-alias rmf="rm -rf"
-alias cpr="cp -r"
-
-# grep
-alias grep='grep --color=always'
-alias zgrep='zgrep --color=always'
-
-# jog
-alias jg='eval `jog | fzf`'
-
-# remote ip addr
-# https://bbs.archlinux.org/viewtopic.php?pid=408739#p408739
-alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1'
-
-# most recent file
-alias new="echo *(.om[1])"
-
-# cat
-alias cm='cat README.md'
-
-# du
-alias dud='du -d 1 -h'
-alias duf='du -sh *'
-alias dus='du -sh'
-
-# recursively counts # files in directories and returns a ranked list
-alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
-
-# locate
-alias locate=plocate
-
-# lit-walk
-alias lw="lit-walk"
-alias lwd="lit-walk --config='~/.config/lit/config-dev.yml'"
-
-# fd
-alias fda="fd -Luu"
-alias fdu="fd -u"
-alias fdl="fd -l | sort -k6M -k7n"
-alias fdr="fd -l --changed-within 5days | csvcut -d ' ' -S -c6-9 | csvlook -HI"
-
-alias fd1="fd --changed-within 1days"
-alias fd3="fd --changed-within 3days"
-alias fd5="fd --changed-within 5days"
-alias fd10="fd --changed-within 10days"
-
-# htop
-alias htop=gotop
-
-# kitty
-alias icat="kitty +kitten icat"
-
-# kord
-alias kord="python ~/.local/fretboard/fretboard.py"
-
-# mindful
-alias m='mindful'
-
-# data
-alias D="data_dir"
-
-# mount
-alias um="sudo umount /mnt/usb"
-
-# netstat
-alias netp="sudo netstat -plant"
-
-# pwd
-alias xp='pwd | xsel'
-alias px='cd "$(xsel -p)"'
-
-# httpd
-alias ph='python -m "http.server"'
-alias pa='parcel'
-
-# rofi
-alias rt='cd $ROFI_PROJ_DIR && ls -l'
-
-# taskwarrior
-alias tw=taskwarrior-tui
-
-# tar
-alias taru="tar xavpf"
-alias tarc="tar czvpf"
-
-# tree
-alias tree='tree -C'
-
-# ranger
-alias ra=ranger
-
-# cat
-alias cat='bat --wrap=never --paging=never'
-
-# feh
-alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
-alias fehd='feh -g 640x480 -d -S filename .'
-
-# less
-alias less='less -NRSi --shift 10'
-
-if type "moar" > /dev/null; then
-    alias less='moar'
-fi
-
-# visidata
-alias vp="vd -f pandas"
-
-# wc
-alias wcl="wc -l"
-
-# xclip
-alias xc=xclip
+# mimetypes
+alias open='mimeopen'
+alias -s doc=lowriter
+alias -s pdf=zathura
+alias -s html=firefox
+alias -s org=firefox
+alias -s com=firefox
+alias -s Rmd=nvim
 
 # neovim
 alias vi=nvim
@@ -171,48 +127,36 @@ alias vm='nvim README.*md'
 alias vl="vim -c \"normal '0\""                         # open most recently edited file / position
 alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}' # open last argument of last command in vim
 
-# journalctl
-alias errors="journalctl -b -p err|less"
-alias vacuum="sudo journalctl --vacuum-size=50M"
+# netstat
+alias netp="sudo netstat -plant"
 
-# pywal
-alias wali='wal -i ~/d/linux/backgrounds/3440 --backend haishoku'
-alias wali2k='wal -i ~/d/linux/backgrounds/1920 --backend haishoku'
-
-# package management
-alias y='yay'
-alias yd='yay -Syu --devel'
-
-# conda
-alias cde='conda deactivate'
-alias ca='conda activate'
-alias cs='mamba search'
-
-# diff
-alias diff='diff --color=auto'
+# pwd
+alias xp='pwd | xsel'
+alias px='cd "$(xsel -p)"'
 
 # python
 alias ipy=ipython
 alias psh='poetry shell'
 
+# pywal
+alias wali='wal -i ~/d/linux/backgrounds/3440 --backend haishoku'
+alias wali2k='wal -i ~/d/linux/backgrounds/1920 --backend haishoku'
+
+# ranger
+alias ra=ranger
+
+# rm
+alias rmf="rm -rf"
+
 # r
 alias R='R --quiet --no-save'
 alias r=radian
 
+# rofi-proj
+alias rt='cd $ROFI_PROJ_DIR && ls -l'
+
 # rust
 alias rc=rustc
-
-# xrandr
-alias 2k="xrandr --output DP-0 --mode 1920x1080"
-alias 4k="xrandr --output DP-0 --mode 3840x2160"
-
-# termbin
-# ex. echo foo | tb
-alias tb="nc termbin.com 9999"
-
-# google translate
-alias tze="trans zh-TW:en"  # to english
-alias tez="trans en:zh-TW"  # to chinese
 
 # sleep
 alias s1="sleep 60 &&"
@@ -225,26 +169,56 @@ alias s30="sleep 1800 &&"
 alias s60="sleep 3600 &&"
 alias s120="sleep 7200 &&"
 
+# sudo
+alias _='sudo'
+alias sudo="sudo " # support aliases when using sudo
+
 # suspend
 alias zzz="systemctl suspend"
 
-# mimetypes
-alias open='mimeopen'
-alias -s doc=lowriter
-alias -s pdf=zathura
-alias -s html=firefox
-alias -s org=firefox
-alias -s com=firefox
-alias -s Rmd=nvim
+# tar
+alias taru="tar xavpf"
+alias tarc="tar czvpf"
+
+# termbin (ex. "echo foo | tb")
+alias tb="nc termbin.com 9999"
 
 # tmux
 alias x=xumt
 
+# translate
+alias tze="trans zh-TW:en"  # to english
+alias tez="trans en:zh-TW"  # to chinese
+
+# tree
+alias tree='tree -C'
+
 # virtual env
 alias dea=deactivate
 
+# visidata
+alias vp="vd -f pandas"
+
+# wc
+alias wcl="wc -l"
+
+# xclip
+alias xc=xclip
+
 # xmodmap
 alias xm="xmodmap ~/.Xmodmap"
+
+# xrandr
+alias 2k="xrandr --output DP-0 --mode 1920x1080"
+alias 4k="xrandr --output DP-0 --mode 3840x2160"
+
+# "whatip"; get external ip addr
+# https://bbs.archlinux.org/viewtopic.php?pid=408739#p408739
+alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1'
+
+# yay
+alias y='yay'
+alias yd='yay -Syu --devel'
 
 # zeit
 alias z='zeit'
@@ -254,15 +228,3 @@ alias zl='zeit list'
 alias zt='zeit tracking'
 alias ze="zeit entry \`zeit --no-colors list | tail -1 | awk '{print \$1}'\`"
 alias zrm='zeit erase '
-
-# Command line head / tail shortcuts
-# "-g" = global alias; can be substituted anywhere on the line
-alias -g H='| head'
-alias -g T='| tail'
-alias -g G='| grep'
-alias -g L="| less"
-alias -g LL="2>&1 | less"
-alias -g CA="2>&1 | cat -A"
-alias -g NE="2> /dev/null"
-alias -g NUL="> /dev/null 2>&1"
-alias -g P="2>&1| pygmentize -l pytb"
