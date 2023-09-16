@@ -1,0 +1,28 @@
+#
+# Tables.jl
+#
+
+# load feather file
+using Arrow;
+dat = Arrow.Table("data.feather")
+
+# convert to dataframe
+using DataFrames
+DataFrame(dat)
+
+# all at once
+df = DataFrame(Arrow.Table("data.feather"))
+
+# load parquet file
+using Parquet2
+dat = Parquet2.Dataset("data.parquet")
+df = DataFrame(dat, copycols=false)
+
+# row-wise access
+rows = Tables.rows(x)
+
+# column-wise access
+columns = Tables.columns(x)
+
+Tables.columnnames(x)
+Tables.getcolumn(columns, col)

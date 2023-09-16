@@ -47,3 +47,18 @@ conn.rollback()
 SELECT id, string_agg(foo, ', ') AS foo_list 
   FROM tbl 
   GROUP BY id;
+
+# list triggers in db
+SELECT * FROM information_schema.triggers  
+
+# list & terminate active lock
+# https://stackoverflow.com/a/50270661/554531
+SELECT t.relname, l.locktype, page, virtualtransaction, pid, mode, granted
+  FROM pg_locks l, pg_stat_all_tables t 
+  WHERE l.relation = t.relid 
+  ORDER BY relation asc;
+
+SELECT pg_terminate_backend(<pid>);
+
+# backup db
+pg_dump -h <host> -U <user> -d <dbname> > backup.sql

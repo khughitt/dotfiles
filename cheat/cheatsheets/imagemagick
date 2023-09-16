@@ -1,6 +1,9 @@
 # combine two images side-by-side (resizing height to 480)
 convert +append left.png right.png -resize x480 out.png
 
+# stack images vertically
+convert -append a.png b.png out.png
+
 # rotate 90 degrees clockwise
 convert in.jpg -rotate 90 out.png
 
@@ -15,3 +18,6 @@ convert a.png b.png -append out.png
 
 # append (horizontally)
 convert a.png b.png +append out.png
+
+# create color palette 
+convert -size 64x64 xc:"#ff0000" xc:"#00ff00" xc:"#0000ff" +append out.png
