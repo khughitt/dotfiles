@@ -20,6 +20,9 @@ lst.sort(key=lambda x: x['foo'], reverse=True)
 # sort list of objects/dicts by key (out of place)
 sorted(lst, key=lambda x: x['foo'], reverse=True)
 
+# sort list of objects to match order of ids in separate list (in place)
+lst.sort(key=lambda x: ids.index(x['id']))
+
 # create a dict from lists of keys/values
 dict(zip(k, v))
 

@@ -7,5 +7,20 @@ CREATE DATABASE x;
 # drop db
 DROP DATABASE x;
 
+# delete rows
+DELETE FROM tbl
+  WHERE ..
+
+# change column
+ALTER TABLE tbl
+  ALTER COLUMN foo TYPE ..,
+  ALTER COLUMN foo SET DEFAULT ..
+  ALTER COLUMN foo DROP NOT NULL
+
+# add columns
+ALTER tbl 
+  ADD COLUMN col1 ...,
+  ADD COLUMN col2 ...
+
 # add value to existing enum
 ALTER TYPE enum_name ADD VALUE '...';
