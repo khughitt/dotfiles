@@ -167,3 +167,6 @@ stopCluster(cl)
 
 # logistic regression
 glm(y ~ x, family = "binomial")
+
+#  vector -> matrix ("matrix", not "as.matrix")
+matrix(vec, nrow=3, ncol=7, byrow = FALSE)

@@ -21,7 +21,8 @@ t               focus track
 cntl + alt + s  collect & save
 
 # piano roll
-f    switch between drum view / piano
+f           switch between drum view / piano
+<shift-e>   toggle note expressions
 
 # show multiple tracks together
 # 1. in bottom left TRACK/CLIP section, choose "TRACK"
@@ -60,7 +61,7 @@ f2          toggle automation
 <shift-alt-r>   reverse pattern
 
 # custom
-<shift-alt-a>   toggle automation for all track
+<shift-alt-a>   toggle automation for all tracks
 
 # looping
 <ctl-l> / r     loop selected region (select _track_ region)
