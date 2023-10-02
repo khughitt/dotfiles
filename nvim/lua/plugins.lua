@@ -4,10 +4,8 @@ return require('packer').startup(function(use)
 
   use 'JoosepAlviste/nvim-ts-context-commentstring'
   use 'ervandew/supertab'
-  -- disabling until i have the chance to adjust keybindings..
-  --use 'ggandor/leap.nvim'
+  use 'ggandor/leap.nvim'
   use 'godlygeek/tabular'
-  use 'junegunn/fzf.vim'
   use 'junegunn/vim-emoji'
   use 'kshenoy/vim-signature'
   use 'lewis6991/gitsigns.nvim'
@@ -19,7 +17,7 @@ return require('packer').startup(function(use)
   use 'wellle/targets.vim'
   use { 'Yggdroot/LeaderF', run = ':LeaderfInstallCExtension' }
   use { 'dstein64/nvim-scrollview', branch = 'main' }
-  use { 'junegunn/fzf', run = ":call fzf#install()" }
+  use { 'junegunn/fzf.vim', requires = { 'junegunn/fzf', run = ':call fzf#install()' }}
   use { 'nvim-lualine/lualine.nvim', requires = { 'nvim-tree/nvim-web-devicons', opt = true }}
   use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
   use({ 'vladdoster/remember.nvim', config = [[ require('remember') ]] })
@@ -43,7 +41,6 @@ return require('packer').startup(function(use)
   use 'tikhomirov/vim-glsl'
   use 'udalov/kotlin-vim'
   use 'yuezk/vim-js'
-  use 'folke/which-key.nvim'
   use { 'neoclide/coc.nvim', branch = 'release'}
   use {'snakemake/snakemake', rtp='misc/vim', ft='snakemake'}
 
@@ -72,6 +69,7 @@ return require('packer').startup(function(use)
   -- https://github.com/brenoprata10/nvim-highlight-colors
 
   -- archived
+  -- use 'folke/which-key.nvim'
   -- use {'andymass/vim-matchup', event = 'VimEnter'}
   -- use 'ggandor/lightspeed.nvim'
   -- use 'rrethy/vim-hexokinase', { 'run': 'make hexokinase' }
