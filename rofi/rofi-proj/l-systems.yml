@@ -7,8 +7,6 @@
 name: "l-systems"
 
 left:
-  - "kitty -d ~/d/l-systems/02-three-lsystem/"
-  - "zathura ~/d/books/abop.pdf"
+  - "kitty -d ~/d/r/proj/three-l-systems"
 right:
-  - "kitty -d ~/notes/books nvim -c \"colorscheme%20nord\" algorithmic-beauty-of-plants.md"
-
+  - "zathura ~/d/books/abop.pdf"
