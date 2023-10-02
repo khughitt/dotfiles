@@ -8,8 +8,6 @@
 # dotfiles home
 export DOTFILES=$(dirname `readlink -f "${(%):-%x}"`)
 
-echo $DOTFILES > ~/zsh_dotfiles_path_detection_test
-
 # stop here in non-interactive mode
 [ -z "$PS1" ] && return
 

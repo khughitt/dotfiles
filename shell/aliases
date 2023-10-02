@@ -130,6 +130,9 @@ alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}' # open last argument of 
 # netstat
 alias netp="sudo netstat -plant"
 
+# npm
+alias npms="npm run dev"
+
 # pwd
 alias xp='pwd | xsel'
 alias px='cd "$(xsel -p)"'
@@ -204,6 +207,9 @@ alias wcl="wc -l"
 
 # xclip
 alias xc=xclip
+
+# xsel
+alias xs=xsel
 
 # xmodmap
 alias xm="xmodmap ~/.Xmodmap"
