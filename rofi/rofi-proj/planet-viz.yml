@@ -1,7 +1,6 @@
 name: "planet-viz"
 left:
   - "kitty -d ~/d/art/THREE.planet/src nvim Planet.tsx"
-  - "kitty -d $NOTES/tech/procedural-generation/space/ nvim three-planet.md"
 right:
   - "kitty -d ~/d/art/THREE.planet npm start"
 
