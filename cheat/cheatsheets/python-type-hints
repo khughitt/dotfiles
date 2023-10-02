@@ -21,3 +21,5 @@ class Foo(BaseModel):
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+# vi:syntax=python

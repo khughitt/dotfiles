@@ -1,27 +1,6 @@
-// 
-// funcs: https://www.shaderific.com/glsl-functions
-//
-// canvas-sketch foo.js --hot
-// canvas-sketch foo.js --new --open
-//
-
-// returns 0/1, if below/above cutoff
-step(cutoff, val)
-
-// given a range and a value, interpolates the value between the range
-smoothstep(lower, upper, val)
-
-// weighted linear intepreation between two values (x * (1−a) + y * a)
-float mix(x, y, a)  
-
-// triangle wave
-abs(2.0 * fract(x) - 1.0)
-
-// clamp (clip between min/max..)
-clamp(x, min, max)
-
-// exponentiation
-pow(x, 2)
+// canvas-sketch
+canvas-sketch foo.js --hot
+canvas-sketch foo.js --new --open
 
 //
 // basic vertex shader
@@ -41,4 +20,73 @@ void main() {
   gl_FragColor = vec4( vec3( vUv, 0. ), 1. );
 }
 
+// basic functions
+abs()
+sign()
+floor()
+min()
+max()
+ceil()
+fract()
+sqrt()
+log()
+log2()
+pow(x, 2.0)
+exp()
+mod()
+clamp(x, min, max)
+
+// trig
+radians(deg)
+degrees(rad)
+sin()
+cos()
+tan()
+asin()
+acos()
+atan()
+
+// geom
+length()          // vector length
+distance(a, b)
+dot(a, b)
+cross(a, b)
+norm(a)
+
+faceforward(norm, inc, ref)
+reflect(inc, norm)
+refract(inc, norm, ratio)
+
+// boolean logic
+&&   // AND
+||   // OR
+^^   // XOR
+
+// ternary if
+x ? a : b
+
+// initialize zero vec
+vec3 color = vec3(0.0);
+
+// returns 0.0/1.0, if below/above cutoff
+step(cutoff, val)
+
+// given a range and a value, interpolates the value between the range
+smoothstep(lower, upper, val)
+
+// weighted linear intepreation between two values (x * (1.0−a) + y * a)
+float mix(x, y, a)  
+
+// triangle wave
+abs(2.0 * fract(x) - 1.0)
+
+// functions
+float foo(float a) {
+  return a;
+}
+
+
+// refs
+// 1. https://thebookofshaders.com/
+// 2. https://shaderific.com/glsl
 # vi:syntax=glsl

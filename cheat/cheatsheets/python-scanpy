@@ -59,3 +59,5 @@ pl.rank_genes_groups(adata, n_genes=25, sharey=False)
 # sources
 # 1. https://scanpy.readthedocs.io/en/stable/api.html
 # 2. https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html
+
+# vi:syntax=python

@@ -14,3 +14,5 @@ gensim.utils.simple_preprocess(doc, min_len=2, max_len=50)
 
 # filter tokens in dictionary (min # docs, max ratio docs)
 dictionary.filter_extremes(no_below=5, no_above=0.5)
+
+# vi:syntax=python

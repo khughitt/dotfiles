@@ -81,3 +81,5 @@ sc.fit_predict(dat)
 # using pre-computered similarity scores
 sc = SpectralClustering(.., affinity='precomputed')
 sc.fit_predict(sim_mat)  
+
+# vi:syntax=python

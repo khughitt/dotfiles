@@ -240,3 +240,5 @@ snakeviz profile.log
 from functools import reduce
 path = ['root', 'a']
 reduce(lambda arr, ind: arr[ind], path, tree)
+
+# vi:syntax=python

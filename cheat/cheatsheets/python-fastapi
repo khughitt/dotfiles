@@ -8,3 +8,5 @@ async def foo(p1: str, p2: List[str], query: Optional[str] = Query(None, regex="
 
 # uvicorn: show print output in console
 print(..., flush=True)
+
+# vi:syntax=python

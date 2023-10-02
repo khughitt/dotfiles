@@ -4,3 +4,5 @@ cm.get_cmap('viridis', 6)
 
 # get list of hex values for colormap
 [matplotlib.colors.rgb2hex(cmap(i)) for i in range(cmap.N)]
+
+# vi:syntax=python

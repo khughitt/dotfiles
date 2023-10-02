@@ -36,3 +36,4 @@ sns.set(rc={"figure.figsize":(12, 8)})  # 1600 x 1200px
 # 2. "figure-level" plots (e.g. lmplot)
 sns.lmplot(..., height=8, aspect=1.5)
 
+# vi:syntax=python

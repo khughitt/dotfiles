@@ -10,3 +10,5 @@ topics(lda, 1)
 
 # topic x term probabilities matrix
 posterior(lda)$terms
+
+# vi:syntax=r

@@ -75,3 +75,5 @@ batch = pa.RecordBatch.from_pandas(df)
 
 sink = pa.InMemoryOutputStream()
 stream_writer = pa.StreamWriter(sink, batch.schema)
+
+# vi:syntax=python

@@ -40,3 +40,14 @@ torch.tensor(...).to(device=cuda)
 
 # clip values
 torch.clamp(x, min=-1.0, max=1.0)
+
+# expand singleton dimensions to a larger size
+x.expand([..])
+
+# squeeze (n dim -> n-1 dim)
+x.squeeze(dim)
+
+# unsqueeze (n dim -> n+1 dim)
+x.unsqueeze(dim)
+
+# vi:syntax=python

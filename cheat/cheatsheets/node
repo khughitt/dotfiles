@@ -21,7 +21,12 @@ npx gitignore node
 npx covgen YOUR_EMAIL_ADDRESS
 npm init -y
 
-# create a new react proj (npm)
+# create a new react proj (vite + ts)
+npm create vite@latest foo -- --template react-ts
+cd foo
+npm install
+
+# create a new react proj (CRA)
 npx create-react-app my-proj
 
 # clear npx cache

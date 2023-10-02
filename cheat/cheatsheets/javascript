@@ -1,33 +1,33 @@
-# DOM
+// DOM
 var elem = document.getElementById(id)
 var elem = document.createElement("div")
 document.head.appendChild(elem)
 elem.setAttribute("id", "foo")
 elem.remove()
 
-# width / height
+// width / height
 elem.offsetWidth;
 elem.offsetHeight;
 
-# imports
-# https://colinricardo.substack.com/p/named-export-vs-default-export
+// imports
+// https://colinricardo.substack.com/p/named-export-vs-default-export
 
-# round
+// round
 num.toFixed(2)
 
-# The map() method creates a new array populated with the results of calling a provided
-# function on every element in the calling array.
+// The map() method creates a new array populated with the results of calling a provided
+// function on every element in the calling array.
 [1, 2, 3].map(x => x * 2);
 ["a", "b", "c"].map((x, ind) => {...})
 
-# add item to array
+// add item to array
 a.push('foo')
 
-# array foreach
+// array foreach
 a.forEach((item) => { console.log(item); })
 a.forEach((item, ind) => { console.log(item); })
 
-# "continue" in forEach loop (for regular for loops, just use "continue"..)
+// "continue" in forEach loop (for regular for loops, just use "continue"..)
 a.forEach((item) => {
     if (...) {
         // continue
@@ -35,222 +35,224 @@ a.forEach((item) => {
     }
 }
 
-# create a sequence of numbers (~range())
+// create a sequence of numbers (~range())
 [...Array(5).keys()]
 
-# create an array of a specified size
+// create an array of a specified size
 Array(5).fill(0);
 
-# check for key in object
-# includes object prototype keys
+// check for key in object
+// includes object prototype keys
 'key' in obj
 
-# more specific way to check
+// more specific way to check
 obj.hasOwnProperty('key')
 
-# iterate over key, value pairs for object (~object "foreach")
+// iterate over key, value pairs for object (~object "foreach")
 for (const [key, value] of Object.entries(obj)) {
   console.log(`${key}: ${value}`);
 }
 
-# get values for object
+// get values for object
 Object.values(obj)
 
-# check "length" of object
+// check "length" of object
 Object.keys(obj).length
 
-# get last value in an object
+// get last value in an object
 Object.values(obj).slice(-1)[0]
 
-# check if item is in array
+// check if item is in array
 arr.includes('foo')
 
-# array intersection
+// array intersection
 a.filter(val => b.includes(val));
 
-# items in one array and not another (~set difference)
+// items in one array and not another (~set difference)
 a.filter(item => !b.includes(item)));
 
-# filter *object* by key
+// filter *object* by key
 Object.fromEntries(
   Object.entries(obj).filter(([key, value]) => allowed.includes(key))
 );
 
-# filter object of the form {'key1': 2, 'key2':5, ..}, to find all keys with values
-# matching some constraint..
+// filter object of the form {'key1': 2, 'key2':5, ..}, to find all keys with values
+// matching some constraint..
 Object.entries(obj).filter(([key, value]) => value > 1).map(x => x[0])
 
-# convert an array of objects to a single object: 
-# [{key: xx, val:yy},..] => {xx: yy,..}
+// convert an array of objects to a single object: 
+// [{key: xx, val:yy},..] => {xx: yy,..}
 arr.reduce((obj, item) => (obj[item.key] = item.value, obj) ,{});
 
-# extract a single field from each object in an array
+// extract a single field from each object in an array
 let arr = [{'title': 'hi'}, {'title': 'bye'}]
 arr.map(x => x.title)
 
-# find index of item in array
+// find index of item in array
 arr.indexOf('foo')
 
-# map from array of objects to an array of objects
+// map from array of objects to an array of objects
 arr.map(x => ({ foo: x.bar }));
 
-# map from array of objects to an array of objects (dynamic keys)
+// map from array of objects to an array of objects (dynamic keys)
 arr.map(x => ({[x.key]:x.val}))
 
-# array of strings => string-indexed object of empty arrays
-# ex. "['a', 'b', 'c']" => "{a: [], b: [], c: []}"
+// array of strings => string-indexed object of empty arrays
+// ex. "['a', 'b', 'c']" => "{a: [], b: [], c: []}"
 arr.reduce((a,b) => (a[b] = [], a), {})
 
-# convert an array of {key:value} pairs to a single combined object
+// convert an array of {key:value} pairs to a single combined object
 Object.assign({}, ...arr);
 
-# copy array (shallow)
+// copy array (shallow)
 arr.slice()
 
-# copy object (shallow)
+// copy object (shallow)
 Object.assign({}, obj);
 
-# change object key
+// change object key
 obj['new'] = obj['old'];
 delete obj['old'];
 
 console.log(obj); // { newKey: 'value' }
 
-# array->unique
+// array->unique
 Array.from(new Set(arr))
 
-# subset array
+// subset array
 arr.slice(0,3);
 
-# check if item in array
+// check if item in array
 arr.includes(x)
 
-# concatenate arrays
+// concatenate arrays
 const b = a.concat(b);
 
-# check if key in obj
+// check if key in obj
 "key" in obj
 
-# check array equality (ordered)
+// check array equality (ordered)
 JSON.stringify(a) == JSON.stringify(b);
 
-# check array equality (any order)
+// check array equality (any order)
 JSON.stringify(a.sort()) == JSON.stringify(b.sort());
 
-# find minimum value of an array of numbers
+// find minimum value of an array of numbers
 Math.min(...arr)
 
-# equality
-a === b  # strict equality (type + value)
-a == b   # loose equality (performs type coercion)
+// equality
+a === b  // strict equality (type + value)
+a == b   // loose equality (performs type coercion)
 
-# type
+// type
 typeof x
 
-# array?
+// array?
 Array.isArray(x)
 
-# lower/upper case
+// lower/upper case
 str.toLowerCase()
 
-# strip / trim whitespace
+// strip / trim whitespace
 str.trim()
 
-# starts with
+// starts with
 str.startsWith("foo")
 
-# substring
+// substring
 str.substring(1, 5)
 
-# split string by space
+// split string by space
 str.split(" ")
 
-# convert string to a character array
+// convert string to a character array
 str.split("")
 
-# check if string contains a given substring
+// check if string contains a given substring
 str.includes("foo")
 
-# ends with?
+// ends with?
 str.endsWith(".png")
 
-# collapse an array into a string
+// collapse an array into a string
 arr.join("");
 
-# replace all occurrences of "foo" in a string (regex)
+// replace all occurrences of "foo" in a string (regex)
 a.replace(/foo/g, 'bar');
 
-# regex match
+// regex match
 var re = /\w+/g;
 var str = 'foo bar';
 var arr = str.match(re);
 
-# regex match multiple
+// regex match multiple
 let arr = [...str.matchAll(re)];
 
-# sum array of numbers
+// sum array of numbers
 [1, 2, 3, 4].reduce((a, b) => a + b, 0)
 
-# count the number of occurrences of each value in an array
-# https://stackoverflow.com/a/5669730/554531
+// count the number of occurrences of each value in an array
+// https://stackoverflow.com/a/5669730/554531
 arr.reduce(function (acc, curr) {
     return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc
 }, {});
 
-# nested/dynamic object indexing
+// nested/dynamic object indexing
 const path = ["root", "a"]
 const tree = {"root": {"a": [1,2,3], "b": [3,4,5]}}
 path.reduce((obj, ind) => obj[ind], tree)
 
-# sort an array of objects by object value (decreasing / in-place)
+// sort an array of objects by object value (decreasing / in-place)
 entries.sort((a, b) => (a.similarity < b.similarity) ? 1 : -1);
 
-# convert array of numbers to a ranking
-# https://stackoverflow.com/a/65681883/554531
+// convert array of numbers to a ranking
+// https://stackoverflow.com/a/65681883/554531
 const sorted = [...arr].sort((a, b) => b - a);
 return arr.map((x) => sorted.indexOf(x) + 1);
 
-# timestamp -> date string
+// timestamp -> date string
 new Date(ts * 1e3).toISOString()
 
-# iso date string -> Date object
+// iso date string -> Date object
 new Date("2023-08-13T03:30:04")
 
-# format date
+// format date
 const opts:Intl.DateTimeFormatOptions = { year: "numeric", month: "long", day: "numeric" }
 date.toLocaleDateString(undefined, opts)
 
-# substract time from date (milliseconds)
+// substract time from date (milliseconds)
 new Date(t1 - 7 * 24 * 3600 * 1000)
 
-# coerce date to a number (needed for typescript time deltas..)
+// coerce date to a number (needed for typescript time deltas..)
 let dateInt = +new Date();
 
-# date formatting (~strftime)
-# https://www.npmjs.com/package/dateformat
+// date formatting (~strftime)
+// https://www.npmjs.com/package/dateformat
 import dateFormat from "dateformat";
 var now = new Date()
 dateFormat(now, "YY/mm/dd");
 
-# print current date
+// print current date
 console.log(Date())
 console.log(Date().toISOString())
 
-# async request
+// async request
 fetch(url)
 
-# load file syncronously
+// load file syncronously
 import { readFileSync } from 'fs';
 readFileSync('foo');
 
-# get filename portion of filepath
+// get filename portion of filepath
 var path = require('path');
 path.parse(file).base;
 
-# localStorage; getItem() returns null if item not found
+// localStorage; getItem() returns null if item not found
 localStorage.setItem('foo', JSON.stringify(obj));
 JSON.parse(localStorage.getItem('foo'))
 
-# math / funcs
+// math / funcs
 Math.PI
 Math.cos()
+
+// vi:syntax=javascript

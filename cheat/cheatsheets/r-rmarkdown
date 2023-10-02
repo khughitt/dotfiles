@@ -49,3 +49,5 @@ if (opts_knit$get("rmarkdown.pandoc.to") == "latex") {
 ```{r copy_html, include=FALSE, echo=FALSE}
 system(sprintf('(sleep 10 && cp README.html %s) &', out_dir))
 ```
+
+# vi:syntax=r
