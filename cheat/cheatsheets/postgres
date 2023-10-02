@@ -48,6 +48,16 @@ SELECT id, string_agg(foo, ', ') AS foo_list
   FROM tbl 
   GROUP BY id;
 
+# collapse array column to string
+SELECT array_to_string(array_col, ',') from tbl;
+
+# get rows where array column includes some value
+SELECT * FROM tbl 
+  WHERE 'foo' = ANY(array_col);
+
+# format date col
+SELECT to_char(time, 'YYYY-mm-dd')
+
 # list triggers in db
 SELECT * FROM information_schema.triggers  
 

@@ -2,3 +2,5 @@
 linters: with_defaults(
   object_usage_linter = NULL,
   line_length_linter(length = 120L))
+
+# vi:syntax=r

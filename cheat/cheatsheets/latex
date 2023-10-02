@@ -106,6 +106,13 @@
 # vectors
 \vec{}
 
+# matrices;
+# bmatrix (brackets), pmatrix (parens), matrix (no border), Bmatrix (curly braces), vmatrix (pipes)
+\begin{bmatrix}
+1 & 2 & 3\\
+a & b & c
+\end{bmatrix}
+
 # spacing
 \                # single space
 \\               # line break / newline

@@ -13,3 +13,5 @@ for doc in out_docs:
 # tokenization (traditional chinese)
 stanza.download("zh-hant")
 nlp = stanza.Pipeline("zh-hant", processors="tokenize")
+
+# vi:syntax=python

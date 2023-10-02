@@ -18,3 +18,5 @@ library(GO.db)
 res <- getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "go_id"), 
              filters = "hgnc_symbol", values = "KIF14", mart = mart)
 AnnotationDbi::select(GO.db, keys=res$go_id, columns=c("TERM"))
+
+# vi:syntax=r

@@ -47,3 +47,5 @@ a.values[ind]
 
 # pearson correlation 
 np.corrcoef(X)
+
+# vi:syntax=python

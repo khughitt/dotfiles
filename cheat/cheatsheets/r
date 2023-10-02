@@ -55,6 +55,7 @@ jsonlite::toJSON(lst)
 
 # yaml
 yaml::read_yaml(file)
+yaml::write_yaml(x, file)
 
 # get filename / extension
 tools::file_ext("file.txt")

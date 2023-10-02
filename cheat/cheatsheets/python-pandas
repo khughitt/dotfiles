@@ -497,3 +497,5 @@ df.index.is_unique
 
 # Series indices don't match; use ndarray instead
 series[mask.values]
+
+# vi:syntax=python
