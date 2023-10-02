@@ -1,2 +1,4 @@
 create("name")
 document()
+
+# vi:syntax=r

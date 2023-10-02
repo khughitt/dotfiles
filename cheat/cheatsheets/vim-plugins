@@ -7,6 +7,10 @@
 :profile pause
 :noautocmd qall!
 
+# coc.nvim
+[c    next error
+]c    previous error
+
 # leap.nvim
 s                 forward search
 S                 backward search

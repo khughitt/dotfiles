@@ -20,3 +20,5 @@ def sparse_corr(A):
     V=np.sqrt(np.mat(np.diag(C)).T*np.mat(np.diag(C)))
     COR = np.divide(C,V+1e-119)
     return COR
+
+# vi:syntax=python

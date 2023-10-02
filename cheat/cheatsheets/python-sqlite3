@@ -4,3 +4,5 @@ cur = con.cursor()
 
 # commit changes
 con.commit()
+
+# vi:syntax=python

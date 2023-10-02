@@ -6,3 +6,5 @@ width(genes(TxDb.Hsapiens.UCSC.hg38.knownGene))
 
 # load gene set
 geneIds(getGmt(infile))
+
+# vi:syntax=r

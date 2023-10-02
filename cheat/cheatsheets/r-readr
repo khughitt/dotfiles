@@ -3,3 +3,5 @@ read_csv(..., col_types='cnf')
 
 # specify col type for a single column
 read_csv(..., col_types = cols(foo = "c"))
+
+# vi:syntax=r

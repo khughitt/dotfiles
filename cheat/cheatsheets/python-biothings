@@ -8,3 +8,5 @@ mg.querymany(["CRP", "TNF"], scopes="symbol", species=9606, fields="entrezgene,s
 
 # entrez -> symbols
 mg.querymany([1401, 7124], scopes="entrezgene", species=9606, fields="symbol,summary", as_dataframe=True)
+
+# vi:syntax=python

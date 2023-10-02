@@ -7,3 +7,5 @@ x.query_one("#foo")
 
 # set focus
 app.set_focus(widget)
+
+# vi:syntax=python

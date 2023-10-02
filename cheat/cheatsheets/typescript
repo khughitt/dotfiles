@@ -1,2 +1,4 @@
 # assert type
 const b:string = a as string
+
+# vi:syntax=typescript

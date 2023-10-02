@@ -55,3 +55,5 @@ df %>%
 df %>% 
   group_by(grp) %>% 
   summarise(combined=paste(foo, collapse = ", "))
+
+# vi:syntax=r

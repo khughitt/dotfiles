@@ -10,3 +10,5 @@ lemmatizer.lemmatize(word)
 
 # stemmer comparison
 # https://stackoverflow.com/a/24663617/554531
+
+# vi:syntax=python
