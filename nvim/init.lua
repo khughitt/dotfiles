@@ -272,7 +272,7 @@ require('lualine').setup {
 -----------------------------------------------------------------------------
 -- which-key (testing)
 -----------------------------------------------------------------------------
-require("which-key").setup {}
+-- require("which-key").setup {}
 
 -----------------------------------------------------------------------------
 -- barbar.nvim
@@ -289,8 +289,22 @@ map('n', '<s-right>', '<cmd>BufferNext<cr>', opts)
 -- ---------------------------------------------------------------------------
 -- coc.nvim
 -- ---------------------------------------------------------------------------
-vim.keymap.set('n', '[g', '<Plug>(coc-diagnostic-prev)', {silent = true})
-vim.keymap.set('n', ']g', '<Plug>(coc-diagnostic-next)', {silent = true})
+vim.keymap.set('n', '[c', '<Plug>(coc-diagnostic-prev)', {silent = true})
+vim.keymap.set('n', ']c', '<Plug>(coc-diagnostic-next)', {silent = true})
+
+-- show type of object under cursor (sep23: not working in lua config; disabling..)
+-- https://github.com/neoclide/coc.nvim/issues/869#issuecomment-501323697
+-- vim.cmd([[
+--   nnoremap <silent> K :call <SID>show_documentation()<CR>
+--
+--   function! s:show_documentation()
+--     if (index(['vim','help'], &filetype) >= 0)
+--       execute 'h '.expand('<cword>')
+--     else
+--       call CocAction('doHover')
+--     endif
+--   endfunction
+-- ]])
 
 -- ---------------------------------------------------------------------------
 -- csv.vim
@@ -372,22 +386,6 @@ vim.keymap.set('v', '<space>', '<leader>c<space>')
 -- ---------------------------------------------------------------------------
 vim.g.SuperTabCrMapping=1
 vim.g.SuperTabDefaultCompletionType = "context"
-
--- add support for mindful #tag completion
-vim.api.nvim_exec([[
-function MindfulTagContext()
-    if filereadable(expand('~/.local/state/nvim/mindful-tags.txt'))
-        let curline = getline('.')
-        let cnum = col('.')
-        
-        if curline =~ '#\w*\%' . cnum . 'c'
-            return "\<c-x>\<c-k>"
-        endif
-    endif
-endfunction
-]], false)
-
-vim.g.SuperTabCompletionContexts = {'MindfulTagContext', 's:ContextText', 's:ContextDiscover'}
 
 -- ---------------------------------------------------------------------------
 --  treesitter
