@@ -252,6 +252,21 @@ function datp {
     fi
 }
 
+# set background
+function wali {
+  wal -i ~/d/linux/backgrounds/3440 --backend haishoku
+
+  # get path to new background
+  img=`sleep 1 && tail -1 ~/.fehbg | grep --color='never' -o "/[\/a-zA-Z0-9_\.]*"`
+
+  fname=`basename $img`
+  fname=${fname/jpg/}
+
+  outfile="~/music/bitwig/colors/$fname"
+
+  $HOME/bin/haishoku $img $outfile
+}
+
 # remove background
 function walirm {
   img=$(basename `cat ${HOME}/.cache/wal/wal`)
