@@ -141,10 +141,6 @@ alias px='cd "$(xsel -p)"'
 alias ipy=ipython
 alias psh='poetry shell'
 
-# pywal
-alias wali='wal -i ~/d/linux/backgrounds/3440 --backend haishoku'
-alias wali2k='wal -i ~/d/linux/backgrounds/1920 --backend haishoku'
-
 # ranger
 alias ra=ranger
 
