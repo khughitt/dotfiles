@@ -36,9 +36,8 @@ npx clear-npx-cache
 pnpx create-react-app my-proj
 
 # parcel
-# yarn global add parcel-bundler
-yarn init -y
-parcel index.html
+# npm install --save-dev parcel
+npx parcel index.html
 
 # start a server
 # "scripts": {

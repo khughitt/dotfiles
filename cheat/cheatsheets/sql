@@ -4,12 +4,19 @@ SELECT DISTINCT(x) FROM y;
 # create db
 CREATE DATABASE x;
 
-# drop db
+# delete db
 DROP DATABASE x;
+
+# delete table
+DROP TABLE x;
 
 # delete rows
 DELETE FROM tbl
   WHERE ..
+
+# delete column
+ALT TABLE tbl
+  DROP COLUMN foo
 
 # change column
 ALTER TABLE tbl
@@ -22,5 +29,23 @@ ALTER tbl
   ADD COLUMN col1 ...,
   ADD COLUMN col2 ...
 
-# add value to existing enum
+# add label to existing enum
 ALTER TYPE enum_name ADD VALUE '...';
+
+# rename enum (automatically updates name in table defs)
+ALTER TYPE old RENAME TO new;
+
+# rename enum label
+ALTER TYPE foo RENAME VALUE 'old' TO 'new'
+
+# delete enum
+DROP TYPE foo;
+
+# change values
+UPDATE tbl 
+  SET a='1', b='2',..
+  WHERE ..
+
+# get rows where array column includes some value
+SELECT * FROM tbl 
+  WHERE 'foo' = ANY(array_col);
