@@ -1,3 +1,9 @@
+# rescale: specify height
+convert a.png -resize x1440 out.png
+
+# rescale: specify width
+convert a.png -resize 3440x out.png
+
 # combine two images side-by-side (resizing height to 480)
 convert +append left.png right.png -resize x480 out.png
 
