@@ -7,7 +7,8 @@
 \d tbl  # describe table
 \d+ tbl # describe table "+"
 
-\dT+ <enum>  # show all enum levels
+\dT          # list enums
+\dT+ <enum>  # show enum levels
 
 # add "postgres" user
 psql -U postgres
@@ -51,15 +52,14 @@ SELECT id, string_agg(foo, ', ') AS foo_list
 # collapse array column to string
 SELECT array_to_string(array_col, ',') from tbl;
 
-# get rows where array column includes some value
-SELECT * FROM tbl 
-  WHERE 'foo' = ANY(array_col);
-
 # format date col
 SELECT to_char(time, 'YYYY-mm-dd')
 
 # list triggers in db
 SELECT * FROM information_schema.triggers  
+
+# show trigger functions
+\df+
 
 # list & terminate active lock
 # https://stackoverflow.com/a/50270661/554531

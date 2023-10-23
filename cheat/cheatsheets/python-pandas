@@ -29,6 +29,9 @@ df["col"]
 df[["col"]]
 df[["col1", "col2"]]
 
+# select columns ending with "foo"
+df.loc[:, df.columns.str.endswith("foo")]
+
 # get index as an integer
 ind = df.index[df["col"] == val].tolist()[0]
 

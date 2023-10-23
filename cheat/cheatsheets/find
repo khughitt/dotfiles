@@ -1,4 +1,4 @@
-# count the number of files in each sub-directory
+# count the number of files in each sub-directory (recursively)
 find . -type f | cut -d/ -f2 | sort | uniq -c
 
 # find files not _owned_ by a particular user
