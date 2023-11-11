@@ -37,6 +37,9 @@ alias down='docker-compose down --remove-orphans'
 alias docl='docker logs -f'
 alias dk='docker kill `docker ps -q`'
 
+# dropbox
+dropbox_exclude='sudo attr -s com.dropbox.ignored -V 1 '
+
 # du
 alias dud='du -d 1 -h'
 alias duf='du -sh *'
@@ -72,6 +75,9 @@ alias htop=gotop
 # httpd
 alias ph='python -m "http.server"'
 alias pa='parcel'
+
+# jupyter
+alias jl='jupyter lab'
 
 # kitty
 alias icat="kitty +kitten icat"

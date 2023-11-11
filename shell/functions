@@ -26,6 +26,11 @@ function fu {
   done
 }
 
+# copy full path
+function cfp {
+  realpath -s $1 | xsel
+}
+
 # relative working directory
 function wd {
     echo ${$(pwd)/$HOME\//}
