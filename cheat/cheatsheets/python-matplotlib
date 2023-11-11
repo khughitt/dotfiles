@@ -1,3 +1,18 @@
+# plot basics
+import matplotlib.pyplot as plt
+
+plt.plot(x, y)
+plt.xlabel('X')
+plt.xlabel('Y')
+plt.title('..')
+
+plt.show()
+
+# 3d scatter plot
+fig = plt.figure(figsize=(12, 9))
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(df.x, df.y, df.z, c=df.color)
+
 # get colormap
 from matplotlib import cm
 cm.get_cmap('viridis', 6)

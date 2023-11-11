@@ -2,11 +2,14 @@
 pip list
 pip freeze
 
+# install from requirements.txt
+pip install -r requirements.txt
+
 # list user-installed
 python -m pip list --user
 
-# list user-installed (outdated)
-python -m pip list --user -o
+# list available updates
+pip list --outdated
 
 # show installed package version
 pip show numba

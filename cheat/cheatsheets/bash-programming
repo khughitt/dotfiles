@@ -24,6 +24,12 @@ set -euo pipefail
 # string starts with
 [[ "$a" =~ ^foo.* ]]
 
+# get filename portion of path
+echo ${file##*/}
+
+# or..
+basename $x
+
 # replace file extension in a string
 echo "${file%.old}.new"
 echo "${file%.*}.new"
@@ -47,6 +53,9 @@ done
 for i in $(seq -w 01 09); do
   echo $i
 done
+
+# split by " " and get the nth element (ex. 2nd)
+echo "one two three" | cut -d ' ' -f2
 
 # split by " " and get last element
 # https://stackoverflow.com/questions/3162385/how-to-split-a-string-in-shell-and-get-the-last-field

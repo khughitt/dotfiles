@@ -82,6 +82,10 @@ crossprod(table(stack(lst)))
 # get classes of each column
 sapply(df, class)
 
+# -_- ...
+df[, single_col, drop = FALSE]
+single_col_df[mask, , drop = FALSE]
+
 # convert dataframe to numeric matrix
 # "data.matrix(df)" should work, but incorrectly converts double columns to integers in
 # some cases..

@@ -14,6 +14,12 @@ o               toggle arranger
 a               automation
 t               focus track
 
+# grid (patching modifiers)
+<ctrl-drag>     add with existing source
+<alt-drag>      mix with existing source
+<shift-drag>    blend with existing source
+<ctrl-shift>    multiply
+
 # note colors
 # right click a blank area of editor
 
@@ -32,8 +38,11 @@ f           switch between drum view / piano
 # devices
 ?           popup browser
 
+# solo
+alt  + s       toggle track solo
+<shift-click>  exclusive solo
+
 # panel focus
-alt  + s    toggle track solo
 cntl + k    toggle device window
 ctrl + p    toggle project panel
 d           focus device panel

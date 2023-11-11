@@ -91,8 +91,11 @@ re.sub(r"\b(foo)\s+(bar)", rep_func, "FOO BAR", flags=re.I)
 {**x, **y}
 x | y # python 3.9
 
-# filter dict ("x[0]" key, "x[1]" value)
-dict(filter(lambda x: x[1] == 'foo', mydict.items()))
+# filter dict by key
+dict(filter(lambda x: x[0] not in exclude, dat.items()))
+
+# filter dict by value
+dict(filter(lambda x: x[1] == 'foo', dat.items()))
 
 # get current timestamp
 import time
