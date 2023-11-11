@@ -10,6 +10,7 @@ return require('packer').startup(function(use)
   use 'kshenoy/vim-signature'
   use 'lewis6991/gitsigns.nvim'
   use 'ncm2/float-preview.nvim'
+  use 'norcalli/nvim-colorizer.lua'
   use 'romgrk/barbar.nvim'
   use 'scrooloose/nerdcommenter'
   use 'tomtom/tlib_vim'

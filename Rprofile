@@ -10,16 +10,15 @@
 options(browser = "brave")
 options(continue = "... ")
 options(download.file.method = "libcurl")
-options(dplyr.print_max = 5) 
+options(dplyr.print_max = 5)
 options(github.user = "khughitt")
 options(keep.source.pkgs = TRUE)
-options(knitr.duplicate.label = 'allow')
+options(knitr.duplicate.label = "allow")
 options(max.print = 100)
-options(menu.graphics = F)
+options(menu.graphics = FALSE)
 options(nwarnings = 1000)
-options(pdfviewer = 'zathura')
+options(pdfviewer = "zathura")
 options(prompt = "> ")
-options(repos = structure(c(CRAN = "https://cran.case.edu/")))
 options(rstudio.markdownToHTML = NULL)
 options(setWidthOnResize = TRUE)
 options(showErrorCalls = TRUE)
@@ -28,6 +27,8 @@ options(showNCalls = 100)
 options(try.all.packages  = TRUE)
 options(warning.length = 8170)
 options(width = 100)
+
+# options(repos = structure(c(CRAN = "https://cran.case.edu/")))
 
 # disabled due to warnings arising from inside packages
 #options(warnPartialMatchArgs = TRUE)
@@ -39,7 +40,7 @@ options(mc.cores = max(1, parallel::detectCores() - 4))
 options(Ncpus    = max(1, parallel::detectCores() - 4))
 
 # this may help speed up some plots over ssh (use per-connection)
-#X11.options(type = 'Xlib')
+#X11.options(type = "Xlib")
 
 # default x11 options
 grDevices::X11.options(width = 4.5, height = 4, ypos = 0, xpos = 1000, pointsize = 10)
@@ -48,8 +49,8 @@ grDevices::X11.options(width = 4.5, height = 4, ypos = 0, xpos = 1000, pointsize
 utils::rc.settings(ipck = TRUE, fuzzy = TRUE)
 
 # plotly
-if (file.exists("~/.plotly/.credentials") && nzchar(system.file(package = 'RJSONIO'))) {
-  creds = RJSONIO::fromJSON("~/.plotly/.credentials")
+if (file.exists("~/.plotly/.credentials") && nzchar(system.file(package = "RJSONIO"))) {
+  creds <- RJSONIO::fromJSON("~/.plotly/.credentials")
   Sys.setenv("plotly_username" = creds$username)
   Sys.setenv("plotly_api_key" = creds$api_key)
   rm(creds)
@@ -62,7 +63,7 @@ options(radian.auto_match = TRUE)
 options(radian.tab_size = 2)
 options(radian.history_search_no_duplicates = FALSE)
 
-# breaks cntl-left / cntl-right / etc. 
+# breaks cntl-left / cntl-right / etc.
 #options(radian.editing_mode = "vi")
 
 # custom prompt for different modes
@@ -75,7 +76,7 @@ if (interactive()) {
   # console settings
   options(colorout.verbose = 1,
           vimcom.verbose = 1,
-          editor = 'nvim')
+          editor = "nvim")
 
   # syntax highlighting
   if (isatty(stdout())) {
@@ -169,15 +170,20 @@ if (interactive()) {
 
 # On startup
 .First <- function () {
-  if ((!'--no-readline' %in% commandArgs()) && interactive()) {
-    utils::loadhistory(Sys.getenv('R_HISTFILE')) 
+  options(
+      repos = c(CRAN = "http://cran.rstudio.com/"),
+      browserNLdisabled = TRUE,
+      deparse.max.lines = 2)
+
+  if ((!"--no-readline" %in% commandArgs()) && interactive()) {
+    utils::loadhistory(Sys.getenv("R_HISTFILE"))
   }
 }
 
 # On quit
 .Last <- function() {
-#  # Preserve history across sessions
-  if ((!'--no-readline' %in% commandArgs()) && interactive()) {
+  # Preserve history across sessions
+  if ((!"--no-readline" %in% commandArgs()) && interactive()) {
     # Append to history instead of over-writing it
     # Adapted from https://stackoverflow.com/a/13525172/554531
     try({
