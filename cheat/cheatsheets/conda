@@ -10,6 +10,9 @@ conda env export > environment.yml
 # clean-up unused packages
 conda clean -a
 
+# rename environment
+conda rename -n from to
+
 #
 # trouble-shooting
 #

@@ -1,4 +1,8 @@
 create("name")
 document()
 
+# closest thing to "pip install -e" (?)
+# simulates package install & reload
+devtools::load_all()
+
 # vi:syntax=r
