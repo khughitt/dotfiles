@@ -53,10 +53,6 @@ export MYPYPATH=".config/stubs"
 # rofi x proj
 export ROFI_PROJ_DIR="$HOME/d/dotfiles/rofi/rofi-proj"
 
-# nodes-web
-export NODES_CONF_DIR="$HOME/d/nodes/config"
-export NODES_DATA_DIR="/mnt/ssd2"
-
 # CMFinder
 PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin
 export CMfinder=$HOME/software/cmfinder-0.4.1.9
