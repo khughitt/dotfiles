@@ -1,7 +1,0 @@
-max-jobs-per-second: 10
-latency-wait: 15
-keep-going: true
-rerun-incomplete: true
-restart-times: 0
-local-cores: 2
-cluster: "sbatch -c {threads} --mem={cluster.mem} --partition={cluster.partition} --time={cluster.time} -e \"/data/hughittvk/log/nih/p3/pipeline/{cluster.stderr}\" -o \"/data/hughittvk/log/nih/p3/pipeline/{cluster.stdout}\" -J '{cluster.jobname}'"

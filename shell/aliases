@@ -19,11 +19,10 @@ alias cdd='cd $dlas'
 
 # conda
 alias cde='conda deactivate'
-alias ca='conda activate'
 alias cs='mamba search'
 
 # cp
-alias cpr="cp -r"
+alias cpr='cp -r'
 
 # diff
 alias diff='diff --color=auto'
@@ -54,15 +53,18 @@ alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/1
 alias fehd='feh -g 640x480 -d -S filename .'
 
 # fd
-alias fda="fd -Luu"
-alias fdu="fd -u"
-alias fdl="fd -l | sort -k6M -k7n"
+alias fda='fd -Luu'
+alias fdu='fd -u'
+alias fdl='fd -l | sort -k6M -k7n'
 alias fdr="fd -l --changed-within 5days | csvcut -d ' ' -S -c6-9 | csvlook -HI"
 
-alias fd1="fd --changed-within 1days"
-alias fd3="fd --changed-within 3days"
-alias fd5="fd --changed-within 5days"
-alias fd10="fd --changed-within 10days"
+alias fd1='fd --changed-within 1days'
+alias fd3='fd --changed-within 3days'
+alias fd5='fd --changed-within 5days'
+alias fd10='fd --changed-within 10days'
+
+# glslviewer
+alias gls='glslviewer -w 1720 -h 1413'
 
 # grep
 alias -g G='| grep'  # "-g" = global alias; can be substituted anywhere on the line
@@ -80,21 +82,21 @@ alias pa='parcel'
 alias jl='jupyter lab'
 
 # kitty
-alias icat="kitty +kitten icat"
+alias icat='kitty +kitten icat'
 
 # "jog"; re-run command specific to current directory
 # https://github.com/natethinks/jog/blob/master/jog
 alias jog='grep -v jog ~/.zsh_history_ext | grep -a --color=never "$PWD   " | cut -f1 -d"|" | tail | fzf'
 
 # journalctl
-alias errors="journalctl -b -p err|less"
-alias vacuum="sudo journalctl --vacuum-size=50M"
+alias errors='journalctl -b -p err|less'
+alias vacuum='sudo journalctl --vacuum-size=50M'
 
 # less
 alias less='moar'
 
 # lit-walk
-alias lw="lit-walk"
+alias lw='lit-walk'
 alias lwd="lit-walk --config='~/.config/lit/config-dev.yml'"
 
 # ln
