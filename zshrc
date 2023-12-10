@@ -48,6 +48,7 @@ setopt interactivecomments    # recognize comments
 
 zstyle ':completion:*' menu select=4                # tab completion menu
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # use smart-case completion
+zstyle ':completion:*' matcher-list 'r:|=*' 'l:|=* r:|=*'  # complete from middle of path
 
 # additional shell settings (aliases, exports, etc.)
 for file in ~/.shell/{fasd,aliases,audio,functions,nodes,private/*,exports,vconsole,video}; do

@@ -64,7 +64,7 @@ function merp {
 
 # glslviewer
 # note: may want to remove --headless option when working more on animated shaders..
-function gls {
+function gls2png {
     outfile="output/${1/.frag/.png}"
     
     glslviewer $1 \
@@ -75,6 +75,20 @@ function gls {
         -o $outfile
 
     icat $outfile 
+}
+
+# conda env launcher
+function ca {
+  wd=`pwd`
+
+  cd ~/conda/envs/
+  target=`/bin/ls -t | grep --color='none' "$1" | fzf -1 --exact`
+
+  if [ ! -z "$target" ]; then
+    conda activate $target
+  fi
+
+  cd $wd
 }
 
 # copy kitty terminfo to conda envs
@@ -311,3 +325,4 @@ function venv {
 
   cd $wd
 }
+alias ven venv
