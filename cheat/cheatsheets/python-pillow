@@ -1,0 +1,8 @@
+# read img
+from PIL import Image
+im = Image.open("im.png")
+
+# img -> numpy array
+np.array(im)
+
+# vi:syntax=python

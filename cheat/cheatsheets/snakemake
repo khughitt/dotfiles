@@ -9,6 +9,16 @@ snakemake -k -T 5
 message(snakemake)
 save.image()
 
+# jupyter integration
+# snakemake -j1 --edit-notebook somefile.txt 
+rule x:
+    output:
+        "somefile.txt"
+    log:
+        notebook="output/notebooks/x.ipynb"
+    notebook:
+        "notebooks/x.py.ipynb"
+
 # accessing config variables in a "shell" section;
 # leave out quotation marks surrounding keys
 "ls {config[foo]}"

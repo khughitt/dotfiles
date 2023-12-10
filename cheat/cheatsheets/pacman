@@ -1,6 +1,12 @@
 # get info on a package
 pacman -Si
 
+# list packages that depend on a package
+pacman -Sii
+
+# remove a package, unused deps and confs
+pacman -Rns 
+
 # remove a package but not its dependencies
 pacman -Rdd
 
@@ -23,7 +29,6 @@ pacman -Sc
 
 # find out who owns a file
 pacman -Qo /bin/foo
-pkgfile foo
 
 # rank mirrors
 # requires "pacman-contrib";

@@ -2,14 +2,27 @@
 poetry init
 poetry install
 
+# create a new project
+poetry new foo
+
+# add dependency
+poetry add ..
+
 # add development dependency
 poetry add -G dev ..
+
+# run script or tests
+poetry run pytest
+poetry run <script>
 
 # launch shell
 poetry shell
 
 # install deps
 poetry install
+
+# update dep versions
+poetry update
 
 # list packages
 poetry show

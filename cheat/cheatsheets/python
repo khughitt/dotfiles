@@ -178,7 +178,8 @@ urllib.parse.unquote
 
 # md5sum
 import hashlib
-md5 = hashlib.md5(s.encode("utf-8")).hexdigest()
+hashlib.md5(string.encode("utf-8")).hexdigest()          # string
+hashlib.md5(open('foo.txt','rb').read()).hexdigest()     # file
 
 # pickle
 import pickle
