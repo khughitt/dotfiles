@@ -2,29 +2,29 @@
 <ctrl-shift-+>  increase gui scaling
 <ctrl-shift-->  decrease gui scaling
 
-# transport
-f9   toggle record
+# general
+consolidate   ctrl-j
+cut time      ctrl-shift-x
 
-pgup    prev track
-pgdn    next track
+toggle browser panel  alt-b
 
-# views
-<shift-tab>     toggle arrangement / editor
-o               toggle arranger
-a               automation
-t               focus track
+make legato   g
+quantize...   alt-q
 
-# grid (patching modifiers)
-<ctrl-drag>     add with existing source
-<alt-drag>      mix with existing source
-<shift-drag>    blend with existing source
-<ctrl-shift>    multiply
+reverse           alt-r
+reverse pattern   shift-alt-r 
 
-# note colors
-# right click a blank area of editor
+scale...    ctrl-`
 
-# file management
-cntl + alt + s  collect & save
+toggle micopitch editing     shift-alt-m
+
+toggle adaptive beat grid   /
+toggle snap                 
+toggle snap to events       shift-/
+toggle snap to grid         shift-,
+toggle snap to grid offset  shift-.
+
+toggle undocked view        ctrl-p
 
 # piano roll
 f           switch between drum view / piano
@@ -35,49 +35,12 @@ f           switch between drum view / piano
 #   - select the "TRACKS" tab
 # 2. cntl-click the tracks to display
 
-# devices
-?           popup browser
-
-# solo
-alt  + s       toggle track solo
-<shift-click>  exclusive solo
-
-# panel focus
-cntl + k    toggle device window
-ctrl + p    toggle project panel
-d           focus device panel
-alt + d     toggle device panel
-
-# arranger
-cntl + l   loop selected region
-r          toggle arranger loop
-
-# editor
-ctrl + j    consolidate
-shift + d   double content
-g           make legato
-
-# function keys
-f2          toggle automation
-
-# notes
-<alt-1>     octave down
-<alt-2>     octave up
-
-<alt-q>     quantize dialog
-
-<alt-r>         reverse
-<shift-alt-r>   reverse pattern
-
-# custom
-<shift-alt-a>   toggle automation for all tracks
-
-# looping
-<ctl-l> / r     loop selected region (select _track_ region)
-
 # record multiple takes 
 # "play" -> "post-recording action" -> "record into next.."
 
-# colors (missing audio samples indicators)
-yellow - sample is outside of project
-red - sample is missing
+# grid (patching modifiers)
+<ctrl-drag>     add with existing source
+<alt-drag>      mix with existing source
+<shift-drag>    blend with existing source
+<ctrl-shift>    multiply
+

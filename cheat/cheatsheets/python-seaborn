@@ -22,6 +22,11 @@ sns.heatmap(df)
 # biclustering heatmap
 sns.clustermap(df)
 
+# set title, axis labels
+hm = sns.clustermap(dat)
+hm.tick_params(labelsize=5)
+hm.fig.suptitle("...")
+
 # biclustering heatmap (row colors, disable column clustering)
 row_colors = pd.DataFrame({
   "var1": ["#ff0000", ...],

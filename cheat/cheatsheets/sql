@@ -10,13 +10,21 @@ DROP DATABASE x;
 # delete table
 DROP TABLE x;
 
+# rename table
+ALTER TABLE tbl
+  RENAME TO y;
+
+# rename column
+ALTER TABLE tbl
+  RENAME COLUMN old TO new;
+
 # delete rows
 DELETE FROM tbl
   WHERE ..
 
 # delete column
-ALT TABLE tbl
-  DROP COLUMN foo
+ALTER TABLE tbl
+  DROP COLUMN foo;
 
 # change column
 ALTER TABLE tbl
@@ -40,6 +48,9 @@ ALTER TYPE foo RENAME VALUE 'old' TO 'new'
 
 # delete enum
 DROP TYPE foo;
+
+# rename index
+ALTER INDEX old RENAME TO new;
 
 # change values
 UPDATE tbl 

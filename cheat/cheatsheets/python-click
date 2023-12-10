@@ -1,0 +1,16 @@
+# entrypoint
+@click.group()
+@click.option("--verbose", is_flag=True, help="If enabled, prints verbose output")
+def cli(verbose:bool):
+  pass
+
+# command
+@cli.command()
+@click.argument('input_file', type=click.File('rb'))
+@click.argument('output_file', type=str)
+@click.option("--foo", "-f", default="bar", type=str, help="...")
+
+# getting path for click.File object
+input_file.name
+
+# vi:syntax=python

@@ -16,6 +16,9 @@ convert in.jpg -rotate 90 out.png
 # show exif metadata
 identify -format '%[EXIF:*]' in.png
 
+# remove all exif metadata
+mogrify -strip in.png
+
 # remove exif orientation (in-place)
 mogrify -auto-orient in.png
 

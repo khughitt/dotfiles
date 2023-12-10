@@ -1,0 +1,5 @@
+# update pkgfile db
+pkgfile -u
+
+# find out which package owns a file
+pkgfile libfoo.so
