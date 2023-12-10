@@ -341,6 +341,9 @@ mat = df.to_numpy()
 scaler = preprocessing.MinMaxScaler().fit(mat)
 scaled_mat = scaler.transform(mat)
 
+# divide rows by row totals (i.e. convert to ratios)
+df.apply(lambda x: x / x.sum(), axis=1)
+
 # standardization (numpy / scikit)
 scaler = preprocessing.StandardScaler().fit(mat)
 scaled_mat = scaler.transform(mat)
@@ -468,6 +471,14 @@ ax = df.score.plot.kde(title="...")
 plt.show()
 
 ax.figure.savefig("out.png", dpi=300)
+
+Similarity
+----------
+df.corr()
+
+# cosin similarity
+from sklearn.metrics.pairwise import cosine_similarity
+cosine_similarity(df.T)
 
 Clipboard
 ---------

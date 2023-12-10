@@ -1,4 +1,4 @@
-# rustup
+// rustup
 rustup install stable
 rustup default stable
 rustup update
@@ -7,108 +7,126 @@ rustup toolchain install nightly
 rustup run nightly rustc
 rustup update
 
-# basic types
+// basic types
 u8 u16 u32 u64 u128
 i8 i16 i32 i64 i128
 f32 f64
 bool
 char
 
-# type conversion
-let f = i as f32;   # int -> float
-let x: u32 = x.trim().parse().expect("not a number");   # str -> int
-let c = str.chars().next().expect("string is empty!");  # string -> char
+// type conversion
+let f = i as f32;   // int -> float
+let x: u32 = x.trim().parse().expect("not a number");   // str -> int
+let c = str.chars().next().expect("string is empty!");  // string -> char
+let num:u32 = c.to_digit(10).unwrap();
 
-# shadowing 
-# - overrides previous value, within scope
-# - uses "let" each time
-# - type can differ
+// shadowing 
+// - overrides previous value, within scope
+// - uses "let" each time
+// - type can differ
 let x = 3;
 ..
 let x = x + 1;
 
-# mut
-# - value can be changed without need to use "let"
-# - type cannot change
+// mut
+// - value can be changed without need to use "let"
+// - type cannot change
 let mut x = 3;
 x = x + 1;
 
-# tuples
-let tup = (1, 2.0, 'a');  # create
-tup.0                     # indexing
-let (a, b, c) = tup;      # destructure
+// tuples
+let tup = (1, 2.0, 'a');  // create
+tup.0                     // indexing
+let (a, b, c) = tup;      // destructure
 
-# arrays
+// arrays
 let arr = ['a', 'b', 'c'];
 let arr: [u32; 3] = [1, 2, 3];
 let ones = [1; n];
 arr[0]
 for elem in a { ... }
 
-# strings
-"foo"                    # string literal (immutable, fixed length)
-s = String::from("foo")  # String type (mutable, variable length)
+// characters
+c.is_digit(10)   // base 10 digit?
 
-s.chars()          # get iterator to characters in string
+// strings
+"foo"                    // string literal (immutable, fixed length)
+s = String::from("foo")  // String type (mutable, variable length)
 
-s.len();           # length in _bytes_
-s.chars().count()  # length in _chars_
+s.chars()          // get iterator to characters in string
 
-s.as_bytes()[i];  # indexing (ascii only)
-&s[2..4];         # substring / slice (ascii only)
+s.len();           // length in _bytes_
+s.chars().count()  // length in _chars_
 
-&str              # return type for string slice
+s.starts_with("foo")
 
-# substring 
+s.as_bytes()[i];  // indexing (ascii only)
+&s[2..4];         // substring / slice (ascii only)
+&s[2..];
+&s[..4];
+
+&str              // return type for string slice
+
+s.replace("from", "to")   // replace all
+
+// substring 
 let substr: String = s.chars().skip(start).take(num_chars).collect();
 
-# create a vector of chars
+
+// create a vector of chars
 let chars:Vec<char> = s.trim().chars().collect();
 
-# vector of chars to string
+// vector of chars to string
 use std::iter::FromIterator;
 let s = String::from_iter(c);
 
 for(i, ch) in s.chars().enumerate() {
 }
 
-let (a, b) = s.split_at(10);  # split string at position
+let (a, b) = s.split_at(10);  // split string at position
 
-s.push_str("..")  # append
+s.push_str("..")  // append
 
 s.split('_')
 s.split_whitespace()
 s.lines()
-s.trim()  # strip
+s.trim()  // strip
 
-# split and create vec of parts
+// split and create vec of parts
 let parts: Vec<&str> = "a b c".split(' ').collect();
 
-# get intersection of characters in two strings as a vec
+// get intersection of characters in two strings as a vec
 let a: HashSet<char> = s1.chars().collect();
 let b: HashSet<char> = s2.chars().collect();
 let mut intersection = a.intersection(&b).collect::<Vec<_>>();
 
-# HashSet from iter
+// HashSet from iter
 use std::iter::FromIterator;
 let ab = HashSet::<&char>::from_iter(a.intersection(&b));
 
-# Or..
+// Or..
 let xx:HashSet<u16> = x.into_iter().collect();
 
-# vectors
-# https://doc.rust-lang.org/std/vec/
+// vectors
+// https://doc.rust-lang.org/std/vec/
 let mut v: Vec<i32> = vec![];
 let v = vec![1, 2, 3, 4, 5];
 let v = vec![0; 10]; // ten zeroes
 
+v[2]
 v[2..]
 v[..5]
 v[0..4]
-v[0..=4]   # inclusive end
+v[0..=4]   // inclusive end
 v[..]
 
-v.len();   # cector length / size
+// get last element in vector
+if let Some(val) = v.last() {
+} else {
+  println!("empty!")
+}
+
+v.len();   // vector length / size
 
 for x in v.iter() {...}
 for (i, x) in v.iter().enumerate() {...}
@@ -121,14 +139,17 @@ v[2] = v[2] + 1;
 
 v.reverse();
 
-# number ranges
+// vector sum
+let total: i32 = v.iter().sum();
+
+// number ranges
 (1..5)
 (1..5).rev()
 
-# min
+// min
 cmp::min(1, 2)
 
-# HashMaps (~dicts)
+// HashMaps (~dicts)
 use std::collections::HashMap;
 let mut map = HashMap::new();
 
@@ -142,13 +163,13 @@ for (key, val) in &h {
   ...
 }
 
-# modify vector inside hashmap
+// modify vector inside hashmap
 h.get_mut(&key).map(|v| v.push("foo"));
 
-# get a copy of hashmap keys; useful for modifying hashmap contents in a loop
+// get a copy of hashmap keys; useful for modifying hashmap contents in a loop
 let k: Vec<u8> = h.keys().cloned().collect();
 
-# HashMap from array
+// HashMap from array
 let solar_distance = HashMap::from([
     ("Mercury", 0.4),
     ("Venus", 0.7),
@@ -156,39 +177,41 @@ let solar_distance = HashMap::from([
     ("Mars", 1.5),
 ]);
 
-# ternary assignment
+// ternary assignment
 let x = uf .. { a } else { b };
 
-# read file contents
+// read file contents
 use std::fs;
 
 let contents = fs::read_to_string("in.txt")
     .expect("Unable to find file!");
 
-# iterate over lines in file
+// iterate over lines in file
 let lines = contents.lines();
 for line in lines {
   ...
 }
 
-# functions
+// functions
 fn foo() -> u16 {
   return 1
 }
 
 fn is_even(a:u32) -> bool {
-  a % 2 == 0   # "return" omitted for expressions
+  a % 2 == 0   // "return" omitted for expressions
 }
 
-# closures (~lambdas)
+// closures (~lambdas)
 |val| val + x
 
-# iterators
-iter.collect::<Vec<_>>();  # convert to vec
+// transform iterator into a collection (e.g. vec)
+iter.collect::<Vec<_>>();
 
-# usize -> int
+// usize -> int
 let b: u16 = a as u16;
 
-# print
+// print
 println!("{}", x);
 println!("{:?}", vec);
+
+// vi:syntax=rust

@@ -1,6 +1,9 @@
 # ipython x pdb
 from IPython import embed; embed()
 
+# history
+%history 1-5
+
 # benchmark python code
 %timeit print('hi')
 
