@@ -304,7 +304,14 @@ function walpal {
 
 # fahrenheit to celsius
 function ftoc {
-  echo "scale=2;(5/9)*($1-32)" | bc
+  cel=$(echo "scale=4;(5/9)*($1-32)" | bc)  # scale determines precision
+  echo "${cel%???}"                         # strip last few digits
+}
+
+# celsius to fahrenheit
+function ctof {
+  far=$(echo "scale=4;(9/5)*$1 + 32" | bc)
+  echo "${far%???}"
 }
 
 # jq | less
@@ -325,4 +332,4 @@ function venv {
 
   cd $wd
 }
-alias ven venv
+alias ven=venv
