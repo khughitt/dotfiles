@@ -35,10 +35,11 @@ row_colors = pd.DataFrame({
 sns.clustermap(df, col_cluster=False, row_colors=row_colors)
 
 # change figure size:
-# 1. "axes-level" plots (e.g. scatterplot)
+# 1. for "axes-level" plots (e.g. scatterplot)
 sns.set(rc={"figure.figsize":(12, 8)})  # 1600 x 1200px
 
-# 2. "figure-level" plots (e.g. lmplot)
+# 2. for "figure-level" plots (e.g. lmplot)
 sns.lmplot(..., height=8, aspect=1.5)
+sns.clustermap(..., figsize=(12, 10,))
 
 # vi:syntax=python

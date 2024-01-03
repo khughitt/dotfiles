@@ -414,6 +414,9 @@ Sampling
 
 df.sample(10, random_state=321)
 
+rng = np.random.default_rng(321)
+df.sample(10, random_state=rng)
+
 Counting
 --------
 

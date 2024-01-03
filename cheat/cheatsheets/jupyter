@@ -33,3 +33,7 @@ for df in dfs:
 # disable scrolling for a particular chunk's output
 1. select output
 2. `shift-O`
+
+# list & remove old kernels
+jupyter kernelspec list
+jupyter kernelspec remove ..

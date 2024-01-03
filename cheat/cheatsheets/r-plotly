@@ -4,4 +4,8 @@ fig <- plot_ly(...)
 config(fig, toImageButtonOptions = list(format = 'svg', filename = 'img', width = 1400, height = 1000, scale = 1)) %>%
   layout(...)
 
+# hide all legends
+plt %>%
+  style(plt, showlegend = FALSE)
+
 # vi:syntax=r

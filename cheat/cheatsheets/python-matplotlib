@@ -14,10 +14,17 @@ ax = fig.add_subplot(111, projection='3d')
 ax.scatter(df.x, df.y, df.z, c=df.color)
 
 # get colormap
-from matplotlib import cm
-cm.get_cmap('viridis', 6)
+matplotlib.colormaps['viridis']
 
 # get list of hex values for colormap
 [matplotlib.colors.rgb2hex(cmap(i)) for i in range(cmap.N)]
+
+# very simple approach to creating a discrete color map (list of colors) from
+# a continuous colormap
+k = 10
+
+cmap = matplotlib.colormaps['viridis']
+ind = list(np.linspace(0, len(cmap.colors) - 1, k).round().astype(int))
+[matplotlib.colors.rgb2hex(cmap(i)) for i in ind]
 
 # vi:syntax=python

@@ -1,4 +1,12 @@
-# assert type
+// assert type
 const b:string = a as string
 
-# vi:syntax=typescript
+// interface describing an associative array
+interface Foo {
+  [index: string]: string;
+}
+
+// indicate that a string is a valid key for an object (assoc array)
+Foo[keyName as keyof typeof Foo]
+
+// vi:syntax=typescript

@@ -15,6 +15,7 @@ ncol(df)
 
 df.foo
 
+# colnames
 names(df)
 
 describe(df)
@@ -28,10 +29,21 @@ last(df, 5)
 rename!(df, :old => :new)
 rename!(df, [:new1, :new2, ..., :newn])
 
+# rename/map values in a given column
+mapping = Dict("from" => "to", "b" => "c", ...)
+df.foo = [mapping[x] for x in df.foo]
+
 # select columns
-select(df, "foo")  # returns 1-d dataframe; use indexing to retrieve column as vector/array
+select(df, "foo")           # returns 1-d dataframe; use indexing to retrieve column as vector/array
 select(df, ["foo", "bar"])
 select(df, r"regex")
+select(df, Not("foo"))      # negation
+
+# row to vec
+[df[n, col] for col in names(df)]
+
+# row to vec (doesn't work?..)
+vec(convert(Array, df[1,:]))
 
 # get all columns _except_ one
 df[:, Not(:foo)]
@@ -69,6 +81,19 @@ hcat(a, b)
 # transpose
 permutedims(df, 1)
 
+# log transform single column
+log.(df.foo)
+
+# log transform all columns except for first
+@. log(df[:, 2:end])
+
+# value counts
+using StatsBase
+countmap(df.foo)
+
+# drop rows with values missing in a specific column
+dropmissing(df, :foo)
+
 # read/load csv
 using CSV
 df = DataFrame(CSV.File(...))
@@ -89,3 +114,5 @@ sum(Matrix(df), dims=1)
 clipboard(sprint(show, "text/tab-separated-values", df))
 clipboard(sprint(show, "text/csv", df))
 clipboard(sprint(show, "text/latex", df))
+
+# vi:syntax=julia

@@ -71,11 +71,11 @@ vec3 color = vec3(0.0);
 // returns 0.0/1.0, if below/above cutoff
 step(cutoff, val)
 
-// given a range and a value, interpolates the value between the range
-smoothstep(lower, upper, val)
+// linear weighted interpolation (b * weight + a * (1.0 - weight))
+mix(a, b, weight)  
 
-// weighted linear intepreation between two values (x * (1.0−a) + y * a)
-float mix(x, y, a)  
+// smooth weighted interpolation (cubic / "Hermite" interpolation)
+smoothstep(a, b, weight)
 
 // triangle wave
 abs(2.0 * fract(x) - 1.0)

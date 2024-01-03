@@ -25,7 +25,7 @@ a.push('foo')
 
 // array foreach
 a.forEach((item) => { console.log(item); })
-a.forEach((item, ind) => { console.log(item); })
+a.forEach((item, ind) => { console.log(item); })  // enumerate
 
 // "continue" in forEach loop (for regular for loops, just use "continue"..)
 a.forEach((item) => {
@@ -61,6 +61,9 @@ Object.keys(obj).length
 
 // get last value in an object
 Object.values(obj).slice(-1)[0]
+
+// merge objects
+{...a, ...b}
 
 // check if item is in array
 arr.includes('foo')
@@ -137,7 +140,8 @@ JSON.stringify(a) == JSON.stringify(b);
 // check array equality (any order)
 JSON.stringify(a.sort()) == JSON.stringify(b.sort());
 
-// find minimum value of an array of numbers
+// min/max
+Math.min(a, b)
 Math.min(...arr)
 
 // equality

@@ -1,0 +1,84 @@
+// install r3f + other useful libraries
+npm install three @types/three @react-three/fiber @react-three/drei \
+  three-custom-shader-material @react-three/postprocessing maath leva
+
+// imports
+import * as THREE from 'three'
+import { Suspense, useRef } from 'react'
+import { Canvas, useFrame, useThree, ThreeElements } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import { EffectComposer, Bloom } from '@react-three/postprocessing'
+
+// canvas, suspense, post-processing
+<Canvas style={{ background: "#333333", width: "100vw", height: "100vh" }}>
+  <Suspense fallback={null}>
+    <EffectComposer>
+      <Bloom intensity={0.5} luminanceThreshold={1} />
+    </EffectComposer>
+  </Suspense>
+</Canvas>)
+
+// nested properties
+<mesh rotation-x={1} material-color={'red'} material-uniforms-foo-value: {1.0} />
+
+// mesh / geom / material
+<mesh position={[0, 0, -1]}>
+  <planeGeometry args={[2, 2]} />
+  <meshStandardMaterial color='#aabbcc' />
+</mesh>
+
+// custom meshes
+const ColorBox = (props: ThreeElements['mesh']) => {
+  const meshRef = useRef<THREE.Mesh>(null!)
+  const [color, setColor] = useState("#ffffff")
+
+  useEffect(() => {
+    if (meshRef.current === null) return
+    setColor(meshRef.current.userData.color)
+  }, [meshRef.current])
+
+  return (
+    <mesh {...props} ref={meshRef}>
+      <boxGeometry />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  )
+}
+<ColorBox scale={1.0} userData={{"color": "#00ff00"}} />
+
+// lights
+<directionalLight position={[1, 0, 0]} color={"#00ffff"} intensity={1.0} />
+
+// mouse support
+<OrbitControls />
+
+// ref
+const meshRef = useRef<THREE.Mesh>(null!)
+
+// type for ref passed as a prop
+React.RefObject<THREE.Mesh<THREE.BufferGeometry>>
+
+// animation
+useFrame((_, delta) => (meshRef.current.rotation.y += delta / 2.0))
+
+// textures
+import { useTexture } from "@react-three/drei"
+
+const props = useTexture({
+  map: 'map.jpg',
+  displacementMap: '..',
+  normalMap: '..',
+  roughnessMap: '..',
+  aoMap: '..',
+})
+<meshStandardMaterial {...props} />
+
+// fog
+<fog attach="fog"  color="#eeeeee" near={1} far={14} />
+<fogExp2 attach="fog"  color="#eeeeee" density={0.025} />
+
+// leva
+import { useControls } from 'leva'
+const { param } = useControls({ param: 2.0 })
+
+// vi:syntax=javascript

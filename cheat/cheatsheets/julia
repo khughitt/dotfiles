@@ -1,3 +1,5 @@
+# jupyter: add ";" to end of expression to avoid printing..
+
 # numbers
 Inf
 
@@ -197,6 +199,9 @@ for line in readlines(fp)
   ...
 end
 
+# combinations (ex. n pick 2)
+binomial(3, 2)
+
 #
 # matrices
 #
@@ -252,3 +257,5 @@ clipboard(x)
 
 # read whitespace-delimited file
 using DelimitedFiles
+
+# vi:syntax=julia

@@ -17,10 +17,14 @@ sed -E 's/[[:alnum:]]+/foo/'   # mac
 sed -i '1s/^/<added text> /' file
 sed -i "1 i <added text>" file
 
-# Print a specific line in a file
+# insert line after line matching "foo"
+sed '/foo/a bar' file
+sed '/foo/a \ \ \ \ bar' file   # indented
+
+# print a specific line in a file
 sed -n '15p' file
 
-# Print from line m to n in a file
+# print from line m to n in a file
 sed -n '3,10p' file
 
 # delete lines containing str

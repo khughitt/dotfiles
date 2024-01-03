@@ -1,6 +1,24 @@
 # create a new proj
 npm init
 
+# create a new react proj (vite + ts)
+npm create vite@latest foo -- --template react-ts
+cd foo
+npm install
+
+# have dropbox chill..
+md node_modules
+dropbox_ignore node_modules
+
+# coc.nvim: "Property 'div' does not exist on type 'JSX.IntrinsicElements'"
+# tsconfig.json: "moduleResolution": "Node",
+# https://github.com/vitejs/vite/issues/14011#issuecomment-1683630859
+sed -i "s/bundler/Node/" tsconfig.json
+
+# eslint-react
+npm install eslint eslint-plugin-react --save-dev
+sed -i "/eslint:recommended/a \ \ \ \ 'plugin:react/recommended'," .eslintrc.cjs
+
 # install deps from package.json
 npm install
 
@@ -20,11 +38,6 @@ npx license mit > LICENSE
 npx gitignore node
 npx covgen YOUR_EMAIL_ADDRESS
 npm init -y
-
-# create a new react proj (vite + ts)
-npm create vite@latest foo -- --template react-ts
-cd foo
-npm install
 
 # create a new react proj (CRA)
 npx create-react-app my-proj

@@ -16,3 +16,5 @@ plot(x, y, seriestype=:scatter, ms=1)
 # save plot
 savefig("plot.png")
 savefig(p, "plot.png")
+
+# vi:syntax=julia

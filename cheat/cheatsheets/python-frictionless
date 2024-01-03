@@ -1,0 +1,13 @@
+# describe
+from frictionless import describe
+
+pkg = describe("in.csv", type="package", stats=True) # type: [package|resource|dialect|schema]
+pkg = describe(df, type="package") # type: [package|resource|dialect|schema]
+
+pkg.to_yaml()
+
+# schema
+from frictionless import Schema
+Schema(df)
+
+# vi:syntax=python
