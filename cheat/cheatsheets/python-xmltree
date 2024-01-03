@@ -1,6 +1,9 @@
 # load xml
 import xml.etree.ElementTree as ET
-tree = ET.parse('...')
+
+with open('in.xml', 'r') as fp:
+  tree = ET.parse(fp)
+
 root = tree.getroot()
 
 # iterate over children
@@ -10,6 +13,9 @@ for child in elem:
 # get child nodes as a list
 list(elem)
 
+# get contents
+elem.text
+
 # get attribute
 elem.get('foo')
 
@@ -17,6 +23,7 @@ elem.get('foo')
 elem.find("child")
 elem.find(".//elem")
 elem.findall(".//elem")
+elem.findall(".//elem/child")
 
 # find element and get text, if matched
 elem.findtext('child', default=None)

@@ -8,7 +8,7 @@ git reset
 # unstage file
 git reset <file>
 
-# undo delete file (uncommitted)
+# restore deleted file (uncommitted)
 git checkout HEAD <file>
 
 # revert all changes

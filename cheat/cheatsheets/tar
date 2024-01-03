@@ -1,4 +1,4 @@
-# Create archive from a list of files
+# create archive from a list of files
 tar -czvf files.tgz `cat filelist.txt`
 
 # list contents

@@ -1,2 +1,12 @@
+using StatsPlots
+gr(size=(1200,900))
+
 # density
 density(vec(x), title="", xlabel="")
+
+# violin + boxplot + scatter
+@df dat violin(string.(:group), :y, linewidth=0)
+@df dat boxplot!(string.(:group), :y, fillalpha=0.75, linewidth=2)
+@df dat dotplot!(string.(:group), :y, marker=(:black, stroke(0)))
+
+# vi:syntax=julia

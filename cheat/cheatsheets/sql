@@ -33,7 +33,7 @@ ALTER TABLE tbl
   ALTER COLUMN foo DROP NOT NULL
 
 # add columns
-ALTER tbl 
+ALTER TABLE tbl 
   ADD COLUMN col1 ...,
   ADD COLUMN col2 ...
 

@@ -3,6 +3,10 @@ G.adj
 G.edges
 G.nodes
 
+# get specific edge (edge must exist)
+G.edges[node1, node1]
+G.edges[node1, node2]["weight"]
+
 # creation
 nx.from_numpy_array(arr)
 nx.from_scipy_sparse_array(arr)
@@ -14,6 +18,32 @@ pos = nx.spring_layout(G, seed=321)
 # plotting
 nx.draw(G)
 nx.draw(G, pos=pos)
-nx.draw_networkx_labels(G, pos, labels)   # "labels" = dict of labels indexed by node
+nx.draw_nx_labels(G, pos, labels)   # "labels" = dict of labels indexed by node
+
+# add node attributes ("node_attrs" = nested dict of node attributes)
+node_attrs = {"id1": {"color": "red",..},..}
+nx.set_node_attributes(G, node_attrs)
+
+# compute network metrics and add them to network
+degree = dict(G.degree)
+nx.set_node_attributes(G, degree, "degree")
+
+bc = nx.betweenness_centrality(G)
+nx.set_node_attributes(G, bc, "betweeness_centrality")
+
+ec = nx.eigenvector_centrality_numpy(G)
+nx.set_node_attributes(G, ec, "eigenvector_centrality")
+
+cc = nx.closeness_centrality(G)
+nx.set_node_attributes(G, cc, "closeness_centrality")
+
+pr = nx.pagerank(G)
+nx.set_node_attributes(G, pr, "page_rank")
+
+# save as graphml
+nx.write_graphml(G, path)
+
+# get a list of edges + edge attrs
+list(G.edges.data())
 
 # vi:syntax=python
