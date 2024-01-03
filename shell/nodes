@@ -10,3 +10,5 @@ function datn {
         ipython -i -c "from nodes.nodes import DataFrameNode; node=DataFrameNode.from_pkg('$target');"
     fi
 }
+
+# vi:syntax=bash

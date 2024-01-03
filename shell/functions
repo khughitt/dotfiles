@@ -180,7 +180,7 @@ function check_gene {
     # Strip "LOC" prefix, if present;
     # "LOC" genes are listed in NCBI genes without the "LOC" prefix
     # https://www.ncbi.nlm.nih.gov/books/NBK3840/
-    if [ "$1" != "${query#LOC}" ]; then
+    if [ "$query" != "${query#LOC}" ]; then
         echo "Removing LOC prefix..."
         query=${query#LOC} 
     fi
@@ -271,19 +271,76 @@ function datp {
     fi
 }
 
+# create new vite + react proj
+function vite_proj {
+  export projname="$1"
+  npm create vite@latest "$projname"  -- --template react-ts
+
+  cd "$projname"
+  npm i
+
+  # eslint
+  sed -i "s/bundler/Node/" tsconfig.json
+
+  npm install eslint eslint-plugin-react --save-dev
+  sed -i "/eslint:recommended/a \ \ \ \ 'plugin:react/recommended'," .eslintrc.cjs
+
+  # r3f & friends
+  npm install three @types/three @react-three/fiber \
+    @react-three/drei @react-three/postprocessing leva
+
+  # .glsl support
+  npm i vite-plugin-glsl --save-dev
+  sed -i "1 i import glsl from 'vite-plugin-glsl';" vite.config.ts
+  sed -i "s/react()/react(), glsl()/" vite.config.ts
+  sed -i '/compilerOptions/a \ \ \ \ "types": ["vite-plugin-glsl/ext"],' tsconfig.json
+
+  echo "Finished!.."
+  echo "---"
+  echo "Manual step:"
+  echo "sudo attr -s com.dropbox.ignored -V 1 node_modules"
+}
+
 # set background
 function wali {
-  wal -i ~/d/linux/backgrounds/3440 --backend haishoku
+  if [ "$#" -eq 0 ]; then
+    target="$HOME/d/linux/backgrounds/3440"
+  else
+    target="$1"
+
+    if [ ! -e "$target" ]; then
+      echo "Invalid path specified!"
+      return 1
+    fi
+  fi
+
+  wal -i $target --backend haishoku
 
   # get path to new background
   img=`sleep 1 && tail -1 ~/.fehbg | grep --color='never' -o "/[\/a-zA-Z0-9_\.]*"`
 
   fname=`basename $img`
-  fname=${fname/jpg/}
 
-  outfile="~/music/bitwig/colors/$fname"
+  # generate color palettes
+  basepath="$HOME/d/colors/_inc/${fname/.(jpg|png)/}"
 
-  $HOME/bin/haishoku $img $outfile
+  cd ~/d/r/colormage/
+
+  magick $img \
+    -resize 10% \
+    -interlace JPEG \
+    -sampling-factor 4:2:0 \
+    -quality 85% \
+    "${basepath}-preview.jpg"
+
+  basecmd="poetry run colormage pal --min-saturation 0.2 --sample-ratio 0.005 --num-colors 12 --include-json"
+
+  eval "$basecmd --method kmeans $img ${basepath}-kmeans.png"
+  eval "$basecmd --method kmeans --max-lightness 0.6 $img ${basepath}-kmeans-dark.png"
+  eval "$basecmd --method kmeans --min-lightness 0.4 $img ${basepath}-kmeans-light.png"
+  eval "$basecmd --method hdb --hdb-epsilon 0.02 $img ${basepath}.png"
+  eval "$basecmd --method hdb --hdb-epsilon 0.02 --max-lightness 0.6 $img ${basepath}-dark.png"
+  eval "$basecmd --method hdb --hdb-epsilon 0.01 --min-lightness 0.4 $img ${basepath}-light.png"
 }
 
 # remove background
@@ -333,3 +390,5 @@ function venv {
   cd $wd
 }
 alias ven=venv
+
+# vi:syntax=bash

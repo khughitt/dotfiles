@@ -37,7 +37,7 @@ alias docl='docker logs -f'
 alias dk='docker kill `docker ps -q`'
 
 # dropbox
-dropbox_exclude='sudo attr -s com.dropbox.ignored -V 1 '
+alias dropbox_ignore='sudo attr -s com.dropbox.ignored -V 1 '
 
 # du
 alias dud='du -d 1 -h'
@@ -96,8 +96,8 @@ alias vacuum='sudo journalctl --vacuum-size=50M'
 alias less='moar'
 
 # lit-walk
-alias lw='lit-walk'
-alias lwd="lit-walk --config='~/.config/lit/config-dev.yml'"
+alias lw='cd $PROJ/lit-explore/lit-walk poetry run lit-walk'
+alias lwd="cd $PROJ/lit-explore/lit-walk poetry run lit-walk --config='~/.config/lit/config-dev.yml'"
 
 # ln
 alias lns='ln -s'
@@ -129,6 +129,7 @@ alias -s Rmd=nvim
 
 # neovim
 alias vi=nvim
+alias vs="nvim src/App.tsx"
 alias vim=nvim
 alias vmi=nvim
 alias vm='nvim README.*md'
@@ -139,7 +140,7 @@ alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}' # open last argument of 
 alias netp="sudo netstat -plant"
 
 # npm
-alias npms="npm run dev"
+alias ndev="npm run dev"
 
 # pwd
 alias xp='pwd | xsel'
@@ -238,3 +239,5 @@ alias zl='zeit list'
 alias zt='zeit tracking'
 alias ze="zeit entry \`zeit --no-colors list | tail -1 | awk '{print \$1}'\`"
 alias zrm='zeit erase '
+
+# vi:syntax=bash
