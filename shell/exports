@@ -48,3 +48,5 @@ export FLASK_ENV=development
 
 # zeit
 export ZEIT_DB=~/.config/zeit/zeit.db
+
+# vi:syntax=bash

@@ -34,3 +34,5 @@ function ffcut {
     echo "Running: $cmd"
     eval $cmd
 }
+
+# vi:syntax=bash

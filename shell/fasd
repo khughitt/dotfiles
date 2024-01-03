@@ -21,6 +21,9 @@ alias j='fasd_cd -d'
 alias jd="fasd_cd -d /data/"
 alias jp="fasd_cd -d home d/r/"
 alias js="fasd_cd -d home shiny"
+alias jr="fasd_cd -d home recipe"
 
 alias jk="cd \`fasd -d -l -r | fzf -1 --exact\`"
-alias v="vim \`fasd -f -l -r | fzf -1 --exact\`"
+alias v="vim \`fasd -f -l -r | fzf-1 --exact\`"
+
+# vi:syntax=bash
