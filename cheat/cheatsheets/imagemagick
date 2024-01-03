@@ -1,8 +1,11 @@
-# rescale: specify height
-convert a.png -resize x1440 out.png
+# rescale
+convert a.png -resize 50% out.png
 
 # rescale: specify width
 convert a.png -resize 3440x out.png
+
+# rescale: specify height
+convert a.png -resize x1440 out.png
 
 # combine two images side-by-side (resizing height to 480)
 convert +append left.png right.png -resize x480 out.png
@@ -12,6 +15,9 @@ convert -append a.png b.png out.png
 
 # rotate 90 degrees clockwise
 convert in.jpg -rotate 90 out.png
+
+# compressed jpeg
+magick in.png -interlace JPEG -sampling-factor 4:2:0 -quality 85% out.jpg
 
 # show exif metadata
 identify -format '%[EXIF:*]' in.png

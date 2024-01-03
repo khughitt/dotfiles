@@ -11,7 +11,7 @@ reveal_type(x)
 from typing import cast
 cast(str, x)
 
-# _assert_ that a variable's type has changed (another approach?)
+# indicate known type (e.g. type of return value in function with multiple possible return types)
 assert isinstance(x, str) 
 
 # pydantic: support dict["key"] style access

@@ -1,6 +1,6 @@
 # find recent/older files
-fd --changed-within 5days
-fd --changed-before 5days
+fd --changed-within 5d
+fd --changed-before 5d
 
 # limit depths
 fd -d 1
@@ -10,6 +10,13 @@ fd -e pdf
 
 # exclude pattern
 fd -E foo
+
+# execute (indiv)
+fd -x .. mv {} target/
+
+# execute (batch)
+fd -X .. mv target/
+fd -X .. mv {} target/
 
 # find files in a specified directory
 fd . <dir> -t f

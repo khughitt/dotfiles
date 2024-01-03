@@ -48,7 +48,7 @@ np.quantile(dat, np.arange(0, 1.01, 0.05))
 ind = np.triu_indices(a.shape[0], k=1)
 a.values[ind]
 
-# pearson correlation 
+# pearson correlation (operates on rows by default; pandas on columns)
 np.corrcoef(X)
 
 # vi:syntax=python

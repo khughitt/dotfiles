@@ -8,6 +8,9 @@ path/to/venv/bin/pip
 # activate
 source <venv>/bin/activate
 
+# list installed
+pip list
+
 # generate requirements.txt
 pip freeze > requirements.txt
 

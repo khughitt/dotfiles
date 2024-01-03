@@ -15,16 +15,24 @@ list(itertools.chain(*[list1, list2, list3, ...]))
 list(itertools.chain(*regular_list))
 
 # sort list of objects/dicts by key (in place)
-lst.sort(key=lambda x: x['foo'], reverse=True)
+lst.sort(key=lambda x: x["foo"], reverse=True)
 
 # sort list of objects/dicts by key (out of place)
-sorted(lst, key=lambda x: x['foo'], reverse=True)
+sorted(lst, key=lambda x: x["foo"], reverse=True)
 
 # sort list of objects to match order of ids in separate list (in place)
-lst.sort(key=lambda x: ids.index(x['id']))
+lst.sort(key=lambda x: ids.index(x["id"]))
+
+# sort values in one list based on values in another list
+a = ["b", "c", "a"]
+b = [0.5, 0.1, 1.0]
+[x[0] for x in sorted(zip(a, b))]  # ["a", "b", "c"]
 
 # create a dict from lists of keys/values
 dict(zip(k, v))
+
+# get index of min/max item in list ("which.max")
+lst.index(max(lst))
 
 # default dicts
 from collections import defaultdict
@@ -60,8 +68,8 @@ regex.match(target)
 regex.search(target)
 regex.sub(pattern, replace, str)
 
-if (regex.search('foo')):
-  print('found!')
+if (regex.search("foo")):
+  print("found!")
 
 # findall
 re.findall("(.*\.png|.*\.jpg|.*\.jpeg|.*\.svg)", x)
@@ -95,7 +103,7 @@ x | y # python 3.9
 dict(filter(lambda x: x[0] not in exclude, dat.items()))
 
 # filter dict by value
-dict(filter(lambda x: x[1] == 'foo', dat.items()))
+dict(filter(lambda x: x[1] == "foo", dat.items()))
 
 # get current timestamp
 import time
@@ -123,27 +131,27 @@ now = datetime.datetime.now().timestamp()
 now - mtime
 
 # read yaml file
-with open('cfg.yml') as fp:
+with open("cfg.yml") as fp:
     cfg = yaml.load(fp, Loader=yaml.FullLoader)
 
 # write yaml file
-with open('foo.yml', 'w') as fp:
+with open("foo.yml", "w") as fp:
     yaml.dump(dict, fp)
 
 # read json from file
-with open('file.json') as fp:
+with open("file.json") as fp:
   x = json.load(fp)
 
 # json string -> python
-x =  '{"foo": "bar"}'
+x =  "{'foo': 'bar'}"
 json.loads(x)
 
 # convert json to string
-json.dumps({'foo': 'bar'})
+json.dumps({"foo": "bar"})
 
 # write json to file
-with open('out.json', 'w') as fp:
-    json.dump({'foo': 'bar'}, fp)
+with open("out.json", "w") as fp:
+    json.dump({"foo": "bar"}, fp)
 
 # dealing with numpy datatype encoding 
 # https://stackoverflow.com/a/65151218/554531
@@ -179,7 +187,7 @@ urllib.parse.unquote
 # md5sum
 import hashlib
 hashlib.md5(string.encode("utf-8")).hexdigest()          # string
-hashlib.md5(open('foo.txt','rb').read()).hexdigest()     # file
+hashlib.md5(open("foo.txt","rb").read()).hexdigest()     # file
 
 # pickle
 import pickle
@@ -187,8 +195,8 @@ pickle.dump(obj, open("out.p", "wb"))
 pickle.load(open("out.p", "rb"))
 
 # replace (see re.sub for regex replaces)
-str.replace('foo', 'bar')
-str.replace('foo', 'bar', 1)
+str.replace("foo", "bar")
+str.replace("foo", "bar", 1)
 
 # f-string decimal place formatting
 f"{foo:.2f}"
@@ -197,11 +205,15 @@ f"{foo:.2f}"
 f"{123:06}"
 
 # recursive directory walk (does not include hidden files)
-for file in glob.iglob('**/**', recursive=True):
+for file in glob.iglob("**/**", recursive=True):
      print(file)
 
 # recursive directory walk (includes hidden files)
 list(pathlib.Path("path/").glob("**/*.*"))
+
+# mkdir (os)
+os.mkdir(path, mode=0o755)
+os.makedirs(path, mode=0o755, exist_ok=True) # recursive
 
 # mkdir (pathlib)
 path = pathlib.Path(..)
@@ -222,7 +234,7 @@ random.sample(lst, 5)
 # hex <-> rgb colors
 # https://stackoverflow.com/a/71804445/554531
 def rgb_to_hex(rgb:tuple[int, int, int]) -> str:
-    return '#%02x%02x%02x' % rgb
+    return "#%02x%02x%02x" % rgb
 
 def hex_to_rgb(hexa:str) -> tuple[int, int, int]:
     return tuple(int(hexa[i:i+2], 16)  for i in (1, 3, 5))
@@ -246,7 +258,16 @@ snakeviz profile.log
 
 # nested dictionary indexing
 from functools import reduce
-path = ['root', 'a']
+path = ["root", "a"]
 reduce(lambda arr, ind: arr[ind], path, tree)
+
+# UUIDs
+from uuid import uuid1
+str(uuid1())
+
+# combinations & permutations
+from itertools import combinations, permutations 
+combinations(lst, k)
+permutations(lst, k)
 
 # vi:syntax=python
