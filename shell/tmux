@@ -18,3 +18,4 @@ if [[ "$TERM" != (screen|tmux)-* ]] && [ ! -z "$SSH_CLIENT" ]; then
     exit
 fi
 
+# vi:syntax=bash

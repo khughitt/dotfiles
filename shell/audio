@@ -42,3 +42,4 @@ function bitwig_copy_sample {
     cd $cwd
 }
 
+# vi:syntax=bash

@@ -39,3 +39,5 @@ add-zsh-hook preexec make_beam
 zle -A kill-whole-line vi-kill-line
 zle -A backward-kill-word vi-backward-kill-word
 zle -A backward-delete-char vi-backward-delete-char
+
+# vi:syntax=bash
