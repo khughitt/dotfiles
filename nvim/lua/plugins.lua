@@ -57,6 +57,7 @@ return require('packer').startup(function(use)
   use 'reedes/vim-colors-pencil'
   use 'tyrannicaltoucan/vim-quantum'
   use {'dracula/vim', as = 'dracula'}
+  use {"scottmckendry/cyberdream.nvim", lazy = false}
 
   -- devicons should come last..
   use 'nvim-tree/nvim-web-devicons'

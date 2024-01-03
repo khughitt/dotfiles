@@ -263,7 +263,7 @@ vim.cmd([[
 -- lualine
 -----------------------------------------------------------------------------
 require('lualine').setup {
-  options = { theme  = 'onedark' },
+  -- options = { theme  = 'onedark' },
   sections = {
     lualine_y = {'searchcount', 'progress'}
   }
@@ -320,7 +320,13 @@ vim.keymap.set('n', ']c', '<Plug>(coc-diagnostic-next)', {silent = true})
 -- ---------------------------------------------------------------------------
 --  Colorscheme
 -- ---------------------------------------------------------------------------
-require('onedark').load()
+-- require('onedark').load()
+require("cyberdream").setup({
+  transparent = true,
+  italic_comments = true,
+  hide_fillchars = true,
+})
+vim.cmd("colorscheme cyberdream")
 
 -- ---------------------------------------------------------------------------
 -- float-preview.nvim
@@ -402,9 +408,6 @@ require'nvim-treesitter.configs'.setup {
                        "query"},
   auto_install = true,
   sync_install = false,
-  context_commentstring = {
-    enable = true
-  },
   highlight = {
     enable = true,
     disable = { "rmd" }
