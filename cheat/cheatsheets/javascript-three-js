@@ -60,6 +60,13 @@ const materialInnner = new THREE.ShaderMaterial({
   uniforms;
 })
 
+// create an array of points
+const [coords, setCoords] = useState<THREE.Vector3[]>([])
+
+Object.values(coords).forEach((pos:number[]) => {
+  coords.push(new THREE.Vector3(pos[0], pos[1], pos[2]))
+})
+
 // math
 THREE.MathUtils.randFloatSpread(100);   // random float in [-range / 2, range / 2].
 

@@ -1,7 +1,18 @@
-// finding cause of scrollbars / overflow 
+/* gradients */
+#bg {
+  background-image: linear-gradient(to right, red , blue);
+  background-image: linear-gradient(to bottom right,  rgba(0,255,0,0), rgba(0,255,0,1));
+  background-image: linear-gradient(red, yellow, green);
+}
+
+/* 100% viewport height */
+#foo {
+  height: 100vh
+}
+
+/* finding cause of scrollbars / overflow */
 * {
   outline: 1px solid #f00 !important;
 }
 
-// 100% height
-#foo { 100vh }
+/* vi:syntax=css */

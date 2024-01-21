@@ -54,6 +54,9 @@ df.reset_index(Drop=True)
 # drop missing
 df.dropna()
 
+# replace missing
+df.fillna(0)
+
 Iteration
 ---------
 
@@ -172,12 +175,11 @@ df["rank"] = list(range(1, df.shape[0] + 1))
 # add row
 df = pd.concat([df, row_df], ignore_index=True)
 
-Moving cols
------------
+Moving / Reordering cols
+------------------------
 
-# move column to front
-x = df.pop("foo")
-df.insert(0, "foo", x)
+# move column to front (in place)
+df.insert(0, 'foo', df.pop('foo'))
 
 Replacing values
 ----------------
@@ -228,6 +230,7 @@ df.loc[:, ~df.columns.isin(cols_to_remove)]
 # subset rows & columns using boolean mask
 df.loc[:, col_sums <= 100]
 df.loc[row_sums >= 0, col_sums <= 100]
+df.loc[(df2.foo == 1).values, :]   # use .values to avoid indexing error
 
 # ~R's where()
 np.where(df["foo"] > 1)
@@ -441,6 +444,11 @@ df.values.ravel()
 # df -> 1d ndarray (upper-triangular matrix only, excluding diagonal)
 ind = np.triu_indices(5, k=1)
 df.values[ind]
+
+# iterating over upper-triangular indices
+for ind in range(len(ind[0])):
+    i = indices[0][ind]
+    j = indices[1][ind]
 
 # pivot long -> wide
 df.pivot_table(index="patient", columns="obs", values="score", fill_value=0)

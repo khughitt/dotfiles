@@ -6,18 +6,27 @@ canvas-sketch foo.js --new --open
 // basic vertex shader
 //
 varying vec2 vUv;
+
 void main() {
   vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 
 //
 // basic fragment shader
 //
 varying vec2 vUv;
+
 void main() {
-  // ex. color based on uv coords
-  gl_FragColor = vec4( vec3( vUv, 0. ), 1. );
+  // map texture coords x -> red, y -> green
+  // gl_FragColor = vec4(vUv.x, vUv.y, 0.0, 1.0);
+
+  // spread sine wave cycle across y dim
+  float color = (sin(2.0 * PI * vUv.y) + 1.0) / 2.0;
+  gl_FragColor = vec4(vec3(color), 1.0);
+
+  // moving sine wave (_add_ uTime to change direction)
+  float color = (sin(2.0 * PI * vUv.y - uTime) + 1.0) / 2.0;
 }
 
 // basic functions
@@ -89,4 +98,4 @@ float foo(float a) {
 // refs
 // 1. https://thebookofshaders.com/
 // 2. https://shaderific.com/glsl
-# vi:syntax=glsl
+// vi:syntax=glsl

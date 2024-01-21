@@ -1,0 +1,18 @@
+import plotly.express as px
+
+# scatter plot
+fig = px.scatter(df, 
+                 x="a",
+                 y="b", 
+                 color="grp", 
+                 title="", 
+                 width=800, 
+                 height=800,
+                 hover_data=["field1",..],
+                 labels={"x": "", "y": ""})
+fig.show()
+
+# specify colormap (column may need to be cast to categorical)
+px.scatter(..., color_discrete_sequence=px.colors.qualitative.Light24)
+
+# vi:syntax=python
