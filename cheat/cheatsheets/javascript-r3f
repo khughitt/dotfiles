@@ -9,8 +9,11 @@ import { Canvas, useFrame, useThree, ThreeElements } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 
-// canvas, suspense, post-processing
-<Canvas style={{ background: "#333333", width: "100vw", height: "100vh" }}>
+// setup
+<Canvas 
+  style={{ background: "#333333", width: "100vw", height: "100vh" }}
+  camera={{ fov: 45, position: [0, -10, 0] }}
+>
   <Suspense fallback={null}>
     <EffectComposer>
       <Bloom intensity={0.5} luminanceThreshold={1} />
@@ -50,7 +53,7 @@ const ColorBox = (props: ThreeElements['mesh']) => {
 <directionalLight position={[1, 0, 0]} color={"#00ffff"} intensity={1.0} />
 
 // mouse support
-<OrbitControls />
+<OrbitControls  target={[0, 0, 0]} />
 
 // ref
 const meshRef = useRef<THREE.Mesh>(null!)
@@ -72,6 +75,37 @@ const props = useTexture({
   aoMap: '..',
 })
 <meshStandardMaterial {...props} />
+
+// ShaderMaterial
+import fragShader from './shaders/frag.glsl'
+import vertexShader from './shaders/vertex.glsl'
+
+const materialRef = useRef<THREE.ShaderMaterial>(null!)
+
+// initial uniform values
+const uniforms = useMemo(() => ({
+  uTime: {
+    value: 0.0
+  },
+  ...
+}), [])
+
+useEffect(() => {
+  materialRef.current.uniforms.uColorScale.value = colorScale;
+}, [colorScale])
+
+useFrame((state) => {
+  const { clock } = state;
+  pointsRef.current.material.uniforms.uTime.value = clock.elapsedTime * 0.1;
+});
+
+<shaderMaterial
+  ref={materialRef}
+  vertexShader={vertexShader}
+  fragmentShader={fragShader}
+  depthWrite={false}
+  uniforms={uniforms}
+/>
 
 // fog
 <fog attach="fog"  color="#eeeeee" near={1} far={14} />

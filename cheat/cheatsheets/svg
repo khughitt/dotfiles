@@ -1,0 +1,28 @@
+<!-- objects to be used later.. -->
+<defs>
+  <circle id="circ" cx="10" cy="10" fill="red" />
+</def>
+
+<!-- linear gradient -->
+<svg width="0" height="0">
+  <linearGradient id="grad">
+    <stop offset="0%" stop-color="#00ff00" stop-opacity="0.1" />
+    <stop offset="100%" stop-color="#00ff00" stop-opacity="1.0" />
+  </linearGradient>
+</svg>
+
+<!-- vertical gradient -->
+<linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">..</linearGradient>
+
+<!-- perlin noise -->
+<filter id='noise'>
+  <feTurbulence 
+    baseFrequency='0.6' 
+    numOctaves='4' 
+    seed='0'
+    stitchTiles='stitch'
+    type='fractalNoise' 
+  />
+</filter>
+
+<!-- vi:syntax=svg

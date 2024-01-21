@@ -52,11 +52,17 @@ SELECT id, string_agg(foo, ', ') AS foo_list
 # collapse array column to string
 SELECT array_to_string(array_col, ',') from tbl;
 
+# select rows where array is empty
+SELECT id FROM tbl WHERE cardinality(foo) = 0;
+
 # format date col
 SELECT to_char(time, 'YYYY-mm-dd')
 
 # list triggers in db
 SELECT * FROM information_schema.triggers  
+
+# delete trigger
+DROP TRIGGER foo ON tbl;
 
 # show trigger functions
 \df+
