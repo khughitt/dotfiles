@@ -2,6 +2,9 @@
 a = np.empty((3, 3,))
 a.fill(np.nan)
 
+# numpy dtype (e.g. int64) to python type
+x.item()
+
 # concatenate arrays
 np.concatenate([a, b])
 
@@ -20,6 +23,9 @@ np.fill_diagonal(a, 0)
 
 # random uniform matrix in [0, 1]
 np.random.rand(3, 4)
+
+# random normal (rnorm)
+np.random.normal(0, 1, 100)
 
 # count number of nonzero values along rows/cols
 np.count_nonzero(arr, axis=1)
@@ -50,5 +56,12 @@ a.values[ind]
 
 # pearson correlation (operates on rows by default; pandas on columns)
 np.corrcoef(X)
+
+# fit a polynomial
+from numpy.polynomial import Polynomial
+model = Polynomial.fit(x, y, deg)
+
+print(model)
+model(x)
 
 # vi:syntax=python

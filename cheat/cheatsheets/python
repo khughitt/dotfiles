@@ -111,7 +111,7 @@ ts = time.time()
 
 # get current date in specified format
 import datetime
-datetime.datetime.now().strftime("%Y-%m-%d")
+today = datetime.datetime.now().strftime("%Y-%m-%d")
 
 # convert unix timestamp to datetime
 datetime.fromtimestamp(..)
@@ -210,6 +210,16 @@ for file in glob.iglob("**/**", recursive=True):
 
 # recursive directory walk (includes hidden files)
 list(pathlib.Path("path/").glob("**/*.*"))
+
+# delete file/folder (pathlib)
+p.unlink(..)
+p.rmdir(..)
+p.rmthree(..)
+
+# delete file/folder (os/shutil)
+os.remove(path)
+os.rmdir(path)
+shutil.rmtree(path)
 
 # mkdir (os)
 os.mkdir(path, mode=0o755)

@@ -18,6 +18,12 @@ dat %>%
 # rbind multiple tibbles
 bind_rows(df1, df2, ..)
 
+# rename columns
+df %>%
+  rename("new" = old)
+df %>%
+  rename(!!new := old)
+
 # cbind / join list of tables
 purrr::reduce(tbls, dplyr::full_join, by = "id")
 

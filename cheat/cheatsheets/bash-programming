@@ -22,7 +22,7 @@ set -euo pipefail
 # string not null
 [ -z "$a" ]
 
-# string starts with
+# check if string matches regex (ex. starts with)
 [[ "$a" =~ ^foo.* ]]
 
 # get filename portion of path
@@ -46,6 +46,18 @@ cmd 2>&1
 
 # if statement conditional on grep 
 if ! echo $foo | grep -q "not running"; then echo 'yes'; fi
+
+# if statement with multiple conditions
+if ([ ] && [ ] && ...)
+
+# if-else
+if []; then
+ ..
+elif []; then
+ ..
+else
+ ..
+fi
 
 # iterate over a list of strings (newline after list is important..)
 for x in a b c
@@ -82,6 +94,9 @@ echo $x | tr '[:lower:]' '[:upper:]'
 # array length (zsh)
 x=(a b c)
 $#x
+
+# string length
+${#x}
 
 # generate a random integer
 $RANDOM

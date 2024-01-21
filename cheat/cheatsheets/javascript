@@ -56,6 +56,9 @@ for (const [key, value] of Object.entries(obj)) {
 // get values for object
 Object.values(obj)
 
+// array length
+arr.length
+
 // check "length" of object
 Object.keys(obj).length
 
@@ -139,10 +142,6 @@ JSON.stringify(a) == JSON.stringify(b);
 
 // check array equality (any order)
 JSON.stringify(a.sort()) == JSON.stringify(b.sort());
-
-// min/max
-Math.min(a, b)
-Math.min(...arr)
 
 // equality
 a === b  // strict equality (type + value)
@@ -255,8 +254,11 @@ path.parse(file).base;
 localStorage.setItem('foo', JSON.stringify(obj));
 JSON.parse(localStorage.getItem('foo'))
 
-// math / funcs
+// math
 Math.PI
 Math.cos()
+Math.min(a, b)
+Math.min(...arr)
+Math.random()  // random uniform
 
 // vi:syntax=javascript
