@@ -14,5 +14,12 @@ nvm install <version>
 # choose version to use
 nvm use <version>
 
+# show info for current version
+nvm ls
+nvm current
+
 # upgrade nvm
 nvm upgrade
+
+# install & use latest version of node
+nvm install node
