@@ -27,7 +27,7 @@ hm = sns.clustermap(dat)
 hm.tick_params(labelsize=5)
 hm.fig.suptitle("...")
 
-# biclustering heatmap (row colors, disable column clustering)
+# biclustering heatmap (row colors, disable column clustering/ordering)
 row_colors = pd.DataFrame({
   "var1": ["#ff0000", ...],
   "var2": ["#00ff00", ...],

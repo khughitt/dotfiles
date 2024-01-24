@@ -20,6 +20,10 @@ from IPython.display import Markdown, Latex
 display(Markdown("..."))
 display(Latex("..."))
 
+# print HTML
+from IPython.display import display, HTML
+display(HTML(html))
+
 # print all rows
 pd.set_option('display.max_rows', None)
 
