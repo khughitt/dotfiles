@@ -1,0 +1,2 @@
+# remove empty lines (in place)
+sd '^\n' '' file

@@ -137,7 +137,7 @@ Joins
 
 # inner join by similar column(s)
 a.merge(b)
-a.merge(b, on=["foo"])
+a.merge(b, on="foo")
 
 # outer join
 a.merge(b, on="col", how="outer")

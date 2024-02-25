@@ -1,6 +1,9 @@
 # create a new proj
 npm init
 
+# create a new proj (vite + ts)
+npm create vite@latest foo -- --template vanilla-ts
+
 # create a new react proj (vite + ts)
 npm create vite@latest foo -- --template react-ts
 cd foo
@@ -31,6 +34,9 @@ npm update foo
 
 # install most recent version of react
 npm install react react-dom
+
+# install package and mark as peer dependency
+npm install --save-peer xx
 
 # create a new proj (longer version)
 # source: @bitandbang

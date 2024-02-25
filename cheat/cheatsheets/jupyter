@@ -5,7 +5,7 @@
 %connect_info
 
 # open qtconsole and connect to existing notebook
-jupyter qtconsole --existing
+eupyter qtconsole --existing
 
 # generate notebook config
 jupyter notebook --generate-config
@@ -22,7 +22,7 @@ display(Latex("..."))
 
 # print HTML
 from IPython.display import display, HTML
-display(HTML(html))
+display(HTML("<span style='color: #00ff00;'>..</span>"))
 
 # print all rows
 pd.set_option('display.max_rows', None)
