@@ -1,0 +1,38 @@
+# static plot (ggplot2)
+library(ggplot2)
+
+ggplot(data = dat, 
+       aes(x = log2ratio, y = log10pval, color = group)) +
+  geom_point() +
+  ggtitle(plot_title) +
+  geom_vline(xintercept = c(-1, 1), color = "#FF4444") +
+  xlim(c(-10, 10)) +
+  theme_bw()
+
+# interactive plot (plotly)
+library(plotly)
+
+# helper func to draw vertical lines
+# https://stackoverflow.com/a/34097929/554531
+vline <- function(x = 0, color = "red") {
+  list(type = "line", y0 = 0, y1 = 1, yref = "paper", x0 = x, x1 = x,
+       line = list(color = color, dash = "dashed", width = 1))
+}
+
+hover_text <- ~sprintf("...")
+
+xlims <- c(-10, 10)
+ylims <- c(0, 100)
+
+plot_ly(data = dat,
+        x = ~log2ratio,
+        y = ~log10pval,
+        color = ~group,
+        type = "scatter",
+        mode = "markers",
+        marker = list(size = 5),
+        text = hover_text) %>%
+  layout(xaxis = list(range = xlims), yaxis = list(range = ylims)) %>%
+  layout(title = plot_title) %>%
+  layout(shapes = list(vline(-1), vline(1))) %>%
+  add_trace(type = "scatter", hovertemplate = "%{text}", showlegend = FALSE)

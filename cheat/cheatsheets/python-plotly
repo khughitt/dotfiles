@@ -9,7 +9,7 @@ fig = px.scatter(df,
                  width=800, 
                  height=800,
                  hover_data=["field1",..],
-                 labels={"x": "", "y": ""})
+                 labels={"x_old": "x_new", "y_old": "y_new"})
 fig.show()
 
 # specify colormap (column may need to be cast to categorical)

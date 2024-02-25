@@ -142,6 +142,12 @@ with open("foo.yml", "w") as fp:
 with open("file.json") as fp:
   x = json.load(fp)
 
+# read json from url
+import urllib.request, json 
+
+with urllib.request.urlopen("") as url:
+    dat = json.load(url)
+
 # json string -> python
 x =  "{'foo': 'bar'}"
 json.loads(x)

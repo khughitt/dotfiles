@@ -1,0 +1,2 @@
+# show changes that would be made
+perl-rename -nv 's/a/b/' *.txt

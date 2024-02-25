@@ -21,6 +21,9 @@ sed -i "1 i <added text>" file
 sed '/foo/a bar' file
 sed '/foo/a \ \ \ \ bar' file   # indented
 
+# remove empty lines
+sed -E '/^$/d'
+
 # print a specific line in a file
 sed -n '15p' file
 

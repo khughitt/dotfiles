@@ -5,6 +5,9 @@ ggplot(df, aes(x=, y=)) +
 # preserve dataframe order
 df$x <- factor(df$x, levels = df$x)
 
+# specify aesthetic target using a variable (2021 edition)
+aes(x = .data[[foo]])
+
 # log-scale
 scale_x_continuous(trans = "log2")
 
