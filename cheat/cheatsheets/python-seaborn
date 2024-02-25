@@ -1,6 +1,6 @@
 # set viz defaults
 sns.set(style="whitegrid", palette="flare", color_codes=True)
-sns.mpl.rc("figure", figsize=(12, 8))
+sns.mpl.rc("figure", figsize=(12, 8)) # only affects figure-level plots..
 
 # scatterplot + color column
 sns.scatterplot(data=.., x="x", y="y", hue="color_col")
@@ -11,21 +11,25 @@ sns.color_palette("magma", 20)
 sns.color_palette("viridis", 10).as_hex()
 
 # add title to scatterplot
-sns.scatterplot(...).set(title='foo')
+sns.scatterplot(...).set(title="foo")
 
 # density plot
 sns.kdeplot(.., log_scale=True)
 
 # heatmap
-sns.heatmap(df)
+import matplotlib.pyplot as plt
+
+plt.figure(figsize = (16, 16))
+sns.heatmap(df).set(xlabel="x", ylabel="y", title="..")
 
 # biclustering heatmap
-sns.clustermap(df)
+sns.clustermap(df, figsize=(16, 16))
 
 # set title, axis labels
 hm = sns.clustermap(dat)
-hm.tick_params(labelsize=5)
-hm.fig.suptitle("...")
+hm.tick_params(labelsize=8)
+hm.ax_heatmap.set(xlabel="xlab", ylabel="ylab")
+hm.fig.suptitle("..")
 
 # biclustering heatmap (row colors, disable column clustering/ordering)
 row_colors = pd.DataFrame({

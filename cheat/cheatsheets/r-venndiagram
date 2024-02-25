@@ -1,0 +1,45 @@
+# VennDiagram
+# based on: https://r-graph-gallery.com/14-venn-diagramm.html
+library(VennDiagram)
+
+venn_colors <- c("#E7EECE", "#EEC8A1", "#EDC8C6")
+border_colors <- c("#C2D18D", "#CD9155", "#D07C78")
+venn_labels <- c("a", "b", "c")
+plt_title <- "..."
+
+plt <- venn.diagram(
+  x = list(a, b, c),
+  category.names = venn_labels,
+  output = TRUE,
+  filename = NULL,
+
+  imagetype = "png",
+  height = 960,
+  width = 960,
+  resolution = 192,
+  compression = "lzw",
+
+  lwd = 1,
+  lty = "solid",
+  fill = venn_colors,
+  col = border_colors,
+
+  cex = .6,
+  fontface = "bold",
+  fontfamily = "sans",
+  print.mode = c("raw", "percent"),
+
+  cat.cex = 0.6,
+  cat.fontface = "bold",
+  cat.default.pos = "outer",
+  cat.pos = c(-27, 27, 135),
+  cat.dist = c(0.055, 0.055, 0.085),
+  cat.fontfamily = "sans",
+
+  main = plt_title
+)
+
+# display plot
+grid::grid.draw(plt)
+
+# vi:syntax=r

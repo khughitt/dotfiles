@@ -1,3 +1,14 @@
+# p-value fdr adjustment
+from scipy import stats
+stats.false_discovery_control(pvals, method="bh")
+
+# adjust each column independently, ignoring missing values
+for i, cname in enumerate(df.columns):
+    pvals = df.iloc[:, i].dropna().values
+    padj = stats.false_discovery_control(pvals, method="bh")
+    mask = np.isnan(df.iloc[:, i])
+    df.loc[~mask, cname] = padj
+
 #
 # sparse matrices
 #

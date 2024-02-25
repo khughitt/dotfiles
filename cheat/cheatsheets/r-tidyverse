@@ -3,9 +3,13 @@ dat %>%
   group_by(symbol) %>%
   summarize(across(everything(), max))
 
-# select by string variable
+# select by string variable (dynamic)
 dat %>%
     select(!!var_name)
+
+# filter by string variable
+dat %>%
+    filter(!!rlang::sym(var_name) > 0)
 
 # select columns whose names contain ".."
 dat %>%
@@ -23,6 +27,13 @@ df %>%
   rename("new" = old)
 df %>%
   rename(!!new := old)
+
+# get first row as two-column key-value dataframe;
+# "glimpse()" can also be used, but dataframe easier to format in rmd
+df[1, ] %>%
+  t() %>%
+  as.data.frame() %>%
+  rownames_to_column("field")
 
 # cbind / join list of tables
 purrr::reduce(tbls, dplyr::full_join, by = "id")

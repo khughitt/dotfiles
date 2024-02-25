@@ -50,6 +50,9 @@ np.random.choice(mat.ravel(), 3)
 rng = np.random.default_rng(321)
 rng.choice(arr, 3)
 
+# shuffle array (in-place)
+rng.shuffle(array)
+
 # quantiles
 np.quantile(dat, np.arange(0, 1.01, 0.05))
 
