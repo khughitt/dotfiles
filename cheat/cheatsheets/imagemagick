@@ -36,3 +36,9 @@ convert a.png b.png +append out.png
 
 # create color palette 
 convert -size 64x64 xc:"#ff0000" xc:"#00ff00" xc:"#0000ff" +append out.png
+
+# touch up
+convert -auto-level -normalize in.png -filter Gaussian -blur 0x1 out.png 
+
+# touch up + gamma adjustment
+convert -auto-gamma -auto-level -normalize in.png -filter Gaussian -blur 0x1 out.png 

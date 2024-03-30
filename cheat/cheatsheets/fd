@@ -35,4 +35,13 @@ fd -S "-1m"
 fda -td "^web$" -x stat -c "%U %G"
 
 # count total number of files in each sub-directory, recursively
-for x in `ls -d */`; do echo $x; fd -Luu . $x -t f | wc -l; done
+for x in `ls -d */`; do 
+  echo $x; 
+  fd -Luu . $x -t f | wc -l;
+done
+
+# same thing, but include hidden directories
+for x in `ls -d -- */ .*/`; do
+  echo $x; 
+  fd -Luu . $x -t f | wc -l;
+done

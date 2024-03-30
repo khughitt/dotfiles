@@ -61,6 +61,9 @@ yaml::write_yaml(x, file)
 tools::file_ext("file.txt")
 tools::file_path_sans_ext("file.txt")
 
+# mkdir
+dir.create("/path/to/dir", mode = "0755", recursive = TRUE)
+
 # today
 strftime(Sys.time(), "%Y-%m-%d")
 

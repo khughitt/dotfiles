@@ -28,6 +28,9 @@ npm install
 # downgrade / install specific version
 npm install foo@1.0.0
 
+# list outdated
+npm outdated
+
 # update install packages
 npm update
 npm update foo

@@ -1,0 +1,2 @@
+# list hidden directories (excluding "." and "..")
+ls -Ap | grep "^\..*/$"

@@ -76,5 +76,8 @@ SELECT t.relname, l.locktype, page, virtualtransaction, pid, mode, granted
 
 SELECT pg_terminate_backend(<pid>);
 
+# show queries + pids
+SELECT query, pid FROM pg_stat_activity;
+
 # backup db
 pg_dump -h <host> -U <user> -d <dbname> > backup.sql

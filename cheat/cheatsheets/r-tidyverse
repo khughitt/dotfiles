@@ -11,7 +11,11 @@ dat %>%
 dat %>%
     filter(!!rlang::sym(var_name) > 0)
 
-# select columns whose names contain ".."
+# select columns whose name starts with "foo"
+dat %>%
+  select(starts_with("foo"))
+
+# select columns whose names contain "foo"
 dat %>%
   select(matches("foo"))
 

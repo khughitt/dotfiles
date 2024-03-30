@@ -1,0 +1,5 @@
+# check status
+celery -A proj status
+
+# inspect active tasks
+celery -A proj inspect active
