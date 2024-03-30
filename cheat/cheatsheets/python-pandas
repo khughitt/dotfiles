@@ -153,8 +153,7 @@ pd.concat([a, b])
 pd.concat([a, b], axis=1)
 pd.concat([a, b], axis=1, ignore_index=True)
 
-pd.concat([a, b.set_index(a.index)], axis=1)
-pd.concat([a.reset_index(), b.reset_index()], axis=1).set_index("index")
+# *actually* ignore index..
 pd.concat([a.reset_index(Drop=True), b.reset_index(Drop=True)], axis=1)
 
 # cbind (numpy)

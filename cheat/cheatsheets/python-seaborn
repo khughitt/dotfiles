@@ -15,6 +15,7 @@ sns.scatterplot(...).set(title="foo")
 
 # density plot
 sns.kdeplot(.., log_scale=True)
+sns.kdeplot(data=df, x="n", hue="type")
 
 # heatmap
 import matplotlib.pyplot as plt

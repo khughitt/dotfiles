@@ -12,6 +12,12 @@ gh gj gk gl    # go to start/end of row/col
 "%"  # float
 "$"  # currency
 
+# column value counts ("frequency tables")
+<shift-f>
+
+# summary statistics
+<shift-I>
+
 # increase float precision
 # https://github.com/saulpw/visidata/issues/275#issuecomment-484098561
 1. press "C" to open the ColumSheet

@@ -12,6 +12,7 @@ set -euo pipefail
 
 # numeric equality
 [ "$a" -eq "$b" ]
+[ "$a" -ne "$b" ]
 
 # numeric inequalities
 [ "$a" -gt "$b" ]

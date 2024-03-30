@@ -3,9 +3,53 @@ G.adj
 G.edges
 G.nodes
 
+# get edge weights, etc.
+G.edges(data=True)
+
+# get a list of edges + edge attrs
+list(G.edges.data())
+
 # get specific edge (edge must exist)
-G.edges[node1, node1]
-G.edges[node1, node2]["weight"]
+G[u][v]
+G.edges[(u, v)]
+G.edges[u, v]
+G.edges[u, v]["weight"]
+
+# iterate over node attributes
+for node in G.nodes.data():
+  id_ = node[0]
+  attrs = node[1]
+
+# get node attrs as dataframe
+node_df = pd.DataFrame([{"node_id": x[0]} | x[1] for x in G.nodes.data(data=True)])
+
+# get edge attrs as dataframe
+edge_df = pd.DataFrame([{"source": x[0]} | {"target": x[1]} | x[2] for x in G.edges.data(data=True)])
+
+# iterate over edges
+for u, v in G.edges:
+    print(u, v)
+
+# iterate over edge weights
+for (u, v, weight) in G.edges.data('weight'):
+  ...
+
+# get list of edge weights
+edge_weights = [x[2]["weight"] for x in G.edges(data=True)]
+
+# filter edges (read-only; attempting to filter/modify view can lead to problems..)
+def filter_edge(n1, n2):
+    return G[n1][n2].get("weight") > 0.5
+
+nx.subgraph_view(G, filter_edge=filter_edge)
+
+# remove nodes (in place)
+G.remove_node(x)
+G.remove_nodes_from([x, y, z])
+
+# remove edges (in place)
+G.remove_edge((u, v))
+G.remove_edges_from([...])
 
 # creation
 nx.from_numpy_array(arr)
@@ -40,10 +84,11 @@ nx.set_node_attributes(G, cc, "closeness_centrality")
 pr = nx.pagerank(G)
 nx.set_node_attributes(G, pr, "page_rank")
 
+# set edge attributes
+edge_attrs = {(0, 1): {"attr1": 20}, ...}
+nx.set_edge_attributes(G, edge_attrs)
+
 # save as graphml
 nx.write_graphml(G, path)
-
-# get a list of edges + edge attrs
-list(G.edges.data())
 
 # vi:syntax=python

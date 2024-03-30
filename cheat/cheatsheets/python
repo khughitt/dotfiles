@@ -105,6 +105,9 @@ dict(filter(lambda x: x[0] not in exclude, dat.items()))
 # filter dict by value
 dict(filter(lambda x: x[1] == "foo", dat.items()))
 
+# or..
+{k:v for (k,v) in d.items() if v > 0}
+
 # get current timestamp
 import time
 ts = time.time()

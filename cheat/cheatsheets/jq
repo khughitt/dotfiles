@@ -7,3 +7,7 @@ jq --monochrome-output
 # convert list of records to csv
 # https://stackoverflow.com/a/32965227/554531
 jq -r '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv'
+
+# colored pagination
+jq -C "." x.json | moar
+jq -C "." x.json | less -R
