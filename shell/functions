@@ -26,6 +26,25 @@ function fu {
   done
 }
 
+# recursively count files in subdirs
+function count_files {
+  # non-hidden folders
+  for x in */; do
+    echo $x; 
+    fd -Luu . $x -t f | wc -l;
+  done
+
+  # if hidden directories present, include them..
+  num_hidden=`/bin/ls -Ap | grep "^\..*/$" | wc -l`
+
+  if [ "$num_hidden" -ne "0" ]; then
+    for x in .*/; do
+      echo $x; 
+      fd -Luu . $x -t f | wc -l;
+    done
+  fi
+}
+
 # copy full path
 function cfp {
   realpath -s $1 | xsel
@@ -390,5 +409,19 @@ function venv {
   cd $wd
 }
 alias ven=venv
+
+# preview generated colormage palettes
+function color_preview {
+  for img in ~/d/colors/_inc/*-preview.jpg; do
+    echo $img; 
+    kitty +kitten icat $img;
+    
+    base=${img/-preview.jpg/}
+
+    for x in ${base}*.(png|jpg); do
+      kitty +kitten icat $x;
+    done
+  done
+}
 
 # vi:syntax=bash
