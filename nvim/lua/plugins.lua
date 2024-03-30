@@ -3,11 +3,11 @@ return require('packer').startup(function(use)
   use 'wbthomason/packer.nvim'
 
   use 'JoosepAlviste/nvim-ts-context-commentstring'
+  use 'chentoast/marks.nvim'
   use 'ervandew/supertab'
   use 'ggandor/leap.nvim'
   use 'godlygeek/tabular'
   use 'junegunn/vim-emoji'
-  use 'kshenoy/vim-signature'
   use 'lewis6991/gitsigns.nvim'
   use 'ncm2/float-preview.nvim'
   use 'norcalli/nvim-colorizer.lua'
@@ -15,6 +15,7 @@ return require('packer').startup(function(use)
   use 'scrooloose/nerdcommenter'
   use 'tomtom/tlib_vim'
   use 'tpope/vim-surround'
+  use 'tpope/vim-repeat'
   use 'wellle/targets.vim'
   use { 'Yggdroot/LeaderF', run = ':LeaderfInstallCExtension' }
   use { 'dstein64/nvim-scrollview', branch = 'main' }
@@ -75,6 +76,5 @@ return require('packer').startup(function(use)
   -- use {'andymass/vim-matchup', event = 'VimEnter'}
   -- use 'ggandor/lightspeed.nvim'
   -- use 'rrethy/vim-hexokinase', { 'run': 'make hexokinase' }
-  -- use 'tpope/vim-repeat'
   -- use 'kana/vim-operator-user'
 end)

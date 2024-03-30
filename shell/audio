@@ -15,10 +15,10 @@ function audio_mono {
     sox $1 ${1/.wav/_left.wav} remix 1-1
 }
 
-# copy most recent bounced audio from bitwig to sample library
+# copy bounced sample from current project to sample library
+# todo (show timestamps?)
 function bitwig_copy_sample {
     # path settings
-    # note: using ~/ to indicate home dir won't work on mac
     PROJDIR="$HOME/music/bitwig/Projects"
     SAMPLEDIR="$HOME/music/samples/KH"
 
@@ -26,13 +26,16 @@ function bitwig_copy_sample {
     cd "$PROJDIR"
  
     # find most recent .wav file in project folder
-    #target=`fd -e wav --exec stat -f "%m%t%N" | sort -nr | head -1 | cut -f2`
-    target=`fd -e wav -X ls -t | head -1`
+    last_file=`fd -e wav -X ls -t | head -1`
+    target_dir=`dirname "$last_file"`
 
-    # choose sample dir to copy file to
-    sample_dir=`fd . -t d -d 1 $SAMPLEDIR | grep --color='none' "$1" | fzf -1 --exact`
+    # choose target sample
+    target=`fd . -t f -d 1 $target_dir | grep --color='none' "$1" | fzf -1 --exact --header "Sample to copy?"`
 
     if [ ! -z "$target" ]; then
+        # choose sample dir to copy file to
+        sample_dir=`fd . -t d -d 1 $SAMPLEDIR | grep --color='none' "$1" | fzf -1 --exact --header "Location to copy sample to?"`
+
         # prompt user to choose a filename and copy file over
         echo "Copying $target..."
         vared -p "Filename? $sample_dir" -c fname

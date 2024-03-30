@@ -5,9 +5,10 @@
 
 # General settings
 options.color_current_row='reverse 11'
-options.disp_status_fmt='({sheet.cursorRowIndex},{sheet.cursorColIndex}) ' + options.disp_status_fmt
+#options.disp_status_fmt='({sheet.cursorRowIndex},{sheet.cursorColIndex}) ' + options.disp_status_fmt
 options.disp_float_fmt='{:.3e}'
 options.undo=True
+options.motd_url=''
 #options.command_copy_clipboard='xclip'
 
 # use different colors for positive and negative values
@@ -15,12 +16,11 @@ theme('color_negative', 'red', 'color of negative numbers')
 
 def is_neg(s, c, r, v):
     return c and v is not None and isinstance(v.value, (int,float)) and int(v.value) < 0
-
 Sheet.colorizers += [ColumnColorizer(2, 'color_negative', is_neg)]
 
 # File formats
-vd.filetype('feather', PandasSheet)
-vd.filetype('parquet', PandasSheet)
+#vd.filetype('feather', PandasSheet)
+#vd.filetype('parquet', PandasSheet)
 
 # hdf5 blosc compression support
 # https://github.com/saulpw/visidata/issues/121
