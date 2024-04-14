@@ -16,6 +16,9 @@ list(elem)
 # get contents
 elem.text
 
+# get attributes as dict
+elem.attrib
+
 # get attribute
 elem.get('foo')
 

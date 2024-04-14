@@ -1,4 +1,24 @@
-# coltypes short version (ex. char-numeric-factor)
+# column type specifiers + abbreviations
+col_logical()            # l
+col_integer()            # i
+col_double()             # d
+col_character()          # c
+col_factor(lvls, ordr)   # f
+date(format="")          # D
+time(format="")          # t
+datetime(format="")      # T
+col_number()             # n
+col_skip()               # -
+col_guess()              # ?
+
+# specifying table coltypes
+ctypes <- cols(
+  foo = col_integer(),
+  bar = col_logical(),
+  ...
+)
+
+# shorthand version example
 read_csv(..., col_types='cnf')
 
 # specify col type for a single column

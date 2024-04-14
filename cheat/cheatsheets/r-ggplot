@@ -1,42 +1,42 @@
 # bar plot
 ggplot(df, aes(x=, y=)) + 
-  geom_bar(stat = "identity")
+  geom_bar(stat="identity")
 
 # preserve dataframe order
-df$x <- factor(df$x, levels = df$x)
+df$x <- factor(df$x, levels=df$x)
 
 # specify aesthetic target using a variable (2021 edition)
-aes(x = .data[[foo]])
+aes(x=.data[[foo]])
 
 # log-scale
-scale_x_continuous(trans = "log2")
+scale_x_continuous(trans="log2")
 
 # rotate x-axis labels
-theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
 # facet_wrap
 ggplot(df, aes(x)) +
   geom_density() +
-  facet_wrap(~foo, ncol = 5)
+  facet_wrap(~foo, ncol=5)
 
 # hide all legends
-theme(legend.position = "none") +
+theme(legend.position="none") +
 
 # hide specific legends (ex. color)
-scale_color_manual(..., guide = "none") +
+scale_color_manual(..., guide="none") +
 
 # save fig
-ggsave("foo.png", width = 1080, height = 1080, units = "px", dpi = 300)
+ggsave("foo.png", width=1080, height=1080, units="px", dpi=300)
 
 # dark theme
-theme_dark <- function(base_font_size = 18) {
-  ggdark::dark_theme_gray(base_size = base_font_size) +
-    theme(axis.text.x = element_text(angle = 90),
-          legend.background = element_rect(fill = NA),
-          plot.background = element_rect(fill = "#222222"),
-          panel.border = element_rect(colour = "#333333", fill = NA, size = 1),
-          panel.grid.major = element_line(color = "#555555", size = 0.2),
-          panel.grid.minor = element_line(color = "#555555", size = 0.2))
+theme_dark <- function(base_font_size=18) {
+  ggdark::dark_theme_gray(base_size=base_font_size) +
+    theme(axis.text.x=element_text(angle=90),
+          legend.background=element_rect(fill=NA),
+          plot.background=element_rect(fill="#222222"),
+          panel.border=element_rect(colour="#333333", fill=NA, size=1),
+          panel.grid.major=element_line(color="#555555", size=0.2),
+          panel.grid.minor=element_line(color="#555555", size=0.2))
 }
 
 # vi:syntax=r
