@@ -7,6 +7,9 @@ axis = 0
 # columns
 axis = 1
 
+# "glimpse"
+df.iloc[0]
+
 Series
 ------
 
@@ -289,6 +292,9 @@ pd.read_csv(..., dtype={"foo": "string[pyarrow]"})
 
 Categories
 ----------
+
+# list number of unique values for each column
+df.nunique()
 
 # drop unused levels
 df.foo = df.foo.cat.remove_unused_categories()

@@ -1,0 +1,10 @@
+# basics
+adata.X
+adata.obs
+adata.var
+
+# write compressed h5ad file
+import hdf5plugin
+adata.write("dat.h5ad", compression=hdf5plugin.FILTERS["zstd"])
+
+# vi:syntax=python

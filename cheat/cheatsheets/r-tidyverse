@@ -5,7 +5,7 @@ dat %>%
 
 # select by string variable (dynamic)
 dat %>%
-    select(!!var_name)
+    select(all_of(var_name))
 
 # filter by string variable
 dat %>%
@@ -32,6 +32,10 @@ df %>%
 df %>%
   rename(!!new := old)
 
+# fix column types
+df %>%
+  mutate(across(4:10, as.double))
+
 # get first row as two-column key-value dataframe;
 # "glimpse()" can also be used, but dataframe easier to format in rmd
 df[1, ] %>%
@@ -42,7 +46,14 @@ df[1, ] %>%
 # cbind / join list of tables
 purrr::reduce(tbls, dplyr::full_join, by = "id")
 
-# drop duplicates
+# create a tibble from a list of lists (types may be lost..)
+cnames <- c('a', 'b')
+
+lst %>%
+  map_dfr(set_names, cnames) %>%
+  as_tibble()
+
+# drop duplicates (unique)
 dat %>%
   distinct()
 
@@ -59,6 +70,10 @@ df %>%
 # long to wide
 df %>%
   pivot_wider(id_cols = zz, names_from = xx, values_from = yy)
+
+# replace string values
+df %>% 
+  mutate(foo = str_replace_all(foo, c('old1' = 'new1', 'old2' = 'new2')))
 
 # recode variable levels
 df %>% 
@@ -86,5 +101,10 @@ df %>%
 df %>% 
   group_by(grp) %>% 
   summarise(combined=paste(foo, collapse = ", "))
+
+# group by -> min/max within each group
+df %>% 
+  group_by(grp) %>% 
+  slice(which.min(foo))
 
 # vi:syntax=r

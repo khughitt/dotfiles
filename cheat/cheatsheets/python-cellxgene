@@ -1,0 +1,42 @@
+# create a census connection instance
+import cellxgene_census
+
+census_version = "2023-12-15"
+census = cellxgene_census.open_soma(census_version=census_version)
+
+# close connection
+census.close()
+
+# TileDB-SOMA DataFrames
+x.schema
+
+# read into pandas dataframe
+df = x..read().concat().to_pandas()
+
+# read a subset of rows/cols into a pandas dataframe
+x.read((slice(0, 10),), column_names=["a", "b"]).concat().to_pandas()
+
+# querying expression data ("obs" = cell, "var" = gene)
+adata = cellxgene_census.get_anndata(
+    census,
+    organism = "homo_sapiens",
+    obs_value_filter = "is_primary_data == True and disease == 'acute myeloid leukemia'",
+    obs_embeddings = ["scvi", "scgpt"]
+)
+
+adata.obs
+adata.var
+adata.X
+adata.write("dat.h5ad", compression=hdf5plugin.FILTERS["zstd"])
+
+# highly variable genes
+from cellxgene_census.experimental.pp import get_highly_variable_genes,
+
+get_highly_variable_genes(
+  census,
+  organism="homo_sapiens",
+  n_top_genes=100,
+  obs_value_filter="""is_primary_data == True and tissue_general == 'blood'""",
+)
+
+# vi:syntax=python

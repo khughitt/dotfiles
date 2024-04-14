@@ -242,9 +242,10 @@ path.mkdir(mode=0o755, parents=True, exist_ok=True)
 path.joinpath("foo")
 path.expanduser()
 
-# create a temp dir
+# create temp file/dir
 import tempfile
-tempfile.mkdtemp
+tempfile.mktemp()
+tempfile.mkdtemp()
 
 # random sample (with seed)
 random.seed(321)
