@@ -1,0 +1,4 @@
+# kmeans
+kmeans(x, k)$cluster
+
+# vi:syntax=r
