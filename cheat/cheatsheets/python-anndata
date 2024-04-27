@@ -1,7 +1,12 @@
 # basics
+import anndata as ad
+
 adata.X
 adata.obs
 adata.var
+
+# read 
+ad.read_h5ad("dat.h5ad")
 
 # write compressed h5ad file
 import hdf5plugin

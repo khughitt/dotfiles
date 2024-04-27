@@ -1,0 +1,19 @@
+import datashader as ds
+import datashader.utils as utils
+import datashader.transfer_functions as tf
+
+# scatter plot (aggregate on "disease" categorical column)
+canvas = ds.Canvas(plot_width=1900, plot_height=1900)
+agg = canvas.points(df, df.columns[0], df.columns[1], ds.count_cat("disease"))
+
+# color key is a dict mapping from "disease" levels -> colors
+img = tf.shade(agg, color_key=color_key, how="eq_hist")
+
+# print html jupyter chunk with color legend
+html_parts = [f"<span style='color: {color};'>{label}</span>" for label,color in color_key.items()]
+display(HTML("<br />".join(html_parts)))
+
+# save plot
+utils.export_image(img, filename="..", background="black")
+
+# vi:syntax=python

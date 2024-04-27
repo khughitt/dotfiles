@@ -1,4 +1,6 @@
 # heatmap
+library(NMF)
+
 aheatmap(dat, Rowv = TRUE, Colv = TRUE, 
          annRow = df, annCol = df, 
          color = viridis(100), main = "",

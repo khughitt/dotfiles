@@ -1,0 +1,2 @@
+# stereo -> mono
+sox in.wav -c 1 out.wav 

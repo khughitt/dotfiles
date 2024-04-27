@@ -37,6 +37,7 @@ a.forEach((item) => {
 
 // create a sequence of numbers (~range())
 [...Array(5).keys()]
+[...Array(5).keys()].map(x => x * 10)
 
 // create an array of a specified size
 Array(5).fill(0);

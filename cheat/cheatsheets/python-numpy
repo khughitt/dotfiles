@@ -70,4 +70,10 @@ model = Polynomial.fit(x, y, deg)
 print(model)
 model(x)
 
+# read/write npz
+np.savez("dat.npz.", foo=arr)
+
+with np.load("dat.npz") as data:
+  arr = data["foo"]
+
 # vi:syntax=python
