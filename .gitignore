@@ -22,3 +22,4 @@ _archive
 .credentials
 .stversions
 .stignore
+packer_compiled.lua
