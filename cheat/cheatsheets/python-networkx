@@ -3,6 +3,10 @@ G.adj
 G.edges
 G.nodes
 
+# load / save
+G = nx.read_graphml("in.graphml.gz")
+nx.write_graphml(G, "out.graphml.gz")
+
 # get edge weights, etc.
 G.edges(data=True)
 
@@ -87,8 +91,5 @@ nx.set_node_attributes(G, pr, "page_rank")
 # set edge attributes
 edge_attrs = {(0, 1): {"attr1": 20}, ...}
 nx.set_edge_attributes(G, edge_attrs)
-
-# save as graphml
-nx.write_graphml(G, path)
 
 # vi:syntax=python
