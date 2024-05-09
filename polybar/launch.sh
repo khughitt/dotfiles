@@ -10,7 +10,7 @@ while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 CFG="$HOME/.config/polybar/config.$(hostname).ini"
 
 if [ ! -f "$CFG" ]; then
-    CFG="$HOME/.config/polybar/config.ini"
+    CFG="$HOME/.config/polybar/config.europa.ini"
 fi
 
 echo "LOADING POLYBAR CONFIG: $CFG" 
