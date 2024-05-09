@@ -10,14 +10,11 @@ docker images
 # list containers
 docker ps -a
 
-# stop a single container
-docker kill <container_id>
-
-# stop all running containers
-docker kill $(docker ps -q)
-
 # run a container
 docker run <name or id>
+
+# rebuild a single container with compose
+docker-compose up -d --build <container>
 
 # run a container, specify volumes, port, etc.
 docker run --rm -p 80:3838 -v /from:/to <container id>
@@ -39,29 +36,32 @@ docker tag <image id> repo:tag
 # list unused containers
 docker container ls -a --filter status=exited --filter status=created 
 
-# remove all stopped containers
-docker container prune 
-
-# clear cache / free up space (check /var/lib/xx as sudo to check space used..)
-docker system prune -a -f
-
 # launch docker compose & build needed containers
 docker-compose up --build
 
 # bring up a single service
 docker-compose start foo
 
+# stop a single container
+docker kill <container_id>
+
+# stop all running containers
+docker kill $(docker ps -q)
+
 # stop docker compose & removed orphaned containers
 docker-compose down --remove-orphans
+
+# remove all stopped containers
+docker container prune 
+
+# clear cache / free up space (check /var/lib/xx as sudo to check space used..)
+docker system prune -a -f
 
 # run a single container with docker compose
 docker-compose run <id>
 
 # stop a single container with docker compose
 docker-compose rm -sv <service>
-
-# rebuild a single container with compose
-docker-compose up -d --build <container>
 
 # get the ip addr and port of a running container
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 
