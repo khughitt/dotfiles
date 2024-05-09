@@ -109,7 +109,7 @@ zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
 zinit snippet OMZ::plugins/taskwarrior/taskwarrior.plugin.zsh
 zinit snippet OMZ::plugins/pip
-zinit snippet OMZ::plugins/poetry
+# zinit snippet OMZ::plugins/poetry
 
 # vi mode improvement
 #zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
@@ -123,7 +123,7 @@ zinit snippet OMZ::plugins/fd/_fd
 #zinit ice as"completion"
 #zinit snippet OMZ::plugins/pip/_pip
 zinit ice as"completion"
-zinit snippet https://github.com/esc/conda-zsh-completion/blob/master/_conda 
+#zinit snippet https://github.com/esc/conda-zsh-completion/blob/master/_conda 
 
 # prompt
 zinit ice pick"async.zsh" src"pure.zsh"; zinit light sindresorhus/pure
@@ -217,25 +217,6 @@ if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/mnt/ssd2/miniforge3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/mnt/ssd2/miniforge3/etc/profile.d/conda.sh" ]; then
-        . "/mnt/ssd2/miniforge3/etc/profile.d/conda.sh"
-    else
-        export PATH="/mnt/ssd2/miniforge3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-
-if [ -f "/mnt/ssd2/miniforge3/etc/profile.d/mamba.sh" ]; then
-    . "/mnt/ssd2/miniforge3/etc/profile.d/mamba.sh"
-fi
-# <<< conda initialize <<<
-
 # tabtab source for packages
 # uninstall by removing these lines
 [[ -f ~/.config/tabtab/zsh/__tabtab.zsh ]] && . ~/.config/tabtab/zsh/__tabtab.zsh || true
@@ -259,3 +240,26 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-rust
 
 ### End of Zinit's installer chunk
+
+# Load a few important annexes, without Turbo
+# (this is currently required for annexes)
+zinit light-mode for \
+    zdharma-continuum/zinit-annex-as-monitor \
+    zdharma-continuum/zinit-annex-bin-gem-node \
+    zdharma-continuum/zinit-annex-patch-dl \
+    zdharma-continuum/zinit-annex-rust
+
+### End of Zinit's installer chunk
+
+# >>> mamba initialize >>>
+# !! Contents within this block are managed by 'mamba init' !!
+export MAMBA_EXE='/home/keith/.local/bin/micromamba';
+export MAMBA_ROOT_PREFIX='/home/keith/micromamba';
+__mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__mamba_setup"
+else
+    alias micromamba="$MAMBA_EXE"  # Fallback on help from mamba activate
+fi
+unset __mamba_setup
+# <<< mamba initialize <<<
