@@ -17,9 +17,10 @@ alias dl='cd ~/downloads'
 alias dots='cd $DOTFILES'
 alias cdd='cd $dlas'
 
-# conda
-alias cde='conda deactivate'
-alias cs='mamba search'
+# conda/mamba
+alias cde='micromamba deactivate'
+alias cs='micromamba search'
+alias mamba='micromamba'
 
 # cp
 alias cpr='cp -r'
@@ -120,6 +121,7 @@ fi
 alias l='ls -l'
 alias lt='ls --tree'
 alias lr='ls -latr'
+alias lsr='ls -lSr'
 
 # mimetypes
 alias open='mimeopen'
@@ -229,6 +231,10 @@ alias 4k="xrandr --output DP-0 --mode 3840x2160"
 # "whatip"; get external ip addr
 # https://bbs.archlinux.org/viewtopic.php?pid=408739#p408739
 alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1'
+
+# yabridge
+alias ya='yabridgectl'
+alias yas='yabridgectl status'
 
 # yay
 alias y='yay'

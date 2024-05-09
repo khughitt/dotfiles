@@ -96,15 +96,15 @@ function gls2png {
     icat $outfile 
 }
 
-# conda env launcher
-function ca {
+# mamba env launcher
+function ma {
   wd=`pwd`
 
-  cd ~/conda/envs/
+  cd $MAMBA_ROOT_PREFIX/envs/
   target=`/bin/ls -t | grep --color='none' "$1" | fzf -1 --exact`
 
   if [ ! -z "$target" ]; then
-    conda activate $target
+    micromamba activate $target
   fi
 
   cd $wd
