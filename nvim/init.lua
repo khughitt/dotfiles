@@ -327,13 +327,13 @@ vim.keymap.set('n', ']c', '<Plug>(coc-diagnostic-next)', {silent = true})
 -- ---------------------------------------------------------------------------
 --  Colorscheme
 -- ---------------------------------------------------------------------------
--- require('onedark').load()
-require("cyberdream").setup({
-  transparent = true,
-  italic_comments = true,
-  hide_fillchars = true,
-})
-vim.cmd("colorscheme cyberdream")
+require('onedark').load()
+-- require("cyberdream").setup({
+--   transparent = true,
+--   italic_comments = true,
+--   hide_fillchars = true,
+-- })
+-- vim.cmd("colorscheme cyberdream")
 
 -- ---------------------------------------------------------------------------
 -- float-preview.nvim
