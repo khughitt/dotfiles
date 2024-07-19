@@ -5,7 +5,7 @@
 %connect_info
 
 # open qtconsole and connect to existing notebook
-eupyter qtconsole --existing
+jupyter qtconsole --existing
 
 # generate notebook config
 jupyter notebook --generate-config

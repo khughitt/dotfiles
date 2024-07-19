@@ -1,7 +1,17 @@
+# tibble row -> vec
+unlist(tbl[1, ])
+
+# tibble col -> vec
+pull(df, 1)
+pull(df, "symbol")
+
 # summarize_all
 dat %>%
   group_by(symbol) %>%
   summarize(across(everything(), max))
+
+# dynamic variable names
+!!sym(foo)
 
 # select by string variable (dynamic)
 dat %>%

@@ -85,6 +85,9 @@ crossprod(table(stack(lst)))
 # get classes of each column
 sapply(df, class)
 
+# split a vector of strings and return first part for each
+sapply(strsplit(x, "_"), "[[", 1)
+
 # -_- ...
 df[, single_col, drop = FALSE]
 single_col_df[mask, , drop = FALSE]
@@ -153,7 +156,8 @@ silverman.test(x, 1)@p_value
 dip.test(x)$p.value
 
 # hypergeometric test (over-representation p-val)
-1.0 - phyper(num_pos_sample - 1, num_pos_bg, num_neg_bg, sample_size, lower.tail = TRUE)
+# ex. phyper(num_de_with_annot - 1, num_with_annot, num_without_annot, num_de)
+phyper(num_pos_sample - 1, num_pos_bg, num_neg_bg, sample_size, lower.tail=FALSE)
 
 # parallel apply
 library(doParallel)

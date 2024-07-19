@@ -157,7 +157,7 @@ pd.concat([a, b], axis=1)
 pd.concat([a, b], axis=1, ignore_index=True)
 
 # *actually* ignore index..
-pd.concat([a.reset_index(Drop=True), b.reset_index(Drop=True)], axis=1)
+pd.concat([a.reset_index(drop=True), b.reset_index(drop=True)], axis=1)
 
 # cbind (numpy)
 df = np.concatenate((a,b), axis=1)
@@ -253,7 +253,7 @@ x[x.foo.str.endswith("bar")]
 df.foo.str.find("bar")
 
 # get rows corresponding to a string match
- df[df.foo.str.lower().str.find("bar") != -1]
+df[df.foo.str.lower().str.find("bar") != -1]
 
 # return boolean series indicating regex presence in column
 df.foo.str.find("bar|baz")

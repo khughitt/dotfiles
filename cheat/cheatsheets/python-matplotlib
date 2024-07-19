@@ -8,6 +8,11 @@ plt.title('..')
 
 plt.show()
 
+# save fig
+fig = plt.figure(figsize=(12,9))
+plt.plot(..)
+fig.savefig("out.png")
+
 # 3d scatter plot
 fig = plt.figure(figsize=(12, 9))
 ax = fig.add_subplot(111, projection='3d')

@@ -1,0 +1,3 @@
+timedatectl status
+timedatectl list-timezones
+timedatectl set-timezone xx/yy

@@ -7,6 +7,9 @@ CREATE DATABASE x;
 # delete db
 DROP DATABASE x;
 
+# delete db (postgres / force)
+DROP DATABASE x WITH(force);
+
 # delete table
 DROP TABLE x;
 
@@ -52,11 +55,49 @@ DROP TYPE foo;
 # rename index
 ALTER INDEX old RENAME TO new;
 
+# where .. or
+SELECT ..
+  WHERE a='foo' OR a='bar'
+
 # change values
 UPDATE tbl 
   SET a='1', b='2',..
   WHERE ..
 
+# match by value in array
+SELECT * FROM tbl
+  WHERE col = ANY('{a,b,c}');
+
 # get rows where array column includes some value
 SELECT * FROM tbl 
   WHERE 'foo' = ANY(array_col);
+
+# subqueries
+SELECT ..
+  INNER JOIN (
+    SELECT ...
+  ) AS foo
+ON ..
+
+INSERT INTO tbl(a, b, c) 
+  VALUES ((SELECT id FROM ...), 'b', 'c');
+
+# find duplicates
+SELECT a, b, COUNT(*)
+  FROM tbl
+  GROUP BY a,b
+  HAVING COUNT(*) > 1;
+
+# find duplicates / get ids
+SELECT x.*
+  FROM tbl x
+  JOIN (
+    SELECT a, b, COUNT(*)
+      FROM tbl1
+      GROUP BY a,b
+      HAVING COUNT(*) > 1)
+    ) y
+  ON x.a = y.a
+  AND x.b = y.b;
+
+

@@ -259,7 +259,21 @@ JSON.parse(localStorage.getItem('foo'))
 Math.PI
 Math.cos()
 Math.min(a, b)
+Math.max(a, b)
 Math.min(...arr)
+Math.max(...arr)
 Math.random()  // random uniform
+
+// random array value
+// https://stackoverflow.com/a/4550514/554531
+arr[Math.floor(Math.random() * arr.length)];
+
+// random integer in specified range
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+export function getRandomIntInclusive(min:number, max:number) {
+  const minCeiled = Math.ceil(min);
+  const maxFloored = Math.floor(max);
+  return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled);
+}
 
 // vi:syntax=javascript

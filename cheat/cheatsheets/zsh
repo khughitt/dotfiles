@@ -1,15 +1,21 @@
 # 
 # keyboard shortcuts
 #
-c-h  # backspace
+cntl-h    # backspace
+cntl-q    # "parks" a command you are typing (saves it and starts a new cmd)
+cntl-x-e  # edit cmd in $EDITOR
+
+cntl-w          # delete last word
+alt-backspace   # same..
+
+# directory-specific history
+jog
 
 # history, etc. expansions
 !!        # last command
 !*        # last command's parameters
 !^        # last command's first parameter
 !$        # last command's last parameter
-cntl-q    # "parks" a command you are typing (saves it and starts a new cmd)
-cntl-x-e  # edit cmd in $EDITOR
 
 *(m0)     # last modified today
 *(m-4)    # last modified <4 days ago
@@ -22,10 +28,6 @@ ${x:0:10}
 
 # everything except the first 10 characters
 ${x:10:999}
-
-# delete last word
-<c-w>
-<alt-backspace>
 
 # check to see what options are set
 setopt

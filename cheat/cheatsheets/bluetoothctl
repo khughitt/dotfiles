@@ -1,0 +1,16 @@
+# initial setup
+default-agent
+power on
+scan on
+
+# basics
+devices
+pair xx
+connect xx
+trust xx
+
+devices Connected
+devices Paired
+devices Trusted
+
+

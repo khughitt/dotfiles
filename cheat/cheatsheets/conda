@@ -20,3 +20,6 @@ conda rename -n from to
 # "none of the providers can be installed.." 
 # may be an issue with python 3.10; try using 3.9
 mamba install python=3.9.12
+
+# multiple version contraints
+python>=3.9.0,<3.11

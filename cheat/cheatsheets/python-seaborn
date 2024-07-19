@@ -10,6 +10,9 @@ sns.color_palette("Set2")
 sns.color_palette("magma", 20)
 sns.color_palette("viridis", 10).as_hex()
 
+# point size
+sns.scatterplot(s=5, ..)
+
 # add title to scatterplot
 sns.scatterplot(...).set(title="foo")
 
