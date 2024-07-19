@@ -1,3 +1,8 @@
 ["FabFilter*.vst3"]
 group = "fabfilter"
-editor_disable_host_scaling = true
+#editor_disable_host_scaling = true
+
+# taken from yabridge's example config for vst3 setup..
+["*"]
+editor_force_dnd = true
+#editor_disable_host_scaling = true
