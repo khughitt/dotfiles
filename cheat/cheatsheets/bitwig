@@ -24,7 +24,11 @@ toggle snap to events       shift-/
 toggle snap to grid         shift-,
 toggle snap to grid offset  shift-.
 
-toggle undocked view        ctrl-p
+# toggle plugin window; focus must be on bitwig itself..
+toggle expanded device view  ctrl-p
+
+# selection
+shift-drag    unselect
 
 # piano roll
 f           switch between drum view / piano

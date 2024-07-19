@@ -6,4 +6,13 @@ aheatmap(dat, Rowv = TRUE, Colv = TRUE,
          color = viridis(100), main = "",
          filename="...")
 
+# specify colors for annotations
+pal1 <- colorRampPalette(brewer.pal(11, "Spectral"))(length(levels(annot_df$foo)))
+names(pal1) <- levels(annot_df$foo)
+
+# drug-similarity heatmap (static)
+aheatmap(..,
+         annCol = annot_df,
+         annColors = list(foo = pal1))
+
 # vi:syntax=r

@@ -10,6 +10,11 @@
 \dT          # list enums
 \dT+ <enum>  # show enum levels
 
+# save output to file
+\o out.txt
+...
+\o
+
 # add "postgres" user
 psql -U postgres
 
@@ -23,6 +28,9 @@ psql ..
 
 # from host
 psql -h db.localhost -U postgres
+
+# provide password via environmental variable
+PGPASSWORD=xx psql -h db.localhost -U postgres <dbname>
 
 # create new user + db
 createuser --interactive
@@ -43,6 +51,11 @@ cur.close()
 # rollback failed transaction
 rollback;
 conn.rollback()
+
+# collapse multiple rows into an array
+SELECT a, array_agg(b) as b_array
+  FROM tbl 
+  GROUP BY a;
 
 # collapse multiple rows into a single string
 SELECT id, string_agg(foo, ', ') AS foo_list 

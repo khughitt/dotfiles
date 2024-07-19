@@ -47,6 +47,15 @@ def filter_edge(n1, n2):
 
 nx.subgraph_view(G, filter_edge=filter_edge)
 
+# edge lists
+edges = [('a', 'b',) ('b', 'd',), ...]
+weighted_edges = [('a', 'b', 0.5,), ('b', 'd', 0.2,), ...]
+
+# add edges
+G.add_edge(('a', 'b',))
+G.add_edges_from(edges)
+G.add_weighted_edges_from(weighted_edges)
+
 # remove nodes (in place)
 G.remove_node(x)
 G.remove_nodes_from([x, y, z])
@@ -56,6 +65,8 @@ G.remove_edge((u, v))
 G.remove_edges_from([...])
 
 # creation
+nx.Graph()
+nx.DiGraph()
 nx.from_numpy_array(arr)
 nx.from_scipy_sparse_array(arr)
 nx.from_pandas_adjacency(df)

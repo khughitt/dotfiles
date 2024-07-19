@@ -70,4 +70,7 @@ Object.values(coords).forEach((pos:number[]) => {
 // math
 THREE.MathUtils.randFloatSpread(100);   // random float in [-range / 2, range / 2].
 
+// trouble-shooting
+// 1. light source?
+
 // vi:syntax=javascript

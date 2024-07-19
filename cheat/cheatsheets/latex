@@ -103,6 +103,9 @@
 \bar{}
 \tilde{}
 
+# arrow above text
+\overrightarrow{\text{foo}}
+
 # vectors
 \vec{}
 
@@ -115,7 +118,8 @@ a & b & c
 
 # spacing
 \                # single space
-\\               # line break / newline
+\\               # line break (matrix / table)
+\par             # line break
 \hspace{1cm}     # 1cm space 
 \break
 \hfill\break

@@ -2,6 +2,8 @@
 # https://github.com/jalvesaq/Nvim-R/blob/master/doc/Nvim-R.txt
 # :RDebugInfo
 
+,o  # evaluate line & insert comment
+
 # Start/Close
 rf Start R (default)
 rc Start R (custom)

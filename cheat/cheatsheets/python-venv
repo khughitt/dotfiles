@@ -16,3 +16,7 @@ pip freeze > requirements.txt
 
 # install from requirements.txt
 pip install -r requirements.txt
+
+# from pip._internal.cli.main import main
+# ModuleNotFoundError: No module named 'pip'
+python -m ensurepip --default-pip

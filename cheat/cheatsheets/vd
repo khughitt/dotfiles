@@ -4,6 +4,10 @@ man vd
 # navigation
 gh gj gk gl    # go to start/end of row/col
 
+# go to line/column number..
+zr 
+zc
+
 # info
 <c-g>    # show current row/col
 
