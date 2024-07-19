@@ -9,6 +9,11 @@ alias agl='ag -l'
 alias agd='ag --depth'
 alias agu='ag -u'
 
+# bluetoothctl
+alias bt='bluetoothcontrol'
+alias btc='bluetoothctl connect'
+alias btC='bluetoothctl devices Connected'
+
 # cat
 alias cat='bat --wrap=never --paging=never'
 
@@ -182,6 +187,9 @@ alias s30="sleep 1800 &&"
 alias s60="sleep 3600 &&"
 alias s120="sleep 7200 &&"
 
+# startx
+alias sx="startx"
+
 # sudo
 alias _='sudo'
 alias sudo="sudo " # support aliases when using sudo
@@ -204,7 +212,7 @@ alias tze="trans zh-TW:en"  # to english
 alias tez="trans en:zh-TW"  # to chinese
 
 # tree
-alias tree='tree -C'
+alias tree="tree -C"
 
 # virtual env
 alias dea=deactivate
@@ -233,20 +241,20 @@ alias 4k="xrandr --output DP-0 --mode 3840x2160"
 alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1'
 
 # yabridge
-alias ya='yabridgectl'
-alias yas='yabridgectl status'
+alias ya="yabridgectl"
+alias yas="yabridgectl status"
 
 # yay
-alias y='yay'
-alias yd='yay -Syu --devel'
+alias y="yay"
+alias yd="yay -Syu --devel"
 
 # zeit
-alias z='zeit'
-alias zf='zeit finish'
-alias zp='zeit track -p '
-alias zl='zeit list'
-alias zt='zeit tracking'
+alias z="zeit"
+alias zf="zeit finish"
+alias zp="zeit track -p "
+alias zl="zeit list"
+alias zt="zeit tracking"
 alias ze="zeit entry \`zeit --no-colors list | tail -1 | awk '{print \$1}'\`"
-alias zrm='zeit erase '
+alias zrm="zeit erase "
 
 # vi:syntax=bash
