@@ -334,32 +334,6 @@ function wali {
   fi
 
   wal -i $target --backend haishoku
-
-  # get path to new background
-  img=`sleep 1 && tail -1 ~/.fehbg | grep --color='never' -o "/[\/a-zA-Z0-9_\.]*"`
-
-  fname=`basename $img`
-
-  # generate color palettes
-  basepath="$HOME/d/colors/_inc/${fname/.(jpg|png)/}"
-
-  cd ~/d/r/colormage/
-
-  magick $img \
-    -resize 10% \
-    -interlace JPEG \
-    -sampling-factor 4:2:0 \
-    -quality 85% \
-    "${basepath}-preview.jpg"
-
-  basecmd="poetry run colormage pal --min-saturation 0.2 --sample-ratio 0.005 --num-colors 12 --include-json"
-
-  eval "$basecmd --method kmeans $img ${basepath}-kmeans.png"
-  eval "$basecmd --method kmeans --max-lightness 0.6 $img ${basepath}-kmeans-dark.png"
-  eval "$basecmd --method kmeans --min-lightness 0.4 $img ${basepath}-kmeans-light.png"
-  eval "$basecmd --method hdb --hdb-epsilon 0.02 $img ${basepath}.png"
-  eval "$basecmd --method hdb --hdb-epsilon 0.02 --max-lightness 0.6 $img ${basepath}-dark.png"
-  eval "$basecmd --method hdb --hdb-epsilon 0.01 --min-lightness 0.4 $img ${basepath}-light.png"
 }
 
 # remove background
@@ -368,6 +342,9 @@ function walirm {
   fd $img -x rm
   wali
 }
+
+# keep track of favs
+alias walifav='cat ~/.fehbg | grep -Eo "[\/a-z0-9]+PXL.*.png" >> $HOME/d/linux/backgrounds/favorites.txt'
 
 # create png palette based on wal colors
 function walpal {

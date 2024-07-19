@@ -45,4 +45,8 @@ function bitwig_copy_sample {
     cd $cwd
 }
 
+function flac_to_mp3 {
+  < /dev/null ffmpeg -i "$1" -qscale:a 0 "${1[@]/%flac/mp3}"
+}
+
 # vi:syntax=bash
