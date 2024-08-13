@@ -1,0 +1,12 @@
+# parse gff
+with open(infile) as fp:
+    recs = list(GFF.parse(fp))
+
+# access features associated with a SequenceRecord
+rec.features
+
+# parse fasta
+with open(infile) as fp:
+    entries = list(SimpleFastaParser(fp))
+
+# vi:syntax=python

@@ -26,6 +26,9 @@
 # multiplication / times
 \times
 
+# multiplication dot
+\cdot
+
 # tensor product
 \otimes
 
@@ -119,7 +122,7 @@ a & b & c
 # spacing
 \                # single space
 \\               # line break (matrix / table)
-\par             # line break
+\par             # line break / newline
 \hspace{1cm}     # 1cm space 
 \break
 \hfill\break

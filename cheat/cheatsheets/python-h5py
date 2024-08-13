@@ -1,0 +1,26 @@
+# Classes / levels of organization:
+# 1. File
+# 2. Group
+# 3. Dataset
+
+# load hdf5 file
+f = h5py.File("dat.hdf5", "r")
+
+# list keys
+f.keys()
+
+# get group/dataset
+dset = f['key']
+
+# Dataset basics
+dset.name
+dset.shape
+dset.dtype
+
+# indexing
+dset[0]
+
+# slices
+dset[0:10:2]
+
+# vi:syntax=python

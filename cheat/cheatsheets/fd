@@ -31,6 +31,9 @@ fd -l | sort -k6M -k7n | tail
 fd -S "+10k"
 fd -S "-1m"
 
+# find hidden directories
+fd -t d --regex "^\." --hidden
+
 # find directories with a specified name and print ownership info
 fda -td "^web$" -x stat -c "%U %G"
 
