@@ -25,6 +25,9 @@ theme(legend.position="none") +
 # hide specific legends (ex. color)
 scale_color_manual(..., guide="none") +
 
+# legend title
+guides(fill=guide_legend(title="..."))
+
 # save fig
 ggsave("foo.png", width=1080, height=1080, units="px", dpi=300)
 

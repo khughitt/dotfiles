@@ -32,7 +32,7 @@ df["col"]
 df[["col"]]
 df[["col1", "col2"]]
 
-# select columns ending with "foo"
+# select columns starting / ending with "foo"
 df.loc[:, df.columns.str.endswith("foo")]
 
 # get index as an integer
@@ -52,7 +52,7 @@ df.drop("col", axis=1)
 df.iloc[: , 1:]
 
 # drop index
-df.reset_index(Drop=True)
+df.reset_index(drop=True)
 
 # drop missing
 df.dropna()

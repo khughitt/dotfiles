@@ -1,20 +1,55 @@
 # create a census connection instance
 import cellxgene_census
 
-census_version = "2023-12-15"
+# get list of available census versions
+cellxgene_census.get_census_version_directory() 
+
+census_version = "2023-12-15" # or, "stable"|"latest"
 census = cellxgene_census.open_soma(census_version=census_version)
 
-# close connection
-census.close()
+# version details
+census["census_info"]["summary"].read().concat().to_pandas()
+
+# datasets + cell counts?
+dat = census["census_info"]["datasets"].read().concat().to_pandas().set_index("soma_joinid")
+
+# cell counts by organism/category/ontology_term_id
+counts = census["census_info"]["summary_cell_counts"].read().concat().to_pandas().drop(columns=["soma_joinid"])
+counts.sort_values("unique_cell_count", ascending=False)
+
+# cell metadata fields? (human)
+list(census["census_data"]["homo_sapiens"].obs.keys())
+
+# gene metadata fields? (human)
+list(census["census_data"]["homo_sapiens"].ms["RNA"].var.keys())
 
 # TileDB-SOMA DataFrames
 x.schema
 
 # read into pandas dataframe
-df = x..read().concat().to_pandas()
+df = x.read().concat().to_pandas()
 
 # read a subset of rows/cols into a pandas dataframe
 x.read((slice(0, 10),), column_names=["a", "b"]).concat().to_pandas()
+
+# query cell metadata
+cells = cellxgene_census.get_obs(census, "homo_sapiens", column_names=["sex", "cell_type", "disease", "tissue"])
+
+# get a random sample of cells
+cells = cellxgene_census.get_obs(
+    census, "homo_sapiens", value_filter="tissue_general == 'bone marrow' and is_primary_data == True"
+)
+cell_ids = cells["soma_joinid"].sample(1000, random_state=1).tolist()
+
+# retrieve data as an *in-memory* AnnData object..
+# to see which embeddings are available for a given census version: 
+# https://cellxgene.cziscience.com/census-models
+adata = cellxgene_census.get_anndata(
+    census, 
+    organism="homo_sapiens", 
+    obs_value_filter="dataset_id == 'xxx'",
+    obs_embeddings = ["scgpt"]
+)
 
 # querying expression data ("obs" = cell, "var" = gene)
 adata = cellxgene_census.get_anndata(
@@ -29,6 +64,9 @@ adata.var
 adata.X
 adata.write("dat.h5ad", compression=hdf5plugin.FILTERS["zstd"])
 
+# another approach to downloading source datasets
+cellxgene_census.download_source_h5ad("<dataset_id>", to_path="data.h5ad")
+
 # highly variable genes
 from cellxgene_census.experimental.pp import get_highly_variable_genes,
 
@@ -38,5 +76,8 @@ get_highly_variable_genes(
   n_top_genes=100,
   obs_value_filter="""is_primary_data == True and tissue_general == 'blood'""",
 )
+
+# close connection
+census.close()
 
 # vi:syntax=python

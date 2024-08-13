@@ -1,3 +1,7 @@
+# start console inside jupyterlab
+# 1. right click tab
+# 2. "New Console for Notebook"
+
 # start qtconsole from notebook
 %qtconsole
 
