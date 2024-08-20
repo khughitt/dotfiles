@@ -1,13 +1,32 @@
-# describe
-from frictionless import describe
+from frictionless import describe, Package, Schema
 
-pkg = describe("in.csv", type="package", stats=True) # type: [package|resource|dialect|schema]
-pkg = describe(df, type="package") # type: [package|resource|dialect|schema]
+# describe a resource
+res = describe(df)
+res = describe("data.csv")
 
+# include "stats" (hash, bytes, num rows, num cols)
+res = describe("data.csv", stats=True)
+
+# remove inferred schema (e.g. for large matrices)
+res.schema = None
+
+# describe a data package
+pkg = describe("in.csv", type="package")
+
+# create a data package from existing resources
+pkg = Package(
+  resources=[res1, res2, ...],
+  name="",
+  title="",
+  description="",
+  ...
+)
+
+# output/save yaml
 pkg.to_yaml()
+pkg.to_yaml("datapackage.yml")
 
 # schema
-from frictionless import Schema
 Schema(df)
 
 # vi:syntax=python

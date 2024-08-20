@@ -21,10 +21,12 @@ import configparser
 # GLOBAL CONSTANTS
 HOME_FOLDER = expanduser("~/")
 MINUTE = 60
+DEFAULT_DURATION = 30
 
 # DEFAULT CONFIGS
 ICON_TOTAL = "%{u#ffa58f} "
 DATABASE_PATH = HOME_FOLDER + ".config/pomobar.db"
+
 
 # CUSTOM CONFIGS
 config = configparser.ConfigParser()
@@ -38,7 +40,7 @@ if config.has_option("PATH", "DATABASE_PATH"):
 class Pomodoro:
     """Normal pomodoro"""
 
-    def __init__(self, duration=30):
+    def __init__(self, duration=DEFAULT_DURATION):
         self.duration = int(duration)
         self.ICON = "%{u#8FFFA6} "
 

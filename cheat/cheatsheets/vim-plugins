@@ -1,29 +1,3 @@
-# profiling vim plugins
-# https://stackoverflow.com/questions/12213597/how-to-see-which-plugins-are-making-vim-slow
-:profile start profile.log
-:profile func *
-:profile file *
-" do some actions..
-:profile pause
-:noautocmd qall!
-
-# coc.nvim
-[c    next error
-]c    previous error
-
-# leap.nvim
-s                 forward search
-S                 backward search
-s{char}<space>    target char at end of line
-s<space><space>   jump to an empty line
-s<enter>          repeat the last search
-s<enter><enter>   traverse matches
-x                 move lhs visual bound
-X                 move rhs visual bound
-
-# vim-emoji
-;e    replace all `:emoji:` instances in current buffer
-
 # fzf
 ;a  # ag
 ;j  # notes
@@ -42,8 +16,34 @@ X                 move rhs visual bound
 
 <up>/<down> navigate history
 
+# coc.nvim
+[c    next error
+]c    previous error
+
+# leap.nvim
+s                 forward search
+S                 backward search
+s{char}<space>    target char at end of line
+s<space><space>   jump to an empty line
+s<enter>          repeat the last search
+s<enter><enter>   traverse matches
+x                 move lhs visual bound
+X                 move rhs visual bound
+
+# vim-emoji
+;e    replace all `:emoji:` instances in current buffer
+
 # indent guides
 :IndentGuidesToggle
 
 # vCoolor
 <alt-c>  open color picker
+
+# profiling vim plugins
+# https://stackoverflow.com/questions/12213597/how-to-see-which-plugins-are-making-vim-slow
+:profile start profile.log
+:profile func *
+:profile file *
+" do some actions..
+:profile pause
+:noautocmd qall!
