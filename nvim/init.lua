@@ -10,7 +10,6 @@
 -- :verbose set <var>?    find where a setting was made
 -- :scriptnames           list vimscripts loaded
 --
-require('plugins')
 
 -- ---------------------------------------------------------------------------
 -- General
@@ -249,15 +248,10 @@ vim.api.nvim_create_autocmd('VimLeave', {
   command = [[ call system("xsel -ip", getreg('+')) ]]
 })
 
--- ---------------------------------------------------------------------------
---  packer.nvim
--- ---------------------------------------------------------------------------
-vim.cmd([[
-  augroup packer_user_config
-    autocmd!
-    autocmd BufWritePost plugins.lua source <afile> | PackerCompile
-  augroup end
-]])
+-----------------------------------------------------------------------------
+-- lazy
+-----------------------------------------------------------------------------
+require("config.lazy")
 
 -----------------------------------------------------------------------------
 -- lualine
