@@ -3,7 +3,7 @@
 # rofi mindmap launcher
 # kh (jan 2021)
 #
-MMDIR="/home/keith/d/mindmaps"
+MMDIR="$HOME/d/mindmaps"
 
 cd $MMDIR
 
