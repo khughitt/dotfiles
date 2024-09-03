@@ -10,6 +10,9 @@ pacman -Rns
 # remove a package but not its dependencies
 pacman -Rdd
 
+# skip already-installed packages
+pacman -S --needed
+
 # view dependency tree of a package
 pactree
 

@@ -13,11 +13,14 @@ for i, cname in enumerate(df.columns):
 # sparse matrices
 #
 
-# create empty csr matrix
+# create empty Compressed Sparse Row matrix (CSR) matrix
 mat = csr_matrix((m, n), dtype=..)
 
 # load sparse matrix
 scipy.sparse.load_npz()
+
+# sum along specified axis
+mat.sum(axis=0)
 
 # get indices of non-zero columns for each row in a csr matrix
 # https://stackoverflow.com/a/24792612/554531

@@ -1,6 +1,12 @@
 # rotate logs
 journalctl --rotate
 
+# start at end + show up to 10,000 lines
+journalctl -e -n 10000
+
+# show log from last boot
+journalctl -b -1
+
 # clean up rotated logs
 journalctl --vacuum-size=100M
 journalctl --vacuum-time=2weeks

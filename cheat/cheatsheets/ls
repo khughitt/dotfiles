@@ -1,2 +1,5 @@
+# sort by size
+ls -S
+
 # list hidden directories (excluding "." and "..")
 ls -Ap | grep "^\..*/$"

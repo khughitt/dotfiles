@@ -1,9 +1,9 @@
+# create a new project
+poetry new foo
+
 # initialize from existing project
 poetry init
 poetry install
-
-# create a new project
-poetry new foo
 
 # add dependency
 poetry add ..

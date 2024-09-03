@@ -31,11 +31,14 @@ fd -l | sort -k6M -k7n | tail
 fd -S "+10k"
 fd -S "-1m"
 
+# variable substitution
+fd foo -x sh -c "x=\"$1\"; echo ${x/foo/bar/}" sh
+
 # find hidden directories
 fd -t d --regex "^\." --hidden
 
 # find directories with a specified name and print ownership info
-fda -td "^web$" -x stat -c "%U %G"
+fd -td "^web$" -x stat -c "%U %G"
 
 # count total number of files in each sub-directory, recursively
 for x in `ls -d */`; do 

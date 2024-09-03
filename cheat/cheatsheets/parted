@@ -1,0 +1,7 @@
+# parted /dev/sda
+mklabel gpt
+mkpart storage1 ext4 0% 100%
+print
+
+# outside of parted
+mkfs.ext4 /dev/sda1
