@@ -24,7 +24,7 @@ return {
   {'tpope/vim-surround'},
   {'tpope/vim-repeat'},
   {'wellle/targets.vim'},
-  { 'Yggdroot/LeaderF', build = ':LeaderfInstallCExtension' },
+  { 'Yggdroot/LeaderF', build = ':LeaderfInstallCExtension', lazy=true },
   { 'dstein64/nvim-scrollview', branch = 'main' },
   { 'junegunn/fzf.vim', dependencies = { 'junegunn/fzf', build = ':call fzf#install()' }, lazy=true},
   { 'nvim-lualine/lualine.nvim', dependencies = { 'nvim-tree/nvim-web-devicons', lazy=true }},
@@ -51,16 +51,16 @@ return {
   {'udalov/kotlin-vim', lazy=true},
   {'yuezk/vim-js', lazy=true},
   { 'neoclide/coc.nvim', branch = 'release', lazy=true},
-  {'snakemake/snakemake', ft='snakemake', 
-	config = function(plugin)
-	    vim.opt.rtp:append(plugin.dir .. "misc/vim")
-	end
-  , lazy=true},
+  {'snakemake/snakemake', 
+    ft='snakemake', 
+    config = function(plugin)
+        vim.opt.rtp:append(plugin.dir .. "/misc/vim")
+    end
+  },
 
   -- textobjs
-  -- {'tyru/vim-textobj-underscore', branch = 'support-3-cases' },
-  -- use 'kana/vim-textobj-user'   -- used by textobj-underscore
-  -- use 'glts/vim-textobj-comment'
+  {'tyru/vim-textobj-underscore', branch = 'support-3-cases', dependencies = {'kana/vim-textobj-user'}},
+  -- {'glts/vim-textobj-comment'}
 
   -- devicons should come last..
   {'nvim-tree/nvim-web-devicons'},
@@ -70,7 +70,6 @@ return {
 
   -- maybe..
   -- use 'nathanaelkane/vim-indent-guides'
-  -- https://github.com/NvChad/nvim-colorizer.lua
   -- https://github.com/brenoprata10/nvim-highlight-colors
 
   -- archived
