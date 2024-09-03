@@ -3,7 +3,6 @@
 #
 # start profiling zshrc
 # zmodload zsh/zprof 
-#
 
 # dotfiles home
 export DOTFILES=$(dirname `readlink -f "${(%):-%x}"`)
@@ -12,7 +11,10 @@ export DOTFILES=$(dirname `readlink -f "${(%):-%x}"`)
 [ -z "$PS1" ] && return
 
 # load zinit
-source ~/.zinit/bin/zinit.zsh
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+[ ! -d $ZINIT_HOME ] && mkdir -p "$(dirname $ZINIT_HOME)"
+[ ! -d $ZINIT_HOME/.git ] && git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+source "${ZINIT_HOME}/zinit.zsh"
 
 # local settings (early)
 if [ -e ~/.zsh_local_early ]; then
@@ -56,21 +58,16 @@ for file in ~/.shell/{fasd,aliases,audio,functions,nodes,private/*,exports,vcons
 done
 
 # nnn
-for file in $DOTFILES/nnn/*.zsh; do
-    [ -r "$file" ] && source "$file"
-done
-unset file
+# for file in $DOTFILES/nnn/*.zsh; do
+#     [ -r "$file" ] && source "$file"
+# done
+# unset file
 
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # disable scroll lock
 stty -ixon
-
-# termite dynamic titles
-if [[ $TERM == xterm-termite ]]; then
-  . /etc/profile.d/vte.sh
-fi
 
 # local settings (late)
 if [ -e ~/.zsh_local_late ]; then
@@ -100,6 +97,7 @@ bindkey "^[^?" backward-kill-word
 #
 
 # nvm
+zinit ice wait lucid
 zinit light lukechilds/zsh-nvm
 
 zinit snippet OMZ::lib/completion.zsh
@@ -109,21 +107,12 @@ zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
 zinit snippet OMZ::plugins/taskwarrior/taskwarrior.plugin.zsh
 zinit snippet OMZ::plugins/pip
-# zinit snippet OMZ::plugins/poetry
 
 # vi mode improvement
 #zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
 
 # emacs mode improvements
 zinit snippet OMZ::lib/key-bindings.zsh
-
-# oh-my-zsh completions
-zinit ice as"completion"
-zinit snippet OMZ::plugins/fd/_fd
-#zinit ice as"completion"
-#zinit snippet OMZ::plugins/pip/_pip
-zinit ice as"completion"
-#zinit snippet https://github.com/esc/conda-zsh-completion/blob/master/_conda 
 
 # prompt
 zinit ice pick"async.zsh" src"pure.zsh"; zinit light sindresorhus/pure
@@ -162,9 +151,6 @@ _fzf_compgen_dir() {
   fd --type d --hidden --follow --exclude ".git" . "$1"
 }
 
-# location of additional zsh completions
-fpath+=$DOTFILES/zsh/
-
 # pure prompt
 fpath+=$HOME/.zsh/pure
 
@@ -173,13 +159,7 @@ autoload -Uz compinit && compinit
 zinit cdreplay -q 
 
 # snakemake tab completion support
-compdef _gnu_generic snakemake mindful
-
-# pywal
-# (/bin/cat ~/.cache/wal/sequences &)
-# if [ -e "${HOME}/.cache/wal/colors.sh" ]; then
-#     source "${HOME}/.cache/wal/colors.sh"
-# fi
+compdef _gnu_generic snakemake
 
 # host-specific settings
 if [ -e $DOTFILES/shell/local/$HOST.zsh ]; then
@@ -196,63 +176,13 @@ zinit wait lucid for \
 # set fast-syntax-highlighting theme
 fast-theme q-jmnemonic &> /dev/null
 
-# autocomplete commands with --help flags
-#source <(cod init $$ zsh)
-
-#
-# custom zsh keybindings;
-# should come near end of config to avoid being overwritten
-# 
-zle -N notes
-bindkey "^N" notes
-
 # directory-specific command history
 # https://github.com/natethinks/jog
 function zshaddhistory() {
 	echo "${1%%$'\n'}|${PWD}   " >> ~/.zsh_history_ext
 }
 
-# print greeting
-if [ "$vconsole" = false ]; then
-    hostname | cut -d'.' -f1 | figlet | lolcat -S 33
-fi
-
-# tabtab source for packages
-# uninstall by removing these lines
-[[ -f ~/.config/tabtab/zsh/__tabtab.zsh ]] && . ~/.config/tabtab/zsh/__tabtab.zsh || true
-
-# Load a few important annexes, without Turbo
-# (this is currently required for annexes)
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
-
-### End of Zinit's installer chunk
-
-# Load a few important annexes, without Turbo
-# (this is currently required for annexes)
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
-
-### End of Zinit's installer chunk
-
-# Load a few important annexes, without Turbo
-# (this is currently required for annexes)
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
-
-### End of Zinit's installer chunk
-
-# >>> mamba initialize >>>
-# !! Contents within this block are managed by 'mamba init' !!
+# mamba
 export MAMBA_EXE='/home/keith/.local/bin/micromamba';
 export MAMBA_ROOT_PREFIX='/home/keith/micromamba';
 __mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
@@ -262,14 +192,18 @@ else
     alias micromamba="$MAMBA_EXE"  # Fallback on help from mamba activate
 fi
 unset __mamba_setup
-# <<< mamba initialize <<<
 
 # Load a few important annexes, without Turbo
-# (this is currently required for annexes)
 zinit light-mode for \
     zdharma-continuum/zinit-annex-as-monitor \
     zdharma-continuum/zinit-annex-bin-gem-node \
     zdharma-continuum/zinit-annex-patch-dl \
     zdharma-continuum/zinit-annex-rust
 
-### End of Zinit's installer chunk
+# print greeting
+if [ "$vconsole" = false ]; then
+    hostname | cut -d'.' -f1 | figlet | lolcat -S 33
+fi
+
+# stop profiling zshrc
+# zprof 

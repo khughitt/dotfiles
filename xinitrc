@@ -71,12 +71,12 @@ autocutsel -fork &
 autocutsel -fork -s PRIMARY &
 
 # fcitx
-export GTK_IM_MODULE=fcitx
-export QT_IM_MODULE=fcitx
-export XMODIFIERS=@im=fcitx
+#export GTK_IM_MODULE=fcitx
+#export QT_IM_MODULE=fcitx
+#export XMODIFIERS=@im=fcitx
 
 # fcitx (kitty support)
-export GLFW_IM_MODULE=ibus
+#export GLFW_IM_MODULE=ibus
 
 # gnome keyring
 eval $(gnome-keyring-daemon --start)
