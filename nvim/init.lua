@@ -43,6 +43,9 @@ vim.keymap.set('n', 'q', '<nop>')
 -- enable mouse wheel in terminal, etc.
 vim.opt.mouse = 'a'
 
+-- enable syntax highlighting by default
+vim.opt.syntax = "on"
+
 -- refresh syntax when saving new files
 vim.api.nvim_create_autocmd('BufWritePost', {
   pattern = {'*'},
@@ -55,10 +58,10 @@ vim.keymap.set('n', '!', ':!')
 -- ----------------------------------------------------------------------------
 --  Backup and undo
 -- ----------------------------------------------------------------------------
+vim.opt.backupdir = (os.getenv('XDG_STATE_HOME') or  (os.getenv('HOME') .. ".local")) .. 'nvim/backup'
+vim.opt.undodir = (os.getenv('XDG_STATE_HOME') or  (os.getenv('HOME') .. ".local")) .. 'nvim/undo'
 vim.opt.backup = true
-vim.opt.backupdir = os.getenv('XDG_STATE_HOME') .. 'nvim/backup'
 vim.opt.history = 5000
-vim.opt.undodir = os.getenv('XDG_STATE_HOME') .. 'nvim/undo'
 vim.opt.undofile = true
 vim.opt.undolevels = 200
 
@@ -369,13 +372,6 @@ vim.keymap.set('', '<c-p>', [[ :<c-u><c-r>=printf("Leaderf --nowrap mru %s", "")
 --  leap
 -- ----------------------------------------------------------------------------
 require('leap').add_default_mappings()
-
--- ----------------------------------------------------------------------------
---  mindful
--- ----------------------------------------------------------------------------
-vim.opt.dictionary:append({os.getenv('XDG_STATE_HOME') .. 'nvim/mindful-tags.txt'})
-vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.mnd', command = 'set syntax=mindful' })
-vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.mnd', command = 'set filetype=mindful' })
 
 -- ---------------------------------------------------------------------------
 --  NERDcommenter
