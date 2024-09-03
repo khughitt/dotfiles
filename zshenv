@@ -13,15 +13,15 @@ export SYSTEMD_EDITOR=nvim
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_STATE_HOME="$HOME/.local/state"
 
-# if type "moar" > /dev/null; then
-#     export PAGER=$(which moar)
-# fi
+if type "moar" > /dev/null; then
+    export PAGER=$(which moar)
+fi
 
 # use system colors for ls
-#export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 
 # LS_COLORS
-export LS_COLORS="$(vivid generate one-dark)"
+# export LS_COLORS="$(vivid generate one-dark)"
 
 # java
 export JAVA_HOME=/usr/lib/jvm/default
@@ -29,14 +29,11 @@ export JAVA_FONTS=/usr/share/fonts/TTF
 export _JAVA_AWT_WM_NONREPARENTING=1
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true'
 
-# let ncurces know where to find terminfo
+# let ncurses know where to find terminfo
 export TERMINFO=~/.terminfo
 
 # remap caps-lock in sway
 export XKB_DEFAULT_OPTIONS=caps:escape
-
-# lazy-load NVM
-#export NVM_LAZY_LOAD=true
 
 # less page colors to use for man pages
 export LESS_TERMCAP_mb=$'\E[01;31m'       # begin blinking
@@ -52,10 +49,6 @@ export MYPYPATH=".config/stubs"
 
 # rofi x proj
 export ROFI_PROJ_DIR="$HOME/d/dotfiles/rofi/rofi-proj"
-
-# CMFinder
-PATH=$PATH:$HOME/software/cmfinder-0.4.1.9/bin
-export CMfinder=$HOME/software/cmfinder-0.4.1.9
 
 # perl
 PATH="/home/keith/perl5/bin${PATH:+:${PATH}}"; export PATH;
