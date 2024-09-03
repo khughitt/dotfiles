@@ -57,6 +57,14 @@ fi
 ln_s ${DOTS_HOME}/gtk-3.0/settings.ini ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
 ln_s ${DOTS_HOME}/gtk-3.0/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
 
+# Gtk 4.0
+if [ ! -e ${XDG_CONFIG_HOME}/gtk-4.0/ ]; then
+    mkdir ${XDG_CONFIG_HOME}/gtk-4.0/
+fi
+ln_s ${DOTS_HOME}/gtk-4.0/settings.ini ${XDG_CONFIG_HOME}/gtk-4.0/settings.ini
+ln_s ${DOTS_HOME}/gtk-4.0/gtk.css ${XDG_CONFIG_HOME}/gtk-4.0/gtk.css
+
+
 # ~/.config/xx
 for path in "cheat" "dunst" "fcitx" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
             "labnote" "lsd" "polybar" "powerline" "ranger" "snakemake" \
