@@ -1,7 +1,8 @@
 channels:
-  - conda-forge
   - bioconda
   - defaults
+  - conda-forge
+  - nodefaults
 anaconda_upload: true
 allow_conda_downgrades: true
 auto_activate_base: false
