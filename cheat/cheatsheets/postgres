@@ -19,7 +19,7 @@
 psql -U postgres
 
 # create db
-psql -c 'create database foo'
+psql -c 'cCREATE USER davide WITH PASSWORD 'jw8s0F4';reate database foo'
 
 # interact with pg docker container
 docker exec -it <container> /bin/bash
@@ -36,6 +36,9 @@ PGPASSWORD=xx psql -h db.localhost -U postgres <dbname>
 createuser --interactive
 createdb dbName
 psql -d dbName
+
+# create new user and prompt for password
+createuser -P user123
 
 # psycopg python adaptor
 conn = psycopg.connect(host="<host>", dbname="...", user="postgres", password="...")

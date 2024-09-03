@@ -4,6 +4,10 @@ find . -type f | cut -d/ -f2 | sort | uniq -c
 # find files not _owned_ by a particular user
 find . \! -user keith -print
 
+# change permissions for files/directories recursively
+find . -type f -exec chmod 644 -- {} +
+find . -type d -exec chmod 755 -- {} +
+
 # find files not _readable_ by a particular user (incl. broken symlinks)
 find . ! -readable -ls
 

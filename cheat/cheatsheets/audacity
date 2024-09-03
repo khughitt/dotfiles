@@ -1,3 +1,6 @@
+# "drag waveform" -_-...
+<s-mousewheel>
+
 # normalize volume
 # "loudness normalize" normalizes _percieved_ loudness
 "Effect" -> "Volume and Compression" -> "Normalize"
