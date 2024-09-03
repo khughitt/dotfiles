@@ -4,10 +4,12 @@
 #
 ################################################################################
 
-# ag
-alias agl='ag -l'
-alias agd='ag --depth'
-alias agu='ag -u'
+# rg
+alias ag="ahem..."
+alias rgl='rg -l'
+alias rgd='rg -d'
+alias rgu='rg -u'
+# rf = rg + fzf
 
 # bluetoothctl
 alias bt='bluetoothcontrol'
@@ -98,6 +100,7 @@ alias icat='kitty +kitten icat'
 alias jog='grep -v jog ~/.zsh_history_ext | grep -a --color=never "$PWD   " | cut -f1 -d"|" | tail | fzf'
 
 # journalctl
+alias journalctl='journalctl -e -n 10000'
 alias errors='journalctl -b -p err|less'
 alias vacuum='sudo journalctl --vacuum-size=50M'
 

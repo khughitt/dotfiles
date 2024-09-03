@@ -28,10 +28,15 @@ function fu {
 
 # recursively count files in subdirs
 function count_files {
+  now=`date +%Y-%m-%d`
+  outfile="file_counts_$now.txt"
+
+  touch $outfile
+
   # non-hidden folders
   for x in */; do
-    echo $x; 
-    fd -Luu . $x -t f | wc -l;
+    echo $x >> $outfile; 
+    fd -Luu . $x -t f | wc -l >> $outfile;
   done
 
   # if hidden directories present, include them..
@@ -39,8 +44,8 @@ function count_files {
 
   if [ "$num_hidden" -ne "0" ]; then
     for x in .*/; do
-      echo $x; 
-      fd -Luu . $x -t f | wc -l;
+      echo $x >> $outfile; 
+      fd -Luu . $x -t f | wc -l >> $outfile;
     done
   fi
 }
@@ -111,11 +116,11 @@ function ma {
 }
 
 # copy kitty terminfo to conda envs
-function conda_kitty {
-    for x in ~/conda/envs/*/share/terminfo/x; do 
-        echo $x; 
-        cp /usr/share/terminfo/x/xterm-kitty $x;
-    done
+function mamba_kitty {
+  for x in $MAMBA_ROOT_PREFIX/envs/*/share/terminfo/x; do 
+    echo $x; 
+    cp /usr/share/terminfo/x/xterm-kitty $x;
+  done
 }
 
 # quick hop to a specific data dir (limit to project data to speed things up..)
@@ -160,9 +165,9 @@ function c {
     fi
 }
 
-# vim + ag
+# vim + rg
 function va {
-    $EDITOR $(ag -l $1)
+    $EDITOR $(rg -l $1)
 }
 
 # vim + fzf
@@ -350,9 +355,9 @@ alias walifav='cat ~/.fehbg | grep -Eo "[\/a-z0-9]+PXL.*.png" >> $HOME/d/linux/b
 function walpal {
   source ~/.cache/wal/colors.sh
 
-  convert -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/a.png
-  convert -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/b.png
-  convert -append /tmp/a.png /tmp/b.png ~/.cache/wal/palette.png
+  magick -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/a.png
+  magick -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/b.png
+  magick -append /tmp/a.png /tmp/b.png ~/.cache/wal/palette.png
 }
 
 # fahrenheit to celsius
