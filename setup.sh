@@ -66,17 +66,17 @@ ln_s ${DOTS_HOME}/gtk-4.0/gtk.css ${XDG_CONFIG_HOME}/gtk-4.0/gtk.css
 
 
 # ~/.config/xx
-for path in "cheat" "dunst" "fcitx" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
-            "labnote" "lsd" "polybar" "powerline" "ranger" "snakemake" \
+for path in "dunst" "fcitx" "feh" "git" "mimeapps.list" "nvim" "redshift.conf"  \
+            "labnote" "lsd" "polybar" "powerline" "snakemake" \
             "picom.conf" "sway" "termcolors" "zathura" "zeit"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
 # ~/.xx
-for path in "agignore" "ansiweatherrc" "cookiecutterrc" "ctags" "dir_colors"  \
-            "plotly" "Rprofile" "Renviron" "sen" "tmux" "tmux.conf" \
+for path in "cookiecutterrc" "ctags" "dir_colors"  \
+            "plotly" "Rprofile" "Renviron" "tmux.conf" \
             "vim" "vimrc" "visidatarc" "xinitrc" "Xmodmap" "Xresources" \
-            "taskrc" "condarc" "xprofile"; do
+            "condarc" "xprofile"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
 done
 
@@ -171,8 +171,8 @@ do
 
             # install arch packages
             echo "Installing Arch packages..."
-            yay -S bat dust fasd fd fzf gotop-bin lsd moar thefuck visidata \
-                   powerline ripgrep tldr polybar nerd-fonts-complete ttf-weather-icons
+            yay -S bat dust fasd fd fzf gotop-bin lsd moar visidata powerline ripgrep polybar \
+                   tre-command ttf-nerd-fonts-symbols ttf-hack-nerd ttf-weather-icons
             ;;
        [nN][oO]|[nN])
             echo "Skipping Arch package installation..."
@@ -185,12 +185,3 @@ do
 done
 
 echo "Done!"
-echo "Don't forget to install any necessary fonts, icons, etc."
-echo ""
-
-echo "Other post-setup steps:"
-echo ""
-echo "1. Adjust \$DOTFILES environmental variable in zshrc as needed"
-echo "2. Install vim-plug (https://github.com/junegunn/vim-plug)"
-echo "3. Install zinit (https://github.com/zdharma-continuum/zinit)"
-echo "4. Install fasd (https://github.com/clvv/fasd)"
