@@ -419,12 +419,8 @@ mode "resize" {
 bindsym $mod+shift+r mode "resize"
 
 # autostart
-exec --no-startup-id "killall blackd; blackd"
 exec_always --no-startup-id "killall picom; picom -b"
 exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
-exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
 exec --no-startup-id "dunst"
 exec --no-startup-id "fcitx5 -d"
-#exec --no-startup-id "/mnt/storage/conda/envs/dashboard/bin/python ~/d/sen/dashboard/app.py"
-#exec --no-startup-id "$HOME/bin/xmodmap-on-input-change.sh"
 
