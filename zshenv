@@ -44,11 +44,14 @@ export LESS_TERMCAP_so=$'\E[38;5;204m'    # begin standout-mode - info/highlight
 export LESS_TERMCAP_ue=$'\E[0m'           # end underline
 export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
 
+# ripgrep
+export RIPGREP_CONFIG_PATH="$DOTFILES/ripgreprc"
+
 # python stubs
 export MYPYPATH=".config/stubs"
 
 # rofi x proj
-export ROFI_PROJ_DIR="$HOME/d/dotfiles/rofi/rofi-proj"
+export ROFI_PROJ_DIR="$DOTFILES/rofi/rofi-proj"
 
 # perl
 PATH="/home/keith/perl5/bin${PATH:+:${PATH}}"; export PATH;
