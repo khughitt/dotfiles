@@ -6,6 +6,7 @@ Current setup
 
 * [Arch Linux](https://www.archlinux.org/)
 * [i3](https://i3wm.org/)
+* [picom](https://github.com/yshui/picom)
 * [Zsh](http://www.zsh.org/)
 * [kitty](https://sw.kovidgoyal.net/kitty/)
 * [polybar](https://github.com/polybar/polybar)
@@ -14,21 +15,23 @@ Current setup
 Tools
 -----
 
-* [Neovim](https://neovim.io/)
-* [picom](https://github.com/yshui/picom)
-* [conda](https://docs.conda.io/en/latest/)
-* [ag](https://github.com/ggreer/the_silver_searcher)
+* [bat](https://github.com/sharkdp/bat)
+* [dust](https://github.com/bootandy/dust)
 * [fasd](https://github.com/clvv/fasd)
 * [fd](https://github.com/sharkdp/fd)
 * [feh](https://feh.finalrewind.org/)
 * [fzf](https://github.com/junegunn/fzf)
+* [gotop](https://github.com/xxxserxxx/gotop)
 * [lsd](https://github.com/Peltoche/lsd)
+* [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)
+* [moar](https://github.com/walles/moar)
+* [neovim](https://neovim.io/)
 * [radian](https://github.com/randy3k/radian)
-* [nnn](https://github.com/jarun/nnn)
+* [rg](https://github.com/BurntSushi/ripgrep)
 * [tmux](https://github.com/tmux/tmux/wiki)
+- [tre](https://github.com/dduan/tre)
 * [visidata](https://www.visidata.org/)
 * [zathura](https://pwmt.org/projects/zathura/)
-* [zeit](https://github.com/mrusme/zeit)
 * [zinit](https://github.com/zdharma/zinit)
 
 Installation
@@ -37,7 +40,6 @@ Installation
 To install, simply clone this repo and run `setup.sh`:
 
     git clone https://github.com/khughitt/dotfiles
-    git submodule update --init --recursive
     cd dotfiles && ./setup.sh
 
 Symbolic links will be created in `$HOME` / `$XDG_CONFIG_DIR` to all of the major
