@@ -156,12 +156,12 @@ function C {
 
 # cheatsheets
 function c {
-    target=`/bin/ls ~/.config/cheat/cheatsheets/ |\
+    target=`/bin/ls $DOTFILES/cheatsheets/ |\
             grep --color='none' "$1" |\
-            fzf -1 --exact --preview 'bat ~/.config/cheat/cheatsheets/{}' --preview-window up`
+            fzf -1 --exact --preview 'bat $DOTFILES/cheatsheets/{}' --preview-window up`
 
     if [ ! -z "$target" ]; then
-        vim ~/.config/cheat/cheatsheets/$target
+        vim $DOTFILES/cheatsheets/$target
     fi
 }
 
