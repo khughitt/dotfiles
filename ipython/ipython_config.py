@@ -5,7 +5,7 @@ c.AliasManager.user_aliases = [
 ]
 
 # disable jedi completion (broken with pandas object completion, oct23)
-c.Completer.use_jedi = False
+# c.Completer.use_jedi = False
 
 # newp..
 # c.MagicsManager.register_alias("p", "paste")
