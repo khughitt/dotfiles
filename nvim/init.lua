@@ -338,35 +338,60 @@ require('onedark').load()
 vim.cmd('let g:float_preview#docked = 1')
 
 -- ---------------------------------------------------------------------------
+-- Telescope
+-- ---------------------------------------------------------------------------
+local actions = require("telescope.actions")
+local builtin = require('telescope.builtin')
+
+require('telescope').setup{
+  defaults = {
+    mappings = {
+      i = {
+        ["<C-h>"] = "which_key",   -- show keyboard shortcuts ("help")
+        ["<C-u>"] = false,         -- clear line
+        ["<esc>"] = actions.close  -- exit picker
+      }
+    }
+  },
+  pickers = {},
+  extensions = {}
+}
+
+require('telescope').load_extension('fzf')
+
+vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
+vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
+vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
+vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
+
+-- ---------------------------------------------------------------------------
 --  fzf.vim
 -- ---------------------------------------------------------------------------
-vim.g.fzf_layout = { window = 'enew' }
-vim.g.fzf_layout = { window = '-tabnew' }
-vim.g.fzf_layout = { window = '10split enew' }
-vim.g.fzf_layout = { down = '~40%' }
-
-vim.keymap.set('c', '<c-r>', ':History:<cr>')
-
--- Ag
-vim.keymap.set('', '<leader>a', ':Ag<cr>')
-
--- create a `Notes` command to search notes
-vim.cmd([[ command! -bang Notes call fzf#vim#files('~/notes', <bang>0) ]])
-vim.keymap.set('', '<leader>j', ':Notes<cr>')
+-- vim.g.fzf_layout = { window = 'enew' }
+-- vim.g.fzf_layout = { window = '-tabnew' }
+-- vim.g.fzf_layout = { window = '10split enew' }
+-- vim.g.fzf_layout = { down = '~40%' }
+--
+-- vim.keymap.set('c', '<c-r>', ':History:<cr>')
+--
+-- -- Ag
+-- vim.keymap.set('', '<leader>a', ':Ag<cr>')
+--
+-- -- ---------------------------------------------------------------------------
+-- -- LeaderF
+-- -- ---------------------------------------------------------------------------
+-- vim.g.Lf_ShortcutF = '<c-f>'
+-- vim.g.Lf_WindowPosition = 'popup'
+-- vim.g.Lf_PreviewInPopup = 1
+--
+-- vim.keymap.set('', '<c-p>', [[ :<c-u><c-r>=printf("Leaderf --nowrap mru %s", "")<cr><cr> ]])
+--
 
 -- ---------------------------------------------------------------------------
 --  gitgutter
 -- ---------------------------------------------------------------------------
 vim.g.gitgutter_diff_args = '--ignore-all-space'
 
--- ---------------------------------------------------------------------------
--- LeaderF
--- ---------------------------------------------------------------------------
-vim.g.Lf_ShortcutF = '<c-f>'
-vim.g.Lf_WindowPosition = 'popup'
-vim.g.Lf_PreviewInPopup = 1
-
-vim.keymap.set('', '<c-p>', [[ :<c-u><c-r>=printf("Leaderf --nowrap mru %s", "")<cr><cr> ]])
 
 -- ----------------------------------------------------------------------------
 --  leap

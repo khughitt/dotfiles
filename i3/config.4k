@@ -423,4 +423,3 @@ exec_always --no-startup-id "killall picom; picom -b"
 exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
 exec --no-startup-id "dunst"
 exec --no-startup-id "fcitx5 -d"
-

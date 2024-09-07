@@ -1,7 +1,7 @@
 configuration {
     modi: "drun";
     combi-modi: "window,drun";
-    font: "hack 20";
+    font: "hack 14";
     opacity: 0.8;
 }
 @import "~/.cache/wal/colors-rofi-dark.rasi"

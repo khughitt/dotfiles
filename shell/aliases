@@ -4,13 +4,6 @@
 #
 ################################################################################
 
-# rg
-alias ag="ahem..."
-alias rgl='rg -l'
-alias rgd='rg -d'
-alias rgu='rg -u'
-# rf = rg + fzf
-
 # bluetoothctl
 alias bt='bluetoothcontrol'
 alias btc='bluetoothctl connect'
@@ -51,6 +44,9 @@ alias dropbox_ignore='sudo attr -s com.dropbox.ignored -V 1 '
 alias dud='du -d 1 -h'
 alias duf='du -sh *'
 alias dus='du -sh'
+
+# dust
+alias dust='dust -r'
 
 # recursively counts # files in directories and returns a ranked list
 # https://unix.stackexchange.com/a/122871/39903
@@ -166,6 +162,11 @@ alias psh='poetry shell'
 # ranger
 alias ra=ranger
 
+# rg
+alias rgl='rg -l'
+alias rgd='rg -d'
+alias rgu='rg -u'
+
 # rm
 alias rmf="rm -rf"
 
@@ -189,6 +190,9 @@ alias s25="sleep 1500 &&"
 alias s30="sleep 1800 &&"
 alias s60="sleep 3600 &&"
 alias s120="sleep 7200 &&"
+
+# snakemake
+alias snek="snakemake"
 
 # startx
 alias sx="startx"
