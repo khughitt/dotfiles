@@ -130,27 +130,6 @@ zinit light "djui/alias-tips"
 # cntl-z <-> fg
 zinit light "mdumitru/fancy-ctrl-z"
 
-# fzf
-export FZF_DEFAULT_COMMAND="fd --type file --color=never"
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-if [[ ! "$DISABLE_FZF_AUTO_COMPLETION" == "true" ]]; then
-    [[ $- == *i* ]] && source "~/.fzf/shell/completion.zsh" 2> /dev/null
-fi
-
-# Use fd (https://github.com/sharkdp/fd) instead of the default find
-# command for listing path candidates.
-# - The first argument to the function ($1) is the base path to start traversal
-# - See the source code (completion.{bash,zsh}) for the details.
-_fzf_compgen_path() {
-  fd --hidden --follow --exclude ".git" . "$1"
-}
-
-# Use fd to generate the list for directory completion
-_fzf_compgen_dir() {
-  fd --type d --hidden --follow --exclude ".git" . "$1"
-}
-
 # pure prompt
 fpath+=$HOME/.zsh/pure
 
@@ -183,13 +162,14 @@ function zshaddhistory() {
 }
 
 # mamba
-export MAMBA_EXE='/home/keith/.local/bin/micromamba';
-export MAMBA_ROOT_PREFIX='/home/keith/micromamba';
+export MAMBA_EXE="$HOME/.local/bin/micromamba";
+export MAMBA_ROOT_PREFIX="$HOME/micromamba";
+
 __mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__mamba_setup"
 else
-    alias micromamba="$MAMBA_EXE"  # Fallback on help from mamba activate
+    alias micromamba="$MAMBA_EXE"
 fi
 unset __mamba_setup
 

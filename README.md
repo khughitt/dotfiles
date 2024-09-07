@@ -56,6 +56,19 @@ Additional Z shell plugins I'm currently using:
 
 ..And a bunch others. 
 
+Keyboard Shortcuts
+------------------
+
+(TODO)
+
+Autocomplete
+------------
+
+```
+# fzf-fasd
+j foo<tab>  
+```
+
 Screenshot
 ----------
 
