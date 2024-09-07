@@ -33,6 +33,7 @@ git checkout alt-history
 
 # search history for a specific string
 git log -S password
+git log -S password -- file.py
 
 # search history for [D]eleted file with name "foo"
 git log --all --stat --diff-filter=D --oneline | grep "foo"

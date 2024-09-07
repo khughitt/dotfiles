@@ -1,5 +1,5 @@
 # python projects
-conda install jupyter ipython black neovim
+conda install jupyter ipython neovim
 
 # remove env
 conda remove --name myenv --all

@@ -19,6 +19,11 @@ ggplot(df, aes(x)) +
   geom_density() +
   facet_wrap(~foo, ncol=5)
 
+# modify styles for a subset of elements
+ggplot(df, aes(x, y)) +
+  geom_line(color="#aaa") +
+  geom_line(data=filter(df, target == "foo"), aes(x, y), colour="red", linewidth=1, linetype="dashed")
+
 # hide all legends
 theme(legend.position="none") +
 

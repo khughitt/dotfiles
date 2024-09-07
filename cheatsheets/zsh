@@ -43,3 +43,7 @@ zinit cclear
 
 # expand symlink
 readlink -f ..
+
+# list defined functions
+# https://superuser.com/a/684256
+print -l ${(ok)functions[(I)[^_]*]}

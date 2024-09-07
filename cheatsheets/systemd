@@ -1,0 +1,7 @@
+# find out where time is being spent during boot
+systemd-analyze
+systemd-analyze blame
+systemd-analyze critical-chain
+
+# visualize the boot profile
+systemd-analyze plot > profile.svg

@@ -2,4 +2,4 @@
 tar -czvf files.tgz `cat filelist.txt`
 
 # list contents
-tar ztvpf foo.tar.gz
+tar tzvpf foo.tar.gz

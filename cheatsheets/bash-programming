@@ -7,6 +7,9 @@ set -euo pipefail
 [ -e "$path" ]
 [ ! -e "$path" ]
 
+# file exists + is file
+[ -f "$path" ]
+
 # string equality
 [ "$a" = "$b" ]
 
