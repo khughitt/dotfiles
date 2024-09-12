@@ -1,12 +1,21 @@
 # basics
 import anndata as ad
+import hdf5plugin
 
 adata.X
+adata.layers
 adata.obs
 adata.var
 
+# observation (cell) columns
+adata.obs.columns
+
+# variable (gene) columns
+adata.var.columns
+
 # convert to dataframe
-adata.to_df(layer="")
+adata.to_df()
+adata.to_df(layer="..")
 
 # subset using cell/gene ids
 adata[["cell1", "cell2"], ["gene1", "gene2"]]
@@ -18,7 +27,6 @@ adata[adata.obs.donor_id == "A"]
 ad.read_h5ad("dat.h5ad")
 
 # write compressed h5ad file
-import hdf5plugin
 adata.write("dat.h5ad", compression=hdf5plugin.FILTERS["zstd"])
 
 # vi:syntax=python

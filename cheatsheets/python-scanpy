@@ -11,10 +11,21 @@ pp.log1p
 pp.normalize_total
 pp.neighbors(adata, n_neighbors=10, n_pcs=10)
 
-# variance filtering
-pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
-pl.highly_variable_genes(adata)
+# highly variable genes;
+# add var columns: 'highly_variable', 'means', 'dispersions', 'dispersions_norm'
+pp.highly_variable_genes(adata, n_top_genes=2000)                          # using desired number of genes
+pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=3, min_disp=0.5) # by specifying cutoffs
+
+# show highly variable genes sorted by normalized dispersion
+hvg = adata[:, adata.var.highly_variable].var[['feature_name', 'means', 'dispersions_norm']]
+hvg.sort_values("dispersions_norm", ascending=False)
+
+# filter based on hvg
 adata = adata[:, adata.var.highly_variable]
+
+# visualize highly expressed / variable genes
+pl.highest_expr_genes(adata, n_top=20)
+pl.highly_variable_genes(adata)
 
 # batch adjust
 pp.combat(adata, key, covariates)
