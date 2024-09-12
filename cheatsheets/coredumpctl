@@ -1,3 +1,5 @@
 coredumpctl list
 coredumpctl info <pid>
 coredumpctl gdb <pid>   # follow by "bt" to show backtrace
+
+_ rm /var/lib/systemd/coredump/*

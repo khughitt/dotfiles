@@ -35,6 +35,9 @@ df[["col1", "col2"]]
 # select columns starting / ending with "foo"
 df.loc[:, df.columns.str.endswith("foo")]
 
+# all columns _except_..
+df.loc[:, ~df.columns.isin(cols)]
+
 # get index as an integer
 ind = df.index[df["col"] == val].tolist()[0]
 
@@ -182,6 +185,9 @@ Moving / Reordering cols
 
 # move column to front (in place)
 df.insert(0, 'foo', df.pop('foo'))
+
+# shift multiple columns to front
+pd.concat([df[cols], df.loc[:, ~df.columns.isin(cols)]], axis=1)
 
 Replacing values
 ----------------
@@ -492,9 +498,16 @@ Similarity
 ----------
 df.corr()
 
-# cosin similarity
+# cosine similarity
 from sklearn.metrics.pairwise import cosine_similarity
 cosine_similarity(df.T)
+
+SQL
+---
+
+# get sql result as a pandas dataframe (ex. sqlite3)
+db = sqlite3.connect(..)
+df = pd.read_sql_query(sql, db)
 
 Clipboard
 ---------

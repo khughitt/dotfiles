@@ -239,7 +239,7 @@ path = pathlib.Path(..)
 path.mkdir(mode=0o755, parents=True, exist_ok=True)
 
 # pathlib basics
-path.joinpath("foo")
+path.joinpath("foo", "bar")
 path.expanduser()
 
 # create temp file/dir

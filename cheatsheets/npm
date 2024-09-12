@@ -25,6 +25,10 @@ sed -i "/eslint:recommended/a \ \ \ \ 'plugin:react/recommended'," .eslintrc.cjs
 # install deps from package.json
 npm install
 
+# install and add to devDependencies
+npm install -D
+npm install --save-deps
+
 # downgrade / install specific version
 npm install foo@1.0.0
 

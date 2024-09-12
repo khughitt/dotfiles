@@ -117,4 +117,15 @@ df %>%
   group_by(grp) %>% 
   slice(which.min(foo))
 
+# count variable levels by group
+df %>%
+  count(a, b)
+
+# or..
+df %>%
+  group_by(a, b) %>%
+  summarize(n=n())
+
+
+
 # vi:syntax=r

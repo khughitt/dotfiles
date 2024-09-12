@@ -40,6 +40,9 @@ psql -d dbName
 # create new user and prompt for password
 createuser -P user123
 
+# change user password
+ALTER USER usr1 WITH PASSWORD '...';
+
 # psycopg python adaptor
 conn = psycopg.connect(host="<host>", dbname="...", user="postgres", password="...")
 

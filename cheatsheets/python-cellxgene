@@ -17,10 +17,10 @@ dat = census["census_info"]["datasets"].read().concat().to_pandas().set_index("s
 counts = census["census_info"]["summary_cell_counts"].read().concat().to_pandas().drop(columns=["soma_joinid"])
 counts.sort_values("unique_cell_count", ascending=False)
 
-# cell metadata fields? (human)
+# cell metadata fields
 list(census["census_data"]["homo_sapiens"].obs.keys())
 
-# gene metadata fields? (human)
+# gene metadata fields (ms = "measurement")
 list(census["census_data"]["homo_sapiens"].ms["RNA"].var.keys())
 
 # TileDB-SOMA DataFrames
@@ -58,6 +58,13 @@ adata = cellxgene_census.get_anndata(
     obs_value_filter = "is_primary_data == True and disease == 'acute myeloid leukemia'",
     obs_embeddings = ["scvi", "scgpt"]
 )
+
+# get size-factor normalized data
+adata = cellxgene_census.get_anndata(
+  ...,
+  X_name = "normalized"
+)
+
 
 adata.obs
 adata.var
