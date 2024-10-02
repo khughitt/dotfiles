@@ -1,5 +1,5 @@
+node_modules
 .project
 .pydevproject
-.pyc
 .snakemake
-node_modules
+*.pyc

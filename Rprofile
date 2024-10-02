@@ -78,6 +78,9 @@ if (interactive()) {
           vimcom.verbose = 1,
           editor = "nvim")
 
+  # make r usable
+  options(defaultPackages=c(getOption("defaultPackages"), "tidyverse"))
+
   # syntax highlighting
   if (isatty(stdout())) {
     try({

@@ -260,7 +260,7 @@ require("config.lazy")
 -- lualine
 -----------------------------------------------------------------------------
 require('lualine').setup {
-  -- options = { theme  = 'onedark' },
+  options = { theme  = 'tokyonight' },
   sections = {
     lualine_y = {'searchcount', 'progress'}
   }
@@ -324,13 +324,14 @@ vim.keymap.set('n', ']c', '<Plug>(coc-diagnostic-next)', {silent = true})
 -- ---------------------------------------------------------------------------
 --  Colorscheme
 -- ---------------------------------------------------------------------------
-require('onedark').load()
+-- require('onedark').load()
 -- require("cyberdream").setup({
 --   transparent = true,
 --   italic_comments = true,
 --   hide_fillchars = true,
 -- })
 -- vim.cmd("colorscheme cyberdream")
+vim.cmd[[colorscheme tokyonight]]
 
 -- ---------------------------------------------------------------------------
 -- float-preview.nvim
@@ -342,6 +343,7 @@ vim.cmd('let g:float_preview#docked = 1')
 -- ---------------------------------------------------------------------------
 local actions = require("telescope.actions")
 local builtin = require('telescope.builtin')
+local extensions = require('telescope').extensions
 
 require('telescope').setup{
   defaults = {
@@ -361,6 +363,7 @@ require('telescope').load_extension('fzf')
 
 vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
+vim.keymap.set('n', '<leader>fr', extensions.frecency.frecency, {})
 vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
 
