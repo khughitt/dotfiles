@@ -1,7 +1,7 @@
 configuration {
     modi: "drun";
-    combi-modi: "window,drun,proj:proj:~/d/software/rofi-proj/rofi-proj.py";
+    combi-modi: "window,drun";
     font: "hack 12";
-    opacity: 0.9;
+    opacity: 0.8;
 }
-@theme "~/.cache/wal/colors-rofi-dark.rasi"
+@import "~/.cache/wal/colors-rofi-dark.rasi"

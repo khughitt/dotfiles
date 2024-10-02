@@ -4,18 +4,19 @@
 [color]
 	ui = true
 [core]
-	excludesfile = /home/keith/.gitignore_global
+	excludesfile = ~/.gitignore_global
 	filemode = false
-;[diff]
-;    external = git-meld
+  pager = delta
 [push]
 	default = simple
 [github]
 	user = khughitt
 [diff]
-	tool = meld
+  colorMoved = default
 [init]
 	defaultBranch = trunk
+[interactive]
+    diffFilter = delta --color-only
 [credential]
 	helper = cache
 [filter "lfs"]
@@ -23,3 +24,9 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
+[delta]
+    navigate = true
+    side-by-side = true
+    line-numbers = true
+[merge]
+    conflictstyle = diff3

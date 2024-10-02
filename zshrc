@@ -52,11 +52,6 @@ zstyle ':completion:*' menu select=4                # tab completion menu
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # use smart-case completion
 zstyle ':completion:*' matcher-list 'r:|=*' 'l:|=* r:|=*'  # complete from middle of path
 
-# additional shell settings (aliases, exports, etc.)
-for file in ~/.shell/{fasd,aliases,audio,functions,nodes,private/*,exports,vconsole,video}; do
-    [ -r "$file" ] && source "$file"
-done
-
 # nnn
 # for file in $DOTFILES/nnn/*.zsh; do
 #     [ -r "$file" ] && source "$file"
@@ -68,11 +63,6 @@ done
 
 # disable scroll lock
 stty -ixon
-
-# local settings (late)
-if [ -e ~/.zsh_local_late ]; then
-   source ~/.zsh_local_late
-fi
 
 # fix keybindings
 bindkey '^P' up-history
@@ -107,6 +97,10 @@ zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
 zinit snippet OMZ::plugins/taskwarrior/taskwarrior.plugin.zsh
 zinit snippet OMZ::plugins/pip
+
+# fzf history search
+zinit ice lucid wait'0'
+zinit light joshskidmore/zsh-fzf-history-search
 
 # vi mode improvement
 #zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
@@ -179,6 +173,16 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-bin-gem-node \
     zdharma-continuum/zinit-annex-patch-dl \
     zdharma-continuum/zinit-annex-rust
+
+# additional shell settings (aliases, exports, etc.); keep near end to prioritize
+for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,nodes,private/*,vconsole,vi,video}; do
+    [ -r "$file" ] && source "$file"
+done
+
+# local settings (late)
+if [ -e ~/.zsh_local_late ]; then
+   source ~/.zsh_local_late
+fi
 
 # print greeting
 if [ "$vconsole" = false ]; then

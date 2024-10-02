@@ -89,6 +89,7 @@ mkdir -p ${HOME}/.julia/config
 ln_s ${DOTS_HOME}/$julia/startup.jl ${HOME}/.julia/config/startup.jl
 
 # jupyter
+mkdir -p ${HOME}/.jupyter
 ln_s ${DOTS_HOME}/jupyter/jupyter_qtconsole_config.py ${HOME}/.jupyter/jupyter_qtconsole_config.py
 
 # mamba

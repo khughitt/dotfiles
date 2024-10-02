@@ -17,6 +17,9 @@ alias dl='cd ~/downloads'
 alias dots='cd $DOTFILES'
 alias cdd='cd $dlas'
 
+# cheatsheets
+alias crg='rg $DOTFILES/cheatsheets'
+
 # conda/mamba
 alias cde='micromamba deactivate'
 alias cs='micromamba search'
@@ -55,6 +58,7 @@ alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*
 # feh
 alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
 alias fehd='feh -g 640x480 -d -S filename .'
+alias feh_edit='gimp $(cat ~/.fehbg | grep --color=never -Eo "[\/a-z0-9]+PXL.*.png")'
 
 # fd
 alias fda='fd -Luu'
@@ -159,13 +163,10 @@ alias px='cd "$(xsel -p)"'
 alias ipy=ipython
 alias psh='poetry shell'
 
-# ranger
-alias ra=ranger
-
 # rg
 alias rgl='rg -l'
 alias rgd='rg -d'
-alias rgu='rg -u'
+alias rgu='rg -uuu --no-ignore-files'
 
 # rm
 alias rmf="rm -rf"

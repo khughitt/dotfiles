@@ -166,7 +166,7 @@ function c {
 }
 
 # vim + rg
-function va {
+function vr {
     $EDITOR $(rg -l $1)
 }
 
@@ -307,7 +307,6 @@ function vite_proj {
   sed -i "s/bundler/Node/" tsconfig.json
 
   npm install eslint eslint-plugin-react --save-dev
-  sed -i "/eslint:recommended/a \ \ \ \ 'plugin:react/recommended'," .eslintrc.cjs
 
   # r3f & friends
   npm install three @types/three @react-three/fiber \
@@ -348,8 +347,14 @@ function walirm {
   wali
 }
 
+function walibg {
+  cat ~/.fehbg | grep -Eo --color='never' "[\/a-z0-9]+PXL.*.png"
+}
+
 # keep track of favs
-alias walifav='cat ~/.fehbg | grep -Eo "[\/a-z0-9]+PXL.*.png" >> $HOME/d/linux/backgrounds/favorites.txt'
+alias walifav='walibg >> $HOME/d/linux/backgrounds/favorites.txt'
+
+
 
 # create png palette based on wal colors
 function walpal {
