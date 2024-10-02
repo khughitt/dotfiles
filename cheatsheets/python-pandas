@@ -63,6 +63,11 @@ df.dropna()
 # replace missing
 df.fillna(0)
 
+Query
+-----
+
+df.query("col1 == 'foo' & col2 == 'bar'")
+
 Iteration
 ---------
 
@@ -420,6 +425,9 @@ df.groupby("foo").first()
 # top n by group
 df.sort_values("foo", ascending = False).groupby("grp").head(5)
 
+# groupby -> cumsum
+df['cumsum'] = df.groupby('grp')['one'].cumsum()
+
 # ~ungroup()
 df.groupby("foo").first().reset_index()
 
@@ -439,6 +447,9 @@ pd.Series(["a", "a", "b", "c"]).value_counts()
 
 Matrix operations
 -----------------
+
+# get diagonal
+np.diag(df)
 
 # set diagonal to zero
 mat.values[tuple([np.arange(mat.shape[0])] * 2)] = 0
@@ -532,8 +543,8 @@ Troubleshooting
 > ValueError: cannot reindex from a duplicate axis
 
 # This means that one of the dataframes being operated on has non-unique index values.
-# To check:
-df.index.is_unique
+df.index.is_unique         # check if index is unique
+df[df.index.duplicated()]  # find duplicated indices
 
 > IndexingError: Unalignable boolean Series provided as indexer (index of the boolean
 > Series and of the indexed object do not match).

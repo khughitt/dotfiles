@@ -22,6 +22,9 @@ scipy.sparse.load_npz()
 # sum along specified axis
 mat.sum(axis=0)
 
+# get number of nonzero values in each col
+mat.astype(bool).sum(axis=0).A1
+
 # get indices of non-zero columns for each row in a csr matrix
 # https://stackoverflow.com/a/24792612/554531
 np.split(mat.indices, mat.indptr[1:-1])

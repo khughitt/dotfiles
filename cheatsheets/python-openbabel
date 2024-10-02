@@ -1,0 +1,19 @@
+from openbabel import pybel
+
+# read sdf file
+for mol in pybel.readfile("sdf", infile):
+  ...
+
+# molecule attrs
+mol.data
+
+# list available fingerprints
+pybel.fps
+
+# get fingerprint for molecule
+fp = mol.calcfp("fp2")
+
+# molecular similarity (tanimoto coef)
+fp1 | fp2
+
+# vi:syntax=python

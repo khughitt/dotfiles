@@ -11,7 +11,7 @@ zc
 # info
 <c-g>    # show current row/col
 
-# types
+# types zX
 "#"  # integer
 "%"  # float
 "$"  # currency
@@ -41,6 +41,14 @@ g_  # fit columns
 #
 [   # ascending
 ]   # descending
+
+#
+# selection
+#
+s    # select current row
+U    # unselect current row
+t    # toggle selection of current row
+gs   # all rows
 
 #
 # filtering

@@ -15,6 +15,9 @@
 ...
 \o
 
+# save output to file (without formatting)
+psql -U xx -h host db -X -A -w -t -c "SELECT body FROM xx LIMIT 1" > out.txt
+
 # add "postgres" user
 psql -U postgres
 
@@ -57,6 +60,12 @@ cur.close()
 # rollback failed transaction
 rollback;
 conn.rollback()
+
+# string operations
+REPLACE(col, from, to)
+LOWER(x)
+UPPER(x)
+INITCAP(x)
 
 # collapse multiple rows into an array
 SELECT a, array_agg(b) as b_array
