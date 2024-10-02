@@ -89,6 +89,10 @@ df %>%
 df %>% 
   mutate(foo = recode(foo, old1="new1", old2="new2", ...))
 
+# create new logical column based on string presence
+df %>% 
+  mutate(new_col=str_detect(existing_col, 'foo'))
+
 #
 # filtering
 #

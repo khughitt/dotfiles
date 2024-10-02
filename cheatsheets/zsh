@@ -47,3 +47,6 @@ readlink -f ..
 # list defined functions
 # https://superuser.com/a/684256
 print -l ${(ok)functions[(I)[^_]*]}
+
+# list key bindings
+bindkey

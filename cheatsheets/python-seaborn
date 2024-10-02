@@ -5,6 +5,9 @@ sns.mpl.rc("figure", figsize=(12, 8)) # only affects figure-level plots..
 # scatterplot + color column
 sns.scatterplot(data=.., x="x", y="y", hue="color_col")
 
+# line plot
+sns.lineplot()
+
 # color palettes
 sns.color_palette("Set2")
 sns.color_palette("magma", 20)

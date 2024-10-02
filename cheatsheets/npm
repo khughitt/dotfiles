@@ -13,6 +13,9 @@ npm install
 md node_modules
 dropbox_ignore node_modules
 
+# other generally useful libraries
+npm install react-router-dom react-bootstrap bootstrap axios react-hotkeys-hook
+
 # coc.nvim: "Property 'div' does not exist on type 'JSX.IntrinsicElements'"
 # tsconfig.json: "moduleResolution": "Node",
 # https://github.com/vitejs/vite/issues/14011#issuecomment-1683630859
@@ -20,7 +23,6 @@ sed -i "s/bundler/Node/" tsconfig.json
 
 # eslint-react
 npm install eslint eslint-plugin-react --save-dev
-sed -i "/eslint:recommended/a \ \ \ \ 'plugin:react/recommended'," .eslintrc.cjs
 
 # install deps from package.json
 npm install

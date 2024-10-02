@@ -35,6 +35,10 @@ x.read((slice(0, 10),), column_names=["a", "b"]).concat().to_pandas()
 # query cell metadata
 cells = cellxgene_census.get_obs(census, "homo_sapiens", column_names=["sex", "cell_type", "disease", "tissue"])
 
+# get list of human datasets
+cells = cellxgene_census.get_obs(census, "homo_sapiens", column_names=["dataset_id"])
+set(cells.dataset_id)
+
 # get a random sample of cells
 cells = cellxgene_census.get_obs(
     census, "homo_sapiens", value_filter="tissue_general == 'bone marrow' and is_primary_data == True"

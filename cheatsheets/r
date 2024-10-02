@@ -182,3 +182,12 @@ glm(y ~ x, family = "binomial")
 
 #  vector -> matrix ("matrix", not "as.matrix")
 matrix(vec, nrow=3, ncol=7, byrow = FALSE)
+
+# adjust font sizes for base r plots
+cex.lab=2.0, cex.axis=1.2, cex.main=1.2, cex.sub=1.5
+
+# adjust font sizes for lattice plots (e.g. levelplot)
+xlab=list(cex=0.5),
+ylab=list(cex=0.5), 
+main=list(label="title", cex=2.0),
+scales=list(x=list(cex=0.8), y=list(cex=0.8)), 

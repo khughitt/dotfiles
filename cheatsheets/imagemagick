@@ -1,20 +1,20 @@
 # rescale
-convert a.png -resize 50% out.png
+magick a.png -resize 50% out.png
 
 # rescale: specify width
-convert a.png -resize 3440x out.png
+magick a.png -resize 3440x out.png
 
 # rescale: specify height
-convert a.png -resize x1440 out.png
+magick a.png -resize x1440 out.png
 
 # combine two images side-by-side (resizing height to 480)
-convert +append left.png right.png -resize x480 out.png
+magick +append left.png right.png -resize x480 out.png
 
 # stack images vertically
-convert -append a.png b.png out.png
+magick -append a.png b.png out.png
 
 # rotate 90 degrees clockwise
-convert in.jpg -rotate 90 out.png
+magick in.png -rotate 90 out.png
 
 # compressed jpeg
 magick in.png -interlace JPEG -sampling-factor 4:2:0 -quality 85% out.jpg
@@ -29,16 +29,19 @@ mogrify -strip in.png
 mogrify -auto-orient in.png
 
 # append (vertically)
-convert a.png b.png -append out.png
+magick a.png b.png -append out.png
 
 # append (horizontally)
-convert a.png b.png +append out.png
+magick a.png b.png +append out.png
 
 # create color palette 
-convert -size 64x64 xc:"#ff0000" xc:"#00ff00" xc:"#0000ff" +append out.png
+magick -size 64x64 xc:"#ff0000" xc:"#00ff00" xc:"#0000ff" +append out.png
 
 # touch up
-convert -auto-level -normalize in.png -filter Gaussian -blur 0x1 out.png 
+magick in.png -auto-level -normalize -filter Gaussian -blur 0x1 out.png 
 
 # touch up + gamma adjustment
-convert -auto-gamma -auto-level -normalize in.png -filter Gaussian -blur 0x1 out.png 
+magick in.png -auto-gamma -auto-level -normalize -filter Gaussian -blur 0x1 out.png 
+
+# denoise (amount x softness)
+magick in.png -wavelet-denoise 5%x0.001  out.png

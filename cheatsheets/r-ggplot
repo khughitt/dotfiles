@@ -1,3 +1,6 @@
+# show defaults aesthetics for a given geom
+GeomPoint$default_aes
+
 # bar plot
 ggplot(df, aes(x=, y=)) + 
   geom_bar(stat="identity")
@@ -36,6 +39,13 @@ guides(fill=guide_legend(title="..."))
 # save fig
 ggsave("foo.png", width=1080, height=1080, units="px", dpi=300)
 
+# axis label font sizes
+theme(axis.text=element_text(size=16),
+      axis.title=element_text(size=rel(2.0)))
+
+theme(axis.text.x=element_text(size=16),
+      axis.title.x=element_text(size=rel(2.0)))
+
 # dark theme
 theme_dark <- function(base_font_size=18) {
   ggdark::dark_theme_gray(base_size=base_font_size) +
@@ -46,5 +56,8 @@ theme_dark <- function(base_font_size=18) {
           panel.grid.major=element_line(color="#555555", size=0.2),
           panel.grid.minor=element_line(color="#555555", size=0.2))
 }
+
+# get default palette hex colors
+scales::hue_pal()(9)
 
 # vi:syntax=r
