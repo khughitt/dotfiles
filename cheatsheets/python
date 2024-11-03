@@ -239,6 +239,13 @@ path = pathlib.Path(..)
 path.mkdir(mode=0o755, parents=True, exist_ok=True)
 
 # pathlib basics
+path.name
+path.parent
+path.parts
+path.stem
+path.suffix
+path.suffixes
+
 path.joinpath("foo", "bar")
 path.expanduser()
 
