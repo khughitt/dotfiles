@@ -1,0 +1,6 @@
+# tools
+m   move
+t   text
+
+# move text / not background.. (move tool)
+<shift-drag>   move the active layer

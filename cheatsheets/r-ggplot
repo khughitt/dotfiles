@@ -14,6 +14,9 @@ aes(x=.data[[foo]])
 # log-scale
 scale_x_continuous(trans="log2")
 
+# reduce margin surround text in geom_label / geom_label_repel
+geom_label_repel(..., label.padding=0.10)
+
 # rotate x-axis labels
 theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 

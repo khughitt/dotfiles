@@ -28,6 +28,10 @@ library(uwot)
 umap(t(dat), n_neighbors = 15, n_components = 2, init = "spectral", scale = FALSE,
      min_dist = 0.01)
 
+# t-SNE
+library(Rtsne)
+Rtsne(dat, dims=2, perplexity=30, num_threads=1)
+
 # sweep (ex: cpm normalization)
 dat <- sweep(dat, 2, colSums(dat), "/") * 1E6
 dat <- sweep(dat, 2, colSums(dat, na.rm = TRUE), "/") * 1E6
@@ -121,6 +125,9 @@ sort( sapply(ls(),function(x){object.size(get(x))}))
 
 # aheatmap
 aheatmap(dat, color = viridis(100), Colv = FALSE, labCol = "", annRow = annot_df)
+
+# heatmaply
+heatmaply(x, row_side_colors=hex_colors_vec_or_df)
 
 # cosine similarity
 # source: https://stats.stackexchange.com/a/367216/18331
