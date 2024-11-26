@@ -51,6 +51,17 @@ nx.subgraph_view(G, filter_edge=filter_edge)
 edges = [('a', 'b',) ('b', 'd',), ...]
 weighted_edges = [('a', 'b', 0.5,), ('b', 'd', 0.2,), ...]
 
+# creation
+nx.Graph()
+nx.DiGraph()
+nx.from_numpy_array(arr)
+nx.from_scipy_sparse_array(arr)
+nx.from_pandas_adjacency(df)
+
+# add nodes
+G.add_node(1)
+G.add_node(1, foo='bar')
+
 # add edges
 G.add_edge(('a', 'b',))
 G.add_edges_from(edges)
@@ -64,12 +75,6 @@ G.remove_nodes_from([x, y, z])
 G.remove_edge((u, v))
 G.remove_edges_from([...])
 
-# creation
-nx.Graph()
-nx.DiGraph()
-nx.from_numpy_array(arr)
-nx.from_scipy_sparse_array(arr)
-nx.from_pandas_adjacency(df)
 
 # force-directed layout
 pos = nx.spring_layout(G, seed=321)
