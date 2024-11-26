@@ -31,6 +31,9 @@ b = [0.5, 0.1, 1.0]
 # create a dict from lists of keys/values
 dict(zip(k, v))
 
+# get index of item in list
+lst.index('foo')
+
 # get index of min/max item in list ("which.max")
 lst.index(max(lst))
 

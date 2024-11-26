@@ -276,4 +276,7 @@ export function getRandomIntInclusive(min:number, max:number) {
   return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled);
 }
 
+// undefined -> null
+undefined ?? null
+
 // vi:syntax=javascript
