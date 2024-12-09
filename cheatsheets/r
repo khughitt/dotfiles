@@ -4,6 +4,10 @@ lapply(lst, "[[", "foo")
 # specify factor level order
 ordered(df$foo, levels = c("small", "med", "large"))
 
+# get index of max/min value for each row
+max.col(mat, "first")
+max.col(-mat, "first")
+
 # PCA (column-wise)
 pca <- prcomp(t(dat), scale = TRUE)
 
@@ -66,7 +70,7 @@ tools::file_ext("file.txt")
 tools::file_path_sans_ext("file.txt")
 
 # mkdir
-dir.create("/path/to/dir", mode = "0755", recursive = TRUE)
+dir.create("/path/to/dir", mode="0755", recursive=TRUE)
 
 # today
 strftime(Sys.time(), "%Y-%m-%d")

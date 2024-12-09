@@ -1,0 +1,59 @@
+-- built-in types
+1       -- Int
+1.0     -- Float
+1.0     -- Double
+True    -- Bool
+'x'     -- Char
+"Foo"   -- String
+()      -- "unit" (empty tuple)
+(5, "foo")        -- tuple
+[1, 2, 3]         -- list
+[[1, 2], [3, 4]]  -- nested list
+
+-- type?
+:t "foo"
+:t func
+
+-- local variables
+let x = 5
+    y = z + 1
+in ..
+
+.. 
+where x = 5
+      y = z + 1
+
+-- negation
+not a
+
+-- "not equal"
+a /= b
+
+-- strings
+a ++ b -- concatenation
+lines a  -- split string on newlines
+
+-- lists
+a ++ b     -- concatenation
+1 : [2,3]  -- add element to front of list ("cons")
+head x
+tail x
+tail "foo"
+take 2 x   -- get first two elements
+drop 2 x   -- get all elements *except* the last two
+null x     -- is empty?
+
+-- list enumeration
+[1..10]
+[1.0,1.5..100.0]
+
+-- conditionals
+if ..
+then ..
+else ..
+
+-- functions
+add a b = a + b
+add 1 2
+
+-- vi:syntax=haskell
