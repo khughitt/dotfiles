@@ -5,4 +5,8 @@ im = Image.open("im.png")
 # img -> numpy array
 np.array(im)
 
+# save image
+im.save("out.png")
+im.save("out.jpg", quality=50)
+
 # vi:syntax=python

@@ -46,6 +46,14 @@ df %>%
 df %>%
   mutate(across(4:10, as.double))
 
+# convert column to factor
+df %>%
+  mutate(foo=as_factor(foo))
+
+# convert column to factor and specify order of levels
+df %>%
+  mutate(foo=fct_relevel(foo, 'a', 'b', 'c'))
+
 # get first row as two-column key-value dataframe;
 # "glimpse()" can also be used, but dataframe easier to format in rmd
 df[1, ] %>%
