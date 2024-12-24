@@ -11,7 +11,7 @@ function al {
 
 # function lookup
 function fu {
-  lines=`ag --no-number "^function" ~/.shell/functions`
+  lines=`rg --no-line-number "^function" ~/.shell/functions`
 
   echo $lines | while read line; do 
     # parse function name
@@ -24,6 +24,13 @@ function fu {
       echo $def
     fi
   done
+}
+
+# kitty theme switcher
+function kit {
+  themedir="$HOME/.config/kitty/themes"
+  theme=`/bin/ls $themedir | sed 's/.conf//' | grep --color='none' "$1" | fzf -1 --exact`
+  kitten @ set-colors "$themedir/$theme.conf"
 }
 
 # recursively count files in subdirs
@@ -323,6 +330,9 @@ function vite_proj {
   echo "Manual step:"
   echo "sudo attr -s com.dropbox.ignored -V 1 node_modules"
 }
+
+# wallpaper switcher
+alias wali="cd ~/d/wali/ && poetry run wali --image-dir=\"$WALI_DIR\" change"
 
 # set background
 function wali {

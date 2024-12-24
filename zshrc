@@ -175,7 +175,7 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-rust
 
 # additional shell settings (aliases, exports, etc.); keep near end to prioritize
-for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,nodes,private/*,vconsole,vi,video}; do
+for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,nodes,private/*,vconsole,video}; do
     [ -r "$file" ] && source "$file"
 done
 
