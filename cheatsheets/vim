@@ -1,6 +1,10 @@
 # yank a single character
 vy
 
+# delete up to next word
+dw
+ldw
+
 # go to start/end of line when wrapping is enabled
 g0
 g$

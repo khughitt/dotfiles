@@ -70,7 +70,16 @@ Object.values(coords).forEach((pos:number[]) => {
 // math
 THREE.MathUtils.randFloatSpread(100);   // random float in [-range / 2, range / 2].
 
+// vectors
+let vec1 = new THREE.Vector3(0, 1, 1)
+let vec2 = new THREE.Vector3(2, 0, 0)
+let vec3 = vec1.clone().add(vec2)
+vec1.multiplyScalar(1.5)
+
 // trouble-shooting
-// 1. light source?
+// 1. light sources?
+// 2. materials?
+// 3. fog?
+// 4. axes/grid helpers
 
 // vi:syntax=javascript

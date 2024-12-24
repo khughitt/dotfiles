@@ -15,4 +15,7 @@ fig.show()
 # specify colormap (column may need to be cast to categorical)
 px.scatter(..., color_discrete_sequence=px.colors.qualitative.Light24)
 
+# heatmap (for dendrograms, use sns.clustermap)
+px.imshow(df)
+
 # vi:syntax=python

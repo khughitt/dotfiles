@@ -7,12 +7,10 @@ https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html
 # get unique list items (preserving order)
 list(dict.fromkeys(x)) 
 
-# combine multiple lists
+# flatten ("collapse" / "combine") multiple lists
+sum(list_of_lists, [])
+list(itertools.chain(*list_of_lists))
 list(itertools.chain(list1, list2, list3, ...))
-list(itertools.chain(*[list1, list2, list3, ...]))
-
-# flatten/collapse nested lists (itertools)
-list(itertools.chain(*regular_list))
 
 # sort list of objects/dicts by key (in place)
 lst.sort(key=lambda x: x["foo"], reverse=True)
@@ -23,6 +21,13 @@ sorted(lst, key=lambda x: x["foo"], reverse=True)
 # sort list of objects to match order of ids in separate list (in place)
 lst.sort(key=lambda x: ids.index(x["id"]))
 
+# shift specific item to front of a list
+for i, item in enumerate(lst):
+    if item.foo == 'xx':
+        x = lst.pop(i)
+        lst.insert(0, x)
+        break
+
 # sort values in one list based on values in another list
 a = ["b", "c", "a"]
 b = [0.5, 0.1, 1.0]
@@ -30,6 +35,9 @@ b = [0.5, 0.1, 1.0]
 
 # create a dict from lists of keys/values
 dict(zip(k, v))
+
+# concat dicsts (out-of-place)
+a | b
 
 # get index of item in list
 lst.index('foo')
@@ -164,6 +172,10 @@ json.dumps({"foo": "bar"})
 # write json to file
 with open("out.json", "w") as fp:
     json.dump({"foo": "bar"}, fp)
+
+# dict -> url params
+import urllib.parse
+urllib.parse.urlencode({'x':5, 'y': 'six'})
 
 # dealing with numpy datatype encoding 
 # https://stackoverflow.com/a/65151218/554531

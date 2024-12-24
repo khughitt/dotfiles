@@ -43,7 +43,7 @@ log2()
 pow(x, 2.0)
 exp()
 mod()
-clamp(x, min, max)
+clamp(x, min, max) // clip (?)
 
 // trig
 radians(deg)
@@ -98,4 +98,5 @@ float foo(float a) {
 // refs
 // 1. https://thebookofshaders.com/
 // 2. https://shaderific.com/glsl
+
 // vi:syntax=glsl
