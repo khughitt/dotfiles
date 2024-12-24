@@ -38,7 +38,7 @@ bind_rows(df1, df2, ..)
 
 # rename columns
 df %>%
-  rename("new" = old)
+  rename("new"=old)
 df %>%
   rename(!!new := old)
 
@@ -62,7 +62,7 @@ df[1, ] %>%
   rownames_to_column("field")
 
 # cbind / join list of tables
-purrr::reduce(tbls, dplyr::full_join, by = "id")
+purrr::reduce(tbls, dplyr::full_join, by="id")
 
 # create a tibble from a list of lists (types may be lost..)
 cnames <- c('a', 'b')
@@ -71,31 +71,40 @@ lst %>%
   map_dfr(set_names, cnames) %>%
   as_tibble()
 
+# get lengths of list column values
+df %>%
+  mutate(num_genes=length(genes))
+
 # drop duplicates (unique)
 dat %>%
   distinct()
 
 # pivot wide to long
 df %>%
-  pivot_longer(everything(), names_to = "xx", values_to = "yy")
+  pivot_longer(everything(), names_to="xx", values_to="yy")
 
 df %>%
-  pivot_longer(c("col1", "col2",...), names_to = "xx", values_to = "yy")
+  pivot_longer(c("col1", "col2",...), names_to="xx", values_to="yy")
 
 df %>%
-  pivot_longer(!col, names_to = "xx", values_to = "yy")
+  pivot_longer(!col, names_to="xx", values_to="yy")
+
+df %>%
+  pivot_longer(!c(col1, col2,..), ..)
 
 # long to wide
 df %>%
-  pivot_wider(id_cols = zz, names_from = xx, values_from = yy)
+  pivot_wider(id_cols=zz, names_from=xx, values_from=yy)
 
 # replace string values
+df %>%
+  mutate(foo=str_replace(foo, 'bla', ''))
 df %>% 
-  mutate(foo = str_replace_all(foo, c('old1' = 'new1', 'old2' = 'new2')))
+  mutate(foo=str_replace_all(foo, c('old1'='new1', 'old2'='new2')))
 
 # recode variable levels
 df %>% 
-  mutate(foo = recode(foo, old1="new1", old2="new2", ...))
+  mutate(foo=recode(foo, old1="new1", old2="new2", ...))
 
 # create new logical column based on string presence
 df %>% 
@@ -113,7 +122,9 @@ df %>%
 # rank
 #
 df %>%
-  mutate(rank = dense_rank(desc(foo)))
+  mutate(Rank=dense_rank(foo))
+df %>%
+  mutate(Rank=dense_rank(desc(foo)))
 
 #
 # summarization
@@ -122,7 +133,13 @@ df %>%
 # concatenate string field by group
 df %>% 
   group_by(grp) %>% 
-  summarise(combined=paste(foo, collapse = ", "))
+  summarise(combined=paste(foo, collapse=", "))
+
+# get first few entries within each group
+df %>% 
+  group_by(grp) %>% 
+  arrange(x) %>%
+  slice_head(n=3)
 
 # group by -> min/max within each group
 df %>% 

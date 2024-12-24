@@ -29,6 +29,10 @@ set -euo pipefail
 # check if string matches regex (ex. starts with)
 [[ "$a" =~ ^foo.* ]]
 
+# variable substitution
+${x/from/to}    # single
+${x//from/to}   # global
+
 # get filename portion of path
 echo "${file##*/}"
 

@@ -20,7 +20,7 @@ df.name = "foo"
 pd.Series(df.values.ravel())
 
 # convert a series to a dataframe
-s.to_frame()
+s.to_frame(name='foo')
 
 Selection
 ---------
@@ -95,6 +95,7 @@ pd.DataFrame.from_dict(d)
 
 # dict of row dicts
 pd.DataFrame.from_dict(d, orient="index")
+pd.DataFrame.from_dict(d, orient="index", columns=[..])
 
 # set index + index name at time of creation
 pd.DataFrame(..., index=pd.Series([...], name="foo"))
@@ -498,7 +499,16 @@ df.to_markdown()
 Plotting
 --------
 
-# density plot for column "score"
+# density plot for series
+s.plot.kde()
+
+# density plot for dataframe column
+ax = df.score.plot.kde()
+
+# color by group
+df.groupby("foo").score.plot.kde(title="", legend=True)
+
+# save plot
 import matplotlib.pyplot as plt
 ax = df.score.plot.kde(title="...")
 plt.show()

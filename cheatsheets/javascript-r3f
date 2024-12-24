@@ -115,4 +115,12 @@ useFrame((state) => {
 import { useControls } from 'leva'
 const { param } = useControls({ param: 2.0 })
 
+// helpers
+import { useHelper } from "drei"
+useHelper(spotLight, THREE.SpotLightHelper, "pink")
+useHelper(pointLight, THREE.PointLightHelper, 0.5, "cyan")
+
+<axesHelper args={[50]} />
+<gridHelper args={[200, 200, 0xff0000, 'cyan']} />
+
 // vi:syntax=javascript

@@ -111,7 +111,8 @@ rownames(x) <- rownames(df)
 data.matrix(df)
 
 # compute ranks for each column in a dataframe
-do.call(cbind, lapply(df, rank))
+do.call(cbind, lapply(df, rank))   #  1 = lowest
+do.call(cbind, lapply(-df, rank))  #  1 = highest
 
 # print stack trace
 traceback()

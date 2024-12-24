@@ -14,6 +14,16 @@ jupyter qtconsole --existing
 # generate notebook config
 jupyter notebook --generate-config
 
+# toggle block comment
+cntl + /
+
+# set chunk type <esc> -> "x"
+m   markdown
+y   code
+
+# undo delete chunk
+esc -> z
+
 # specify plot parameters
 import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = [12, 10]

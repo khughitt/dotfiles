@@ -42,6 +42,9 @@ hm.ax_heatmap.set(xlabel="xlab", ylabel="ylab")
 hm.fig.suptitle("..")
 
 # biclustering heatmap (row colors, disable column clustering/ordering)
+row_colors = pd.Series(["#ff0000", "#ff0000",..])
+
+# or..
 row_colors = pd.DataFrame({
   "var1": ["#ff0000", ...],
   "var2": ["#00ff00", ...],
