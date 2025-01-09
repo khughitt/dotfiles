@@ -1,2 +1,6 @@
+# include/exclude certain file types
+rg --type ts xx
+rg --type-not css xx
+
 # match group ("-r" = "replace"; used to show specific groups)
 echo "title  : 2020-05-09" | rg 'title +: ([\d-]+)' -N -r '$1'

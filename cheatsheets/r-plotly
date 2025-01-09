@@ -4,8 +4,30 @@ fig <- plot_ly(...)
 config(fig, toImageButtonOptions = list(format = 'svg', filename = 'img', width = 1400, height = 1000, scale = 1)) %>%
   layout(...)
 
+# x- and y-axis label fonts
+layout(
+  xaxis = list(tickfont = list(size = 12)), 
+  yaxis = list(tickfont = list(size = 12))
+)
+
 # hide all legends
 plt %>%
   style(plt, showlegend = FALSE)
+
+# subplots + titles
+plts[[n]] <- plot_ly(..) %>%
+  add_annotations(
+    text = 'subplot title',
+    x = 0.1,
+    y = 1,
+    xref = "paper",
+    yref = "paper",
+    xanchor = "left",
+    yanchor = "top",
+    showarrow = FALSE
+  )
+
+do.call(plotly::subplot, c(plts, list(nrows=2, margin = 0.06))) %>%
+  layout(title = "Main title")
 
 # vi:syntax=r

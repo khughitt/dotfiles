@@ -1,3 +1,6 @@
 # check for font
 fc-list | grep siji
 fc-match siji
+
+# update cache
+fc-cache -fv

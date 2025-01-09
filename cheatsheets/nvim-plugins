@@ -1,24 +1,9 @@
-# fzf
-;a  # ag
-;j  # notes
-
-# LeaderF
-<c-f> search files
-<c-p> search mru
-
-<c-r> toggle fuzzy/regex mode
-<c-f> toggle fullpath
-<c-u> clear prompt
-<c-j> down
-<c-k> up
-<c-p> preview
-<tab> normal mode
-
-<up>/<down> navigate history
-
-# coc.nvim
-[c    next error
-]c    previous error
+# telescope
+;ff   files
+;fg   grep
+;fr   frecency
+;fb   buffers
+;fh   help tags
 
 # leap.nvim
 s                 forward search
@@ -29,15 +14,6 @@ s<enter>          repeat the last search
 s<enter><enter>   traverse matches
 x                 move lhs visual bound
 X                 move rhs visual bound
-
-# vim-emoji
-;e    replace all `:emoji:` instances in current buffer
-
-# indent guides
-:IndentGuidesToggle
-
-# vCoolor
-<alt-c>  open color picker
 
 # profiling vim plugins
 # https://stackoverflow.com/questions/12213597/how-to-see-which-plugins-are-making-vim-slow
