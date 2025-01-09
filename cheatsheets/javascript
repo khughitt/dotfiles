@@ -42,6 +42,10 @@ a.forEach((item) => {
 // create an array of a specified size
 Array(5).fill(0);
 
+// destructure array
+const arr = ['one', 'two']
+const [a, b] = arr
+
 // check for key in object
 // includes object prototype keys
 'key' in obj
@@ -66,7 +70,7 @@ Object.keys(obj).length
 // get last value in an object
 Object.values(obj).slice(-1)[0]
 
-// merge objects
+// merge ("update") objects; values of "b" overide those of "a"
 {...a, ...b}
 
 // check if item is in array
@@ -184,6 +188,9 @@ arr.join("");
 // replace all occurrences of "foo" in a string (regex)
 a.replace(/foo/g, 'bar');
 
+// strip newlines
+s.replace(/\n/g, "")
+
 // regex match
 var re = /\w+/g;
 var str = 'foo bar';
@@ -216,6 +223,9 @@ return arr.map((x) => sorted.indexOf(x) + 1);
 
 // timestamp -> date string
 new Date(ts * 1e3).toISOString()
+
+// number of milliseconds since epoch
+date.getTime()
 
 // iso date string -> Date object
 new Date("2023-08-13T03:30:04")

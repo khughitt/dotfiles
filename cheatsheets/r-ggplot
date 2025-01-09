@@ -1,6 +1,9 @@
 # show defaults aesthetics for a given geom
 GeomPoint$default_aes
 
+# lm fit
+geom_smooth(method='lm') 
+
 # bar plot
 ggplot(df, aes(x=, y=)) + 
   geom_bar(stat="identity")
@@ -23,7 +26,7 @@ theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 # facet_wrap
 ggplot(df, aes(x)) +
   geom_density() +
-  facet_wrap(~foo, ncol=5)
+  facet_wrap(~foo, ncol=5, scales='free')
 
 # modify styles for a subset of elements
 ggplot(df, aes(x, y)) +

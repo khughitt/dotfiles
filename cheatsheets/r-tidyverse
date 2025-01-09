@@ -79,6 +79,10 @@ df %>%
 dat %>%
   distinct()
 
+# complete.cases
+dat %>%
+  na.omit()
+
 # pivot wide to long
 df %>%
   pivot_longer(everything(), names_to="xx", values_to="yy")
@@ -154,7 +158,5 @@ df %>%
 df %>%
   group_by(a, b) %>%
   summarize(n=n())
-
-
 
 # vi:syntax=r

@@ -14,6 +14,12 @@ Qx (record..)
 Q  (stop recording)
 @x (replay)
 
+# add string to end of each line
+1. c-v (select lines)
+2. $
+3. A<text>
+4. esc
+
 # show all highlight groups
 # see also: https://vim.fandom.com/wiki/Xterm256_color_names_for_console_Vim
 :so $VIMRUNTIME/syntax/hitest.vim

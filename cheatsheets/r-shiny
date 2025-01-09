@@ -1,0 +1,4 @@
+# multiline strings
+HTML(paste("one", "two", sep="<br/>"))
+
+# vi:syntax=r

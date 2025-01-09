@@ -1,0 +1,14 @@
+// useTexture
+// https://r3f.docs.pmnd.rs/tutorials/loading-textures
+import { useTexture } from "@react-three/drei"
+
+const props = useTexture({
+  map: 'PavingStones092_1K_Color.jpg',
+  displacementMap: 'PavingStones092_1K_Displacement.jpg',
+  normalMap: 'PavingStones092_1K_Normal.jpg',
+  roughnessMap: 'PavingStones092_1K_Roughness.jpg',
+  aoMap: 'PavingStones092_1K_AmbientOcclusion.jpg',
+})
+<meshStandardMaterial {...props} />
+
+// vi:syntax=javascript

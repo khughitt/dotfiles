@@ -1,8 +1,17 @@
+# load multiple datasets at once
+lapply(paths, read_feather)
+
 # get a specific column from each list in a list-of-lists
 lapply(lst, "[[", "foo")
 
+# pass additional args to do.call
+do.call(func, c(arg, list(arg2=x, arg3=y)))
+
 # specify factor level order
 ordered(df$foo, levels = c("small", "med", "large"))
+
+# dynamic variable names in formulas
+expr(!!sym(feat1) ~ !!sym(feat2))
 
 # get index of max/min value for each row
 max.col(mat, "first")

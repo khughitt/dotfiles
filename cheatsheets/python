@@ -127,6 +127,9 @@ ts = time.time()
 import datetime
 today = datetime.datetime.now().strftime("%Y-%m-%d")
 
+# "Dec 26, 2024"
+date.strftime("%b %d, %Y")
+
 # convert unix timestamp to datetime
 datetime.fromtimestamp(..)
 

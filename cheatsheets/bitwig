@@ -1,3 +1,15 @@
+# panels
+f1  editor
+f2  automation
+f3  device
+f4  mixer
+f5-8  select sub-panel 1-4
+
+# browser panel
+<alt-b>   toggle browser panel    
+f1-f7     choose section
+f1        everything
+
 # appearance
 <c-shift-+>  increase gui scaling
 <c-shift-->  decrease gui scaling
@@ -6,7 +18,6 @@
 <c-j>        consolidate
 <c-s-x>      cut time      
 
-<alt-b>             toggle browser panel    
 <alt-shift-arrow>   change focus            
 
 # toggle plugin window; focus must be on bitwig itself..
