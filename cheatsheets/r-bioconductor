@@ -7,4 +7,12 @@ width(genes(TxDb.Hsapiens.UCSC.hg38.knownGene))
 # load gene set
 geneIds(getGmt(infile))
 
+# tx -> gene mapping
+txdb <- keepStandardChromosomes(TxDb.Hsapiens.UCSC.hg38.knownGene)
+
+k <- keys(txdb, keytype="TXNAME")
+
+tx2gene <- AnnotationDbi::select(txdb, k, "GENEID", "TXNAME")
+tx2gene <- tx2gene[complete.cases(tx2gene), ]
+
 # vi:syntax=r

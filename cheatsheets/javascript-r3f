@@ -22,8 +22,15 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing'
   </Suspense>
 </Canvas>
 
+// specify canvas background color; helps with some issues relating to MeshTransmissionMaterial,
+// etc.
+<color attach="background" args={["white"]} />
+
 // renderer settings (defaults))
 <Canvas gl={{ antialias: true, alpha: true}}>
+
+// renderer settings (post-processing recommendations)
+<Canvas gl={{ powerPreference: "high-performance", antialias: false, stencil: false, depth: false }}>
 
 // nested properties
 <mesh rotation-x={1} material-color={'red'} material-uniforms-foo-value: {1.0} />
@@ -58,6 +65,28 @@ const ColorBox = (props: ThreeElements['mesh']) => {
 
 // mouse support
 <OrbitControls  target={[0, 0, 0]} />
+
+// mouse follower
+const MouseFollower = () => {
+  const ref = useRef<THREE.Mesh<THREE.BufferGeometry>>(null);
+  const { pointer, viewport } = useThree();
+
+  useFrame((state) => {
+    if (ref.current === null) return;
+
+    const x = (pointer.x * viewport.width) / 2
+    const y = (pointer.y * viewport.height) / 2
+
+    ref.current.position.set(x, y, 0)
+  });
+
+  return(
+    <mesh ref={ref}>
+      <meshStandardMaterial color='white' />
+      <sphereGeometry args={[0.5, 20, 20]} />
+    </mesh>
+  )
+}
 
 // ref
 const meshRef = useRef<THREE.Mesh>(null!)

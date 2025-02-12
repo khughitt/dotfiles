@@ -67,8 +67,14 @@ Object.values(coords).forEach((pos:number[]) => {
   coords.push(new THREE.Vector3(pos[0], pos[1], pos[2]))
 })
 
-// math
-THREE.MathUtils.randFloatSpread(100);   // random float in [-range / 2, range / 2].
+// math (https://threejs.org/docs/#api/en/math/MathUtils)
+THREE.MathUtils.clamp(val, min, max)
+THREE.MathUtils.lerp(x:float, y:float, t:float)  // t = weight in [0, 1]
+THREE.MathUtils.randFloat(min, max)
+THREE.MathUtils.randInt(min, max)
+THREE.MathUtils.randFloatSpread(float)   // random float in [-range / 2, range / 2].
+THREE.MathUtils.seededRandom (seed:int)  // -> [0, 1]
+THREE.MathUtils.smoothstep(x, min, max)
 
 // vectors
 let vec1 = new THREE.Vector3(0, 1, 1)

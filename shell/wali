@@ -1,0 +1,70 @@
+#
+# wallpaper switcher
+# wraps pywal + chooses a random image from a specified dir
+# https://github.com/khughitt/wali
+#
+
+# kitty image previews
+# https://github.com/junegunn/fzf/issues/3228#issuecomment-1730781875
+KITTY_PREVIEW_CMD='kitten icat \
+    --clear \
+    --transfer-mode=memory \
+    --stdin=no \
+    --place=${FZF_PREVIEW_COLUMNS}x${FZF_PREVIEW_LINES}@20x1 {}\
+    > /dev/tty'
+  
+# wallpaper switcher
+alias wali="cd ~/d/wali/ && poetry run wali --image-dir=\"$WALI_DIR/3440\" change"
+
+# wali -> fd -> add to favorites
+function walifav {
+  target=`fd $1 $WALI_DIR/3440 |\
+    grep --color='none' "$1" |\
+    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
+
+  [ ! -z "$target" ] && echo "Adding $target to favorites.." && echo $target >> "$WALI_DIR/favorites.txt"
+}
+
+# mark current background as a favorite
+alias walisave='walibg >> $WALI_DIR/favorites.txt'
+
+# wali favorites -> gimp
+function walig {
+  target=`/bin/cat $WALI_DIR/favorites.txt |\
+    grep --color='none' "$1" |\
+    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
+
+  [ ! -z "$target" ] && /bin/gimp $target
+}
+
+# wali -> fd -> gimp
+function walifg {
+  target=`fd $1 $WALI_DIR/3440 |\
+    grep --color='none' "$1" |\
+    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
+
+  [ ! -z "$target" ] && echo "opening $target.." && /bin/gimp $target
+}
+
+# print path to original version of image used in current background
+function walibg {
+  file=$(/bin/cat ~/.fehbg | grep -Eo --color='never' "[\/a-z0-9]+PXL.*.png")
+  datestr=`echo $file | cut -d '_' -f2`
+
+  year=`date -d $datestr +%Y`
+  mon=`date -d $datestr +%m`
+
+  file=${file/3440/orig\/$year\/$mon}
+  echo ${file/png/jpg}
+}
+
+# create png palette based on wal colors
+function walipal {
+  source ~/.cache/wal/colors.sh
+
+  magick -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/a.png
+  magick -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/b.png
+  magick -append /tmp/a.png /tmp/b.png ~/.cache/wal/palette.png
+}
+
+# vi:syntax=bash

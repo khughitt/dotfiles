@@ -16,6 +16,9 @@ magick -append a.png b.png out.png
 # rotate 90 degrees clockwise
 magick in.png -rotate 90 out.png
 
+# opacity (transparency) 50%
+magick in.webp -alpha set -background none -channel A -evaluate multiply 0.5 +channel out.webp
+
 # compressed jpeg
 magick in.png -interlace JPEG -sampling-factor 4:2:0 -quality 85% out.jpg
 
