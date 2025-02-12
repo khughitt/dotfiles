@@ -80,7 +80,7 @@ vec3 color = vec3(0.0);
 // returns 0.0/1.0, if below/above cutoff
 step(cutoff, val)
 
-// linear weighted interpolation (b * weight + a * (1.0 - weight))
+// lerp / linear weighted interpolation (b * weight + a * (1.0 - weight))
 mix(a, b, weight)  
 
 // smooth weighted interpolation (cubic / "Hermite" interpolation)

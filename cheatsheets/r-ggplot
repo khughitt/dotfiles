@@ -8,6 +8,10 @@ geom_smooth(method='lm')
 ggplot(df, aes(x=, y=)) + 
   geom_bar(stat="identity")
 
+# histogram
+ggplot(df, aes(x=x, fill=foo, group=foo)) + 
+  geom_histogram(alpha=0.5, position="identity")
+
 # preserve dataframe order
 df$x <- factor(df$x, levels=df$x)
 

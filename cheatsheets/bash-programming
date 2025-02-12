@@ -96,6 +96,9 @@ ${foo  <-- from variable foo
 # date formatting
 now=`date +%Y-%m-%d`
 
+# parse date string
+date -d "20241005" +%Y
+
 # convert lowercase to uppercase
 echo $x | tr '[:lower:]' '[:upper:]'
 

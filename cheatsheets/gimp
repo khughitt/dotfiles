@@ -2,5 +2,9 @@
 m   move
 t   text
 
+# layers
+<f2>            rename layer
+<cntl-shift-d>  duplicate layer
+
 # move text / not background.. (move tool)
 <shift-drag>   move the active layer

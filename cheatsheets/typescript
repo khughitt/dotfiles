@@ -9,4 +9,8 @@ interface Foo {
 // indicate that a string is a valid key for an object (assoc array)
 Foo[keyName as keyof typeof Foo]
 
+// type aliases
+type short = SomeLongInterfaceEtc
+type Age = number
+
 // vi:syntax=typescript

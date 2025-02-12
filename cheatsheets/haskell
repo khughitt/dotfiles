@@ -43,9 +43,12 @@ take 2 x   -- get first two elements
 drop 2 x   -- get all elements *except* the last two
 null x     -- is empty?
 
--- list enumeration
+zip [1,2,3] ['a', 'b', 'c'] -- lst + lst -> lst of tuples
+
+-- ranges / list enumeration
 [1..10]
 [1.0,1.5..100.0]
+['a'..'z']
 
 -- conditionals
 if ..
@@ -55,5 +58,9 @@ else ..
 -- functions
 add a b = a + b
 add 1 2
+
+-- composition
+g . f
+g ∘ f
 
 -- vi:syntax=haskell

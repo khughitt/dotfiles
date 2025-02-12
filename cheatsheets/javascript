@@ -230,7 +230,7 @@ date.getTime()
 // iso date string -> Date object
 new Date("2023-08-13T03:30:04")
 
-// format date
+// date -> human readable string
 const opts:Intl.DateTimeFormatOptions = { year: "numeric", month: "long", day: "numeric" }
 date.toLocaleDateString(undefined, opts)
 

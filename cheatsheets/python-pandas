@@ -420,7 +420,7 @@ df.groupby("foo").sort_values("bar")
 # group by -> count -> max -> sample
 df.groupby(["path", "foo"]).count().max(axis=1).groupby("path").sample(1)
 
-# get first item from each group
+# get first item from each group (top 1 by group)
 df.groupby("foo").first()
 
 # top n by group
