@@ -27,4 +27,7 @@ read_csv(..., col_types = cols(foo = "c"))
 # use same type for all columns
 read_csv(..., col_types=cols(.default = "c"))
 
+# skip rows
+read_csv(..., skip=3)
+
 # vi:syntax=r

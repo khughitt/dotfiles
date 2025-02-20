@@ -10,6 +10,10 @@
 # double arrow
 \leftrightarrow
 
+# arrow with text above/below
+\overrightarrow{\text{foo}}
+\underrightarrow{\text{foo}}
+
 # v ^
 \vee
 \wedge
@@ -109,9 +113,6 @@
 \hat{}
 \bar{}
 \tilde{}
-
-# arrow above text
-\overrightarrow{\text{foo}}
 
 # vectors
 \vec{}
