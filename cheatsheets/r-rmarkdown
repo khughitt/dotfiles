@@ -1,3 +1,15 @@
+# yaml header
+---
+title: ""
+author: ""
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    df_print: kable
+    toc: true
+    toc_depth: 2
+---
+
 # figure defaults (knitr defaults: 7, 7, 1, 72)
 knitr::opts_chunk$set(
   fig.width = 4.8,
@@ -8,26 +20,6 @@ knitr::opts_chunk$set(
 
 # printing messages to console in recent knitr versions..
 ```{r message = NA, warning = NA}```
-
-# default to kable() for table output
----
-output:
-  html_document:
-    df_print: kable
----
-
-# yaml date
----
-date: "`r format(Sys.time(), '%d %B, %Y')`"
----
-
-# table of contents
----
-output:
-  html_document:
-    toc: true
-    toc_depth: 2
----
 
 # ggplot high-res theme
 theme_bw_high_res <- function (base_size = 8, base_line_size = 0.4, base_rect_size = 0.4) { 

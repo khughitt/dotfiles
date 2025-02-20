@@ -3,3 +3,6 @@ tar -czvf files.tgz `cat filelist.txt`
 
 # list contents
 tar tzvpf foo.tar.gz
+
+# extract specific file/folder
+tar xavpf dat.tar.xz target/

@@ -1,6 +1,11 @@
 # tibble row -> vec
 unlist(tbl[1, ])
 
+# tibble row -> two-column dataframe
+tbl[1, ] %>% 
+  t() %>% 
+  enframe()
+
 # tibble col -> vec
 pull(df, 1)
 pull(df, "symbol")
@@ -52,7 +57,7 @@ df %>%
 
 # convert column to factor and specify order of levels
 df %>%
-  mutate(foo=fct_relevel(foo, 'a', 'b', 'c'))
+  mutate(foo=fct_relevel(foo, "a", "b", "c"))
 
 # get first row as two-column key-value dataframe;
 # "glimpse()" can also be used, but dataframe easier to format in rmd
@@ -64,9 +69,19 @@ df[1, ] %>%
 # cbind / join list of tables
 purrr::reduce(tbls, dplyr::full_join, by="id")
 
-# create a tibble from a list of lists (types may be lost..)
-cnames <- c('a', 'b')
+# join fields w/ different names
+x %>%
+  left_join(y, by=c("name_in_x"="name_in_y"))
 
+# row-wise tibble creation
+tribble(
+  ~foo, ~bar,
+  "a", 1,
+  "b", 2
+)
+
+# create a tibble from a list of lists (types may be lost..)
+cnames <- c("a", "b")
 lst %>%
   map_dfr(set_names, cnames) %>%
   as_tibble()
@@ -102,9 +117,9 @@ df %>%
 
 # replace string values
 df %>%
-  mutate(foo=str_replace(foo, 'bla', ''))
+  mutate(foo=str_replace(foo, "bla", ""))
 df %>% 
-  mutate(foo=str_replace_all(foo, c('old1'='new1', 'old2'='new2')))
+  mutate(foo=str_replace_all(foo, c("old1"="new1", "old2"="new2")))
 
 # recode variable levels
 df %>% 
@@ -112,7 +127,7 @@ df %>%
 
 # create new logical column based on string presence
 df %>% 
-  mutate(new_col=str_detect(existing_col, 'foo'))
+  mutate(new_col=str_detect(existing_col, "foo"))
 
 #
 # filtering

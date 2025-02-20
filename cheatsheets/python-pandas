@@ -115,6 +115,15 @@ df = pd.DataFrame(np.random.rand(3, 4))
 # zeros
 df = pd.DataFrame(np.zeros((3, 4)))
 
+Types
+-----
+
+# create a dataframe with the types & number of unique values for each column
+pd.DataFrame({'name': mut.columns, 'dtype': mut.dtypes, 'num_levels': mut.nunique()})
+
+# show column dtypes + total memory usage
+df.info()
+
 Saving
 ------
 
@@ -399,8 +408,8 @@ Grouping / Summarization
 df.groupby("foo").sum()
 
 # group by -> count
-df.groupby("foo").count()
 df.foo.value_counts().sort_values(ascending=False)
+df.groupby("foo").count()
 
 # group by -> count (limit to a single column)
 df.[["foo", "bar"]].groupby("foo").count().sort_values("bar")
@@ -494,6 +503,8 @@ df.rename(columns={"from": "to", ...})
 Printing
 --------
 
+pd.set_option('display.max_rows', 100)
+
 df.to_markdown()
 
 Plotting
@@ -536,6 +547,12 @@ Clipboard
 pd.read_clipboard(sep="\t")
 df.to_clipboard()
 df.foo.to_clipboard()
+
+Read
+----
+
+# skip rows
+pd.read_csv(.., skiprows=3)
 
 Write
 -----
