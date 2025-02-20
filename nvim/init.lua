@@ -21,7 +21,6 @@ vim.opt.hidden = true                 -- easy buffer switching
 vim.opt.isk:append({'%', '#', '-'})   -- additional vim word characters
 vim.opt.modeline = true               -- make sure modeline support is enabled
 vim.opt.showmode = false              -- hide <INSERT>
-vim.opt.updatetime = 200              -- decrease update time for coc.nvim
 
 -- reduce keycode mapping timeout delay
 vim.opt.ttimeoutlen = 5
@@ -257,6 +256,30 @@ vim.api.nvim_create_autocmd('VimLeave', {
 require("config.lazy")
 
 -----------------------------------------------------------------------------
+-- mason
+-----------------------------------------------------------------------------
+require("mason").setup()
+require("mason-lspconfig").setup()
+
+-----------------------------------------------------------------------------
+-- nvim-lspconfig
+-----------------------------------------------------------------------------
+local lspconfig = require'lspconfig'
+
+lspconfig.quick_lint_js.setup({
+    filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"}
+})
+
+lspconfig.r_language_server.setup {
+  cmd = {"R", "--slave", "-e", "languageserver::run()"},
+  filetypes = {"r", "rmd"},
+  root_dir = function(fname)
+    return lspconfig.util.find_git_ancestor(fname)
+  end,
+  settings = {},
+}
+
+-----------------------------------------------------------------------------
 -- lualine
 -----------------------------------------------------------------------------
 require('lualine').setup {
@@ -280,6 +303,18 @@ vim.cmd('set termguicolors')
 require('colorizer').setup {}
 
 -----------------------------------------------------------------------------
+-- R.nvim
+-----------------------------------------------------------------------------
+require'r'.setup {
+  -- show term on bottom
+  rconsole_width = 0,
+  source_args = "echo = TRUE"
+
+  -- show term on left side (jan25: not working..)
+  -- nosplitright = true
+}
+
+-----------------------------------------------------------------------------
 -- which-key (testing)
 -----------------------------------------------------------------------------
 -- require("which-key").setup {}
@@ -295,26 +330,6 @@ map('n', '<s-tab>', '<cmd>BufferPrevious<cr>', opts)
 map('n', '<tab>', '<cmd>BufferNext<cr>', opts)
 map('n', '<s-left>', '<cmd>BufferPrevious<cr>', opts)
 map('n', '<s-right>', '<cmd>BufferNext<cr>', opts)
-
--- ---------------------------------------------------------------------------
--- coc.nvim
--- ---------------------------------------------------------------------------
-vim.keymap.set('n', '[c', '<Plug>(coc-diagnostic-prev)', {silent = true})
-vim.keymap.set('n', ']c', '<Plug>(coc-diagnostic-next)', {silent = true})
-
--- show type of object under cursor (sep23: not working in lua config; disabling..)
--- https://github.com/neoclide/coc.nvim/issues/869#issuecomment-501323697
--- vim.cmd([[
---   nnoremap <silent> K :call <SID>show_documentation()<CR>
---
---   function! s:show_documentation()
---     if (index(['vim','help'], &filetype) >= 0)
---       execute 'h '.expand('<cword>')
---     else
---       call CocAction('doHover')
---     endif
---   endfunction
--- ]])
 
 -- ---------------------------------------------------------------------------
 -- csv.vim
@@ -368,29 +383,6 @@ vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
 
 -- ---------------------------------------------------------------------------
---  fzf.vim
--- ---------------------------------------------------------------------------
--- vim.g.fzf_layout = { window = 'enew' }
--- vim.g.fzf_layout = { window = '-tabnew' }
--- vim.g.fzf_layout = { window = '10split enew' }
--- vim.g.fzf_layout = { down = '~40%' }
---
--- vim.keymap.set('c', '<c-r>', ':History:<cr>')
---
--- -- Ag
--- vim.keymap.set('', '<leader>a', ':Ag<cr>')
---
--- -- ---------------------------------------------------------------------------
--- -- LeaderF
--- -- ---------------------------------------------------------------------------
--- vim.g.Lf_ShortcutF = '<c-f>'
--- vim.g.Lf_WindowPosition = 'popup'
--- vim.g.Lf_PreviewInPopup = 1
---
--- vim.keymap.set('', '<c-p>', [[ :<c-u><c-r>=printf("Leaderf --nowrap mru %s", "")<cr><cr> ]])
---
-
--- ---------------------------------------------------------------------------
 --  gitgutter
 -- ---------------------------------------------------------------------------
 vim.g.gitgutter_diff_args = '--ignore-all-space'
@@ -419,11 +411,6 @@ vim.keymap.set('n', '<space>', '<leader>c<space>')
 vim.keymap.set('v', '<space>', '<leader>c<space>')
 
 -- ---------------------------------------------------------------------------
--- Nvim-R
--- ---------------------------------------------------------------------------
-vim.cmd('let rout_follow_colorscheme = 1')
-
--- ---------------------------------------------------------------------------
 -- supertab.vim
 -- ---------------------------------------------------------------------------
 vim.g.SuperTabCrMapping=1
@@ -433,27 +420,13 @@ vim.g.SuperTabDefaultCompletionType = "context"
 --  treesitter
 -- ---------------------------------------------------------------------------
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = { "bash", "c", "cmake", "cpp", "css", "dockerfile", "go", "javascript", "json",
-                       "julia", "lua", "latex", "r", "rust", "sql", "toml", "tsx", "typescript", "yaml", "vimdoc",
-                       "query"},
+  ensure_installed = { "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "javascript",
+                       "json", "julia", "latex", "lua", "markdown", "markdown_inline", "python",
+                       "query", "r", "rust", "sql", "toml", "tsx", "typescript", "vimdoc", "yaml"},
   auto_install = true,
   sync_install = false,
-  highlight = {
-    enable = true,
-    disable = { "rmd" }
-  },
+  highlight = { enable = true, },
 }
-
--- ---------------------------------------------------------------------------
--- vim-emoji
--- https://www.webfx.com/tools/emoji-cheat-sheet/
--- ---------------------------------------------------------------------------
--- enable completion (haven't been able to get this to work..)
--- vim.cmd('set omnifunc=syntaxcomplete#Complete')
--- vim.cmd('set completefunc=emoji#complete')
-
--- replace all :emoji: instances in current file
-vim.keymap.set('', '<leader>e', [[ :%s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g<cr> ]])
 
 -- ---------------------------------------------------------------------------
 --  vim-textobj-underscore
