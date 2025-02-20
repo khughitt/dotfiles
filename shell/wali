@@ -2,7 +2,6 @@
 # wallpaper switcher
 # wraps pywal + chooses a random image from a specified dir
 # https://github.com/khughitt/wali
-#
 
 # kitty image previews
 # https://github.com/junegunn/fzf/issues/3228#issuecomment-1730781875
@@ -16,38 +15,8 @@ KITTY_PREVIEW_CMD='kitten icat \
 # wallpaper switcher
 alias wali="cd ~/d/wali/ && poetry run wali --image-dir=\"$WALI_DIR/3440\" change"
 
-# wali -> fd -> add to favorites
-function walifav {
-  target=`fd $1 $WALI_DIR/3440 |\
-    grep --color='none' "$1" |\
-    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
-
-  [ ! -z "$target" ] && echo "Adding $target to favorites.." && echo $target >> "$WALI_DIR/favorites.txt"
-}
-
-# mark current background as a favorite
-alias walisave='walibg >> $WALI_DIR/favorites.txt'
-
-# wali favorites -> gimp
-function walig {
-  target=`/bin/cat $WALI_DIR/favorites.txt |\
-    grep --color='none' "$1" |\
-    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
-
-  [ ! -z "$target" ] && /bin/gimp $target
-}
-
-# wali -> fd -> gimp
-function walifg {
-  target=`fd $1 $WALI_DIR/3440 |\
-    grep --color='none' "$1" |\
-    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
-
-  [ ! -z "$target" ] && echo "opening $target.." && /bin/gimp $target
-}
-
 # print path to original version of image used in current background
-function walibg {
+function wali_print {
   file=$(/bin/cat ~/.fehbg | grep -Eo --color='never' "[\/a-z0-9]+PXL.*.png")
   datestr=`echo $file | cut -d '_' -f2`
 
@@ -58,8 +27,44 @@ function walibg {
   echo ${file/png/jpg}
 }
 
+# open the current original version of the current background in gimp
+alias wali_edit_current="gimp `wali_print`"
+
+#
+# search for an image by name and add it to the "favorites" list
+# 
+function wali_search {
+  target=`fd $1 $WALI_DIR/3440 |\
+    grep --color='none' "$1" |\
+    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
+
+  [ ! -z "$target" ] && echo "Adding $target to favorites.." && echo $target >> "$WALI_DIR/favorites.txt"
+}
+
+#
+# add the current background to the "favorites" list
+alias wali_save='wali_print >> $WALI_DIR/favorites.txt'
+
+# select an image from the favorites list and open it in gimp
+function wali_edit_fav {
+  target=`/bin/cat $WALI_DIR/favorites.txt |\
+    grep --color='none' "$1" |\
+    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
+
+  [ ! -z "$target" ] && /bin/gimp $target
+}
+
+# find an image by name and open it in gimp
+function wali_edit_search {
+  target=`fd $1 $WALI_DIR/3440 |\
+    grep --color='none' "$1" |\
+    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
+
+  [ ! -z "$target" ] && echo "opening $target.." && /bin/gimp $target
+}
+
 # create png palette based on wal colors
-function walipal {
+function wali_pal {
   source ~/.cache/wal/colors.sh
 
   magick -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/a.png

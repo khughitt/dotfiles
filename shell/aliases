@@ -33,12 +33,12 @@ alias diff='diff --color=auto'
 
 # docker
 alias doc='docker'
-alias docb='docker-compose up --build'
+alias up='docker compose up --build'
+alias upv='docker --debug compose up --build'
+alias down='docker compose down --remove-orphans'
 alias dps='docker ps -a --format="table {{.ID}}\t\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
-alias up='docker-compose up --build'
-alias down='docker-compose down --remove-orphans'
 alias docl='docker logs -f'
-alias dk='docker kill `docker ps -q`'
+alias dkill='docker kill `docker ps -q`'
 
 # dropbox
 alias dropbox_ignore='sudo attr -s com.dropbox.ignored -V 1 '
@@ -61,6 +61,7 @@ alias fehd='feh -g 640x480 -d -S filename .'
 alias feh_edit='gimp $(cat ~/.fehbg | grep --color=never -Eo "[\/a-z0-9]+PXL.*.png")'
 
 # fd
+alias Fd='fd -d 1'
 alias fda='fd -Luu'
 alias fdu='fd -u'
 alias fdl='fd -l | sort -k6M -k7n'
@@ -70,15 +71,22 @@ alias fdd="fd -t d"
 alias fdf="fd -t f"
 
 alias fd1='fd --changed-within 1days'
+alias fd2='fd --changed-within 2days'
 alias fd3='fd --changed-within 3days'
 alias fd5='fd --changed-within 5days'
 alias fd10='fd --changed-within 10days'
+
+alias fd-1='fd --changed-before 1days'
+alias fd-2='fd --changed-before 2days'
+alias fd-3='fd --changed-before 3days'
+alias fd-5='fd --changed-before 5days'
+alias fd-10='fd --changed-before 10days'
 
 # glslviewer
 alias gls='glslviewer -w 1720 -h 1413'
 
 # grep
-alias -g G='| grep'  # "-g" = global alias; can be substituted anywhere on the line
+alias -g G='| grep -i'  # "-g" = global alias; can be substituted anywhere on the line
 alias grep='grep --color=always'
 alias zgrep='zgrep --color=always'
 
@@ -142,11 +150,11 @@ alias -s Rmd=nvim
 
 # neovim
 alias vi=nvim
-alias vs="nvim src/App.tsx"
+alias vs="kitty @ set-window-title nvim src/App.tsx && nvim src/App.tsx"
 alias vim=nvim
 alias vmi=nvim
-alias vm='nvim README.*md'
-alias vl="vim -c \"normal '0\""                         # open most recently edited file / position
+alias vm='kitty @ set-window-title nvim README.*md && nvim README.*md'
+alias vl="nvim -c \"normal '0\""                         # open most recently edited file / position
 alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}' # open last argument of last command in vim
 
 # netstat

@@ -1,11 +1,13 @@
 c = get_config()  #noqa
 
+c.Completer.use_jedi = False
+
 c.AliasManager.user_aliases = [
  ('l', 'lsd --group-dirs=first -lah')
 ]
 
-# disable jedi completion (broken with pandas object completion, oct23)
-# c.Completer.use_jedi = False
+# disable jedi completion (still broken in dec24)
+c.Completer.use_jedi = False
 
 # newp..
 # c.MagicsManager.register_alias("p", "paste")
