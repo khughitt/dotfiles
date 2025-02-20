@@ -28,6 +28,7 @@ export JAVA_HOME=/usr/lib/jvm/default
 export JAVA_FONTS=/usr/share/fonts/TTF
 export _JAVA_AWT_WM_NONREPARENTING=1
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true'
+export FREEPLANE_USE_UNSUPPORTED_JAVA_VERSION=1
 
 # let ncurses know where to find terminfo
 export TERMINFO=~/.terminfo

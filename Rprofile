@@ -79,7 +79,7 @@ if (interactive()) {
           editor = "nvim")
 
   # make r usable
-  # options(defaultPackages=c(getOption("defaultPackages"), "tidyverse", "arrow"))
+  # options(defaultPackages=c(getOption("defaultPackages"), "tidyverse", "arrow", "nvimcom"))
 
   # syntax highlighting
   if (isatty(stdout())) {

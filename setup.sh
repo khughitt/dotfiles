@@ -98,6 +98,9 @@ ln_s ${DOTS_HOME}/condarc ${HOME}/.mambarc
 # r
 ln_s ${DOTS_HOME}/lintr ${HOME}/.lintr
 
+# ripgrep
+ln_s ${DOTS_HOME}/rgignore ${HOME}/.rgignore
+
 # 4k configs (i3, rofi, wal )
 if [[ "$HIRES" == "y" ]]; then
     ln_s ${DOTS_HOME}/i3/config.4k ${XDG_CONFIG_HOME}/i3/config

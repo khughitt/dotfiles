@@ -29,7 +29,7 @@ function fu {
 # kitty theme switcher
 function kit {
   themedir="$HOME/.config/kitty/themes"
-  theme=`/bin/ls $themedir | sed 's/.conf//' | grep --color='none' "$1" | fzf -1 --exact`
+  theme=`/bin/ls $themedir | grep -v README | sed 's/.conf//' | grep --color='none' "$1" | fzf -1 --exact`
   kitten @ set-colors "$themedir/$theme.conf"
 }
 
@@ -157,6 +157,7 @@ function C {
             fzf -1 --exact`
 
     if [ ! -z "$target" ]; then
+        kitty @ set-window-title vim $target
         vim $target
     fi
 }
@@ -168,6 +169,7 @@ function c {
             fzf -1 --exact --preview 'bat $DOTFILES/cheatsheets/{}' --preview-window up`
 
     if [ ! -z "$target" ]; then
+        kitty @ set-window-title vim $DOTFILES/cheatsheets/$target
         vim $DOTFILES/cheatsheets/$target
     fi
 }
@@ -187,6 +189,7 @@ function vI {
             fzf -1 --exact`
 
     if [ ! -z "$target" ]; then
+        kitty @ set-window-title vim $target
         vim $target
     fi
 }
@@ -315,9 +318,14 @@ function vite_proj {
 
   npm install eslint eslint-plugin-react --save-dev
 
+  # feb25; use r3f rc compat for now to support react 19
+  #npm install three @types/three @react-three/fiber \
+  # @react-three/drei 
+
   # r3f & friends
-  npm install three @types/three @react-three/fiber \
-    @react-three/drei @react-three/postprocessing leva
+  npm install three @types/three @react-three/fiber@rc \
+    @react-three/drei@rc
+    #@react-three/postprocessing leva
 
   # .glsl support
   npm i vite-plugin-glsl --save-dev
@@ -329,50 +337,6 @@ function vite_proj {
   echo "---"
   echo "Manual step:"
   echo "sudo attr -s com.dropbox.ignored -V 1 node_modules"
-}
-
-# wallpaper switcher
-alias wali="cd ~/d/wali/ && poetry run wali --image-dir=\"$WALI_DIR\" change"
-
-# set background
-function wali {
-  if [ "$#" -eq 0 ]; then
-    target="$HOME/d/linux/backgrounds/3440"
-  else
-    target="$1"
-
-    if [ ! -e "$target" ]; then
-      echo "Invalid path specified!"
-      return 1
-    fi
-  fi
-
-  wal -i $target --backend haishoku
-}
-
-# remove background
-function walirm {
-  img=$(basename `cat ${HOME}/.cache/wal/wal`)
-  fd $img -x rm
-  wali
-}
-
-function walibg {
-  cat ~/.fehbg | grep -Eo --color='never' "[\/a-z0-9]+PXL.*.png"
-}
-
-# keep track of favs
-alias walifav='walibg >> $HOME/d/linux/backgrounds/favorites.txt'
-
-
-
-# create png palette based on wal colors
-function walpal {
-  source ~/.cache/wal/colors.sh
-
-  magick -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/a.png
-  magick -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/b.png
-  magick -append /tmp/a.png /tmp/b.png ~/.cache/wal/palette.png
 }
 
 # fahrenheit to celsius

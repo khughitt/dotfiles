@@ -134,6 +134,10 @@ zinit cdreplay -q
 # snakemake tab completion support
 compdef _gnu_generic snakemake
 
+# dec24: functionality recently added to bat; waiting for version in arch repos to update..
+# https://github.com/sharkdp/bat/pull/3126
+# source <(bat completion zsh)
+
 # host-specific settings
 if [ -e $DOTFILES/shell/local/$HOST.zsh ]; then
     . $DOTFILES/shell/local/$HOST.zsh
@@ -175,7 +179,7 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-rust
 
 # additional shell settings (aliases, exports, etc.); keep near end to prioritize
-for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,nodes,private/*,vconsole,video}; do
+for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,nodes,private/*,vconsole,video,wali}; do
     [ -r "$file" ] && source "$file"
 done
 

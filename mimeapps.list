@@ -41,3 +41,4 @@ image/x-eps=org.gnome.Evince.desktop;
 audio/x-wav=vlc.desktop;
 application/postscript=org.gnome.Evince.desktop;
 application/pdf=zathura-usercreated-1.desktop;
+application/zip=localc-usercreated-1.desktop;
