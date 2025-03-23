@@ -20,7 +20,7 @@ df.name = "foo"
 pd.Series(df.values.ravel())
 
 # convert a series to a dataframe
-s.to_frame(name='foo')
+s.to_frame(name="foo")
 
 Selection
 ---------
@@ -50,6 +50,7 @@ df.values[ind]
 
 # drop column
 df.drop("col", axis=1)
+df.drop(["c1", "c2",..], axis=1)
 
 # drop first column
 df.iloc[: , 1:]
@@ -119,7 +120,14 @@ Types
 -----
 
 # create a dataframe with the types & number of unique values for each column
-pd.DataFrame({'name': mut.columns, 'dtype': mut.dtypes, 'num_levels': mut.nunique()})
+pd.DataFrame({
+  "name": df.columns, 
+  "dtype": df.dtypes, 
+  "num_levels": df.nunique()
+})
+
+# int w/ missing values
+'Int64'
 
 # show column dtypes + total memory usage
 df.info()
@@ -160,8 +168,9 @@ Joins
 a.merge(b)
 a.merge(b, on="foo")
 
-# outer join
+# outer / left / etc. join
 a.merge(b, on="col", how="outer")
+a.merge(b, on="col", how="left")
 
 # join on index
 a.join(b)
@@ -199,7 +208,7 @@ Moving / Reordering cols
 ------------------------
 
 # move column to front (in place)
-df.insert(0, 'foo', df.pop('foo'))
+df.insert(0, "foo", df.pop("foo"))
 
 # shift multiple columns to front
 pd.concat([df[cols], df.loc[:, ~df.columns.isin(cols)]], axis=1)
@@ -209,6 +218,7 @@ Replacing values
 
 # replace a single value
 df.loc[0, "column"] = "foo"
+df.loc[df.age.values == '17', "age"]
 
 # replace values in all columns
 df.replace({"from": "to", "foo": "bar"})
@@ -320,6 +330,14 @@ df.nunique()
 # drop unused levels
 df.foo = df.foo.cat.remove_unused_categories()
 
+# compare memory usage of column as object / category
+df.x.nbytes
+df.x.astype("category").nbytes
+
+# ordinal
+from pandas.api.types import CategoricalDtype
+cat_type = CategoricalDtype(categories=[...], ordered=True)
+
 Memory
 ------
 
@@ -358,11 +376,11 @@ df.apply(lambda x: x.mean(), axis=1)
 Normalization / Scaling
 -----------------------
 
-# min-max scaling
-(df - df.min()) / (df.max() - df.min())
-
 # mean-center
 df.apply(lambda x: x - x.mean())
+
+# min-max scaling
+(df - df.min()) / (df.max() - df.min())
 
 # min-max scaling (numpy / scikit)
 from sklearn import preprocessing
@@ -373,12 +391,13 @@ scaled_mat = scaler.transform(mat)
 # divide rows by row totals (i.e. convert to ratios)
 df.apply(lambda x: x / x.sum(), axis=1)
 
+# different approach for the same thing..
+df.div(df.sum(axis=1), axis=0)
+
 # standardization (numpy / scikit)
 scaler = preprocessing.StandardScaler().fit(mat)
 scaled_mat = scaler.transform(mat)
 
-# scale so that rows sum to "1"
-df.div(df.sum(axis=1), axis=0)
 
 Variance
 --------
@@ -436,7 +455,7 @@ df.groupby("foo").first()
 df.sort_values("foo", ascending = False).groupby("grp").head(5)
 
 # groupby -> cumsum
-df['cumsum'] = df.groupby('grp')['one'].cumsum()
+df["cumsum"] = df.groupby("grp")["one"].cumsum()
 
 # ~ungroup()
 df.groupby("foo").first().reset_index()
@@ -494,16 +513,28 @@ mat = df.pivot_table(index="patient", columns="obs", values="presence", fill_val
 # matrix will be floats/"objects" instead of "bool", as expected.. to fix, cast type back to bool:
 mat = mat.astype(bool)
 
+# split string field & create multiple rows from it
+df['Gene Names'] = df['Gene Names'].str.split()
+df.explode('Gene Names')
+
 Renaming
 --------
 
 df.columns = [...]
-df.rename(columns={"from": "to", ...})
+
+# tidyverse: rename(to=from)
+df.rename(columns={"from": "to", ...}) 
+
+Multi indexes
+-------------
+
+# get single index from multi-index dataframe
+df.index.get_level_values('index1')
 
 Printing
 --------
 
-pd.set_option('display.max_rows', 100)
+pd.set_option("display.max_rows", 100)
 
 df.to_markdown()
 

@@ -141,11 +141,12 @@ sort( sapply(ls(),function(x){object.size(get(x))}))
 aheatmap(dat, color = viridis(100), Colv = FALSE, labCol = "", annRow = annot_df)
 
 # heatmaply
+heatmaply(x, row_side_colors=df$foo)
 heatmaply(x, row_side_colors=hex_colors_vec_or_df)
 
 # cosine similarity
 # source: https://stats.stackexchange.com/a/367216/18331
-mat <- as.matrix(df)
+mat <- as.matrix(df)   # transpose for columns
 sim <- mat / sqrt(rowSums(mat * mat))
 sim <- sim %*% t(sim)
 

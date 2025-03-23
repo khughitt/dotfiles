@@ -200,6 +200,15 @@ with urllib.request.urlopen("http://<remote>") as fp:
 with open("/path/to/<local>", "wb") as fp:
     fp.write(dat)
 
+# download and extract .tar.gz file
+import urllib.request
+import tarfile 
+from io import BytesIO
+
+with urllib.request.urlopen(url) as stream:
+    with tarfile.open(name=None, fileobj=BytesIO(stream.read())) as fp:
+        fp.extractall("/dir")
+
 # adding request headers
 headers = {"User-Agent": "XX"}
 req = urllib.request.Request("http://<remote>", headers=headers)

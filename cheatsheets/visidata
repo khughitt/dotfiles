@@ -1,6 +1,9 @@
 # quick ref
 man vd
 
+# options
+<shift-o>
+
 # navigation
 gh gj gk gl    # go to start/end of row/col
 

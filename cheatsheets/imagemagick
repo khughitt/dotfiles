@@ -10,7 +10,7 @@ magick a.png -resize x1440 out.png
 # combine two images side-by-side (resizing height to 480)
 magick +append left.png right.png -resize x480 out.png
 
-# stack images vertically
+# stack images vertically (may need to use "convert" instead of "magick")
 magick -append a.png b.png out.png
 
 # rotate 90 degrees clockwise
