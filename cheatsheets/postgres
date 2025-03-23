@@ -95,7 +95,7 @@ DROP TRIGGER foo ON tbl;
 # show trigger functions
 \df+
 
-# list & terminate active lock
+# list & terminate (kill) active lock
 # https://stackoverflow.com/a/50270661/554531
 SELECT t.relname, l.locktype, page, virtualtransaction, pid, mode, granted
   FROM pg_locks l, pg_stat_all_tables t 

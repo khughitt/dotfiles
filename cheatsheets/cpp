@@ -1,0 +1,7 @@
+// pairs
+using namespace std;
+
+pair<int, string> x = {1, "foo"};
+make_pair(1, "foo")
+
+// vi:syntax=cpp

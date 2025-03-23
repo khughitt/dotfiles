@@ -20,6 +20,9 @@ Q  (stop recording)
 3. A<text>
 4. esc
 
+# edit multiple files
+:args path/to/*.py
+
 # show all highlight groups
 # see also: https://vim.fandom.com/wiki/Xterm256_color_names_for_console_Vim
 :so $VIMRUNTIME/syntax/hitest.vim

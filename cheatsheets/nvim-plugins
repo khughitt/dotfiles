@@ -5,6 +5,9 @@
 ;fb   buffers
 ;fh   help tags
 
+# sneak
+s + <first two chars..>
+
 # leap.nvim
 s                 forward search
 S                 backward search

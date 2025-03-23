@@ -69,6 +69,13 @@ from sklearn.metrics import pairwise_distances
 ##########################
 
 #
+# k-means
+#
+from sklearn.cluster import KMeans
+kmeans = KMeans(n_clusters=5, random_state=0).fit(X)
+kmeans.labels_
+
+#
 # spectral clustering
 #
 from sklearn.cluster import SpectralClustering

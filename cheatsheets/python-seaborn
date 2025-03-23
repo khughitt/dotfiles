@@ -51,6 +51,9 @@ row_colors = pd.DataFrame({
 })
 sns.clustermap(df, col_cluster=False, row_colors=row_colors)
 
+# if colors row colors don't appear..
+sns.clustermap(df.reset_index(drop=True), col_cluster=False, row_colors=row_colors)
+
 # add legend to heatmap
 # https://stackoverflow.com/a/62475411/554531
 cmap_dict = {f"Cluster {i}": cmap[i] for i in range(len(cmap))}

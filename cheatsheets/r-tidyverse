@@ -98,6 +98,10 @@ dat %>%
 dat %>%
   na.omit()
 
+# fill na
+dat %>%
+  replace(is.na(.), 0)
+
 # pivot wide to long
 df %>%
   pivot_longer(everything(), names_to="xx", values_to="yy")
@@ -129,6 +133,10 @@ df %>%
 df %>% 
   mutate(new_col=str_detect(existing_col, "foo"))
 
+# mutate subset of columns
+df %>%
+  mutate(mean_rank = rowMeans(select(., ends_with("_rank"))))
+
 #
 # filtering
 #
@@ -141,9 +149,9 @@ df %>%
 # rank
 #
 df %>%
-  mutate(Rank=dense_rank(foo))
+  mutate(rank=dense_rank(foo))
 df %>%
-  mutate(Rank=dense_rank(desc(foo)))
+  mutate(rank=dense_rank(desc(foo)))
 
 #
 # summarization
@@ -167,7 +175,8 @@ df %>%
 
 # count variable levels by group
 df %>%
-  count(a, b)
+  group_by(x) %>%
+  count()
 
 # or..
 df %>%

@@ -9,6 +9,9 @@ npm create vite@latest foo -- --template react-ts
 cd foo
 npm install
 
+# trouble-shooting install
+npm install --verbose
+
 # have dropbox chill..
 md node_modules
 dropbox_ignore node_modules

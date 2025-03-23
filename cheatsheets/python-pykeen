@@ -1,0 +1,33 @@
+# PyKEEN
+# https://pykeen.readthedocs.io/en/latest
+
+# training
+from pykeen.pipeline import pipeline
+
+result = pipeline(
+    model='TransE',
+    dataset='nations',
+    training_loop='sLCWA',           # default
+    evaluator='RankBasedEvaluator',  # default
+)
+
+# embeddings
+result.model.entity_representations
+result.model.relation_representations
+
+# embeddings -> ndarray
+entity_ids = result.training.entities_to_ids(["china", "egypt"])
+entity_embedding_tensor = entity_embeddings(indices=torch.as_tensor(entity_ids))
+entity_embedding_tensor = entity_embeddings.detach().cpu().numpy()
+
+# save fitted model
+pipeline_result.save_to_directory('..')
+
+# loading a pre-trained model
+my_pykeen_model = torch.load("trained_model.pkl")
+
+# use entity/relation labels to interact with model
+dataset.training.entities_to_ids(["foo", "bar"])
+dataset.training.relations_to_ids(["makes", "bakes"])
+
+# vi:syntax=python
