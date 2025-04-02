@@ -70,14 +70,15 @@ python3 -m http.server 7800
 \b       empty string
 (?<!\s)  current position is _not_ preceded by a whitespace character
 
-
 # regex matching;
 # match: left-anchored
 # search: anywhere
 regex = re.compile(r".*foo")
 regex.match(target)
 regex.search(target)
-regex.sub(pattern, replace, str)
+regex.sub(to, target)
+
+re.sub(pattern, replace, str)
 
 if (regex.search("foo")):
   print("found!")
@@ -100,6 +101,9 @@ for m in matches:
 matches.group(1)
 matches.groups()
 matches.groupdict()
+
+# multiline regex (also, re.MULTILINE flag)
+code_regex = re.compile(r"```(.+)((?:\n.+)+)```")
 
 # replace space between two specific words in case insensitive manner, while preserving case of
 # surrounding words

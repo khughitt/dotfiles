@@ -43,4 +43,9 @@ loader = DataLoader(dataset, batch_size=32, shuffle=True)
 for batch in loader:
   ...
 
+# visualize graph
+from torch_geometric.utils import to_networkx
+G = to_networkx(data, to_undirected=True)
+visualize_graph(G, color=data.y)
+
 # vi:syntax=python

@@ -23,6 +23,10 @@ num.toFixed(2)
 // add item to array
 a.push('foo')
 
+// iterate over numeric range
+for (let i = 0; i < 100; i++) {
+}
+
 // array foreach
 a.forEach((item) => { console.log(item); })
 a.forEach((item, ind) => { console.log(item); })  // enumerate

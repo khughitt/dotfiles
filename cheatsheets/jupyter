@@ -35,7 +35,7 @@ display(Markdown("..."))
 display(Latex("..."))
 
 # print HTML
-from IPython.display import display, HTML
+from IPython.display import HTML
 display(HTML("<span style='color: #00ff00;'>..</span>"))
 
 # print all rows
