@@ -2,3 +2,5 @@
 [^a]  # not "a"
 \b    # word boundary (ex. r'\bfoo\b')
 
+# url regex (https://stackoverflow.com/a/3809435/554531)
+https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)

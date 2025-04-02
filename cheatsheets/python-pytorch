@@ -6,6 +6,8 @@ torch.ones(shape)
 torch.rand(shape)
 torch.zeros(shape)
 
+torch.randn((), device=x, dtype=torch.float)
+
 torch.ones_like(t)
 torch.rand_like(t)
 

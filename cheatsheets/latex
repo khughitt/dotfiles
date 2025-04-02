@@ -1,8 +1,12 @@
+# draw -> latex
+# https://detexify.kirelabs.org/classify.html
+
 # angle brackets
 \langle
 \rangle
 
 # arrows
+\to
 \leftarrow
 \longleftarrow
 \Leftarrow
@@ -14,13 +18,24 @@
 \overrightarrow{\text{foo}}
 \underrightarrow{\text{foo}}
 
-# v ^
+# bracket with two conditions on separate lines
+a_{ij} = \begin{cases} 1 & (i,j) \in E \\
+                       0 & \text {otherwise}
+         \end{cases}
+
+# dash
+--
+
+# ∨ ^
 \vee
 \wedge
 
 # parens
 \left( 
 \right)
+
+# :
+\colon
 
 # equivalence
 \equiv
@@ -32,13 +47,12 @@
 \neq
 
 # multiplication / times
+\cdot
 \times
 
-# multiplication dot
-\cdot
-
-# tensor product
-\otimes
+# circle with plus or times
+\otimes  # tensor product
+\oplus
 
 # integration
 \int_{from}^{to} 
@@ -123,6 +137,14 @@
 1 & 2 & 3\\
 a & b & c
 \end{bmatrix}
+
+# column vector
+y = \begin{bmatrix}
+           x_{1}  \\
+           x_{2}  \\
+           \vdots \\
+           x_{m}
+    \end{bmatrix}
 
 # spacing
 \                # single space

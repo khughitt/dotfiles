@@ -8,6 +8,9 @@ x.item()
 # concatenate arrays
 np.concatenate([a, b])
 
+# generate sequence of numbers (start, stop, num)
+np.linspace(0, 1, 100)
+
 # matrix of zeros
 np.zeros(12).reshape(3, 4)
 

@@ -1,0 +1,11 @@
+// general
+// https://ollama.com/search
+ollama list
+ollama ps
+
+// model
+ollama run M
+ollama show M
+ollama stop M
+ollama pull M
+ollama rm M
