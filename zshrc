@@ -138,6 +138,12 @@ compdef _gnu_generic snakemake
 # https://github.com/sharkdp/bat/pull/3126
 # source <(bat completion zsh)
 
+# Xan completions
+function __xan {
+    xan compgen "$1" "$2" "$3"
+}
+complete -F __xan -o default xan
+
 # host-specific settings
 if [ -e $DOTFILES/shell/local/$HOST.zsh ]; then
     . $DOTFILES/shell/local/$HOST.zsh

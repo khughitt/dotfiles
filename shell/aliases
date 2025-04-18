@@ -102,6 +102,7 @@ alias jl='jupyter lab'
 
 # kitty
 alias icat='kitty +kitten icat'
+alias i=icat
 
 # "jog"; re-run command specific to current directory
 # https://github.com/natethinks/jog/blob/master/jog
@@ -155,7 +156,7 @@ alias vim=nvim
 alias vmi=nvim
 alias vm='kitty @ set-window-title nvim README.*md && nvim README.*md'
 alias vl="nvim -c \"normal '0\""                         # open most recently edited file / position
-alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}' # open last argument of last command in vim
+alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}'  # open last argument of last command in vim
 
 # netstat
 alias netp="sudo netstat -plant"

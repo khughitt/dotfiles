@@ -80,8 +80,8 @@ class Timer:
                 call(
                     [
                         "notify-send",
-                        "-t",
-                        "0",
+                        #  "-t",
+                        #  "0",
                         "Pomodoro",
                         "Timer reached zero",
                     ],

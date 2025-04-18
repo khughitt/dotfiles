@@ -1,5 +1,10 @@
 node_modules
+.cursor
+.cursorrules
 .project
 .pydevproject
 .snakemake
+.vscode
 *.pyc
+*.code-workspace
+

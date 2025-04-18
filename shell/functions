@@ -236,6 +236,32 @@ function check_gene {
 # dataset functions
 #
 
+#
+# preview table
+# csvpeek in.csv [num rows]
+function csvpeek {
+  numrows=3
+
+  if [ ! -z "$2" ]; then
+    numrows="$2"
+  fi
+
+  if [[ $1 == *.(tsv|txt)* ]]; then
+    csvlook \
+      -d $'\t' \
+      --max-rows $numrows \
+      --max-column-width 20 \
+      $1 
+  elif [[ $1 == *.csv* ]]; then
+    csvlook \
+      --max-rows $numrows \
+      --max-column-width 20 \
+      $1 
+  else
+    echo "Unrecognized file extension!"
+  fi
+}
+
 # number of columns
 function ncol {
     if [[ $1 == *.tsv* ]]; then
@@ -257,13 +283,13 @@ function o {
     ext="${filename##*.}"
 
     if [ $ext = "feather" ]; then
-        ipython -i -c "import pandas as pd; dat=pd.read_feather('$1'); dat;"
+        ipython -i -c "import pandas as pd; df=pd.read_feather('$1'); df;"
     elif [ $ext = "parquet" ]; then
-        ipython -i -c "import pandas as pd; dat=pd.read_parquet('$1'); dat;"
+        ipython -i -c "import pandas as pd; df=pd.read_parquet('$1'); df;"
     elif [ $ext = "csv" ]; then
-        ipython -i -c "import pandas as pd; dat=pd.read_csv('$1'); dat;"
+        ipython -i -c "import pandas as pd; df=pd.read_csv('$1'); df;"
     elif [ $ext = "tsv" ] || [ $ext = "txt" ]; then
-        ipython -i -c "import pandas as pd; dat=pd.read_csv('$1', sep='\t'); dat;"
+        ipython -i -c "import pandas as pd; df=pd.read_csv('$1', sep='\t'); df;"
     else
         echo "Unrecognized filetype specified: $ext"
     fi
@@ -318,13 +344,12 @@ function vite_proj {
 
   npm install eslint eslint-plugin-react --save-dev
 
-  # feb25; use r3f rc compat for now to support react 19
-  #npm install three @types/three @react-three/fiber \
-  # @react-three/drei 
-
   # r3f & friends
-  npm install three @types/three @react-three/fiber@rc \
-    @react-three/drei@rc
+  npm install three @types/three @react-three/fiber @react-three/drei
+
+  # feb25; use r3f rc compat for now to support react 19
+  # npm install three @types/three @react-three/fiber@rc \
+  #   @react-three/drei@rc
     #@react-three/postprocessing leva
 
   # .glsl support
