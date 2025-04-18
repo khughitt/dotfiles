@@ -258,26 +258,30 @@ require("config.lazy")
 -----------------------------------------------------------------------------
 -- mason
 -----------------------------------------------------------------------------
-require("mason").setup()
-require("mason-lspconfig").setup()
+if not vim.g.vscode then
+  require("mason").setup()
+  require("mason-lspconfig").setup()
+end
 
 -----------------------------------------------------------------------------
 -- nvim-lspconfig
 -----------------------------------------------------------------------------
-local lspconfig = require'lspconfig'
+if not vim.g.vscode then
+  local lspconfig = require'lspconfig'
 
-lspconfig.quick_lint_js.setup({
-    filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"}
-})
+  lspconfig.quick_lint_js.setup({
+      filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"}
+  })
 
-lspconfig.r_language_server.setup {
-  cmd = {"R", "--slave", "-e", "languageserver::run()"},
-  filetypes = {"r", "rmd"},
-  root_dir = function(fname)
-    return lspconfig.util.find_git_ancestor(fname)
-  end,
-  settings = {},
-}
+  lspconfig.r_language_server.setup {
+    cmd = {"R", "--slave", "-e", "languageserver::run()"},
+    filetypes = {"r", "rmd"},
+    root_dir = function(fname)
+      return lspconfig.util.find_git_ancestor(fname)
+    end,
+    settings = {},
+  }
+end
 
 -----------------------------------------------------------------------------
 -- lualine
@@ -305,14 +309,16 @@ require('colorizer').setup {}
 -----------------------------------------------------------------------------
 -- R.nvim
 -----------------------------------------------------------------------------
-require'r'.setup {
-  -- show term on bottom
-  rconsole_width = 0,
-  source_args = "echo = TRUE"
+if not vim.g.vscode then
+  require'r'.setup {
+    -- show term on bottom
+    rconsole_width = 0,
+    source_args = "echo = TRUE"
 
-  -- show term on left side (jan25: not working..)
-  -- nosplitright = true
-}
+    -- show term on left side (jan25: not working..)
+    -- nosplitright = true
+  }
+end
 
 -----------------------------------------------------------------------------
 -- which-key (testing)
@@ -322,14 +328,16 @@ require'r'.setup {
 -----------------------------------------------------------------------------
 -- barbar.nvim
 -----------------------------------------------------------------------------
-local map = vim.api.nvim_set_keymap
-local opts = { silent = true }
+if not vim.g.vscode then
+  local map = vim.api.nvim_set_keymap
+  local opts = { silent = true }
 
-map('n', '<leader>bd', '<cmd>BufferClose<cr>', opts)
-map('n', '<s-tab>', '<cmd>BufferPrevious<cr>', opts)
-map('n', '<tab>', '<cmd>BufferNext<cr>', opts)
-map('n', '<s-left>', '<cmd>BufferPrevious<cr>', opts)
-map('n', '<s-right>', '<cmd>BufferNext<cr>', opts)
+  map('n', '<leader>bd', '<cmd>BufferClose<cr>', opts)
+  map('n', '<s-tab>', '<cmd>BufferPrevious<cr>', opts)
+  map('n', '<tab>', '<cmd>BufferNext<cr>', opts)
+  map('n', '<s-left>', '<cmd>BufferPrevious<cr>', opts)
+  map('n', '<s-right>', '<cmd>BufferNext<cr>', opts)
+end
 
 -- ---------------------------------------------------------------------------
 -- csv.vim
@@ -413,8 +421,8 @@ vim.keymap.set('v', '<space>', '<leader>c<space>')
 -- ---------------------------------------------------------------------------
 -- supertab.vim
 -- ---------------------------------------------------------------------------
-vim.g.SuperTabCrMapping=1
-vim.g.SuperTabDefaultCompletionType = "context"
+-- vim.g.SuperTabCrMapping=1
+-- vim.g.SuperTabDefaultCompletionType = "context"
 
 -- ---------------------------------------------------------------------------
 --  treesitter

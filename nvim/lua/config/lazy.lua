@@ -22,10 +22,15 @@ vim.opt.rtp:prepend(lazypath)
 --vim.g.maplocalleader = ","
 
 -- Setup lazy.nvim
+-- require("lazy").setup({
+--   spec = {
+--     { import = "plugins" },
+--   },
+--   install = { colorscheme = { "habamax" } },
+--   checker = { enabled = false },
+-- })
 require("lazy").setup({
-  spec = {
-    { import = "plugins" },
-  },
-  install = { colorscheme = { "habamax" } },
-  checker = { enabled = false },
+	{ import = "plugins_notvscode", cond = (function() return not vim.g.vscode end) },
+	{ import = "plugins_always",    cond = true },
+	{ import = "plugins_vscode",    cond = (function() return vim.g.vscode end) },
 })
