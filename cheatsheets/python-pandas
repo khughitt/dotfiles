@@ -77,9 +77,6 @@ for index, row in df.iterrows():
     row.foo
     row[0]
 
-# iterate over rows as dicts
-df.to_dict(orient="records")
-
 # iterate over columns
 for cname, col in df.items():
   print(col)
@@ -88,8 +85,24 @@ for cname, col in df.items():
 for index, value in s.items():
   ...
 
+# iterate over rows as dicts
+df.to_dict(orient="records")
+
+Dicts
+-----
+
+# 2-col df -> dict of key-value pairs
+dict(zip(x.tag, x.color))
+
+# df -> nested dict indexed by id
+dict(zip(df.id_field, 
+         df.set_index('id_field').to_dict(orient="records")))
+
 Creation
 --------
+
+# dict of key-value pairs -> 2-col df
+pd.DataFrame(d.items(), columns=[...])
 
 # dict of columns / list of row dicts
 pd.DataFrame.from_dict(d)
@@ -151,15 +164,6 @@ pd.to_datetime(df["ts"], unit="s")
 
 # get all rows for a specific date
 df[df["date"].dt.normalize() == "2021-12-07"]
-
-Dicts
------
-
-# 2-col df -> dict of key-value pairs
-dict(zip(x.tag, x.color))
-
-# dict of key-value pairs -> 2-col df
-pd.DataFrame(d.items(), columns=[...])
 
 Joins
 -----
@@ -384,20 +388,21 @@ df.apply(lambda x: x - x.mean())
 
 # min-max scaling (numpy / scikit)
 from sklearn import preprocessing
+
 mat = df.to_numpy()
 scaler = preprocessing.MinMaxScaler().fit(mat)
 scaled_mat = scaler.transform(mat)
+
+# standardization (numpy / scikit)
+scaler = preprocessing.StandardScaler().fit(df)
+scaled_df = scaler.transform(df)
+df.iloc[:, :] = scaled_df
 
 # divide rows by row totals (i.e. convert to ratios)
 df.apply(lambda x: x / x.sum(), axis=1)
 
 # different approach for the same thing..
 df.div(df.sum(axis=1), axis=0)
-
-# standardization (numpy / scikit)
-scaler = preprocessing.StandardScaler().fit(mat)
-scaled_mat = scaler.transform(mat)
-
 
 Variance
 --------

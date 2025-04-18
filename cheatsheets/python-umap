@@ -1,7 +1,13 @@
 # pip install umap-learn
 import umap
+import pandas as pd
+import seaborn as sns
+
 reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric='cosine', densmap=True, n_components=2,
                     random_state=321)
-embedding = reducer.fit_transform(dat)
+umap_embedding = reducer.fit_transform(dat)
+
+umap_df = pd.DataFrame(umap_embedding, columns=['UMAP1', 'UMAP2'])
+sns.scatterplot(data=umap_df, x='UMAP1', y='UMAP2').set(title="UMAP plot")
 
 # vi:syntax=python

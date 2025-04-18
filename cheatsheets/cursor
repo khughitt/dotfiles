@@ -1,3 +1,14 @@
+// general
+ctrl + shift + p  // command palette
 
-ctrl + /            // toggle line comment
-ctrl + shift + a    // toggle block comment
+// views
+ctrl + i          // toggle right panel
+ctrl + b          // toggle left panel
+
+// comments
+ctrl + /          // toggle line comment
+ctrl + shift + a  // toggle block comment
+
+// refs:
+// 1. https://docs.cursor.com/kbd
+// 2. https://code.visualstudio.com/shortcuts/keyboard-shortcuts-linux.pdf

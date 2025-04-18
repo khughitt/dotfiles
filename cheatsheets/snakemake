@@ -5,6 +5,9 @@ snakemake --skip-script-cleanup
 snakemake --keep-going --restart-times 5
 snakemake -k -T 5
 
+# visualize dag
+snakemake --dag | dot -Tsvg > dag.svg
+
 # debug r scripts
 message(snakemake)
 save.image()

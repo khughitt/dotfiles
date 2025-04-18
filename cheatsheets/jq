@@ -14,3 +14,9 @@ jq -C "." x.json | less -R
 
 # get first element in array
 jq '.[0]' x.json
+
+# get first key in dict
+jq 'keys_unsorted[0]' x.json
+
+# get first value in dict
+jq '.[keys_unsorted[0]]' x.json

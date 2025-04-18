@@ -22,23 +22,35 @@ torch.cat([t1, ..., tn], dim=1)
 # matrix multiplication
 x @ y
 x.matmul(y)
+torch.mm(x, y)
 
-# element-wise product
+# element-wise multiplication (hadamard product)
 x * y
 x.mul(y)
+torch.mul(x, y)
 
-# export
-tensor.numpy()
-tensor.tolist()
+# dot-product
+torch.dot(x, y)
 
-# transfer tensor gpu
+# matrix-vector product
+torch.mv(m, v)
+
+# transfer tensor gpu|cpu
 tensor.cuda()
+tensor.cpu()
 
 # transfer tensor to specific gpu
 cuda = torch.device('cuda') 
 
 torch.tensor(..., device=cuda)
 torch.tensor(...).to(device=cuda)
+
+# gpu -> ndarray
+tensor.cpu().detach().numpy()
+
+# export
+tensor.numpy()
+tensor.tolist()
 
 # clip values
 torch.clamp(x, min=-1.0, max=1.0)
@@ -51,5 +63,8 @@ x.squeeze(dim)
 
 # unsqueeze (n dim -> n+1 dim)
 x.unsqueeze(dim)
+
+# flatten tensor
+x.view(-1)
 
 # vi:syntax=python

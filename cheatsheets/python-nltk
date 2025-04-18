@@ -8,6 +8,9 @@ from nltk.stem.wordnet import WordNetLemmatizer
 lemmatizer = WordNetLemmatizer()
 lemmatizer.lemmatize(word)
 
+# sentences
+nltk.sent_tokenize(doc)
+
 # stemmer comparison
 # https://stackoverflow.com/a/24663617/554531
 

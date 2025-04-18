@@ -48,6 +48,11 @@ pd.set_option('display.max_colwidth', 0)
 for df in dfs:
   display(df)
 
+# show plots rendered in a for-loop
+for ..:
+  ..
+  plt.show()
+
 # disable scrolling for a particular chunk's output
 1. select output
 2. `shift-O`
