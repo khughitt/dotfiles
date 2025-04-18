@@ -7,3 +7,4 @@ anaconda_upload: true
 allow_conda_downgrades: true
 auto_activate_base: false
 channel_priority: strict
+repodata_use_zst: true

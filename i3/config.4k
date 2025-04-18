@@ -323,8 +323,8 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 # Scratchpads
 #-------------------------------------------------------------------------------
 
-set $scratch_width 2680
-set $scratch_height 1220
+set $scratch_width 2064
+set $scratch_height 1020
 
 #-- terminal --#
 exec_always --no-startup-id kitty --name=kitty_scratch
