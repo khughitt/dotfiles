@@ -30,6 +30,9 @@ np.fill_diagonal(a, 0)
 # get off-diagonal values
 a[np.where(~np.eye(a[0], dtype=bool))]
 
+# apply function along row/cols
+np.apply_along_axis(func, axis, a)
+
 # random uniform matrix in [0, 1]
 np.random.rand(3, 4)
 

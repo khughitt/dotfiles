@@ -1,6 +1,11 @@
 -- compilation
 ghc --make -dynamic -o foo foo.hs
 
+-- basic script structure
+module Main where
+...
+main = ..
+
 -- built-in types
 1       -- Int
 1.0     -- Float
@@ -16,6 +21,9 @@ True    -- Bool
 -- type?
 :t "foo"
 :t func
+
+-- type cast
+show 5 -- str
 
 -- local variables
 let x = 5
@@ -33,11 +41,13 @@ not a
 a /= b
 
 -- strings
-a ++ b -- concatenation
-lines a  -- split string on newlines
+a <> b    -- concatenation
+a ++ b    -- concatenation (old way..)
+lines a   -- split string on newlines
 
 -- lists
-a ++ b     -- concatenation
+a <> b     -- concatenation
+a ++ b     -- concatenation (old way..)
 1 : [2,3]  -- add element to front of list ("cons")
 head x
 tail x
@@ -50,8 +60,15 @@ zip [1,2,3] ['a', 'b', 'c'] -- lst + lst -> lst of tuples
 
 -- ranges / list enumeration
 [1..10]
+[10,9..1]
 [1.0,1.5..100.0]
 ['a'..'z']
+
+
+-- tuples
+let x = (1, 'a')
+fst x
+snd x
 
 -- conditionals
 if ..
@@ -62,8 +79,16 @@ else ..
 add a b = a + b
 add 1 2
 
+-- lambdas
+
+\a b -> a <> b
+
 -- composition
 g . f
 g ∘ f
+
+-- printing
+putStrLn "..."
+print 5  -- putStrLn ( show 5 ))
 
 -- vi:syntax=haskell

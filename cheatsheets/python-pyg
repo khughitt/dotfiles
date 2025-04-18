@@ -22,6 +22,9 @@ edge_index = torch.tensor([[..from..], [..to..]], dtype=torch.long)
 x = torch.tensor([[0], [1], [2]], dtype=torch.float)
 data = Data(x=x, edge_index=edge_index)
 
+# networkx -> pyg
+data = from_networkx(G, group_node_attrs="all")
+
 # load example datasets;
 # https://pytorch-geometric.readthedocs.io/en/latest/modules/datasets.html
 from torch_geometric.datasets import PPI

@@ -11,4 +11,3 @@ in2csv in.xls | csvformat -T > out.tsv
 csvlook --max-rows 3 in.csv 
 csvlook --max-rows 3 -d $'\t' in.tsv
 csvlook --max-rows 3 --max-column-width 15 in.csv 
-

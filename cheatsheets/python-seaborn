@@ -15,6 +15,10 @@ sns.color_palette("viridis", 10).as_hex()
 
 # point size
 sns.scatterplot(s=5, ..)
+sns.scatterplot(size='foo')
+
+# list specific point sizes to use for bool / categorical variable
+sns.scatterplot(size='foo', sizes=(5, 2)) 
 
 # add title to scatterplot
 sns.scatterplot(...).set(title="foo")

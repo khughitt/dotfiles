@@ -7,3 +7,8 @@ it         -- variable with result of last expr
 
 :cd /path
 :load file.hs
+
+-- multiline expressions
+:{
+  ..
+}:

@@ -19,6 +19,10 @@ G.edges[(u, v)]
 G.edges[u, v]
 G.edges[u, v]["weight"]
 
+# iterate over nodes
+for node_id in G.nodes:
+  node = G.nodes[node_id]
+
 # iterate over node attributes
 for node in G.nodes.data():
   id_ = node[0]
@@ -41,11 +45,22 @@ for (u, v, weight) in G.edges.data('weight'):
 # get list of edge weights
 edge_weights = [x[2]["weight"] for x in G.edges(data=True)]
 
-# filter edges (read-only; attempting to filter/modify view can lead to problems..)
+# filter nodes based on edges
+edges_to_filter = [e1, e2,..]
+nodes_to_remove = set()
+    
+for u, v in G.edges():
+    if v in edges_to_filter:
+        nodes_to_remove.add(u)
+
+nodes_to_keep = [x for x in G.nodes if x not in nodes_to_remove]
+G1 = G.subgraph(nodes_to_keep).copy()
+
+# filter edges by attr (creates a read-only view)
 def filter_edge(n1, n2):
     return G[n1][n2].get("weight") > 0.5
 
-nx.subgraph_view(G, filter_edge=filter_edge)
+nx.subgraph_view(G, filter_edge=filter_edge).copy()
 
 # edge lists
 edges = [('a', 'b',) ('b', 'd',), ...]
@@ -67,6 +82,10 @@ G.add_edge(('a', 'b',))
 G.add_edges_from(edges)
 G.add_weighted_edges_from(weighted_edges)
 
+# add self edges
+self_edges = [(id_, id_) for id_ in G.nodes]
+G.add_edges_from(self_edges)
+
 # remove nodes (in place)
 G.remove_node(x)
 G.remove_nodes_from([x, y, z])
@@ -75,6 +94,8 @@ G.remove_nodes_from([x, y, z])
 G.remove_edge((u, v))
 G.remove_edges_from([...])
 
+# drop fully-disconnected nodes
+G.remove_nodes_from(list(nx.isolates(G)))
 
 # force-directed layout
 pos = nx.spring_layout(G, seed=321)
@@ -85,6 +106,7 @@ nx.draw(G, pos=pos)
 nx.draw_nx_labels(G, pos, labels)   # "labels" = dict of labels indexed by node
 
 # add node attributes ("node_attrs" = nested dict of node attributes)
+# extends existing attributes
 node_attrs = {"id1": {"color": "red",..},..}
 nx.set_node_attributes(G, node_attrs)
 

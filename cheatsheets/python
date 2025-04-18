@@ -36,7 +36,7 @@ b = [0.5, 0.1, 1.0]
 # create a dict from lists of keys/values
 dict(zip(k, v))
 
-# concat dicsts (out-of-place)
+# concat dicts (out-of-place)
 a | b
 
 # get index of item in list
@@ -68,7 +68,9 @@ python3 -m http.server 7800
 \w       word character ([a-zA-Z0-9_])
 \W       non-word character
 \b       empty string
+(?:...)  non-capturing
 (?<!\s)  current position is _not_ preceded by a whitespace character
+[^a-z]   match any character _except_ lowercase letters
 
 # regex matching;
 # match: left-anchored
@@ -254,7 +256,6 @@ list(pathlib.Path("path/").glob("**/*.*"))
 # delete file/folder (pathlib)
 p.unlink(..)
 p.rmdir(..)
-p.rmthree(..)
 
 # delete file/folder (os/shutil)
 os.remove(path)
@@ -270,6 +271,7 @@ path = pathlib.Path(..)
 path.mkdir(mode=0o755, parents=True, exist_ok=True)
 
 # pathlib basics
+path.exists()
 path.name
 path.parent
 path.parts

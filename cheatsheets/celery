@@ -3,3 +3,36 @@ celery -A proj status
 
 # inspect active tasks
 celery -A proj inspect active
+
+# call tasks
+t.delay(...)     # similar to calling a regular func
+t.apply_async()  # different signature, but more flexibility
+
+# signatures
+t.signature((..))
+t.s(..)
+
+# chaining tasks
+res = celery.chain(add.s(2, 2), add.s(4), ...)()
+res.get()
+
+# chord (group -> chain)
+res = celery.chord(tasks, task)()
+
+# check if task is running
+def _is_xx_running(self):
+    is_running = False
+
+    try:
+        active_tasks = app.control.inspect().active()
+    except:
+        raise Exception("Error encountered while attempting to query Celery status")
+
+    if active_tasks is not None:
+
+        for _, running_tasks in active_tasks.items():
+            for task in running_tasks:
+                if task["name"] == "foo.tasks.xx_task":
+                    is_running = True
+    
+    return is_running
