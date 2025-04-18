@@ -1,0 +1,34 @@
+# This file contains default non-project-specific settings for 'stack', used
+# in all projects.  For more information about stack's configuration, see
+# http://docs.haskellstack.org/en/stable/yaml_configuration/
+
+# The following parameters are used by "stack new" to automatically fill fields
+# in the cabal config. We recommend uncommenting them and filling them out if
+# you intend to use 'stack new'.
+# See https://docs.haskellstack.org/en/stable/yaml_configuration/#templates
+templates:
+  params:
+#    author-name:
+#    author-email:
+#    copyright:
+#    github-username:
+
+# The following parameter specifies stack's output styles; STYLES is a
+# colon-delimited sequence of key=value, where 'key' is a style name and
+# 'value' is a semicolon-delimited list of 'ANSI' SGR (Select Graphic
+# Rendition) control codes (in decimal). Use "stack ls stack-colors --basic"
+# to see the current sequence.
+# stack-colors: STYLES
+
+# Stop downloading GHCs into isolated locations under ~/.stack
+install-ghc: false
+
+# Allow Stack to pick the system GHC (false by default).
+system-ghc: true
+
+# Allow to use, say, Stackage snapshot for GHC 8.8.2 with system GHC 8.8.3.
+compiler-check: newer-minor
+
+# Add the -dynamic flag to every invocation of GHC.
+ghc-options:
+  "$everything": -dynamic

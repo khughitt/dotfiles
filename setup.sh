@@ -80,6 +80,10 @@ for path in "cookiecutterrc" "ctags" "dir_colors"  \
     ln_s ${DOTS_HOME}/${path} ~/.${path}
 done
 
+# ghci
+mkdir -p ${HOME}/.ghc
+ln_s ${DOTS_HOME}/ghci.conf ${HOME}/.ghc/ghci.conf
+
 # git
 ln_s ${DOTS_HOME}/git/ignore ${HOME}/.gitignore_global
 ln_s ${DOTS_HOME}/git/config ${HOME}/.gitconfig
