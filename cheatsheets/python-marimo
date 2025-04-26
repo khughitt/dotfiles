@@ -1,0 +1,19 @@
+# convert ipynb
+marimo convert in.ipynb > nb.py
+
+# create / open
+marimo edit
+marimo edit nb.py
+
+# deploy as app
+marimo run nb.py
+
+# run as script
+python nb.py
+
+# markdown
+import marimo as mo 
+mo.md("...")
+
+
+# vi:syntax=python

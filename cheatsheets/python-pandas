@@ -570,11 +570,19 @@ df.corr()
 from sklearn.metrics.pairwise import cosine_similarity
 cosine_similarity(df.T)
 
+Time series
+-----------
+
+# rolling window / counts by window size
+df['indicator'] = 0
+df.sort_values('time').set_index('time').groupby('target_id').rolling('48h')['indicator'].sum()
+
 SQL
 ---
 
-# get sql result as a pandas dataframe (ex. sqlite3)
+# get sql result as a pandas dataframe
 db = sqlite3.connect(..)
+db = psycopg.connect(..)
 df = pd.read_sql_query(sql, db)
 
 Clipboard
