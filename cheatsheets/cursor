@@ -5,6 +5,10 @@ ctrl + shift + p  // command palette
 ctrl + i          // toggle right panel
 ctrl + b          // toggle left panel
 
+// editor
+<f12>             // jump to code defintion for function under cursor
+ctrl + click      // same thing..
+
 // comments
 ctrl + /          // toggle line comment
 ctrl + shift + a  // toggle block comment

@@ -53,8 +53,9 @@ head x
 tail x
 tail "foo"
 take 2 x   -- get first two elements
-drop 2 x   -- get all elements *except* the last two
+drop 2 x   -- get all elements *except* the first two
 null x     -- is empty?
+reverse x
 
 zip [1,2,3] ['a', 'b', 'c'] -- lst + lst -> lst of tuples
 
@@ -63,7 +64,6 @@ zip [1,2,3] ['a', 'b', 'c'] -- lst + lst -> lst of tuples
 [10,9..1]
 [1.0,1.5..100.0]
 ['a'..'z']
-
 
 -- tuples
 let x = (1, 'a')
@@ -79,9 +79,16 @@ else ..
 add a b = a + b
 add 1 2
 
+-- higher-order functions
+map func target  -- apply
+filter odd [1,2,3]
+
 -- lambdas
 
 \a b -> a <> b
+
+-- function application operator
+g $ f 1 2 -- g (f 1 2)
 
 -- composition
 g . f
@@ -90,5 +97,10 @@ g ∘ f
 -- printing
 putStrLn "..."
 print 5  -- putStrLn ( show 5 ))
+
+-- math
+min a b
+minimum [1, 3, 5]
+odd 5
 
 -- vi:syntax=haskell

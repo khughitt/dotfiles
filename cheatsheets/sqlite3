@@ -3,3 +3,6 @@
 
 # list tables
 .tables
+
+# describe table
+.schema tbl

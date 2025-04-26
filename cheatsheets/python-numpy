@@ -55,6 +55,9 @@ np.random.choice(arr, 3)
 # sample n values from a matrix
 np.random.choice(mat.ravel(), 3)
 
+# weighted sampling
+np.random.choice(arr, k, replace=False, p=weights)
+
 # sample n values from an array, specifying random seed
 rng = np.random.default_rng(321)
 rng.choice(arr, 3)

@@ -35,7 +35,8 @@ fd -S "-1m"
 fd foo -x sh -c "x=\"$1\"; echo ${x/foo/bar/}" sh
 
 # find hidden directories
-fd -t d --regex "^\." --hidden
+fd -t d --hidden --regex "^\."
+fd -t d --hidden --glob ".*"
 
 # find directories with a specified name and print ownership info
 fd -td "^web$" -x stat -c "%U %G"

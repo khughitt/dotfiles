@@ -1,0 +1,12 @@
+# venv
+uv venv ~/venv/foo
+uv venv ~/venv/foo --python 3.11
+
+# pip
+uv pip ...
+
+# update all pkgs in venv
+# https://github.com/astral-sh/uv/issues/1419#issuecomment-2726472894
+for pkg in $(uv pip freeze | grep -v '^-e'); do uv pip install -U $pkg; done
+
+# vi:syntax=sh
