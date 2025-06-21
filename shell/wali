@@ -52,6 +52,13 @@ function wali_edit_fav {
     fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
 
   [ ! -z "$target" ] && /bin/gimp $target
+
+  imgdir = `dirname "$target"`
+
+  wali \
+    --image-dir="$imgdir" \
+    --file="$target" \
+    change 
 }
 
 # find an image by name and open it in gimp
@@ -70,6 +77,42 @@ function wali_pal {
   magick -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/a.png
   magick -size 64x64 xc:"$color1" xc:"$color2" xc:"$color3" xc:"$color4" xc:"$color5" xc:"$color6" +append /tmp/b.png
   magick -append /tmp/a.png /tmp/b.png ~/.cache/wal/palette.png
+}
+
+# image ingestion
+function wali_ingest {
+  for x in $BACKGROUND_IMG_DIR/*/*/*.jpg; do
+    # output filepath
+    fname=${x##*/}
+    outfile="$WALI_DIR/3440/${fname/.jpg/.png}"
+
+    if [ ! -e "$outfile" ]; then
+      # initial convert command
+      cmd="magick $x"
+
+      # get width/height
+      dims=`identify $x | cut -d ' ' -f 3`
+
+      w=`echo $dims | cut -d 'x' -f 1`
+      h=`echo $dims | cut -d 'x' -f 2`
+
+      # if height > width, rotate image
+      if [ "$h" -gt "$w" ]; then
+        cmd="$cmd -rotate 90"
+      fi
+
+      cmd="$cmd -resize 3440x $outfile"
+
+      echo $cmd
+      eval $cmd
+
+      # strip metadata
+      mogrify -strip $outfile
+
+      # squish
+      oxipng -o 4 $outfile
+    fi
+  done
 }
 
 # vi:syntax=bash

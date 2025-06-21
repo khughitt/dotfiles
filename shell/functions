@@ -83,9 +83,18 @@ function pg {
     ps -Af | grep $1 | grep -v grep
 }
 
-# docker tty
+# docker
 function dty {
     docker exec -it $1 /bin/bash
+}
+function up {
+  # if container specified, just build it
+  if [ $# -gt 0 ]; then
+    docker compose up --build
+  else
+    # otherwise build everything
+    docker compose up --build
+  fi
 }
 
 # pandoc + mermaid
