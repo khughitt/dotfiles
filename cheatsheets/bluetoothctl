@@ -5,6 +5,7 @@ scan on
 
 # basics
 devices
+info xx
 pair xx
 connect xx
 trust xx

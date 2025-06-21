@@ -34,7 +34,7 @@ g                   make legato
 alt-q               quantize...             
 alt-r               reverse                 
 shift-alt-r         reverse pattern         
-c-`                 scale... (or: shift-alt + mouse drag)
+c-`                 scale... (or: alt + drag clip)
 
 toggle micopitch editing     shift-alt-m
 

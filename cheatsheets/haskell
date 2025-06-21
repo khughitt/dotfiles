@@ -23,9 +23,10 @@ True    -- Bool
 :t func
 
 -- type cast
-show 5 -- str
+show 5 -- any -> str
 
--- local variables
+-- let / where
+-- https://wiki.haskell.org/Let_vs._Where
 let x = 5
     y = z + 1
 in ..
@@ -46,6 +47,7 @@ a ++ b    -- concatenation (old way..)
 lines a   -- split string on newlines
 
 -- lists
+a !! 3     -- indexing
 a <> b     -- concatenation
 a ++ b     -- concatenation (old way..)
 1 : [2,3]  -- add element to front of list ("cons")
@@ -55,9 +57,14 @@ tail "foo"
 take 2 x   -- get first two elements
 drop 2 x   -- get all elements *except* the first two
 null x     -- is empty?
+length x
 reverse x
+i `elem` x -- membership
 
 zip [1,2,3] ['a', 'b', 'c'] -- lst + lst -> lst of tuples
+
+-- math
+mod 5 3   -- modulo
 
 -- ranges / list enumeration
 [1..10]
@@ -65,10 +72,14 @@ zip [1,2,3] ['a', 'b', 'c'] -- lst + lst -> lst of tuples
 [1.0,1.5..100.0]
 ['a'..'z']
 
+-- list comprehension
+[x^2 | x <- [1..10]]          -- map
+[x^2 | x <- [1..10], odd x]   -- map + filter
+
 -- tuples
-let x = (1, 'a')
-fst x
-snd x
+x = (1, 'a')
+fst x   -- get first item from a two-element tuple
+snd x   -- get second item from a two-element tuple
 
 -- conditionals
 if ..
@@ -79,24 +90,38 @@ else ..
 add a b = a + b
 add 1 2
 
+-- guards
+
+func args
+  | cond1 = ...
+  | cond2 = ...
+  | otherwise ...
+
 -- higher-order functions
-map func target  -- apply
-filter odd [1,2,3]
+
+--- map (apply)
+map fxn [1..10]
+fmap fxn [1..10]
+
+--- filter
+filter odd [1..10]
+
+--- fold (reduce)
+foldl (+) 0 [1..10]
 
 -- lambdas
 
 \a b -> a <> b
 
 -- function application operator
-g $ f 1 2 -- g (f 1 2)
+g $ f 1 2       -- g (f 1 2)
 
 -- composition
-g . f
-g ∘ f
+h = g . f       -- "f then g.."
 
 -- printing
-putStrLn "..."
-print 5  -- putStrLn ( show 5 ))
+putStrLn "..."  -- print string
+print 5         -- print any; i.e. "printStrLn (show x)"
 
 -- math
 min a b

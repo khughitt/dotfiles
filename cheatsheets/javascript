@@ -152,6 +152,10 @@ JSON.stringify(a) == JSON.stringify(b);
 // check array equality (any order)
 JSON.stringify(a.sort()) == JSON.stringify(b.sort());
 
+// check if any array values are undefined
+a.includes(undefined)
+a.indexOf(undefined) !== -1
+
 // equality
 a === b  // strict equality (type + value)
 a == b   // loose equality (performs type coercion)
@@ -161,6 +165,9 @@ typeof x
 
 // array?
 Array.isArray(x)
+
+// event target -> numeric
+event.target.valueAsNumber
 
 // lower/upper case
 str.toLowerCase()
@@ -173,6 +180,7 @@ str.startsWith("foo")
 
 // substring
 str.substring(1, 5)
+str.slice(0, -1)
 
 // split string by space
 str.split(" ")

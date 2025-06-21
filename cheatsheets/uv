@@ -1,9 +1,31 @@
 # venv
 uv venv ~/venv/foo
 uv venv ~/venv/foo --python 3.11
+uv pip install ..
 
 # pip
 uv pip ...
+uv pip install "git+https://github.com/a/b"
+uv pip install -e .
+
+# project management (~poetry)
+uv init
+uv add pandas
+uv add ruff --dev
+uv run ./script.py
+
+uv sync   # install deps
+
+# ruff
+uv run ruff check .
+uv run ruff check --show-settings --verbose
+
+# sandboxed tools (~pipx)
+uv tool install marimo            # install
+uvx run marimo edit notebook.py   # run directly
+
+# ipython %run
+%run .venv/bin/foo ..
 
 # update all pkgs in venv
 # https://github.com/astral-sh/uv/issues/1419#issuecomment-2726472894

@@ -6,3 +6,10 @@
 
 # describe table
 .schema tbl
+
+# number of days ince Nov 24, 4714 BC
+julianday(now)
+julianday(field)
+
+# difference in days..
+abs(julianday(now) - julianday(field))

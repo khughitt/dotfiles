@@ -357,6 +357,9 @@ df.idxmax(axis=1)
 # get indices & values for the N largest values in a (matrix) dataframe
 df.stack().sort_values(ascending=False).iloc[:n]
 
+# get indices of top N values in a series
+s.iloc[np.argsort(s)].tail(n).index.values
+
 # get min of two or more cols
 df[["a","b"]].min(axis=1)
 
