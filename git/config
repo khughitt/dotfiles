@@ -13,6 +13,11 @@
 	user = khughitt
 [diff]
   colorMoved = default
+  tool = meld
+[difftool]
+  prompt = false
+[difftool "meld"]
+  cmd = meld "$LOCAL" "$REMOTE"
 [init]
 	defaultBranch = trunk
 [interactive]
