@@ -296,15 +296,19 @@ require('lualine').setup {
 -----------------------------------------------------------------------------
 -- marks.nvim
 -----------------------------------------------------------------------------
-require'marks'.setup {
-  refresh_interval = 350
-}
+if not vim.g.vscode then
+  require'marks'.setup {
+    refresh_interval = 350
+  }
+end
 
 -----------------------------------------------------------------------------
 -- nvim-colorizer
 -----------------------------------------------------------------------------
-vim.cmd('set termguicolors')
-require('colorizer').setup {}
+if not vim.g.vscode then
+  vim.cmd('set termguicolors')
+  require('colorizer').setup {}
+end
 
 -----------------------------------------------------------------------------
 -- R.nvim
@@ -354,6 +358,7 @@ end
 --   hide_fillchars = true,
 -- })
 -- vim.cmd("colorscheme cyberdream")
+-- vim.cmd[[colorscheme tokyonight-day]]
 vim.cmd[[colorscheme tokyonight]]
 
 -- ---------------------------------------------------------------------------
