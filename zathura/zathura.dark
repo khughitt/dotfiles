@@ -2,18 +2,18 @@
 set selection-clipboard primary
 set statusbar-basename true
 set adjust-open "width"
+set guioptions "vs"
+
+set font "inconsolata 14"
 
 # Keyboard mappings
 map ` mark_evaluate
-
-set font "inconsolata 14"
 
 # set recolor true
 
 set default-bg '#11171d'
 set default-fg '#a8a8a8'
 
-set guioptions='v'
 
 set recolor-lightcolor '#11171d'
 set recolor-darkcolor '#a8a8a8'

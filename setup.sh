@@ -84,6 +84,24 @@ done
 mkdir -p ${HOME}/.ghc
 ln_s ${DOTS_HOME}/ghci.conf ${HOME}/.ghc/ghci.conf
 
+# gimp
+GIMP_DIR="${XDG_CONFIG_HOME}/GIMP/3.0"
+GIMP_PLUGIN_DIR="${XDG_CONFIG_HOME}/GIMP/3.0/plug-ins"
+
+GIMPRC="${GIMP_DIR}/gimprc"
+
+mdir -p "${GIMP_DIR}"
+
+if [ -e $GIMPRC ]; then
+  mv $GIMPRC $GIMPRC.bak
+fi
+if [ -e $GIMP_PLUGIN_DIR ]; then
+  mv $GIMP_PLUGIN_DIR $GIMP_PLUGIN_DIR.bak
+fi
+
+ln -s "${DOTS_HOME}/gimp/gimprc" $GIMPRC 
+ln -s "${DOTS_HOME}/gimp/plug-ins" $GIMP_PLUGIN_DIR
+
 # git
 ln_s ${DOTS_HOME}/git/ignore ${HOME}/.gitignore_global
 ln_s ${DOTS_HOME}/git/config ${HOME}/.gitconfig

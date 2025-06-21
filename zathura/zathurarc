@@ -2,11 +2,17 @@
 set selection-clipboard primary
 set statusbar-basename true
 set adjust-open "width"
+set guioptions "vs"
+
+set font "inconsolata 14"
 
 # Keyboard mappings
 map ` mark_evaluate
+map <c-l> nohlsearch
 
-set font "inconsolata 14"
+set recolor                     "true"
+set recolor-reverse-video       "false"
+set recolor-keephue             "true"
 
 # Base16 OneDark
 # Author: Lalit Magant (http://github.com/tilal6991)
@@ -28,8 +34,8 @@ set notification-error-fg       "#e06c75"
 set notification-warning-bg     "#282c34"
 set notification-warning-fg     "#e06c75"
 
-set highlight-color             "#e5c07b"
-set highlight-active-color      "#61afef"
+set highlight-color             "#e5c07baa"
+set highlight-active-color      "#61afefaa"
 
 set completion-bg               "#353b45"
 set completion-fg               "#61afef"
@@ -39,8 +45,3 @@ set completion-highlight-bg     "#61afef"
 
 set recolor-lightcolor          "#282c34"
 set recolor-darkcolor           "#b6bdca"
-
-set recolor                     "true"
-set recolor-reverse-video       "true"
-set recolor-keephue             "false"
-

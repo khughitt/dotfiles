@@ -6,7 +6,7 @@ Xcursor.theme: aero-large-drop
 !
 ! Colour Scheme
 !
-#include "/home/keith/.dotfiles/termcolors/dark"
+#include "/home/keith/d/dotfiles/termcolors/dark"
 
 !
 ! xft
