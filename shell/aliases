@@ -33,7 +33,6 @@ alias diff='diff --color=auto'
 
 # docker
 alias doc='docker'
-alias up='docker compose up --build'
 alias upv='docker --debug compose up --build'
 alias down='docker compose down --remove-orphans'
 alias dps='docker ps -a --format="table {{.ID}}\t\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
@@ -75,12 +74,17 @@ alias fd2='fd --changed-within 2days'
 alias fd3='fd --changed-within 3days'
 alias fd5='fd --changed-within 5days'
 alias fd10='fd --changed-within 10days'
+alias fd30='fd --changed-within 30days'
 
 alias fd-1='fd --changed-before 1days'
 alias fd-2='fd --changed-before 2days'
 alias fd-3='fd --changed-before 3days'
 alias fd-5='fd --changed-before 5days'
 alias fd-10='fd --changed-before 10days'
+alias fd-30='fd --changed-before 30days'
+
+# ghci
+alias ghci='ghci-color'
 
 # glslviewer
 alias gls='glslviewer -w 1720 -h 1413'
@@ -102,7 +106,8 @@ alias jl='jupyter lab'
 
 # kitty
 alias icat='kitty +kitten icat'
-alias i=icat
+alias light='kitten themes --reload-in=all "Pencil Light"'
+alias dark='kitten themes --reload-in=all "wal"'
 
 # "jog"; re-run command specific to current directory
 # https://github.com/natethinks/jog/blob/master/jog
@@ -230,6 +235,10 @@ alias tez="trans en:zh-TW"  # to chinese
 
 # tree
 alias tree="tree -C"
+
+# uv
+alias uvr="uv run"
+alias uvi="uv run ipython"
 
 # virtual env
 alias dea=deactivate
