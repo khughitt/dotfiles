@@ -15,4 +15,12 @@
   outline: 1px solid #f00 !important;
 }
 
+/* variables */
+:root {
+  --foo: #ff0000;
+}
+body {
+  color: var(--foo);
+}
+
 /* vi:syntax=css */

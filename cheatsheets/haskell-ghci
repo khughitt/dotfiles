@@ -5,10 +5,14 @@ it         -- variable with result of last expr
 :set +t    -- show variable types
 :unset +t  -- stop showing variable types
 
+-- function info
+:i func
+:browse ..
+
 :cd /path
 :load file.hs
 
 -- multiline expressions
 :{
   ..
-}:
+:}

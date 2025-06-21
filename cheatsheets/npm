@@ -50,6 +50,11 @@ npm update --save
 # update package.json using npm-check-updates
 npx npm-check-updates -u
 
+# prettier & eslint
+npx prettier file.ts --write
+npx eslint .
+npx eslint file.ts --fix
+
 # install most recent version of react
 npm install react react-dom
 

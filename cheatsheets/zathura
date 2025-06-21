@@ -2,7 +2,6 @@
 <tab> table of contents
 
 # general
-d   side-by-side
 r   rotate
 
 # navigation
@@ -16,9 +15,14 @@ k   scroll up
 -   zoom out
 =   orig size
 n=  zoom to size <n>
+
 a   adjust to page-fit
 s   adjust to width
+
+d   toggle multipage view
 P   center page
+f5  presentation mode
+f11 fullscreen
 
 # links
 f highlight links; <num> to follow
@@ -40,3 +44,5 @@ blist   <name>
 # appearance
 <c-r>  reverse colors
 
+# stop highlighting search results
+:nohlsearch

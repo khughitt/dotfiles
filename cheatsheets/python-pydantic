@@ -1,0 +1,46 @@
+# extend model
+class Parent(BaseModel):
+  a: str
+
+class Child(Parent):
+  b: str
+
+# recursive type definitions
+from typing import ForwardRef
+Node = ForwardRef('Node')
+
+class Node(BaseModel):
+  nodes: list[Node]
+
+Node.update_forward_refs()
+
+# show serialized model
+model.model_dump()
+model.model_dump(mode='json')
+model.model_dump_json()
+
+# default values
+from pydantic import Field
+foo: bool = Field(default=True)
+
+# round floats when serializing to json
+# https://github.com/pydantic/pydantic/issues/8903#issue-2156829197
+from pydantic import BaseModel, field_validator
+
+class MyModel(BaseModel):
+
+    x: float
+    y: list[float]
+
+    @field_validator("x")
+    @classmethod
+    def round_float(cls, v: float) -> float:
+        return round(v, 2)
+
+    @field_validator("y")
+    @classmethod
+    def round_float_list(cls, v: list[float]) -> list[float]:
+        return [round(x, 2) for x in v]
+
+# vi:syntax=python
+

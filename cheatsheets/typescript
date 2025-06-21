@@ -1,10 +1,18 @@
 // assert type
 const b:string = a as string
 
-// interface describing an associative array
+// interface describing a dict-like object
 interface Foo {
   [index: string]: string;
 }
+
+// or,
+type Foo = Record<string, string>
+
+// or,
+new Map<string, string>()
+map.set('key', 'val')
+map.get('key')
 
 // indicate that a string is a valid key for an object (assoc array)
 Foo[keyName as keyof typeof Foo]

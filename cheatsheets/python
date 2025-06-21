@@ -1,6 +1,12 @@
 # type hints cheatsheet
 https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html
 
+# type aliases
+type Foo = str | float
+
+# generics
+def max[T](args: Iterable[T]) -> T:
+
 # launch qtconsole from a notebook
 %qtconsole
 
@@ -176,7 +182,7 @@ x =  "{'foo': 'bar'}"
 json.loads(x)
 
 # convert json to string
-json.dumps({"foo": "bar"})
+json.dumps({"foo": "bar"}, indent=2)
 
 # write json to file
 with open("out.json", "w") as fp:

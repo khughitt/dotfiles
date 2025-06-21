@@ -19,11 +19,14 @@ zc
 "%"  # float
 "$"  # currency
 
+# columns + attrs
+<shift-c>
+
 # column value counts ("frequency tables")
 <shift-f>
 
-# summary statistics
-<shift-I>
+# column summarry stats
+<shift-i>
 
 # increase float precision
 # https://github.com/saulpw/visidata/issues/275#issuecomment-484098561
