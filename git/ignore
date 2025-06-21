@@ -8,3 +8,5 @@ node_modules
 *.pyc
 *.code-workspace
 
+
+**/.claude/settings.local.json
