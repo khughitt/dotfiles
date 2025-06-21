@@ -2,9 +2,8 @@
 # note: 'typeset -U' specifies that only the first occurence of any duplicates should be
 #        kept in an array variable.
 typeset -U PATH path
-export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.local/share/gem/ruby/3.3.0/bin:$HOME/go/bin:$HOME/.yarn/bin:$PATH
+export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.gem/ruby/3.4.0/bin:$HOME/go/bin:$HOME/.yarn/bin:$PATH
 
-# environmental variables
 export BROWSER=firefox
 export EDITOR=nvim
 export PAGER=less
@@ -45,18 +44,21 @@ export LESS_TERMCAP_so=$'\E[38;5;204m'    # begin standout-mode - info/highlight
 export LESS_TERMCAP_ue=$'\E[0m'           # end underline
 export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
 
-# ripgrep
-export RIPGREP_CONFIG_PATH="$DOTFILES/ripgreprc"
-
-# python stubs
-export MYPYPATH=".config/stubs"
-
-# rofi x proj
-export ROFI_PROJ_DIR="$DOTFILES/rofi/rofi-proj"
-
 # perl
 PATH="/home/keith/perl5/bin${PATH:+:${PATH}}"; export PATH;
 PERL5LIB="/home/keith/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
 PERL_LOCAL_LIB_ROOT="/home/keith/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
 PERL_MB_OPT="--install_base \"/home/keith/perl5\""; export PERL_MB_OPT;
 PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5"; export PERL_MM_OPT;
+
+# python
+export MYPYPATH=".config/stubs"
+
+# ripgrep
+export RIPGREP_CONFIG_PATH="$DOTFILES/ripgreprc"
+
+# rofi x proj
+export ROFI_PROJ_DIR="$DOTFILES/rofi/rofi-proj"
+
+# qt
+export QT_SCALE_FACTOR=1.25
