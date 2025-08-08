@@ -14,6 +14,16 @@ git checkout HEAD <file>
 # revert all changes
 git checkout .
 
+# checkout most recent commit
+git checkout <branch>
+
+# show changes made in most recent commit
+git show HEAD
+
+# show an earlier version of a file
+git show <commit>:api/pyproject.toml
+git show HEAD~2:api/pyproject.toml
+
 # create & push a tag
 git tag -a v1.0 -m "..."
 git push origin v1.0
@@ -56,6 +66,13 @@ git branch -a
 # fetch all remote branches
 git fetch --all
 
+# rename local branch
+git branch -m old new
+
+# use main branch version of file when conflicts are encountered
+git checkout --theirs <file>
+git add <file>
+
 # testing out someone else's fork
 git remote add wafels https://github.com/wafels/sunpy.git
 git fetch wafels
@@ -91,4 +108,8 @@ git remote set-head origin -a
 git remote prune origin
 
 # delete local branch
+git checkout main
 git branch --delete foo
+
+# delete remote branch
+git push origin --delete feature-branch-name

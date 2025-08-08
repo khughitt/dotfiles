@@ -11,6 +11,9 @@ fd -e pdf
 # exclude pattern
 fd -E foo
 
+# empty
+fd -te
+
 # execute (indiv)
 fd -x .. mv {} target/
 
@@ -18,14 +21,14 @@ fd -x .. mv {} target/
 fd -X .. mv target/
 fd -X .. mv {} target/
 
+# sort results by recency
+fd -l | sort -k6M -k7n | tail
+
 # find files in a specified directory
 fd . <dir> -t f
 
 # copy (see "find" notes for example that preserves directory structure..)
 fd -e csv -x cp {} to/
-
-# sort results by recency
-fd -l | sort -k6M -k7n | tail
 
 # size
 fd -S "+10k"

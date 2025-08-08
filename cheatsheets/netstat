@@ -1,6 +1,13 @@
 # check what is using ports ("net-tools" package)
 netstat -plant
 
+# list all open ports
+netstat -lntu
+
+# check if ports are listening
+netstat -tlnp | grep :80
+netstat -tlnp | grep :443
+
 # another way to check port usage
 lsof -Pnl +M -i4
 

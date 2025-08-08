@@ -1,6 +1,7 @@
 # venv
 uv venv ~/venv/foo
 uv venv ~/venv/foo --python 3.11
+uv add ..
 uv pip install ..
 
 # pip
@@ -14,15 +15,21 @@ uv add pandas
 uv add ruff --dev
 uv run ./script.py
 
-uv sync   # install deps
+uv sync             # install deps
+uv sync --upgrade   # upgrade deps
 
 # ruff
 uv run ruff check .
 uv run ruff check --show-settings --verbose
+uv run ruff check --select I --fix .  # sort imports
+uv run ruff format .
 
 # sandboxed tools (~pipx)
 uv tool install marimo            # install
 uvx run marimo edit notebook.py   # run directly
+
+# limit number of concurrent downloads
+UV_CONCURRENT_DOWNLOADS=3 uv ..
 
 # ipython %run
 %run .venv/bin/foo ..

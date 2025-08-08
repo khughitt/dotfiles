@@ -7,8 +7,10 @@ nvm ls
 # list available
 nvm ls-remote
 
-# install node
+# install & use latest version of node
 nvm install node
+
+# install specific version
 nvm install <version>
 
 # choose version to use
@@ -20,6 +22,3 @@ nvm current
 
 # upgrade nvm
 nvm upgrade
-
-# install & use latest version of node
-nvm install node

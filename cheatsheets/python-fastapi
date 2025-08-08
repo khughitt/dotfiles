@@ -9,4 +9,12 @@ async def foo(p1: str, p2: List[str], query: Optional[str] = Query(None, regex="
 # uvicorn: show print output in console
 print(..., flush=True)
 
+# debugging / pdb; run uvicorn directly in main.py
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=3000)
+
+# endpoints available?
+curl http://localhost:5000/openapi.json | jq '.paths | keys'
+
 # vi:syntax=python

@@ -14,6 +14,9 @@ ctrl+shift+c   # copy selected text
 # neovim pager
 # https://github.com/kovidgoyal/kitty/issues/719#issuecomment-1120383920
 
+# themes
+kitten themes
+
 # load scrollback buffer into $PAGER
 ctrl+shift+h
 

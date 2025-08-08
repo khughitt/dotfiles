@@ -19,6 +19,10 @@ res.get()
 # chord (group -> chain)
 res = celery.chord(tasks, task)()
 
+# pass task instance as first argument ("self")
+@app.task(name='foo', bind=True)
+@app.task(name='foo', bind=True, max_retries=3)
+
 # check if task is running
 def _is_xx_running(self):
     is_running = False
