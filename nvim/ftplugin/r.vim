@@ -35,7 +35,7 @@ endfunction
 nmap gz :call ZoomWindow()<CR>
 
 " Exclude object browser from buffer list
-au BufEnter Object_Browser set nobuflisted
+" au BufEnter Object_Browser set nobuflisted
 
 " development
 "let R_path = '/usr/local/bin/'
@@ -126,5 +126,5 @@ set iskeyword=@,48-57,_,192-255
 " https://vim.fandom.com/wiki/Fix_syntax_highlighting
 " https://github.com/vim/vim/issues/2790
 " set redrawtime=10000
-au BufEnter * :syntax sync fromstart
+" au BufEnter * :syntax sync fromstart
 syntax sync minlines=300
