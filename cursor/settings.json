@@ -18,8 +18,11 @@
     },
     "python.analysis.typeCheckingMode": "basic",
     "r.rmarkdown.enableCodeLens": false,
+    "[r]": {
+        "editor.formatOnSave": true
+    },
     "window.commandCenter": true,
-    "workbench.colorTheme": "Tokyo Night Light",
+    "workbench.colorTheme": "Winter is Coming (Light)",
     "workbench.colorCustomizations": {
       "focusBorder": "#ff00ff"
     },
@@ -69,5 +72,39 @@
         "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
     },
     "explorer.confirmDelete": false,
-    "git.openRepositoryInParentFolders": "never"
+    "git.openRepositoryInParentFolders": "never",
+    "explorer.confirmDragAndDrop": false,
+    "git.autofetch": true,
+    "[json]": {
+        "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+    },
+    "cursorpyright.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none"
+    },
+    "cursorpyright.analysis.typeCheckingMode": "basic",
+    "nebulaOni.update.restoreConfiguration": {
+        "themeSettings": {
+            "background": "Grey",
+            "main": "Bumblebee",
+            "highlight": "Ultra Violet",
+            "focusBorder": "ON",
+            "fontStyle": "Italic",
+            "syntaxBrightness": "Normal",
+            "comments": "Dark Violet",
+            "favorite": "OFF"
+        },
+        "favoriteSettings": {
+            "background": "Glacial Blue",
+            "main": "Sakura",
+            "highlight": "Ultra Violet",
+            "focusBorder": "ON",
+            "fontStyle": "Italic",
+            "syntaxBrightness": "Dimmed",
+            "comments": "Dark Magenta",
+            "favorite": "Nebula Oni (Pegasus)"
+        }
+    },
+    "editor.formatOnSave": true,
+    "editor.minimap.enabled": true,
+    "window.menuBarVisibility": "compact"
 }

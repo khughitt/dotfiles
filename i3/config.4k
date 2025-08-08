@@ -108,7 +108,7 @@ client.background       $bg
 
 # terminal (pre-loaded in background)
 exec_always --no-startup-id kitty --name=i3term
-for_window[instance="i3term"] move scratchpad
+for_window [instance="i3term"] move scratchpad
 
 bindsym $mod+Return \
     exec --no-startup-id kitty --name=i3term;\
@@ -324,12 +324,13 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 # Scratchpads
 #-------------------------------------------------------------------------------
 
-set $scratch_width 2064
+# set $scratch_width 2064
+set $scratch_width 1800
 set $scratch_height 1020
 
 #-- terminal --#
 exec_always --no-startup-id kitty --name=kitty_scratch
-for_window[instance="kitty_scratch"] move scratchpad
+for_window [instance="kitty_scratch"] move scratchpad
 
 bindsym Mod1+Return \
     [instance="haskell_scratch|python_scratch|r_scratch|julia_scratch|node_scratch"] move scratchpad; \
@@ -338,7 +339,7 @@ bindsym Mod1+Return \
 
 #-- r console --#
 exec_always --no-startup-id kitty --name=r_scratch radian
-for_window[instance="r_scratch"] move scratchpad
+for_window [instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
     [instance="haskell_scratch|python_scratch|kitty_scratch|julia_scratch|node_scratch"] move scratchpad; \
@@ -347,7 +348,7 @@ bindsym Mod1+space \
 
 #-- python console --#
 exec_always --no-startup-id kitty --name=python_scratch ipython
-for_window[instance="python_scratch"] move scratchpad
+for_window [instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
     [instance="r_scratch|haskell_scratch|kitty_scratch|julia_scratch|node_scratch"] move scratchpad; \
@@ -356,7 +357,7 @@ bindsym Mod1+p \
 
 #-- haskell --#
 exec_always --no-startup-id kitty --name=haskell_scratch ghci
-for_window[instance="haskell_scratch"] move scratchpad
+for_window [instance="haskell_scratch"] move scratchpad
 
 bindsym Mod1+h \
     [instance="r_scratch|python_scratch|kitty_scratch|julia_scratch|node_scratch"] move scratchpad; \
@@ -365,7 +366,7 @@ bindsym Mod1+h \
 
 #-- julia console --#
 exec_always --no-startup-id kitty --name=julia_scratch julia
-for_window[instance="julia_scratch"] move scratchpad
+for_window [instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
     [instance="haskell_scratch|r_scratch|python_scratch|kitty_scratch|node_scratch"] move scratchpad; \
@@ -374,7 +375,7 @@ bindsym Mod1+j \
 
 #-- node.js --#
 exec_always --no-startup-id kitty --name=node_scratch node
-for_window[instance="node_scratch"] move scratchpad
+for_window [instance="node_scratch"] move scratchpad
 
 bindsym Mod1+n \
     [instance="haskell_scratch|julia_scratch|r_scratch|python_scratch|kitty_scratch"] move scratchpad; \

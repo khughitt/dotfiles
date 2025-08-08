@@ -1,15 +1,13 @@
 #
-# sway config
-# kh dec.2020
+# i3 config (~4k)
+# kh sep.2022
 #
 
 #-------------------------------------------------------------------------------
 # Variables
 #-------------------------------------------------------------------------------
-# Logo key. Use Mod1 for Alt.
+# super/Logo key. Use Mod1 for Alt.
 set $mod Mod4
-
-output e-DP1 pos 0 0 res 1920x1080
 
 # Home row direction keys, like vim
 set $left h
@@ -18,29 +16,31 @@ set $up k
 set $right l
 
 # Your preferred terminal emulator
-set $term termite
+set $term kitty
 
-# Your preferred application launcher
+#-------------------------------------------------------------------------------
+# Rofi
+#-------------------------------------------------------------------------------
 set $menu rofi -show drun
 
-# rofi-notes
-bindsym $mod+n exec rofi -show notes -modi "notes:$DOTFILES/rofi/scripts/rofi-notes.sh"
-
-# rofi-tasks
-bindsym $mod+t exec --no-startup-id rofi -show tasks -modi "tasks:$DOTFILES/rofi/scripts/rofi-tasks.sh"
+bindsym $mod+m exec --no-startup-id rofi -show mindmaps -modi "mindmaps:$DOTFILES/rofi/scripts/rofi-mindmaps.sh"
+bindsym $mod+p exec --no-startup-id rofi -show proj -modi "proj:~/d/software/rofi-proj/rofi-proj.py"
 
 #-------------------------------------------------------------------------------
 #  Appearance
 #-------------------------------------------------------------------------------
 
+# display
+# output e-DP1 pos 0 0 res 1920x1080
+
 # wallpaper
 #exec_always feh --bg-scale ~/d/linux/backgrounds/nature/Milford_Sound_NZ.jpg
 
 # font
-font pango:Droid Sans Mono 10
+font pango:Droid Sans Mono 14
 
 # window borders
-#for_window [class=".*"] border pixel 0
+for_window [class=".*"] border pixel 1
 hide_edge_borders smart_no_gaps
 
 # gaps
@@ -54,23 +54,15 @@ bindsym $mod+Shift+b border toggle
 #gaps outer current plus 5
 
 # colors [dracula]
-#client.focused          #ea51b2 #d1499f #282936 #a1efe4 #ea51b2 
+#client.focused          #ea51b2 #d1499f #282936 #a1efe4 #ea51b2
 #client.focused_inactive #3a3c4e #626483 #f7f7fb #3a3c4e #3a3c4e
 #client.unfocused        #3a3c4e #282936 #626483 #292d2e #3a3c4e
 #client.urgent           #3a3c4e #ebff87 #626483 #ebff87 #3a3c4e
 
 # colors [onedark]
+# class                   border  backgr. text    indic.   child_border
 client.focused          #a067abff #61afefff #23292dff #56b6c2ff #a067abff
 client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
-
-# class                 border  backgr. text indicator child_border
-# client.focused          $bg     $c6     $c3  $bg       $bg
-# client.focused_inactive $c3     $c1     $fg  $bg       $bg
-# client.unfocused        $c1     $c1     $fg  $bg       $bg
-# client.urgent           $bg     $bg     $fg  $bg       $bg
-# client.placeholder      $bg     $bg     $fg  $bg       $bg
-#
-# client.background       $bg
 
 #-------------------------------------------------------------------------------
 #  Input
@@ -88,24 +80,32 @@ client.unfocused        #42474baa #23292daa #616668aa #23292daa #23292daa
 #
 
 # terminal (pre-loaded in background)
-exec_always --no-startup-id termite --name=i3term
-#for_window[instance="i3term"] move scratchpad
+exec_always --no-startup-id kitty --name=i3term
+for_window [instance="i3term"] move scratchpad
 
 bindsym $mod+Return \
-    exec --no-startup-id termite --name=i3term;\
+    exec --no-startup-id kitty --name=i3term;\
     [instance="i3term"] scratchpad show;\
     floating toggle
 
+# screenshot
+# bindsym --release Print exec scrot
+# bindsym --release $mod+Print exec "scrot --select"
+bindsym --release F8 exec scrot
+bindsym --release $mod+F8 exec "scrot --select"
 
 # file browser
-#bindsym $mod+n exec termite -e ranger
+#bindsym $mod+n exec kitty nnn
+
+# wallpaper switcher
+bindsym $mod+n exec wali
 
 # kill focused window
 bindsym $mod+q kill
 bindsym Mod1+F4 kill
 
 # rofi
-bindsym $mod+p exec $menu
+bindsym Control+space exec $menu
 
 # Drag floating windows by holding down $mod and left mouse button.
 # Resize them with right mouse button + $mod.
@@ -147,7 +147,7 @@ bindsym $mod+Shift+Right move right
 #-------------------------------------------------------------------------------
 
 # default to stacked layout
-workspace_layout stacking
+workspace_layout stacked
 
 # switch to workspace
 bindsym $mod+1 workspace number 1
@@ -168,13 +168,13 @@ bindsym $mod+Shift+3 move container to workspace number 3
 bindsym $mod+Shift+4 move container to workspace number 4
 bindsym $mod+Shift+5 move container to workspace number 5
 bindsym $mod+Shift+6 move container to workspace number 6
-bindsym $mod+Shift+7 move container to workspace number 7 
-bindsym $mod+Shift+8 move container to workspace number 8 
+bindsym $mod+Shift+7 move container to workspace number 7
+bindsym $mod+Shift+8 move container to workspace number 8
 bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
 # move workspace to different monitor
-bindsym $mod+m move workspace to output left
+# bindsym $mod+m move workspace to output left
 
 # rename workspace
 bindsym $mod+r exec "python ~/bin/renameworkspace.py"
@@ -248,7 +248,9 @@ bindsym $mod+v splitv
 # Switch the current container between different layout styles
 bindsym $mod+s layout stacking
 bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
+bindsym $mod+e layout toggle splitv stacking
+
+#bindsym $mod+e layout toggle split
 
 # Make the current focus fullscreen
 bindsym $mod+f fullscreen
@@ -257,7 +259,7 @@ bindsym $mod+f fullscreen
 bindsym $mod+Shift+space floating toggle
 
 # Swap focus between the tiling area and the floating area
-bindsym $mod+space focus mode_toggle
+# bindsym $mod+space focus mode_toggle
 
 # move focus to the parent container
 bindsym $mod+a focus parent
@@ -274,9 +276,8 @@ bindsym $mod+a focus parent
 # for_window [window_role="Preferences"]  floating enable
 # for_window [window_type="dialog"]       floating enable
 # for_window [window_type="menu"]         floating enable
-
-#for_window [class="text-input"]         floating enable
-#for_window [class="peek"]               floating enable
+for_window [class="text-input"]         floating enable
+for_window [class="peek"]               floating enable
 
 #
 # Media keys:
@@ -296,56 +297,64 @@ bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer
 # Scratchpads
 #-------------------------------------------------------------------------------
 
-set $scratch_width 1536
-set $scratch_height 864
-set $scratch_x1 192
-set $scratch_y1 108
+# set $scratch_width 2064
+set $scratch_width 1800
+set $scratch_height 1020
 
 #-- terminal --#
-exec_always --no-startup-id termite --name=termite_scratch
-#for_window[instance="termite_scratch"] move scratchpad
+exec_always --no-startup-id kitty --name=kitty_scratch
+for_window [instance="kitty_scratch"] move scratchpad
 
 bindsym Mod1+Return \
-    [instance="python_scratch|r_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
-    [instance="termite_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1;
+    [instance="haskell_scratch|python_scratch|r_scratch|julia_scratch|node_scratch"] move scratchpad; \
+    [instance="kitty_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
 
 #-- r console --#
-# exec_always --no-startup-id termite -e "radian --no-environ" --name=r_scratch
-exec_always --no-startup-id termite -e "radian" --name=r_scratch
-#for_window[instance="r_scratch"] move scratchpad
+exec_always --no-startup-id kitty --name=r_scratch radian
+for_window [instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
-    [instance="python_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
-    [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+    [instance="haskell_scratch|python_scratch|kitty_scratch|julia_scratch|node_scratch"] move scratchpad; \
+    [instance="r_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
 
 #-- python console --#
-exec_always --no-startup-id termite -e ipython --name=python_scratch
-#for_window[instance="python_scratch"] move scratchpad
+exec_always --no-startup-id kitty --name=python_scratch ipython
+for_window [instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
-    [instance="r_scratch|termite_scratch|tasks_scratch|julia_scratch"] move scratchpad; \
-    [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+    [instance="r_scratch|haskell_scratch|kitty_scratch|julia_scratch|node_scratch"] move scratchpad; \
+    [instance="python_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
+
+#-- haskell --#
+exec_always --no-startup-id kitty --name=haskell_scratch ghci
+for_window [instance="haskell_scratch"] move scratchpad
+
+bindsym Mod1+h \
+    [instance="r_scratch|python_scratch|kitty_scratch|julia_scratch|node_scratch"] move scratchpad; \
+    [instance="haskell_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
 
 #-- julia console --#
-exec_always --no-startup-id termite -e julia --name=julia_scratch
-#for_window[instance="julia_scratch"] move scratchpad
+exec_always --no-startup-id kitty --name=julia_scratch julia
+for_window [instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
-    [instance="r_scratch|python_sratch|tasks_scratch|termite_scratch"] move scratchpad; \
-    [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+    [instance="haskell_scratch|r_scratch|python_scratch|kitty_scratch|node_scratch"] move scratchpad; \
+    [instance="julia_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
 
-#-- tasks --#
-exec_always --no-startup-id termite -e "nvim ~/d/notes/personal/organization/organization-tasks.md" --name=tasks_scratch
-#for_window[instance="tasks_scratch"] move scratchpad
+#-- node.js --#
+exec_always --no-startup-id kitty --name=node_scratch node
+for_window [instance="node_scratch"] move scratchpad
 
-bindsym Mod1+t \
-    [instance="julia_scratch|r_scratch|python_sratch|termite_scratch"] move scratchpad; \
-    [instance="tasks_scratch"] scratchpad show, resize set $scratch_width $scratch_height; \
-    move position $scratch_x1 $scratch_y1
+bindsym Mod1+n \
+    [instance="haskell_scratch|julia_scratch|r_scratch|python_scratch|kitty_scratch"] move scratchpad; \
+    [instance="node_scratch"] scratchpad show, resize set $scratch_width $scratch_height, \
+    move absolute position center;
+
 
 #
 # Resizing containers:
@@ -373,13 +382,7 @@ mode "resize" {
 bindsym $mod+shift+r mode "resize"
 
 # autostart
-exec --no-startup-id "killall blackd; blackd"
 exec_always --no-startup-id "killall picom; picom -b"
 exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
-exec --no-startup-id "/usr/lib/geoclue-2.0/demos/agent"
-# exec --no-startup-id "$HOME/.config/polybar/scripts/spotify/launchlistener.sh"
-exec --no-startup-id "$HOME/.config/polybar/scripts/spotify/py_spotify_listener.py"
-#exec --no-startup-id "cadence-session-start --system-start"
-#exec --no-startup-id "cadence --minimized"
-#exec --no-startup-id "XDG_CURRENT_DESKTOP=GNOME syncthing-gtk -m"
-
+exec --no-startup-id "dunst"
+exec --no-startup-id "fcitx5 -d"

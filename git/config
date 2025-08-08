@@ -6,7 +6,8 @@
 [core]
 	excludesfile = ~/.gitignore_global
 	filemode = false
-  pager = delta
+  ;disabling delta as default pager to avoid blocking
+  ;pager = delta
 [push]
 	default = simple
 [github]
@@ -19,7 +20,7 @@
 [difftool "meld"]
   cmd = meld "$LOCAL" "$REMOTE"
 [init]
-	defaultBranch = trunk
+	defaultBranch = main
 [interactive]
     diffFilter = delta --color-only
 [credential]
