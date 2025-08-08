@@ -13,3 +13,9 @@ julianday(field)
 
 # difference in days..
 abs(julianday(now) - julianday(field))
+
+# extract table / query results as JSON
+sqlite3 x.db \
+  -cmd ".mode json" "SELECT * FROM tbl;" |\
+  python3 -m json.tool \
+  > out.json

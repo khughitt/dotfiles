@@ -23,6 +23,9 @@ model.model_dump_json()
 from pydantic import Field
 foo: bool = Field(default=True)
 
+# aliases (useful for fields with spaces, etc.)
+foo: bool = Field(alias="Is Foo?")
+
 # round floats when serializing to json
 # https://github.com/pydantic/pydantic/issues/8903#issue-2156829197
 from pydantic import BaseModel, field_validator

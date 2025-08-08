@@ -1,0 +1,2 @@
+tree -L 1     # depth
+tree -d       # directories only

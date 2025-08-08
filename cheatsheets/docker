@@ -13,9 +13,6 @@ docker ps -a
 # run a container
 docker run <name or id>
 
-# rebuild a single container with compose
-docker-compose up -d --build <container>
-
 # run a container, specify volumes, port, etc.
 docker run --rm -p 80:3838 -v /from:/to <container id>
 
@@ -36,32 +33,62 @@ docker tag <image id> repo:tag
 # list unused containers
 docker container ls -a --filter status=exited --filter status=created 
 
-# launch docker compose & build needed containers
-docker-compose up --build
-
-# bring up a single service
-docker-compose start foo
-
 # stop a single container
 docker kill <container_id>
 
 # stop all running containers
 docker kill $(docker ps -q)
 
+# rebuild a container
+docker rm -f <container_name_or_id>
+docker-compose up -d --build <service_name>
+
+# rebuild a container without using cache
+docker rm -f <container_name_or_id>
+docker-compose build --no-cache <service_name>
+docker-compose up -d <service_name>
+
+# launch docker compose & build needed containers
+docker-compose up --build
+
+# rebuild a single container with compose
+docker-compose up --build -d <container>
+
 # stop docker compose & removed orphaned containers
 docker-compose down --remove-orphans
 
-# remove all stopped containers
-docker container prune 
+# "Resource is still in use"
+docker compose --profile optional down
 
-# clear cache / free up space (check /var/lib/xx as sudo to check space used..)
-docker system prune -a -f
+# bring up a single service
+docker-compose start foo
 
 # run a single container with docker compose
 docker-compose run <id>
 
 # stop a single container with docker compose
 docker-compose rm -sv <service>
+
+# check logs
+docker compose logs traefik
+docker compose logs traefik  --tail 20
+
+# check open ports inside container / make sure expected port is being used
+docker compose exec traefik netstat -tlnp
+
+# pass host environmental variable
+environment:
+  - XYZ
+  - FOO=$BAR
+
+# keep container running
+command: "tail -f /dev/null"
+
+# remove all stopped containers
+docker container prune 
+
+# clear cache / free up space (check /var/lib/xx as sudo to check space used..)
+docker system prune -a -f
 
 # get the ip addr and port of a running container
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 

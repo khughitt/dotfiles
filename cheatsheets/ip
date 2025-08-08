@@ -1,0 +1,2 @@
+# get ip address
+ip addr show | grep "inet " | grep -v 127.0.0.1

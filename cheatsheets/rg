@@ -2,6 +2,10 @@
 rg --type ts xx
 rg --type-not css xx
 
+# hide lines / filenames
+rg --no-filename --no-line-number
+
+# rg -> sed
 rg -0 -l foo | xargs -0 sed -i 's/foo/bar/g'
 
 # match group ("-r" = "replace"; used to show specific groups)
