@@ -28,7 +28,7 @@ return {
   {"williamboman/mason.nvim"},
   {"williamboman/mason-lspconfig.nvim"},
   {"neovim/nvim-lspconfig"},
-  {'JuliaEditorSupport/julia-vim', lazy=true},
+  -- {'JuliaEditorSupport/julia-vim', lazy=true},
   {'bioSyntax/bioSyntax-vim', lazy=true},
   {'chrisbra/csv.vim', lazy=true},
   {'fatih/vim-go', lazy=true},

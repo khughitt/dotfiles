@@ -18,20 +18,20 @@ return {
   -- textobjs
   {'JoosepAlviste/nvim-ts-context-commentstring'},
   {'tyru/vim-textobj-underscore', branch = 'support-3-cases', dependencies = {'kana/vim-textobj-user'}},
-  -- {'glts/vim-textobj-comment'}
 
   -- devicons should come last..
   {'nvim-tree/nvim-web-devicons'},
   {'ryanoasis/vim-devicons'},
 
-  -- use '~/.config/nvim/user/mindful.vim'
 
   -- maybe..
+  -- {'glts/vim-textobj-comment'}
   -- use 'nathanaelkane/vim-indent-guides'
   -- https://github.com/brenoprata10/nvim-highlight-colors
 
   -- archived
   -- {'ervandew/supertab'},
+  -- use '~/.config/nvim/user/mindful.vim'
   -- use 'folke/which-key.nvim'
   -- use {'andymass/vim-matchup', event = 'VimEnter'}
   -- use 'ggandor/lightspeed.nvim'

@@ -369,31 +369,33 @@ vim.cmd('let g:float_preview#docked = 1')
 -- ---------------------------------------------------------------------------
 -- Telescope
 -- ---------------------------------------------------------------------------
-local actions = require("telescope.actions")
-local builtin = require('telescope.builtin')
-local extensions = require('telescope').extensions
+if not vim.g.vscode then
+  local actions = require("telescope.actions")
+  local builtin = require('telescope.builtin')
+  local extensions = require('telescope').extensions
 
-require('telescope').setup{
-  defaults = {
-    mappings = {
-      i = {
-        ["<C-h>"] = "which_key",   -- show keyboard shortcuts ("help")
-        ["<C-u>"] = false,         -- clear line
-        ["<esc>"] = actions.close  -- exit picker
+  require('telescope').setup{
+    defaults = {
+      mappings = {
+        i = {
+          ["<C-h>"] = "which_key",   -- show keyboard shortcuts ("help")
+          ["<C-u>"] = false,         -- clear line
+          ["<esc>"] = actions.close  -- exit picker
+        }
       }
-    }
-  },
-  pickers = {},
-  extensions = {}
-}
+    },
+    pickers = {},
+    extensions = {}
+  }
 
-require('telescope').load_extension('fzf')
+  require('telescope').load_extension('fzf')
 
-vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
-vim.keymap.set('n', '<leader>fr', extensions.frecency.frecency, {})
-vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
-vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
+  vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
+  vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
+  vim.keymap.set('n', '<leader>fr', extensions.frecency.frecency, {})
+  vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
+  vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
+end
 
 -- ---------------------------------------------------------------------------
 --  gitgutter
@@ -434,7 +436,7 @@ vim.keymap.set('v', '<space>', '<leader>c<space>')
 -- ---------------------------------------------------------------------------
 require'nvim-treesitter.configs'.setup {
   ensure_installed = { "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "javascript",
-                       "json", "julia", "latex", "lua", "markdown", "markdown_inline", "python",
+                       "json",  "lua", "markdown", "markdown_inline", "python",
                        "query", "r", "rust", "sql", "toml", "tsx", "typescript", "vimdoc", "yaml"},
   auto_install = true,
   sync_install = false,
@@ -452,7 +454,7 @@ vim.keymap.set('n', 'dad', 'da_', { remap = true })
 -- ---------------------------------------------------------------------------
 --  Language-specific Options
 -- ---------------------------------------------------------------------------
-vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.jl', command = 'set syntax=julia' })
+-- vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.jl', command = 'set syntax=julia' })
 vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.md', command = 'set syntax=markdown' })
 vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.har', command = 'set ft=json' })
 vim.api.nvim_create_autocmd('FileType', { pattern = 'javascript', command = 'let b:did_indent = 1' })

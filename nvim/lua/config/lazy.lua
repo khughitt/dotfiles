@@ -29,8 +29,13 @@ vim.opt.rtp:prepend(lazypath)
 --   install = { colorscheme = { "habamax" } },
 --   checker = { enabled = false },
 -- })
+-- require("lazy").setup({
+--   { import = "plugins_notvscode", cond = (function() return not vim.g.vscode end) },
+--   { import = "plugins_always",    cond = true },
+--   { import = "plugins_vscode",    cond = (function() return vim.g.vscode end) },
+-- })
 require("lazy").setup({
-	{ import = "plugins_notvscode", cond = (function() return not vim.g.vscode end) },
-	{ import = "plugins_always",    cond = true },
-	{ import = "plugins_vscode",    cond = (function() return vim.g.vscode end) },
+	{ import = "user.plugins_notvscode", cond = (function() return not vim.g.vscode end) },
+	{ import = "user.plugins_always",    cond = true },
+	{ import = "user.plugins_vscode",    cond = (function() return vim.g.vscode end) },
 })
