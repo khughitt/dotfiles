@@ -33,6 +33,7 @@ alias diff='diff --color=auto'
 
 # docker
 alias doc='docker'
+alias docc='docker compose'
 alias upv='docker --debug compose up --build'
 alias down='docker compose down --remove-orphans'
 alias dps='docker ps -a --format="table {{.ID}}\t\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
@@ -234,7 +235,7 @@ alias tze="trans zh-TW:en"  # to english
 alias tez="trans en:zh-TW"  # to chinese
 
 # tree
-alias tree="tree -C"
+alias tree="tree -C --gitignore"
 
 # uv
 alias uvr="uv run"

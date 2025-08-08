@@ -89,10 +89,14 @@ wal -R
 eval `pkill ssh-agent && ssh-agent`
 
 # sway
-#exec sway >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
+#exec sway --unsupported-gpu >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
 
 # gnome
 #XDG_SESSION_TYPE=wayland dbus-run-session gnome-session
 
 # i3
+# export XDG_SESSION_TYPE=x11
+# export XDG_CURRENT_DESKTOP=i3
+# export XDG_SESSION_DESKTOP=i3
+#
 exec i3 >> ~/.cache/i3/stdout 2>> ~/.cache/i3/stderr

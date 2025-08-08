@@ -90,7 +90,7 @@ function dty {
 function up {
   # if container specified, just build it
   if [ $# -gt 0 ]; then
-    docker compose up --build
+    docker compose up --build $1
   else
     # otherwise build everything
     docker compose up --build
@@ -186,6 +186,9 @@ function c {
 # vim + rg
 function vr {
     $EDITOR $(rg -l $1)
+}
+function vru {
+    $EDITOR $(rg -uuu --no-ignore-files -l $1)
 }
 
 # vim + fzf

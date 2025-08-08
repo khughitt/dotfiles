@@ -43,5 +43,9 @@
         "key": "ctrl+pageup",
         "command": "-selectPrevPageSuggestion",
         "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus || suggestWidgetVisible && textInputFocus && !suggestWidgetHasFocusedSuggestion"
+    },
+    {
+        "key": "ctrl+e",
+        "command": "composerMode.background"
     }
 ]
