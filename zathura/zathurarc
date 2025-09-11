@@ -1,7 +1,7 @@
 # General settings
 set selection-clipboard primary
 set statusbar-basename true
-set adjust-open "width"
+set adjust-open "best-fit" # "width"
 set guioptions "vs"
 
 set font "inconsolata 14"
@@ -10,38 +10,38 @@ set font "inconsolata 14"
 map ` mark_evaluate
 map <c-l> nohlsearch
 
-set recolor                     "true"
-set recolor-reverse-video       "false"
-set recolor-keephue             "true"
+#set recolor                     "true"
+#set recolor-reverse-video       "false"
+#set recolor-keephue             "true"
 
 # Base16 OneDark
 # Author: Lalit Magant (http://github.com/tilal6991)
-set default-bg                  "#282c34"
-set default-fg                  "#353b45"
-
-set statusbar-fg                "#565c64"
-set statusbar-bg                "#3e4451"
-
-set inputbar-bg                 "#282c34"
-set inputbar-fg                 "#c8ccd4"
-
-set notification-bg             "#282c34"
-set notification-fg             "#c8ccd4"
-
-set notification-error-bg       "#282c34"
-set notification-error-fg       "#e06c75"
-
-set notification-warning-bg     "#282c34"
-set notification-warning-fg     "#e06c75"
-
-set highlight-color             "#e5c07baa"
-set highlight-active-color      "#61afefaa"
-
-set completion-bg               "#353b45"
-set completion-fg               "#61afef"
-
-set completion-highlight-fg     "#c8ccd4"
-set completion-highlight-bg     "#61afef"
-
-set recolor-lightcolor          "#282c34"
-set recolor-darkcolor           "#b6bdca"
+# set default-bg                  "#282c34"
+# set default-fg                  "#353b45"
+#
+# set statusbar-fg                "#565c64"
+# set statusbar-bg                "#3e4451"
+#
+# set inputbar-bg                 "#282c34"
+# set inputbar-fg                 "#c8ccd4"
+#
+# set notification-bg             "#282c34"
+# set notification-fg             "#c8ccd4"
+#
+# set notification-error-bg       "#282c34"
+# set notification-error-fg       "#e06c75"
+#
+# set notification-warning-bg     "#282c34"
+# set notification-warning-fg     "#e06c75"
+#
+# set highlight-color             "#e5c07baa"
+# set highlight-active-color      "#61afefaa"
+#
+# set completion-bg               "#353b45"
+# set completion-fg               "#61afef"
+#
+# set completion-highlight-fg     "#c8ccd4"
+# set completion-highlight-bg     "#61afef"
+#
+# set recolor-lightcolor          "#282c34"
+# set recolor-darkcolor           "#b6bdca"

@@ -6,3 +6,6 @@ tar tzvpf foo.tar.gz
 
 # extract specific file/folder
 tar xavpf dat.tar.xz target/
+
+# exclude files
+tar --exclude "*.png" --exclude "*.jpg" czvpf file.tgz input/

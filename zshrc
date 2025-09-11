@@ -201,3 +201,6 @@ fi
 
 # stop profiling zshrc
 # zprof 
+
+# NexML CLI completions
+fpath=(~/.local/share/zsh/site-functions $fpath)

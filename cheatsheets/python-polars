@@ -1,0 +1,4 @@
+# rename columns
+df = df.rename({"from": "to"})
+
+# vi:syntax=python

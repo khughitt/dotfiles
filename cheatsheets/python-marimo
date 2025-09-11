@@ -1,3 +1,15 @@
+# keyboard shortcuts (similar to jupyter; <control-shift-h>)
+<c-enter>   # run
+<s-enter>   # run and add below
+
+<c-s-k>     # prev cell
+<c-s-j>     # next cell
+
+<c-s-m>     # convert to markdown
+
+# defining "private" (local) variables
+_foo = 5
+
 # convert ipynb
 marimo convert in.ipynb > nb.py
 
