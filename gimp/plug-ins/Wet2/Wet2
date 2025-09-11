@@ -1,0 +1,172 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+see: https://docs.gimp.org/3.0/en/gimp-using-python-plug-in-tutorial.html
+"""
+import sys
+
+import gi
+gi.require_version('Gimp', '3.0')
+from gi.repository import Gimp
+gi.require_version('GimpUi', '3.0')
+from gi.repository import GimpUi
+from gi.repository import GLib
+from gi.repository import GObject
+
+class EasyPDB:
+    _instance = None
+    
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+    
+    def __init__(self):
+        self.pdb = None
+    
+    def initialize(self):
+        if self.pdb is None:
+            self.pdb = Gimp.get_pdb()
+            if not self.pdb:
+                raise RuntimeError("Failed to get GIMP PDB")
+            # Verify PDB is working by trying to get a known procedure
+            test_proc = self.pdb.lookup_procedure('gimp-drawable-color-balance')
+            if not test_proc:
+                raise RuntimeError("PDB initialization failed - could not find test procedure")
+    
+    def call(self, procedure_name, *args):
+        """Call a PDB procedure with automatic value conversion"""
+        if self.pdb is None:
+            self.initialize()
+            
+        procedure = self.pdb.lookup_procedure(procedure_name)
+        if not procedure:
+            raise RuntimeError(f"Procedure {procedure_name} not found")
+            
+        config = procedure.create_config()
+        
+        # Debug: Print procedure info
+        Gimp.message(f"Procedure {procedure_name} found")
+        Gimp.message(f"Config type: {type(config)}")
+        
+        # Debug: List all properties with their names
+        try:
+            props = config.list_properties()
+            prop_names = [p.get_name() for p in props]
+            Gimp.message(f"Available properties: {prop_names}")
+        except Exception as e:
+            Gimp.message(f"Could not list properties: {str(e)}")
+        
+        # Set arguments directly
+        if procedure_name == 'gimp-drawable-color-balance':
+            config.set_property('drawable', args[0])
+            config.set_property('transfer-mode', args[1])
+            config.set_property('preserve-lum', args[2])
+            config.set_property('cyan-red', args[3])
+            config.set_property('magenta-green', args[4])
+            config.set_property('yellow-blue', args[5])
+        elif procedure_name == 'gimp-drawable-gauss-blur':
+            config.set_property('drawable', args[0])
+            config.set_property('radius', args[1])  # Single radius for both directions
+            config.set_property('method', args[2])
+        
+        return procedure.run(config)
+
+    def run(self, procedure, run_mode, image, drawables, config, run_data):
+        try:
+            pdb = EasyPDB.get_instance()
+            pdb.initialize()  # Make sure PDB is initialized
+            
+            # Debug: Try to find some known procedures
+            test_procs = [
+                'gimp-drawable-color-balance',
+                'gimp-drawable-gauss-blur',
+                'plug-in-gauss',
+                'plug-in-spread',
+                'plug-in-noise',
+                'plug-in-hsv-noise',
+                'plug-in-hsv-noise2'
+            ]
+            
+            found_procs = []
+            for name in test_procs:
+                proc = pdb.pdb.lookup_procedure(name)
+                if proc:
+                    found_procs.append(name)
+            
+            Gimp.message(f"Found procedures: {found_procs}")
+            
+            # Color balance  
+            pdb.call('gimp-drawable-color-balance', drawables[0], 
+                    Gimp.TransferMode.HIGHLIGHTS, True, 0.0, 0.0, 10.0)
+            
+            # Gaussian blur
+            pdb.call('gimp-drawable-gauss-blur', drawables[0], 2.0, 0)  # radius=2.0, method=0 (IIR)
+
+            return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+        except Exception as e:
+            Gimp.message(f"Error: {str(e)}")
+            return procedure.new_return_values(Gimp.PDBStatusType.EXECUTION_ERROR, GLib.Error())
+
+class Wet2 (Gimp.PlugIn):
+    def do_query_procedures(self):
+        return [ "kh-wet-2" ]
+
+    def do_set_i18n (self, name):
+        return False
+
+    def do_create_procedure(self, name):
+        procedure = Gimp.ImageProcedure.new(self, name,
+                                            Gimp.PDBProcType.PLUGIN,
+                                            self.run, None)
+
+        procedure.set_image_types("*")
+
+        procedure.set_menu_label("_ wet 2")
+        procedure.add_menu_path('<Image>/Filters/_user')
+
+        procedure.set_documentation("..",
+                                    "..",
+                                    name)
+        procedure.set_attribution("keith", "keith", "2025")
+
+        return procedure
+
+    def run(self, procedure, run_mode, image, drawables, config, run_data):
+        try:
+            pdb = EasyPDB.get_instance()
+            pdb.initialize()  # Make sure PDB is initialized
+            
+            # Debug: Try to find some known procedures
+            test_procs = [
+                'gimp-drawable-color-balance',
+                'gimp-drawable-gauss-blur',
+                'plug-in-gauss',
+                'plug-in-spread',
+                'plug-in-noise',
+                'plug-in-hsv-noise',
+                'plug-in-hsv-noise2'
+            ]
+            
+            found_procs = []
+            for name in test_procs:
+                proc = pdb.pdb.lookup_procedure(name)
+                if proc:
+                    found_procs.append(name)
+            
+            Gimp.message(f"Found procedures: {found_procs}")
+            
+            # Color balance  
+            pdb.call('gimp-drawable-color-balance', drawables[0], 
+                    Gimp.TransferMode.HIGHLIGHTS, True, 0.0, 0.0, 10.0)
+            
+            # Gaussian blur
+            pdb.call('gimp-drawable-gauss-blur', drawables[0], 2.0, 0)  # radius=2.0, method=0 (IIR)
+
+            return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+        except Exception as e:
+            Gimp.message(f"Error: {str(e)}")
+            return procedure.new_return_values(Gimp.PDBStatusType.EXECUTION_ERROR, GLib.Error())
+
+Gimp.main(Wet2.__gtype__, sys.argv)

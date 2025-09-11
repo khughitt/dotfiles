@@ -10,6 +10,9 @@ jq . x.json
 # print top-levels keys in a dict
 jq 'keys[]' dict.json
 
+# read from gzip
+gunzip -c dict.json.gz | jq 'keys[]' | wcl
+
 # convert list of records to csv
 # https://stackoverflow.com/a/32965227/554531
 jq -r '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv'

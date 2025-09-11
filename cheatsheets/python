@@ -288,6 +288,9 @@ path.suffixes
 path.joinpath("foo", "bar")
 path.expanduser()
 
+for entry in dir_.iterdir():
+  print(entry) 
+
 # create temp file/dir
 import tempfile
 tempfile.mktemp()

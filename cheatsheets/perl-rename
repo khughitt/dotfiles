@@ -1,2 +1,5 @@
 # show changes that would be made
 perl-rename -nv 's/a/b/' *.txt
+
+# first 12 characters
+perl-rename -nv 's/^(.{1,12}).*\.pdf$/$1.pdf/' *.pdf

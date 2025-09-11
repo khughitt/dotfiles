@@ -23,8 +23,13 @@ function wali_print {
   year=`date -d $datestr +%Y`
   mon=`date -d $datestr +%m`
 
-  file=${file/3440/orig\/$year\/$mon}
-  echo ${file/png/jpg}
+  # file=${file/3440/orig\/$year\/$mon}
+  # /home/keith/d/linux/backgrounds/3440/PXL_20240520_023703962.png
+  #file=${file/3440/orig\/$year\/$mon}
+  root_dir="$BACKGROUND_IMG_DIR"
+  file=`basename $file`
+
+  echo "$root_dir/$year/$mon/${file/png/jpg}"
 }
 
 # open the current original version of the current background in gimp
@@ -46,19 +51,36 @@ function wali_search {
 alias wali_save='wali_print >> $WALI_DIR/favorites.txt'
 
 # select an image from the favorites list and open it in gimp
-function wali_edit_fav {
+function wali_edit_fav { 
   target=`/bin/cat $WALI_DIR/favorites.txt |\
     grep --color='none' "$1" |\
     fzf -1 --exact --preview=$KITTY_PREVIEW_CMD`
 
-  [ ! -z "$target" ] && /bin/gimp $target
+  # determine which prefix to use
+  # /mnt/ssd2/backgrounds/2024/05/PXL_20240526_175819114.jpg
+  # /home/keith/d/linux/backgrounds/orig/2022/10/PXL_20221023_211629715.jpg
 
+  # get the directory of the image
   imgdir = `dirname "$target"`
 
-  wali \
-    --image-dir="$imgdir" \
-    --file="$target" \
-    change 
+  # get the year and month of the image
+
+  # get the year and month of the image
+  year=`echo $imgdir | cut -d '/' -f 5`
+  mon=`echo $imgdir | cut -d '/' -f 6`
+
+  # get the prefix
+  prefix="/home/keith/d/linux/backgrounds/orig/$year/$mon"
+  
+  # che
+  if [ ! -e "$target" ]; then
+    # check alt path
+    if [ -e "$prefix/$target" ]; then
+      target="$prefix/$target" 
+    fi
+  fi
+
+  [ ! -z "$target" ] && /bin/gimp $target
 }
 
 # find an image by name and open it in gimp

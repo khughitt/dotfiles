@@ -1,5 +1,4 @@
 {
-    "diffEditor.hideUnchangedRegions.enabled": true,
     "editor.fontFamily": "'JetBrains Mono Regular Nerd Font Complete Mono', 'Droid Sans Mono', 'monospace', monospace",
     "extensions.experimental.affinity": {
         "asvetliakov.vscode-neovim": 1
@@ -106,5 +105,6 @@
     },
     "editor.formatOnSave": true,
     "editor.minimap.enabled": true,
-    "window.menuBarVisibility": "compact"
+    "diffEditor.maxComputationTime": 0,
+    "diffEditor.hideUnchangedRegions.enabled": true
 }

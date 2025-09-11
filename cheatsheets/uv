@@ -28,7 +28,7 @@ uv run ruff format .
 uv tool install marimo            # install
 uvx run marimo edit notebook.py   # run directly
 
-# limit number of concurrent downloads
+# limit number of parallel downloads
 UV_CONCURRENT_DOWNLOADS=3 uv ..
 
 # ipython %run

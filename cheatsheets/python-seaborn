@@ -27,6 +27,10 @@ sns.scatterplot(...).set(title="foo")
 sns.kdeplot(.., log_scale=True)
 sns.kdeplot(data=df, x="n", hue="type")
 
+# add vline
+ax = sns.kdeplot(df)
+ax.axvline(x=1.5, color='red', linestyle='dashed')
+
 # frequency barplots (valuecount)
 sns.countplot(data=df, x="grp")
 

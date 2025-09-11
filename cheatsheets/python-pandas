@@ -264,6 +264,9 @@ df.loc[df["column_name"].isin(some_values)]
 # filter columns by name
 df.loc[:, ~df.columns.isin(cols_to_remove)]
 
+# filter by count
+df.groupby('foo').filter(lambda x: len(x) > CUTOFF)
+
 # subset rows & columns using boolean mask
 df.loc[:, col_sums <= 100]
 df.loc[row_sums >= 0, col_sums <= 100]
@@ -491,6 +494,15 @@ np.diag(df)
 # set diagonal to zero
 mat.values[tuple([np.arange(mat.shape[0])] * 2)] = 0
 
+Co-occurrence
+-------------
+
+# a x b (counts)
+pd.crosstab(df['a'], df['b'])
+
+# a x b (binary)
+pd.crosstab(df['a'], df['b']).clip(upper=1)
+
 # convert count matrix to a co-occurence matrix
 df.T.dot(df)
 
@@ -524,6 +536,14 @@ mat = mat.astype(bool)
 # split string field & create multiple rows from it
 df['Gene Names'] = df['Gene Names'].str.split()
 df.explode('Gene Names')
+
+# same, but including other columns
+df.loc[:, "foo_list"] = df.foo.str.split(",")
+df.explode("foo_list")
+
+# split string and count
+df.foo.str.count(",").value_counts().sort_values(ascending=False)
+
 
 Renaming
 --------
