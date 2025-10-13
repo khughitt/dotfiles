@@ -119,7 +119,7 @@ zinit light "khughitt/fzf-fasd"
 # zinit load trapd00r/LS_COLORS
 
 # alias reminders
-zinit light "djui/alias-tips"
+# zinit light "djui/alias-tips"
 
 # cntl-z <-> fg
 zinit light "mdumitru/fancy-ctrl-z"

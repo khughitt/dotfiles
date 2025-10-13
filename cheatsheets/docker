@@ -90,6 +90,13 @@ docker container prune
 # clear cache / free up space (check /var/lib/xx as sudo to check space used..)
 docker system prune -a -f
 
+# inspect data volumes
+docker volume ls | grep couchdb_data
+docker volume inspect <volume_name>
+
+# remove docker data volumes (careful..)
+docker system prune -a -f --volumes
+
 # get the ip addr and port of a running container
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 
 

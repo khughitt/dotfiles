@@ -7,7 +7,7 @@
 # Preferences dialog.
 
 (prev-language "American English")
-(config-version "3.0.4")
+(config-version "3.0.6")
 (color-management
     (mode display)
     (display-profile-from-gdk no)

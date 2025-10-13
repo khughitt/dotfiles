@@ -93,6 +93,7 @@ eval `pkill ssh-agent && ssh-agent`
 
 # gnome
 #XDG_SESSION_TYPE=wayland dbus-run-session gnome-session
+#XDG_SESSION_TYPE=X11 dbus-run-session gnome-session
 
 # i3
 # export XDG_SESSION_TYPE=x11

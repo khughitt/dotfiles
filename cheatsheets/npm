@@ -55,6 +55,9 @@ npx prettier file.ts --write
 npx eslint .
 npx eslint file.ts --fix
 
+# eslint -> json
+npx eslint src --format json > lint-report.json
+
 # install most recent version of react
 npm install react react-dom
 
