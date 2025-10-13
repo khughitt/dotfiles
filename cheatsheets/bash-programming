@@ -59,9 +59,9 @@ if ! echo $foo | grep -q "not running"; then echo 'yes'; fi
 if ([ ] && [ ] && ...)
 
 # if-else
-if []; then
+if ..; then
  ..
-elif []; then
+elif ..; then
  ..
 else
  ..
@@ -71,6 +71,13 @@ fi
 for x in a b c
 do
   echo $x;
+done
+
+# or..
+items=("a" "b" "c")
+
+for item in "${items[@]}"; do
+    echo $item
 done
 
 # print a sequence of numbers with leading zeros

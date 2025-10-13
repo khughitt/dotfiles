@@ -1,0 +1,9 @@
+if ! `grep -q Ubuntu /etc/lsb-release`; then
+  return
+fi
+
+# ubuntu likes to be different..
+alias fd="fdfind"
+alias cat='batcat --wrap=never --paging=never'
+
+# vi:syntax=bash

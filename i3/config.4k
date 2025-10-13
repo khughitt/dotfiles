@@ -118,8 +118,10 @@ bindsym $mod+Return \
 # screenshot
 # bindsym --release Print exec scrot
 # bindsym --release $mod+Print exec "scrot --select"
-bindsym --release F8 exec scrot
-bindsym --release $mod+F8 exec "scrot --select"
+# bindsym --release F8 exec scrot
+# bindsym --release $mod+F8 exec "scrot --select"
+bindsym --release F6 exec scrot
+bindsym --release $mod+F6 exec "scrot --select"
 
 # file browser
 #bindsym $mod+n exec kitty nnn

@@ -2,11 +2,17 @@
 rg --type ts xx
 rg --type-not css xx
 
+# exclude glob
+rg -g '!doc' unified
+
 # hide lines / filenames
 rg --no-filename --no-line-number
 
 # rg -> sed
 rg -0 -l foo | xargs -0 sed -i 's/foo/bar/g'
+
+# rg -> mv
+rg -l foo | xargs -I {} mv {} dest/
 
 # match group ("-r" = "replace"; used to show specific groups)
 echo "title  : 2020-05-09" | rg 'title +: ([\d-]+)' -N -r '$1'

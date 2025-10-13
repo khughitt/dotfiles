@@ -29,3 +29,7 @@ jq 'keys_unsorted[0]' x.json
 
 # get first value in dict
 jq '.[keys_unsorted[0]]' x.json
+
+# given a dict of arrays, return dict with same structure, but only the first element from each
+# top-level array
+jq 'map_values(.[0])' x.json

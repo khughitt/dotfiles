@@ -20,6 +20,9 @@ alias cdd='cd $dlas'
 # cheatsheets
 alias crg='rg $DOTFILES/cheatsheets'
 
+# claude code
+alias cl='claude --dangerously-skip-permissions'
+
 # conda/mamba
 alias cde='micromamba deactivate'
 alias cs='micromamba search'
@@ -70,19 +73,15 @@ alias fdr="fd -l --changed-within 5days | csvcut -d ' ' -S -c6-9 | csvlook -HI"
 alias fdd="fd -t d"
 alias fdf="fd -t f"
 
-alias fd1='fd --changed-within 1days'
-alias fd2='fd --changed-within 2days'
-alias fd3='fd --changed-within 3days'
-alias fd5='fd --changed-within 5days'
-alias fd10='fd --changed-within 10days'
-alias fd30='fd --changed-within 30days'
+alias fd1='fd --changed-within 1hours'
+alias fd2='fd --changed-within 2hours'
+alias fd24='fd --changed-within 1days'
+alias fd48='fd --changed-within 2days'
 
-alias fd-1='fd --changed-before 1days'
-alias fd-2='fd --changed-before 2days'
-alias fd-3='fd --changed-before 3days'
-alias fd-5='fd --changed-before 5days'
-alias fd-10='fd --changed-before 10days'
-alias fd-30='fd --changed-before 30days'
+alias fd-1='fd --changed-before 1hours'
+alias fd-2='fd --changed-before 2hours'
+alias fd-24='fd --changed-before 1days'
+alias fd-48='fd --changed-before 2days'
 
 # ghci
 alias ghci='ghci-color'

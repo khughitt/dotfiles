@@ -30,6 +30,9 @@ fd . <dir> -t f
 # copy (see "find" notes for example that preserves directory structure..)
 fd -e csv -x cp {} to/
 
+# copy matches, preserving directory structure
+fd "foo" | rsync -av --files-from=- . /path/to/destination
+
 # size
 fd -S "+10k"
 fd -S "-1m"

@@ -99,6 +99,10 @@ git remote prune origin --dry-run
 # rename local branch
 git branch -m old new
 
+# save files / folders from an earlier commit to a directory
+mkdir orig-code
+git --work-tree=orig-code checkout <hash> -- <target>
+
 # use main branch version of file when conflicts are encountered
 git checkout --theirs <file>
 git add <file>
@@ -143,3 +147,9 @@ git branch --delete foo
 
 # delete remote branch
 git push origin --delete feature-branch-name
+
+# lfs
+git lfs track "*.png" "*.obj"
+git add .gitattributes
+git add your-assets/
+git commit -m "Add assets via LFS"

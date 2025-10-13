@@ -1,8 +1,5 @@
 {
     "editor.fontFamily": "'JetBrains Mono Regular Nerd Font Complete Mono', 'Droid Sans Mono', 'monospace', monospace",
-    "extensions.experimental.affinity": {
-        "asvetliakov.vscode-neovim": 1
-    },
     "files.exclude": {
         "**/__pycache__": true,
         "**/.cursor": true,
@@ -106,5 +103,8 @@
     "editor.formatOnSave": true,
     "editor.minimap.enabled": true,
     "diffEditor.maxComputationTime": 0,
-    "diffEditor.hideUnchangedRegions.enabled": true
+    "diffEditor.hideUnchangedRegions.enabled": true,
+    "extensions.experimental.affinity": {
+        "asvetliakov.vscode-neovim": 1
+    }
 }
