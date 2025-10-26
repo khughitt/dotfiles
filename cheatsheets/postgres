@@ -15,6 +15,10 @@
 ...
 \o
 
+# display results as two-column key-value pairs
+/x on
+select ..
+
 # save output to file / clipboard (without formatting)
 # -X  dont read startup config
 # -A  no align

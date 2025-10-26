@@ -199,8 +199,15 @@ if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
+# work-around (oct25)
+# https://github.com/openai/codex/issues/1457
+codex() {
+  command codex -s workspace-write -c "sandbox_workspace_write.writable_roots=['$HOME/.cache/uv']" "$@"
+}
+
+# CLI completions
+fpath=(~/.local/share/zsh/site-functions $fpath)
+
 # stop profiling zshrc
 # zprof 
 
-# NexML CLI completions
-fpath=(~/.local/share/zsh/site-functions $fpath)

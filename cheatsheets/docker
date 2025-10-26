@@ -94,6 +94,16 @@ docker system prune -a -f
 docker volume ls | grep couchdb_data
 docker volume inspect <volume_name>
 
+# get sizes of all volumes
+docker system df --verbose --format '{{ range .Volumes }}{{ .Name }} {{ .Size }}\n{{ end }}'
+
+# docker disk usage by image, containers, volumes..
+docker system df
+
+# remove all dangling images >N hours ago
+# https://docs.docker.com/reference/cli/docker/image/prune/
+docker image prune --all --filter until=168h
+
 # remove docker data volumes (careful..)
 docker system prune -a -f --volumes
 

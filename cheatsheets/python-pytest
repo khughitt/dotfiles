@@ -1,2 +1,8 @@
+# txt
+pytest --no-cov 2>&1 | tee pytest.txt
+
+# json
+pytest . --json-report --json-report-file=pytest.json
+
 # launch pdb on failure
 pytest --pdb
