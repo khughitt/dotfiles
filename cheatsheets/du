@@ -2,3 +2,6 @@
 # https://unix.stackexchange.com/a/122871/39903
 du --inodes -S | sort -rh | sed -n \
         '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'
+
+# create a list of files & folders sorted by size
+du -ah . | grep -v "/$" | sort -rh | head -100

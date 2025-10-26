@@ -68,20 +68,25 @@ alias Fd='fd -d 1'
 alias fda='fd -Luu'
 alias fdu='fd -u'
 alias fdl='fd -l | sort -k6M -k7n'
-alias fdr="fd -l --changed-within 5days | csvcut -d ' ' -S -c6-9 | csvlook -HI"
+alias fdr="fd -l --changed-within 5d | csvcut -d ' ' -S -c6-9 | csvlook -HI"
 
 alias fdd="fd -t d"
 alias fdf="fd -t f"
 
-alias fd1='fd --changed-within 1hours'
-alias fd2='fd --changed-within 2hours'
-alias fd24='fd --changed-within 1days'
-alias fd48='fd --changed-within 2days'
+alias fd1='fd --changed-within 1h'
+alias fd2='fd --changed-within 2h'
+alias fd3='fd --changed-within 3h'
+alias fd4='fd --changed-within 4h'
+alias fd5='fd --changed-within 5h'
+alias fd6='fd --changed-within 6h'
+alias fd12='fd --changed-within 12h'
+alias fd24='fd --changed-within 1d'
+alias fd48='fd --changed-within 2d'
 
-alias fd-1='fd --changed-before 1hours'
-alias fd-2='fd --changed-before 2hours'
-alias fd-24='fd --changed-before 1days'
-alias fd-48='fd --changed-before 2days'
+alias fd-1='fd --changed-before 1h'
+alias fd-2='fd --changed-before 2h'
+alias fd-24='fd --changed-before 1d'
+alias fd-48='fd --changed-before 2d'
 
 # ghci
 alias ghci='ghci-color'
@@ -176,6 +181,10 @@ alias px='cd "$(xsel -p)"'
 # python
 alias ipy=ipython
 alias psh='poetry shell'
+
+# pytest
+alias pyt="uv run pytest --no-cov 2>&1 | tee pytest.txt"
+alias pyj="uv run pytest . --json-report --json-report-file=pytest.json"
 
 # rg
 alias rgl='rg -l'
