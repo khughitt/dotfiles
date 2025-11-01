@@ -1,0 +1,8 @@
+# check / fix
+uv run ruff check --fix
+
+# fix sort order
+uv run ruff check --select I --fix
+
+# format code
+uv run ruff format

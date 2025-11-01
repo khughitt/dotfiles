@@ -1,0 +1,10 @@
+npm run test:styles -- \
+  --reporter=basic \
+  --reporter=json \
+  --outputFile=vitest-errors.json
+
+// count failures
+jq '.numFailedTests' frontend/tmp/styles-failures.json
+
+// list failing test names + messages
+jq -r '.testResults[].assertionResults[] | select(.status=="failed") | "\(.fullName)\n \(.failureMessages[0])\n"' frontend/tmp/styles-failures.json

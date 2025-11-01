@@ -149,7 +149,8 @@ git branch --delete foo
 git push origin --delete feature-branch-name
 
 # lfs
-git lfs track "*.png" "*.obj"
+git lfs track "*.png"
+git lfs track "*.jpg"
 git add .gitattributes
 git add your-assets/
 git commit -m "Add assets via LFS"
