@@ -4,6 +4,7 @@ fi
 
 # ubuntu likes to be different..
 alias fd="fdfind"
+alias bat='batcat'
 alias cat='batcat --wrap=never --paging=never'
 
 # vi:syntax=bash

@@ -267,20 +267,19 @@ end
 -- nvim-lspconfig
 -----------------------------------------------------------------------------
 if not vim.g.vscode then
-  local lspconfig = require'lspconfig'
-
-  lspconfig.quick_lint_js.setup({
+  -- local lspconfig = require'lspconfig'
+  vim.lsp.config('quick_lint_js', {
       filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"}
   })
 
-  lspconfig.r_language_server.setup {
+  vim.lsp.config('r_language_server', {
     cmd = {"R", "--slave", "-e", "languageserver::run()"},
     filetypes = {"r", "rmd"},
-    root_dir = function(fname)
-      return lspconfig.util.find_git_ancestor(fname)
-    end,
+    -- root_dir = function(fname)
+    --   return lspconfig.util.find_git_ancestor(fname)
+    -- end,
     settings = {},
-  }
+  })
 end
 
 -----------------------------------------------------------------------------
@@ -406,7 +405,8 @@ vim.g.gitgutter_diff_args = '--ignore-all-space'
 -- ----------------------------------------------------------------------------
 --  leap
 -- ----------------------------------------------------------------------------
-require('leap').add_default_mappings()
+vim.keymap.set({'n', 'x', 'o'}, 's', '<Plug>(leap)')
+vim.keymap.set('n',             'S', '<Plug>(leap-from-window)')
 
 -- ---------------------------------------------------------------------------
 --  NERDcommenter
