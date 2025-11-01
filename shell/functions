@@ -11,19 +11,17 @@ function al {
 
 # function lookup
 function fu {
-  lines=`rg --no-line-number "^function" ~/.shell/functions`
-
-  echo $lines | while read line; do 
+  while IFS= read -r line; do
     # parse function name
-    func=$(echo $line | sed 's/function //' | cut -d ' ' -f1);
+    func=$(echo "$line" | sed 's/function //' | cut -d ' ' -f1)
 
     # get function definition
-    def=`type -af $func`
-  
-    if echo $def | grep -q $1; then
-      echo $def
+    def=$(type -af "$func")
+
+    if echo "$def" | grep -q "$1"; then
+      echo "$def"
     fi
-  done
+  done < <(rg --no-line-number "^function" ~/.shell/functions)
 }
 
 # kitty theme switcher
@@ -87,14 +85,31 @@ function pg {
 function dty {
     docker exec -it $1 /bin/bash
 }
+
 function up {
+  # detect Ubuntu and set compose file flag
+  local compose_file_flag=""
+  if [ -f /etc/lsb-release ] && grep -q Ubuntu /etc/lsb-release; then
+    compose_file_flag="-f compose.deploy.yml"
+  fi
+
   # if container specified, just build it
   if [ $# -gt 0 ]; then
-    docker compose up --build $1
+    docker compose $compose_file_flag up --build $1
   else
     # otherwise build everything
-    docker compose up --build
+    docker compose $compose_file_flag up --build
   fi
+}
+
+function down {
+  # detect Ubuntu and set compose file flag
+  local compose_file_flag=""
+  if [ -f /etc/lsb-release ] && grep -q Ubuntu /etc/lsb-release; then
+    compose_file_flag="-f compose.deploy.yml"
+  fi
+
+  docker compose $compose_file_flag down --remove-orphans
 }
 
 # pandoc + mermaid
@@ -121,14 +136,14 @@ function gls2png {
 function ma {
   wd=`pwd`
 
-  cd $MAMBA_ROOT_PREFIX/envs/
+  cd "$MAMBA_ROOT_PREFIX/envs/"
   target=`/bin/ls -t | grep --color='none' "$1" | fzf -1 --exact`
 
   if [ ! -z "$target" ]; then
-    micromamba activate $target
+    micromamba activate "$target"
   fi
 
-  cd $wd
+  cd "$wd"
 }
 
 # copy kitty terminfo to conda envs
@@ -185,10 +200,12 @@ function c {
 
 # vim + rg
 function vr {
-    $EDITOR $(rg -l $1)
+    local files=($(rg -l "$1"))
+    [ ${#files[@]} -gt 0 ] && $EDITOR "${files[@]}"
 }
 function vru {
-    $EDITOR $(rg -uuu --no-ignore-files -l $1)
+    local files=($(rg -uuu --no-ignore-files -l "$1"))
+    [ ${#files[@]} -gt 0 ] && $EDITOR "${files[@]}"
 }
 
 # vim + fzf
@@ -314,7 +331,7 @@ function dat {
     searchpaths="/data/packages /data/proj /data/clean"
 
     # search clean data and most recent data packages
-    fd_cmd="fd . -e .tsv -e .feather -e .parquet -e .csv -e .gz $searchpaths"
+    fd_cmd="fd . -e tsv -e feather -e parquet -e csv -e gz $searchpaths"
     target=`eval $fd_cmd | fzf -1 --exact`
 
     # launch ipython and attempt to load the dataset

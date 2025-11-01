@@ -38,10 +38,9 @@ alias diff='diff --color=auto'
 alias doc='docker'
 alias docc='docker compose'
 alias upv='docker --debug compose up --build'
-alias down='docker compose down --remove-orphans'
 alias dps='docker ps -a --format="table {{.ID}}\t\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
 alias docl='docker logs -f'
-alias dkill='docker kill `docker ps -q`'
+alias dkill='docker kill $(docker ps -q)'
 
 # dropbox
 alias dropbox_ignore='sudo attr -s com.dropbox.ignored -V 1 '
@@ -289,7 +288,7 @@ alias zf="zeit finish"
 alias zp="zeit track -p "
 alias zl="zeit list"
 alias zt="zeit tracking"
-alias ze="zeit entry \`zeit --no-colors list | tail -1 | awk '{print \$1}'\`"
+alias ze='zeit entry $(zeit --no-colors list | tail -1 | awk "{print \$1}")'
 alias zrm="zeit erase "
 
 # vi:syntax=bash

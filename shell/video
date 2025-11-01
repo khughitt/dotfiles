@@ -10,17 +10,19 @@ function ffh265 {
 
     # convert entire video
     if [ $# -eq 1 ]; then
-        cmd="ffmpeg -i $infile -c:v libx265 -crf 28 -preset medium -c:a aac -b:a 192k $outfile"
-        echo $cmd
+        cmd="ffmpeg -i \"$infile\" -c:v libx265 -crf 28 -preset medium -c:a aac -b:a 192k \"$outfile\""
+        echo "$cmd"
+        eval "$cmd"
     else
         local start=$2
         local duration=$3
 
         # otherwise, if start and duration specified, convert a specific region;
-        # note that when the "-ss" option is used, timestamp gets reset, and so 
+        # note that when the "-ss" option is used, timestamp gets reset, and so
         # a duration (-t) must be used in place of the "-to" switch
-        cmd="ffmpeg -ss \"$start\" -i $infile -t \"$duration\" -c:v libx265 -crf 28 -preset medium -c:a aac -b:a 192k $outfile"
-        echo $cmd
+        cmd="ffmpeg -ss \"$start\" -i \"$infile\" -t \"$duration\" -c:v libx265 -crf 28 -preset medium -c:a aac -b:a 192k \"$outfile\""
+        echo "$cmd"
+        eval "$cmd"
     fi
 }
 
