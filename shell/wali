@@ -3,6 +3,11 @@
 # wraps pywal + chooses a random image from a specified dir
 # https://github.com/khughitt/wali
 
+# skip for ubuntu hosts
+if [ `grep -q Ubuntu /etc/lsb-release` ]; then
+  return
+fi
+
 # kitty image previews
 # https://github.com/junegunn/fzf/issues/3228#issuecomment-1730781875
 KITTY_PREVIEW_CMD='kitten icat \
