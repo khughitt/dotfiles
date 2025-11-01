@@ -1,4 +1,4 @@
-if ! [ `grep -q Ubuntu /etc/lsb-release` ]; then
+if [ ! -f /etc/lsb-release ] || ! grep -q Ubuntu /etc/lsb-release; then
   return
 fi
 

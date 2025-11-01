@@ -4,15 +4,15 @@
 
 # creates a sub-directory with reversed versions of .wav files in the current dir
 function audio_reverse {
-    mkdir rev
+    mkdir -p rev
     for x in *.wav; do
-        sox $x rev/${x/.wav/_reversed.wav} reverse;
+        sox "$x" "rev/${x/.wav/_reversed.wav}" reverse
     done
 }
 
 # converts a stereo audio file to a single-channel mono one
 function audio_mono {
-    sox $1 ${1/.wav/_left.wav} remix 1-1
+    sox "$1" "${1/.wav/_left.wav}" remix 1-1
 }
 
 # copy bounced sample from current project to sample library

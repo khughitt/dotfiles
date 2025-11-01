@@ -185,9 +185,16 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-rust
 
 # additional shell settings (aliases, exports, etc.); keep near end to prioritize
-for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,nodes,private/*,vconsole,video,wali}; do
+for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,vconsole,video,wali}; do
     [ -r "$file" ] && source "$file"
 done
+
+# source private configs separately with existence check
+if [ -d ~/.shell/private ]; then
+    for file in ~/.shell/private/*; do
+        [ -r "$file" ] && source "$file"
+    done
+fi
 
 # local settings (late)
 if [ -e ~/.zsh_local_late ]; then
