@@ -31,8 +31,7 @@ npm install eslint eslint-plugin-react --save-dev
 npm install
 
 # install and add to devDependencies
-npm install -D
-npm install --save-deps
+npm install foo -D
 
 # downgrade / install specific version
 npm install foo@1.0.0

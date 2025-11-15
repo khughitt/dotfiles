@@ -16,6 +16,12 @@ docker run <name or id>
 # run a container, specify volumes, port, etc.
 docker run --rm -p 80:3838 -v /from:/to <container id>
 
+# run a command in a container
+docker run -v /from:/to -it <container id> bash -c "<command>"
+
+# run a command overriding the default entrypoint
+docker run -v /from:/to -it --entrypoint bash <container id> -c "<command>"
+
 # run a container without exiting
 docker run -dit <image id>
 docker exec -it <container id> /bin/bash
@@ -84,12 +90,6 @@ environment:
 # keep container running
 command: "tail -f /dev/null"
 
-# remove all stopped containers
-docker container prune 
-
-# clear cache / free up space (check /var/lib/xx as sudo to check space used..)
-docker system prune -a -f
-
 # inspect data volumes
 docker volume ls | grep couchdb_data
 docker volume inspect <volume_name>
@@ -100,9 +100,21 @@ docker system df --verbose --format '{{ range .Volumes }}{{ .Name }} {{ .Size }}
 # docker disk usage by image, containers, volumes..
 docker system df
 
+# <none>:<none> = intermediate images
+# https://stackoverflow.com/a/53224187/554531
+
+# remove all dangling images
+docker image prune
+
 # remove all dangling images >N hours ago
 # https://docs.docker.com/reference/cli/docker/image/prune/
 docker image prune --all --filter until=168h
+
+# remove all stopped containers
+docker container prune 
+
+# clear cache / free up space (check /var/lib/xx as sudo to check space used..)
+docker system prune -a -f
 
 # remove docker data volumes (careful..)
 docker system prune -a -f --volumes

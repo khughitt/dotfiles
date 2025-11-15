@@ -28,6 +28,9 @@ uv run ruff format .
 uv tool install marimo            # install
 uvx run marimo edit notebook.py   # run directly
 
+# remove item from cache
+uv cache clean <pkg>
+
 # limit number of parallel downloads
 UV_CONCURRENT_DOWNLOADS=3 uv ..
 

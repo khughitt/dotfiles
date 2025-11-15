@@ -92,8 +92,19 @@ eval `pkill ssh-agent && ssh-agent`
 #exec sway --unsupported-gpu >> ~/.cache/sway/stdout 2>> ~/.cache/sway/stderr
 
 # gnome
-#XDG_SESSION_TYPE=wayland dbus-run-session gnome-session
-#XDG_SESSION_TYPE=X11 dbus-run-session gnome-session
+export XDG_SESSION_TYPE=x11
+#export XDG_SESSION_CLASS=user
+#export XDG_CURRENT_DESKTOP=GNOME
+#export XDG_SESSION_DESKTOP=gnome
+
+# Import systemd environment variables
+#systemctl --user import-environment DISPLAY XAUTHORITY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
+
+# Update dbus activation environment
+#dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
+
+# Start GNOME session
+#exec gnome-session --session=gnome
 
 # i3
 # export XDG_SESSION_TYPE=x11

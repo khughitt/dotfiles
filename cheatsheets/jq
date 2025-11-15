@@ -18,6 +18,7 @@ gunzip -c dict.json.gz | jq 'keys[]' | wcl
 jq -r '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv'
 
 # colored pagination
+jq -C "." x.json | head
 jq -C "." x.json | moar
 jq -C "." x.json | less -R
 

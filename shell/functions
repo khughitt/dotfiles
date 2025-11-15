@@ -87,29 +87,29 @@ function dty {
 }
 
 function up {
-  # detect Ubuntu and set compose file flag
-  local compose_file_flag=""
+  # detect Ubuntu and set compose file args
+  local compose_args=()
   if [ -f /etc/lsb-release ] && grep -q Ubuntu /etc/lsb-release; then
-    compose_file_flag="-f compose.deploy.yml"
+    compose_args=(-f compose.deploy.yml)
   fi
 
   # if container specified, just build it
   if [ $# -gt 0 ]; then
-    docker compose $compose_file_flag up --build $1
+    docker compose "${compose_args[@]}" up --build "$@"
   else
     # otherwise build everything
-    docker compose $compose_file_flag up --build
+    docker compose "${compose_args[@]}" up --build
   fi
 }
 
 function down {
-  # detect Ubuntu and set compose file flag
-  local compose_file_flag=""
+  # detect Ubuntu and set compose file args
+  local compose_args=()
   if [ -f /etc/lsb-release ] && grep -q Ubuntu /etc/lsb-release; then
-    compose_file_flag="-f compose.deploy.yml"
+    compose_args=(-f compose.deploy.yml)
   fi
 
-  docker compose $compose_file_flag down --remove-orphans
+  docker compose "${compose_args[@]}" down --remove-orphans
 }
 
 # pandoc + mermaid
