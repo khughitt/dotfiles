@@ -3,3 +3,6 @@ conda install mamba -n base -c conda-forge
 
 # clean mamba cache
 mamba clean -i
+
+# flexible deps
+mamba install -f requirements.txt -c bioconda -c conda-forge -c defaults --channel-priority flexible

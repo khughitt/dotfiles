@@ -191,6 +191,7 @@ vim.opt.tabstop = 2
 vim.opt.textwidth = 100               -- wrap lines at 100 characters, when asked
 vim.opt.virtualedit = {"block"}       -- allow virtual edit in visual block ..
 vim.opt.wrap = false                  -- do not wrap lines
+vim.opt.linebreak = true              -- when wrapping, respect word boundaries
 
 -- when wrapping is on, wrap backspace, cursor keys, etc.
 vim.opt.whichwrap:append ({

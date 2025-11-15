@@ -60,5 +60,8 @@ export RIPGREP_CONFIG_PATH="$DOTFILES/ripgreprc"
 # rofi x proj
 export ROFI_PROJ_DIR="$DOTFILES/rofi/rofi-proj"
 
+# uv
+export UV_CONCURRENT_DOWNLOADS=3
+
 # qt
 export QT_SCALE_FACTOR=1.25

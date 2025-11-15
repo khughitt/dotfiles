@@ -95,9 +95,6 @@ client.background       $bg
 #  Input
 #-------------------------------------------------------------------------------
 
-# not yet implemented.. https://github.com/swaywm/sway/pull/1979
-#hide_cursor 5000
-
 #-------------------------------------------------------------------------------
 #  Key bindings
 #-------------------------------------------------------------------------------
@@ -107,7 +104,7 @@ client.background       $bg
 #
 
 # terminal (pre-loaded in background)
-exec_always --no-startup-id kitty --name=i3term
+exec --no-startup-id kitty --name=i3term
 for_window[instance="i3term"] move scratchpad
 
 bindsym $mod+Return \
@@ -308,15 +305,15 @@ for_window [class="peek"]               floating enable
 #
 # Media keys:
 #
-bindsym XF86AudioRaiseVolume exec pactl set-sink-volume $(pacmd list-sinks |awk '/* index:/{print $3}') +5%
-bindsym XF86AudioLowerVolume exec pactl set-sink-volume $(pacmd list-sinks |awk '/* index:/{print $3}') -5%
-bindsym XF86AudioMute exec pactl set-sink-mute $(pacmd list-sinks |awk '/* index:/{print $3}') toggle
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
 
-# spotify
-bindsym XF86AudioPlay exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause"
-bindsym XF86AudioStop exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Stop"
-bindsym XF86AudioPrev exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Previous"
-bindsym XF86AudioNext exec "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Next"
+# media player controls (works with any MPRIS-compatible player)
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioStop exec playerctl stop
+bindsym XF86AudioPrev exec playerctl previous
+bindsym XF86AudioNext exec playerctl next
 
 
 #-------------------------------------------------------------------------------
@@ -328,7 +325,7 @@ set $scratch_width 1536
 set $scratch_height 864
 
 #-- terminal --#
-exec_always --no-startup-id kitty --name=kitty_scratch
+exec --no-startup-id kitty --name=kitty_scratch
 for_window[instance="kitty_scratch"] move scratchpad
 
 bindsym Mod1+Return \
@@ -337,7 +334,7 @@ bindsym Mod1+Return \
     move absolute position center;
 
 #-- r console --#
-exec_always --no-startup-id kitty --name=r_scratch radian
+exec --no-startup-id kitty --name=r_scratch radian
 for_window[instance="r_scratch"] move scratchpad
 
 bindsym Mod1+space \
@@ -346,7 +343,7 @@ bindsym Mod1+space \
     move absolute position center;
 
 #-- python console --#
-exec_always --no-startup-id kitty --name=python_scratch ipython
+exec --no-startup-id kitty --name=python_scratch ipython
 for_window[instance="python_scratch"] move scratchpad
 
 bindsym Mod1+p \
@@ -355,7 +352,7 @@ bindsym Mod1+p \
     move absolute position center;
 
 #-- haskell --#
-exec_always --no-startup-id kitty --name=haskell_scratch ghci
+exec --no-startup-id kitty --name=haskell_scratch ghci
 for_window[instance="haskell_scratch"] move scratchpad
 
 bindsym Mod1+h \
@@ -364,7 +361,7 @@ bindsym Mod1+h \
     move absolute position center;
 
 #-- julia console --#
-exec_always --no-startup-id kitty --name=julia_scratch julia
+exec --no-startup-id kitty --name=julia_scratch julia
 for_window[instance="julia_scratch"] move scratchpad
 
 bindsym Mod1+j \
@@ -373,7 +370,7 @@ bindsym Mod1+j \
     move absolute position center;
 
 #-- node.js --#
-exec_always --no-startup-id kitty --name=node_scratch node
+exec --no-startup-id kitty --name=node_scratch node
 for_window[instance="node_scratch"] move scratchpad
 
 bindsym Mod1+n \
@@ -407,7 +404,7 @@ mode "resize" {
 bindsym $mod+shift+r mode "resize"
 
 # autostart
-exec_always --no-startup-id "killall picom; picom -b"
+exec_always --no-startup-id "killall -q picom; while pgrep -x picom >/dev/null; do sleep 0.1; done; picom -b"
 exec_always --no-startup-id "$HOME/.config/polybar/launch.sh"
 exec --no-startup-id "dunst"
 exec --no-startup-id "fcitx5 -d"
