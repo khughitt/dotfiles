@@ -47,7 +47,7 @@ if [[ "$UBUNTU" == "true" ]]; then
     PACKAGE_INSTALL_CMD="sudo apt install -y"
     PACKAGE_UPDATE_CMD="sudo apt update"
 else
-    PACKAGES=("bat" "dust" "fasd" "fd" "fzf" "gotop-bin" "lsd" "moar" "powerline" "ripgrep" "tre-command" "thefuck" "tk" "tldr" "visidata")
+    PACKAGES=("bat" "dust" "fasd" "fd" "fzf" "gotop-bin" "lsd" "moor" "powerline" "ripgrep" "tre-command" "thefuck" "tk" "tldr" "visidata")
     FONT_PACKAGES=("ttf-nerd-fonts-symbols" "ttf-hack-nerd" "ttf-weather-icons")
     PACKAGE_MANAGER="yay"
     PACKAGE_INSTALL_CMD="yay -S"
@@ -60,7 +60,7 @@ if [[ "$HEADLESS" == "false" ]]; then
 fi
 
 # Define configuration components
-GRAPHICAL_CONFIGS=("dunst" "feh" "picom.conf" "polybar" "sway" "wal" "zathura")
+GRAPHICAL_CONFIGS=("dunst" "feh" "hypr" "picom.conf" "polybar" "sway" "wal" "zathura")
 COMMON_CONFIGS=("fcitx" "git" "mimeapps.list" "nvim" "redshift.conf" "labnote" "lsd" "powerline" "snakemake" "termcolors" "zeit")
 
 GRAPHICAL_DOTFILES=("xinitrc" "Xmodmap" "Xresources" "xprofile")

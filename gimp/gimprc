@@ -29,6 +29,7 @@
 (filter-tool-use-last-settings yes)
 (save-tool-options no)
 (show-welcome-dialog no)
+(color-profile-policy keep)
 (layer-new-fill-type white)
 (fill-options
     (style fg-color)

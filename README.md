@@ -24,7 +24,7 @@ Tools
 * [gotop](https://github.com/xxxserxxx/gotop)
 * [lsd](https://github.com/Peltoche/lsd)
 * [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)
-* [moar](https://github.com/walles/moar)
+* [moor](https://github.com/walles/moor)
 * [neovim](https://neovim.io/)
 * [radian](https://github.com/randy3k/radian)
 * [rg](https://github.com/BurntSushi/ripgrep)

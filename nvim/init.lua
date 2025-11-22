@@ -240,15 +240,42 @@ vim.keymap.set('n', '<localleader>r', ':call ToggleTextWidth()<cr>', { silent = 
 -- switching to unnamedplus to allow pasting to chromium, etc. in wayland
 vim.opt.clipboard:prepend({'unnamed', 'unnamedplus'})
 
+-- Explicitly configure clipboard provider for Wayland
+if vim.env.WAYLAND_DISPLAY then
+  vim.g.clipboard = {
+    name = 'wl-clipboard',
+    copy = {
+      ['+'] = 'wl-copy',
+      ['*'] = 'wl-copy --primary',
+    },
+    paste = {
+      ['+'] = 'wl-paste',
+      ['*'] = 'wl-paste --primary',
+    },
+    cache_enabled = 0,
+  }
+end
+
 -- paste from primary in normal mode
 vim.keymap.set('', '<leader>p', '"*p')
 vim.keymap.set('', '<leader>P', '"*P')
 
--- preserve primary buffer on exit
+-- preserve clipboard on exit (Wayland/X11 compatible)
 -- https://stackoverflow.com/questions/6453595/prevent-vim-from-clearing-the-clipboard-on-exit
 vim.api.nvim_create_autocmd('VimLeave', {
   pattern = {'*'},
-  command = [[ call system("xsel -ip", getreg('+')) ]]
+  callback = function()
+    -- Check if we're in Wayland or X11
+    local wayland = vim.env.WAYLAND_DISPLAY ~= nil
+    if wayland then
+      -- Use wl-copy for Wayland
+      vim.fn.system("wl-copy", vim.fn.getreg('+'))
+      vim.fn.system("wl-copy --primary", vim.fn.getreg('*'))
+    else
+      -- Use xsel for X11
+      vim.fn.system("xsel -ip", vim.fn.getreg('+'))
+    end
+  end
 })
 
 -----------------------------------------------------------------------------

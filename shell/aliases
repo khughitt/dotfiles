@@ -123,7 +123,9 @@ alias errors='journalctl -b -p err|less'
 alias vacuum='sudo journalctl --vacuum-size=50M'
 
 # less
-alias less='moar'
+if type "moor" > /dev/null; then
+  alias less='moor'
+fi
 
 # lit-walk
 alias lw='cd $PROJ/lit-explore/lit-walk poetry run lit-walk'
@@ -147,6 +149,7 @@ fi
 alias l='ls -l'
 alias lt='ls --tree'
 alias lr='ls -latr'
+alias lrd='ls -latr doc/*.md'
 alias lsr='ls -lSr'
 
 # mimetypes
@@ -185,6 +188,10 @@ alias psh='poetry shell'
 alias pyt="uv run pytest --no-cov 2>&1 | tee pytest.txt"
 alias pyj="uv run pytest . --json-report --json-report-file=pytest.json"
 
+function pyf {
+  uv run pytest --no-cov $(fd $1)
+}
+
 # rg
 alias rgl='rg -l'
 alias rgd='rg -d'
@@ -203,6 +210,9 @@ alias rt='cd $ROFI_PROJ_DIR && ls -l'
 # rust
 alias rc=rustc
 
+# sd
+alias -g N='| sd "/\x1b\[[0-9;]*m/g" ""'   # strip ansi colors
+
 # sleep
 alias s1="sleep 60 &&"
 alias s5="sleep 300 &&"
@@ -218,7 +228,7 @@ alias s120="sleep 7200 &&"
 alias snek="snakemake"
 
 # startx
-alias sx="startx"
+alias sx="start-hyprland"
 
 # sudo
 alias _='sudo'

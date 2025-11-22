@@ -122,8 +122,11 @@ docker system prune -a -f --volumes
 # get the ip addr and port of a running container
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 
 
-# copy file from inside container to host
+# container -> host
 docker cp <container>:from/file.txt to.txt
+
+# host -> container
+docker cp from.txt <container>:to/file.txt
 
 # keep container open/running
 ENTRYPOINT ["tail", "-f", "/dev/null"]

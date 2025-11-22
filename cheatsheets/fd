@@ -14,6 +14,9 @@ fd -E foo
 # empty
 fd -te
 
+# absolute paths
+fd -a
+
 # execute (indiv)
 fd -x .. mv {} target/
 
@@ -36,6 +39,9 @@ fd "foo" | rsync -av --files-from=- . /path/to/destination
 # size
 fd -S "+10k"
 fd -S "-1m"
+
+# multiple strings
+fd 'test.*something'
 
 # variable substitution
 fd foo -x sh -c "x=\"$1\"; echo ${x/foo/bar/}" sh

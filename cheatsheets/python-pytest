@@ -4,5 +4,8 @@ pytest --no-cov 2>&1 | tee pytest.txt
 # json
 pytest . --json-report --json-report-file=pytest.json
 
+# fd + grep
+uv run pytest --no-cov $(fd -a foo | grep --color=never test)
+
 # launch pdb on failure
 pytest --pdb
