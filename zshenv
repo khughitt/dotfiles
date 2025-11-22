@@ -12,8 +12,8 @@ export SYSTEMD_EDITOR=nvim
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_STATE_HOME="$HOME/.local/state"
 
-if type "moar" > /dev/null; then
-    export PAGER=$(which moar)
+if type "moor" > /dev/null; then
+    export PAGER=$(which moor)
 fi
 
 # use system colors for ls
@@ -64,4 +64,4 @@ export ROFI_PROJ_DIR="$DOTFILES/rofi/rofi-proj"
 export UV_CONCURRENT_DOWNLOADS=3
 
 # qt
-export QT_SCALE_FACTOR=1.25
+export QT_SCALE_FACTOR=1

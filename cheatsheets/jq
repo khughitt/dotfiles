@@ -19,7 +19,7 @@ jq -r '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.]
 
 # colored pagination
 jq -C "." x.json | head
-jq -C "." x.json | moar
+jq -C "." x.json | moor
 jq -C "." x.json | less -R
 
 # get first element in array

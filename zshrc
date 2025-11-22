@@ -35,7 +35,6 @@ SAVEHIST=10000
 setopt extended_history       # record timestamp of command in HISTFILE
 setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
 setopt hist_ignore_dups       # ignore duplicated commands history list
-setopt hist_ignore_space      # ignore commands that start with space
 setopt hist_verify            # show command with history expansion to user before running it
 setopt inc_append_history     # add commands to HISTFILE as they are executed
 setopt share_history          # share command history data
@@ -185,7 +184,7 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-rust
 
 # additional shell settings (aliases, exports, etc.); keep near end to prioritize
-for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,vconsole,video,wali}; do
+for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,ubuntu,vconsole,video,wali}; do
     [ -r "$file" ] && source "$file"
 done
 

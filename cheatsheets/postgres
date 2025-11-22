@@ -16,7 +16,7 @@
 \o
 
 # display results as two-column key-value pairs
-/x on
+\x on
 select ..
 
 # save output to file / clipboard (without formatting)
