@@ -5,12 +5,11 @@ Current setup
 -------------
 
 * [Arch Linux](https://www.archlinux.org/)
-* [i3](https://i3wm.org/)
-* [picom](https://github.com/yshui/picom)
+* [Hyprland](https://hypr.land/)
 * [Zsh](http://www.zsh.org/)
 * [kitty](https://sw.kovidgoyal.net/kitty/)
-* [polybar](https://github.com/polybar/polybar)
-* [rofi](https://github.com/davatorium/rofi)
+* [Waybar](https://github.com/Alexays/Waybar)
+* [Rofi](https://github.com/davatorium/rofi)
 
 Tools
 -----
@@ -29,7 +28,7 @@ Tools
 * [radian](https://github.com/randy3k/radian)
 * [rg](https://github.com/BurntSushi/ripgrep)
 * [tmux](https://github.com/tmux/tmux/wiki)
-- [tre](https://github.com/dduan/tre)
+* [tre](https://github.com/dduan/tre)
 * [visidata](https://www.visidata.org/)
 * [zathura](https://pwmt.org/projects/zathura/)
 * [zinit](https://github.com/zdharma/zinit)
@@ -56,17 +55,47 @@ Additional Z shell plugins I'm currently using:
 
 ..And a bunch others. 
 
-Keyboard Shortcuts
-------------------
+Aliases / Functions
+-------------------
 
-(TODO)
-
-Autocomplete
-------------
+Not a complete list, but some useful ones..
 
 ```
-# fzf-fasd
-j foo<tab>  
+j       # jump (fasd)
+l       # ls -l
+lr      # ls -latr
+y       # yay
+
+..      # cd ..
+cpr     # cp -r
+rmf     # rm -fr
+
+c       # open cheatsheet
+C       # open config
+
+doc     # docker
+docc    # docker compose
+up      # bring up compose stack
+down    # bring down compose stack
+
+g       # git
+gst     # git status
+gcam    # git commit -am
+gcmsg   # git commit -m
+gco     # git checkout
+gp      # git push
+grst    # git restore --staged
+
+h ..    # search history
+pg ..   # search ps
+
+rgl     # rg -l
+rgu     # rg -uuu
+fda     # fd -Luu
+
+v       # nvim recent
+vl      # nvim last
+vr      # rg -> nvim
 ```
 
 Screenshot

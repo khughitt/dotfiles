@@ -47,20 +47,20 @@ if [[ "$UBUNTU" == "true" ]]; then
     PACKAGE_INSTALL_CMD="sudo apt install -y"
     PACKAGE_UPDATE_CMD="sudo apt update"
 else
-    PACKAGES=("bat" "dust" "fasd" "fd" "fzf" "gotop-bin" "lsd" "moor" "powerline" "ripgrep" "tre-command" "thefuck" "tk" "tldr" "visidata")
+    PACKAGES=("bat" "dust" "fasd" "fd" "fzf" "gotop-bin" "lolcat" "lsd" "moor" "powerline" "ripgrep" "tre-command" "thefuck" "tk" "tldr" "visidata")
     FONT_PACKAGES=("ttf-nerd-fonts-symbols" "ttf-hack-nerd" "ttf-weather-icons")
     PACKAGE_MANAGER="yay"
     PACKAGE_INSTALL_CMD="yay -S"
     PACKAGE_UPDATE_CMD=""
 fi
 
-# Add polybar to packages if not headless
+# Add waybar to packages if not headless
 if [[ "$HEADLESS" == "false" ]]; then
-    PACKAGES+=("polybar")
+    PACKAGES+=("waybar")
 fi
 
 # Define configuration components
-GRAPHICAL_CONFIGS=("dunst" "feh" "hypr" "picom.conf" "polybar" "sway" "wal" "zathura")
+GRAPHICAL_CONFIGS=("dunst" "feh" "hypr" "picom.conf" "waybar" "sway" "wal" "zathura")
 COMMON_CONFIGS=("fcitx" "git" "mimeapps.list" "nvim" "redshift.conf" "labnote" "lsd" "powerline" "snakemake" "termcolors" "zeit")
 
 GRAPHICAL_DOTFILES=("xinitrc" "Xmodmap" "Xresources" "xprofile")

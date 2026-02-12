@@ -1,0 +1,62 @@
+# Mako notification daemon configuration
+# Pywal template - colors auto-update with wallpaper changes
+
+# Sorting (-time for newest first, +time for oldest first)
+sort=-time
+
+# Layers (overlay is highest, bottom is lowest)
+layer=overlay
+
+# Positioning
+anchor=top-right
+margin=12
+padding=12,16
+
+# Dimensions
+width=450
+height=150
+max-visible=5
+
+# Style
+border-size=2
+border-radius=12
+background-color={background}dd
+text-color={foreground}
+border-color={color4}
+
+# Progress bar colors
+progress-color=over {color2}
+
+# Icons
+icons=1
+max-icon-size=48
+icon-location=left
+
+# Font
+font=monospace 11
+
+# Timeouts (milliseconds)
+default-timeout=5000
+ignore-timeout=0
+
+# Grouping
+group-by=app-name
+
+# Format
+format=<b>%s</b>\n%b
+markup=1
+
+# Urgency levels
+[urgency=low]
+border-color={color8}
+default-timeout=3000
+
+[urgency=normal]
+border-color={color4}
+default-timeout=5000
+
+[urgency=critical]
+border-color={color1}
+background-color={color1}22
+text-color={foreground}
+default-timeout=0

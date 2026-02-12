@@ -3,10 +3,12 @@ node_modules
 .cursorrules
 .project
 .pydevproject
+.serena
 .snakemake
 .vscode
 *.pyc
 *.code-workspace
-
+archive
+GEMINI.md
 
 **/.claude/settings.local.json

@@ -7,7 +7,7 @@
 # Preferences dialog.
 
 (prev-language "American English")
-(config-version "3.0.6")
+(config-version "3.0.8")
 (color-management
     (mode display)
     (display-profile-from-gdk no)
@@ -24,8 +24,8 @@
     (show-hsv yes))
 (import-raw-plug-in "${gimp_plug_in_dir}/plug-ins/file-darktable/file-darktable")
 (export-file-type webp)
-(monitor-xresolution 110)
-(monitor-yresolution 110)
+(monitor-xresolution 109)
+(monitor-yresolution 111)
 (filter-tool-use-last-settings yes)
 (save-tool-options no)
 (show-welcome-dialog no)
