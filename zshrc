@@ -29,8 +29,8 @@ source ~/.shell/tmux
 # 
 [ -z "$HISTFILE" ] && HISTFILE="$HOME/.zsh_history"
 
-HISTSIZE=50000
-SAVEHIST=10000
+HISTSIZE=100000
+SAVEHIST=100000
 
 setopt extended_history       # record timestamp of command in HISTFILE
 setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
@@ -205,11 +205,8 @@ if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
-# work-around (oct25)
-# https://github.com/openai/codex/issues/1457
-codex() {
-  command codex -s workspace-write -c "sandbox_workspace_write.writable_roots=['$HOME/.cache/uv']" "$@"
-}
+# AWS completions
+source /usr/bin/aws_zsh_completer.sh
 
 # CLI completions
 fpath=(~/.local/share/zsh/site-functions $fpath)

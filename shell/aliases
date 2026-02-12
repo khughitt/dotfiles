@@ -60,7 +60,7 @@ alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*
 # feh
 alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
 alias fehd='feh -g 640x480 -d -S filename .'
-alias feh_edit='gimp $(cat ~/.fehbg | grep --color=never -Eo "[\/a-z0-9]+PXL.*.png")'
+alias feh_edit='gimp $(cat ~/.fehbg | /bin/grep -Eo "[\/a-z0-9]+PXL.*.png")'
 
 # fd
 alias Fd='fd -d 1'
@@ -177,8 +177,8 @@ alias netp="sudo netstat -plant"
 alias ndev="npm run dev"
 
 # pwd
-alias xp='pwd | xsel'
-alias px='cd "$(xsel -p)"'
+alias xp='pwd | wl-copy -p'
+alias px='cd "$(wl-paste -p)"'
 
 # python
 alias ipy=ipython
@@ -244,6 +244,10 @@ alias tarc="tar czvpf"
 # termbin (ex. "echo foo | tb")
 alias tb="nc termbin.com 9999"
 
+# time zone
+alias est="timedatectl set-timezone US/Eastern"
+alias pst="timedatectl set-timezone US/Pacific"
+
 # tmux
 alias x=xumt
 
@@ -267,11 +271,22 @@ alias vp="vd -f pandas"
 # wc
 alias wcl="wc -l"
 
+# wl-copy
+alias wl="wl-copy"
+
+function yank {
+  /bin/cat $1 | wl-copy
+}
+
 # xclip
 alias xc=xclip
 
 # xsel
 alias xs=xsel
+
+# "whatip"; get external ip addr
+# https://bbs.archlinux.org/viewtopic.php?pid=408739#p408739
+alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1'
 
 # xmodmap
 alias xm="xmodmap ~/.Xmodmap"
@@ -279,10 +294,6 @@ alias xm="xmodmap ~/.Xmodmap"
 # xrandr
 alias 2k="xrandr --output DP-0 --mode 1920x1080"
 alias 4k="xrandr --output DP-0 --mode 3840x2160"
-
-# "whatip"; get external ip addr
-# https://bbs.archlinux.org/viewtopic.php?pid=408739#p408739
-alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1'
 
 # yabridge
 alias ya="yabridgectl"

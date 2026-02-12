@@ -33,7 +33,7 @@ export FREEPLANE_USE_UNSUPPORTED_JAVA_VERSION=1
 export TERMINFO=~/.terminfo
 
 # remap caps-lock in sway
-export XKB_DEFAULT_OPTIONS=caps:escape
+# export XKB_DEFAULT_OPTIONS=caps:escape
 
 # less page colors to use for man pages
 export LESS_TERMCAP_mb=$'\E[01;31m'       # begin blinking
@@ -51,8 +51,8 @@ PERL_LOCAL_LIB_ROOT="/home/keith/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_R
 PERL_MB_OPT="--install_base \"/home/keith/perl5\""; export PERL_MB_OPT;
 PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5"; export PERL_MM_OPT;
 
-# python
-export MYPYPATH=".config/stubs"
+# pre-commit
+export PRE_COMMIT_HOME=$HOME/.cache/pre-commit
 
 # ripgrep
 export RIPGREP_CONFIG_PATH="$DOTFILES/ripgreprc"
