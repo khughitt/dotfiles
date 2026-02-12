@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+"""Simple Pomodoro timer for Waybar"""
+
+import os
+import sys
+import json
+import time
+import argparse
+from pathlib import Path
+from subprocess import run, DEVNULL
+
+# State file location
+STATE_DIR = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp"))
+STATE_FILE = STATE_DIR / "waybar-pomodoro.json"
+
+# Timer settings (in seconds)
+WORK_TIME = 25 * 60  # 25 minutes
+BREAK_TIME = 5 * 60  # 5 minutes
+
+# Icons (Nerd Fonts)
+TOMATO = "󰔛"  # nf-md-fruit_pineapple (work mode)
+BREAK = "󰖔"   # nf-md-coffee (break mode)
+PAUSE = "󰏤"   # nf-md-pause (paused)
+
+
+def load_state():
+    """Load state from file"""
+    if not STATE_FILE.exists():
+        return {
+            "mode": "work",
+            "remaining": WORK_TIME,
+            "active": False,
+            "last_update": time.time(),
+        }
+
+    try:
+        with open(STATE_FILE) as f:
+            state = json.load(f)
+            # Update remaining time if timer is active
+            if state.get("active", False):
+                elapsed = time.time() - state["last_update"]
+                state["remaining"] = max(0, state["remaining"] - elapsed)
+            state["last_update"] = time.time()
+            return state
+    except (json.JSONDecodeError, KeyError):
+        return {
+            "mode": "work",
+            "remaining": WORK_TIME,
+            "active": False,
+            "last_update": time.time(),
+        }
+
+
+def save_state(state):
+    """Save state to file"""
+    state["last_update"] = time.time()
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f)
+
+
+def format_time(seconds):
+    """Format seconds as MM:SS"""
+    minutes = int(seconds // 60)
+    secs = int(seconds % 60)
+    return f"{minutes:02d}:{secs:02d}"
+
+
+def show_notification(title, message):
+    """Show desktop notification"""
+    try:
+        run(["notify-send", title, message], stdout=DEVNULL, stderr=DEVNULL)
+    except FileNotFoundError:
+        pass
+
+
+def status():
+    """Show current status (for waybar)"""
+    state = load_state()
+
+    # Check if timer reached zero
+    if state["active"] and state["remaining"] <= 0:
+        state["active"] = False
+        state["remaining"] = 0
+        save_state(state)
+        show_notification("Pomodoro", "Timer finished!")
+
+    # Select icon
+    if not state["active"]:
+        icon = PAUSE
+    elif state["mode"] == "work":
+        icon = TOMATO
+    else:
+        icon = BREAK
+
+    # Format output for waybar
+    time_str = format_time(state["remaining"])
+    # Use different classes based on active state
+    if state["active"]:
+        css_class = state["mode"]  # "work" or "break" when active
+    else:
+        css_class = "paused"  # "paused" when not active
+
+    output = {
+        "text": f"{icon} {time_str}",
+        "tooltip": f"{'Work' if state['mode'] == 'work' else 'Break'} - {'Active' if state['active'] else 'Paused'}",
+        "class": css_class,
+    }
+    print(json.dumps(output))
+
+
+def toggle():
+    """Toggle timer active/paused"""
+    state = load_state()
+    state["active"] = not state["active"]
+    save_state(state)
+
+
+def next_timer():
+    """Skip to next timer (work -> break or break -> work)"""
+    state = load_state()
+    if state["mode"] == "work":
+        state["mode"] = "break"
+        state["remaining"] = BREAK_TIME
+    else:
+        state["mode"] = "work"
+        state["remaining"] = WORK_TIME
+    state["active"] = False
+    save_state(state)
+
+
+def reset():
+    """Reset current timer"""
+    state = load_state()
+    if state["mode"] == "work":
+        state["remaining"] = WORK_TIME
+    else:
+        state["remaining"] = BREAK_TIME
+    state["active"] = False
+    save_state(state)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Waybar Pomodoro Timer")
+    parser.add_argument(
+        "action",
+        nargs="?",
+        default="status",
+        choices=["status", "toggle", "next", "reset"],
+        help="Action to perform",
+    )
+    args = parser.parse_args()
+
+    if args.action == "status":
+        status()
+    elif args.action == "toggle":
+        toggle()
+    elif args.action == "next":
+        next_timer()
+    elif args.action == "reset":
+        reset()
+
+
+if __name__ == "__main__":
+    main()

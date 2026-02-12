@@ -1,0 +1,398 @@
+/* Import pywal colors (updates with wallpaper changes) */
+@import url("../../.cache/wal/colors-waybar.css");
+
+* {
+    border: none;
+    border-radius: 0;
+    /* Nerd Fonts first for icons, fallback to system fonts */
+    font-family: "FiraCode Nerd Font", "FiraMono Nerd Font", "JetBrainsMono Nerd Font", "Symbols Nerd Font", monospace;
+    font-size: 14px;  /* Increased from 13px for better icon visibility */
+    min-height: 0;
+}
+
+window#waybar {
+    /* Use pywal background with transparency (like picom) */
+    background-color: alpha(@background, 0.73);
+    color: @foreground;
+}
+
+/* Remove default button styling */
+button {
+    box-shadow: none;
+    text-shadow: none;
+    padding: 0;
+    border-radius: 0;
+}
+
+/* ==========================================
+   LEFT SIDE - Workspaces & Window Title
+   ========================================== */
+
+/* Workspace buttons */
+#workspaces button {
+    padding: 0 8px;
+    color: @foreground;
+    background-color: transparent;
+    border-bottom: 3px solid transparent;
+}
+
+#workspaces button.active {
+    background-color: @color0;
+    border-bottom: 3px solid @color6;  /* cyan */
+    color: @color6;
+}
+
+#workspaces button.urgent {
+    background-color: @color1;  /* red */
+    color: @foreground;
+}
+
+#workspaces button:hover {
+    background-color: alpha(@foreground, 0.1);
+}
+
+/* Submap (resize mode, etc.) */
+#submap {
+    padding: 0 10px;
+    color: @color0;
+    background-color: @color2;  /* green */
+    font-weight: bold;
+}
+
+/* Window title */
+#window {
+    padding: 0 10px;
+    color: @foreground;  /* Use normal foreground color */
+    font-style: italic;
+}
+
+/* ==========================================
+   CENTER - Media Player
+   ========================================== */
+
+#custom-media {
+    padding: 0 10px;
+    color: @color10;  /* bright green */
+    border-bottom: 3px solid @color2;
+}
+
+#custom-media.playing {
+    color: @color2;
+}
+
+#custom-media.paused {
+    color: @color8;
+}
+
+/* ==========================================
+   RIGHT SIDE - System Info
+   ========================================== */
+
+#idle_inhibitor,
+#privacy,
+#network,
+#bluetooth,
+#pulseaudio,
+#backlight,
+#battery,
+#memory,
+#cpu,
+#temperature,
+#language,
+#custom-pomodoro,
+#custom-layout,
+#clock,
+#tray {
+    padding: 0 10px;
+    margin: 0 2px;
+}
+
+/* Idle inhibitor */
+#idle_inhibitor {
+    border-bottom: 3px solid @color3;  /* yellow/orange */
+}
+
+#idle_inhibitor.activated {
+    color: @color11;  /* bright yellow - active */
+}
+
+#idle_inhibitor.deactivated {
+    color: @foreground;  /* normal foreground when inactive */
+}
+
+/* Privacy indicators */
+#privacy {
+    padding: 0 5px;
+}
+
+#privacy-item {
+    padding: 0 3px;
+    color: @color1;
+}
+
+#privacy-item.screenshare {
+    background-color: @color1;
+    color: @foreground;
+}
+
+#privacy-item.audio-in {
+    background-color: @color3;
+    color: @foreground;
+}
+
+#privacy-item.audio-out {
+    background-color: @color4;
+    color: @foreground;
+}
+
+/* Network */
+#network {
+    border-bottom: 3px solid @color2;  /* green */
+}
+
+#network.disconnected {
+    color: @color1;
+    border-bottom: 3px solid @color1;
+}
+
+/* Bluetooth */
+#bluetooth {
+    border-bottom: 3px solid @color4;  /* blue */
+}
+
+#bluetooth.disabled,
+#bluetooth.off {
+    color: @color8;
+}
+
+#bluetooth.connected {
+    color: @color12;  /* bright blue */
+}
+
+/* PulseAudio - magenta */
+#pulseaudio {
+    border-bottom: 3px solid @color5;
+}
+
+#pulseaudio.muted {
+    color: @color8;
+    border-bottom: 3px solid @color8;
+}
+
+/* Backlight */
+#backlight {
+    border-bottom: 3px solid @color3;  /* yellow */
+}
+
+/* Battery */
+#battery {
+    border-bottom: 3px solid @color2;  /* green */
+}
+
+#battery.charging {
+    color: @color10;
+}
+
+#battery.warning:not(.charging) {
+    color: @color11;  /* bright yellow */
+    border-bottom: 3px solid @color3;
+}
+
+#battery.critical:not(.charging) {
+    color: @color9;  /* bright red */
+    border-bottom: 3px solid @color1;
+    animation: blink 1s linear infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Memory - blue */
+#memory {
+    border-bottom: 3px solid @color4;
+}
+
+#memory.warning {
+    color: @color11;
+    border-bottom: 3px solid @color3;
+}
+
+#memory.critical {
+    color: @color9;
+    border-bottom: 3px solid @color1;
+}
+
+/* CPU - cyan */
+#cpu {
+    border-bottom: 3px solid @color6;
+}
+
+/* Temperature */
+#temperature {
+    border-bottom: 3px solid @color2;
+}
+
+#temperature.critical {
+    color: @color9;
+    border-bottom: 3px solid @color1;
+}
+
+/* Keyboard language */
+#language {
+    border-bottom: 3px solid @color5;  /* magenta */
+}
+
+/* Custom layout indicator - blue */
+#custom-layout {
+    border-bottom: 3px solid @color4;
+}
+
+/* Clock/Date - blue */
+#clock {
+    border-bottom: 3px solid @color4;
+}
+
+/* System tray */
+#tray {
+    padding: 0 10px;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
+
+/* Pomodoro timer states */
+#custom-pomodoro {
+    border-bottom: 3px solid @color2;  /* green border */
+}
+
+#custom-pomodoro.paused {
+    color: @foreground;  /* Normal brightness when paused */
+}
+
+#custom-pomodoro.work {
+    color: @color11;  /* bright yellow/orange for active work */
+}
+
+#custom-pomodoro.break {
+    color: @color12;  /* bright blue for break mode */
+}
+
+/* ==========================================
+   MCP Mode + Notification Module
+   ========================================== */
+
+/* Bar-wide styling when MCP mode is active */
+window#waybar.mode-mcp {
+    /* Keep bar geometry unchanged; styling handled in the MCP module */
+    background-color: alpha(@background, 0.88);
+    transition: background-color 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Default MCP module (inactive/ready) */
+#custom-mcp {
+    padding: 0 12px;
+    margin: 0 2px;
+    color: alpha(@foreground, 0.55);
+    border-bottom: 3px solid transparent;
+    background-color: transparent;
+    min-width: 200px;
+    /**overflow: hidden;*/
+    /**text-overflow: ellipsis;*/
+    /**white-space: nowrap;*/
+    transition: color 200ms ease-out,
+                background-color 200ms ease-out,
+                border-bottom-color 200ms ease-out,
+                opacity 200ms ease-out;
+}
+
+/* Active state; class should be set via module payload */
+#custom-mcp.active {
+    color: @foreground;
+    background-color: alpha(@color1, 0.18);
+    box-shadow: inset 0 -3px 0 @color1;
+    font-weight: 600;
+}
+
+/* Severity accents */
+#custom-mcp.info.active {
+    background-color: alpha(@color6, 0.18);  /* cyan */
+    box-shadow: inset 0 -3px 0 @color6;
+}
+
+#custom-mcp.warn.active {
+    background-color: alpha(@color3, 0.18);  /* yellow/orange */
+    box-shadow: inset 0 -3px 0 @color3;
+}
+
+#custom-mcp.crit.active {
+    background-color: alpha(@color1, 0.18);  /* red */
+    box-shadow: inset 0 -3px 0 @color1;
+}
+
+/* Optional slow pulse for attention; apply class "pulse" via payload */
+#custom-mcp.pulse {
+    animation: mcp-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes mcp-pulse {
+    0% { opacity: 0.92; }
+    60% { opacity: 1; }
+    100% { opacity: 0.92; }
+}
+
+/* Bar-wide accent when MCP is active */
+window#waybar.mcp-active {
+    background: radial-gradient(circle at 50% 50%, alpha(@color1, 0.18) 0%, alpha(@color1, 0) 60%),
+                linear-gradient(90deg, alpha(@color1, 0) 0%, alpha(@color1, 0.12) 50%, alpha(@color1, 0) 100%);
+    animation: mcp-wave 1.3s ease-out 1;
+    transition: background-color 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+window#waybar.mcp-active.info {
+    background: radial-gradient(circle at 50% 50%, alpha(@color6, 0.18) 0%, alpha(@color6, 0) 60%),
+                linear-gradient(90deg, alpha(@color6, 0) 0%, alpha(@color6, 0.12) 50%, alpha(@color6, 0) 100%);
+    animation: mcp-wave 1.3s ease-out 1;
+    transition: background-color 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+window#waybar.mcp-active.warn {
+    background: radial-gradient(circle at 50% 50%, alpha(@color3, 0.18) 0%, alpha(@color3, 0) 60%),
+                linear-gradient(90deg, alpha(@color3, 0) 0%, alpha(@color3, 0.12) 50%, alpha(@color3, 0) 100%);
+    animation: mcp-wave 1.3s ease-out 1;
+    transition: background-color 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+window#waybar.mcp-active.crit {
+    background: radial-gradient(circle at 50% 50%, alpha(@color1, 0.18) 0%, alpha(@color1, 0) 60%),
+                linear-gradient(90deg, alpha(@color1, 0) 0%, alpha(@color1, 0.12) 50%, alpha(@color1, 0) 100%);
+    animation: mcp-wave 1.3s ease-out 1;
+    transition: background-color 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+
+}
+
+@keyframes mcp-wave {
+    0% {
+        background-size: 50% 50%, 100% 100%;
+        opacity: 1;
+    }
+    100% {
+        background-size: 140% 140%, 110% 110%;
+        opacity: 0.55;
+    }
+}
+
+/* Hide window title when MCP is active to avoid split messaging */
+window#waybar.mcp-active #window {
+    opacity: 0;
+    transition: opacity 120ms ease-out;
+}
+
+window#waybar:not(.mcp-active) #custom-mcp.active {
+    opacity: 0;
+}
