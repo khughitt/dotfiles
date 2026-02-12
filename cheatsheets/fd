@@ -27,6 +27,9 @@ fd -X .. mv {} target/
 # sort results by recency
 fd -l | sort -k6M -k7n | tail
 
+# sort files by number of lines
+fd -t f . | xargs wc -l | sort -n
+
 # find files in a specified directory
 fd . <dir> -t f
 

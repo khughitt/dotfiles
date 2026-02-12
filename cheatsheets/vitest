@@ -3,6 +3,9 @@ npm run test:styles -- \
   --reporter=json \
   --outputFile=vitest-errors.json
 
+// no color
+NO_COLOR=true npx vitest run
+
 // count failures
 jq '.numFailedTests' frontend/tmp/styles-failures.json
 

@@ -8,6 +8,9 @@ rg -g '!doc' unified
 # hide lines / filenames
 rg --no-filename --no-line-number
 
+# rg -> sd
+rg -0 -l foo | xargs -0 sd 'foo' 'bar'
+
 # rg -> sed
 rg -0 -l foo | xargs -0 sed -i 's/foo/bar/g'
 

@@ -1,0 +1,3 @@
+# sync files from remote host using list of filepaths
+rsync -avz --files-from=files.txt user@remote:/ ./destination/
+

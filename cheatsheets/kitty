@@ -4,15 +4,10 @@ kitty +kitten ssh myserver
 # list available fonts
 kitty +list-fonts
 
-# copy & paste rectange
-ctrl+shift+v   # start selection; click & drag mouse to select region..
-ctrl+shift+c   # copy selected text
-
-# keyboard shortcuts
-# https://sw.kovidgoyal.net/kitty/overview/#other-keyboard-shortcuts
-
-# neovim pager
-# https://github.com/kovidgoyal/kitty/issues/719#issuecomment-1120383920
+# copy & paste
+ctrl+shift+c   # copy to clipboard
+ctrl+shift+v   # paste from clipboard
+ctrl+;         # show clipboard manager
 
 # themes
 kitten themes
@@ -20,8 +15,19 @@ kitten themes
 # load scrollback buffer into $PAGER
 ctrl+shift+h
 
+# search scrollback in a page
+ctrl+shift+/
+
+# increase / decrease background opacity
+ctrl+shift+a > m
+ctrl+shift+a > l
+
 # choose url to launch
 ctrl+shift+e
 
-# clipboard manager
-ctrl+;
+# shell integration
+ctrl+shift+g              # open output from last command in pager
+ctrl+shift+right-click    # right click output to open in pager
+ctrl+shift+z              # scroll to previous shell prompt
+ctrl+shift+x              # scroll to next shell prompt
+

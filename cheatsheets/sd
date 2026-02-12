@@ -1,2 +1,5 @@
 # remove empty lines (in place)
 sd '^\n' '' file
+
+# preview changes
+sd -p
