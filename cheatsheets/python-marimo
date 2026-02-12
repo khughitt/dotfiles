@@ -10,6 +10,9 @@
 # defining "private" (local) variables
 _foo = 5
 
+# append to output
+mo.output.append()
+
 # convert ipynb
 marimo convert in.ipynb > nb.py
 

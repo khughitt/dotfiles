@@ -46,6 +46,15 @@ npm update foo
 # update packages + package.json
 npm update --save
 
+# list outdated packages
+npm outdated
+
+# update major versions
+npm install vite@7
+
+# update dev dependencies
+npm update --save-dev
+
 # update package.json using npm-check-updates
 npx npm-check-updates -u
 

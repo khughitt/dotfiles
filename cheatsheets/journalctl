@@ -10,3 +10,10 @@ journalctl -b -1
 # clean up rotated logs
 journalctl --vacuum-size=100M
 journalctl --vacuum-time=2weeks
+
+# see what's failing (user service)
+journalctl --user -u foo.service -e
+systemctl --user status foo.service
+
+# test user service
+systemctl --user start foo.service

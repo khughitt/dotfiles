@@ -1,5 +1,8 @@
 # show changes that would be made
 perl-rename -nv 's/a/b/' *.txt
 
+# lowercase and replace whitespace
+perl-rename -nv 'tr/ A-Z/_a-z/' *
+
 # first 12 characters
 perl-rename -nv 's/^(.{1,12}).*\.pdf$/$1.pdf/' *.pdf

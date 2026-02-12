@@ -87,6 +87,9 @@ environment:
   - XYZ
   - FOO=$BAR
 
+# check value of environmental variable
+docker inspect backend --format '{{range .Config.Env}}{{println .}}{{end}}' | grep FOO
+
 # keep container running
 command: "tail -f /dev/null"
 

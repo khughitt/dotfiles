@@ -1,11 +1,17 @@
 # 
 # keyboard shortcuts
 #
-cntl-h    # backspace
-cntl-q    # "parks" a command you are typing (saves it and starts a new cmd)
-cntl-x-e  # edit cmd in $EDITOR
+ctrl-u    # delete entire line
+ctrl-h    # backspace
+ctrl-q    # "parks" a command you are typing (saves it and starts a new cmd)
+ctrl-w    # delete previous word
+ctrl-k    # delete after cursor
+alt-w     # delete before cursor
+alt-k     # delete next word
+alt-t     # transpose words
 
-cntl-w          # delete last word
+ctrl-x-e  # edit cmd in $EDITOR
+
 alt-backspace   # same..
 
 # directory-specific history
