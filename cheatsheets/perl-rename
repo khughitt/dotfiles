@@ -4,5 +4,8 @@ perl-rename -nv 's/a/b/' *.txt
 # lowercase and replace whitespace
 perl-rename -nv 'tr/ A-Z/_a-z/' *
 
+# remove bracketed alphanumeric characters e.g. "[abc123]"
+perl-rename -nv 's/\[\w+\]//' *
+
 # first 12 characters
 perl-rename -nv 's/^(.{1,12}).*\.pdf$/$1.pdf/' *.pdf

@@ -1,0 +1,15 @@
+# get account id
+aws sts get-caller-identity --query Account --output text
+
+# logs
+aws logs list-log-groups
+aws logs tail /ecs/x --follow
+
+#
+# .aws/config
+#
+
+# disable pager
+cli_pager= 
+
+# vi:syntax=bash

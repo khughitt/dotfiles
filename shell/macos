@@ -1,0 +1,44 @@
+if [[ "$(uname)" != "Darwin" ]]; then
+  return
+fi
+
+# Clipboard (override Wayland/X11 aliases)
+unalias wl xc xs 2>/dev/null
+alias wl='pbcopy'
+function yank {
+  /bin/cat $1 | pbcopy
+}
+
+# macOS `open` is native — remove mimeopen alias
+unalias open 2>/dev/null
+
+# plocate doesn't exist on macOS
+unalias locate 2>/dev/null
+
+# Override Linux-only aliases with macOS equivalents
+unalias zzz 2>/dev/null
+alias zzz="pmset sleepnow"
+
+# Remove systemd/X11/Wayland aliases that don't apply
+unalias est pst sx xm 2>/dev/null
+unalias 2k 4k 2>/dev/null
+unalias y yd 2>/dev/null
+unalias xp px 2>/dev/null
+
+# feh doesn't exist on macOS
+unalias feh fehd feh_edit 2>/dev/null
+
+# journalctl
+unalias journalctl errors vacuum 2>/dev/null
+
+# dropbox xattr (different on macOS)
+unalias dropbox_ignore 2>/dev/null
+alias dropbox_ignore='xattr -w com.dropbox.ignored 1 '
+
+# GNU du --inodes not available on macOS
+unalias duin 2>/dev/null
+
+# sed -i requires '' on macOS; provide a wrapper
+alias gsed='sed'  # if user installs gnu-sed via brew
+
+# vi:syntax=bash

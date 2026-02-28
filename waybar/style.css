@@ -163,10 +163,11 @@ button {
 #bluetooth.disabled,
 #bluetooth.off {
     color: @color8;
+    border-bottom: 3px solid @color8;
 }
 
 #bluetooth.connected {
-    color: @color12;  /* bright blue */
+    color: @foreground;
 }
 
 /* PulseAudio - magenta */
@@ -191,6 +192,7 @@ button {
 
 #battery.charging {
     color: @color10;
+    border-bottom: 3px solid @color2;  /* green - explicit for consistency */
 }
 
 #battery.warning:not(.charging) {

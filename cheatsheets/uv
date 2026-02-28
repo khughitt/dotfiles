@@ -9,13 +9,15 @@ uv pip ...
 uv pip install "git+https://github.com/a/b"
 uv pip install -e .
 
-# project management (~poetry)
+# project management
 uv init
 uv add pandas
 uv add ruff --dev
 uv run ./script.py
 
 uv add -r requirements.txt
+
+uv remove pandas
 
 uv sync             # install deps
 uv sync --upgrade   # upgrade deps

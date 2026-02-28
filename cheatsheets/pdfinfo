@@ -1,0 +1,7 @@
+# print number of pages
+for x in *.pdf; do 
+  num_pages=$(pdfinfo $x | awk '/^Pages:/ {print $2}');
+  echo "$x        $num_pages";
+done
+
+# vi:syntax=bash

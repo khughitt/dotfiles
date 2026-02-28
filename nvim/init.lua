@@ -249,8 +249,8 @@ if vim.env.WAYLAND_DISPLAY then
       ['*'] = 'wl-copy --primary',
     },
     paste = {
-      ['+'] = 'wl-paste',
-      ['*'] = 'wl-paste --primary',
+      ['+'] = 'wl-paste --no-newline',
+      ['*'] = 'wl-paste --no-newline --primary',
     },
     cache_enabled = 0,
   }

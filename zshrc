@@ -5,7 +5,7 @@
 # zmodload zsh/zprof 
 
 # dotfiles home
-export DOTFILES=$(dirname `readlink -f "${(%):-%x}"`)
+export DOTFILES=${${(%):-%x}:A:h}
 
 # stop here in non-interactive mode
 [ -z "$PS1" ] && return
@@ -48,8 +48,7 @@ setopt autocd                 # enter directories by name only
 setopt interactivecomments    # recognize comments
 
 zstyle ':completion:*' menu select=4                # tab completion menu
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # use smart-case completion
-zstyle ':completion:*' matcher-list 'r:|=*' 'l:|=* r:|=*'  # complete from middle of path
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|=*' 'l:|=* r:|=*'  # smart-case, then substring
 
 # nnn
 # for file in $DOTFILES/nnn/*.zsh; do
@@ -93,7 +92,7 @@ zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/directories.zsh
 zinit snippet OMZ::lib/git.zsh
 zinit snippet OMZ::plugins/git/git.plugin.zsh
-zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
+[[ "$(uname)" != "Darwin" ]] && zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
 zinit snippet OMZ::plugins/taskwarrior/taskwarrior.plugin.zsh
 zinit snippet OMZ::plugins/pip
 
@@ -123,12 +122,13 @@ zinit light "khughitt/fzf-fasd"
 # cntl-z <-> fg
 zinit light "mdumitru/fancy-ctrl-z"
 
-# pure prompt
-fpath+=$HOME/.zsh/pure
+# CLI completions
+fpath=(~/.local/share/zsh/site-functions $fpath)
 
 # tab completion
 autoload -Uz compinit && compinit
-zinit cdreplay -q 
+autoload -Uz bashcompinit && bashcompinit
+zinit cdreplay -q
 
 # snakemake tab completion support
 compdef _gnu_generic snakemake
@@ -138,10 +138,7 @@ compdef _gnu_generic snakemake
 # source <(bat completion zsh)
 
 # Xan completions
-function __xan {
-    xan compgen "$1" "$2" "$3"
-}
-complete -F __xan -o default xan
+eval "$(xan completions zsh)"
 
 # host-specific settings
 if [ -e $DOTFILES/shell/local/$HOST.zsh ]; then
@@ -151,12 +148,13 @@ fi
 # remaining zinit plugins
 zinit wait lucid for \
  atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
+ atload"fast-theme q-jmnemonic &>/dev/null" \
     zdharma-continuum/fast-syntax-highlighting \
  blockf \
     zsh-users/zsh-completions
 
-# set fast-syntax-highlighting theme
-fast-theme q-jmnemonic &> /dev/null
+# AWS completions (source after turbo compinit via sched)
+[[ -f /usr/bin/aws_zsh_completer.sh ]] && sched +0 source /usr/bin/aws_zsh_completer.sh
 
 # directory-specific command history
 # https://github.com/natethinks/jog
@@ -184,7 +182,7 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-rust
 
 # additional shell settings (aliases, exports, etc.); keep near end to prioritize
-for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,ubuntu,vconsole,video,wali}; do
+for file in ~/.shell/{aliases,audio,exports,fasd,functions,fzf,macos,ubuntu,vconsole,video,wali}; do
     [ -r "$file" ] && source "$file"
 done
 
@@ -204,12 +202,6 @@ fi
 if [ "$vconsole" = false ]; then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
-
-# AWS completions
-source /usr/bin/aws_zsh_completer.sh
-
-# CLI completions
-fpath=(~/.local/share/zsh/site-functions $fpath)
 
 # stop profiling zshrc
 # zprof 

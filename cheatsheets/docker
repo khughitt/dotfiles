@@ -122,6 +122,12 @@ docker system prune -a -f
 # remove docker data volumes (careful..)
 docker system prune -a -f --volumes
 
+# prune buildkit cache
+docker buildx prune -a -f
+
+# prune dangling volumes
+docker volume prune -f
+
 # get the ip addr and port of a running container
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id> 
 
