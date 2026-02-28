@@ -8,7 +8,7 @@ if test $SSH_AUTH_SOCK && [ $SSH_AUTH_SOCK != $SOCK ]; then
     export SSH_AUTH_SOCK=$SOCK
 fi
 
-export FONTCONFIG_PATH=/etc/fonts
+[[ "$(uname)" != "Darwin" ]] && export FONTCONFIG_PATH=/etc/fonts
 
 # hostname (use existing if already set)
 export HOSTNAME="${HOSTNAME:-$(hostname)}"

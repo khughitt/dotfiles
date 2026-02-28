@@ -8,10 +8,11 @@ DOTS_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Parse command line arguments
 HEADLESS=false
 UBUNTU=false
+MACOS=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --headless|-h)
+        --headless)
             HEADLESS=true
             shift
             ;;
@@ -19,11 +20,16 @@ while [[ $# -gt 0 ]]; do
             UBUNTU=true
             shift
             ;;
+        --macos|-m)
+            MACOS=true
+            shift
+            ;;
         --help)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
-            echo "  -h, --headless    Install only non-graphical components"
+            echo "  --headless        Install only non-graphical components"
             echo "  -u, --ubuntu      Configure for Ubuntu (default: Arch Linux)"
+            echo "  -m, --macos       Configure for macOS with Homebrew"
             echo "  --help            Show this help message"
             exit 0
             ;;
@@ -35,12 +41,26 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# macOS has no Wayland/X11, so skip graphical configs
+if [[ "$MACOS" == "true" ]]; then
+    HEADLESS=true
+fi
+
 echo "Installing dotfiles relative to: $DOTS_HOME..."
 echo "Headless mode: $HEADLESS"
 echo "Ubuntu mode: $UBUNTU"
+echo "macOS mode: $MACOS"
 
 # Define package lists based on distribution
-if [[ "$UBUNTU" == "true" ]]; then
+if [[ "$MACOS" == "true" ]]; then
+    PACKAGES=("bat" "coreutils" "dust" "fasd" "fd" "figlet" "fzf" "gotop"
+              "lolcat" "lsd" "neovim" "ripgrep" "thefuck" "tk" "tldr"
+              "tmux" "tre-command" "visidata")
+    FONT_PACKAGES=("font-hack-nerd-font" "font-symbols-only-nerd-font")
+    PACKAGE_MANAGER="brew"
+    PACKAGE_INSTALL_CMD="brew install"
+    PACKAGE_UPDATE_CMD="brew update"
+elif [[ "$UBUNTU" == "true" ]]; then
     PACKAGES=("bat" "fasd" "fd-find" "fzf" "lsd" "ripgrep" "thefuck" "tk" "tldr" "visidata")
     FONT_PACKAGES=("fonts-nerd-fonts" "fonts-weather-icons")
     PACKAGE_MANAGER="apt"
@@ -62,6 +82,16 @@ fi
 # Define configuration components
 GRAPHICAL_CONFIGS=("dunst" "feh" "hypr" "picom.conf" "waybar" "sway" "wal" "zathura")
 COMMON_CONFIGS=("fcitx" "git" "mimeapps.list" "nvim" "redshift.conf" "labnote" "lsd" "powerline" "snakemake" "termcolors" "zeit")
+
+if [[ "$MACOS" == "true" ]]; then
+    # Remove Linux-only configs
+    _filtered=()
+    for item in "${COMMON_CONFIGS[@]}"; do
+        [[ "$item" != "fcitx" && "$item" != "mimeapps.list" && "$item" != "redshift.conf" ]] && _filtered+=("$item")
+    done
+    COMMON_CONFIGS=("${_filtered[@]}")
+    unset _filtered
+fi
 
 GRAPHICAL_DOTFILES=("xinitrc" "Xmodmap" "Xresources" "xprofile")
 COMMON_DOTFILES=("cookiecutterrc" "ctags" "dir_colors" "plotly" "Rprofile" "Renviron" "tmux.conf" "vim" "vimrc" "visidatarc" "condarc")
@@ -104,18 +134,31 @@ function ln_s() {
 # Function to install packages
 function install_packages() {
     local packages=("$@")
-    
-    echo "${UBUNTU:+Ubuntu}${UBUNTU:+ }${UBUNTU:-Arch} packages:"
+    local distro_name
+    if [[ "$MACOS" == "true" ]]; then
+        distro_name="macOS (Homebrew)"
+    elif [[ "$UBUNTU" == "true" ]]; then
+        distro_name="Ubuntu"
+    else
+        distro_name="Arch"
+    fi
+
+    echo "$distro_name packages:"
     printf '%s ' "${packages[@]}"
     echo ""
     printf '%s ' "${FONT_PACKAGES[@]}"
     echo ""
 
     while true; do
-        read -r -p "Install ${UBUNTU:+Ubuntu}${UBUNTU:+ }${UBUNTU:-Arch} packages? [Y/n] " input
+        read -r -p "Install $distro_name packages? [Y/n] " input
         case $input in
             [yY][eE][sS]|[yY])
-                if [[ "$UBUNTU" == "true" ]]; then
+                if [[ "$MACOS" == "true" ]]; then
+                    echo "Installing macOS packages via Homebrew..."
+                    brew update
+                    brew install "${packages[@]}"
+                    brew install --cask "${FONT_PACKAGES[@]}"
+                elif [[ "$UBUNTU" == "true" ]]; then
                     echo "Installing Ubuntu packages..."
                     $PACKAGE_UPDATE_CMD
                     $PACKAGE_INSTALL_CMD "${packages[@]}"
@@ -135,7 +178,7 @@ function install_packages() {
                 break
                 ;;
             [nN][oO]|[nN])
-                echo "Skipping ${UBUNTU:+Ubuntu}${UBUNTU:+ }${UBUNTU:-Arch} package installation..."
+                echo "Skipping $distro_name package installation..."
                 break
                 ;;
             *)
@@ -271,17 +314,18 @@ ln_s ${DOTS_HOME}/bin ~/
 # create vim backup dir
 mkdir -p ~/.vim/tmp/backup
 
-# mimetypes
-mkdir -p ~/.local/share/mime
-ln_s ${DOTS_HOME}/mime ~/.local/share/mime/packages
-update-mime-database ~/.local/share/mime
+# mimetypes & fontconfig (Linux only)
+if [[ "$MACOS" != "true" ]]; then
+    mkdir -p ~/.local/share/mime
+    ln_s ${DOTS_HOME}/mime ~/.local/share/mime/packages
+    update-mime-database ~/.local/share/mime
 
-rm ${XDG_CONFIG_HOME}/mimeapps.list
-ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
+    rm ${XDG_CONFIG_HOME}/mimeapps.list
+    ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
 
-# fontconfig
-mkdir -p $XDG_CONFIG_HOME/fontconfig
-ln_s ${DOTS_HOME}/fonts.conf $XDG_CONFIG_HOME/fontconfig/fonts.conf
+    mkdir -p $XDG_CONFIG_HOME/fontconfig
+    ln_s ${DOTS_HOME}/fonts.conf $XDG_CONFIG_HOME/fontconfig/fonts.conf
+fi
 
 # install tpm
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm

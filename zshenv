@@ -2,13 +2,19 @@
 # note: 'typeset -U' specifies that only the first occurence of any duplicates should be
 #        kept in an array variable.
 typeset -U PATH path
+
+# Homebrew (Apple Silicon)
+if [[ -d /opt/homebrew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.gem/ruby/3.4.0/bin:$HOME/go/bin:$HOME/.yarn/bin:$PATH
 
 export BROWSER=firefox
 export EDITOR=nvim
 export PAGER=less
 export PDFVIEWER=zathura
-export SYSTEMD_EDITOR=nvim
+[[ "$(uname)" != "Darwin" ]] && export SYSTEMD_EDITOR=nvim
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_STATE_HOME="$HOME/.local/state"
 
@@ -23,10 +29,16 @@ export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30
 # export LS_COLORS="$(vivid generate one-dark)"
 
 # java
-export JAVA_HOME=/usr/lib/jvm/default
-export JAVA_FONTS=/usr/share/fonts/TTF
-export _JAVA_AWT_WM_NONREPARENTING=1
-export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true'
+if [[ "$(uname)" == "Darwin" ]]; then
+    export JAVA_HOME=$(/usr/libexec/java_home 2>/dev/null)
+else
+    export JAVA_HOME=/usr/lib/jvm/default
+    export JAVA_FONTS=/usr/share/fonts/TTF
+fi
+if [[ "$(uname)" != "Darwin" ]]; then
+    export _JAVA_AWT_WM_NONREPARENTING=1
+    export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true'
+fi
 export FREEPLANE_USE_UNSUPPORTED_JAVA_VERSION=1
 
 # let ncurses know where to find terminfo
@@ -45,11 +57,11 @@ export LESS_TERMCAP_ue=$'\E[0m'           # end underline
 export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
 
 # perl
-PATH="/home/keith/perl5/bin${PATH:+:${PATH}}"; export PATH;
-PERL5LIB="/home/keith/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
-PERL_LOCAL_LIB_ROOT="/home/keith/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
-PERL_MB_OPT="--install_base \"/home/keith/perl5\""; export PERL_MB_OPT;
-PERL_MM_OPT="INSTALL_BASE=/home/keith/perl5"; export PERL_MM_OPT;
+PATH="$HOME/perl5/bin${PATH:+:${PATH}}"; export PATH;
+PERL5LIB="$HOME/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
+PERL_LOCAL_LIB_ROOT="$HOME/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
+PERL_MB_OPT="--install_base \"$HOME/perl5\""; export PERL_MB_OPT;
+PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"; export PERL_MM_OPT;
 
 # pre-commit
 export PRE_COMMIT_HOME=$HOME/.cache/pre-commit

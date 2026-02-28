@@ -5,8 +5,11 @@
 # https://github.com/khughitt/wali
 #
 
-# skip for ubuntu hosts
+# skip for ubuntu and macOS hosts
 if [ -f /etc/lsb-release ] && grep -q Ubuntu /etc/lsb-release; then
+  return
+fi
+if [[ "$(uname)" == "Darwin" ]]; then
   return
 fi
 
@@ -65,9 +68,9 @@ function wali_print {
 
   # get current wallpaper path
   if [ "$WALI_BACKEND" = "swww" ]; then
-    file=$(swww query | grep -oP 'image: \K.*' | head -n1)
+    file=$(swww query | grep --color=never -oP 'image: \K.*' | head -n1)
   else
-    file=$(/bin/cat ~/.fehbg | /bin/grep -Eo "[\/a-z0-9]+PXL.*\.(jpg|png)")
+    file=$(/bin/cat ~/.fehbg | /bin/grep --color=never -Eo "[\/a-z0-9]+PXL.*\.(jpg|png)")
   fi
 
   # extract filename and parse date (PXL_20240520_023703962.jpg -> 20240520)
@@ -162,10 +165,12 @@ function wali_reload {
 }
 
 # process a single image into 3440px-wide wallpaper
-# usage: _wali_process_image <source> <outfile> <mode>
-# modes: landscape (resize only), rotate (rotate 90° + resize), crop (center-crop 21:9 + resize)
+# usage: _wali_process_image <source> <outfile> <mode> [angle]
+# modes: landscape (resize only), rotate (rotate + resize), crop (center-crop 21:9 + resize),
+#        rotate-crop (rotate + center-crop 21:9 + resize)
+# angle: rotation degrees (default: 90). use -90 for left, 90 for right
 function _wali_process_image {
-  local src="$1" outfile="$2" mode="$3"
+  local src="$1" outfile="$2" mode="$3" angle="${4:-90}"
 
   local dims=$(identify "$src" | cut -d ' ' -f 3)
   local w=$(echo "$dims" | cut -d 'x' -f 1)
@@ -175,11 +180,21 @@ function _wali_process_image {
 
   case "$mode" in
     rotate)
-      cmd="$cmd -rotate 90"
+      cmd="$cmd -rotate $angle"
       ;;
     crop)
       local crop_h=$((w * 9 / 21))
       cmd="$cmd -gravity center -crop ${w}x${crop_h}+0+0 +repage"
+      ;;
+    rotate-crop)
+      cmd="$cmd -rotate $angle"
+      # 90°/270° swaps dimensions; 180° preserves them
+      local rw=$w rh=$h
+      if [ "$angle" != 180 ] && [ "$angle" != -180 ]; then
+        rw=$h; rh=$w
+      fi
+      local crop_h=$((rw * 9 / 21))
+      cmd="$cmd -gravity center -crop ${rw}x${crop_h}+0+0 +repage"
       ;;
   esac
 
@@ -262,6 +277,53 @@ function wali_reprocess {
       *) echo "Skipping $fname" ;;
     esac
   done
+}
+
+# rotate current wallpaper and crop to 21:9
+# usage: wali_rotate [l|r|f]  (default: r)
+#   l = 90° left (CCW), r = 90° right (CW), f = 180° flip
+function wali_rotate {
+  local dir="${1:-r}"
+  local angle
+  case "$dir" in
+    l) angle=-90 ;;
+    r) angle=90 ;;
+    f) angle=180 ;;
+    *) echo "Usage: wali_rotate [l|r|f]"; return 1 ;;
+  esac
+
+  # get current processed wallpaper path
+  local current
+  if [ "$WALI_BACKEND" = "swww" ]; then
+    current=$(swww query | grep --color=never -oP 'image: \K.*' | head -n1)
+  else
+    current=$(/bin/cat ~/.fehbg | /bin/grep --color=never -Eo "[\/a-z0-9]+PXL.*\.(jpg|png)")
+  fi
+
+  if [ -z "$current" ]; then
+    echo "Could not determine current wallpaper"
+    return 1
+  fi
+
+  # resolve source image
+  local source=$(wali_print)
+
+  if [ ! -f "$source" ]; then
+    echo "Source image not found: $source"
+    return 1
+  fi
+
+  echo "Source: $source"
+  echo "Rotating ${angle}° + cropping to 21:9..."
+
+  rm -f "$current"
+  _wali_process_image "$source" "$current" rotate-crop "$angle"
+
+  # clear swww first — it skips reload when the file path hasn't changed
+  if [ "$WALI_BACKEND" = "swww" ]; then
+    swww clear
+  fi
+  wali_set "$current"
 }
 
 # vi:syntax=bash
