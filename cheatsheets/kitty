@@ -18,6 +18,10 @@ ctrl+shift+h
 # search scrollback in a page
 ctrl+shift+/
 
+# scroll up / down
+ctrl+shift + up/dn
+ctrl+shift + pgup/pgdn
+
 # increase / decrease background opacity
 ctrl+shift+a > m
 ctrl+shift+a > l
@@ -30,4 +34,3 @@ ctrl+shift+g              # open output from last command in pager
 ctrl+shift+right-click    # right click output to open in pager
 ctrl+shift+z              # scroll to previous shell prompt
 ctrl+shift+x              # scroll to next shell prompt
-

@@ -9,3 +9,6 @@ uv run pytest --no-cov $(fd -a foo | grep --color=never test)
 
 # launch pdb on failure
 pytest --pdb
+
+# show skipped
+uv run pytest -rs
