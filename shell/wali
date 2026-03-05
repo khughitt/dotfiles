@@ -1,7 +1,7 @@
 #
 # wallpaper switcher
 # wraps pywal + chooses a random image from a specified dir
-# supports both X11 (feh) and Wayland/Hyprland (swww)
+# supports X11 (feh), Wayland/Hyprland (swww), and noctalia-shell
 # https://github.com/khughitt/wali
 #
 
@@ -13,8 +13,11 @@ if [[ "$(uname)" == "Darwin" ]]; then
   return
 fi
 
-# detect display server
-if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
+# detect display server / wallpaper backend
+# priority: noctalia > swww > feh
+if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ] && pgrep -f "noctalia-shell" > /dev/null 2>&1; then
+  WALI_BACKEND="noctalia"
+elif [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
   WALI_BACKEND="swww"
 else
   WALI_BACKEND="feh"
@@ -34,13 +37,15 @@ KITTY_PREVIEW_CMD='kitten icat \
     > /dev/tty'
 
 # wallpaper switcher
-if [ "$WALI_BACKEND" = "swww" ]; then
+if [ "$WALI_BACKEND" = "noctalia" ]; then
+  alias wali="qs -c noctalia-shell ipc call wallpaper random all"
+elif [ "$WALI_BACKEND" = "swww" ]; then
   alias wali="cd ~/d/wali/ && uv run wali --image-dir=\"\$WALI_DIR/3440\" --wallpaper-backend swww change"
 else
   alias wali="cd ~/d/wali/ && uv run wali --image-dir=\"\$WALI_DIR/3440\" change"
 fi
 
-# apply pywal colors and set wallpaper (swww only)
+# set wallpaper to a specific image
 function wali_set {
   local img="$1"
 
@@ -49,15 +54,16 @@ function wali_set {
     return 1
   fi
 
-  # generate colors with pywal
-  wal -i "$img" -n
-
-  if [ "$WALI_BACKEND" = "swww" ]; then
+  if [ "$WALI_BACKEND" = "noctalia" ]; then
+    qs -c noctalia-shell ipc call wallpaper set "$img" all
+  elif [ "$WALI_BACKEND" = "swww" ]; then
+    wal -i "$img" -n
     swww img "$img" \
       --transition-type wipe \
       --transition-duration 2 \
       --transition-fps 60
   else
+    wal -i "$img" -n
     feh --bg-fill "$img"
   fi
 }
@@ -70,7 +76,13 @@ function wali_print {
   if [ "$WALI_BACKEND" = "swww" ]; then
     file=$(swww query | grep --color=never -oP 'image: \K.*' | head -n1)
   else
+    # noctalia and feh both use ~/.fehbg
     file=$(/bin/cat ~/.fehbg | /bin/grep --color=never -Eo "[\/a-z0-9]+PXL.*\.(jpg|png)")
+  fi
+
+  if [ -z "$file" ]; then
+    echo "Error: could not determine current wallpaper" >&2
+    return 1
   fi
 
   # extract filename and parse date (PXL_20240520_023703962.jpg -> 20240520)
@@ -161,7 +173,7 @@ function wali_reload {
   # reload kitty colors
   killall -SIGUSR1 kitty 2>/dev/null
 
-  echo "Reloaded pywal colors"
+  echo "Reloaded colors"
 }
 
 # process a single image into 3440px-wide wallpaper
@@ -297,6 +309,7 @@ function wali_rotate {
   if [ "$WALI_BACKEND" = "swww" ]; then
     current=$(swww query | grep --color=never -oP 'image: \K.*' | head -n1)
   else
+    # noctalia and feh both use ~/.fehbg
     current=$(/bin/cat ~/.fehbg | /bin/grep --color=never -Eo "[\/a-z0-9]+PXL.*\.(jpg|png)")
   fi
 

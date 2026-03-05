@@ -21,4 +21,4 @@ else
 fi
 
 # Launch waybar
-waybar &
+# waybar &
