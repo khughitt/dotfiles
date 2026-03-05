@@ -43,6 +43,9 @@ git diff --name-status 629feca 3e0800d
 git difftool 629fec
 git difftool 629feca file.py
 
+# see differences for staged files
+git diff --staged
+
 # edit commit message
 git commit --amend
 
