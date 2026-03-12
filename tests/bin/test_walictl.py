@@ -320,6 +320,33 @@ def test_save_current_appends_source_path(tmp_path: Path, monkeypatch: pytest.Mo
     assert favorites_path.read_text() == f"existing-entry\n{source_path}\n"
 
 
+def test_save_current_fails_when_wali_favorites_directory_is_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    archive_root = tmp_path / "backgrounds"
+    source_path = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
+    source_path.parent.mkdir(parents=True)
+    source_path.touch()
+
+    missing_wali_dir = tmp_path / "missing-wali"
+    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert kwargs == {"check": True, "capture_output": True, "text": True}
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
+
+    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
+    monkeypatch.setenv("WALI_DIR", str(missing_wali_dir))
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    exit_code, stdout, stderr = run_walictl(["save-current"], monkeypatch)
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == "favorites directory not found\n"
+
+
 def test_edit_current_launches_gimp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     archive_root = tmp_path / "backgrounds"
     source_path = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
