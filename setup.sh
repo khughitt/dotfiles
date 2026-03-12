@@ -54,63 +54,41 @@ echo "macOS mode: $MACOS"
 # Define package lists based on distribution
 if [[ "$MACOS" == "true" ]]; then
     PACKAGES=("bat" "coreutils" "dust" "fasd" "fd" "figlet" "fzf" "gotop"
-              "lolcat" "lsd" "neovim" "ripgrep" "thefuck" "tk" "tldr"
+              "lolcat" "lsd" "neovim" "ripgrep" "thefuck" "tldr"
               "tmux" "tre-command" "visidata")
     FONT_PACKAGES=("font-hack-nerd-font" "font-symbols-only-nerd-font")
     PACKAGE_MANAGER="brew"
     PACKAGE_INSTALL_CMD="brew install"
     PACKAGE_UPDATE_CMD="brew update"
 elif [[ "$UBUNTU" == "true" ]]; then
-    PACKAGES=("bat" "fasd" "fd-find" "fzf" "lsd" "ripgrep" "thefuck" "tk" "tldr" "visidata")
+    PACKAGES=("bat" "fasd" "fd-find" "fzf" "lsd" "ripgrep" "thefuck" "tldr" "visidata")
     FONT_PACKAGES=("fonts-nerd-fonts" "fonts-weather-icons")
     PACKAGE_MANAGER="apt"
     PACKAGE_INSTALL_CMD="sudo apt install -y"
     PACKAGE_UPDATE_CMD="sudo apt update"
 else
-    PACKAGES=("bat" "dust" "fasd" "fd" "fzf" "gotop-bin" "lolcat" "lsd" "moor" "powerline" "ripgrep" "tre-command" "thefuck" "tk" "tldr" "visidata")
+    PACKAGES=("bat" "dust" "fasd" "fd" "fzf" "gotop-bin" "lolcat" "lsd" "moor" "powerline" "ripgrep" "tre-command" "thefuck" "tldr" "visidata" "xan")
     FONT_PACKAGES=("ttf-nerd-fonts-symbols" "ttf-hack-nerd" "ttf-weather-icons")
     PACKAGE_MANAGER="yay"
     PACKAGE_INSTALL_CMD="yay -S"
     PACKAGE_UPDATE_CMD=""
 fi
 
-# Add waybar to packages if not headless
-if [[ "$HEADLESS" == "false" ]]; then
-    PACKAGES+=("waybar")
-fi
-
 # Define configuration components
-GRAPHICAL_CONFIGS=("dunst" "feh" "hypr" "picom.conf" "waybar" "sway" "wal" "zathura")
-COMMON_CONFIGS=("fcitx" "git" "mimeapps.list" "nvim" "redshift.conf" "labnote" "lsd" "powerline" "snakemake" "termcolors" "zeit")
+GRAPHICAL_CONFIGS=("feh" "hypr" "zathura")
+COMMON_CONFIGS=("fcitx" "git" "mimeapps.list" "nvim" "lsd" "powerline" "snakemake" "termcolors" "yazi")
 
 if [[ "$MACOS" == "true" ]]; then
     # Remove Linux-only configs
     _filtered=()
     for item in "${COMMON_CONFIGS[@]}"; do
-        [[ "$item" != "fcitx" && "$item" != "mimeapps.list" && "$item" != "redshift.conf" ]] && _filtered+=("$item")
+        [[ "$item" != "fcitx" && "$item" != "mimeapps.list" ]] && _filtered+=("$item")
     done
     COMMON_CONFIGS=("${_filtered[@]}")
     unset _filtered
 fi
 
-GRAPHICAL_DOTFILES=("xinitrc" "Xmodmap" "Xresources" "xprofile")
-COMMON_DOTFILES=("cookiecutterrc" "ctags" "dir_colors" "plotly" "Rprofile" "Renviron" "tmux.conf" "vim" "vimrc" "visidatarc" "condarc")
-
-# Determine resolution to use (only for graphical mode)
-HIRES=""
-
-if [[ "$HEADLESS" == "false" ]]; then
-    while [[ "$HIRES" != "n" && "$HIRES" != "y" ]]; do
-        read -r -p "Configure system for 4k display? [y|N] " HIRES
-        HIRES="${HIRES,,}"
-
-        if [[ "$HIRES" == "" ]]; then
-            HIRES="n"
-        fi
-    done
-else
-    HIRES="n"
-fi
+COMMON_DOTFILES=("condarc" "ctags" "dir_colors" "plotly" "Rprofile" "Renviron" "tmux.conf" "visidatarc")
 
 # Check for configuration directory
 if [ -z $XDG_CONFIG_HOME ]; then
@@ -197,10 +175,6 @@ ln_s ${DOTS_HOME}/shell ~/.shell
 
 # Create needed directories (only for graphical mode)
 if [[ "$HEADLESS" == "false" ]]; then
-    for x in "compton" "i3" "rofi" "wal"; do
-        mkdir -p ${XDG_CONFIG_HOME}/${x}
-    done
-
     # Gtk 3.0
     if [ ! -e ${XDG_CONFIG_HOME}/gtk-3.0/ ]; then
         mkdir ${XDG_CONFIG_HOME}/gtk-3.0/
@@ -228,12 +202,6 @@ for path in "${COMMON_CONFIGS[@]}"; do
 done
 
 # Install ~/. components
-if [[ "$HEADLESS" == "false" ]]; then
-    for path in "${GRAPHICAL_DOTFILES[@]}"; do
-        ln_s ${DOTS_HOME}/${path} ~/.${path}
-    done
-fi
-
 for path in "${COMMON_DOTFILES[@]}"; do
     ln_s ${DOTS_HOME}/${path} ~/.${path}
 done
@@ -282,37 +250,8 @@ ln_s ${DOTS_HOME}/lintr ${HOME}/.lintr
 # ripgrep
 ln_s ${DOTS_HOME}/rgignore ${HOME}/.rgignore
 
-# 4k configs (i3, rofi, wal) - only for graphical mode
-if [[ "$HEADLESS" == "false" ]]; then
-    if [[ "$HIRES" == "y" ]]; then
-        ln_s ${DOTS_HOME}/i3/config.4k ${XDG_CONFIG_HOME}/i3/config
-        ln_s ${DOTS_HOME}/rofi/config.4k.rasi ${XDG_CONFIG_HOME}/rofi/config.rasi
-        ln_s ${DOTS_HOME}/wal/templates.4k ${XDG_CONFIG_HOME}/wal/templates
-    else
-        ln_s ${DOTS_HOME}/i3/config ${XDG_CONFIG_HOME}/i3/config
-        ln_s ${DOTS_HOME}/rofi/config.rasi ${XDG_CONFIG_HOME}/rofi/config.rasi
-        ln_s ${DOTS_HOME}/wal/templates ${XDG_CONFIG_HOME}/wal/templates
-    fi
-
-    # wal colorscheme
-    ln_s ${DOTS_HOME}/wal/colorschemes ${XDG_CONFIG_HOME}/wal/colorschemes
-
-    # to install pywal alt color algorithms:
-    # pip install --user colorz haishoku colorthief
-
-    # create i3 and sway log dirs
-    mkdir -p ~/.cache/i3
-    mkdir -p ~/.cache/sway
-
-    # symlink Xresources to Xdefaults for sway
-    ln_s ${DOTS_HOME}/Xresources ~/.Xdefaults
-fi
-
 # scripts, etc.
 ln_s ${DOTS_HOME}/bin ~/
-
-# create vim backup dir
-mkdir -p ~/.vim/tmp/backup
 
 # mimetypes & fontconfig (Linux only)
 if [[ "$MACOS" != "true" ]]; then

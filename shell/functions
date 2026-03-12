@@ -33,15 +33,10 @@ function kit {
 
 # recursively count files in subdirs
 function count_files {
-  now=`date +%Y-%m-%d`
-  outfile="file_counts_$now.txt"
-
-  touch $outfile
-
   # non-hidden folders
   for x in */; do
-    echo $x >> $outfile; 
-    fd -Luu . $x -t f | wc -l >> $outfile;
+    echo $x;
+    fd -Luu . $x -t f | wc -l;
   done
 
   # if hidden directories present, include them..
@@ -49,8 +44,8 @@ function count_files {
 
   if [ "$num_hidden" -ne "0" ]; then
     for x in .*/; do
-      echo $x >> $outfile; 
-      fd -Luu . $x -t f | wc -l >> $outfile;
+      echo $x;
+      fd -Luu . $x -t f | wc -l;
     done
   fi
 }

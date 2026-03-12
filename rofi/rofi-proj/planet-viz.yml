@@ -1,6 +1,0 @@
-name: "planet-viz"
-left:
-  - "kitty -d ~/d/art/THREE.planet/src nvim Planet.tsx"
-right:
-  - "kitty -d ~/d/art/THREE.planet npm start"
-

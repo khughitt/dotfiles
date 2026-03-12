@@ -5,6 +5,7 @@ fi
 # Clipboard (override Wayland/X11 aliases)
 unalias wl xc xs 2>/dev/null
 alias wl='pbcopy'
+
 function yank {
   /bin/cat $1 | pbcopy
 }

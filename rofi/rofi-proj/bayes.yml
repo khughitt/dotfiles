@@ -1,6 +1,0 @@
-name: bayes
-
-left:
-  - "zathura ~/d/books/statisticalrethinking2.pdf"
-right:
-  - "kitty -d $NOTES/knowledge/courses/statistical-rethinking ls"

@@ -1,2 +1,0 @@
-screen.vmb: call delete('/home/keith/.vim/autoload/screen.vim')|call delete('/home/keith/.vim/doc/screen.txt')|call delete('/home/keith/.vim/plugin/screen.vim')
-supertab.vmb: call delete('/home/keith/.vim/doc/supertab.txt')|call delete('/home/keith/.vim/plugin/supertab.vim')
