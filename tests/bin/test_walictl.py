@@ -98,10 +98,76 @@ def test_current_fails_when_wallpaper_query_is_empty(
     assert stderr == "could not determine current wallpaper\n"
 
 
+def test_current_fails_when_qs_command_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_run(
+        args: list[str], *, check: bool, capture_output: bool, text: bool
+    ) -> subprocess.CompletedProcess[str]:
+        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert check is True
+        assert capture_output is True
+        assert text is True
+        raise FileNotFoundError("qs")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == "qs command not found\n"
+
+
+def test_current_fails_when_wallpaper_query_command_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_run(
+        args: list[str], *, check: bool, capture_output: bool, text: bool
+    ) -> subprocess.CompletedProcess[str]:
+        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert check is True
+        assert capture_output is True
+        assert text is True
+        raise subprocess.CalledProcessError(returncode=1, cmd=args)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == "wallpaper query failed\n"
+
+
 def test_current_returns_null_metadata_for_unparseable_filename(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     current_wallpaper = tmp_path / "current" / "wallpaper.jpg"
+
+    def fake_run(
+        args: list[str], *, check: bool, capture_output: bool, text: bool
+    ) -> subprocess.CompletedProcess[str]:
+        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert check is True
+        assert capture_output is True
+        assert text is True
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
+
+    monkeypatch.delenv("BACKGROUND_IMG_DIR", raising=False)
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
+    payload = json.loads(stdout)
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert payload["current_wallpaper_path"] == str(current_wallpaper)
+    assert payload["source_wallpaper_path"] is None
+    assert payload["parsed_date"] is None
+    assert payload["display_date"] is None
+
+
+def test_current_returns_null_metadata_for_noncanonical_filename(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    current_wallpaper = tmp_path / "current" / "IMG_PXL_20240520.jpg"
 
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
