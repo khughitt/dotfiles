@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+from datetime import datetime
+from pathlib import Path
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="walictl")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    current_parser = subparsers.add_parser("current")
+    current_parser.add_argument("--json", action="store_true", dest="as_json")
+
+    return parser
+
+
+def get_current_wallpaper_path() -> Path:
+    result = subprocess.run(
+        ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    wallpaper_path = next((line.strip() for line in result.stdout.splitlines() if line.strip()), "")
+    if not wallpaper_path:
+        raise RuntimeError("could not determine current wallpaper")
+    return Path(wallpaper_path).expanduser().resolve()
+
+
+def parse_pixel_date(filename: str) -> datetime:
+    match = re.search(r"PXL_(\d{8})", filename)
+    if match is None:
+        raise RuntimeError("could not parse wallpaper date")
+    return datetime.strptime(match.group(1), "%Y%m%d")
+
+
+def derive_source_path(current_path: Path, image_root: Path) -> Path:
+    parsed_date = parse_pixel_date(current_path.name)
+    return image_root / parsed_date.strftime("%Y") / parsed_date.strftime("%m") / f"{current_path.stem}.jpg"
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    if args.command != "current" or not args.as_json:
+        raise RuntimeError("unsupported command")
+
+    archive_root = Path(os.environ["BACKGROUND_IMG_DIR"]).expanduser().resolve()
+    current_path = get_current_wallpaper_path()
+    parsed_date = parse_pixel_date(current_path.name)
+    source_path = derive_source_path(current_path, archive_root)
+
+    payload = {
+        "ok": True,
+        "backend": "noctalia",
+        "current_wallpaper_path": str(current_path),
+        "source_wallpaper_path": str(source_path),
+        "filename": current_path.name,
+        "parsed_date": parsed_date.date().isoformat(),
+        "display_date": parsed_date.strftime("%B %-d, %Y"),
+    }
+    print(json.dumps(payload))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
