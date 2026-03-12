@@ -1,0 +1,14 @@
+{
+  "id": "wali-panel",
+  "name": "Wali Panel",
+  "version": "0.1.0",
+  "author": "Keith Hughitt",
+  "description": "Preview and manage the current wallpaper from the bar.",
+  "entryPoints": {
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml"
+  },
+  "metadata": {
+    "iconColor": "primary"
+  }
+}
