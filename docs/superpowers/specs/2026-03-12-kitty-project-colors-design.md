@@ -13,7 +13,7 @@ Two complementary color systems operating on individual kitty windows:
 1. **Automatic** — dark themes assigned deterministically by project git root
 2. **Manual** — light themes applied via `alt+1-9`, with `alt+0` to reset
 
-Both use `kitty @ set-colors` scoped to `KITTY_WINDOW_ID`. Neither modifies config files nor affects other windows.
+Shell commands use `kitten @ set-colors -m "id:$KITTY_WINDOW_ID"`. Kitty keybindings use the `remote_control set-colors` action. Neither modifies config files nor affects other windows.
 
 ## Automatic System
 
@@ -26,7 +26,10 @@ A zsh function `_kitty_project_colors` that:
 3. If no git root found, applies default theme (noctalia) and returns
 4. Checks pin file for an explicit project→theme mapping
 5. If no pin, hashes the git root path to select a dark theme deterministically
-6. Calls `kitten @ set-colors -m "id:$KITTY_WINDOW_ID" <theme_path>`
+6. Skips the `kitten @ set-colors` call if the theme is unchanged from the last application (cached in `$_KITTY_CURRENT_THEME`)
+7. Calls `kitten @ set-colors -m "id:$KITTY_WINDOW_ID" <theme_path>`
+
+Theme paths resolve to `$DOTFILES/kitty/themes/<filename>`. Some filenames contain spaces (e.g. `1984 Dark.conf`) and must be properly quoted in the implementation.
 
 ### Trigger Points
 
@@ -35,7 +38,7 @@ A zsh function `_kitty_project_colors` that:
 
 ### Pin File
 
-Located at `~/.config/kitty/project-themes.conf`. Format:
+Located at `~/.config/kitty/project-themes.conf` (outside the dotfiles repo, since project paths are machine-specific). Format:
 
 ```
 # Maps project git roots to theme filenames from kitty/themes/
@@ -47,11 +50,9 @@ Located at `~/.config/kitty/project-themes.conf`. Format:
 # /mnt/ssd/Dropbox/seq-feats = Nord.conf
 ```
 
-Theme filenames are resolved relative to the `kitty/themes/` directory in the dotfiles.
-
 ### Dark Theme Pool (automatic)
 
-Existing themes in `kitty/themes/`:
+Defined as an explicit ordered array in `shell/kitty` (not by globbing the directory). Adding or removing themes will shift existing project→theme assignments; use the pin file to stabilize important projects.
 
 | Index | Theme |
 |-------|-------|
@@ -63,7 +64,10 @@ Existing themes in `kitty/themes/`:
 | 5 | Pencil Dark |
 | 6 | Tomorrow Night Eighties |
 
-Noctalia is excluded from the pool — it serves as the default/fallback when not in a git project.
+Excluded from the pool:
+- `noctalia.conf` — serves as the default/fallback when not in a git project
+- `wal.conf` — pywal-generated, contents change dynamically
+- `color.conf` — One Dark variant, redundant with `One Dark.conf`
 
 ### Hashing
 
@@ -72,17 +76,27 @@ hash = md5sum of git root absolute path
 index = hash (first 8 hex chars, interpreted as integer) mod theme_count
 ```
 
-This is deterministic: the same project always gets the same theme across sessions and machines (assuming the same theme pool ordering).
+Deterministic: the same project always gets the same theme across sessions and machines (assuming the same theme pool ordering).
 
 ## Manual System
 
 ### Keybindings
 
-Defined in `kitty/kitty.conf`:
+Defined in `kitty/kitty.conf` using the `remote_control` action:
+
+```conf
+# project color manual overrides (light themes)
+map alt+0 remote_control set-colors themes/noctalia.conf
+map alt+1 remote_control set-colors themes/manual/solarized-light.conf
+map alt+2 remote_control set-colors themes/manual/catppuccin-latte.conf
+...
+```
+
+Paths are relative to the kitty config directory (`~/.config/kitty/`, which symlinks to the dotfiles `kitty/` dir). The `remote_control` action in keybindings targets the active window by default — no `--match` flag needed.
 
 | Key | Theme | Background |
 |-----|-------|------------|
-| `alt+0` | Reset (re-run auto-detection) | — |
+| `alt+0` | Reset to noctalia default | #14140f |
 | `alt+1` | Solarized Light | #fdf6e3 |
 | `alt+2` | Catppuccin Latte | #eff1f5 |
 | `alt+3` | Rosé Pine Dawn | #faf4ed |
@@ -93,22 +107,20 @@ Defined in `kitty/kitty.conf`:
 | `alt+8` | Ayu Light | #fafafa |
 | `alt+9` | PaperColor Light | #eeeeee |
 
-Light themes are stored in `kitty/themes/manual/`.
+### alt+0 Behavior
 
-`alt+0` sends an escape sequence or shell command that re-runs `_kitty_project_colors` to restore the auto-detected theme. Implementation: `remote_control set-colors` pointing to a small script/kitten, or a keybinding that sends a shell command.
+`alt+0` applies noctalia as a safe default via `remote_control set-colors`. If the user then `cd`s anywhere, the `chpwd` hook re-applies the project theme. Main use case: "undo manual override."
 
-### alt+0 Implementation
+### Relationship with `kit()`
 
-`alt+0` maps to a kitty `remote_control` call that loads the noctalia default, combined with sending a signal or shell command to re-trigger project detection. Simplest approach: map `alt+0` to `send_text` that runs `_kitty_project_colors\n` in the shell. However, this only works when a shell prompt is active, not inside a TUI.
-
-Better approach: `alt+0` applies noctalia as a safe default via `remote_control set-colors`. If the user then `cd`s anywhere, the `chpwd` hook will re-apply the project theme. This is good enough — the main use case is "undo manual override."
+The existing `kit()` function in `shell/functions` applies themes globally (no `--match` flag). It is left as-is — it serves a different purpose (global theme switch for all windows). The new system is per-window only.
 
 ## Files
 
 | File | Action | Description |
 |------|--------|-------------|
 | `shell/kitty` | Create | Project color detection function, chpwd hook, init call |
-| `zshrc` | Modify | Add `source "$DOTFILES/shell/kitty"` |
+| `zshrc` | Modify | Add `kitty` to the existing shell source loop (line ~181) |
 | `kitty/kitty.conf` | Modify | Add `alt+0-9` keybindings |
 | `kitty/themes/manual/*.conf` | Create | 9 light themes (already extracted) |
 | `~/.config/kitty/project-themes.conf` | Create | Empty pin file with usage comments |
@@ -122,3 +134,4 @@ Better approach: `alt+0` applies noctalia as a safe default via `remote_control 
 - **Inside a TUI (not at shell prompt)**: `chpwd` won't fire, but the last-applied theme persists. Manual overrides (`alt+1-9`) work regardless since they're kitty-level keybindings
 - **New terminal in same project dir**: Init call at end of `shell/kitty` handles this
 - **Pin file missing**: Treated as empty (no pins), auto-hash is used
+- **cd within same project**: Cache check (`$_KITTY_CURRENT_THEME`) skips redundant `set-colors` calls
