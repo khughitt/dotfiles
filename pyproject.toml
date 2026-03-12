@@ -16,4 +16,6 @@ include = ["bin/walictl", "tests/bin/test_walictl.py"]
 
 [tool.ruff]
 line-length = 120
-include = ["bin/walictl", "tests/**/*.py"]
+respect-gitignore = false
+include = ["pyproject.toml", "tests/**/*.py"]
+extend-include = ["bin/walictl"]
