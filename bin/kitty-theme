@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+from pathlib import Path
+
+import click
+from rich.console import Console
+
+
+STDOUT = Console()
+STDERR = Console(stderr=True)
+
+
+class KittyThemeError(RuntimeError):
+    """Base error for expected CLI failures."""
+
+
+class ProjectRegistryError(KittyThemeError):
+    """Raised when the project registry is invalid."""
+
+
+def default_registry_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "kitty" / "semantic-projects.txt"
+
+
+def normalize_project_root(raw_path: str, registry_path: Path) -> Path:
+    candidate = Path(raw_path).expanduser()
+    if not candidate.is_absolute():
+        candidate = registry_path.parent / candidate
+
+    normalized_path = candidate.resolve(strict=False)
+    if not normalized_path.exists():
+        raise ProjectRegistryError(f"configured project root does not exist: {normalized_path}")
+    if not normalized_path.is_dir():
+        raise ProjectRegistryError(f"configured project root is not a directory: {normalized_path}")
+    return normalized_path
+
+
+def parse_project_registry(registry_path: Path) -> list[Path]:
+    normalized_registry_path = registry_path.expanduser().resolve(strict=False)
+    if not normalized_registry_path.is_file():
+        raise ProjectRegistryError(f"project registry not found: {normalized_registry_path}")
+
+    project_roots: list[Path] = []
+    seen_roots: set[Path] = set()
+    for raw_line in normalized_registry_path.read_text(encoding="utf-8").splitlines():
+        stripped_line = raw_line.strip()
+        if not stripped_line or stripped_line.startswith("#"):
+            continue
+
+        normalized_root = normalize_project_root(stripped_line, normalized_registry_path)
+        if normalized_root in seen_roots:
+            continue
+
+        seen_roots.add(normalized_root)
+        project_roots.append(normalized_root)
+
+    return project_roots
+
+
+@click.group()
+def cli() -> None:
+    """Manage semantic kitty theme metadata."""
+
+
+@cli.group()
+def projects() -> None:
+    """Manage the semantic project registry."""
+
+
+@projects.command("validate")
+@click.option(
+    "--registry",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_registry_path,
+    show_default=str(default_registry_path()),
+)
+def validate_projects(registry: Path) -> None:
+    project_roots = parse_project_registry(registry)
+    root_label = "root" if len(project_roots) == 1 else "roots"
+    STDOUT.print(
+        f"validated {len(project_roots)} project {root_label} from {registry.expanduser().resolve()}",
+        soft_wrap=True,
+    )
+
+
+def main() -> int:
+    try:
+        cli(standalone_mode=False)
+    except click.ClickException as exc:
+        exc.show()
+        return exc.exit_code
+    except KittyThemeError as exc:
+        STDERR.print(str(exc), soft_wrap=True)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
