@@ -288,3 +288,66 @@ def test_current_fails_when_background_img_dir_is_missing(
     assert exit_code == 1
     assert stdout == ""
     assert stderr == "BACKGROUND_IMG_DIR is not set\n"
+
+
+def test_save_current_appends_source_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    archive_root = tmp_path / "backgrounds"
+    source_path = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
+    source_path.parent.mkdir(parents=True)
+    source_path.touch()
+
+    wali_dir = tmp_path / "wali"
+    wali_dir.mkdir()
+    favorites_path = wali_dir / "favorites.txt"
+    favorites_path.write_text("existing-entry\n")
+
+    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert kwargs == {"check": True, "capture_output": True, "text": True}
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
+
+    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
+    monkeypatch.setenv("WALI_DIR", str(wali_dir))
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    exit_code, stdout, stderr = run_walictl(["save-current"], monkeypatch)
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert stdout == f"saved {source_path}\n"
+    assert favorites_path.read_text() == f"existing-entry\n{source_path}\n"
+
+
+def test_edit_current_launches_gimp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    archive_root = tmp_path / "backgrounds"
+    source_path = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
+    source_path.parent.mkdir(parents=True)
+    source_path.touch()
+
+    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
+    calls: list[tuple[list[str], dict[str, object]]] = []
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append((args, kwargs))
+        if args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]:
+            assert kwargs == {"check": True, "capture_output": True, "text": True}
+            return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
+
+        assert args == ["gimp", str(source_path)]
+        assert kwargs == {"check": True}
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    exit_code, stdout, stderr = run_walictl(["edit-current"], monkeypatch)
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert stdout == f"opened {source_path}\n"
+    assert calls == [
+        (["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"], {"check": True, "capture_output": True, "text": True}),
+        (["gimp", str(source_path)], {"check": True}),
+    ]
