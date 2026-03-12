@@ -6,8 +6,17 @@ import json
 import os
 import re
 import subprocess
-from datetime import datetime
+import sys
+from datetime import date, datetime
 from pathlib import Path
+
+
+class WalictlError(RuntimeError):
+    """Base error for expected CLI failures."""
+
+
+class WallpaperQueryError(WalictlError):
+    """Raised when the wallpaper backend query cannot resolve the current path."""
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -15,34 +24,64 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     current_parser = subparsers.add_parser("current")
-    current_parser.add_argument("--json", action="store_true", required=True, dest="as_json")
+    current_parser.add_argument("--json", action="store_true", required=True)
 
     return parser
 
 
 def get_current_wallpaper_path() -> Path:
-    result = subprocess.run(
-        ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise WallpaperQueryError("qs command not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise WallpaperQueryError("wallpaper query failed") from exc
+
     wallpaper_path = next((line.strip() for line in result.stdout.splitlines() if line.strip()), "")
     if not wallpaper_path:
-        raise RuntimeError("could not determine current wallpaper")
+        raise WallpaperQueryError("could not determine current wallpaper")
     return Path(wallpaper_path).expanduser().resolve()
 
 
-def parse_pixel_date(filename: str) -> datetime:
+def parse_pixel_date(filename: str) -> date | None:
     match = re.search(r"PXL_(\d{8})", filename)
     if match is None:
-        raise RuntimeError("could not parse wallpaper date")
-    return datetime.strptime(match.group(1), "%Y%m%d")
+        return None
+
+    try:
+        return datetime.strptime(match.group(1), "%Y%m%d").date()
+    except ValueError:
+        return None
 
 
-def derive_source_path(current_path: Path, image_root: Path) -> Path:
+def get_archive_root() -> Path:
+    archive_root = os.environ.get("BACKGROUND_IMG_DIR")
+    if not archive_root:
+        raise WalictlError("BACKGROUND_IMG_DIR is not set")
+    return Path(archive_root).expanduser().resolve()
+
+
+def derive_source_path(current_path: Path, archive_root: Path, parsed_date: date | None) -> Path:
+    if parsed_date is None:
+        raise WalictlError("could not derive source wallpaper path")
+
+    source_path = archive_root / parsed_date.strftime("%Y") / parsed_date.strftime("%m") / f"{current_path.stem}.jpg"
+    if not source_path.is_file():
+        raise WalictlError("source wallpaper not found")
+    return source_path
+
+
+def resolve_current_metadata() -> tuple[Path, Path, date | None]:
+    current_path = get_current_wallpaper_path()
     parsed_date = parse_pixel_date(current_path.name)
-    return image_root / parsed_date.strftime("%Y") / parsed_date.strftime("%m") / f"{current_path.stem}.jpg"
+    archive_root = get_archive_root()
+    source_path = derive_source_path(current_path, archive_root, parsed_date)
+    return current_path, source_path, parsed_date
 
 
 def main() -> int:
@@ -50,10 +89,11 @@ def main() -> int:
     if args.command != "current":
         raise AssertionError("unreachable")
 
-    archive_root = Path(os.environ["BACKGROUND_IMG_DIR"]).expanduser().resolve()
-    current_path = get_current_wallpaper_path()
-    parsed_date = parse_pixel_date(current_path.name)
-    source_path = derive_source_path(current_path, archive_root)
+    try:
+        current_path, source_path, parsed_date = resolve_current_metadata()
+    except WalictlError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
 
     payload = {
         "ok": True,
@@ -61,8 +101,8 @@ def main() -> int:
         "current_wallpaper_path": str(current_path),
         "source_wallpaper_path": str(source_path),
         "filename": current_path.name,
-        "parsed_date": parsed_date.date().isoformat(),
-        "display_date": parsed_date.strftime("%B %-d, %Y"),
+        "parsed_date": parsed_date.isoformat() if parsed_date is not None else None,
+        "display_date": parsed_date.strftime("%B %-d, %Y") if parsed_date is not None else None,
     }
     print(json.dumps(payload))
     return 0
