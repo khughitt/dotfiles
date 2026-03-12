@@ -1,8 +1,0 @@
-name: shaders
-
-setup:
-  - "cp -r ~/d/art/shaders/template ~/d/art/shaders/prac/{today}"
-left:
-  - "kitty -d ~/d/art/shaders/prac/{today} nvim shader.frag"
-right:
-  - "$BROWSER --new-window --profile-directory='shaders'"

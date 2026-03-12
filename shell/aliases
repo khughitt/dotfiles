@@ -4,13 +4,13 @@
 #
 ################################################################################
 
+# bat
+alias bat='bat --wrap=never --paging=never'
+
 # bluetoothctl
 alias bt='bluetoothcontrol'
 alias btc='bluetoothctl connect'
 alias btC='bluetoothctl devices Connected'
-
-# cat
-alias cat='bat --wrap=never --paging=never'
 
 # cd
 alias dl='cd ~/downloads'
@@ -49,13 +49,6 @@ alias dropbox_ignore='sudo attr -s com.dropbox.ignored -V 1 '
 alias dud='du -d 1 -h'
 alias duf='du -sh *'
 alias dus='du -sh'
-
-# dust
-alias dust='dust -r'
-
-# recursively counts # files in directories and returns a ranked list
-# https://unix.stackexchange.com/a/122871/39903
-alias duin="du --inodes -xS | sort -rh | sed -n '1,50{/^.\{71\}/s/^\(.\{30\}\).*\(.\{37\}\)$/\1...\2/;p}'"
 
 # feh
 alias feh='feh --scale-down --auto-zoom -C /usr/share/fonts/TTF/ -e DejaVuSans/13'
@@ -101,21 +94,11 @@ alias zgrep='zgrep --color=always'
 # htop
 alias htop=gotop
 
-# httpd
-alias ph='python -m "http.server"'
-alias pa='parcel'
-
 # jupyter
 alias jl='jupyter lab'
 
 # kitty
 alias icat='kitty +kitten icat'
-alias light='kitten themes --reload-in=all "Pencil Light"'
-alias dark='kitten themes --reload-in=all "wal"'
-
-# "jog"; re-run command specific to current directory
-# https://github.com/natethinks/jog/blob/master/jog
-alias jog='grep -v jog ~/.zsh_history_ext | grep -a --color=never "$PWD   " | cut -f1 -d"|" | tail | fzf'
 
 # journalctl
 alias journalctl='journalctl -e -n 10000'
@@ -140,10 +123,6 @@ alias locate=plocate
 # ls
 if type "lsd" > /dev/null; then
     alias ls='lsd --group-dirs=first'
-elif type "ls++" > /dev/null; then
-    alias ls='ls++'
-elif type "colorls" > /dev/null; then
-    alias ls='colorls'
 fi
 
 alias l='ls -l'
@@ -163,9 +142,7 @@ alias -s Rmd=nvim
 
 # neovim
 alias vi=nvim
-alias vs="kitty @ set-window-title nvim src/App.tsx && nvim src/App.tsx"
 alias vim=nvim
-alias vmi=nvim
 alias vm='kitty @ set-window-title nvim README.*md && nvim README.*md'
 alias vl="nvim -c \"normal '0\""                         # open most recently edited file / position
 alias vv='x=$(fc -l -1); x=${x##* }; vim ${x/\~/$HOME}'  # open last argument of last command in vim
@@ -176,13 +153,12 @@ alias netp="sudo netstat -plant"
 # npm
 alias ndev="npm run dev"
 
-# pwd
+# sync location from one term to another
 alias xp='pwd | wl-copy -p'
 alias px='cd "$(wl-paste -p)"'
 
 # python
 alias ipy=ipython
-alias psh='poetry shell'
 
 # pytest
 alias pyt="uv run pytest --no-cov 2>&1 | tee pytest.txt"
@@ -203,9 +179,6 @@ alias rmf="rm -rf"
 # r
 alias R='R --quiet --no-save'
 alias r=radian
-
-# rofi-proj
-alias rt='cd $ROFI_PROJ_DIR && ls -l'
 
 # rust
 alias rc=rustc
@@ -231,8 +204,8 @@ alias snek="snakemake"
 alias sx="start-hyprland"
 
 # sudo
-alias _='sudo'
 alias sudo="sudo " # support aliases when using sudo
+alias _='sudo'
 
 # suspend
 alias zzz="systemctl suspend"
@@ -278,22 +251,9 @@ function yank {
   /bin/cat $1 | wl-copy
 }
 
-# xclip
-alias xc=xclip
-
-# xsel
-alias xs=xsel
-
 # "whatip"; get external ip addr
 # https://bbs.archlinux.org/viewtopic.php?pid=408739#p408739
 alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1'
-
-# xmodmap
-alias xm="xmodmap ~/.Xmodmap"
-
-# xrandr
-alias 2k="xrandr --output DP-0 --mode 1920x1080"
-alias 4k="xrandr --output DP-0 --mode 3840x2160"
 
 # yabridge
 alias ya="yabridgectl"
@@ -302,14 +262,5 @@ alias yas="yabridgectl status"
 # yay
 alias y="yay"
 alias yd="yay -Syu --devel"
-
-# zeit
-alias z="zeit"
-alias zf="zeit finish"
-alias zp="zeit track -p "
-alias zl="zeit list"
-alias zt="zeit tracking"
-alias ze='zeit entry $(zeit --no-colors list | tail -1 | awk "{print \$1}")'
-alias zrm="zeit erase "
 
 # vi:syntax=bash

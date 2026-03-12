@@ -12,15 +12,19 @@ export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.gem/ruby/3.4.0/bi
 
 export BROWSER=firefox
 export EDITOR=nvim
+export FONTCONFIG_PATH=/etc/fonts
 export PAGER=less
 export PDFVIEWER=zathura
-[[ "$(uname)" != "Darwin" ]] && export SYSTEMD_EDITOR=nvim
+export SYSTEMD_EDITOR=nvim
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_STATE_HOME="$HOME/.local/state"
 
-if type "moor" > /dev/null; then
-    export PAGER=$(which moor)
-fi
+# anki font size fix
+# https://changes.ankiweb.net/#/known-issues
+export ANKI_NOHIGHDPI=1
+
+# go
+export GOPATH="$HOME/go"
 
 # use system colors for ls
 export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
@@ -77,3 +81,13 @@ export UV_CONCURRENT_DOWNLOADS=3
 
 # qt
 export QT_SCALE_FACTOR=1
+
+# Predictable SSH authentication socket location.
+# https://unix.stackexchange.com/a/76256/39903
+# SOCK="/tmp/ssh-agent-keith-screen"
+
+# if test $SSH_AUTH_SOCK && [ $SSH_AUTH_SOCK != $SOCK ]; then
+#     rm -f /tmp/ssh-agent-$USER-screen
+#     ln -sf $SSH_AUTH_SOCK $SOCK
+#     export SSH_AUTH_SOCK=$SOCK
+# fi
