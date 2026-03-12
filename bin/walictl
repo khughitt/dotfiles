@@ -134,8 +134,11 @@ def save_current_source() -> Path:
     favorites_path = get_wali_dir() / "favorites.txt"
     if not favorites_path.parent.is_dir():
         raise WalictlError("favorites directory not found")
-    with favorites_path.open("a", encoding="utf-8") as favorites_file:
-        favorites_file.write(f"{source_path}\n")
+    try:
+        with favorites_path.open("a", encoding="utf-8") as favorites_file:
+            favorites_file.write(f"{source_path}\n")
+    except OSError as exc:
+        raise WalictlError(f"failed to write favorites file: {exc}") from exc
     return source_path
 
 

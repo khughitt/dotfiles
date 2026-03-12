@@ -7,6 +7,7 @@ import runpy
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -345,6 +346,42 @@ def test_save_current_fails_when_wali_favorites_directory_is_missing(
     assert exit_code == 1
     assert stdout == ""
     assert stderr == "favorites directory not found\n"
+
+
+def test_save_current_translates_favorites_write_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    archive_root = tmp_path / "backgrounds"
+    source_path = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
+    source_path.parent.mkdir(parents=True)
+    source_path.touch()
+
+    wali_dir = tmp_path / "wali"
+    wali_dir.mkdir()
+    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert kwargs == {"check": True, "capture_output": True, "text": True}
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
+
+    original_open = Path.open
+
+    def fake_open(self: Path, *args: Any, **kwargs: Any) -> io.TextIOWrapper:
+        if self == wali_dir / "favorites.txt":
+            raise OSError("disk full")
+        return cast(io.TextIOWrapper, original_open(self, *args, **kwargs))
+
+    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
+    monkeypatch.setenv("WALI_DIR", str(wali_dir))
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(Path, "open", fake_open)
+
+    exit_code, stdout, stderr = run_walictl(["save-current"], monkeypatch)
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == "failed to write favorites file: disk full\n"
 
 
 def test_edit_current_launches_gimp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
