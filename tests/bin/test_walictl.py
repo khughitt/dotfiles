@@ -15,10 +15,6 @@ def walictl_script_path() -> Path:
     return Path(__file__).resolve().parents[2] / "bin" / "walictl"
 
 
-def load_walictl_module() -> dict[str, object]:
-    return runpy.run_path(str(walictl_script_path()))
-
-
 def run_walictl(argv: list[str], monkeypatch: pytest.MonkeyPatch) -> tuple[int, str, str]:
     script_path = walictl_script_path()
     monkeypatch.setattr(sys, "argv", [str(script_path), *argv])
@@ -102,11 +98,32 @@ def test_current_fails_when_wallpaper_query_is_empty(
     assert stderr == "could not determine current wallpaper\n"
 
 
-def test_parse_pixel_date_returns_none_for_unparseable_filename() -> None:
-    parse_pixel_date = load_walictl_module()["parse_pixel_date"]
+def test_current_returns_null_metadata_for_unparseable_filename(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    current_wallpaper = tmp_path / "current" / "wallpaper.jpg"
 
-    assert callable(parse_pixel_date)
-    assert parse_pixel_date("wallpaper.jpg") is None
+    def fake_run(
+        args: list[str], *, check: bool, capture_output: bool, text: bool
+    ) -> subprocess.CompletedProcess[str]:
+        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert check is True
+        assert capture_output is True
+        assert text is True
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
+
+    monkeypatch.delenv("BACKGROUND_IMG_DIR", raising=False)
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
+    payload = json.loads(stdout)
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert payload["current_wallpaper_path"] == str(current_wallpaper)
+    assert payload["source_wallpaper_path"] is None
+    assert payload["parsed_date"] is None
+    assert payload["display_date"] is None
 
 
 def test_current_fails_when_source_wallpaper_is_missing(
