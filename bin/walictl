@@ -15,7 +15,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     current_parser = subparsers.add_parser("current")
-    current_parser.add_argument("--json", action="store_true", dest="as_json")
+    current_parser.add_argument("--json", action="store_true", required=True, dest="as_json")
 
     return parser
 
@@ -47,8 +47,8 @@ def derive_source_path(current_path: Path, image_root: Path) -> Path:
 
 def main() -> int:
     args = build_parser().parse_args()
-    if args.command != "current" or not args.as_json:
-        raise RuntimeError("unsupported command")
+    if args.command != "current":
+        raise AssertionError("unreachable")
 
     archive_root = Path(os.environ["BACKGROUND_IMG_DIR"]).expanduser().resolve()
     current_path = get_current_wallpaper_path()
