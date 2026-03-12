@@ -229,6 +229,20 @@ if [[ "$HEADLESS" == "false" ]]; then
     ln -s "${DOTS_HOME}/gimp/plug-ins" $GIMP_PLUGIN_DIR
 fi
 
+# noctalia plugin (only for graphical mode)
+if [[ "$HEADLESS" == "false" ]]; then
+    NOCTALIA_PLUGIN_DIR="${XDG_CONFIG_HOME}/noctalia/plugins"
+    WALI_PANEL_PLUGIN="${NOCTALIA_PLUGIN_DIR}/wali-panel"
+
+    mkdir -p "${NOCTALIA_PLUGIN_DIR}"
+
+    if [ -e "${WALI_PANEL_PLUGIN}" ] && [ ! -L "${WALI_PANEL_PLUGIN}" ]; then
+      mv "${WALI_PANEL_PLUGIN}" "${WALI_PANEL_PLUGIN}.bak"
+    fi
+
+    ln_s "${DOTS_HOME}/noctalia/plugins/wali-panel" "${WALI_PANEL_PLUGIN}"
+fi
+
 # git
 ln_s ${DOTS_HOME}/git/ignore ${HOME}/.gitignore_global
 ln_s ${DOTS_HOME}/git/config ${HOME}/.gitconfig
