@@ -1,0 +1,21 @@
+[project]
+name = "dotfiles-wali-tools"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.11.0",
+  "pyright>=1.1.0",
+]
+
+[tool.pyright]
+include = ["bin/walictl", "tests/bin/test_walictl.py"]
+
+[tool.ruff]
+line-length = 120
+respect-gitignore = false
+include = ["pyproject.toml", "tests/**/*.py"]
+extend-include = ["bin/walictl"]

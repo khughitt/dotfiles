@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+from dataclasses import dataclass
+from datetime import date, datetime
+from pathlib import Path
+
+
+class WalictlError(RuntimeError):
+    """Base error for expected CLI failures."""
+
+
+class WallpaperQueryError(WalictlError):
+    """Raised when the wallpaper backend query cannot resolve the current path."""
+
+
+@dataclass(frozen=True)
+class WallpaperFilenameInfo:
+    parsed_date: date | None
+    can_derive_source_path: bool
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="walictl")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    current_parser = subparsers.add_parser("current")
+    current_parser.add_argument("--json", action="store_true", required=True)
+    subparsers.add_parser("save-current")
+    subparsers.add_parser("edit-current")
+
+    return parser
+
+
+def get_current_wallpaper_path() -> Path:
+    try:
+        result = subprocess.run(
+            ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise WallpaperQueryError("qs command not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise WallpaperQueryError("wallpaper query failed") from exc
+
+    wallpaper_path = next((line.strip() for line in result.stdout.splitlines() if line.strip()), "")
+    if not wallpaper_path:
+        raise WallpaperQueryError("could not determine current wallpaper")
+    return Path(wallpaper_path).expanduser().resolve()
+
+
+def parse_pixel_date(value: str) -> date | None:
+    try:
+        return datetime.strptime(value, "%Y%m%d").date()
+    except ValueError:
+        return None
+
+
+def get_archive_root() -> Path:
+    archive_root = os.environ.get("BACKGROUND_IMG_DIR")
+    if not archive_root:
+        raise WalictlError("BACKGROUND_IMG_DIR is not set")
+    return Path(archive_root).expanduser().resolve()
+
+
+def get_wali_dir() -> Path:
+    wali_dir = os.environ.get("WALI_DIR")
+    if not wali_dir:
+        raise WalictlError("WALI_DIR is not set")
+    return Path(wali_dir).expanduser().resolve()
+
+
+def classify_wallpaper_filename(current_path: Path) -> WallpaperFilenameInfo:
+    derivable_match = re.fullmatch(r"PXL_(\d{8})_(.+)", current_path.stem)
+    if derivable_match is not None:
+        parsed_date = parse_pixel_date(derivable_match.group(1))
+        return WallpaperFilenameInfo(parsed_date=parsed_date, can_derive_source_path=parsed_date is not None)
+
+    partial_match = re.fullmatch(r"PXL_(\d{8})", current_path.stem)
+    if partial_match is not None:
+        return WallpaperFilenameInfo(parsed_date=parse_pixel_date(partial_match.group(1)), can_derive_source_path=False)
+
+    return WallpaperFilenameInfo(parsed_date=None, can_derive_source_path=False)
+
+
+def derive_source_path(
+    current_path: Path, archive_root: Path, filename_info: WallpaperFilenameInfo
+) -> Path | None:
+    if filename_info.parsed_date is None:
+        return None
+
+    source_path = (
+        archive_root
+        / filename_info.parsed_date.strftime("%Y")
+        / filename_info.parsed_date.strftime("%m")
+        / f"{current_path.stem}.jpg"
+    )
+    if not source_path.is_file():
+        raise WalictlError("source wallpaper not found")
+    return source_path
+
+
+def resolve_current_metadata() -> tuple[Path, Path | None, date | None]:
+    current_path = get_current_wallpaper_path()
+    filename_info = classify_wallpaper_filename(current_path)
+
+    if filename_info.parsed_date is None:
+        return current_path, None, None
+    if not filename_info.can_derive_source_path:
+        raise WalictlError("could not derive source wallpaper path")
+
+    archive_root = get_archive_root()
+    source_path = derive_source_path(current_path, archive_root, filename_info)
+    return current_path, source_path, filename_info.parsed_date
+
+
+def resolve_current_source_path() -> Path:
+    _, source_path, _ = resolve_current_metadata()
+    if source_path is None:
+        raise WalictlError("could not resolve source wallpaper path")
+    return source_path
+
+
+def save_current_source() -> Path:
+    source_path = resolve_current_source_path()
+    favorites_path = get_wali_dir() / "favorites.txt"
+    if not favorites_path.parent.is_dir():
+        raise WalictlError("favorites directory not found")
+    try:
+        with favorites_path.open("a", encoding="utf-8") as favorites_file:
+            favorites_file.write(f"{source_path}\n")
+    except OSError as exc:
+        raise WalictlError(f"failed to write favorites file: {exc}") from exc
+    return source_path
+
+
+def edit_current_source() -> Path:
+    source_path = resolve_current_source_path()
+    try:
+        subprocess.run(["gimp", str(source_path)], check=True)
+    except FileNotFoundError as exc:
+        raise WalictlError("gimp command not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise WalictlError("gimp launch failed") from exc
+    return source_path
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    try:
+        if args.command == "current":
+            current_path, source_path, parsed_date = resolve_current_metadata()
+            payload = {
+                "ok": True,
+                "backend": "noctalia",
+                "current_wallpaper_path": str(current_path),
+                "source_wallpaper_path": str(source_path) if source_path is not None else None,
+                "filename": current_path.name,
+                "parsed_date": parsed_date.isoformat() if parsed_date is not None else None,
+                "display_date": parsed_date.strftime("%B %-d, %Y") if parsed_date is not None else None,
+            }
+            print(json.dumps(payload))
+            return 0
+
+        if args.command == "save-current":
+            source_path = save_current_source()
+            print(f"saved {source_path}")
+            return 0
+
+        if args.command == "edit-current":
+            source_path = edit_current_source()
+            print(f"opened {source_path}")
+            return 0
+
+        raise AssertionError("unreachable")
+    except WalictlError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
