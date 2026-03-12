@@ -47,7 +47,7 @@ def test_registry_parses_existing_project_roots(tmp_path: Path) -> None:
 
     registry = tmp_path / "semantic-projects.txt"
     registry.write_text(
-        f"\n# comment\n{project_a.parent / 'project-a'}\n\n{project_b}\n{project_a}\n",
+        f"\n# comment\n{project_a.parent / 'nested' / '..' / 'project-a'}\n\n{project_b}\n{project_a}\n",
         encoding="utf-8",
     )
 
