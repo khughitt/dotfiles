@@ -99,18 +99,22 @@ Item {
 
     running: false
     command: [root.helperPath, "current", "--json"]
+    stdout: StdioCollector {}
+    stderr: StdioCollector {}
 
-    onExited: function(exitCode, stdout, stderr) {
+    onExited: function(exitCode) {
       root.loading = false;
+      var stdoutText = String(currentWallpaperProcess.stdout.text || "");
+      var stderrText = String(currentWallpaperProcess.stderr.text || "");
 
       if (exitCode !== 0) {
-        root.errorMessage = root.normalizeMessage(stderr, "Failed to load current wallpaper.");
+        root.errorMessage = root.normalizeMessage(stderrText, "Failed to load current wallpaper.");
         root.resetWallpaperState();
         return;
       }
 
       try {
-        var payload = JSON.parse((stdout || "").trim());
+        var payload = JSON.parse(stdoutText.trim());
         if (!payload.ok) {
           root.errorMessage = "walictl returned an invalid wallpaper payload.";
           root.resetWallpaperState();
@@ -131,15 +135,18 @@ Item {
 
     running: false
     command: root.pendingAction !== "" ? [root.helperPath, root.pendingAction] : []
+    stdout: StdioCollector {}
+    stderr: StdioCollector {}
 
-    onExited: function(exitCode, stdout, stderr) {
+    onExited: function(exitCode) {
       var actionName = root.pendingAction;
+      var stderrText = String(actionProcess.stderr.text || "");
 
       root.pendingAction = "";
       root.actionRunning = false;
 
       if (exitCode !== 0) {
-        ToastService.showError("Wallpaper", root.normalizeMessage(stderr, "Wallpaper action failed."));
+        ToastService.showError("Wallpaper", root.normalizeMessage(stderrText, "Wallpaper action failed."));
         return;
       }
 
