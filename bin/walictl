@@ -87,8 +87,6 @@ def derive_source_path(
 ) -> Path | None:
     if filename_info.parsed_date is None:
         return None
-    if not filename_info.can_derive_source_path:
-        raise WalictlError("could not derive source wallpaper path")
 
     source_path = (
         archive_root
@@ -104,14 +102,15 @@ def derive_source_path(
 def resolve_current_metadata() -> tuple[Path, Path | None, date | None]:
     current_path = get_current_wallpaper_path()
     filename_info = classify_wallpaper_filename(current_path)
-    parsed_date = filename_info.parsed_date
-    source_path = None
 
-    if parsed_date is not None:
-        archive_root = get_archive_root()
-        source_path = derive_source_path(current_path, archive_root, filename_info)
+    if filename_info.parsed_date is None:
+        return current_path, None, None
+    if not filename_info.can_derive_source_path:
+        raise WalictlError("could not derive source wallpaper path")
 
-    return current_path, source_path, parsed_date
+    archive_root = get_archive_root()
+    source_path = derive_source_path(current_path, archive_root, filename_info)
+    return current_path, source_path, filename_info.parsed_date
 
 
 def main() -> int:

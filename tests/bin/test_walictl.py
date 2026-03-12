@@ -217,6 +217,30 @@ def test_current_fails_when_source_wallpaper_path_cannot_be_derived(
     assert stderr == "could not derive source wallpaper path\n"
 
 
+def test_current_reports_derivation_error_before_missing_archive_env(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    current_wallpaper = tmp_path / "current" / "PXL_20240520.jpg"
+
+    def fake_run(
+        args: list[str], *, check: bool, capture_output: bool, text: bool
+    ) -> subprocess.CompletedProcess[str]:
+        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert check is True
+        assert capture_output is True
+        assert text is True
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
+
+    monkeypatch.delenv("BACKGROUND_IMG_DIR", raising=False)
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == "could not derive source wallpaper path\n"
+
+
 def test_current_fails_when_source_wallpaper_is_missing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
