@@ -66,9 +66,9 @@ def get_archive_root() -> Path:
     return Path(archive_root).expanduser().resolve()
 
 
-def derive_source_path(current_path: Path, archive_root: Path, parsed_date: date | None) -> Path:
+def derive_source_path(current_path: Path, archive_root: Path, parsed_date: date | None) -> Path | None:
     if parsed_date is None:
-        raise WalictlError("could not derive source wallpaper path")
+        return None
 
     source_path = archive_root / parsed_date.strftime("%Y") / parsed_date.strftime("%m") / f"{current_path.stem}.jpg"
     if not source_path.is_file():
@@ -76,11 +76,15 @@ def derive_source_path(current_path: Path, archive_root: Path, parsed_date: date
     return source_path
 
 
-def resolve_current_metadata() -> tuple[Path, Path, date | None]:
+def resolve_current_metadata() -> tuple[Path, Path | None, date | None]:
     current_path = get_current_wallpaper_path()
     parsed_date = parse_pixel_date(current_path.name)
-    archive_root = get_archive_root()
-    source_path = derive_source_path(current_path, archive_root, parsed_date)
+    source_path = None
+
+    if parsed_date is not None:
+        archive_root = get_archive_root()
+        source_path = derive_source_path(current_path, archive_root, parsed_date)
+
     return current_path, source_path, parsed_date
 
 
@@ -99,7 +103,7 @@ def main() -> int:
         "ok": True,
         "backend": "noctalia",
         "current_wallpaper_path": str(current_path),
-        "source_wallpaper_path": str(source_path),
+        "source_wallpaper_path": str(source_path) if source_path is not None else None,
         "filename": current_path.name,
         "parsed_date": parsed_date.isoformat() if parsed_date is not None else None,
         "display_date": parsed_date.strftime("%B %-d, %Y") if parsed_date is not None else None,
