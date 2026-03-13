@@ -198,11 +198,13 @@ class SemanticProjectCacheEntry:
 class SemanticThemeCache:
     version: int
     backend: str
+    cluster_count: int
     projects: list[SemanticProjectCacheEntry]
 
     def to_json_data(self) -> dict[str, object]:
         return {
             "backend": self.backend,
+            "cluster_count": self.cluster_count,
             "projects": [project.to_json_data() for project in self.projects],
             "version": self.version,
         }
@@ -877,6 +879,11 @@ def build_semantic_cache(
         seen_git_roots.add(git_root)
         project_roots.append(git_root)
 
+    if cluster_count > len(project_roots):
+        raise KittyThemeError(
+            f"semantic cluster count exceeds project count: requested {cluster_count} for {len(project_roots)} projects"
+        )
+
     project_inputs = [
         SemanticProjectInput(project_root=project_root, corpus=build_project_corpus(project_root))
         for project_root in project_roots
@@ -885,6 +892,7 @@ def build_semantic_cache(
     return SemanticThemeCache(
         version=SEMANTIC_CACHE_VERSION,
         backend=semantic_backend.backend_name,
+        cluster_count=cluster_count,
         projects=semantic_backend.assign_projects(project_inputs, theme_targets),
     )
 
@@ -915,6 +923,7 @@ def load_semantic_cache(cache_path: Path) -> SemanticThemeCache:
 
     version = raw_cache.get("version")
     backend = raw_cache.get("backend")
+    cluster_count = raw_cache.get("cluster_count")
     raw_projects = raw_cache.get("projects")
     if not isinstance(version, int) or isinstance(version, bool):
         raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
@@ -924,12 +933,17 @@ def load_semantic_cache(cache_path: Path) -> SemanticThemeCache:
         raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
     if backend != SEMANTIC_CACHE_BACKEND:
         raise KittyThemeError(f"semantic cache has unsupported backend: {normalized_cache_path}")
+    if not isinstance(cluster_count, int) or isinstance(cluster_count, bool) or cluster_count < 1:
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
     if not isinstance(raw_projects, list):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+    if cluster_count > len(raw_projects):
         raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
 
     return SemanticThemeCache(
         version=version,
         backend=backend,
+        cluster_count=cluster_count,
         projects=[
             SemanticProjectCacheEntry.from_json_data(raw_project, normalized_cache_path) for raw_project in raw_projects
         ],

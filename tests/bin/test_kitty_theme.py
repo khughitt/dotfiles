@@ -456,7 +456,53 @@ def test_recompute_accepts_configured_cluster_count(tmp_path: Path, monkeypatch:
     assert stderr == ""
     assert stdout == f"wrote semantic cache for {len(project_roots)} project roots to {cache_path.resolve()}\n"
     cache_data = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert cache_data["cluster_count"] == SEMANTIC_CLUSTER_COUNT
     assert len({project["cluster_id"] for project in cache_data["projects"]}) == SEMANTIC_CLUSTER_COUNT
+
+
+def test_recompute_rejects_configured_cluster_count_larger_than_registry_size(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project_alpha = tmp_path / "projects" / "alpha"
+    project_alpha.mkdir(parents=True)
+    (project_alpha / ".git").mkdir()
+    (project_alpha / "README.md").write_text("Alpha service\n", encoding="utf-8")
+
+    project_beta = tmp_path / "projects" / "beta"
+    project_beta.mkdir()
+    (project_beta / ".git").mkdir()
+    (project_beta / "README.md").write_text("Beta service\n", encoding="utf-8")
+
+    registry = tmp_path / "kitty" / "semantic-projects.txt"
+    registry.parent.mkdir()
+    registry.write_text(f"{project_alpha}\n{project_beta}\n", encoding="utf-8")
+
+    themes_dir = tmp_path / "kitty" / "themes"
+    themes_dir.mkdir()
+    (themes_dir / "Aurora.conf").write_text("# aurora\n", encoding="utf-8")
+    (themes_dir / "Nordic.conf").write_text("# nordic\n", encoding="utf-8")
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "recompute",
+            "--registry",
+            str(registry),
+            "--themes-dir",
+            str(themes_dir),
+            "--cache",
+            str(cache_path),
+            "--cluster-count",
+            "3",
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == "semantic cluster count exceeds project count: requested 3 for 2 projects\n"
+    assert not cache_path.exists()
 
 
 def test_summarize_uv_lock_metadata_caps_package_lines_and_reports_totals(tmp_path: Path) -> None:
@@ -625,6 +671,8 @@ def test_recompute_writes_semantic_cache(tmp_path: Path, monkeypatch: pytest.Mon
             str(themes_dir),
             "--cache",
             str(cache_path),
+            "--cluster-count",
+            "2",
         ],
         monkeypatch,
     )
@@ -636,6 +684,7 @@ def test_recompute_writes_semantic_cache(tmp_path: Path, monkeypatch: pytest.Mon
     cache_text = cache_path.read_text(encoding="utf-8")
     cache_data = json.loads(cache_text)
     assert cache_data["backend"] == SEMANTIC_BACKEND
+    assert cache_data["cluster_count"] == 2
     assert cache_data["version"] == 1
     assert [project["project_root"] for project in cache_data["projects"]] == [
         str(project_alpha.resolve()),
@@ -655,6 +704,8 @@ def test_recompute_writes_semantic_cache(tmp_path: Path, monkeypatch: pytest.Mon
             str(themes_dir),
             "--cache",
             str(cache_path),
+            "--cluster-count",
+            "2",
         ],
         monkeypatch,
     )
@@ -691,6 +742,8 @@ def test_recompute_normalizes_registry_entries_to_git_roots(tmp_path: Path, monk
             str(themes_dir),
             "--cache",
             str(cache_path),
+            "--cluster-count",
+            "1",
         ],
         monkeypatch,
     )
@@ -701,6 +754,7 @@ def test_recompute_normalizes_registry_entries_to_git_roots(tmp_path: Path, monk
 
     cache_data = json.loads(cache_path.read_text(encoding="utf-8"))
     assert cache_data["backend"] == SEMANTIC_BACKEND
+    assert cache_data["cluster_count"] == 1
     assert cache_data["projects"] == [
         {
             "cluster_id": cache_data["projects"][0]["cluster_id"],
@@ -725,9 +779,10 @@ def test_resolve_prints_target_theme_for_git_root(tmp_path: Path, monkeypatch: p
     cache_path.parent.mkdir()
     cache_path.write_text(
         json.dumps(
-            {
-                "backend": SEMANTIC_BACKEND,
-                "projects": [
+                {
+                    "backend": SEMANTIC_BACKEND,
+                    "cluster_count": 1,
+                    "projects": [
                     {
                         "cluster_id": "cluster-0003",
                         "confidence": 0.875,
@@ -783,6 +838,8 @@ def test_recompute_reports_clean_metadata_parse_failures(
             str(themes_dir),
             "--cache",
             str(cache_path),
+            "--cluster-count",
+            "1",
         ],
         monkeypatch,
     )
@@ -811,15 +868,27 @@ def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) 
     ("cache_payload", "message_pattern"),
     [
         (
-            {"backend": SEMANTIC_BACKEND, "projects": [], "version": 2},
+            {"backend": SEMANTIC_BACKEND, "cluster_count": SEMANTIC_CLUSTER_COUNT, "projects": [], "version": 2},
             "semantic cache has unsupported version",
         ),
-        ({"backend": 123, "projects": [], "version": 1}, "semantic cache is malformed"),
-        ({"backend": "other-backend", "projects": [], "version": 1}, "semantic cache has unsupported backend"),
-        ({"backend": SEMANTIC_BACKEND, "projects": {}, "version": 1}, "semantic cache is malformed"),
+        ({"backend": 123, "cluster_count": SEMANTIC_CLUSTER_COUNT, "projects": [], "version": 1}, "semantic cache is malformed"),
+        ({"backend": SEMANTIC_BACKEND, "projects": [], "version": 1}, "semantic cache is malformed"),
+        (
+            {"backend": SEMANTIC_BACKEND, "cluster_count": 0, "projects": [], "version": 1},
+            "semantic cache is malformed",
+        ),
+        (
+            {"backend": "other-backend", "cluster_count": SEMANTIC_CLUSTER_COUNT, "projects": [], "version": 1},
+            "semantic cache has unsupported backend",
+        ),
+        (
+            {"backend": SEMANTIC_BACKEND, "cluster_count": SEMANTIC_CLUSTER_COUNT, "projects": {}, "version": 1},
+            "semantic cache is malformed",
+        ),
         (
             {
                 "backend": SEMANTIC_BACKEND,
+                "cluster_count": SEMANTIC_CLUSTER_COUNT,
                 "projects": [{"cluster_id": "cluster-0001", "confidence": 1.0, "project_root": "/tmp/example"}],
                 "version": 1,
             },
@@ -828,6 +897,7 @@ def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) 
         (
             {
                 "backend": SEMANTIC_BACKEND,
+                "cluster_count": SEMANTIC_CLUSTER_COUNT,
                 "projects": [
                     {
                         "cluster_id": "cluster-0001",
