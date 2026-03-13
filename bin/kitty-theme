@@ -599,9 +599,12 @@ def cluster_project_indexes(similarity_matrix: FloatArray, cluster_count: int) -
     project_count = similarity_matrix.shape[0]
     if cluster_count < 1:
         raise KittyThemeError(f"semantic cluster count must be at least 1: {cluster_count}")
+    if cluster_count > project_count:
+        raise KittyThemeError(
+            f"semantic cluster count exceeds project count: requested {cluster_count} for {project_count} projects"
+        )
 
-    effective_cluster_count = min(cluster_count, project_count)
-    return agglomerative_cluster_indexes(similarity_matrix, effective_cluster_count)
+    return agglomerative_cluster_indexes(similarity_matrix, cluster_count)
 
 
 def agglomerative_cluster_indexes(similarity_matrix: FloatArray, cluster_count: int) -> list[int]:
@@ -940,13 +943,17 @@ def load_semantic_cache(cache_path: Path) -> SemanticThemeCache:
     if cluster_count > len(raw_projects):
         raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
 
+    projects = [
+        SemanticProjectCacheEntry.from_json_data(raw_project, normalized_cache_path) for raw_project in raw_projects
+    ]
+    if len({project.cluster_id for project in projects}) != cluster_count:
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+
     return SemanticThemeCache(
         version=version,
         backend=backend,
         cluster_count=cluster_count,
-        projects=[
-            SemanticProjectCacheEntry.from_json_data(raw_project, normalized_cache_path) for raw_project in raw_projects
-        ],
+        projects=projects,
     )
 
 
