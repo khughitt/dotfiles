@@ -1,0 +1,1846 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import time
+import tomllib
+from collections import Counter
+from dataclasses import dataclass
+from json import JSONDecodeError
+from pathlib import Path
+from typing import Literal, Protocol, TypeAlias
+
+import click
+import numpy as np
+from numpy.typing import NDArray
+from rich.console import Console
+
+
+STDOUT = Console()
+STDERR = Console(stderr=True)
+
+DOC_FILENAMES = ("readme.md", "readme.rst", "readme.txt", "readme")
+DOC_SUFFIXES = {".md", ".rst", ".txt", ".adoc"}
+DOC_BASENAME_PRIORITY = ("index", "readme", "overview", "guide", "getting-started")
+MAX_UV_LOCK_PACKAGES = 4
+MAX_UNSUPPORTED_SKIP_LINES = 4
+MAX_OVERSIZED_SKIP_LINES = 4
+SEMANTIC_CACHE_VERSION = 1
+SEMANTIC_CACHE_BACKEND = "tfidf-svd-agglomerative-v1"
+SEMANTIC_CLUSTER_COUNT = 5
+SEMANTIC_MAX_COMPONENTS = 8
+SEMANTIC_CLUSTER_LABEL_TERMS = 3
+SEMANTIC_LOW_CONFIDENCE_THRESHOLD = 0.5
+SEMANTIC_SINGLETON_CONFIDENCE_CAP = 0.24
+NEUTRAL_FALLBACK_THEME = "noctalia.conf"
+TRANSITION_STEP_COUNT = 12
+TRANSITION_DURATION_MS = 240
+TRANSITION_MAX_CHANNEL_DELTA = 4
+TOKEN_PATTERN = re.compile(r"[a-z][a-z0-9-]{2,}")
+SEMANTIC_STOPWORDS = {
+    "and",
+    "build",
+    "code",
+    "dependency",
+    "description",
+    "doc",
+    "docs",
+    "file",
+    "files",
+    "guide",
+    "index",
+    "metadata",
+    "name",
+    "overview",
+    "package",
+    "packages",
+    "project",
+    "projects",
+    "readme",
+    "script",
+    "scripts",
+    "src",
+    "theme",
+    "tool",
+    "tools",
+}
+METADATA_FILENAMES = (
+    "pyproject.toml",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "uv.lock",
+)
+SUPPORTED_CODE_SUFFIXES = {
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".rs",
+    ".go",
+    ".lua",
+    ".nix",
+    ".sh",
+    ".zsh",
+}
+PALETTE_KEY_ORDER = (
+    "background",
+    "foreground",
+    "selection_background",
+    "selection_foreground",
+    "cursor",
+    *tuple(f"color{index}" for index in range(16)),
+)
+THEME_MIN_FOREGROUND_CONTRAST = 3.0
+THEME_MIN_CURSOR_CONTRAST = 2.0
+IGNORED_DIR_NAMES = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".venv",
+    ".mypy_cache",
+    ".pytest_cache",
+    "__pycache__",
+    "node_modules",
+    "dist",
+    "build",
+    "target",
+}
+
+FloatArray: TypeAlias = NDArray[np.float64]
+
+
+class KittyThemeError(RuntimeError):
+    """Base error for expected CLI failures."""
+
+
+class ProjectRegistryError(KittyThemeError):
+    """Raised when the project registry is invalid."""
+
+
+def read_metadata_text(metadata_path: Path) -> str:
+    try:
+        return metadata_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise KittyThemeError(f"failed to parse metadata file: {metadata_path.resolve(strict=False)}") from exc
+
+
+def parse_toml_metadata(metadata_path: Path) -> dict[str, object]:
+    try:
+        parsed = tomllib.loads(read_metadata_text(metadata_path))
+    except tomllib.TOMLDecodeError as exc:
+        raise KittyThemeError(f"failed to parse metadata file: {metadata_path.resolve(strict=False)}") from exc
+    if not isinstance(parsed, dict):
+        raise KittyThemeError(f"failed to parse metadata file: {metadata_path.resolve(strict=False)}")
+    return parsed
+
+
+def parse_json_metadata(metadata_path: Path) -> object:
+    try:
+        return json.loads(read_metadata_text(metadata_path))
+    except JSONDecodeError as exc:
+        raise KittyThemeError(f"failed to parse metadata file: {metadata_path.resolve(strict=False)}") from exc
+
+
+def default_registry_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "kitty" / "semantic-projects.txt"
+
+
+def default_cache_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "kitty" / "semantic-themes.json"
+
+
+def default_themes_dir() -> Path:
+    return Path(__file__).resolve().parents[1] / "kitty" / "themes"
+
+
+def default_runtime_state_path() -> Path:
+    return Path.home() / ".cache" / "kitty" / "semantic-runtime-state.json"
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticProjectInput:
+    project_root: Path
+    corpus: str
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticProjectCacheEntry:
+    project_root: Path
+    cluster_id: str
+    confidence: float
+    target_theme: str
+
+    def to_json_data(self) -> dict[str, object]:
+        return {
+            "cluster_id": self.cluster_id,
+            "confidence": self.confidence,
+            "project_root": str(self.project_root),
+            "target_theme": self.target_theme,
+        }
+
+    @classmethod
+    def from_json_data(cls, raw_entry: object, cache_path: Path) -> SemanticProjectCacheEntry:
+        if not isinstance(raw_entry, dict):
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+
+        project_root = raw_entry.get("project_root")
+        cluster_id = raw_entry.get("cluster_id")
+        confidence = raw_entry.get("confidence")
+        target_theme = raw_entry.get("target_theme")
+
+        if not isinstance(project_root, str) or not project_root:
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+        if not isinstance(cluster_id, str) or not cluster_id:
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+        if not isinstance(confidence, (int, float)) or isinstance(confidence, bool):
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+        if not isinstance(target_theme, str) or not target_theme:
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+
+        normalized_project_root = Path(project_root).expanduser()
+        if not normalized_project_root.is_absolute():
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+
+        return cls(
+            project_root=normalized_project_root.resolve(strict=False),
+            cluster_id=cluster_id,
+            confidence=float(confidence),
+            target_theme=target_theme,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticThemeCache:
+    version: int
+    backend: str
+    cluster_count: int
+    projects: list[SemanticProjectCacheEntry]
+
+    def to_json_data(self) -> dict[str, object]:
+        return {
+            "backend": self.backend,
+            "cluster_count": self.cluster_count,
+            "projects": [project.to_json_data() for project in self.projects],
+            "version": self.version,
+        }
+
+    def to_json_text(self) -> str:
+        return json.dumps(self.to_json_data(), indent=2, sort_keys=True) + "\n"
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticSpace:
+    project_roots: tuple[Path, ...]
+    vocabulary: tuple[str, ...]
+    tfidf_matrix: FloatArray
+    embeddings: FloatArray
+    similarity_matrix: FloatArray
+
+
+@dataclass(frozen=True, slots=True)
+class ClusteredSemanticSpace:
+    cluster_terms: dict[str, tuple[str, ...]]
+    project_labels: dict[Path, str]
+    project_confidences: dict[Path, float]
+
+
+@dataclass(frozen=True, slots=True)
+class ThemeCandidate:
+    theme_name: str
+    palette: dict[str, str]
+    foreground_contrast: float
+    cursor_contrast: float
+    quality_score: float
+
+
+OverrideMode: TypeAlias = Literal["temporary", "sticky"]
+
+
+@dataclass(slots=True)
+class WindowRuntimeState:
+    current_theme: str | None = None
+    last_transition_at: float = 0.0
+    override_mode: OverrideMode | None = None
+    override_project_root: Path | None = None
+    override_theme: str | None = None
+
+    def to_json_data(self) -> dict[str, object]:
+        return {
+            "current_theme": self.current_theme,
+            "last_transition_at": self.last_transition_at,
+            "override_mode": self.override_mode,
+            "override_project_root": str(self.override_project_root) if self.override_project_root is not None else None,
+            "override_theme": self.override_theme,
+        }
+
+    @classmethod
+    def from_json_data(cls, raw_entry: object) -> WindowRuntimeState:
+        if not isinstance(raw_entry, dict):
+            return cls()
+
+        current_theme = raw_entry.get("current_theme")
+        last_transition_at = raw_entry.get("last_transition_at")
+        override_mode = raw_entry.get("override_mode")
+        override_project_root = raw_entry.get("override_project_root")
+        override_theme = raw_entry.get("override_theme")
+
+        normalized_override_mode: OverrideMode | None = None
+        if override_mode in {"temporary", "sticky"}:
+            normalized_override_mode = override_mode
+
+        normalized_project_root: Path | None = None
+        if isinstance(override_project_root, str) and override_project_root:
+            normalized_project_root = Path(override_project_root).expanduser().resolve(strict=False)
+
+        return cls(
+            current_theme=current_theme if isinstance(current_theme, str) and current_theme else None,
+            last_transition_at=float(last_transition_at) if isinstance(last_transition_at, (int, float)) else 0.0,
+            override_mode=normalized_override_mode,
+            override_project_root=normalized_project_root,
+            override_theme=override_theme if isinstance(override_theme, str) and override_theme else None,
+        )
+
+
+@dataclass(slots=True)
+class SemanticRuntimeState:
+    windows: dict[str, WindowRuntimeState]
+
+    def to_json_data(self) -> dict[str, object]:
+        return {"windows": {window_id: state.to_json_data() for window_id, state in sorted(self.windows.items())}}
+
+
+class SemanticAssignmentBackend(Protocol):
+    @property
+    def backend_name(self) -> str: ...
+
+    def assign_projects(
+        self, project_inputs: list[SemanticProjectInput], theme_targets: list[str]
+    ) -> list[SemanticProjectCacheEntry]: ...
+
+
+@dataclass(frozen=True, slots=True)
+class TfidfSvdSemanticBackend:
+    cluster_count: int = SEMANTIC_CLUSTER_COUNT
+
+    @property
+    def backend_name(self) -> str:
+        return SEMANTIC_CACHE_BACKEND
+
+    def assign_projects(
+        self, project_inputs: list[SemanticProjectInput], theme_targets: list[str]
+    ) -> list[SemanticProjectCacheEntry]:
+        if not theme_targets:
+            raise KittyThemeError("semantic theme target list is empty")
+
+        semantic_space = build_semantic_space(project_inputs)
+        cluster_result = cluster_semantic_space(semantic_space, cluster_count=self.cluster_count)
+        theme_by_label = {
+            cluster_label: theme_targets[index % len(theme_targets)]
+            for index, cluster_label in enumerate(sorted(cluster_result.cluster_terms))
+        }
+        assignments: list[SemanticProjectCacheEntry] = []
+        for project_input in project_inputs:
+            cluster_label = cluster_result.project_labels[project_input.project_root]
+            assignments.append(
+                SemanticProjectCacheEntry(
+                    project_root=project_input.project_root,
+                    cluster_id=cluster_label,
+                    confidence=cluster_result.project_confidences[project_input.project_root],
+                    target_theme=theme_by_label[cluster_label],
+                )
+            )
+        return assignments
+
+
+def normalize_project_root(raw_path: str, registry_path: Path) -> Path:
+    candidate = Path(raw_path).expanduser()
+    if not candidate.is_absolute():
+        candidate = registry_path.parent / candidate
+
+    normalized_path = candidate.resolve(strict=False)
+    if not normalized_path.exists():
+        raise ProjectRegistryError(f"configured project root does not exist: {normalized_path}")
+    if not normalized_path.is_dir():
+        raise ProjectRegistryError(f"configured project root is not a directory: {normalized_path}")
+    return normalized_path
+
+
+def parse_project_registry(registry_path: Path) -> list[Path]:
+    normalized_registry_path = registry_path.expanduser().resolve(strict=False)
+    if not normalized_registry_path.is_file():
+        raise ProjectRegistryError(f"project registry not found: {normalized_registry_path}")
+
+    try:
+        registry_lines = normalized_registry_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ProjectRegistryError(f"failed to read project registry: {normalized_registry_path}") from exc
+
+    project_roots: list[Path] = []
+    seen_roots: set[Path] = set()
+    for raw_line in registry_lines:
+        stripped_line = raw_line.strip()
+        if not stripped_line or stripped_line.startswith("#"):
+            continue
+
+        normalized_root = normalize_project_root(stripped_line, normalized_registry_path)
+        if normalized_root in seen_roots:
+            continue
+
+        seen_roots.add(normalized_root)
+        project_roots.append(normalized_root)
+
+    return project_roots
+
+
+def build_project_corpus(
+    project_root: Path,
+    *,
+    max_code_files: int = 12,
+    max_code_bytes: int = 24_000,
+    max_file_bytes: int = 8_000,
+) -> str:
+    normalized_root = project_root.expanduser().resolve(strict=False)
+    if not normalized_root.exists():
+        raise KittyThemeError(f"project root does not exist: {normalized_root}")
+    if not normalized_root.is_dir():
+        raise KittyThemeError(f"project root is not a directory: {normalized_root}")
+
+    doc_paths = discover_doc_files(normalized_root)
+    metadata_paths = discover_metadata_files(normalized_root)
+    doc_set = {path.relative_to(normalized_root) for path in doc_paths}
+    metadata_set = {path.relative_to(normalized_root) for path in metadata_paths}
+
+    sections: list[str] = []
+    sections.extend(render_doc_section(normalized_root, doc_path) for doc_path in doc_paths)
+    sections.extend(render_metadata_section(normalized_root, metadata_path) for metadata_path in metadata_paths)
+
+    code_sections, skip_lines = sample_code_sections(
+        normalized_root,
+        doc_paths=doc_set,
+        metadata_paths=metadata_set,
+        max_code_files=max_code_files,
+        max_code_bytes=max_code_bytes,
+        max_file_bytes=max_file_bytes,
+    )
+    sections.extend(code_sections)
+    sections.extend(skip_lines)
+
+    return "\n\n".join(section for section in sections if section).strip()
+
+
+def discover_doc_files(project_root: Path) -> list[Path]:
+    doc_paths: list[Path] = []
+    seen_paths: set[Path] = set()
+
+    readme_candidates = [
+        candidate
+        for candidate in project_root.iterdir()
+        if candidate.is_file() and candidate.name.lower() in DOC_FILENAMES
+    ]
+    for candidate in sorted(readme_candidates, key=readme_sort_key):
+        seen_paths.add(candidate)
+        doc_paths.append(candidate)
+
+    docs_root = project_root / "docs"
+    if docs_root.is_dir():
+        for candidate in sorted(collect_project_files(docs_root), key=lambda path: doc_sort_key(project_root, path)):
+            if candidate.is_file() and candidate.suffix.lower() in DOC_SUFFIXES and candidate not in seen_paths:
+                seen_paths.add(candidate)
+                doc_paths.append(candidate)
+
+    return doc_paths
+
+
+def readme_sort_key(readme_path: Path) -> tuple[int, str, str]:
+    filename = readme_path.name
+    return DOC_FILENAMES.index(filename.lower()), filename.lower(), filename
+
+
+def doc_sort_key(project_root: Path, doc_path: Path) -> tuple[int, str, str]:
+    stem = doc_path.stem.lower()
+    try:
+        basename_rank = DOC_BASENAME_PRIORITY.index(stem)
+    except ValueError:
+        basename_rank = len(DOC_BASENAME_PRIORITY)
+
+    relative_path = doc_path.relative_to(project_root).as_posix()
+    return basename_rank, relative_path.lower(), relative_path
+
+
+def discover_metadata_files(project_root: Path) -> list[Path]:
+    return [project_root / filename for filename in METADATA_FILENAMES if (project_root / filename).is_file()]
+
+
+def render_doc_section(project_root: Path, doc_path: Path) -> str:
+    relative_path = doc_path.relative_to(project_root)
+    contents = doc_path.read_text(encoding="utf-8").strip()
+    return f"DOC {relative_path.as_posix()}\n{contents}"
+
+
+def render_metadata_section(project_root: Path, metadata_path: Path) -> str:
+    relative_path = metadata_path.relative_to(project_root)
+    summary_lines = summarize_metadata(metadata_path)
+    if not summary_lines:
+        return ""
+    return f"METADATA {relative_path.as_posix()}\n" + "\n".join(summary_lines)
+
+
+def summarize_metadata(metadata_path: Path) -> list[str]:
+    if metadata_path.name == "pyproject.toml":
+        return summarize_pyproject_metadata(metadata_path)
+    if metadata_path.name == "package.json":
+        return summarize_package_json_metadata(metadata_path)
+    if metadata_path.name == "uv.lock":
+        return summarize_uv_lock_metadata(metadata_path)
+    if metadata_path.name in {"package-lock.json", "pnpm-lock.yaml", "yarn.lock"}:
+        return [f"lockfile: {metadata_path.name}"]
+    return []
+
+
+def summarize_pyproject_metadata(metadata_path: Path) -> list[str]:
+    data = parse_toml_metadata(metadata_path)
+    project_data = data.get("project", {})
+    if not isinstance(project_data, dict):
+        return []
+
+    summary_lines: list[str] = []
+    for field in ("name", "description"):
+        value = project_data.get(field)
+        if isinstance(value, str) and value:
+            summary_lines.append(f"{field}: {value}")
+
+    dependencies = project_data.get("dependencies", [])
+    if isinstance(dependencies, list):
+        summary_lines.extend(f"dependency: {name}" for name in extract_requirement_names(dependencies))
+    return summary_lines
+
+
+def summarize_package_json_metadata(metadata_path: Path) -> list[str]:
+    data = parse_json_metadata(metadata_path)
+    if not isinstance(data, dict):
+        return []
+
+    summary_lines: list[str] = []
+    name = data.get("name")
+    if isinstance(name, str) and name:
+        summary_lines.append(f"name: {name}")
+
+    scripts = data.get("scripts", {})
+    if isinstance(scripts, dict):
+        summary_lines.extend(f"script: {script_name}" for script_name in sorted(as_string_keys(scripts)))
+
+    dependency_sections = ("dependencies", "devDependencies", "peerDependencies")
+    dependency_names: set[str] = set()
+    for section in dependency_sections:
+        dependency_map = data.get(section, {})
+        if isinstance(dependency_map, dict):
+            dependency_names.update(as_string_keys(dependency_map))
+
+    summary_lines.extend(f"dependency: {dependency}" for dependency in sorted(dependency_names))
+    return summary_lines
+
+
+def summarize_uv_lock_metadata(metadata_path: Path) -> list[str]:
+    data = parse_toml_metadata(metadata_path)
+    packages = data.get("package", [])
+    if not isinstance(packages, list):
+        return []
+
+    package_names = sorted(
+        package_name
+        for package in packages
+        if isinstance(package, dict)
+        for package_name in [package.get("name")]
+        if isinstance(package_name, str) and package_name
+    )
+
+    summary_lines = [f"package_count: {len(package_names)}"]
+    summary_lines.extend(f"package: {package_name}" for package_name in package_names[:MAX_UV_LOCK_PACKAGES])
+    remaining_packages = len(package_names) - MAX_UV_LOCK_PACKAGES
+    if remaining_packages > 0:
+        summary_lines.append(f"package_remaining: {remaining_packages}")
+    return summary_lines
+
+
+def extract_requirement_names(requirements: list[object]) -> list[str]:
+    names: list[str] = []
+    for requirement in requirements:
+        if not isinstance(requirement, str):
+            continue
+        match = re.match(r"[A-Za-z0-9_.-]+", requirement.strip())
+        if match is not None:
+            names.append(match.group(0))
+    return sorted(set(names))
+
+
+def as_string_keys(values: dict[object, object]) -> set[str]:
+    return {str(key) for key in values}
+
+
+def tokenize_semantic_corpus(corpus: str) -> list[str]:
+    return [
+        token
+        for token in TOKEN_PATTERN.findall(corpus.lower())
+        if token not in SEMANTIC_STOPWORDS and not token.isdigit()
+    ]
+
+
+def build_semantic_space(project_inputs: list[SemanticProjectInput]) -> SemanticSpace:
+    if not project_inputs:
+        raise KittyThemeError("semantic project input list is empty")
+
+    project_roots = tuple(project_input.project_root for project_input in project_inputs)
+    tokenized_corpora = [tokenize_semantic_corpus(project_input.corpus) for project_input in project_inputs]
+    for project_input, tokens in zip(project_inputs, tokenized_corpora, strict=True):
+        if not tokens:
+            raise KittyThemeError(f"semantic corpus has no indexable tokens: {project_input.project_root}")
+
+    vocabulary, tfidf_matrix = build_tfidf_matrix(tokenized_corpora)
+    embeddings = reduce_tfidf_matrix(tfidf_matrix)
+    normalized_embeddings = normalize_rows(embeddings)
+    similarity_matrix = np.clip(normalized_embeddings @ normalized_embeddings.T, -1.0, 1.0)
+    return SemanticSpace(
+        project_roots=project_roots,
+        vocabulary=vocabulary,
+        tfidf_matrix=tfidf_matrix,
+        embeddings=embeddings,
+        similarity_matrix=similarity_matrix,
+    )
+
+
+def build_tfidf_matrix(tokenized_corpora: list[list[str]]) -> tuple[tuple[str, ...], FloatArray]:
+    vocabulary = tuple(sorted({token for corpus in tokenized_corpora for token in corpus}))
+    if not vocabulary:
+        raise KittyThemeError("semantic corpus has no indexable tokens")
+
+    token_indexes = {token: index for index, token in enumerate(vocabulary)}
+    counts = np.zeros((len(tokenized_corpora), len(vocabulary)), dtype=np.float64)
+    for row_index, corpus in enumerate(tokenized_corpora):
+        for token, count in Counter(corpus).items():
+            counts[row_index, token_indexes[token]] = float(count)
+
+    document_frequency = np.count_nonzero(counts > 0.0, axis=0)
+    idf = np.log((1.0 + len(tokenized_corpora)) / (1.0 + document_frequency)) + 1.0
+    token_totals = counts.sum(axis=1, keepdims=True)
+    tf = counts / np.maximum(token_totals, 1.0)
+    tfidf_matrix = tf * idf
+    return vocabulary, normalize_rows(tfidf_matrix)
+
+
+def reduce_tfidf_matrix(tfidf_matrix: FloatArray) -> FloatArray:
+    if tfidf_matrix.size == 0:
+        raise KittyThemeError("semantic corpus has no indexable tokens")
+
+    component_count = min(SEMANTIC_MAX_COMPONENTS, tfidf_matrix.shape[0], tfidf_matrix.shape[1])
+    left_vectors, singular_values, right_vectors = np.linalg.svd(tfidf_matrix, full_matrices=False)
+    left_vectors = left_vectors[:, :component_count].copy()
+    singular_values = singular_values[:component_count].copy()
+    right_vectors = right_vectors[:component_count].copy()
+
+    for component_index in range(component_count):
+        pivot_index = int(np.argmax(np.abs(right_vectors[component_index])))
+        if right_vectors[component_index, pivot_index] < 0.0:
+            left_vectors[:, component_index] *= -1.0
+            right_vectors[component_index] *= -1.0
+
+    return left_vectors * singular_values
+
+
+def normalize_rows(matrix: FloatArray) -> FloatArray:
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    return matrix / np.maximum(norms, 1e-12)
+
+
+def cluster_semantic_space(
+    semantic_space: SemanticSpace,
+    *,
+    cluster_count: int = SEMANTIC_CLUSTER_COUNT,
+) -> ClusteredSemanticSpace:
+    cluster_indexes = cluster_project_indexes(semantic_space.similarity_matrix, cluster_count)
+    cluster_members = group_cluster_members(cluster_indexes)
+    cluster_terms_by_index = select_cluster_terms(semantic_space, cluster_members)
+    cluster_labels = build_cluster_labels(cluster_terms_by_index)
+    project_labels = {
+        project_root: cluster_labels[cluster_indexes[index]]
+        for index, project_root in enumerate(semantic_space.project_roots)
+    }
+    project_confidences = compute_project_confidences(semantic_space, cluster_indexes, cluster_members)
+    return ClusteredSemanticSpace(
+        cluster_terms={
+            cluster_labels[cluster_index]: cluster_terms_by_index[cluster_index]
+            for cluster_index in sorted(cluster_members)
+        },
+        project_labels=project_labels,
+        project_confidences=project_confidences,
+    )
+
+
+def cluster_project_indexes(similarity_matrix: FloatArray, cluster_count: int) -> list[int]:
+    project_count = similarity_matrix.shape[0]
+    if cluster_count < 1:
+        raise KittyThemeError(f"semantic cluster count must be at least 1: {cluster_count}")
+    if cluster_count > project_count:
+        raise KittyThemeError(
+            f"semantic cluster count exceeds project count: requested {cluster_count} for {project_count} projects"
+        )
+
+    return agglomerative_cluster_indexes(similarity_matrix, cluster_count)
+
+
+def agglomerative_cluster_indexes(similarity_matrix: FloatArray, cluster_count: int) -> list[int]:
+    clusters = [tuple([index]) for index in range(similarity_matrix.shape[0])]
+    while len(clusters) > cluster_count:
+        best_pair: tuple[int, int] | None = None
+        best_score = float("-inf")
+        best_key: tuple[tuple[int, ...], tuple[int, ...]] | None = None
+        for left_index in range(len(clusters)):
+            for right_index in range(left_index + 1, len(clusters)):
+                left_cluster = clusters[left_index]
+                right_cluster = clusters[right_index]
+                candidate_score = average_cluster_similarity(similarity_matrix, left_cluster, right_cluster)
+                candidate_key = (left_cluster, right_cluster)
+                if candidate_score > best_score + 1e-9:
+                    best_pair = (left_index, right_index)
+                    best_score = candidate_score
+                    best_key = candidate_key
+                    continue
+                if abs(candidate_score - best_score) <= 1e-9 and best_key is not None and candidate_key < best_key:
+                    best_pair = (left_index, right_index)
+                    best_key = candidate_key
+
+        if best_pair is None:
+            raise KittyThemeError("failed to merge semantic project clusters")
+
+        left_index, right_index = best_pair
+        merged_cluster = tuple(sorted((*clusters[left_index], *clusters[right_index])))
+        clusters.pop(right_index)
+        clusters.pop(left_index)
+        clusters.append(merged_cluster)
+        clusters.sort()
+
+    cluster_indexes = [0] * similarity_matrix.shape[0]
+    for merged_index, cluster in enumerate(sorted(clusters)):
+        for member_index in cluster:
+            cluster_indexes[member_index] = merged_index
+    return cluster_indexes
+
+
+def average_cluster_similarity(
+    similarity_matrix: FloatArray, left_cluster: tuple[int, ...], right_cluster: tuple[int, ...]
+) -> float:
+    total_similarity = 0.0
+    pair_count = 0
+    for left_index in left_cluster:
+        for right_index in right_cluster:
+            total_similarity += float(similarity_matrix[left_index, right_index])
+            pair_count += 1
+    return total_similarity / pair_count
+
+
+def group_cluster_members(cluster_indexes: list[int]) -> dict[int, tuple[int, ...]]:
+    grouped_members: dict[int, list[int]] = {}
+    for project_index, cluster_index in enumerate(cluster_indexes):
+        grouped_members.setdefault(cluster_index, []).append(project_index)
+    return {cluster_index: tuple(members) for cluster_index, members in sorted(grouped_members.items())}
+
+
+def select_cluster_terms(
+    semantic_space: SemanticSpace, cluster_members: dict[int, tuple[int, ...]]
+) -> dict[int, tuple[str, ...]]:
+    cluster_terms: dict[int, tuple[str, ...]] = {}
+    tfidf_matrix = semantic_space.tfidf_matrix
+    all_indexes = set(range(tfidf_matrix.shape[0]))
+    for cluster_index, members in cluster_members.items():
+        member_slice = tfidf_matrix[list(members)]
+        cluster_mean = np.mean(member_slice, axis=0)
+        non_member_indexes = sorted(all_indexes.difference(members))
+        if non_member_indexes:
+            other_mean = np.mean(tfidf_matrix[non_member_indexes], axis=0)
+            term_scores = cluster_mean - other_mean
+        else:
+            term_scores = cluster_mean
+
+        ranked_indexes = np.argsort(-term_scores, kind="stable")
+        selected_terms = tuple(
+            semantic_space.vocabulary[term_index]
+            for term_index in ranked_indexes
+            if term_scores[term_index] > 0.0
+        )[:SEMANTIC_CLUSTER_LABEL_TERMS]
+        if selected_terms:
+            cluster_terms[cluster_index] = selected_terms
+            continue
+
+        fallback_indexes = np.argsort(-cluster_mean, kind="stable")
+        cluster_terms[cluster_index] = tuple(
+            semantic_space.vocabulary[term_index] for term_index in fallback_indexes[:SEMANTIC_CLUSTER_LABEL_TERMS]
+        )
+    return cluster_terms
+
+
+def build_cluster_labels(cluster_terms_by_index: dict[int, tuple[str, ...]]) -> dict[int, str]:
+    label_occurrences: dict[str, int] = {}
+    cluster_labels: dict[int, str] = {}
+    for cluster_index, cluster_terms in sorted(cluster_terms_by_index.items()):
+        base_label = "-".join(cluster_terms[:2]) if cluster_terms else f"cluster-{cluster_index:04d}"
+        occurrence_count = label_occurrences.get(base_label, 0)
+        label_occurrences[base_label] = occurrence_count + 1
+        if occurrence_count == 0:
+            cluster_labels[cluster_index] = base_label
+            continue
+        cluster_labels[cluster_index] = f"{base_label}-{occurrence_count + 1}"
+    return cluster_labels
+
+
+def compute_project_confidences(
+    semantic_space: SemanticSpace, cluster_indexes: list[int], cluster_members: dict[int, tuple[int, ...]]
+) -> dict[Path, float]:
+    normalized_embeddings = normalize_rows(semantic_space.embeddings)
+    cluster_centroids = {
+        cluster_index: normalize_rows(np.mean(normalized_embeddings[list(members)], axis=0, keepdims=True))[0]
+        for cluster_index, members in cluster_members.items()
+    }
+    project_confidences: dict[Path, float] = {}
+
+    for project_index, project_root in enumerate(semantic_space.project_roots):
+        cluster_index = cluster_indexes[project_index]
+        own_members = cluster_members[cluster_index]
+        own_centroid_similarity = cosine_similarity_to_vector(
+            normalized_embeddings[project_index], cluster_centroids[cluster_index]
+        )
+        competing_centroid_similarity = max(
+            (
+                cosine_similarity_to_vector(normalized_embeddings[project_index], cluster_centroid)
+                for candidate_cluster, cluster_centroid in cluster_centroids.items()
+                if candidate_cluster != cluster_index
+            ),
+            default=0.0,
+        )
+        if len(own_members) > 1:
+            peer_similarity = sum(
+                float(semantic_space.similarity_matrix[project_index, member])
+                for member in own_members
+                if member != project_index
+            ) / (len(own_members) - 1)
+        else:
+            peer_similarity = 0.0
+
+        margin = max(0.0, own_centroid_similarity - competing_centroid_similarity)
+        confidence = min(1.0, 0.6 * margin + 0.4 * max(0.0, peer_similarity))
+        if len(own_members) == 1:
+            confidence = min(confidence, SEMANTIC_SINGLETON_CONFIDENCE_CAP)
+        project_confidences[project_root] = round(confidence, 6)
+
+    return project_confidences
+
+
+def cosine_similarity_to_vector(left_vector: FloatArray, right_vector: FloatArray) -> float:
+    return float(np.clip(np.dot(left_vector, right_vector), -1.0, 1.0))
+
+
+def low_confidence_project_roots(
+    clustered_space: ClusteredSemanticSpace, threshold: float = SEMANTIC_LOW_CONFIDENCE_THRESHOLD
+) -> list[Path]:
+    return [
+        project_root
+        for project_root in clustered_space.project_labels
+        if clustered_space.project_confidences[project_root] < threshold
+    ]
+
+
+def sample_code_sections(
+    project_root: Path,
+    *,
+    doc_paths: set[Path],
+    metadata_paths: set[Path],
+    max_code_files: int,
+    max_code_bytes: int,
+    max_file_bytes: int,
+) -> tuple[list[str], list[str]]:
+    code_sections: list[str] = []
+    skip_lines: list[str] = []
+    unsupported_paths: list[Path] = []
+    oversized_paths: list[Path] = []
+    sampled_file_count = 0
+    sampled_byte_count = 0
+
+    for candidate in iter_project_files(project_root):
+        relative_path = candidate.relative_to(project_root)
+        if relative_path in doc_paths or relative_path in metadata_paths:
+            continue
+
+        suffix = candidate.suffix.lower()
+        if suffix not in SUPPORTED_CODE_SUFFIXES:
+            unsupported_paths.append(relative_path)
+            continue
+
+        file_size = candidate.stat().st_size
+        if file_size > max_file_bytes:
+            oversized_paths.append(relative_path)
+            continue
+
+        if sampled_file_count >= max_code_files:
+            continue
+        if sampled_byte_count + file_size > max_code_bytes:
+            continue
+
+        contents = candidate.read_text(encoding="utf-8").strip()
+        code_sections.append(f"CODE {relative_path.as_posix()}\n{contents}")
+        sampled_file_count += 1
+        sampled_byte_count += file_size
+
+    skip_lines.extend(
+        f"SKIP {relative_path.as_posix()} unsupported"
+        for relative_path in unsupported_paths[:MAX_UNSUPPORTED_SKIP_LINES]
+    )
+    remaining_unsupported = len(unsupported_paths) - MAX_UNSUPPORTED_SKIP_LINES
+    if remaining_unsupported > 0:
+        skip_lines.append(f"SKIP unsupported {remaining_unsupported} more")
+    skip_lines.extend(
+        f"SKIP {relative_path.as_posix()} oversized" for relative_path in oversized_paths[:MAX_OVERSIZED_SKIP_LINES]
+    )
+    remaining_oversized = len(oversized_paths) - MAX_OVERSIZED_SKIP_LINES
+    if remaining_oversized > 0:
+        skip_lines.append(f"SKIP oversized {remaining_oversized} more")
+
+    return code_sections, skip_lines
+
+
+def iter_project_files(project_root: Path) -> list[Path]:
+    return collect_project_files(project_root)
+
+
+def collect_project_files(current_path: Path) -> list[Path]:
+    project_files: list[Path] = []
+    for candidate in sorted(current_path.iterdir(), key=path_name_sort_key):
+        if candidate.is_dir():
+            if candidate.name in IGNORED_DIR_NAMES:
+                continue
+            project_files.extend(collect_project_files(candidate))
+            continue
+        if candidate.is_file():
+            project_files.append(candidate)
+    return project_files
+
+
+def path_name_sort_key(path: Path) -> tuple[str, str]:
+    return path.name.lower(), path.name
+
+
+def list_semantic_theme_targets(themes_dir: Path) -> list[str]:
+    normalized_themes_dir = themes_dir.expanduser().resolve(strict=False)
+    if not normalized_themes_dir.exists():
+        raise KittyThemeError(f"kitty themes directory does not exist: {normalized_themes_dir}")
+    if not normalized_themes_dir.is_dir():
+        raise KittyThemeError(f"kitty themes path is not a directory: {normalized_themes_dir}")
+
+    theme_paths = [
+        candidate
+        for candidate in sorted(normalized_themes_dir.iterdir(), key=path_name_sort_key)
+        if candidate.is_file() and candidate.suffix == ".conf"
+    ]
+    theme_targets = [theme_path.name for theme_path in theme_paths]
+    if not theme_targets:
+        raise KittyThemeError(f"kitty themes directory has no .conf themes: {normalized_themes_dir}")
+    return theme_targets
+
+
+def parse_kitty_theme_palette(theme_path: Path) -> dict[str, str]:
+    normalized_theme_path = theme_path.expanduser().resolve(strict=False)
+    if not normalized_theme_path.is_file():
+        raise KittyThemeError(f"kitty theme not found: {normalized_theme_path}")
+
+    try:
+        theme_lines = normalized_theme_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise KittyThemeError(f"failed to read kitty theme: {normalized_theme_path}") from exc
+
+    values: dict[str, str] = {}
+    for line in theme_lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        parts = stripped.split()
+        if len(parts) < 2:
+            continue
+        key, raw_value = parts[0], parts[1]
+        value = raw_value.strip().lower()
+        if key not in PALETTE_KEY_ORDER:
+            continue
+        if not is_hex_rgb(value):
+            continue
+        values[key] = value
+
+    missing_keys = [key for key in PALETTE_KEY_ORDER if key not in values]
+    if missing_keys:
+        missing = ", ".join(missing_keys)
+        raise KittyThemeError(f"kitty theme is missing required color keys: {normalized_theme_path} ({missing})")
+    return values
+
+
+def is_hex_rgb(value: str) -> bool:
+    return bool(re.fullmatch(r"#[0-9a-f]{6}", value))
+
+
+def hex_rgb_to_triplet(value: str) -> tuple[int, int, int]:
+    return int(value[1:3], 16), int(value[3:5], 16), int(value[5:7], 16)
+
+
+def relative_luminance(value: str) -> float:
+    channel_values = [channel / 255.0 for channel in hex_rgb_to_triplet(value)]
+    transformed = [
+        channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4 for channel in channel_values
+    ]
+    return 0.2126 * transformed[0] + 0.7152 * transformed[1] + 0.0722 * transformed[2]
+
+
+def contrast_ratio(left: str, right: str) -> float:
+    left_luminance = relative_luminance(left)
+    right_luminance = relative_luminance(right)
+    lighter = max(left_luminance, right_luminance)
+    darker = min(left_luminance, right_luminance)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def palette_visual_distance(left_palette: dict[str, str], right_palette: dict[str, str]) -> float:
+    channel_deltas: list[int] = []
+    for palette_key in PALETTE_KEY_ORDER:
+        left_triplet = hex_rgb_to_triplet(left_palette[palette_key])
+        right_triplet = hex_rgb_to_triplet(right_palette[palette_key])
+        channel_deltas.extend(left_channel - right_channel for left_channel, right_channel in zip(left_triplet, right_triplet))
+    return float(np.linalg.norm(np.array(channel_deltas, dtype=np.float64)))
+
+
+def score_theme_candidate(theme_name: str, palette: dict[str, str]) -> ThemeCandidate:
+    foreground_contrast = contrast_ratio(palette["foreground"], palette["background"])
+    cursor_contrast = contrast_ratio(palette["cursor"], palette["background"])
+    ansi_colors = [hex_rgb_to_triplet(palette[f"color{index}"]) for index in range(16)]
+    unique_ansi_colors = len(set(ansi_colors))
+    quality_score = foreground_contrast * 1.4 + cursor_contrast * 0.8 + float(unique_ansi_colors) * 0.1
+    return ThemeCandidate(
+        theme_name=theme_name,
+        palette=palette,
+        foreground_contrast=foreground_contrast,
+        cursor_contrast=cursor_contrast,
+        quality_score=quality_score,
+    )
+
+
+def load_theme_candidates(themes_dir: Path) -> list[ThemeCandidate]:
+    normalized_themes_dir = themes_dir.expanduser().resolve(strict=False)
+    theme_targets = list_semantic_theme_targets(normalized_themes_dir)
+    candidates = [
+        score_theme_candidate(
+            theme_name=theme_name,
+            palette=parse_kitty_theme_palette(normalized_themes_dir / theme_name),
+        )
+        for theme_name in theme_targets
+    ]
+    return sorted(candidates, key=lambda candidate: (-candidate.quality_score, candidate.theme_name.lower(), candidate.theme_name))
+
+
+def select_attractor_themes(themes_dir: Path, attractor_count: int) -> list[str]:
+    if attractor_count < 1:
+        raise KittyThemeError(f"semantic cluster count must be at least 1: {attractor_count}")
+
+    candidate_pool = [
+        candidate
+        for candidate in load_theme_candidates(themes_dir)
+        if candidate.foreground_contrast >= THEME_MIN_FOREGROUND_CONTRAST
+        and candidate.cursor_contrast >= THEME_MIN_CURSOR_CONTRAST
+    ]
+    if len(candidate_pool) < attractor_count:
+        raise KittyThemeError(
+            f"insufficient readable kitty themes for attractor selection: "
+            f"needed {attractor_count}, found {len(candidate_pool)}"
+        )
+
+    selected: list[ThemeCandidate] = [sorted(candidate_pool, key=lambda candidate: candidate.theme_name)[0]]
+    remaining = [candidate for candidate in candidate_pool if candidate.theme_name != selected[0].theme_name]
+
+    while len(selected) < attractor_count:
+        best_candidate: ThemeCandidate | None = None
+        best_score = float("-inf")
+        for candidate in remaining:
+            min_distance = min(
+                palette_visual_distance(candidate.palette, selected_candidate.palette) for selected_candidate in selected
+            )
+            candidate_score = min_distance + candidate.quality_score * 0.01
+            if candidate_score > best_score + 1e-9:
+                best_candidate = candidate
+                best_score = candidate_score
+                continue
+            if (
+                abs(candidate_score - best_score) <= 1e-9
+                and best_candidate is not None
+                and candidate.theme_name < best_candidate.theme_name
+            ):
+                best_candidate = candidate
+
+        if best_candidate is None:
+            break
+        selected.append(best_candidate)
+        remaining = [candidate for candidate in remaining if candidate.theme_name != best_candidate.theme_name]
+
+    if len(selected) < attractor_count:
+        raise KittyThemeError(
+            f"failed to select kitty attractor themes: needed {attractor_count}, selected {len(selected)}"
+        )
+    return [candidate.theme_name for candidate in selected]
+
+
+def build_semantic_cache(
+    registry_path: Path,
+    themes_dir: Path,
+    backend: SemanticAssignmentBackend | None = None,
+    *,
+    cluster_count: int = SEMANTIC_CLUSTER_COUNT,
+) -> SemanticThemeCache:
+    registry_project_roots = parse_project_registry(registry_path)
+    project_roots: list[Path] = []
+    seen_git_roots: set[Path] = set()
+    for registry_project_root in registry_project_roots:
+        git_root = find_git_root(registry_project_root)
+        if git_root in seen_git_roots:
+            continue
+        seen_git_roots.add(git_root)
+        project_roots.append(git_root)
+
+    if cluster_count > len(project_roots):
+        raise KittyThemeError(
+            f"semantic cluster count exceeds project count: requested {cluster_count} for {len(project_roots)} projects"
+        )
+
+    project_inputs = [
+        SemanticProjectInput(project_root=project_root, corpus=build_project_corpus(project_root))
+        for project_root in project_roots
+    ]
+    theme_targets = select_attractor_themes(themes_dir, cluster_count)
+    semantic_backend = backend if backend is not None else TfidfSvdSemanticBackend(cluster_count=cluster_count)
+    return SemanticThemeCache(
+        version=SEMANTIC_CACHE_VERSION,
+        backend=semantic_backend.backend_name,
+        cluster_count=cluster_count,
+        projects=semantic_backend.assign_projects(project_inputs, theme_targets),
+    )
+
+
+def write_semantic_cache(cache_path: Path, cache: SemanticThemeCache) -> None:
+    normalized_cache_path = cache_path.expanduser().resolve(strict=False)
+    normalized_cache_path.parent.mkdir(parents=True, exist_ok=True)
+    normalized_cache_path.write_text(cache.to_json_text(), encoding="utf-8")
+
+
+def load_semantic_cache(cache_path: Path) -> SemanticThemeCache:
+    normalized_cache_path = cache_path.expanduser().resolve(strict=False)
+    if not normalized_cache_path.is_file():
+        raise KittyThemeError(f"semantic cache not found: {normalized_cache_path}")
+
+    try:
+        raw_contents = normalized_cache_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise KittyThemeError(f"failed to read semantic cache: {normalized_cache_path}") from exc
+
+    try:
+        raw_cache = json.loads(raw_contents)
+    except json.JSONDecodeError as exc:
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}") from exc
+
+    if not isinstance(raw_cache, dict):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+
+    version = raw_cache.get("version")
+    backend = raw_cache.get("backend")
+    cluster_count = raw_cache.get("cluster_count")
+    raw_projects = raw_cache.get("projects")
+    if not isinstance(version, int) or isinstance(version, bool):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+    if version != SEMANTIC_CACHE_VERSION:
+        raise KittyThemeError(f"semantic cache has unsupported version: {normalized_cache_path}")
+    if not isinstance(backend, str):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+    if backend != SEMANTIC_CACHE_BACKEND:
+        raise KittyThemeError(f"semantic cache has unsupported backend: {normalized_cache_path}")
+    if not isinstance(cluster_count, int) or isinstance(cluster_count, bool) or cluster_count < 1:
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+    if not isinstance(raw_projects, list):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+    if cluster_count > len(raw_projects):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+
+    projects = [
+        SemanticProjectCacheEntry.from_json_data(raw_project, normalized_cache_path) for raw_project in raw_projects
+    ]
+    if len({project.cluster_id for project in projects}) != cluster_count:
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+
+    return SemanticThemeCache(
+        version=version,
+        backend=backend,
+        cluster_count=cluster_count,
+        projects=projects,
+    )
+
+
+def find_git_root(project_path: Path) -> Path:
+    normalized_path = project_path.expanduser().resolve(strict=False)
+    if not normalized_path.exists():
+        raise KittyThemeError(f"path does not exist: {normalized_path}")
+
+    candidate = normalized_path if normalized_path.is_dir() else normalized_path.parent
+    while True:
+        if (candidate / ".git").exists():
+            return candidate
+        if candidate.parent == candidate:
+            break
+        candidate = candidate.parent
+
+    raise KittyThemeError(f"path is not inside a git repository: {normalized_path}")
+
+
+def resolve_theme_for_path(project_path: Path, cache_path: Path) -> str:
+    git_root = find_git_root(project_path)
+    semantic_cache = load_semantic_cache(cache_path)
+    for project in semantic_cache.projects:
+        if project.project_root == git_root:
+            return project.target_theme
+
+    raise KittyThemeError(f"semantic cache has no entry for git root: {git_root}")
+
+
+def find_semantic_project_entry(project_path: Path, cache_path: Path) -> SemanticProjectCacheEntry | None:
+    try:
+        git_root = find_git_root(project_path)
+        semantic_cache = load_semantic_cache(cache_path)
+    except KittyThemeError:
+        return None
+
+    for project in semantic_cache.projects:
+        if project.project_root == git_root:
+            return project
+    return None
+
+
+def cluster_terms_from_cluster_id(cluster_id: str | None) -> tuple[str, ...]:
+    if cluster_id is None:
+        return ()
+    terms = tuple(token for token in cluster_id.split("-") if token and not token.isdigit())
+    return terms[:3]
+
+
+def load_runtime_state(state_path: Path) -> SemanticRuntimeState:
+    normalized_state_path = state_path.expanduser().resolve(strict=False)
+    if not normalized_state_path.exists():
+        return SemanticRuntimeState(windows={})
+    if not normalized_state_path.is_file():
+        raise KittyThemeError(f"semantic runtime state path is not a file: {normalized_state_path}")
+
+    try:
+        raw_state = json.loads(normalized_state_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, JSONDecodeError) as exc:
+        raise KittyThemeError(f"failed to read semantic runtime state: {normalized_state_path}") from exc
+
+    if not isinstance(raw_state, dict):
+        return SemanticRuntimeState(windows={})
+    raw_windows = raw_state.get("windows", {})
+    if not isinstance(raw_windows, dict):
+        return SemanticRuntimeState(windows={})
+
+    windows = {
+        str(window_id): WindowRuntimeState.from_json_data(raw_window_state)
+        for window_id, raw_window_state in raw_windows.items()
+    }
+    return SemanticRuntimeState(windows=windows)
+
+
+def write_runtime_state(state_path: Path, state: SemanticRuntimeState) -> None:
+    normalized_state_path = state_path.expanduser().resolve(strict=False)
+    normalized_state_path.parent.mkdir(parents=True, exist_ok=True)
+    normalized_state_path.write_text(
+        json.dumps(state.to_json_data(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def set_window_override(
+    state: SemanticRuntimeState,
+    window_id: str,
+    theme_name: str,
+    mode: OverrideMode,
+    project_root: Path | None,
+) -> None:
+    window_state = state.windows.get(window_id, WindowRuntimeState())
+    window_state.override_theme = theme_name
+    window_state.override_mode = mode
+    window_state.override_project_root = project_root
+    state.windows[window_id] = window_state
+
+
+def clear_window_override(state: SemanticRuntimeState, window_id: str) -> None:
+    window_state = state.windows.get(window_id, WindowRuntimeState())
+    window_state.override_theme = None
+    window_state.override_mode = None
+    window_state.override_project_root = None
+    state.windows[window_id] = window_state
+
+
+def resolve_semantic_theme_with_fallback(
+    project_path: Path,
+    cache_path: Path,
+    fallback_theme: str,
+    low_confidence_threshold: float = SEMANTIC_LOW_CONFIDENCE_THRESHOLD,
+) -> tuple[str, str | None]:
+    try:
+        git_root = find_git_root(project_path)
+        semantic_cache = load_semantic_cache(cache_path)
+    except KittyThemeError:
+        return fallback_theme, None
+
+    for project in semantic_cache.projects:
+        if project.project_root != git_root:
+            continue
+        if project.confidence < low_confidence_threshold:
+            return fallback_theme, project.cluster_id
+        return project.target_theme, project.cluster_id
+
+    return fallback_theme, None
+
+
+def resolve_effective_theme_for_window(
+    project_path: Path,
+    cache_path: Path,
+    state_path: Path,
+    window_id: str,
+    fallback_theme: str,
+) -> tuple[str, OverrideMode | None, str | None]:
+    state = load_runtime_state(state_path)
+    window_state = state.windows.get(window_id, WindowRuntimeState())
+
+    git_root: Path | None
+    try:
+        git_root = find_git_root(project_path)
+    except KittyThemeError:
+        git_root = None
+
+    semantic_theme, semantic_cluster = resolve_semantic_theme_with_fallback(project_path, cache_path, fallback_theme)
+    if (
+        window_state.override_mode == "temporary"
+        and window_state.override_theme is not None
+        and window_state.override_project_root is not None
+        and window_state.override_project_root != git_root
+    ):
+        clear_window_override(state, window_id)
+        window_state = state.windows[window_id]
+
+    if window_state.override_theme is not None and window_state.override_mode is not None:
+        effective_theme = window_state.override_theme
+        override_mode: OverrideMode | None = window_state.override_mode
+    else:
+        effective_theme = semantic_theme
+        override_mode = None
+
+    state.windows[window_id] = window_state
+    write_runtime_state(state_path, state)
+    return effective_theme, override_mode, semantic_cluster
+
+
+def parse_hex_palette_triplet(hex_value: str) -> tuple[int, int, int]:
+    if not is_hex_rgb(hex_value):
+        raise KittyThemeError(f"invalid hex color: {hex_value}")
+    return hex_rgb_to_triplet(hex_value)
+
+
+def interpolate_channel(source: int, target: int, factor: float) -> int:
+    return int(round(source + (target - source) * factor))
+
+
+def interpolate_hex_color(source: str, target: str, factor: float) -> str:
+    source_triplet = parse_hex_palette_triplet(source)
+    target_triplet = parse_hex_palette_triplet(target)
+    channels = [interpolate_channel(source_channel, target_channel, factor) for source_channel, target_channel in zip(source_triplet, target_triplet)]
+    return f"#{channels[0]:02x}{channels[1]:02x}{channels[2]:02x}"
+
+
+def ease_in_out_cubic(value: float) -> float:
+    if value < 0.5:
+        return 4.0 * value**3
+    return 1.0 - ((-2.0 * value + 2.0) ** 3) / 2.0
+
+
+def build_transition_palettes(
+    start_palette: dict[str, str],
+    target_palette: dict[str, str],
+    step_count: int = TRANSITION_STEP_COUNT,
+) -> list[dict[str, str]]:
+    if step_count < 2:
+        raise KittyThemeError(f"transition step count must be at least 2: {step_count}")
+
+    steps: list[dict[str, str]] = []
+    for step_index in range(step_count):
+        factor = step_index / (step_count - 1)
+        eased_factor = ease_in_out_cubic(factor)
+        step_palette = {
+            palette_key: interpolate_hex_color(start_palette[palette_key], target_palette[palette_key], eased_factor)
+            for palette_key in PALETTE_KEY_ORDER
+        }
+        steps.append(step_palette)
+    return steps
+
+
+def should_skip_transition(
+    start_palette: dict[str, str],
+    target_palette: dict[str, str],
+    max_channel_delta: int = TRANSITION_MAX_CHANNEL_DELTA,
+) -> bool:
+    for palette_key in PALETTE_KEY_ORDER:
+        start_triplet = parse_hex_palette_triplet(start_palette[palette_key])
+        target_triplet = parse_hex_palette_triplet(target_palette[palette_key])
+        for start_channel, target_channel in zip(start_triplet, target_triplet):
+            if abs(start_channel - target_channel) > max_channel_delta:
+                return False
+    return True
+
+
+def resolve_theme_path(theme_name: str, themes_dir: Path) -> Path:
+    candidate_path = Path(theme_name).expanduser()
+    if candidate_path.is_absolute():
+        resolved = candidate_path.resolve(strict=False)
+        if resolved.is_file():
+            return resolved
+        raise KittyThemeError(f"kitty theme path not found: {resolved}")
+
+    normalized_themes_dir = themes_dir.expanduser().resolve(strict=False)
+    resolved = (normalized_themes_dir / candidate_path).resolve(strict=False)
+    if resolved.is_file():
+        return resolved
+    raise KittyThemeError(f"kitty theme path not found: {resolved}")
+
+
+def apply_theme_palette(window_id: str, palette: dict[str, str]) -> None:
+    color_args = [f"{palette_key}={palette[palette_key]}" for palette_key in PALETTE_KEY_ORDER]
+    try:
+        subprocess.run(
+            ["kitten", "@", "set-colors", "-m", f"id:{window_id}", *color_args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (subprocess.CalledProcessError, OSError) as exc:
+        raise KittyThemeError("failed to apply intermediate kitty palette transition") from exc
+
+
+def apply_theme_file(window_id: str, theme_path: Path) -> None:
+    try:
+        subprocess.run(
+            ["kitten", "@", "set-colors", "-m", f"id:{window_id}", str(theme_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (subprocess.CalledProcessError, OSError) as exc:
+        raise KittyThemeError(f"failed to apply kitty theme: {theme_path}") from exc
+
+
+def apply_effective_theme_for_window(
+    project_path: Path,
+    *,
+    window_id: str,
+    cache_path: Path,
+    themes_dir: Path,
+    state_path: Path,
+    fallback_theme: str = NEUTRAL_FALLBACK_THEME,
+    transition_steps: int = TRANSITION_STEP_COUNT,
+    transition_duration_ms: int = TRANSITION_DURATION_MS,
+) -> str:
+    if not window_id:
+        raise KittyThemeError("kitty window id is required for runtime theme application")
+    if transition_steps < 2:
+        raise KittyThemeError(f"transition step count must be at least 2: {transition_steps}")
+    if transition_duration_ms < 0:
+        raise KittyThemeError(f"transition duration must be non-negative: {transition_duration_ms}")
+
+    effective_theme, _, _ = resolve_effective_theme_for_window(
+        project_path,
+        cache_path,
+        state_path,
+        window_id,
+        fallback_theme,
+    )
+    state = load_runtime_state(state_path)
+    window_state = state.windows.get(window_id, WindowRuntimeState())
+
+    target_theme_path = resolve_theme_path(effective_theme, themes_dir)
+    source_theme_name = window_state.current_theme if window_state.current_theme is not None else effective_theme
+    source_theme_path = resolve_theme_path(source_theme_name, themes_dir)
+
+    if source_theme_path != target_theme_path:
+        source_palette = parse_kitty_theme_palette(source_theme_path)
+        target_palette = parse_kitty_theme_palette(target_theme_path)
+        if should_skip_transition(source_palette, target_palette):
+            apply_theme_file(window_id, target_theme_path)
+        else:
+            transition_delay = (transition_duration_ms / 1000.0) / transition_steps
+            try:
+                for transition_palette in build_transition_palettes(source_palette, target_palette, transition_steps):
+                    apply_theme_palette(window_id, transition_palette)
+                    if transition_delay > 0:
+                        time.sleep(transition_delay)
+            except KittyThemeError:
+                apply_theme_file(window_id, target_theme_path)
+
+    window_state.current_theme = effective_theme
+    window_state.last_transition_at = time.time()
+    state.windows[window_id] = window_state
+    write_runtime_state(state_path, state)
+    return effective_theme
+
+
+@click.group()
+def cli() -> None:
+    """Manage semantic kitty theme metadata."""
+
+
+@cli.group()
+def projects() -> None:
+    """Manage the semantic project registry."""
+
+
+@cli.group()
+def themes() -> None:
+    """Inspect kitty theme candidates."""
+
+
+@cli.group()
+def override() -> None:
+    """Manage per-window manual theme overrides."""
+
+
+@themes.command("diagnose")
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+def diagnose_theme_candidates(themes_dir: Path) -> None:
+    candidates = load_theme_candidates(themes_dir)
+    for candidate in candidates:
+        STDOUT.print(
+            f"{candidate.theme_name} quality={candidate.quality_score:.3f} "
+            f"fg={candidate.foreground_contrast:.3f} cursor={candidate.cursor_contrast:.3f}",
+            soft_wrap=True,
+        )
+
+
+@cli.command("apply")
+@click.argument("project_path", type=click.Path(path_type=Path), required=False, default=Path("."))
+@click.option("--window-id", envvar="KITTY_WINDOW_ID", required=True, help="kitty window id")
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+@click.option(
+    "--state",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_runtime_state_path,
+    show_default=str(default_runtime_state_path()),
+)
+@click.option("--fallback-theme", default=NEUTRAL_FALLBACK_THEME, show_default=True)
+@click.option("--transition-steps", type=click.IntRange(min=2), default=TRANSITION_STEP_COUNT, show_default=True)
+@click.option("--transition-duration-ms", type=click.IntRange(min=0), default=TRANSITION_DURATION_MS, show_default=True)
+def apply_theme(
+    project_path: Path,
+    window_id: str,
+    cache: Path,
+    themes_dir: Path,
+    state: Path,
+    fallback_theme: str,
+    transition_steps: int,
+    transition_duration_ms: int,
+) -> None:
+    applied_theme = apply_effective_theme_for_window(
+        project_path,
+        window_id=window_id,
+        cache_path=cache,
+        themes_dir=themes_dir,
+        state_path=state,
+        fallback_theme=fallback_theme,
+        transition_steps=transition_steps,
+        transition_duration_ms=transition_duration_ms,
+    )
+    STDOUT.print(applied_theme, soft_wrap=True)
+
+
+@override.command("set")
+@click.option("--window-id", envvar="KITTY_WINDOW_ID", required=True, help="kitty window id")
+@click.option("--theme", "theme_name", required=True, help="theme relative path (from themes dir) or absolute path")
+@click.option("--mode", type=click.Choice(["temporary", "sticky"]), default="temporary", show_default=True)
+@click.argument("project_path", type=click.Path(path_type=Path), required=False, default=Path("."))
+@click.option(
+    "--state",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_runtime_state_path,
+    show_default=str(default_runtime_state_path()),
+)
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+@click.option("--fallback-theme", default=NEUTRAL_FALLBACK_THEME, show_default=True)
+@click.option("--transition-steps", type=click.IntRange(min=2), default=TRANSITION_STEP_COUNT, show_default=True)
+@click.option("--transition-duration-ms", type=click.IntRange(min=0), default=TRANSITION_DURATION_MS, show_default=True)
+@click.option("--apply/--no-apply", "apply_now", default=True, show_default=True)
+def set_override(
+    window_id: str,
+    theme_name: str,
+    mode: str,
+    project_path: Path,
+    state: Path,
+    cache: Path,
+    themes_dir: Path,
+    fallback_theme: str,
+    transition_steps: int,
+    transition_duration_ms: int,
+    apply_now: bool,
+) -> None:
+    resolved_theme_path = resolve_theme_path(theme_name, themes_dir)
+    normalized_themes_dir = themes_dir.expanduser().resolve(strict=False)
+    try:
+        stored_theme_name = resolved_theme_path.relative_to(normalized_themes_dir).as_posix()
+    except ValueError:
+        stored_theme_name = str(resolved_theme_path)
+
+    try:
+        project_root: Path | None = find_git_root(project_path)
+    except KittyThemeError:
+        project_root = None
+
+    normalized_mode: OverrideMode = "temporary" if mode == "temporary" else "sticky"
+
+    runtime_state = load_runtime_state(state)
+    set_window_override(runtime_state, window_id, stored_theme_name, normalized_mode, project_root)
+    write_runtime_state(state, runtime_state)
+
+    if apply_now:
+        apply_effective_theme_for_window(
+            project_path,
+            window_id=window_id,
+            cache_path=cache,
+            themes_dir=themes_dir,
+            state_path=state,
+            fallback_theme=fallback_theme,
+            transition_steps=transition_steps,
+            transition_duration_ms=transition_duration_ms,
+        )
+    STDOUT.print(stored_theme_name, soft_wrap=True)
+
+
+@override.command("reset")
+@click.option("--window-id", envvar="KITTY_WINDOW_ID", required=True, help="kitty window id")
+@click.argument("project_path", type=click.Path(path_type=Path), required=False, default=Path("."))
+@click.option(
+    "--state",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_runtime_state_path,
+    show_default=str(default_runtime_state_path()),
+)
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+@click.option("--fallback-theme", default=NEUTRAL_FALLBACK_THEME, show_default=True)
+@click.option("--transition-steps", type=click.IntRange(min=2), default=TRANSITION_STEP_COUNT, show_default=True)
+@click.option("--transition-duration-ms", type=click.IntRange(min=0), default=TRANSITION_DURATION_MS, show_default=True)
+@click.option("--apply/--no-apply", "apply_now", default=True, show_default=True)
+def reset_override(
+    window_id: str,
+    project_path: Path,
+    state: Path,
+    cache: Path,
+    themes_dir: Path,
+    fallback_theme: str,
+    transition_steps: int,
+    transition_duration_ms: int,
+    apply_now: bool,
+) -> None:
+    runtime_state = load_runtime_state(state)
+    clear_window_override(runtime_state, window_id)
+    write_runtime_state(state, runtime_state)
+    if apply_now:
+        applied_theme = apply_effective_theme_for_window(
+            project_path,
+            window_id=window_id,
+            cache_path=cache,
+            themes_dir=themes_dir,
+            state_path=state,
+            fallback_theme=fallback_theme,
+            transition_steps=transition_steps,
+            transition_duration_ms=transition_duration_ms,
+        )
+        STDOUT.print(applied_theme, soft_wrap=True)
+        return
+    STDOUT.print("override reset", soft_wrap=True)
+
+
+@projects.command("validate")
+@click.option(
+    "--registry",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_registry_path,
+    show_default=str(default_registry_path()),
+)
+def validate_projects(registry: Path) -> None:
+    project_roots = parse_project_registry(registry)
+    root_label = "root" if len(project_roots) == 1 else "roots"
+    STDOUT.print(
+        f"validated {len(project_roots)} project {root_label} from {registry.expanduser().resolve()}",
+        soft_wrap=True,
+    )
+
+
+@cli.command("recompute")
+@click.option(
+    "--registry",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_registry_path,
+    show_default=str(default_registry_path()),
+)
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+@click.option(
+    "--cluster-count",
+    type=click.IntRange(min=1),
+    default=SEMANTIC_CLUSTER_COUNT,
+    show_default=True,
+)
+def recompute_semantic_cache(registry: Path, themes_dir: Path, cache: Path, cluster_count: int) -> None:
+    semantic_cache = build_semantic_cache(registry, themes_dir, cluster_count=cluster_count)
+    write_semantic_cache(cache, semantic_cache)
+    root_label = "root" if len(semantic_cache.projects) == 1 else "roots"
+    STDOUT.print(
+        f"wrote semantic cache for {len(semantic_cache.projects)} project {root_label} to "
+        f"{cache.expanduser().resolve(strict=False)}",
+        soft_wrap=True,
+    )
+
+
+@cli.command("resolve")
+@click.argument("project_path", type=click.Path(path_type=Path))
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+def resolve_semantic_theme(project_path: Path, cache: Path) -> None:
+    STDOUT.print(resolve_theme_for_path(project_path, cache), soft_wrap=True)
+
+
+@cli.command("explain")
+@click.argument("project_path", type=click.Path(path_type=Path), required=False, default=Path("."))
+@click.option("--window-id", envvar="KITTY_WINDOW_ID", required=True, help="kitty window id")
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+@click.option(
+    "--state",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_runtime_state_path,
+    show_default=str(default_runtime_state_path()),
+)
+@click.option("--fallback-theme", default=NEUTRAL_FALLBACK_THEME, show_default=True)
+def explain_semantic_assignment(project_path: Path, window_id: str, cache: Path, state: Path, fallback_theme: str) -> None:
+    semantic_entry = find_semantic_project_entry(project_path, cache)
+    semantic_theme, _ = resolve_semantic_theme_with_fallback(project_path, cache, fallback_theme)
+    effective_theme, override_mode, _ = resolve_effective_theme_for_window(
+        project_path,
+        cache,
+        state,
+        window_id,
+        fallback_theme,
+    )
+
+    try:
+        project_root: Path | None = find_git_root(project_path)
+    except KittyThemeError:
+        project_root = None
+
+    if semantic_entry is None:
+        cluster_id = "<none>"
+        confidence = "0.000000"
+        assigned_theme = fallback_theme
+        top_terms = "<none>"
+    else:
+        cluster_id = semantic_entry.cluster_id
+        confidence = f"{semantic_entry.confidence:.6f}"
+        assigned_theme = semantic_entry.target_theme
+        terms = cluster_terms_from_cluster_id(semantic_entry.cluster_id)
+        top_terms = ", ".join(terms) if terms else "<none>"
+
+    project_root_value = str(project_root) if project_root is not None else "<none>"
+    override_mode_value = override_mode if override_mode is not None else "<none>"
+    STDOUT.print(f"project_root: {project_root_value}", soft_wrap=True)
+    STDOUT.print(f"cluster_id: {cluster_id}", soft_wrap=True)
+    STDOUT.print(f"confidence: {confidence}", soft_wrap=True)
+    STDOUT.print(f"top_terms: {top_terms}", soft_wrap=True)
+    STDOUT.print(f"assigned_theme: {assigned_theme}", soft_wrap=True)
+    STDOUT.print(f"semantic_theme: {semantic_theme}", soft_wrap=True)
+    STDOUT.print(f"override_mode: {override_mode_value}", soft_wrap=True)
+    STDOUT.print(f"effective_theme: {effective_theme}", soft_wrap=True)
+
+
+def main() -> int:
+    try:
+        cli(standalone_mode=False)
+    except click.ClickException as exc:
+        exc.show()
+        return exc.exit_code
+    except KittyThemeError as exc:
+        STDERR.print(str(exc), soft_wrap=True)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
