@@ -15,6 +15,7 @@ STDERR = Console(stderr=True)
 
 DOC_FILENAMES = ("readme.md", "readme.rst", "readme.txt", "readme")
 DOC_SUFFIXES = {".md", ".rst", ".txt", ".adoc"}
+DOC_BASENAME_PRIORITY = ("index", "readme", "overview", "guide", "getting-started")
 METADATA_FILENAMES = (
     "pyproject.toml",
     "package.json",
@@ -143,19 +144,37 @@ def discover_doc_files(project_root: Path) -> list[Path]:
     doc_paths: list[Path] = []
     seen_paths: set[Path] = set()
 
-    for candidate in sorted(project_root.iterdir(), key=lambda path: path.name.lower()):
-        if candidate.is_file() and candidate.name.lower() in DOC_FILENAMES:
-            seen_paths.add(candidate)
-            doc_paths.append(candidate)
+    readme_candidates = {
+        candidate.name.lower(): candidate
+        for candidate in project_root.iterdir()
+        if candidate.is_file() and candidate.name.lower() in DOC_FILENAMES
+    }
+    for filename in DOC_FILENAMES:
+        candidate = readme_candidates.get(filename)
+        if candidate is None:
+            continue
+        seen_paths.add(candidate)
+        doc_paths.append(candidate)
 
     docs_root = project_root / "docs"
     if docs_root.is_dir():
-        for candidate in sorted(docs_root.rglob("*"), key=lambda path: str(path.relative_to(project_root)).lower()):
+        for candidate in sorted(docs_root.rglob("*"), key=lambda path: doc_sort_key(project_root, path)):
             if candidate.is_file() and candidate.suffix.lower() in DOC_SUFFIXES and candidate not in seen_paths:
                 seen_paths.add(candidate)
                 doc_paths.append(candidate)
 
     return doc_paths
+
+
+def doc_sort_key(project_root: Path, doc_path: Path) -> tuple[int, str]:
+    stem = doc_path.stem.lower()
+    try:
+        basename_rank = DOC_BASENAME_PRIORITY.index(stem)
+    except ValueError:
+        basename_rank = len(DOC_BASENAME_PRIORITY)
+
+    relative_path = doc_path.relative_to(project_root).as_posix().lower()
+    return basename_rank, relative_path
 
 
 def discover_metadata_files(project_root: Path) -> list[Path]:
