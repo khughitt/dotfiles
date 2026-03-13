@@ -16,6 +16,8 @@ STDERR = Console(stderr=True)
 DOC_FILENAMES = ("readme.md", "readme.rst", "readme.txt", "readme")
 DOC_SUFFIXES = {".md", ".rst", ".txt", ".adoc"}
 DOC_BASENAME_PRIORITY = ("index", "readme", "overview", "guide", "getting-started")
+MAX_UV_LOCK_PACKAGES = 4
+MAX_UNSUPPORTED_SKIP_LINES = 4
 METADATA_FILENAMES = (
     "pyproject.toml",
     "package.json",
@@ -263,7 +265,13 @@ def summarize_uv_lock_metadata(metadata_path: Path) -> list[str]:
         for package_name in [package.get("name")]
         if isinstance(package_name, str) and package_name
     )
-    return [f"package: {package_name}" for package_name in package_names]
+
+    summary_lines = [f"package_count: {len(package_names)}"]
+    summary_lines.extend(f"package: {package_name}" for package_name in package_names[:MAX_UV_LOCK_PACKAGES])
+    remaining_packages = len(package_names) - MAX_UV_LOCK_PACKAGES
+    if remaining_packages > 0:
+        summary_lines.append(f"package_remaining: {remaining_packages}")
+    return summary_lines
 
 
 def extract_requirement_names(requirements: list[object]) -> list[str]:
@@ -292,6 +300,7 @@ def sample_code_sections(
 ) -> tuple[list[str], list[str]]:
     code_sections: list[str] = []
     skip_lines: list[str] = []
+    unsupported_paths: list[Path] = []
     sampled_file_count = 0
     sampled_byte_count = 0
 
@@ -302,7 +311,7 @@ def sample_code_sections(
 
         suffix = candidate.suffix.lower()
         if suffix not in SUPPORTED_CODE_SUFFIXES:
-            skip_lines.append(f"SKIP {relative_path.as_posix()} unsupported")
+            unsupported_paths.append(relative_path)
             continue
 
         file_size = candidate.stat().st_size
@@ -320,17 +329,31 @@ def sample_code_sections(
         sampled_file_count += 1
         sampled_byte_count += file_size
 
+    skip_lines.extend(
+        f"SKIP {relative_path.as_posix()} unsupported"
+        for relative_path in unsupported_paths[:MAX_UNSUPPORTED_SKIP_LINES]
+    )
+    remaining_unsupported = len(unsupported_paths) - MAX_UNSUPPORTED_SKIP_LINES
+    if remaining_unsupported > 0:
+        skip_lines.append(f"SKIP unsupported {remaining_unsupported} more")
+
     return code_sections, skip_lines
 
 
 def iter_project_files(project_root: Path) -> list[Path]:
+    return collect_project_files(project_root)
+
+
+def collect_project_files(current_path: Path) -> list[Path]:
     project_files: list[Path] = []
-    for candidate in sorted(project_root.rglob("*"), key=lambda path: str(path.relative_to(project_root)).lower()):
-        if not candidate.is_file():
+    for candidate in sorted(current_path.iterdir(), key=lambda path: path.name.lower()):
+        if candidate.is_dir():
+            if candidate.name in IGNORED_DIR_NAMES:
+                continue
+            project_files.extend(collect_project_files(candidate))
             continue
-        if any(part in IGNORED_DIR_NAMES for part in candidate.relative_to(project_root).parts[:-1]):
-            continue
-        project_files.append(candidate)
+        if candidate.is_file():
+            project_files.append(candidate)
     return project_files
 
 
