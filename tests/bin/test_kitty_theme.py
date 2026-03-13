@@ -243,3 +243,97 @@ def test_build_project_corpus_reports_explicit_skips_for_unsupported_and_oversiz
 
     assert "SKIP src/huge.py oversized" in corpus
     assert "SKIP src/logo.png unsupported" in corpus
+
+
+def test_summarize_uv_lock_metadata_caps_package_lines_and_reports_totals(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    summarize_uv_lock_metadata = cast(Callable[[Path], list[str]], module["summarize_uv_lock_metadata"])
+
+    metadata_path = tmp_path / "uv.lock"
+    metadata_path.write_text(
+        "\n".join(
+            [
+                "[[package]]",
+                'name = "alpha"',
+                'version = "1.0.0"',
+                "",
+                "[[package]]",
+                'name = "beta"',
+                'version = "1.0.0"',
+                "",
+                "[[package]]",
+                'name = "charlie"',
+                'version = "1.0.0"',
+                "",
+                "[[package]]",
+                'name = "delta"',
+                'version = "1.0.0"',
+                "",
+                "[[package]]",
+                'name = "echo"',
+                'version = "1.0.0"',
+                "",
+                "[[package]]",
+                'name = "foxtrot"',
+                'version = "1.0.0"',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    summary_lines = summarize_uv_lock_metadata(metadata_path)
+
+    assert "package_count: 6" in summary_lines
+    assert any(line.startswith("package_remaining: ") for line in summary_lines)
+    assert "package: alpha" in summary_lines
+    assert "package: beta" in summary_lines
+    assert "package: charlie" in summary_lines
+    assert "package: delta" in summary_lines
+    assert "package: echo" not in summary_lines
+    assert "package: foxtrot" not in summary_lines
+
+
+def test_build_project_corpus_caps_unsupported_skip_lines(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    build_project_corpus = cast(Callable[..., str], module["build_project_corpus"])
+
+    project_root = tmp_path / "asset-project"
+    project_root.mkdir()
+    (project_root / "README.md").write_text("Asset project\n", encoding="utf-8")
+    (project_root / "assets").mkdir()
+    for index in range(12):
+        (project_root / "assets" / f"image-{index:02}.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    corpus = build_project_corpus(project_root)
+
+    assert "SKIP assets/image-00.png unsupported" in corpus
+    assert "SKIP assets/image-01.png unsupported" in corpus
+    assert "SKIP assets/image-02.png unsupported" in corpus
+    assert "SKIP assets/image-03.png unsupported" in corpus
+    assert "SKIP assets/image-04.png unsupported" not in corpus
+    assert "SKIP unsupported 8 more" in corpus
+
+
+def test_iter_project_files_prunes_ignored_directories_during_traversal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = load_kitty_theme_module()
+    iter_project_files = cast(Callable[[Path], list[Path]], module["iter_project_files"])
+
+    project_root = tmp_path / "walk-project"
+    project_root.mkdir()
+    ignored_dir = project_root / "node_modules"
+    ignored_dir.mkdir()
+    (ignored_dir / "ignored.js").write_text("console.log('ignored')\n", encoding="utf-8")
+    src_dir = project_root / "src"
+    src_dir.mkdir()
+    visible_file = src_dir / "main.py"
+    visible_file.write_text("print('visible')\n", encoding="utf-8")
+
+    def guarded_rglob(self: Path, pattern: str) -> object:
+        raise AssertionError(f"recursive glob traversal should not be used: {self} {pattern}")
+
+    monkeypatch.setattr(Path, "rglob", guarded_rglob)
+
+    assert iter_project_files(project_root) == [visible_file]
