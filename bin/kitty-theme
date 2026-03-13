@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
+import re
+import tomllib
 from pathlib import Path
 
 import click
@@ -9,6 +12,43 @@ from rich.console import Console
 
 STDOUT = Console()
 STDERR = Console(stderr=True)
+
+DOC_FILENAMES = ("readme.md", "readme.rst", "readme.txt", "readme")
+DOC_SUFFIXES = {".md", ".rst", ".txt", ".adoc"}
+METADATA_FILENAMES = (
+    "pyproject.toml",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "uv.lock",
+)
+SUPPORTED_CODE_SUFFIXES = {
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".rs",
+    ".go",
+    ".lua",
+    ".nix",
+    ".sh",
+    ".zsh",
+}
+IGNORED_DIR_NAMES = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".venv",
+    ".mypy_cache",
+    ".pytest_cache",
+    "__pycache__",
+    "node_modules",
+    "dist",
+    "build",
+    "target",
+}
 
 
 class KittyThemeError(RuntimeError):
@@ -61,6 +101,218 @@ def parse_project_registry(registry_path: Path) -> list[Path]:
         project_roots.append(normalized_root)
 
     return project_roots
+
+
+def build_project_corpus(
+    project_root: Path,
+    *,
+    max_code_files: int = 12,
+    max_code_bytes: int = 24_000,
+    max_file_bytes: int = 8_000,
+) -> str:
+    normalized_root = project_root.expanduser().resolve(strict=False)
+    if not normalized_root.exists():
+        raise KittyThemeError(f"project root does not exist: {normalized_root}")
+    if not normalized_root.is_dir():
+        raise KittyThemeError(f"project root is not a directory: {normalized_root}")
+
+    doc_paths = discover_doc_files(normalized_root)
+    metadata_paths = discover_metadata_files(normalized_root)
+    doc_set = {path.relative_to(normalized_root) for path in doc_paths}
+    metadata_set = {path.relative_to(normalized_root) for path in metadata_paths}
+
+    sections: list[str] = []
+    sections.extend(render_doc_section(normalized_root, doc_path) for doc_path in doc_paths)
+    sections.extend(render_metadata_section(normalized_root, metadata_path) for metadata_path in metadata_paths)
+
+    code_sections, skip_lines = sample_code_sections(
+        normalized_root,
+        doc_paths=doc_set,
+        metadata_paths=metadata_set,
+        max_code_files=max_code_files,
+        max_code_bytes=max_code_bytes,
+        max_file_bytes=max_file_bytes,
+    )
+    sections.extend(code_sections)
+    sections.extend(skip_lines)
+
+    return "\n\n".join(section for section in sections if section).strip()
+
+
+def discover_doc_files(project_root: Path) -> list[Path]:
+    doc_paths: list[Path] = []
+    seen_paths: set[Path] = set()
+
+    for candidate in sorted(project_root.iterdir(), key=lambda path: path.name.lower()):
+        if candidate.is_file() and candidate.name.lower() in DOC_FILENAMES:
+            seen_paths.add(candidate)
+            doc_paths.append(candidate)
+
+    docs_root = project_root / "docs"
+    if docs_root.is_dir():
+        for candidate in sorted(docs_root.rglob("*"), key=lambda path: str(path.relative_to(project_root)).lower()):
+            if candidate.is_file() and candidate.suffix.lower() in DOC_SUFFIXES and candidate not in seen_paths:
+                seen_paths.add(candidate)
+                doc_paths.append(candidate)
+
+    return doc_paths
+
+
+def discover_metadata_files(project_root: Path) -> list[Path]:
+    return [project_root / filename for filename in METADATA_FILENAMES if (project_root / filename).is_file()]
+
+
+def render_doc_section(project_root: Path, doc_path: Path) -> str:
+    relative_path = doc_path.relative_to(project_root)
+    contents = doc_path.read_text(encoding="utf-8").strip()
+    return f"DOC {relative_path.as_posix()}\n{contents}"
+
+
+def render_metadata_section(project_root: Path, metadata_path: Path) -> str:
+    relative_path = metadata_path.relative_to(project_root)
+    summary_lines = summarize_metadata(metadata_path)
+    if not summary_lines:
+        return ""
+    return f"METADATA {relative_path.as_posix()}\n" + "\n".join(summary_lines)
+
+
+def summarize_metadata(metadata_path: Path) -> list[str]:
+    if metadata_path.name == "pyproject.toml":
+        return summarize_pyproject_metadata(metadata_path)
+    if metadata_path.name == "package.json":
+        return summarize_package_json_metadata(metadata_path)
+    if metadata_path.name == "uv.lock":
+        return summarize_uv_lock_metadata(metadata_path)
+    if metadata_path.name in {"package-lock.json", "pnpm-lock.yaml", "yarn.lock"}:
+        return [f"lockfile: {metadata_path.name}"]
+    return []
+
+
+def summarize_pyproject_metadata(metadata_path: Path) -> list[str]:
+    data = tomllib.loads(metadata_path.read_text(encoding="utf-8"))
+    project_data = data.get("project", {})
+    if not isinstance(project_data, dict):
+        return []
+
+    summary_lines: list[str] = []
+    for field in ("name", "description"):
+        value = project_data.get(field)
+        if isinstance(value, str) and value:
+            summary_lines.append(f"{field}: {value}")
+
+    dependencies = project_data.get("dependencies", [])
+    if isinstance(dependencies, list):
+        summary_lines.extend(f"dependency: {name}" for name in extract_requirement_names(dependencies))
+    return summary_lines
+
+
+def summarize_package_json_metadata(metadata_path: Path) -> list[str]:
+    data = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        return []
+
+    summary_lines: list[str] = []
+    name = data.get("name")
+    if isinstance(name, str) and name:
+        summary_lines.append(f"name: {name}")
+
+    scripts = data.get("scripts", {})
+    if isinstance(scripts, dict):
+        summary_lines.extend(f"script: {script_name}" for script_name in sorted(as_string_keys(scripts)))
+
+    dependency_sections = ("dependencies", "devDependencies", "peerDependencies")
+    dependency_names: set[str] = set()
+    for section in dependency_sections:
+        dependency_map = data.get(section, {})
+        if isinstance(dependency_map, dict):
+            dependency_names.update(as_string_keys(dependency_map))
+
+    summary_lines.extend(f"dependency: {dependency}" for dependency in sorted(dependency_names))
+    return summary_lines
+
+
+def summarize_uv_lock_metadata(metadata_path: Path) -> list[str]:
+    data = tomllib.loads(metadata_path.read_text(encoding="utf-8"))
+    packages = data.get("package", [])
+    if not isinstance(packages, list):
+        return []
+
+    package_names = sorted(
+        package_name
+        for package in packages
+        if isinstance(package, dict)
+        for package_name in [package.get("name")]
+        if isinstance(package_name, str) and package_name
+    )
+    return [f"package: {package_name}" for package_name in package_names]
+
+
+def extract_requirement_names(requirements: list[object]) -> list[str]:
+    names: list[str] = []
+    for requirement in requirements:
+        if not isinstance(requirement, str):
+            continue
+        match = re.match(r"[A-Za-z0-9_.-]+", requirement.strip())
+        if match is not None:
+            names.append(match.group(0))
+    return sorted(set(names))
+
+
+def as_string_keys(values: dict[object, object]) -> set[str]:
+    return {str(key) for key in values}
+
+
+def sample_code_sections(
+    project_root: Path,
+    *,
+    doc_paths: set[Path],
+    metadata_paths: set[Path],
+    max_code_files: int,
+    max_code_bytes: int,
+    max_file_bytes: int,
+) -> tuple[list[str], list[str]]:
+    code_sections: list[str] = []
+    skip_lines: list[str] = []
+    sampled_file_count = 0
+    sampled_byte_count = 0
+
+    for candidate in iter_project_files(project_root):
+        relative_path = candidate.relative_to(project_root)
+        if relative_path in doc_paths or relative_path in metadata_paths:
+            continue
+
+        suffix = candidate.suffix.lower()
+        if suffix not in SUPPORTED_CODE_SUFFIXES:
+            skip_lines.append(f"SKIP {relative_path.as_posix()} unsupported")
+            continue
+
+        file_size = candidate.stat().st_size
+        if file_size > max_file_bytes:
+            skip_lines.append(f"SKIP {relative_path.as_posix()} oversized")
+            continue
+
+        if sampled_file_count >= max_code_files:
+            continue
+        if sampled_byte_count + file_size > max_code_bytes:
+            continue
+
+        contents = candidate.read_text(encoding="utf-8").strip()
+        code_sections.append(f"CODE {relative_path.as_posix()}\n{contents}")
+        sampled_file_count += 1
+        sampled_byte_count += file_size
+
+    return code_sections, skip_lines
+
+
+def iter_project_files(project_root: Path) -> list[Path]:
+    project_files: list[Path] = []
+    for candidate in sorted(project_root.rglob("*"), key=lambda path: str(path.relative_to(project_root)).lower()):
+        if not candidate.is_file():
+            continue
+        if any(part in IGNORED_DIR_NAMES for part in candidate.relative_to(project_root).parts[:-1]):
+            continue
+        project_files.append(candidate)
+    return project_files
 
 
 @click.group()
