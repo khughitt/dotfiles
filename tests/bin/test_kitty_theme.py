@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import json
 import runpy
 import sys
 from collections.abc import Callable
@@ -398,3 +399,138 @@ def test_iter_project_files_is_deterministic_with_case_variant_names(tmp_path: P
         project_root / "src" / "Beta.py",
         project_root / "src" / "beta.py",
     ]
+
+
+def test_recompute_writes_semantic_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project_alpha = tmp_path / "projects" / "alpha"
+    project_alpha.mkdir(parents=True)
+    (project_alpha / ".git").mkdir()
+    (project_alpha / "README.md").write_text("Alpha service\n", encoding="utf-8")
+
+    project_beta = tmp_path / "projects" / "beta"
+    project_beta.mkdir()
+    (project_beta / ".git").mkdir()
+    (project_beta / "README.md").write_text("Beta service\n", encoding="utf-8")
+
+    registry = tmp_path / "kitty" / "semantic-projects.txt"
+    registry.parent.mkdir()
+    registry.write_text(f"{project_alpha}\n{project_beta}\n", encoding="utf-8")
+
+    themes_dir = tmp_path / "kitty" / "themes"
+    themes_dir.mkdir()
+    (themes_dir / "Aurora.conf").write_text("# aurora\n", encoding="utf-8")
+    (themes_dir / "Nordic.conf").write_text("# nordic\n", encoding="utf-8")
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "recompute",
+            "--registry",
+            str(registry),
+            "--themes-dir",
+            str(themes_dir),
+            "--cache",
+            str(cache_path),
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert stdout == f"wrote semantic cache for 2 project roots to {cache_path.resolve()}\n"
+
+    expected_cache = {
+        "backend": "deterministic-placeholder-v1",
+        "projects": [
+            {
+                "cluster_id": "cluster-0000",
+                "confidence": 1.0,
+                "project_root": str(project_alpha.resolve()),
+                "target_theme": "Aurora.conf",
+            },
+            {
+                "cluster_id": "cluster-0001",
+                "confidence": 1.0,
+                "project_root": str(project_beta.resolve()),
+                "target_theme": "Nordic.conf",
+            },
+        ],
+        "version": 1,
+    }
+    expected_text = json.dumps(expected_cache, indent=2, sort_keys=True) + "\n"
+
+    assert cache_path.read_text(encoding="utf-8") == expected_text
+
+    second_exit_code, second_stdout, second_stderr = run_kitty_theme(
+        [
+            "recompute",
+            "--registry",
+            str(registry),
+            "--themes-dir",
+            str(themes_dir),
+            "--cache",
+            str(cache_path),
+        ],
+        monkeypatch,
+    )
+
+    assert second_exit_code == 0
+    assert second_stderr == ""
+    assert second_stdout == f"wrote semantic cache for 2 project roots to {cache_path.resolve()}\n"
+    assert cache_path.read_text(encoding="utf-8") == expected_text
+
+
+def test_resolve_prints_target_theme_for_git_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project_root = tmp_path / "workspace" / "service"
+    project_root.mkdir(parents=True)
+    (project_root / ".git").mkdir()
+    nested_path = project_root / "src" / "module"
+    nested_path.mkdir(parents=True)
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+    cache_path.parent.mkdir()
+    cache_path.write_text(
+        json.dumps(
+            {
+                "backend": "deterministic-placeholder-v1",
+                "projects": [
+                    {
+                        "cluster_id": "cluster-0003",
+                        "confidence": 0.875,
+                        "project_root": str(project_root.resolve()),
+                        "target_theme": "Nordic.conf",
+                    }
+                ],
+                "version": 1,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        ["resolve", str(nested_path), "--cache", str(cache_path)],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert stdout == "Nordic.conf\n"
+
+
+def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    load_semantic_cache = cast(Callable[[Path], Any], module["load_semantic_cache"])
+    kitty_theme_error = cast(type[Exception], module["KittyThemeError"])
+
+    missing_cache = tmp_path / "missing-semantic-themes.json"
+    with pytest.raises(kitty_theme_error, match="semantic cache not found"):
+        load_semantic_cache(missing_cache)
+
+    malformed_cache = tmp_path / "semantic-themes.json"
+    malformed_cache.write_text('{"version": 1, "projects": [}', encoding="utf-8")
+    with pytest.raises(kitty_theme_error, match="semantic cache is malformed"):
+        load_semantic_cache(malformed_cache)
