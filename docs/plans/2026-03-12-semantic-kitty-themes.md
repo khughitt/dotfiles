@@ -10,7 +10,38 @@
 
 ---
 
-### Task 1: Scaffold the CLI, registry, and test harness
+## Progress
+
+Current execution status in the `semantic-kitty-themes` worktree:
+
+- [x] Task 1: Scaffold the CLI, registry, and test harness
+- [x] Task 2: Build corpus sampling from docs, metadata, and code
+- [x] Task 3: Add cache models and semantic recompute plumbing
+- [x] Task 4: Integrate embeddings, similarity, clustering, and labels
+- [x] Task 5: Build theme parsing, quality scoring, and attractor selection
+- [x] Task 6: Implement runtime transition logic and override state
+- [x] Task 7: Wire `shell/kitty` into semantic resolution
+- [x] Task 8: Add explainability commands and final verification
+
+Audit summary for previously completed Tasks 1-4:
+
+- validated Task 1-4 implementation against plan scope and existing tests
+- confirmed deterministic semantic clustering path and typed cache contracts
+- identified runtime integration gaps (Tasks 5-8 not yet wired) and completed those implementations
+- validated shell/kitty and kitty.conf now delegate to `kitty-theme` runtime commands
+
+Current verification checkpoint:
+
+- latest reviewed worktree head: `semantic-kitty-themes` working tree (post Task 8)
+- `uv run --frozen ruff check . --exclude .pytest-tmp` -> pass
+- `uv run --frozen pyright` -> pass
+- `uv run --frozen pytest tests/bin/test_kitty_theme.py -q --basetemp .pytest-tmp/test_kitty_theme` -> `53 passed`
+
+Execution notes:
+
+- Some pytest runs use a worktree-local `--basetemp` because host `/tmp` quota pressure can break tmp-path writes.
+
+### Task 1: Scaffold the CLI, registry, and test harness [Completed]
 
 **Files:**
 - Create: `pyproject.toml`
@@ -79,7 +110,7 @@ git add pyproject.toml bin/kitty-theme kitty/semantic-projects.txt tests/bin/tes
 git commit -m "feat: scaffold semantic kitty theme cli"
 ```
 
-### Task 2: Build corpus sampling from docs, metadata, and code
+### Task 2: Build corpus sampling from docs, metadata, and code [Completed]
 
 **Files:**
 - Modify: `bin/kitty-theme`
@@ -139,7 +170,7 @@ git add bin/kitty-theme tests/bin/test_kitty_theme.py
 git commit -m "feat: add semantic corpus sampling"
 ```
 
-### Task 3: Add cache models and semantic recompute plumbing
+### Task 3: Add cache models and semantic recompute plumbing [Completed]
 
 **Files:**
 - Modify: `bin/kitty-theme`
@@ -199,7 +230,7 @@ git add bin/kitty-theme kitty/semantic-themes.json tests/bin/test_kitty_theme.py
 git commit -m "feat: add semantic cache plumbing"
 ```
 
-### Task 4: Integrate embeddings, similarity, clustering, and labels
+### Task 4: Integrate embeddings, similarity, clustering, and labels [Completed]
 
 **Files:**
 - Modify: `bin/kitty-theme`
@@ -262,7 +293,7 @@ git add bin/kitty-theme tests/bin/test_kitty_theme.py
 git commit -m "feat: add semantic clustering and labels"
 ```
 
-### Task 5: Build theme parsing, quality scoring, and attractor selection
+### Task 5: Build theme parsing, quality scoring, and attractor selection [Completed]
 
 **Files:**
 - Modify: `bin/kitty-theme`
@@ -323,7 +354,7 @@ git add bin/kitty-theme kitty/theme-candidates/.gitkeep tests/bin/test_kitty_the
 git commit -m "feat: add theme attractor selection"
 ```
 
-### Task 6: Implement runtime transition logic and override state
+### Task 6: Implement runtime transition logic and override state [Completed]
 
 **Files:**
 - Modify: `bin/kitty-theme`
@@ -385,7 +416,7 @@ git add bin/kitty-theme tests/bin/test_kitty_theme.py
 git commit -m "feat: add kitty theme transitions"
 ```
 
-### Task 7: Wire `shell/kitty` into semantic resolution
+### Task 7: Wire `shell/kitty` into semantic resolution [Completed]
 
 **Files:**
 - Modify: `shell/kitty`
@@ -441,7 +472,7 @@ git add shell/kitty kitty/kitty.conf tests/bin/test_kitty_theme.py
 git commit -m "feat: switch kitty themes to semantic assignment"
 ```
 
-### Task 8: Add explainability commands and final verification
+### Task 8: Add explainability commands and final verification [Completed]
 
 **Files:**
 - Modify: `bin/kitty-theme`

@@ -1,0 +1,7 @@
+# Semantic kitty theme project registry.
+# Add one project root per line.
+# Blank lines and comments are ignored.
+# Paths may be absolute or relative to this file.
+#
+# /mnt/ssd/src/example-project
+# ../relative-example-project

@@ -1,21 +1,11 @@
-# kitty per-window project colors
-# Assigns dark themes automatically by git project root.
-# Manual light theme overrides available via alt+0-9 in kitty.conf.
+# kitty semantic per-window project colors
+# Uses bin/kitty-theme for semantic cache resolution, override state, and transitions.
 
-# dark theme pool (order matters — changing this shifts project assignments)
-_KITTY_DARK_THEMES=(
-  "1984 Dark.conf"
-  "Ayu Mirage.conf"
-  "Dracula.conf"
-  "Nord.conf"
-  "One Dark.conf"
-  "Pencil Dark.conf"
-  "Tomorrow Night Eighties.conf"
-)
-
-_KITTY_DEFAULT_THEME="noctalia.conf"
-_KITTY_PIN_FILE="$HOME/.config/kitty/project-themes.conf"
+_KITTY_THEME_CLI="${DOTFILES:-$HOME/.dotfiles}/bin/kitty-theme"
+_KITTY_SEMANTIC_CACHE="${DOTFILES:-$HOME/.dotfiles}/kitty/semantic-themes.json"
+_KITTY_SEMANTIC_STATE="$HOME/.cache/kitty/semantic-runtime-state.json"
 _KITTY_THEMES_DIR="${DOTFILES:-$HOME/.dotfiles}/kitty/themes"
+_KITTY_FALLBACK_THEME="noctalia.conf"
 
 # find nearest git root by walking up from $PWD
 _kitty_find_git_root() {
@@ -27,70 +17,27 @@ _kitty_find_git_root() {
   return 1
 }
 
-# look up pinned theme for a git root
-_kitty_pinned_theme() {
-  local git_root="$1"
-  [[ -r "$_KITTY_PIN_FILE" ]] || return 1
-
-  local line
-  while IFS= read -r line; do
-    # skip comments and blank lines
-    [[ "$line" =~ ^[[:space:]]*# ]] && continue
-    [[ "$line" =~ ^[[:space:]]*$ ]] && continue
-
-    local pin_path="${line%%=*}"
-    local pin_theme="${line#*=}"
-
-    # trim leading and trailing whitespace
-    pin_path="${pin_path#"${pin_path%%[! ]*}"}"
-    pin_path="${pin_path%"${pin_path##*[! ]}"}"
-    pin_theme="${pin_theme#"${pin_theme%%[! ]*}"}"
-    pin_theme="${pin_theme%"${pin_theme##*[! ]}"}"
-
-    [[ "$pin_path" == "$git_root" ]] && echo "$pin_theme" && return 0
-  done < "$_KITTY_PIN_FILE"
-
-  return 1
-}
-
 # main: detect project and apply theme
 _kitty_project_colors() {
   # guard: only inside kitty
   [[ -z "$KITTY_WINDOW_ID" ]] && return
+  [[ ! -x "$_KITTY_THEME_CLI" ]] && return
 
-  local theme_file
-
+  local project_path="$PWD"
   local git_root
   git_root=$(_kitty_find_git_root)
+  [[ -n "$git_root" ]] && project_path="$git_root"
 
-  if [[ -z "$git_root" ]]; then
-    theme_file="$_KITTY_DEFAULT_THEME"
-  else
-    # check for pinned theme
-    local pinned
-    pinned=$(_kitty_pinned_theme "$git_root")
-
-    if [[ -n "$pinned" ]]; then
-      theme_file="$pinned"
-    else
-      # hash git root to select theme
-      local hash
-      hash=$(echo -n "$git_root" | md5sum | cut -c1-8)
-      local index=$(( 16#$hash % ${#_KITTY_DARK_THEMES[@]} ))
-      theme_file="${_KITTY_DARK_THEMES[$((index + 1))]}"
-    fi
-  fi
-
-  local theme_path="$_KITTY_THEMES_DIR/$theme_file"
-
-  # skip if theme unchanged
-  [[ "$_KITTY_CURRENT_THEME" == "$theme_path" ]] && return
-
-  # guard: theme file must exist
-  [[ -r "$theme_path" ]] || return
-
-  _KITTY_CURRENT_THEME="$theme_path"
-  kitten @ set-colors -m "id:$KITTY_WINDOW_ID" "$theme_path"
+  local applied_theme
+  applied_theme=$(
+    "$_KITTY_THEME_CLI" apply "$project_path" \
+      --window-id "$KITTY_WINDOW_ID" \
+      --cache "$_KITTY_SEMANTIC_CACHE" \
+      --themes-dir "$_KITTY_THEMES_DIR" \
+      --state "$_KITTY_SEMANTIC_STATE" \
+      --fallback-theme "$_KITTY_FALLBACK_THEME" 2>/dev/null
+  ) || return
+  [[ -n "$applied_theme" ]] && _KITTY_CURRENT_THEME="$applied_theme"
 }
 
 # register chpwd hook
