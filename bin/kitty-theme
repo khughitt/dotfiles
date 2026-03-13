@@ -27,11 +27,10 @@ MAX_UNSUPPORTED_SKIP_LINES = 4
 MAX_OVERSIZED_SKIP_LINES = 4
 SEMANTIC_CACHE_VERSION = 1
 SEMANTIC_CACHE_BACKEND = "tfidf-svd-agglomerative-v1"
-SEMANTIC_MIN_CLUSTERS = 4
-SEMANTIC_MAX_CLUSTERS = 6
+SEMANTIC_CLUSTER_COUNT = 5
 SEMANTIC_MAX_COMPONENTS = 8
 SEMANTIC_CLUSTER_LABEL_TERMS = 3
-SEMANTIC_LOW_CONFIDENCE_THRESHOLD = 0.25
+SEMANTIC_LOW_CONFIDENCE_THRESHOLD = 0.5
 SEMANTIC_SINGLETON_CONFIDENCE_CAP = 0.24
 TOKEN_PATTERN = re.compile(r"[a-z][a-z0-9-]{2,}")
 SEMANTIC_STOPWORDS = {
@@ -239,6 +238,8 @@ class SemanticAssignmentBackend(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class TfidfSvdSemanticBackend:
+    cluster_count: int = SEMANTIC_CLUSTER_COUNT
+
     @property
     def backend_name(self) -> str:
         return SEMANTIC_CACHE_BACKEND
@@ -250,7 +251,7 @@ class TfidfSvdSemanticBackend:
             raise KittyThemeError("semantic theme target list is empty")
 
         semantic_space = build_semantic_space(project_inputs)
-        cluster_result = cluster_semantic_space(semantic_space)
+        cluster_result = cluster_semantic_space(semantic_space, cluster_count=self.cluster_count)
         theme_by_label = {
             cluster_label: theme_targets[index % len(theme_targets)]
             for index, cluster_label in enumerate(sorted(cluster_result.cluster_terms))
@@ -571,10 +572,9 @@ def normalize_rows(matrix: FloatArray) -> FloatArray:
 def cluster_semantic_space(
     semantic_space: SemanticSpace,
     *,
-    min_clusters: int = SEMANTIC_MIN_CLUSTERS,
-    max_clusters: int = SEMANTIC_MAX_CLUSTERS,
+    cluster_count: int = SEMANTIC_CLUSTER_COUNT,
 ) -> ClusteredSemanticSpace:
-    cluster_indexes = cluster_project_indexes(semantic_space.similarity_matrix, min_clusters, max_clusters)
+    cluster_indexes = cluster_project_indexes(semantic_space.similarity_matrix, cluster_count)
     cluster_members = group_cluster_members(cluster_indexes)
     cluster_terms_by_index = select_cluster_terms(semantic_space, cluster_members)
     cluster_labels = build_cluster_labels(cluster_terms_by_index)
@@ -593,34 +593,13 @@ def cluster_semantic_space(
     )
 
 
-def cluster_project_indexes(similarity_matrix: FloatArray, min_clusters: int, max_clusters: int) -> list[int]:
+def cluster_project_indexes(similarity_matrix: FloatArray, cluster_count: int) -> list[int]:
     project_count = similarity_matrix.shape[0]
-    if project_count == 1:
-        return [0]
-    if project_count == 2:
-        return [0, 1]
+    if cluster_count < 1:
+        raise KittyThemeError(f"semantic cluster count must be at least 1: {cluster_count}")
 
-    lower_bound = max(2, min(min_clusters, project_count - 1))
-    upper_bound = max(lower_bound, min(max_clusters, project_count - 1))
-    best_cluster_indexes: list[int] | None = None
-    best_score = float("-inf")
-    best_cluster_count = lower_bound
-
-    for cluster_count in range(lower_bound, upper_bound + 1):
-        candidate_indexes = agglomerative_cluster_indexes(similarity_matrix, cluster_count)
-        candidate_score = silhouette_score(similarity_matrix, candidate_indexes)
-        if candidate_score > best_score + 1e-9:
-            best_cluster_indexes = candidate_indexes
-            best_score = candidate_score
-            best_cluster_count = cluster_count
-            continue
-        if abs(candidate_score - best_score) <= 1e-9 and cluster_count < best_cluster_count:
-            best_cluster_indexes = candidate_indexes
-            best_cluster_count = cluster_count
-
-    if best_cluster_indexes is None:
-        raise KittyThemeError("failed to cluster semantic project inputs")
-    return best_cluster_indexes
+    effective_cluster_count = min(cluster_count, project_count)
+    return agglomerative_cluster_indexes(similarity_matrix, effective_cluster_count)
 
 
 def agglomerative_cluster_indexes(similarity_matrix: FloatArray, cluster_count: int) -> list[int]:
@@ -671,38 +650,6 @@ def average_cluster_similarity(
             total_similarity += float(similarity_matrix[left_index, right_index])
             pair_count += 1
     return total_similarity / pair_count
-
-
-def silhouette_score(similarity_matrix: FloatArray, cluster_indexes: list[int]) -> float:
-    cluster_members = group_cluster_members(cluster_indexes)
-    if len(cluster_members) <= 1:
-        return 0.0
-
-    distance_matrix = 1.0 - similarity_matrix
-    scores: list[float] = []
-    for project_index, cluster_index in enumerate(cluster_indexes):
-        own_members = cluster_members[cluster_index]
-        if len(own_members) > 1:
-            own_distance = sum(
-                float(distance_matrix[project_index, member])
-                for member in own_members
-                if member != project_index
-            ) / (len(own_members) - 1)
-        else:
-            own_distance = 0.0
-
-        nearest_distance = min(
-            sum(float(distance_matrix[project_index, member]) for member in members) / len(members)
-            for candidate_cluster, members in cluster_members.items()
-            if candidate_cluster != cluster_index
-        )
-        denominator = max(own_distance, nearest_distance)
-        if denominator <= 1e-12:
-            scores.append(0.0)
-            continue
-        scores.append((nearest_distance - own_distance) / denominator)
-
-    return sum(scores) / len(scores)
 
 
 def group_cluster_members(cluster_indexes: list[int]) -> dict[int, tuple[int, ...]]:
@@ -916,6 +863,8 @@ def build_semantic_cache(
     registry_path: Path,
     themes_dir: Path,
     backend: SemanticAssignmentBackend | None = None,
+    *,
+    cluster_count: int = SEMANTIC_CLUSTER_COUNT,
 ) -> SemanticThemeCache:
     registry_project_roots = parse_project_registry(registry_path)
     theme_targets = list_semantic_theme_targets(themes_dir)
@@ -932,7 +881,7 @@ def build_semantic_cache(
         SemanticProjectInput(project_root=project_root, corpus=build_project_corpus(project_root))
         for project_root in project_roots
     ]
-    semantic_backend = backend if backend is not None else TfidfSvdSemanticBackend()
+    semantic_backend = backend if backend is not None else TfidfSvdSemanticBackend(cluster_count=cluster_count)
     return SemanticThemeCache(
         version=SEMANTIC_CACHE_VERSION,
         backend=semantic_backend.backend_name,
@@ -1058,8 +1007,14 @@ def validate_projects(registry: Path) -> None:
     default=default_cache_path,
     show_default=str(default_cache_path()),
 )
-def recompute_semantic_cache(registry: Path, themes_dir: Path, cache: Path) -> None:
-    semantic_cache = build_semantic_cache(registry, themes_dir)
+@click.option(
+    "--cluster-count",
+    type=click.IntRange(min=1),
+    default=SEMANTIC_CLUSTER_COUNT,
+    show_default=True,
+)
+def recompute_semantic_cache(registry: Path, themes_dir: Path, cache: Path, cluster_count: int) -> None:
+    semantic_cache = build_semantic_cache(registry, themes_dir, cluster_count=cluster_count)
     write_semantic_cache(cache, semantic_cache)
     root_label = "root" if len(semantic_cache.projects) == 1 else "roots"
     STDOUT.print(
