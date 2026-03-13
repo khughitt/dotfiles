@@ -12,6 +12,9 @@ from typing import Any, cast
 import pytest
 
 
+SEMANTIC_BACKEND = "tfidf-svd-agglomerative-v1"
+
+
 def kitty_theme_script_path() -> Path:
     return Path(__file__).resolve().parents[2] / "bin" / "kitty-theme"
 
@@ -35,6 +38,36 @@ def run_kitty_theme(argv: list[str], monkeypatch: pytest.MonkeyPatch) -> tuple[i
             exit_code = exc.code if isinstance(exc.code, int) else 1
 
     return exit_code, stdout.getvalue(), stderr.getvalue()
+
+
+def build_semantic_fixture_inputs(
+    tmp_path: Path, semantic_project_input: type[Any]
+) -> tuple[list[Any], dict[str, Path]]:
+    fixture_corpora = {
+        "cli-terminal-a": (
+            "terminal command palette shell prompt ansi console hotkey tmux cli terminal shell keybinding"
+        ),
+        "cli-terminal-b": "cli console prompt shell terminal escape sequence hotkey command pane terminal shell",
+        "react-ui-a": "react component browser hooks jsx route frontend ui vite dashboard component react",
+        "react-ui-b": "frontend react browser state component jsx router layout ui design react component",
+        "data-analytics-a": "sql warehouse dbt analytics metrics model query dashboard pipeline sql dbt warehouse",
+        "data-analytics-b": "analytics sql warehouse transformation metric dashboard dbt semantic model query sql",
+        "nix-config-a": "nix flake derivation home-manager module package shell declarative nix flake module",
+        "nix-config-b": "flake nix package overlay shell module declarative profile home-manager nix flake",
+        "graphics-render-a": "shader vulkan opengl texture fragment vertex render gpu shader texture pipeline",
+        "graphics-render-b": "opengl shader rendering texture gpu framebuffer vertex fragment shader render vulkan",
+        "hybrid-workbench": "terminal command palette react component browser console dashboard workflow shell component",
+    }
+
+    project_inputs: list[Any] = []
+    project_roots: dict[str, Path] = {}
+    for project_name, corpus in fixture_corpora.items():
+        project_root = (tmp_path / project_name).resolve()
+        project_root.mkdir()
+        project_roots[project_name] = project_root
+        project_inputs.append(semantic_project_input(project_root=project_root, corpus=corpus))
+
+    return project_inputs, project_roots
 
 
 def test_registry_parses_existing_project_roots(tmp_path: Path) -> None:
@@ -266,6 +299,97 @@ def test_build_project_corpus_reports_explicit_skips_for_unsupported_and_oversiz
     assert "SKIP src/logo.png unsupported" in corpus
 
 
+def test_semantic_embeddings_are_computed_for_each_fixture_project(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
+    build_semantic_space = cast(Callable[[list[Any]], Any], module["build_semantic_space"])
+
+    project_inputs, _ = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
+
+    semantic_space = build_semantic_space(project_inputs)
+
+    assert semantic_space.embeddings.shape[0] == len(project_inputs)
+    assert semantic_space.embeddings.shape[1] >= 3
+    assert semantic_space.similarity_matrix.shape == (len(project_inputs), len(project_inputs))
+    assert set(semantic_space.project_roots) == {project_input.project_root for project_input in project_inputs}
+
+
+def test_pairwise_similarity_output_is_symmetric_for_fixture_projects(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
+    build_semantic_space = cast(Callable[[list[Any]], Any], module["build_semantic_space"])
+
+    project_inputs, project_roots = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
+    semantic_space = build_semantic_space(project_inputs)
+    root_to_index = {
+        project_root: index for index, project_root in enumerate(cast(list[Path], semantic_space.project_roots))
+    }
+
+    cli_a_index = root_to_index[project_roots["cli-terminal-a"]]
+    cli_b_index = root_to_index[project_roots["cli-terminal-b"]]
+    react_a_index = root_to_index[project_roots["react-ui-a"]]
+
+    assert semantic_space.similarity_matrix[cli_a_index, cli_b_index] == pytest.approx(
+        semantic_space.similarity_matrix[cli_b_index, cli_a_index]
+    )
+    assert semantic_space.similarity_matrix[cli_a_index, cli_a_index] == pytest.approx(1.0)
+    assert semantic_space.similarity_matrix[cli_a_index, cli_b_index] > semantic_space.similarity_matrix[
+        cli_a_index, react_a_index
+    ]
+
+
+def test_fixture_projects_cluster_into_deterministic_semantic_groups(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
+    build_semantic_space = cast(Callable[[list[Any]], Any], module["build_semantic_space"])
+    cluster_semantic_space = cast(Callable[[Any], Any], module["cluster_semantic_space"])
+
+    project_inputs, _ = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
+
+    first_result = cluster_semantic_space(build_semantic_space(project_inputs))
+    second_result = cluster_semantic_space(build_semantic_space(project_inputs))
+
+    assert 4 <= len(first_result.cluster_terms) <= 6
+    assert list(first_result.cluster_terms) == list(second_result.cluster_terms)
+    assert first_result.project_labels == second_result.project_labels
+
+
+def test_cluster_terms_are_discriminative_for_fixture_projects(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
+    build_semantic_space = cast(Callable[[list[Any]], Any], module["build_semantic_space"])
+    cluster_semantic_space = cast(Callable[[Any], Any], module["cluster_semantic_space"])
+
+    project_inputs, project_roots = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
+    cluster_result = cluster_semantic_space(build_semantic_space(project_inputs))
+
+    labels_by_project = {
+        project_root: cluster_result.project_labels[project_root]
+        for project_root in cast(list[Path], cluster_result.project_labels)
+    }
+
+    cli_terms = set(cluster_result.cluster_terms[labels_by_project[project_roots["cli-terminal-a"]]])
+    data_terms = set(cluster_result.cluster_terms[labels_by_project[project_roots["data-analytics-a"]]])
+    nix_terms = set(cluster_result.cluster_terms[labels_by_project[project_roots["nix-config-a"]]])
+
+    assert {"terminal", "shell"} & cli_terms
+    assert {"sql", "dbt", "warehouse"} & data_terms
+    assert {"nix", "flake", "module"} & nix_terms
+
+
+def test_low_confidence_projects_are_identified_for_fixture_projects(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
+    build_semantic_space = cast(Callable[[list[Any]], Any], module["build_semantic_space"])
+    cluster_semantic_space = cast(Callable[[Any], Any], module["cluster_semantic_space"])
+    low_confidence_project_roots = cast(Callable[[Any], list[Path]], module["low_confidence_project_roots"])
+
+    project_inputs, project_roots = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
+    cluster_result = cluster_semantic_space(build_semantic_space(project_inputs))
+
+    assert low_confidence_project_roots(cluster_result) == [project_roots["hybrid-workbench"]]
+
+
 def test_summarize_uv_lock_metadata_caps_package_lines_and_reports_totals(tmp_path: Path) -> None:
     module = load_kitty_theme_module()
     summarize_uv_lock_metadata = cast(Callable[[Path], list[str]], module["summarize_uv_lock_metadata"])
@@ -440,27 +564,18 @@ def test_recompute_writes_semantic_cache(tmp_path: Path, monkeypatch: pytest.Mon
     assert stderr == ""
     assert stdout == f"wrote semantic cache for 2 project roots to {cache_path.resolve()}\n"
 
-    expected_cache = {
-        "backend": "deterministic-placeholder-v1",
-        "projects": [
-            {
-                "cluster_id": "cluster-0000",
-                "confidence": 1.0,
-                "project_root": str(project_alpha.resolve()),
-                "target_theme": "Aurora.conf",
-            },
-            {
-                "cluster_id": "cluster-0001",
-                "confidence": 1.0,
-                "project_root": str(project_beta.resolve()),
-                "target_theme": "Nordic.conf",
-            },
-        ],
-        "version": 1,
-    }
-    expected_text = json.dumps(expected_cache, indent=2, sort_keys=True) + "\n"
-
-    assert cache_path.read_text(encoding="utf-8") == expected_text
+    cache_text = cache_path.read_text(encoding="utf-8")
+    cache_data = json.loads(cache_text)
+    assert cache_data["backend"] == SEMANTIC_BACKEND
+    assert cache_data["version"] == 1
+    assert [project["project_root"] for project in cache_data["projects"]] == [
+        str(project_alpha.resolve()),
+        str(project_beta.resolve()),
+    ]
+    assert {project["target_theme"] for project in cache_data["projects"]} == {"Aurora.conf", "Nordic.conf"}
+    assert len({project["cluster_id"] for project in cache_data["projects"]}) == 2
+    assert all(isinstance(project["cluster_id"], str) and project["cluster_id"] for project in cache_data["projects"])
+    assert all(0.0 <= project["confidence"] <= 1.0 for project in cache_data["projects"])
 
     second_exit_code, second_stdout, second_stderr = run_kitty_theme(
         [
@@ -478,7 +593,7 @@ def test_recompute_writes_semantic_cache(tmp_path: Path, monkeypatch: pytest.Mon
     assert second_exit_code == 0
     assert second_stderr == ""
     assert second_stdout == f"wrote semantic cache for 2 project roots to {cache_path.resolve()}\n"
-    assert cache_path.read_text(encoding="utf-8") == expected_text
+    assert cache_path.read_text(encoding="utf-8") == cache_text
 
 
 def test_recompute_normalizes_registry_entries_to_git_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -516,14 +631,18 @@ def test_recompute_normalizes_registry_entries_to_git_roots(tmp_path: Path, monk
     assert stdout == f"wrote semantic cache for 1 project root to {cache_path.resolve()}\n"
 
     cache_data = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert cache_data["backend"] == SEMANTIC_BACKEND
     assert cache_data["projects"] == [
         {
-            "cluster_id": "cluster-0000",
-            "confidence": 1.0,
+            "cluster_id": cache_data["projects"][0]["cluster_id"],
+            "confidence": cache_data["projects"][0]["confidence"],
             "project_root": str(project_root.resolve()),
             "target_theme": "Nordic.conf",
         }
     ]
+    assert isinstance(cache_data["projects"][0]["cluster_id"], str)
+    assert cache_data["projects"][0]["cluster_id"]
+    assert 0.0 <= cache_data["projects"][0]["confidence"] <= 1.0
 
 
 def test_resolve_prints_target_theme_for_git_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -538,7 +657,7 @@ def test_resolve_prints_target_theme_for_git_root(tmp_path: Path, monkeypatch: p
     cache_path.write_text(
         json.dumps(
             {
-                "backend": "deterministic-placeholder-v1",
+                "backend": SEMANTIC_BACKEND,
                 "projects": [
                     {
                         "cluster_id": "cluster-0003",
@@ -623,15 +742,15 @@ def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) 
     ("cache_payload", "message_pattern"),
     [
         (
-            {"backend": "deterministic-placeholder-v1", "projects": [], "version": 2},
+            {"backend": SEMANTIC_BACKEND, "projects": [], "version": 2},
             "semantic cache has unsupported version",
         ),
         ({"backend": 123, "projects": [], "version": 1}, "semantic cache is malformed"),
         ({"backend": "other-backend", "projects": [], "version": 1}, "semantic cache has unsupported backend"),
-        ({"backend": "deterministic-placeholder-v1", "projects": {}, "version": 1}, "semantic cache is malformed"),
+        ({"backend": SEMANTIC_BACKEND, "projects": {}, "version": 1}, "semantic cache is malformed"),
         (
             {
-                "backend": "deterministic-placeholder-v1",
+                "backend": SEMANTIC_BACKEND,
                 "projects": [{"cluster_id": "cluster-0001", "confidence": 1.0, "project_root": "/tmp/example"}],
                 "version": 1,
             },
@@ -639,7 +758,7 @@ def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) 
         ),
         (
             {
-                "backend": "deterministic-placeholder-v1",
+                "backend": SEMANTIC_BACKEND,
                 "projects": [
                     {
                         "cluster_id": "cluster-0001",
