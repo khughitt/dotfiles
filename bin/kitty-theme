@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import time
 import tomllib
 from collections import Counter
 from dataclasses import dataclass
 from json import JSONDecodeError
 from pathlib import Path
-from typing import Protocol, TypeAlias
+from typing import Literal, Protocol, TypeAlias
 
 import click
 import numpy as np
@@ -32,6 +34,10 @@ SEMANTIC_MAX_COMPONENTS = 8
 SEMANTIC_CLUSTER_LABEL_TERMS = 3
 SEMANTIC_LOW_CONFIDENCE_THRESHOLD = 0.5
 SEMANTIC_SINGLETON_CONFIDENCE_CAP = 0.24
+NEUTRAL_FALLBACK_THEME = "noctalia.conf"
+TRANSITION_STEP_COUNT = 12
+TRANSITION_DURATION_MS = 240
+TRANSITION_MAX_CHANNEL_DELTA = 4
 TOKEN_PATTERN = re.compile(r"[a-z][a-z0-9-]{2,}")
 SEMANTIC_STOPWORDS = {
     "and",
@@ -81,6 +87,16 @@ SUPPORTED_CODE_SUFFIXES = {
     ".sh",
     ".zsh",
 }
+PALETTE_KEY_ORDER = (
+    "background",
+    "foreground",
+    "selection_background",
+    "selection_foreground",
+    "cursor",
+    *tuple(f"color{index}" for index in range(16)),
+)
+THEME_MIN_FOREGROUND_CONTRAST = 3.0
+THEME_MIN_CURSOR_CONTRAST = 2.0
 IGNORED_DIR_NAMES = {
     ".git",
     ".hg",
@@ -140,6 +156,10 @@ def default_cache_path() -> Path:
 
 def default_themes_dir() -> Path:
     return Path(__file__).resolve().parents[1] / "kitty" / "themes"
+
+
+def default_runtime_state_path() -> Path:
+    return Path.home() / ".cache" / "kitty" / "semantic-runtime-state.json"
 
 
 @dataclass(frozen=True, slots=True)
@@ -227,6 +247,71 @@ class ClusteredSemanticSpace:
     cluster_terms: dict[str, tuple[str, ...]]
     project_labels: dict[Path, str]
     project_confidences: dict[Path, float]
+
+
+@dataclass(frozen=True, slots=True)
+class ThemeCandidate:
+    theme_name: str
+    palette: dict[str, str]
+    foreground_contrast: float
+    cursor_contrast: float
+    quality_score: float
+
+
+OverrideMode: TypeAlias = Literal["temporary", "sticky"]
+
+
+@dataclass(slots=True)
+class WindowRuntimeState:
+    current_theme: str | None = None
+    last_transition_at: float = 0.0
+    override_mode: OverrideMode | None = None
+    override_project_root: Path | None = None
+    override_theme: str | None = None
+
+    def to_json_data(self) -> dict[str, object]:
+        return {
+            "current_theme": self.current_theme,
+            "last_transition_at": self.last_transition_at,
+            "override_mode": self.override_mode,
+            "override_project_root": str(self.override_project_root) if self.override_project_root is not None else None,
+            "override_theme": self.override_theme,
+        }
+
+    @classmethod
+    def from_json_data(cls, raw_entry: object) -> WindowRuntimeState:
+        if not isinstance(raw_entry, dict):
+            return cls()
+
+        current_theme = raw_entry.get("current_theme")
+        last_transition_at = raw_entry.get("last_transition_at")
+        override_mode = raw_entry.get("override_mode")
+        override_project_root = raw_entry.get("override_project_root")
+        override_theme = raw_entry.get("override_theme")
+
+        normalized_override_mode: OverrideMode | None = None
+        if override_mode in {"temporary", "sticky"}:
+            normalized_override_mode = override_mode
+
+        normalized_project_root: Path | None = None
+        if isinstance(override_project_root, str) and override_project_root:
+            normalized_project_root = Path(override_project_root).expanduser().resolve(strict=False)
+
+        return cls(
+            current_theme=current_theme if isinstance(current_theme, str) and current_theme else None,
+            last_transition_at=float(last_transition_at) if isinstance(last_transition_at, (int, float)) else 0.0,
+            override_mode=normalized_override_mode,
+            override_project_root=normalized_project_root,
+            override_theme=override_theme if isinstance(override_theme, str) and override_theme else None,
+        )
+
+
+@dataclass(slots=True)
+class SemanticRuntimeState:
+    windows: dict[str, WindowRuntimeState]
+
+    def to_json_data(self) -> dict[str, object]:
+        return {"windows": {window_id: state.to_json_data() for window_id, state in sorted(self.windows.items())}}
 
 
 class SemanticAssignmentBackend(Protocol):
@@ -864,6 +949,150 @@ def list_semantic_theme_targets(themes_dir: Path) -> list[str]:
     return theme_targets
 
 
+def parse_kitty_theme_palette(theme_path: Path) -> dict[str, str]:
+    normalized_theme_path = theme_path.expanduser().resolve(strict=False)
+    if not normalized_theme_path.is_file():
+        raise KittyThemeError(f"kitty theme not found: {normalized_theme_path}")
+
+    try:
+        theme_lines = normalized_theme_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise KittyThemeError(f"failed to read kitty theme: {normalized_theme_path}") from exc
+
+    values: dict[str, str] = {}
+    for line in theme_lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        parts = stripped.split()
+        if len(parts) < 2:
+            continue
+        key, raw_value = parts[0], parts[1]
+        value = raw_value.strip().lower()
+        if key not in PALETTE_KEY_ORDER:
+            continue
+        if not is_hex_rgb(value):
+            continue
+        values[key] = value
+
+    missing_keys = [key for key in PALETTE_KEY_ORDER if key not in values]
+    if missing_keys:
+        missing = ", ".join(missing_keys)
+        raise KittyThemeError(f"kitty theme is missing required color keys: {normalized_theme_path} ({missing})")
+    return values
+
+
+def is_hex_rgb(value: str) -> bool:
+    return bool(re.fullmatch(r"#[0-9a-f]{6}", value))
+
+
+def hex_rgb_to_triplet(value: str) -> tuple[int, int, int]:
+    return int(value[1:3], 16), int(value[3:5], 16), int(value[5:7], 16)
+
+
+def relative_luminance(value: str) -> float:
+    channel_values = [channel / 255.0 for channel in hex_rgb_to_triplet(value)]
+    transformed = [
+        channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4 for channel in channel_values
+    ]
+    return 0.2126 * transformed[0] + 0.7152 * transformed[1] + 0.0722 * transformed[2]
+
+
+def contrast_ratio(left: str, right: str) -> float:
+    left_luminance = relative_luminance(left)
+    right_luminance = relative_luminance(right)
+    lighter = max(left_luminance, right_luminance)
+    darker = min(left_luminance, right_luminance)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def palette_visual_distance(left_palette: dict[str, str], right_palette: dict[str, str]) -> float:
+    channel_deltas: list[int] = []
+    for palette_key in PALETTE_KEY_ORDER:
+        left_triplet = hex_rgb_to_triplet(left_palette[palette_key])
+        right_triplet = hex_rgb_to_triplet(right_palette[palette_key])
+        channel_deltas.extend(left_channel - right_channel for left_channel, right_channel in zip(left_triplet, right_triplet))
+    return float(np.linalg.norm(np.array(channel_deltas, dtype=np.float64)))
+
+
+def score_theme_candidate(theme_name: str, palette: dict[str, str]) -> ThemeCandidate:
+    foreground_contrast = contrast_ratio(palette["foreground"], palette["background"])
+    cursor_contrast = contrast_ratio(palette["cursor"], palette["background"])
+    ansi_colors = [hex_rgb_to_triplet(palette[f"color{index}"]) for index in range(16)]
+    unique_ansi_colors = len(set(ansi_colors))
+    quality_score = foreground_contrast * 1.4 + cursor_contrast * 0.8 + float(unique_ansi_colors) * 0.1
+    return ThemeCandidate(
+        theme_name=theme_name,
+        palette=palette,
+        foreground_contrast=foreground_contrast,
+        cursor_contrast=cursor_contrast,
+        quality_score=quality_score,
+    )
+
+
+def load_theme_candidates(themes_dir: Path) -> list[ThemeCandidate]:
+    normalized_themes_dir = themes_dir.expanduser().resolve(strict=False)
+    theme_targets = list_semantic_theme_targets(normalized_themes_dir)
+    candidates = [
+        score_theme_candidate(
+            theme_name=theme_name,
+            palette=parse_kitty_theme_palette(normalized_themes_dir / theme_name),
+        )
+        for theme_name in theme_targets
+    ]
+    return sorted(candidates, key=lambda candidate: (-candidate.quality_score, candidate.theme_name.lower(), candidate.theme_name))
+
+
+def select_attractor_themes(themes_dir: Path, attractor_count: int) -> list[str]:
+    if attractor_count < 1:
+        raise KittyThemeError(f"semantic cluster count must be at least 1: {attractor_count}")
+
+    candidate_pool = [
+        candidate
+        for candidate in load_theme_candidates(themes_dir)
+        if candidate.foreground_contrast >= THEME_MIN_FOREGROUND_CONTRAST
+        and candidate.cursor_contrast >= THEME_MIN_CURSOR_CONTRAST
+    ]
+    if len(candidate_pool) < attractor_count:
+        raise KittyThemeError(
+            f"insufficient readable kitty themes for attractor selection: "
+            f"needed {attractor_count}, found {len(candidate_pool)}"
+        )
+
+    selected: list[ThemeCandidate] = [sorted(candidate_pool, key=lambda candidate: candidate.theme_name)[0]]
+    remaining = [candidate for candidate in candidate_pool if candidate.theme_name != selected[0].theme_name]
+
+    while len(selected) < attractor_count:
+        best_candidate: ThemeCandidate | None = None
+        best_score = float("-inf")
+        for candidate in remaining:
+            min_distance = min(
+                palette_visual_distance(candidate.palette, selected_candidate.palette) for selected_candidate in selected
+            )
+            candidate_score = min_distance + candidate.quality_score * 0.01
+            if candidate_score > best_score + 1e-9:
+                best_candidate = candidate
+                best_score = candidate_score
+                continue
+            if (
+                abs(candidate_score - best_score) <= 1e-9
+                and best_candidate is not None
+                and candidate.theme_name < best_candidate.theme_name
+            ):
+                best_candidate = candidate
+
+        if best_candidate is None:
+            break
+        selected.append(best_candidate)
+        remaining = [candidate for candidate in remaining if candidate.theme_name != best_candidate.theme_name]
+
+    if len(selected) < attractor_count:
+        raise KittyThemeError(
+            f"failed to select kitty attractor themes: needed {attractor_count}, selected {len(selected)}"
+        )
+    return [candidate.theme_name for candidate in selected]
+
+
 def build_semantic_cache(
     registry_path: Path,
     themes_dir: Path,
@@ -872,7 +1101,6 @@ def build_semantic_cache(
     cluster_count: int = SEMANTIC_CLUSTER_COUNT,
 ) -> SemanticThemeCache:
     registry_project_roots = parse_project_registry(registry_path)
-    theme_targets = list_semantic_theme_targets(themes_dir)
     project_roots: list[Path] = []
     seen_git_roots: set[Path] = set()
     for registry_project_root in registry_project_roots:
@@ -891,6 +1119,7 @@ def build_semantic_cache(
         SemanticProjectInput(project_root=project_root, corpus=build_project_corpus(project_root))
         for project_root in project_roots
     ]
+    theme_targets = select_attractor_themes(themes_dir, cluster_count)
     semantic_backend = backend if backend is not None else TfidfSvdSemanticBackend(cluster_count=cluster_count)
     return SemanticThemeCache(
         version=SEMANTIC_CACHE_VERSION,
@@ -983,6 +1212,293 @@ def resolve_theme_for_path(project_path: Path, cache_path: Path) -> str:
     raise KittyThemeError(f"semantic cache has no entry for git root: {git_root}")
 
 
+def find_semantic_project_entry(project_path: Path, cache_path: Path) -> SemanticProjectCacheEntry | None:
+    try:
+        git_root = find_git_root(project_path)
+        semantic_cache = load_semantic_cache(cache_path)
+    except KittyThemeError:
+        return None
+
+    for project in semantic_cache.projects:
+        if project.project_root == git_root:
+            return project
+    return None
+
+
+def cluster_terms_from_cluster_id(cluster_id: str | None) -> tuple[str, ...]:
+    if cluster_id is None:
+        return ()
+    terms = tuple(token for token in cluster_id.split("-") if token and not token.isdigit())
+    return terms[:3]
+
+
+def load_runtime_state(state_path: Path) -> SemanticRuntimeState:
+    normalized_state_path = state_path.expanduser().resolve(strict=False)
+    if not normalized_state_path.exists():
+        return SemanticRuntimeState(windows={})
+    if not normalized_state_path.is_file():
+        raise KittyThemeError(f"semantic runtime state path is not a file: {normalized_state_path}")
+
+    try:
+        raw_state = json.loads(normalized_state_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, JSONDecodeError) as exc:
+        raise KittyThemeError(f"failed to read semantic runtime state: {normalized_state_path}") from exc
+
+    if not isinstance(raw_state, dict):
+        return SemanticRuntimeState(windows={})
+    raw_windows = raw_state.get("windows", {})
+    if not isinstance(raw_windows, dict):
+        return SemanticRuntimeState(windows={})
+
+    windows = {
+        str(window_id): WindowRuntimeState.from_json_data(raw_window_state)
+        for window_id, raw_window_state in raw_windows.items()
+    }
+    return SemanticRuntimeState(windows=windows)
+
+
+def write_runtime_state(state_path: Path, state: SemanticRuntimeState) -> None:
+    normalized_state_path = state_path.expanduser().resolve(strict=False)
+    normalized_state_path.parent.mkdir(parents=True, exist_ok=True)
+    normalized_state_path.write_text(
+        json.dumps(state.to_json_data(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def set_window_override(
+    state: SemanticRuntimeState,
+    window_id: str,
+    theme_name: str,
+    mode: OverrideMode,
+    project_root: Path | None,
+) -> None:
+    window_state = state.windows.get(window_id, WindowRuntimeState())
+    window_state.override_theme = theme_name
+    window_state.override_mode = mode
+    window_state.override_project_root = project_root
+    state.windows[window_id] = window_state
+
+
+def clear_window_override(state: SemanticRuntimeState, window_id: str) -> None:
+    window_state = state.windows.get(window_id, WindowRuntimeState())
+    window_state.override_theme = None
+    window_state.override_mode = None
+    window_state.override_project_root = None
+    state.windows[window_id] = window_state
+
+
+def resolve_semantic_theme_with_fallback(
+    project_path: Path,
+    cache_path: Path,
+    fallback_theme: str,
+    low_confidence_threshold: float = SEMANTIC_LOW_CONFIDENCE_THRESHOLD,
+) -> tuple[str, str | None]:
+    try:
+        git_root = find_git_root(project_path)
+        semantic_cache = load_semantic_cache(cache_path)
+    except KittyThemeError:
+        return fallback_theme, None
+
+    for project in semantic_cache.projects:
+        if project.project_root != git_root:
+            continue
+        if project.confidence < low_confidence_threshold:
+            return fallback_theme, project.cluster_id
+        return project.target_theme, project.cluster_id
+
+    return fallback_theme, None
+
+
+def resolve_effective_theme_for_window(
+    project_path: Path,
+    cache_path: Path,
+    state_path: Path,
+    window_id: str,
+    fallback_theme: str,
+) -> tuple[str, OverrideMode | None, str | None]:
+    state = load_runtime_state(state_path)
+    window_state = state.windows.get(window_id, WindowRuntimeState())
+
+    git_root: Path | None
+    try:
+        git_root = find_git_root(project_path)
+    except KittyThemeError:
+        git_root = None
+
+    semantic_theme, semantic_cluster = resolve_semantic_theme_with_fallback(project_path, cache_path, fallback_theme)
+    if (
+        window_state.override_mode == "temporary"
+        and window_state.override_theme is not None
+        and window_state.override_project_root is not None
+        and window_state.override_project_root != git_root
+    ):
+        clear_window_override(state, window_id)
+        window_state = state.windows[window_id]
+
+    if window_state.override_theme is not None and window_state.override_mode is not None:
+        effective_theme = window_state.override_theme
+        override_mode: OverrideMode | None = window_state.override_mode
+    else:
+        effective_theme = semantic_theme
+        override_mode = None
+
+    state.windows[window_id] = window_state
+    write_runtime_state(state_path, state)
+    return effective_theme, override_mode, semantic_cluster
+
+
+def parse_hex_palette_triplet(hex_value: str) -> tuple[int, int, int]:
+    if not is_hex_rgb(hex_value):
+        raise KittyThemeError(f"invalid hex color: {hex_value}")
+    return hex_rgb_to_triplet(hex_value)
+
+
+def interpolate_channel(source: int, target: int, factor: float) -> int:
+    return int(round(source + (target - source) * factor))
+
+
+def interpolate_hex_color(source: str, target: str, factor: float) -> str:
+    source_triplet = parse_hex_palette_triplet(source)
+    target_triplet = parse_hex_palette_triplet(target)
+    channels = [interpolate_channel(source_channel, target_channel, factor) for source_channel, target_channel in zip(source_triplet, target_triplet)]
+    return f"#{channels[0]:02x}{channels[1]:02x}{channels[2]:02x}"
+
+
+def ease_in_out_cubic(value: float) -> float:
+    if value < 0.5:
+        return 4.0 * value**3
+    return 1.0 - ((-2.0 * value + 2.0) ** 3) / 2.0
+
+
+def build_transition_palettes(
+    start_palette: dict[str, str],
+    target_palette: dict[str, str],
+    step_count: int = TRANSITION_STEP_COUNT,
+) -> list[dict[str, str]]:
+    if step_count < 2:
+        raise KittyThemeError(f"transition step count must be at least 2: {step_count}")
+
+    steps: list[dict[str, str]] = []
+    for step_index in range(step_count):
+        factor = step_index / (step_count - 1)
+        eased_factor = ease_in_out_cubic(factor)
+        step_palette = {
+            palette_key: interpolate_hex_color(start_palette[palette_key], target_palette[palette_key], eased_factor)
+            for palette_key in PALETTE_KEY_ORDER
+        }
+        steps.append(step_palette)
+    return steps
+
+
+def should_skip_transition(
+    start_palette: dict[str, str],
+    target_palette: dict[str, str],
+    max_channel_delta: int = TRANSITION_MAX_CHANNEL_DELTA,
+) -> bool:
+    for palette_key in PALETTE_KEY_ORDER:
+        start_triplet = parse_hex_palette_triplet(start_palette[palette_key])
+        target_triplet = parse_hex_palette_triplet(target_palette[palette_key])
+        for start_channel, target_channel in zip(start_triplet, target_triplet):
+            if abs(start_channel - target_channel) > max_channel_delta:
+                return False
+    return True
+
+
+def resolve_theme_path(theme_name: str, themes_dir: Path) -> Path:
+    candidate_path = Path(theme_name).expanduser()
+    if candidate_path.is_absolute():
+        resolved = candidate_path.resolve(strict=False)
+        if resolved.is_file():
+            return resolved
+        raise KittyThemeError(f"kitty theme path not found: {resolved}")
+
+    normalized_themes_dir = themes_dir.expanduser().resolve(strict=False)
+    resolved = (normalized_themes_dir / candidate_path).resolve(strict=False)
+    if resolved.is_file():
+        return resolved
+    raise KittyThemeError(f"kitty theme path not found: {resolved}")
+
+
+def apply_theme_palette(window_id: str, palette: dict[str, str]) -> None:
+    color_args = [f"{palette_key}={palette[palette_key]}" for palette_key in PALETTE_KEY_ORDER]
+    try:
+        subprocess.run(
+            ["kitten", "@", "set-colors", "-m", f"id:{window_id}", *color_args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (subprocess.CalledProcessError, OSError) as exc:
+        raise KittyThemeError("failed to apply intermediate kitty palette transition") from exc
+
+
+def apply_theme_file(window_id: str, theme_path: Path) -> None:
+    try:
+        subprocess.run(
+            ["kitten", "@", "set-colors", "-m", f"id:{window_id}", str(theme_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (subprocess.CalledProcessError, OSError) as exc:
+        raise KittyThemeError(f"failed to apply kitty theme: {theme_path}") from exc
+
+
+def apply_effective_theme_for_window(
+    project_path: Path,
+    *,
+    window_id: str,
+    cache_path: Path,
+    themes_dir: Path,
+    state_path: Path,
+    fallback_theme: str = NEUTRAL_FALLBACK_THEME,
+    transition_steps: int = TRANSITION_STEP_COUNT,
+    transition_duration_ms: int = TRANSITION_DURATION_MS,
+) -> str:
+    if not window_id:
+        raise KittyThemeError("kitty window id is required for runtime theme application")
+    if transition_steps < 2:
+        raise KittyThemeError(f"transition step count must be at least 2: {transition_steps}")
+    if transition_duration_ms < 0:
+        raise KittyThemeError(f"transition duration must be non-negative: {transition_duration_ms}")
+
+    effective_theme, _, _ = resolve_effective_theme_for_window(
+        project_path,
+        cache_path,
+        state_path,
+        window_id,
+        fallback_theme,
+    )
+    state = load_runtime_state(state_path)
+    window_state = state.windows.get(window_id, WindowRuntimeState())
+
+    target_theme_path = resolve_theme_path(effective_theme, themes_dir)
+    source_theme_name = window_state.current_theme if window_state.current_theme is not None else effective_theme
+    source_theme_path = resolve_theme_path(source_theme_name, themes_dir)
+
+    if source_theme_path != target_theme_path:
+        source_palette = parse_kitty_theme_palette(source_theme_path)
+        target_palette = parse_kitty_theme_palette(target_theme_path)
+        if should_skip_transition(source_palette, target_palette):
+            apply_theme_file(window_id, target_theme_path)
+        else:
+            transition_delay = (transition_duration_ms / 1000.0) / transition_steps
+            try:
+                for transition_palette in build_transition_palettes(source_palette, target_palette, transition_steps):
+                    apply_theme_palette(window_id, transition_palette)
+                    if transition_delay > 0:
+                        time.sleep(transition_delay)
+            except KittyThemeError:
+                apply_theme_file(window_id, target_theme_path)
+
+    window_state.current_theme = effective_theme
+    window_state.last_transition_at = time.time()
+    state.windows[window_id] = window_state
+    write_runtime_state(state_path, state)
+    return effective_theme
+
+
 @click.group()
 def cli() -> None:
     """Manage semantic kitty theme metadata."""
@@ -991,6 +1507,207 @@ def cli() -> None:
 @cli.group()
 def projects() -> None:
     """Manage the semantic project registry."""
+
+
+@cli.group()
+def themes() -> None:
+    """Inspect kitty theme candidates."""
+
+
+@cli.group()
+def override() -> None:
+    """Manage per-window manual theme overrides."""
+
+
+@themes.command("diagnose")
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+def diagnose_theme_candidates(themes_dir: Path) -> None:
+    candidates = load_theme_candidates(themes_dir)
+    for candidate in candidates:
+        STDOUT.print(
+            f"{candidate.theme_name} quality={candidate.quality_score:.3f} "
+            f"fg={candidate.foreground_contrast:.3f} cursor={candidate.cursor_contrast:.3f}",
+            soft_wrap=True,
+        )
+
+
+@cli.command("apply")
+@click.argument("project_path", type=click.Path(path_type=Path), required=False, default=Path("."))
+@click.option("--window-id", envvar="KITTY_WINDOW_ID", required=True, help="kitty window id")
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+@click.option(
+    "--state",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_runtime_state_path,
+    show_default=str(default_runtime_state_path()),
+)
+@click.option("--fallback-theme", default=NEUTRAL_FALLBACK_THEME, show_default=True)
+@click.option("--transition-steps", type=click.IntRange(min=2), default=TRANSITION_STEP_COUNT, show_default=True)
+@click.option("--transition-duration-ms", type=click.IntRange(min=0), default=TRANSITION_DURATION_MS, show_default=True)
+def apply_theme(
+    project_path: Path,
+    window_id: str,
+    cache: Path,
+    themes_dir: Path,
+    state: Path,
+    fallback_theme: str,
+    transition_steps: int,
+    transition_duration_ms: int,
+) -> None:
+    applied_theme = apply_effective_theme_for_window(
+        project_path,
+        window_id=window_id,
+        cache_path=cache,
+        themes_dir=themes_dir,
+        state_path=state,
+        fallback_theme=fallback_theme,
+        transition_steps=transition_steps,
+        transition_duration_ms=transition_duration_ms,
+    )
+    STDOUT.print(applied_theme, soft_wrap=True)
+
+
+@override.command("set")
+@click.option("--window-id", envvar="KITTY_WINDOW_ID", required=True, help="kitty window id")
+@click.option("--theme", "theme_name", required=True, help="theme relative path (from themes dir) or absolute path")
+@click.option("--mode", type=click.Choice(["temporary", "sticky"]), default="temporary", show_default=True)
+@click.argument("project_path", type=click.Path(path_type=Path), required=False, default=Path("."))
+@click.option(
+    "--state",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_runtime_state_path,
+    show_default=str(default_runtime_state_path()),
+)
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+@click.option("--fallback-theme", default=NEUTRAL_FALLBACK_THEME, show_default=True)
+@click.option("--transition-steps", type=click.IntRange(min=2), default=TRANSITION_STEP_COUNT, show_default=True)
+@click.option("--transition-duration-ms", type=click.IntRange(min=0), default=TRANSITION_DURATION_MS, show_default=True)
+@click.option("--apply/--no-apply", "apply_now", default=True, show_default=True)
+def set_override(
+    window_id: str,
+    theme_name: str,
+    mode: str,
+    project_path: Path,
+    state: Path,
+    cache: Path,
+    themes_dir: Path,
+    fallback_theme: str,
+    transition_steps: int,
+    transition_duration_ms: int,
+    apply_now: bool,
+) -> None:
+    resolved_theme_path = resolve_theme_path(theme_name, themes_dir)
+    normalized_themes_dir = themes_dir.expanduser().resolve(strict=False)
+    try:
+        stored_theme_name = resolved_theme_path.relative_to(normalized_themes_dir).as_posix()
+    except ValueError:
+        stored_theme_name = str(resolved_theme_path)
+
+    try:
+        project_root: Path | None = find_git_root(project_path)
+    except KittyThemeError:
+        project_root = None
+
+    normalized_mode: OverrideMode = "temporary" if mode == "temporary" else "sticky"
+
+    runtime_state = load_runtime_state(state)
+    set_window_override(runtime_state, window_id, stored_theme_name, normalized_mode, project_root)
+    write_runtime_state(state, runtime_state)
+
+    if apply_now:
+        apply_effective_theme_for_window(
+            project_path,
+            window_id=window_id,
+            cache_path=cache,
+            themes_dir=themes_dir,
+            state_path=state,
+            fallback_theme=fallback_theme,
+            transition_steps=transition_steps,
+            transition_duration_ms=transition_duration_ms,
+        )
+    STDOUT.print(stored_theme_name, soft_wrap=True)
+
+
+@override.command("reset")
+@click.option("--window-id", envvar="KITTY_WINDOW_ID", required=True, help="kitty window id")
+@click.argument("project_path", type=click.Path(path_type=Path), required=False, default=Path("."))
+@click.option(
+    "--state",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_runtime_state_path,
+    show_default=str(default_runtime_state_path()),
+)
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+@click.option("--fallback-theme", default=NEUTRAL_FALLBACK_THEME, show_default=True)
+@click.option("--transition-steps", type=click.IntRange(min=2), default=TRANSITION_STEP_COUNT, show_default=True)
+@click.option("--transition-duration-ms", type=click.IntRange(min=0), default=TRANSITION_DURATION_MS, show_default=True)
+@click.option("--apply/--no-apply", "apply_now", default=True, show_default=True)
+def reset_override(
+    window_id: str,
+    project_path: Path,
+    state: Path,
+    cache: Path,
+    themes_dir: Path,
+    fallback_theme: str,
+    transition_steps: int,
+    transition_duration_ms: int,
+    apply_now: bool,
+) -> None:
+    runtime_state = load_runtime_state(state)
+    clear_window_override(runtime_state, window_id)
+    write_runtime_state(state, runtime_state)
+    if apply_now:
+        applied_theme = apply_effective_theme_for_window(
+            project_path,
+            window_id=window_id,
+            cache_path=cache,
+            themes_dir=themes_dir,
+            state_path=state,
+            fallback_theme=fallback_theme,
+            transition_steps=transition_steps,
+            transition_duration_ms=transition_duration_ms,
+        )
+        STDOUT.print(applied_theme, soft_wrap=True)
+        return
+    STDOUT.print("override reset", soft_wrap=True)
 
 
 @projects.command("validate")
@@ -1055,6 +1772,62 @@ def recompute_semantic_cache(registry: Path, themes_dir: Path, cache: Path, clus
 )
 def resolve_semantic_theme(project_path: Path, cache: Path) -> None:
     STDOUT.print(resolve_theme_for_path(project_path, cache), soft_wrap=True)
+
+
+@cli.command("explain")
+@click.argument("project_path", type=click.Path(path_type=Path), required=False, default=Path("."))
+@click.option("--window-id", envvar="KITTY_WINDOW_ID", required=True, help="kitty window id")
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+@click.option(
+    "--state",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_runtime_state_path,
+    show_default=str(default_runtime_state_path()),
+)
+@click.option("--fallback-theme", default=NEUTRAL_FALLBACK_THEME, show_default=True)
+def explain_semantic_assignment(project_path: Path, window_id: str, cache: Path, state: Path, fallback_theme: str) -> None:
+    semantic_entry = find_semantic_project_entry(project_path, cache)
+    semantic_theme, _ = resolve_semantic_theme_with_fallback(project_path, cache, fallback_theme)
+    effective_theme, override_mode, _ = resolve_effective_theme_for_window(
+        project_path,
+        cache,
+        state,
+        window_id,
+        fallback_theme,
+    )
+
+    try:
+        project_root: Path | None = find_git_root(project_path)
+    except KittyThemeError:
+        project_root = None
+
+    if semantic_entry is None:
+        cluster_id = "<none>"
+        confidence = "0.000000"
+        assigned_theme = fallback_theme
+        top_terms = "<none>"
+    else:
+        cluster_id = semantic_entry.cluster_id
+        confidence = f"{semantic_entry.confidence:.6f}"
+        assigned_theme = semantic_entry.target_theme
+        terms = cluster_terms_from_cluster_id(semantic_entry.cluster_id)
+        top_terms = ", ".join(terms) if terms else "<none>"
+
+    project_root_value = str(project_root) if project_root is not None else "<none>"
+    override_mode_value = override_mode if override_mode is not None else "<none>"
+    STDOUT.print(f"project_root: {project_root_value}", soft_wrap=True)
+    STDOUT.print(f"cluster_id: {cluster_id}", soft_wrap=True)
+    STDOUT.print(f"confidence: {confidence}", soft_wrap=True)
+    STDOUT.print(f"top_terms: {top_terms}", soft_wrap=True)
+    STDOUT.print(f"assigned_theme: {assigned_theme}", soft_wrap=True)
+    STDOUT.print(f"semantic_theme: {semantic_theme}", soft_wrap=True)
+    STDOUT.print(f"override_mode: {override_mode_value}", soft_wrap=True)
+    STDOUT.print(f"effective_theme: {effective_theme}", soft_wrap=True)
 
 
 def main() -> int:
