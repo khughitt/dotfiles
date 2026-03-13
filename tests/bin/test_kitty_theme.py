@@ -205,6 +205,26 @@ def test_discover_doc_files_uses_preferred_readme_and_doc_priority(tmp_path: Pat
     ]
 
 
+def test_discover_doc_files_is_deterministic_with_case_variant_names(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    discover_doc_files = cast(Callable[[Path], list[Path]], module["discover_doc_files"])
+
+    project_root = tmp_path / "case-docs-project"
+    project_root.mkdir()
+    (project_root / "README.md").write_text("upper preferred\n", encoding="utf-8")
+    (project_root / "readme.md").write_text("lower preferred\n", encoding="utf-8")
+    (project_root / "docs").mkdir()
+    (project_root / "docs" / "Guide.md").write_text("guide upper\n", encoding="utf-8")
+    (project_root / "docs" / "guide.md").write_text("guide lower\n", encoding="utf-8")
+
+    assert discover_doc_files(project_root) == [
+        project_root / "README.md",
+        project_root / "readme.md",
+        project_root / "docs" / "Guide.md",
+        project_root / "docs" / "guide.md",
+    ]
+
+
 def test_build_project_corpus_respects_code_file_count_and_byte_budget(tmp_path: Path) -> None:
     module = load_kitty_theme_module()
     build_project_corpus = cast(Callable[..., str], module["build_project_corpus"])
@@ -315,6 +335,27 @@ def test_build_project_corpus_caps_unsupported_skip_lines(tmp_path: Path) -> Non
     assert "SKIP unsupported 8 more" in corpus
 
 
+def test_build_project_corpus_caps_oversized_skip_lines(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    build_project_corpus = cast(Callable[..., str], module["build_project_corpus"])
+
+    project_root = tmp_path / "oversized-project"
+    project_root.mkdir()
+    (project_root / "README.md").write_text("Oversized project\n", encoding="utf-8")
+    (project_root / "src").mkdir()
+    for index in range(8):
+        (project_root / "src" / f"huge_{index}.py").write_text("x" * 256, encoding="utf-8")
+
+    corpus = build_project_corpus(project_root, max_file_bytes=64)
+
+    assert "SKIP src/huge_0.py oversized" in corpus
+    assert "SKIP src/huge_1.py oversized" in corpus
+    assert "SKIP src/huge_2.py oversized" in corpus
+    assert "SKIP src/huge_3.py oversized" in corpus
+    assert "SKIP src/huge_4.py oversized" not in corpus
+    assert "SKIP oversized 4 more" in corpus
+
+
 def test_iter_project_files_prunes_ignored_directories_during_traversal(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -337,3 +378,23 @@ def test_iter_project_files_prunes_ignored_directories_during_traversal(
     monkeypatch.setattr(Path, "rglob", guarded_rglob)
 
     assert iter_project_files(project_root) == [visible_file]
+
+
+def test_iter_project_files_is_deterministic_with_case_variant_names(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    iter_project_files = cast(Callable[[Path], list[Path]], module["iter_project_files"])
+
+    project_root = tmp_path / "case-files-project"
+    project_root.mkdir()
+    (project_root / "Alpha.py").write_text("print('A')\n", encoding="utf-8")
+    (project_root / "alpha.py").write_text("print('a')\n", encoding="utf-8")
+    (project_root / "src").mkdir()
+    (project_root / "src" / "Beta.py").write_text("print('B')\n", encoding="utf-8")
+    (project_root / "src" / "beta.py").write_text("print('b')\n", encoding="utf-8")
+
+    assert iter_project_files(project_root) == [
+        project_root / "Alpha.py",
+        project_root / "alpha.py",
+        project_root / "src" / "Beta.py",
+        project_root / "src" / "beta.py",
+    ]

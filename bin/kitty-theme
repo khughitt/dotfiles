@@ -18,6 +18,7 @@ DOC_SUFFIXES = {".md", ".rst", ".txt", ".adoc"}
 DOC_BASENAME_PRIORITY = ("index", "readme", "overview", "guide", "getting-started")
 MAX_UV_LOCK_PACKAGES = 4
 MAX_UNSUPPORTED_SKIP_LINES = 4
+MAX_OVERSIZED_SKIP_LINES = 4
 METADATA_FILENAMES = (
     "pyproject.toml",
     "package.json",
@@ -146,21 +147,18 @@ def discover_doc_files(project_root: Path) -> list[Path]:
     doc_paths: list[Path] = []
     seen_paths: set[Path] = set()
 
-    readme_candidates = {
-        candidate.name.lower(): candidate
+    readme_candidates = [
+        candidate
         for candidate in project_root.iterdir()
         if candidate.is_file() and candidate.name.lower() in DOC_FILENAMES
-    }
-    for filename in DOC_FILENAMES:
-        candidate = readme_candidates.get(filename)
-        if candidate is None:
-            continue
+    ]
+    for candidate in sorted(readme_candidates, key=readme_sort_key):
         seen_paths.add(candidate)
         doc_paths.append(candidate)
 
     docs_root = project_root / "docs"
     if docs_root.is_dir():
-        for candidate in sorted(docs_root.rglob("*"), key=lambda path: doc_sort_key(project_root, path)):
+        for candidate in sorted(collect_project_files(docs_root), key=lambda path: doc_sort_key(project_root, path)):
             if candidate.is_file() and candidate.suffix.lower() in DOC_SUFFIXES and candidate not in seen_paths:
                 seen_paths.add(candidate)
                 doc_paths.append(candidate)
@@ -168,15 +166,20 @@ def discover_doc_files(project_root: Path) -> list[Path]:
     return doc_paths
 
 
-def doc_sort_key(project_root: Path, doc_path: Path) -> tuple[int, str]:
+def readme_sort_key(readme_path: Path) -> tuple[int, str, str]:
+    filename = readme_path.name
+    return DOC_FILENAMES.index(filename.lower()), filename.lower(), filename
+
+
+def doc_sort_key(project_root: Path, doc_path: Path) -> tuple[int, str, str]:
     stem = doc_path.stem.lower()
     try:
         basename_rank = DOC_BASENAME_PRIORITY.index(stem)
     except ValueError:
         basename_rank = len(DOC_BASENAME_PRIORITY)
 
-    relative_path = doc_path.relative_to(project_root).as_posix().lower()
-    return basename_rank, relative_path
+    relative_path = doc_path.relative_to(project_root).as_posix()
+    return basename_rank, relative_path.lower(), relative_path
 
 
 def discover_metadata_files(project_root: Path) -> list[Path]:
@@ -301,6 +304,7 @@ def sample_code_sections(
     code_sections: list[str] = []
     skip_lines: list[str] = []
     unsupported_paths: list[Path] = []
+    oversized_paths: list[Path] = []
     sampled_file_count = 0
     sampled_byte_count = 0
 
@@ -316,7 +320,7 @@ def sample_code_sections(
 
         file_size = candidate.stat().st_size
         if file_size > max_file_bytes:
-            skip_lines.append(f"SKIP {relative_path.as_posix()} oversized")
+            oversized_paths.append(relative_path)
             continue
 
         if sampled_file_count >= max_code_files:
@@ -336,6 +340,12 @@ def sample_code_sections(
     remaining_unsupported = len(unsupported_paths) - MAX_UNSUPPORTED_SKIP_LINES
     if remaining_unsupported > 0:
         skip_lines.append(f"SKIP unsupported {remaining_unsupported} more")
+    skip_lines.extend(
+        f"SKIP {relative_path.as_posix()} oversized" for relative_path in oversized_paths[:MAX_OVERSIZED_SKIP_LINES]
+    )
+    remaining_oversized = len(oversized_paths) - MAX_OVERSIZED_SKIP_LINES
+    if remaining_oversized > 0:
+        skip_lines.append(f"SKIP oversized {remaining_oversized} more")
 
     return code_sections, skip_lines
 
@@ -346,7 +356,7 @@ def iter_project_files(project_root: Path) -> list[Path]:
 
 def collect_project_files(current_path: Path) -> list[Path]:
     project_files: list[Path] = []
-    for candidate in sorted(current_path.iterdir(), key=lambda path: path.name.lower()):
+    for candidate in sorted(current_path.iterdir(), key=path_name_sort_key):
         if candidate.is_dir():
             if candidate.name in IGNORED_DIR_NAMES:
                 continue
@@ -355,6 +365,10 @@ def collect_project_files(current_path: Path) -> list[Path]:
         if candidate.is_file():
             project_files.append(candidate)
     return project_files
+
+
+def path_name_sort_key(path: Path) -> tuple[str, str]:
+    return path.name.lower(), path.name
 
 
 @click.group()
