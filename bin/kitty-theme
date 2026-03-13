@@ -4,7 +4,9 @@ from __future__ import annotations
 import json
 import re
 import tomllib
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol
 
 import click
 from rich.console import Console
@@ -19,6 +21,8 @@ DOC_BASENAME_PRIORITY = ("index", "readme", "overview", "guide", "getting-starte
 MAX_UV_LOCK_PACKAGES = 4
 MAX_UNSUPPORTED_SKIP_LINES = 4
 MAX_OVERSIZED_SKIP_LINES = 4
+SEMANTIC_CACHE_VERSION = 1
+SEMANTIC_CACHE_BACKEND = "deterministic-placeholder-v1"
 METADATA_FILENAMES = (
     "pyproject.toml",
     "package.json",
@@ -65,6 +69,119 @@ class ProjectRegistryError(KittyThemeError):
 
 def default_registry_path() -> Path:
     return Path(__file__).resolve().parents[1] / "kitty" / "semantic-projects.txt"
+
+
+def default_cache_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "kitty" / "semantic-themes.json"
+
+
+def default_themes_dir() -> Path:
+    return Path(__file__).resolve().parents[1] / "kitty" / "themes"
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticProjectInput:
+    project_root: Path
+    corpus: str
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticProjectCacheEntry:
+    project_root: Path
+    cluster_id: str
+    confidence: float
+    target_theme: str
+
+    def to_json_data(self) -> dict[str, object]:
+        return {
+            "cluster_id": self.cluster_id,
+            "confidence": self.confidence,
+            "project_root": str(self.project_root),
+            "target_theme": self.target_theme,
+        }
+
+    @classmethod
+    def from_json_data(cls, raw_entry: object, cache_path: Path) -> SemanticProjectCacheEntry:
+        if not isinstance(raw_entry, dict):
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+
+        project_root = raw_entry.get("project_root")
+        cluster_id = raw_entry.get("cluster_id")
+        confidence = raw_entry.get("confidence")
+        target_theme = raw_entry.get("target_theme")
+
+        if not isinstance(project_root, str) or not project_root:
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+        if not isinstance(cluster_id, str) or not cluster_id:
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+        if not isinstance(confidence, (int, float)) or isinstance(confidence, bool):
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+        if not isinstance(target_theme, str) or not target_theme:
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+
+        normalized_project_root = Path(project_root).expanduser()
+        if not normalized_project_root.is_absolute():
+            raise KittyThemeError(f"semantic cache is malformed: {cache_path}")
+
+        return cls(
+            project_root=normalized_project_root.resolve(strict=False),
+            cluster_id=cluster_id,
+            confidence=float(confidence),
+            target_theme=target_theme,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticThemeCache:
+    version: int
+    backend: str
+    projects: list[SemanticProjectCacheEntry]
+
+    def to_json_data(self) -> dict[str, object]:
+        return {
+            "backend": self.backend,
+            "projects": [project.to_json_data() for project in self.projects],
+            "version": self.version,
+        }
+
+    def to_json_text(self) -> str:
+        return json.dumps(self.to_json_data(), indent=2, sort_keys=True) + "\n"
+
+
+class SemanticAssignmentBackend(Protocol):
+    @property
+    def backend_name(self) -> str: ...
+
+    def assign_projects(
+        self, project_inputs: list[SemanticProjectInput], theme_targets: list[str]
+    ) -> list[SemanticProjectCacheEntry]: ...
+
+
+@dataclass(frozen=True, slots=True)
+class DeterministicPlaceholderBackend:
+    @property
+    def backend_name(self) -> str:
+        return SEMANTIC_CACHE_BACKEND
+
+    def assign_projects(
+        self, project_inputs: list[SemanticProjectInput], theme_targets: list[str]
+    ) -> list[SemanticProjectCacheEntry]:
+        if not theme_targets:
+            raise KittyThemeError("semantic theme target list is empty")
+
+        assignments: list[SemanticProjectCacheEntry] = []
+        for project_index, project_input in enumerate(project_inputs):
+            _ = project_input.corpus
+            theme_index = project_index % len(theme_targets)
+            assignments.append(
+                SemanticProjectCacheEntry(
+                    project_root=project_input.project_root,
+                    cluster_id=f"cluster-{theme_index:04d}",
+                    confidence=1.0,
+                    target_theme=theme_targets[theme_index],
+                )
+            )
+        return assignments
 
 
 def normalize_project_root(raw_path: str, registry_path: Path) -> Path:
@@ -371,6 +488,108 @@ def path_name_sort_key(path: Path) -> tuple[str, str]:
     return path.name.lower(), path.name
 
 
+def list_semantic_theme_targets(themes_dir: Path) -> list[str]:
+    normalized_themes_dir = themes_dir.expanduser().resolve(strict=False)
+    if not normalized_themes_dir.exists():
+        raise KittyThemeError(f"kitty themes directory does not exist: {normalized_themes_dir}")
+    if not normalized_themes_dir.is_dir():
+        raise KittyThemeError(f"kitty themes path is not a directory: {normalized_themes_dir}")
+
+    theme_paths = [
+        candidate
+        for candidate in sorted(normalized_themes_dir.iterdir(), key=path_name_sort_key)
+        if candidate.is_file() and candidate.suffix == ".conf"
+    ]
+    theme_targets = [theme_path.name for theme_path in theme_paths]
+    if not theme_targets:
+        raise KittyThemeError(f"kitty themes directory has no .conf themes: {normalized_themes_dir}")
+    return theme_targets
+
+
+def build_semantic_cache(
+    registry_path: Path,
+    themes_dir: Path,
+    backend: SemanticAssignmentBackend | None = None,
+) -> SemanticThemeCache:
+    project_roots = parse_project_registry(registry_path)
+    theme_targets = list_semantic_theme_targets(themes_dir)
+    project_inputs = [
+        SemanticProjectInput(project_root=project_root, corpus=build_project_corpus(project_root))
+        for project_root in project_roots
+    ]
+    semantic_backend = backend if backend is not None else DeterministicPlaceholderBackend()
+    return SemanticThemeCache(
+        version=SEMANTIC_CACHE_VERSION,
+        backend=semantic_backend.backend_name,
+        projects=semantic_backend.assign_projects(project_inputs, theme_targets),
+    )
+
+
+def write_semantic_cache(cache_path: Path, cache: SemanticThemeCache) -> None:
+    normalized_cache_path = cache_path.expanduser().resolve(strict=False)
+    normalized_cache_path.parent.mkdir(parents=True, exist_ok=True)
+    normalized_cache_path.write_text(cache.to_json_text(), encoding="utf-8")
+
+
+def load_semantic_cache(cache_path: Path) -> SemanticThemeCache:
+    normalized_cache_path = cache_path.expanduser().resolve(strict=False)
+    if not normalized_cache_path.is_file():
+        raise KittyThemeError(f"semantic cache not found: {normalized_cache_path}")
+
+    try:
+        raw_contents = normalized_cache_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise KittyThemeError(f"failed to read semantic cache: {normalized_cache_path}") from exc
+
+    try:
+        raw_cache = json.loads(raw_contents)
+    except json.JSONDecodeError as exc:
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}") from exc
+
+    if not isinstance(raw_cache, dict):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+
+    version = raw_cache.get("version")
+    backend = raw_cache.get("backend")
+    raw_projects = raw_cache.get("projects")
+    if version != SEMANTIC_CACHE_VERSION or not isinstance(backend, str) or not isinstance(raw_projects, list):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+
+    return SemanticThemeCache(
+        version=version,
+        backend=backend,
+        projects=[
+            SemanticProjectCacheEntry.from_json_data(raw_project, normalized_cache_path) for raw_project in raw_projects
+        ],
+    )
+
+
+def find_git_root(project_path: Path) -> Path:
+    normalized_path = project_path.expanduser().resolve(strict=False)
+    if not normalized_path.exists():
+        raise KittyThemeError(f"path does not exist: {normalized_path}")
+
+    candidate = normalized_path if normalized_path.is_dir() else normalized_path.parent
+    while True:
+        if (candidate / ".git").exists():
+            return candidate
+        if candidate.parent == candidate:
+            break
+        candidate = candidate.parent
+
+    raise KittyThemeError(f"path is not inside a git repository: {normalized_path}")
+
+
+def resolve_theme_for_path(project_path: Path, cache_path: Path) -> str:
+    git_root = find_git_root(project_path)
+    semantic_cache = load_semantic_cache(cache_path)
+    for project in semantic_cache.projects:
+        if project.project_root == git_root:
+            return project.target_theme
+
+    raise KittyThemeError(f"semantic cache has no entry for git root: {git_root}")
+
+
 @click.group()
 def cli() -> None:
     """Manage semantic kitty theme metadata."""
@@ -395,6 +614,48 @@ def validate_projects(registry: Path) -> None:
         f"validated {len(project_roots)} project {root_label} from {registry.expanduser().resolve()}",
         soft_wrap=True,
     )
+
+
+@cli.command("recompute")
+@click.option(
+    "--registry",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_registry_path,
+    show_default=str(default_registry_path()),
+)
+@click.option(
+    "--themes-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=default_themes_dir,
+    show_default=str(default_themes_dir()),
+)
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+def recompute_semantic_cache(registry: Path, themes_dir: Path, cache: Path) -> None:
+    semantic_cache = build_semantic_cache(registry, themes_dir)
+    write_semantic_cache(cache, semantic_cache)
+    root_label = "root" if len(semantic_cache.projects) == 1 else "roots"
+    STDOUT.print(
+        f"wrote semantic cache for {len(semantic_cache.projects)} project {root_label} to "
+        f"{cache.expanduser().resolve(strict=False)}",
+        soft_wrap=True,
+    )
+
+
+@cli.command("resolve")
+@click.argument("project_path", type=click.Path(path_type=Path))
+@click.option(
+    "--cache",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=default_cache_path,
+    show_default=str(default_cache_path()),
+)
+def resolve_semantic_theme(project_path: Path, cache: Path) -> None:
+    STDOUT.print(resolve_theme_for_path(project_path, cache), soft_wrap=True)
 
 
 def main() -> int:
