@@ -4,12 +4,15 @@ from __future__ import annotations
 import json
 import re
 import tomllib
+from collections import Counter
 from dataclasses import dataclass
 from json import JSONDecodeError
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, TypeAlias
 
 import click
+import numpy as np
+from numpy.typing import NDArray
 from rich.console import Console
 
 
@@ -23,7 +26,41 @@ MAX_UV_LOCK_PACKAGES = 4
 MAX_UNSUPPORTED_SKIP_LINES = 4
 MAX_OVERSIZED_SKIP_LINES = 4
 SEMANTIC_CACHE_VERSION = 1
-SEMANTIC_CACHE_BACKEND = "deterministic-placeholder-v1"
+SEMANTIC_CACHE_BACKEND = "tfidf-svd-agglomerative-v1"
+SEMANTIC_MIN_CLUSTERS = 4
+SEMANTIC_MAX_CLUSTERS = 6
+SEMANTIC_MAX_COMPONENTS = 8
+SEMANTIC_CLUSTER_LABEL_TERMS = 3
+SEMANTIC_LOW_CONFIDENCE_THRESHOLD = 0.25
+SEMANTIC_SINGLETON_CONFIDENCE_CAP = 0.24
+TOKEN_PATTERN = re.compile(r"[a-z][a-z0-9-]{2,}")
+SEMANTIC_STOPWORDS = {
+    "and",
+    "build",
+    "code",
+    "dependency",
+    "description",
+    "doc",
+    "docs",
+    "file",
+    "files",
+    "guide",
+    "index",
+    "metadata",
+    "name",
+    "overview",
+    "package",
+    "packages",
+    "project",
+    "projects",
+    "readme",
+    "script",
+    "scripts",
+    "src",
+    "theme",
+    "tool",
+    "tools",
+}
 METADATA_FILENAMES = (
     "pyproject.toml",
     "package.json",
@@ -58,6 +95,8 @@ IGNORED_DIR_NAMES = {
     "build",
     "target",
 }
+
+FloatArray: TypeAlias = NDArray[np.float64]
 
 
 class KittyThemeError(RuntimeError):
@@ -173,6 +212,22 @@ class SemanticThemeCache:
         return json.dumps(self.to_json_data(), indent=2, sort_keys=True) + "\n"
 
 
+@dataclass(frozen=True, slots=True)
+class SemanticSpace:
+    project_roots: tuple[Path, ...]
+    vocabulary: tuple[str, ...]
+    tfidf_matrix: FloatArray
+    embeddings: FloatArray
+    similarity_matrix: FloatArray
+
+
+@dataclass(frozen=True, slots=True)
+class ClusteredSemanticSpace:
+    cluster_terms: dict[str, tuple[str, ...]]
+    project_labels: dict[Path, str]
+    project_confidences: dict[Path, float]
+
+
 class SemanticAssignmentBackend(Protocol):
     @property
     def backend_name(self) -> str: ...
@@ -183,7 +238,7 @@ class SemanticAssignmentBackend(Protocol):
 
 
 @dataclass(frozen=True, slots=True)
-class DeterministicPlaceholderBackend:
+class TfidfSvdSemanticBackend:
     @property
     def backend_name(self) -> str:
         return SEMANTIC_CACHE_BACKEND
@@ -194,16 +249,21 @@ class DeterministicPlaceholderBackend:
         if not theme_targets:
             raise KittyThemeError("semantic theme target list is empty")
 
+        semantic_space = build_semantic_space(project_inputs)
+        cluster_result = cluster_semantic_space(semantic_space)
+        theme_by_label = {
+            cluster_label: theme_targets[index % len(theme_targets)]
+            for index, cluster_label in enumerate(sorted(cluster_result.cluster_terms))
+        }
         assignments: list[SemanticProjectCacheEntry] = []
-        for project_index, project_input in enumerate(project_inputs):
-            _ = project_input.corpus
-            theme_index = project_index % len(theme_targets)
+        for project_input in project_inputs:
+            cluster_label = cluster_result.project_labels[project_input.project_root]
             assignments.append(
                 SemanticProjectCacheEntry(
                     project_root=project_input.project_root,
-                    cluster_id=f"cluster-{theme_index:04d}",
-                    confidence=1.0,
-                    target_theme=theme_targets[theme_index],
+                    cluster_id=cluster_label,
+                    confidence=cluster_result.project_confidences[project_input.project_root],
+                    target_theme=theme_by_label[cluster_label],
                 )
             )
         return assignments
@@ -434,6 +494,327 @@ def as_string_keys(values: dict[object, object]) -> set[str]:
     return {str(key) for key in values}
 
 
+def tokenize_semantic_corpus(corpus: str) -> list[str]:
+    return [
+        token
+        for token in TOKEN_PATTERN.findall(corpus.lower())
+        if token not in SEMANTIC_STOPWORDS and not token.isdigit()
+    ]
+
+
+def build_semantic_space(project_inputs: list[SemanticProjectInput]) -> SemanticSpace:
+    if not project_inputs:
+        raise KittyThemeError("semantic project input list is empty")
+
+    project_roots = tuple(project_input.project_root for project_input in project_inputs)
+    tokenized_corpora = [tokenize_semantic_corpus(project_input.corpus) for project_input in project_inputs]
+    for project_input, tokens in zip(project_inputs, tokenized_corpora, strict=True):
+        if not tokens:
+            raise KittyThemeError(f"semantic corpus has no indexable tokens: {project_input.project_root}")
+
+    vocabulary, tfidf_matrix = build_tfidf_matrix(tokenized_corpora)
+    embeddings = reduce_tfidf_matrix(tfidf_matrix)
+    normalized_embeddings = normalize_rows(embeddings)
+    similarity_matrix = np.clip(normalized_embeddings @ normalized_embeddings.T, -1.0, 1.0)
+    return SemanticSpace(
+        project_roots=project_roots,
+        vocabulary=vocabulary,
+        tfidf_matrix=tfidf_matrix,
+        embeddings=embeddings,
+        similarity_matrix=similarity_matrix,
+    )
+
+
+def build_tfidf_matrix(tokenized_corpora: list[list[str]]) -> tuple[tuple[str, ...], FloatArray]:
+    vocabulary = tuple(sorted({token for corpus in tokenized_corpora for token in corpus}))
+    if not vocabulary:
+        raise KittyThemeError("semantic corpus has no indexable tokens")
+
+    token_indexes = {token: index for index, token in enumerate(vocabulary)}
+    counts = np.zeros((len(tokenized_corpora), len(vocabulary)), dtype=np.float64)
+    for row_index, corpus in enumerate(tokenized_corpora):
+        for token, count in Counter(corpus).items():
+            counts[row_index, token_indexes[token]] = float(count)
+
+    document_frequency = np.count_nonzero(counts > 0.0, axis=0)
+    idf = np.log((1.0 + len(tokenized_corpora)) / (1.0 + document_frequency)) + 1.0
+    token_totals = counts.sum(axis=1, keepdims=True)
+    tf = counts / np.maximum(token_totals, 1.0)
+    tfidf_matrix = tf * idf
+    return vocabulary, normalize_rows(tfidf_matrix)
+
+
+def reduce_tfidf_matrix(tfidf_matrix: FloatArray) -> FloatArray:
+    if tfidf_matrix.size == 0:
+        raise KittyThemeError("semantic corpus has no indexable tokens")
+
+    component_count = min(SEMANTIC_MAX_COMPONENTS, tfidf_matrix.shape[0], tfidf_matrix.shape[1])
+    left_vectors, singular_values, right_vectors = np.linalg.svd(tfidf_matrix, full_matrices=False)
+    left_vectors = left_vectors[:, :component_count].copy()
+    singular_values = singular_values[:component_count].copy()
+    right_vectors = right_vectors[:component_count].copy()
+
+    for component_index in range(component_count):
+        pivot_index = int(np.argmax(np.abs(right_vectors[component_index])))
+        if right_vectors[component_index, pivot_index] < 0.0:
+            left_vectors[:, component_index] *= -1.0
+            right_vectors[component_index] *= -1.0
+
+    return left_vectors * singular_values
+
+
+def normalize_rows(matrix: FloatArray) -> FloatArray:
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    return matrix / np.maximum(norms, 1e-12)
+
+
+def cluster_semantic_space(
+    semantic_space: SemanticSpace,
+    *,
+    min_clusters: int = SEMANTIC_MIN_CLUSTERS,
+    max_clusters: int = SEMANTIC_MAX_CLUSTERS,
+) -> ClusteredSemanticSpace:
+    cluster_indexes = cluster_project_indexes(semantic_space.similarity_matrix, min_clusters, max_clusters)
+    cluster_members = group_cluster_members(cluster_indexes)
+    cluster_terms_by_index = select_cluster_terms(semantic_space, cluster_members)
+    cluster_labels = build_cluster_labels(cluster_terms_by_index)
+    project_labels = {
+        project_root: cluster_labels[cluster_indexes[index]]
+        for index, project_root in enumerate(semantic_space.project_roots)
+    }
+    project_confidences = compute_project_confidences(semantic_space, cluster_indexes, cluster_members)
+    return ClusteredSemanticSpace(
+        cluster_terms={
+            cluster_labels[cluster_index]: cluster_terms_by_index[cluster_index]
+            for cluster_index in sorted(cluster_members)
+        },
+        project_labels=project_labels,
+        project_confidences=project_confidences,
+    )
+
+
+def cluster_project_indexes(similarity_matrix: FloatArray, min_clusters: int, max_clusters: int) -> list[int]:
+    project_count = similarity_matrix.shape[0]
+    if project_count == 1:
+        return [0]
+    if project_count == 2:
+        return [0, 1]
+
+    lower_bound = max(2, min(min_clusters, project_count - 1))
+    upper_bound = max(lower_bound, min(max_clusters, project_count - 1))
+    best_cluster_indexes: list[int] | None = None
+    best_score = float("-inf")
+    best_cluster_count = lower_bound
+
+    for cluster_count in range(lower_bound, upper_bound + 1):
+        candidate_indexes = agglomerative_cluster_indexes(similarity_matrix, cluster_count)
+        candidate_score = silhouette_score(similarity_matrix, candidate_indexes)
+        if candidate_score > best_score + 1e-9:
+            best_cluster_indexes = candidate_indexes
+            best_score = candidate_score
+            best_cluster_count = cluster_count
+            continue
+        if abs(candidate_score - best_score) <= 1e-9 and cluster_count < best_cluster_count:
+            best_cluster_indexes = candidate_indexes
+            best_cluster_count = cluster_count
+
+    if best_cluster_indexes is None:
+        raise KittyThemeError("failed to cluster semantic project inputs")
+    return best_cluster_indexes
+
+
+def agglomerative_cluster_indexes(similarity_matrix: FloatArray, cluster_count: int) -> list[int]:
+    clusters = [tuple([index]) for index in range(similarity_matrix.shape[0])]
+    while len(clusters) > cluster_count:
+        best_pair: tuple[int, int] | None = None
+        best_score = float("-inf")
+        best_key: tuple[tuple[int, ...], tuple[int, ...]] | None = None
+        for left_index in range(len(clusters)):
+            for right_index in range(left_index + 1, len(clusters)):
+                left_cluster = clusters[left_index]
+                right_cluster = clusters[right_index]
+                candidate_score = average_cluster_similarity(similarity_matrix, left_cluster, right_cluster)
+                candidate_key = (left_cluster, right_cluster)
+                if candidate_score > best_score + 1e-9:
+                    best_pair = (left_index, right_index)
+                    best_score = candidate_score
+                    best_key = candidate_key
+                    continue
+                if abs(candidate_score - best_score) <= 1e-9 and best_key is not None and candidate_key < best_key:
+                    best_pair = (left_index, right_index)
+                    best_key = candidate_key
+
+        if best_pair is None:
+            raise KittyThemeError("failed to merge semantic project clusters")
+
+        left_index, right_index = best_pair
+        merged_cluster = tuple(sorted((*clusters[left_index], *clusters[right_index])))
+        clusters.pop(right_index)
+        clusters.pop(left_index)
+        clusters.append(merged_cluster)
+        clusters.sort()
+
+    cluster_indexes = [0] * similarity_matrix.shape[0]
+    for merged_index, cluster in enumerate(sorted(clusters)):
+        for member_index in cluster:
+            cluster_indexes[member_index] = merged_index
+    return cluster_indexes
+
+
+def average_cluster_similarity(
+    similarity_matrix: FloatArray, left_cluster: tuple[int, ...], right_cluster: tuple[int, ...]
+) -> float:
+    total_similarity = 0.0
+    pair_count = 0
+    for left_index in left_cluster:
+        for right_index in right_cluster:
+            total_similarity += float(similarity_matrix[left_index, right_index])
+            pair_count += 1
+    return total_similarity / pair_count
+
+
+def silhouette_score(similarity_matrix: FloatArray, cluster_indexes: list[int]) -> float:
+    cluster_members = group_cluster_members(cluster_indexes)
+    if len(cluster_members) <= 1:
+        return 0.0
+
+    distance_matrix = 1.0 - similarity_matrix
+    scores: list[float] = []
+    for project_index, cluster_index in enumerate(cluster_indexes):
+        own_members = cluster_members[cluster_index]
+        if len(own_members) > 1:
+            own_distance = sum(
+                float(distance_matrix[project_index, member])
+                for member in own_members
+                if member != project_index
+            ) / (len(own_members) - 1)
+        else:
+            own_distance = 0.0
+
+        nearest_distance = min(
+            sum(float(distance_matrix[project_index, member]) for member in members) / len(members)
+            for candidate_cluster, members in cluster_members.items()
+            if candidate_cluster != cluster_index
+        )
+        denominator = max(own_distance, nearest_distance)
+        if denominator <= 1e-12:
+            scores.append(0.0)
+            continue
+        scores.append((nearest_distance - own_distance) / denominator)
+
+    return sum(scores) / len(scores)
+
+
+def group_cluster_members(cluster_indexes: list[int]) -> dict[int, tuple[int, ...]]:
+    grouped_members: dict[int, list[int]] = {}
+    for project_index, cluster_index in enumerate(cluster_indexes):
+        grouped_members.setdefault(cluster_index, []).append(project_index)
+    return {cluster_index: tuple(members) for cluster_index, members in sorted(grouped_members.items())}
+
+
+def select_cluster_terms(
+    semantic_space: SemanticSpace, cluster_members: dict[int, tuple[int, ...]]
+) -> dict[int, tuple[str, ...]]:
+    cluster_terms: dict[int, tuple[str, ...]] = {}
+    tfidf_matrix = semantic_space.tfidf_matrix
+    all_indexes = set(range(tfidf_matrix.shape[0]))
+    for cluster_index, members in cluster_members.items():
+        member_slice = tfidf_matrix[list(members)]
+        cluster_mean = np.mean(member_slice, axis=0)
+        non_member_indexes = sorted(all_indexes.difference(members))
+        if non_member_indexes:
+            other_mean = np.mean(tfidf_matrix[non_member_indexes], axis=0)
+            term_scores = cluster_mean - other_mean
+        else:
+            term_scores = cluster_mean
+
+        ranked_indexes = np.argsort(-term_scores, kind="stable")
+        selected_terms = tuple(
+            semantic_space.vocabulary[term_index]
+            for term_index in ranked_indexes
+            if term_scores[term_index] > 0.0
+        )[:SEMANTIC_CLUSTER_LABEL_TERMS]
+        if selected_terms:
+            cluster_terms[cluster_index] = selected_terms
+            continue
+
+        fallback_indexes = np.argsort(-cluster_mean, kind="stable")
+        cluster_terms[cluster_index] = tuple(
+            semantic_space.vocabulary[term_index] for term_index in fallback_indexes[:SEMANTIC_CLUSTER_LABEL_TERMS]
+        )
+    return cluster_terms
+
+
+def build_cluster_labels(cluster_terms_by_index: dict[int, tuple[str, ...]]) -> dict[int, str]:
+    label_occurrences: dict[str, int] = {}
+    cluster_labels: dict[int, str] = {}
+    for cluster_index, cluster_terms in sorted(cluster_terms_by_index.items()):
+        base_label = "-".join(cluster_terms[:2]) if cluster_terms else f"cluster-{cluster_index:04d}"
+        occurrence_count = label_occurrences.get(base_label, 0)
+        label_occurrences[base_label] = occurrence_count + 1
+        if occurrence_count == 0:
+            cluster_labels[cluster_index] = base_label
+            continue
+        cluster_labels[cluster_index] = f"{base_label}-{occurrence_count + 1}"
+    return cluster_labels
+
+
+def compute_project_confidences(
+    semantic_space: SemanticSpace, cluster_indexes: list[int], cluster_members: dict[int, tuple[int, ...]]
+) -> dict[Path, float]:
+    normalized_embeddings = normalize_rows(semantic_space.embeddings)
+    cluster_centroids = {
+        cluster_index: normalize_rows(np.mean(normalized_embeddings[list(members)], axis=0, keepdims=True))[0]
+        for cluster_index, members in cluster_members.items()
+    }
+    project_confidences: dict[Path, float] = {}
+
+    for project_index, project_root in enumerate(semantic_space.project_roots):
+        cluster_index = cluster_indexes[project_index]
+        own_members = cluster_members[cluster_index]
+        own_centroid_similarity = cosine_similarity_to_vector(
+            normalized_embeddings[project_index], cluster_centroids[cluster_index]
+        )
+        competing_centroid_similarity = max(
+            (
+                cosine_similarity_to_vector(normalized_embeddings[project_index], cluster_centroid)
+                for candidate_cluster, cluster_centroid in cluster_centroids.items()
+                if candidate_cluster != cluster_index
+            ),
+            default=0.0,
+        )
+        if len(own_members) > 1:
+            peer_similarity = sum(
+                float(semantic_space.similarity_matrix[project_index, member])
+                for member in own_members
+                if member != project_index
+            ) / (len(own_members) - 1)
+        else:
+            peer_similarity = 0.0
+
+        margin = max(0.0, own_centroid_similarity - competing_centroid_similarity)
+        confidence = min(1.0, 0.6 * margin + 0.4 * max(0.0, peer_similarity))
+        if len(own_members) == 1:
+            confidence = min(confidence, SEMANTIC_SINGLETON_CONFIDENCE_CAP)
+        project_confidences[project_root] = round(confidence, 6)
+
+    return project_confidences
+
+
+def cosine_similarity_to_vector(left_vector: FloatArray, right_vector: FloatArray) -> float:
+    return float(np.clip(np.dot(left_vector, right_vector), -1.0, 1.0))
+
+
+def low_confidence_project_roots(
+    clustered_space: ClusteredSemanticSpace, threshold: float = SEMANTIC_LOW_CONFIDENCE_THRESHOLD
+) -> list[Path]:
+    return [
+        project_root
+        for project_root in clustered_space.project_labels
+        if clustered_space.project_confidences[project_root] < threshold
+    ]
+
+
 def sample_code_sections(
     project_root: Path,
     *,
@@ -551,7 +932,7 @@ def build_semantic_cache(
         SemanticProjectInput(project_root=project_root, corpus=build_project_corpus(project_root))
         for project_root in project_roots
     ]
-    semantic_backend = backend if backend is not None else DeterministicPlaceholderBackend()
+    semantic_backend = backend if backend is not None else TfidfSvdSemanticBackend()
     return SemanticThemeCache(
         version=SEMANTIC_CACHE_VERSION,
         backend=semantic_backend.backend_name,
