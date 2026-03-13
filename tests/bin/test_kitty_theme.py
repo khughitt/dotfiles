@@ -41,6 +41,42 @@ def run_kitty_theme(argv: list[str], monkeypatch: pytest.MonkeyPatch) -> tuple[i
     return exit_code, stdout.getvalue(), stderr.getvalue()
 
 
+def write_valid_theme(theme_path: Path, background: str, foreground: str) -> None:
+    selection_background = "#303030" if background == "#101010" else "#dddddd"
+    selection_foreground = "#ffffff" if foreground != "#101010" else "#000000"
+    cursor = foreground
+    ansi_values = [
+        "#000000",
+        "#aa0000",
+        "#00aa00",
+        "#aa5500",
+        "#0000aa",
+        "#aa00aa",
+        "#00aaaa",
+        "#aaaaaa",
+        "#555555",
+        "#ff5555",
+        "#55ff55",
+        "#ffff55",
+        "#5555ff",
+        "#ff55ff",
+        "#55ffff",
+        "#ffffff",
+    ]
+    if background != "#101010":
+        ansi_values = list(reversed(ansi_values))
+
+    lines = [
+        f"background {background}",
+        f"foreground {foreground}",
+        f"selection_background {selection_background}",
+        f"selection_foreground {selection_foreground}",
+        f"cursor {cursor}",
+    ]
+    lines.extend(f"color{index} {value}" for index, value in enumerate(ansi_values))
+    theme_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def build_semantic_fixture_inputs(
     tmp_path: Path, semantic_project_input: type[Any]
 ) -> tuple[list[Any], dict[str, Path]]:
@@ -446,8 +482,14 @@ def test_recompute_accepts_configured_cluster_count(tmp_path: Path, monkeypatch:
 
     themes_dir = tmp_path / "kitty" / "themes"
     themes_dir.mkdir()
-    for theme_name in ("Aurora.conf", "Nordic.conf", "Dawn.conf", "Ember.conf", "Forest.conf"):
-        (themes_dir / theme_name).write_text(f"# {theme_name}\n", encoding="utf-8")
+    for theme_name, colors in {
+        "Aurora.conf": ("#101010", "#f0f0f0"),
+        "Nordic.conf": ("#101010", "#e6f0ff"),
+        "Dawn.conf": ("#f5f5f5", "#121212"),
+        "Ember.conf": ("#181818", "#f4d7a1"),
+        "Forest.conf": ("#0f1a12", "#d6f5de"),
+    }.items():
+        write_valid_theme(themes_dir / theme_name, background=colors[0], foreground=colors[1])
 
     cache_path = tmp_path / "kitty" / "semantic-themes.json"
 
@@ -493,8 +535,8 @@ def test_recompute_rejects_configured_cluster_count_larger_than_registry_size(
 
     themes_dir = tmp_path / "kitty" / "themes"
     themes_dir.mkdir()
-    (themes_dir / "Aurora.conf").write_text("# aurora\n", encoding="utf-8")
-    (themes_dir / "Nordic.conf").write_text("# nordic\n", encoding="utf-8")
+    write_valid_theme(themes_dir / "Aurora.conf", background="#101010", foreground="#f0f0f0")
+    write_valid_theme(themes_dir / "Nordic.conf", background="#f5f5f5", foreground="#121212")
 
     cache_path = tmp_path / "kitty" / "semantic-themes.json"
 
@@ -671,8 +713,8 @@ def test_recompute_writes_semantic_cache(tmp_path: Path, monkeypatch: pytest.Mon
 
     themes_dir = tmp_path / "kitty" / "themes"
     themes_dir.mkdir()
-    (themes_dir / "Aurora.conf").write_text("# aurora\n", encoding="utf-8")
-    (themes_dir / "Nordic.conf").write_text("# nordic\n", encoding="utf-8")
+    write_valid_theme(themes_dir / "Aurora.conf", background="#101010", foreground="#f0f0f0")
+    write_valid_theme(themes_dir / "Nordic.conf", background="#f5f5f5", foreground="#121212")
 
     cache_path = tmp_path / "kitty" / "semantic-themes.json"
 
@@ -743,7 +785,7 @@ def test_recompute_normalizes_registry_entries_to_git_roots(tmp_path: Path, monk
 
     themes_dir = tmp_path / "kitty" / "themes"
     themes_dir.mkdir()
-    (themes_dir / "Nordic.conf").write_text("# nordic\n", encoding="utf-8")
+    write_valid_theme(themes_dir / "Nordic.conf", background="#101010", foreground="#f0f0f0")
 
     cache_path = tmp_path / "kitty" / "semantic-themes.json"
 
@@ -960,3 +1002,538 @@ def test_load_semantic_cache_validates_typed_contract(
 
     with pytest.raises(kitty_theme_error, match=message_pattern):
         load_semantic_cache(cache_path)
+
+
+def test_parse_kitty_theme_palette_extracts_required_colors(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    parse_kitty_theme_palette = cast(Callable[[Path], dict[str, str]], module["parse_kitty_theme_palette"])
+
+    theme_path = tmp_path / "Aurora.conf"
+    theme_path.write_text(
+        "\n".join(
+            [
+                "background #111111",
+                "foreground #eeeeee",
+                "selection_background #444444",
+                "selection_foreground #ffffff",
+                "cursor #eeeeee",
+                "color0 #000000",
+                "color1 #111111",
+                "color2 #222222",
+                "color3 #333333",
+                "color4 #444444",
+                "color5 #555555",
+                "color6 #666666",
+                "color7 #777777",
+                "color8 #888888",
+                "color9 #999999",
+                "color10 #aaaaaa",
+                "color11 #bbbbbb",
+                "color12 #cccccc",
+                "color13 #dddddd",
+                "color14 #eeeeee",
+                "color15 #ffffff",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    palette = parse_kitty_theme_palette(theme_path)
+
+    assert palette["background"] == "#111111"
+    assert palette["foreground"] == "#eeeeee"
+    assert palette["selection_background"] == "#444444"
+    assert palette["selection_foreground"] == "#ffffff"
+    assert palette["cursor"] == "#eeeeee"
+    assert palette["color0"] == "#000000"
+    assert palette["color15"] == "#ffffff"
+
+
+def test_parse_kitty_theme_palette_rejects_missing_required_keys(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    parse_kitty_theme_palette = cast(Callable[[Path], dict[str, str]], module["parse_kitty_theme_palette"])
+    kitty_theme_error = cast(type[Exception], module["KittyThemeError"])
+
+    theme_path = tmp_path / "Broken.conf"
+    theme_path.write_text(
+        "\n".join(
+            [
+                "background #111111",
+                "foreground #eeeeee",
+                "selection_background #444444",
+                "selection_foreground #ffffff",
+                "cursor #eeeeee",
+                "color0 #000000",
+                "color1 #111111",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(kitty_theme_error, match="missing required color keys"):
+        parse_kitty_theme_palette(theme_path)
+
+
+def test_palette_visual_distance_is_deterministic() -> None:
+    module = load_kitty_theme_module()
+    palette_visual_distance = cast(Callable[[dict[str, str], dict[str, str]], float], module["palette_visual_distance"])
+
+    palette_a = {
+        "background": "#111111",
+        "foreground": "#eeeeee",
+        "selection_background": "#222222",
+        "selection_foreground": "#ffffff",
+        "cursor": "#eeeeee",
+        **{f"color{index}": "#111111" for index in range(16)},
+    }
+    palette_b = {
+        "background": "#111111",
+        "foreground": "#eeeeee",
+        "selection_background": "#222222",
+        "selection_foreground": "#ffffff",
+        "cursor": "#eeeeee",
+        **{f"color{index}": "#111111" for index in range(16)},
+    }
+    palette_c = {
+        "background": "#f0f0f0",
+        "foreground": "#101010",
+        "selection_background": "#dddddd",
+        "selection_foreground": "#121212",
+        "cursor": "#101010",
+        **{f"color{index}": "#f0f0f0" for index in range(16)},
+    }
+
+    assert palette_visual_distance(palette_a, palette_b) == pytest.approx(0.0)
+    assert palette_visual_distance(palette_a, palette_c) == pytest.approx(palette_visual_distance(palette_c, palette_a))
+    assert palette_visual_distance(palette_a, palette_c) > 0.0
+
+
+def test_select_attractor_themes_prefers_diverse_readable_candidates(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    select_attractor_themes = cast(Callable[[Path, int], list[str]], module["select_attractor_themes"])
+
+    themes_dir = tmp_path / "themes"
+    themes_dir.mkdir()
+
+    (themes_dir / "Alpha.conf").write_text(
+        "\n".join(
+            [
+                "background #101010",
+                "foreground #f0f0f0",
+                "selection_background #303030",
+                "selection_foreground #ffffff",
+                "cursor #f0f0f0",
+                *[f"color{index} #{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}" for index in range(16)],
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (themes_dir / "Beta.conf").write_text(
+        "\n".join(
+            [
+                "background #111111",
+                "foreground #efefef",
+                "selection_background #2f2f2f",
+                "selection_foreground #ffffff",
+                "cursor #efefef",
+                *[f"color{index} #{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}" for index in range(16)],
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (themes_dir / "Gamma.conf").write_text(
+        "\n".join(
+            [
+                "background #f5f5f5",
+                "foreground #121212",
+                "selection_background #dddddd",
+                "selection_foreground #000000",
+                "cursor #121212",
+                *[f"color{index} #{15-index:01x}{15-index:01x}{15-index:01x}{15-index:01x}{15-index:01x}{15-index:01x}" for index in range(16)],
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    selected = select_attractor_themes(themes_dir, 2)
+
+    assert len(selected) == 2
+    assert selected[0] == "Alpha.conf"
+    assert "Gamma.conf" in selected
+
+
+def test_themes_diagnose_reports_quality_metrics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    themes_dir = tmp_path / "themes"
+    themes_dir.mkdir()
+    write_valid_theme(themes_dir / "Alpha.conf", background="#101010", foreground="#f0f0f0")
+    write_valid_theme(themes_dir / "Gamma.conf", background="#f5f5f5", foreground="#121212")
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        ["themes", "diagnose", "--themes-dir", str(themes_dir)],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Alpha.conf quality=" in stdout
+    assert "Gamma.conf quality=" in stdout
+    assert "fg=" in stdout
+    assert "cursor=" in stdout
+
+
+def build_uniform_palette(value: str) -> dict[str, str]:
+    return {
+        "background": value,
+        "foreground": value,
+        "selection_background": value,
+        "selection_foreground": value,
+        "cursor": value,
+        **{f"color{index}": value for index in range(16)},
+    }
+
+
+def test_build_transition_palettes_has_expected_step_count_and_endpoints() -> None:
+    module = load_kitty_theme_module()
+    build_transition_palettes = cast(
+        Callable[[dict[str, str], dict[str, str], int], list[dict[str, str]]],
+        module["build_transition_palettes"],
+    )
+
+    start_palette = build_uniform_palette("#111111")
+    end_palette = build_uniform_palette("#eeeeee")
+
+    transition_palettes = build_transition_palettes(start_palette, end_palette, 5)
+
+    assert len(transition_palettes) == 5
+    assert transition_palettes[0] == start_palette
+    assert transition_palettes[-1] == end_palette
+
+
+def test_should_skip_transition_when_delta_is_negligible() -> None:
+    module = load_kitty_theme_module()
+    should_skip_transition = cast(
+        Callable[[dict[str, str], dict[str, str], int], bool],
+        module["should_skip_transition"],
+    )
+
+    start_palette = build_uniform_palette("#111111")
+    almost_same_palette = build_uniform_palette("#121212")
+    very_different_palette = build_uniform_palette("#f0f0f0")
+
+    assert should_skip_transition(start_palette, almost_same_palette, 4)
+    assert not should_skip_transition(start_palette, very_different_palette, 4)
+
+
+def test_temporary_override_clears_on_project_change(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    load_runtime_state = cast(Callable[[Path], Any], module["load_runtime_state"])
+    set_window_override = cast(Callable[[Any, str, str, str, Path | None], None], module["set_window_override"])
+    write_runtime_state = cast(Callable[[Path, Any], None], module["write_runtime_state"])
+    resolve_effective_theme_for_window = cast(
+        Callable[[Path, Path, Path, str, str], tuple[str, str | None, str | None]],
+        module["resolve_effective_theme_for_window"],
+    )
+
+    project_a = tmp_path / "workspace" / "project-a"
+    project_a.mkdir(parents=True)
+    (project_a / ".git").mkdir()
+    project_b = tmp_path / "workspace" / "project-b"
+    project_b.mkdir(parents=True)
+    (project_b / ".git").mkdir()
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+    cache_path.parent.mkdir()
+    cache_path.write_text(
+        json.dumps(
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 2,
+                "projects": [
+                    {
+                        "cluster_id": "cli-shell",
+                        "confidence": 0.95,
+                        "project_root": str(project_a.resolve()),
+                        "target_theme": "Nordic.conf",
+                    },
+                    {
+                        "cluster_id": "data-warehouse",
+                        "confidence": 0.91,
+                        "project_root": str(project_b.resolve()),
+                        "target_theme": "Aurora.conf",
+                    },
+                ],
+                "version": 1,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    state_path = tmp_path / "kitty" / "runtime-state.json"
+    state = load_runtime_state(state_path)
+    set_window_override(state, "42", "manual/solarized-light.conf", "temporary", project_a.resolve())
+    write_runtime_state(state_path, state)
+
+    first_theme, first_override_mode, _ = resolve_effective_theme_for_window(
+        project_a,
+        cache_path,
+        state_path,
+        "42",
+        "noctalia.conf",
+    )
+    assert first_theme == "manual/solarized-light.conf"
+    assert first_override_mode == "temporary"
+
+    second_theme, second_override_mode, _ = resolve_effective_theme_for_window(
+        project_b,
+        cache_path,
+        state_path,
+        "42",
+        "noctalia.conf",
+    )
+    assert second_theme == "Aurora.conf"
+    assert second_override_mode is None
+
+
+def test_sticky_override_persists_until_reset(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    clear_window_override = cast(Callable[[Any, str], None], module["clear_window_override"])
+    load_runtime_state = cast(Callable[[Path], Any], module["load_runtime_state"])
+    resolve_effective_theme_for_window = cast(
+        Callable[[Path, Path, Path, str, str], tuple[str, str | None, str | None]],
+        module["resolve_effective_theme_for_window"],
+    )
+    set_window_override = cast(Callable[[Any, str, str, str, Path | None], None], module["set_window_override"])
+    write_runtime_state = cast(Callable[[Path, Any], None], module["write_runtime_state"])
+
+    project_a = tmp_path / "workspace" / "project-a"
+    project_a.mkdir(parents=True)
+    (project_a / ".git").mkdir()
+    project_b = tmp_path / "workspace" / "project-b"
+    project_b.mkdir(parents=True)
+    (project_b / ".git").mkdir()
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+    cache_path.parent.mkdir()
+    cache_path.write_text(
+        json.dumps(
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 2,
+                "projects": [
+                    {
+                        "cluster_id": "cli-shell",
+                        "confidence": 0.95,
+                        "project_root": str(project_a.resolve()),
+                        "target_theme": "Nordic.conf",
+                    },
+                    {
+                        "cluster_id": "data-warehouse",
+                        "confidence": 0.91,
+                        "project_root": str(project_b.resolve()),
+                        "target_theme": "Aurora.conf",
+                    },
+                ],
+                "version": 1,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    state_path = tmp_path / "kitty" / "runtime-state.json"
+    state = load_runtime_state(state_path)
+    set_window_override(state, "42", "manual/catppuccin-latte.conf", "sticky", project_a.resolve())
+    write_runtime_state(state_path, state)
+
+    theme_before_reset, override_mode_before_reset, _ = resolve_effective_theme_for_window(
+        project_b,
+        cache_path,
+        state_path,
+        "42",
+        "noctalia.conf",
+    )
+    assert theme_before_reset == "manual/catppuccin-latte.conf"
+    assert override_mode_before_reset == "sticky"
+
+    state_after_read = load_runtime_state(state_path)
+    clear_window_override(state_after_read, "42")
+    write_runtime_state(state_path, state_after_read)
+
+    theme_after_reset, override_mode_after_reset, _ = resolve_effective_theme_for_window(
+        project_b,
+        cache_path,
+        state_path,
+        "42",
+        "noctalia.conf",
+    )
+    assert theme_after_reset == "Aurora.conf"
+    assert override_mode_after_reset is None
+
+
+def test_resolve_semantic_theme_uses_neutral_fallback_for_low_confidence_and_missing_projects(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    resolve_semantic_theme_with_fallback = cast(
+        Callable[[Path, Path, str, float], tuple[str, str | None]],
+        module["resolve_semantic_theme_with_fallback"],
+    )
+
+    project_a = tmp_path / "workspace" / "project-a"
+    project_a.mkdir(parents=True)
+    (project_a / ".git").mkdir()
+    project_b = tmp_path / "workspace" / "project-b"
+    project_b.mkdir(parents=True)
+    (project_b / ".git").mkdir()
+    project_c = tmp_path / "workspace" / "project-c"
+    project_c.mkdir(parents=True)
+    (project_c / ".git").mkdir()
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+    cache_path.parent.mkdir()
+    cache_path.write_text(
+        json.dumps(
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 2,
+                "projects": [
+                    {
+                        "cluster_id": "cli-shell",
+                        "confidence": 0.95,
+                        "project_root": str(project_a.resolve()),
+                        "target_theme": "Nordic.conf",
+                    },
+                    {
+                        "cluster_id": "data-warehouse",
+                        "confidence": 0.11,
+                        "project_root": str(project_b.resolve()),
+                        "target_theme": "Aurora.conf",
+                    },
+                ],
+                "version": 1,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    resolved_high_confidence, _ = resolve_semantic_theme_with_fallback(
+        project_a,
+        cache_path,
+        "noctalia.conf",
+        0.5,
+    )
+    assert resolved_high_confidence == "Nordic.conf"
+
+    resolved_low_confidence, _ = resolve_semantic_theme_with_fallback(
+        project_b,
+        cache_path,
+        "noctalia.conf",
+        0.5,
+    )
+    assert resolved_low_confidence == "noctalia.conf"
+
+    resolved_missing, _ = resolve_semantic_theme_with_fallback(
+        project_c,
+        cache_path,
+        "noctalia.conf",
+        0.5,
+    )
+    assert resolved_missing == "noctalia.conf"
+
+
+def test_shell_runtime_delegates_to_kitty_theme_cli() -> None:
+    shell_script = Path(__file__).resolve().parents[2] / "shell" / "kitty"
+    shell_text = shell_script.read_text(encoding="utf-8")
+
+    assert "_KITTY_THEME_CLI" in shell_text
+    assert '"$_KITTY_THEME_CLI" apply' in shell_text
+    assert "md5sum" not in shell_text
+    assert "set-colors" not in shell_text
+
+
+def test_kitty_conf_manual_mappings_flow_through_override_commands() -> None:
+    kitty_conf = Path(__file__).resolve().parents[2] / "kitty" / "kitty.conf"
+    kitty_text = kitty_conf.read_text(encoding="utf-8")
+
+    assert "kitty-theme override set" in kitty_text
+    assert "kitty-theme override reset" in kitty_text
+    assert "remote_control set-colors" not in kitty_text
+
+
+def test_explain_command_reports_effective_assignment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    module = load_kitty_theme_module()
+    load_runtime_state = cast(Callable[[Path], Any], module["load_runtime_state"])
+    set_window_override = cast(Callable[[Any, str, str, str, Path | None], None], module["set_window_override"])
+    write_runtime_state = cast(Callable[[Path, Any], None], module["write_runtime_state"])
+
+    project_root = tmp_path / "workspace" / "project-a"
+    project_root.mkdir(parents=True)
+    (project_root / ".git").mkdir()
+    nested_path = project_root / "src"
+    nested_path.mkdir()
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+    cache_path.parent.mkdir()
+    cache_path.write_text(
+        json.dumps(
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 1,
+                "projects": [
+                    {
+                        "cluster_id": "sql-dbt-warehouse",
+                        "confidence": 0.93,
+                        "project_root": str(project_root.resolve()),
+                        "target_theme": "Nordic.conf",
+                    }
+                ],
+                "version": 1,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    state_path = tmp_path / "kitty" / "runtime-state.json"
+    state = load_runtime_state(state_path)
+    set_window_override(state, "42", "manual/solarized-light.conf", "sticky", project_root.resolve())
+    write_runtime_state(state_path, state)
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "explain",
+            str(nested_path),
+            "--window-id",
+            "42",
+            "--cache",
+            str(cache_path),
+            "--state",
+            str(state_path),
+            "--fallback-theme",
+            "noctalia.conf",
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert f"project_root: {project_root.resolve()}" in stdout
+    assert "cluster_id: sql-dbt-warehouse" in stdout
+    assert "confidence: 0.930000" in stdout
+    assert "top_terms: sql, dbt, warehouse" in stdout
+    assert "assigned_theme: Nordic.conf" in stdout
+    assert "override_mode: sticky" in stdout
+    assert "effective_theme: manual/solarized-light.conf" in stdout
