@@ -183,6 +183,28 @@ version = "8.1.0"
     assert "render_theme" in corpus
 
 
+def test_discover_doc_files_uses_preferred_readme_and_doc_priority(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    discover_doc_files = cast(Callable[[Path], list[Path]], module["discover_doc_files"])
+
+    project_root = tmp_path / "docs-project"
+    project_root.mkdir()
+    (project_root / "README").write_text("fallback readme\n", encoding="utf-8")
+    (project_root / "README.md").write_text("preferred readme\n", encoding="utf-8")
+    (project_root / "docs").mkdir()
+    (project_root / "docs" / "guide.md").write_text("guide\n", encoding="utf-8")
+    (project_root / "docs" / "index.md").write_text("index\n", encoding="utf-8")
+    (project_root / "docs" / "reference.md").write_text("reference\n", encoding="utf-8")
+
+    assert discover_doc_files(project_root) == [
+        project_root / "README.md",
+        project_root / "README",
+        project_root / "docs" / "index.md",
+        project_root / "docs" / "guide.md",
+        project_root / "docs" / "reference.md",
+    ]
+
+
 def test_build_project_corpus_respects_code_file_count_and_byte_budget(tmp_path: Path) -> None:
     module = load_kitty_theme_module()
     build_project_corpus = cast(Callable[..., str], module["build_project_corpus"])
