@@ -481,6 +481,51 @@ def test_recompute_writes_semantic_cache(tmp_path: Path, monkeypatch: pytest.Mon
     assert cache_path.read_text(encoding="utf-8") == expected_text
 
 
+def test_recompute_normalizes_registry_entries_to_git_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project_root = tmp_path / "workspace" / "service"
+    nested_path = project_root / "src" / "package"
+    nested_path.mkdir(parents=True)
+    (project_root / ".git").mkdir()
+    (project_root / "README.md").write_text("Service overview\n", encoding="utf-8")
+
+    registry = tmp_path / "kitty" / "semantic-projects.txt"
+    registry.parent.mkdir()
+    registry.write_text(f"{nested_path}\n", encoding="utf-8")
+
+    themes_dir = tmp_path / "kitty" / "themes"
+    themes_dir.mkdir()
+    (themes_dir / "Nordic.conf").write_text("# nordic\n", encoding="utf-8")
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "recompute",
+            "--registry",
+            str(registry),
+            "--themes-dir",
+            str(themes_dir),
+            "--cache",
+            str(cache_path),
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert stdout == f"wrote semantic cache for 1 project root to {cache_path.resolve()}\n"
+
+    cache_data = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert cache_data["projects"] == [
+        {
+            "cluster_id": "cluster-0000",
+            "confidence": 1.0,
+            "project_root": str(project_root.resolve()),
+            "target_theme": "Nordic.conf",
+        }
+    ]
+
+
 def test_resolve_prints_target_theme_for_git_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     project_root = tmp_path / "workspace" / "service"
     project_root.mkdir(parents=True)
@@ -521,6 +566,44 @@ def test_resolve_prints_target_theme_for_git_root(tmp_path: Path, monkeypatch: p
     assert stdout == "Nordic.conf\n"
 
 
+@pytest.mark.parametrize("metadata_name", ["pyproject.toml", "package.json", "uv.lock"])
+def test_recompute_reports_clean_metadata_parse_failures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, metadata_name: str
+) -> None:
+    project_root = tmp_path / "workspace" / "broken-project"
+    project_root.mkdir(parents=True)
+    (project_root / ".git").mkdir()
+    (project_root / "README.md").write_text("Broken project\n", encoding="utf-8")
+    (project_root / metadata_name).write_text("{not valid\n", encoding="utf-8")
+
+    registry = tmp_path / "kitty" / "semantic-projects.txt"
+    registry.parent.mkdir()
+    registry.write_text(f"{project_root}\n", encoding="utf-8")
+
+    themes_dir = tmp_path / "kitty" / "themes"
+    themes_dir.mkdir()
+    (themes_dir / "Nordic.conf").write_text("# nordic\n", encoding="utf-8")
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "recompute",
+            "--registry",
+            str(registry),
+            "--themes-dir",
+            str(themes_dir),
+            "--cache",
+            str(cache_path),
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == f"failed to parse metadata file: {(project_root / metadata_name).resolve()}\n"
+
+
 def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) -> None:
     module = load_kitty_theme_module()
     load_semantic_cache = cast(Callable[[Path], Any], module["load_semantic_cache"])
@@ -534,3 +617,52 @@ def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) 
     malformed_cache.write_text('{"version": 1, "projects": [}', encoding="utf-8")
     with pytest.raises(kitty_theme_error, match="semantic cache is malformed"):
         load_semantic_cache(malformed_cache)
+
+
+@pytest.mark.parametrize(
+    ("cache_payload", "message_pattern"),
+    [
+        (
+            {"backend": "deterministic-placeholder-v1", "projects": [], "version": 2},
+            "semantic cache has unsupported version",
+        ),
+        ({"backend": 123, "projects": [], "version": 1}, "semantic cache is malformed"),
+        ({"backend": "other-backend", "projects": [], "version": 1}, "semantic cache has unsupported backend"),
+        ({"backend": "deterministic-placeholder-v1", "projects": {}, "version": 1}, "semantic cache is malformed"),
+        (
+            {
+                "backend": "deterministic-placeholder-v1",
+                "projects": [{"cluster_id": "cluster-0001", "confidence": 1.0, "project_root": "/tmp/example"}],
+                "version": 1,
+            },
+            "semantic cache is malformed",
+        ),
+        (
+            {
+                "backend": "deterministic-placeholder-v1",
+                "projects": [
+                    {
+                        "cluster_id": "cluster-0001",
+                        "confidence": 1.0,
+                        "project_root": "relative/path",
+                        "target_theme": "Nordic.conf",
+                    }
+                ],
+                "version": 1,
+            },
+            "semantic cache is malformed",
+        ),
+    ],
+)
+def test_load_semantic_cache_validates_typed_contract(
+    tmp_path: Path, cache_payload: dict[str, object], message_pattern: str
+) -> None:
+    module = load_kitty_theme_module()
+    load_semantic_cache = cast(Callable[[Path], Any], module["load_semantic_cache"])
+    kitty_theme_error = cast(type[Exception], module["KittyThemeError"])
+
+    cache_path = tmp_path / "semantic-themes.json"
+    cache_path.write_text(json.dumps(cache_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(kitty_theme_error, match=message_pattern):
+        load_semantic_cache(cache_path)
