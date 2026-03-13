@@ -391,6 +391,20 @@ def test_low_confidence_projects_are_identified_for_fixture_projects(tmp_path: P
     assert low_confidence_project_roots(cluster_result) == [project_roots["hybrid-workbench"]]
 
 
+def test_cluster_semantic_space_rejects_cluster_count_larger_than_project_count(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
+    build_semantic_space = cast(Callable[[list[Any]], Any], module["build_semantic_space"])
+    cluster_semantic_space = cast(Callable[..., Any], module["cluster_semantic_space"])
+    kitty_theme_error = cast(type[Exception], module["KittyThemeError"])
+
+    project_inputs, _ = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
+    small_fixture_inputs = project_inputs[:2]
+
+    with pytest.raises(kitty_theme_error, match="semantic cluster count exceeds project count: requested 3 for 2 projects"):
+        cluster_semantic_space(build_semantic_space(small_fixture_inputs), cluster_count=3)
+
+
 def test_recompute_accepts_configured_cluster_count(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     fixture_names = [
         "cli-terminal-a",
@@ -905,6 +919,28 @@ def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) 
                         "project_root": "relative/path",
                         "target_theme": "Nordic.conf",
                     }
+                ],
+                "version": 1,
+            },
+            "semantic cache is malformed",
+        ),
+        (
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 2,
+                "projects": [
+                    {
+                        "cluster_id": "cluster-0001",
+                        "confidence": 1.0,
+                        "project_root": "/tmp/example-a",
+                        "target_theme": "Nordic.conf",
+                    },
+                    {
+                        "cluster_id": "cluster-0001",
+                        "confidence": 0.9,
+                        "project_root": "/tmp/example-b",
+                        "target_theme": "Aurora.conf",
+                    },
                 ],
                 "version": 1,
             },
