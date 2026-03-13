@@ -41,9 +41,14 @@ def parse_project_registry(registry_path: Path) -> list[Path]:
     if not normalized_registry_path.is_file():
         raise ProjectRegistryError(f"project registry not found: {normalized_registry_path}")
 
+    try:
+        registry_lines = normalized_registry_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ProjectRegistryError(f"failed to read project registry: {normalized_registry_path}") from exc
+
     project_roots: list[Path] = []
     seen_roots: set[Path] = set()
-    for raw_line in normalized_registry_path.read_text(encoding="utf-8").splitlines():
+    for raw_line in registry_lines:
         stripped_line = raw_line.strip()
         if not stripped_line or stripped_line.startswith("#"):
             continue
