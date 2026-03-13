@@ -13,6 +13,7 @@ import pytest
 
 
 SEMANTIC_BACKEND = "tfidf-svd-agglomerative-v1"
+SEMANTIC_CLUSTER_COUNT = 5
 
 
 def kitty_theme_script_path() -> Path:
@@ -342,14 +343,14 @@ def test_fixture_projects_cluster_into_deterministic_semantic_groups(tmp_path: P
     module = load_kitty_theme_module()
     semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
     build_semantic_space = cast(Callable[[list[Any]], Any], module["build_semantic_space"])
-    cluster_semantic_space = cast(Callable[[Any], Any], module["cluster_semantic_space"])
+    cluster_semantic_space = cast(Callable[..., Any], module["cluster_semantic_space"])
 
     project_inputs, _ = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
 
-    first_result = cluster_semantic_space(build_semantic_space(project_inputs))
-    second_result = cluster_semantic_space(build_semantic_space(project_inputs))
+    first_result = cluster_semantic_space(build_semantic_space(project_inputs), cluster_count=SEMANTIC_CLUSTER_COUNT)
+    second_result = cluster_semantic_space(build_semantic_space(project_inputs), cluster_count=SEMANTIC_CLUSTER_COUNT)
 
-    assert 4 <= len(first_result.cluster_terms) <= 6
+    assert len(first_result.cluster_terms) == SEMANTIC_CLUSTER_COUNT
     assert list(first_result.cluster_terms) == list(second_result.cluster_terms)
     assert first_result.project_labels == second_result.project_labels
 
@@ -358,10 +359,10 @@ def test_cluster_terms_are_discriminative_for_fixture_projects(tmp_path: Path) -
     module = load_kitty_theme_module()
     semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
     build_semantic_space = cast(Callable[[list[Any]], Any], module["build_semantic_space"])
-    cluster_semantic_space = cast(Callable[[Any], Any], module["cluster_semantic_space"])
+    cluster_semantic_space = cast(Callable[..., Any], module["cluster_semantic_space"])
 
     project_inputs, project_roots = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
-    cluster_result = cluster_semantic_space(build_semantic_space(project_inputs))
+    cluster_result = cluster_semantic_space(build_semantic_space(project_inputs), cluster_count=SEMANTIC_CLUSTER_COUNT)
 
     labels_by_project = {
         project_root: cluster_result.project_labels[project_root]
@@ -381,13 +382,81 @@ def test_low_confidence_projects_are_identified_for_fixture_projects(tmp_path: P
     module = load_kitty_theme_module()
     semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
     build_semantic_space = cast(Callable[[list[Any]], Any], module["build_semantic_space"])
-    cluster_semantic_space = cast(Callable[[Any], Any], module["cluster_semantic_space"])
+    cluster_semantic_space = cast(Callable[..., Any], module["cluster_semantic_space"])
     low_confidence_project_roots = cast(Callable[[Any], list[Path]], module["low_confidence_project_roots"])
 
     project_inputs, project_roots = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
-    cluster_result = cluster_semantic_space(build_semantic_space(project_inputs))
+    cluster_result = cluster_semantic_space(build_semantic_space(project_inputs), cluster_count=SEMANTIC_CLUSTER_COUNT)
 
     assert low_confidence_project_roots(cluster_result) == [project_roots["hybrid-workbench"]]
+
+
+def test_recompute_accepts_configured_cluster_count(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixture_names = [
+        "cli-terminal-a",
+        "cli-terminal-b",
+        "react-ui-a",
+        "react-ui-b",
+        "data-analytics-a",
+        "data-analytics-b",
+        "nix-config-a",
+        "nix-config-b",
+        "graphics-render-a",
+        "graphics-render-b",
+        "hybrid-workbench",
+    ]
+    fixture_corpora = {
+        "cli-terminal-a": "terminal command palette shell prompt ansi console hotkey tmux cli terminal shell keybinding",
+        "cli-terminal-b": "cli console prompt shell terminal escape sequence hotkey command pane terminal shell",
+        "react-ui-a": "react component browser hooks jsx route frontend ui vite dashboard component react",
+        "react-ui-b": "frontend react browser state component jsx router layout ui design react component",
+        "data-analytics-a": "sql warehouse dbt analytics metrics model query dashboard pipeline sql dbt warehouse",
+        "data-analytics-b": "analytics sql warehouse transformation metric dashboard dbt semantic model query sql",
+        "nix-config-a": "nix flake derivation home-manager module package shell declarative nix flake module",
+        "nix-config-b": "flake nix package overlay shell module declarative profile home-manager nix flake",
+        "graphics-render-a": "shader vulkan opengl texture fragment vertex render gpu shader texture pipeline",
+        "graphics-render-b": "opengl shader rendering texture gpu framebuffer vertex fragment shader render vulkan",
+        "hybrid-workbench": "terminal command palette react component browser console dashboard workflow shell component",
+    }
+    project_roots: list[Path] = []
+    for fixture_name in fixture_names:
+        project_root = tmp_path / "projects" / fixture_name
+        project_root.mkdir(parents=True)
+        (project_root / ".git").mkdir()
+        (project_root / "README.md").write_text(fixture_corpora[fixture_name] + "\n", encoding="utf-8")
+        project_roots.append(project_root.resolve())
+
+    registry = tmp_path / "kitty" / "semantic-projects.txt"
+    registry.parent.mkdir()
+    registry.write_text("\n".join(str(project_root) for project_root in project_roots) + "\n", encoding="utf-8")
+
+    themes_dir = tmp_path / "kitty" / "themes"
+    themes_dir.mkdir()
+    for theme_name in ("Aurora.conf", "Nordic.conf", "Dawn.conf", "Ember.conf", "Forest.conf"):
+        (themes_dir / theme_name).write_text(f"# {theme_name}\n", encoding="utf-8")
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "recompute",
+            "--registry",
+            str(registry),
+            "--themes-dir",
+            str(themes_dir),
+            "--cache",
+            str(cache_path),
+            "--cluster-count",
+            str(SEMANTIC_CLUSTER_COUNT),
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert stdout == f"wrote semantic cache for {len(project_roots)} project roots to {cache_path.resolve()}\n"
+    cache_data = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert len({project["cluster_id"] for project in cache_data["projects"]}) == SEMANTIC_CLUSTER_COUNT
 
 
 def test_summarize_uv_lock_metadata_caps_package_lines_and_reports_totals(tmp_path: Path) -> None:
