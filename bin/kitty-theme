@@ -5,6 +5,7 @@ import json
 import re
 import tomllib
 from dataclasses import dataclass
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Protocol
 
@@ -65,6 +66,30 @@ class KittyThemeError(RuntimeError):
 
 class ProjectRegistryError(KittyThemeError):
     """Raised when the project registry is invalid."""
+
+
+def read_metadata_text(metadata_path: Path) -> str:
+    try:
+        return metadata_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise KittyThemeError(f"failed to parse metadata file: {metadata_path.resolve(strict=False)}") from exc
+
+
+def parse_toml_metadata(metadata_path: Path) -> dict[str, object]:
+    try:
+        parsed = tomllib.loads(read_metadata_text(metadata_path))
+    except tomllib.TOMLDecodeError as exc:
+        raise KittyThemeError(f"failed to parse metadata file: {metadata_path.resolve(strict=False)}") from exc
+    if not isinstance(parsed, dict):
+        raise KittyThemeError(f"failed to parse metadata file: {metadata_path.resolve(strict=False)}")
+    return parsed
+
+
+def parse_json_metadata(metadata_path: Path) -> object:
+    try:
+        return json.loads(read_metadata_text(metadata_path))
+    except JSONDecodeError as exc:
+        raise KittyThemeError(f"failed to parse metadata file: {metadata_path.resolve(strict=False)}") from exc
 
 
 def default_registry_path() -> Path:
@@ -330,7 +355,7 @@ def summarize_metadata(metadata_path: Path) -> list[str]:
 
 
 def summarize_pyproject_metadata(metadata_path: Path) -> list[str]:
-    data = tomllib.loads(metadata_path.read_text(encoding="utf-8"))
+    data = parse_toml_metadata(metadata_path)
     project_data = data.get("project", {})
     if not isinstance(project_data, dict):
         return []
@@ -348,7 +373,7 @@ def summarize_pyproject_metadata(metadata_path: Path) -> list[str]:
 
 
 def summarize_package_json_metadata(metadata_path: Path) -> list[str]:
-    data = json.loads(metadata_path.read_text(encoding="utf-8"))
+    data = parse_json_metadata(metadata_path)
     if not isinstance(data, dict):
         return []
 
@@ -373,7 +398,7 @@ def summarize_package_json_metadata(metadata_path: Path) -> list[str]:
 
 
 def summarize_uv_lock_metadata(metadata_path: Path) -> list[str]:
-    data = tomllib.loads(metadata_path.read_text(encoding="utf-8"))
+    data = parse_toml_metadata(metadata_path)
     packages = data.get("package", [])
     if not isinstance(packages, list):
         return []
@@ -511,8 +536,17 @@ def build_semantic_cache(
     themes_dir: Path,
     backend: SemanticAssignmentBackend | None = None,
 ) -> SemanticThemeCache:
-    project_roots = parse_project_registry(registry_path)
+    registry_project_roots = parse_project_registry(registry_path)
     theme_targets = list_semantic_theme_targets(themes_dir)
+    project_roots: list[Path] = []
+    seen_git_roots: set[Path] = set()
+    for registry_project_root in registry_project_roots:
+        git_root = find_git_root(registry_project_root)
+        if git_root in seen_git_roots:
+            continue
+        seen_git_roots.add(git_root)
+        project_roots.append(git_root)
+
     project_inputs = [
         SemanticProjectInput(project_root=project_root, corpus=build_project_corpus(project_root))
         for project_root in project_roots
@@ -552,7 +586,15 @@ def load_semantic_cache(cache_path: Path) -> SemanticThemeCache:
     version = raw_cache.get("version")
     backend = raw_cache.get("backend")
     raw_projects = raw_cache.get("projects")
-    if version != SEMANTIC_CACHE_VERSION or not isinstance(backend, str) or not isinstance(raw_projects, list):
+    if not isinstance(version, int) or isinstance(version, bool):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+    if version != SEMANTIC_CACHE_VERSION:
+        raise KittyThemeError(f"semantic cache has unsupported version: {normalized_cache_path}")
+    if not isinstance(backend, str):
+        raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
+    if backend != SEMANTIC_CACHE_BACKEND:
+        raise KittyThemeError(f"semantic cache has unsupported backend: {normalized_cache_path}")
+    if not isinstance(raw_projects, list):
         raise KittyThemeError(f"semantic cache is malformed: {normalized_cache_path}")
 
     return SemanticThemeCache(
