@@ -67,6 +67,31 @@ def test_registry_rejects_nonexistent_project_root(tmp_path: Path) -> None:
         parse_project_registry(registry)
 
 
+def test_registry_rejects_missing_registry_path(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    parse_project_registry = cast(Callable[[Path], list[Path]], module["parse_project_registry"])
+    registry_error = cast(type[Exception], module["ProjectRegistryError"])
+
+    registry = tmp_path / "missing-semantic-projects.txt"
+
+    with pytest.raises(registry_error, match="project registry not found"):
+        parse_project_registry(registry)
+
+
+def test_registry_resolves_relative_paths_from_registry_location(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    parse_project_registry = cast(Callable[[Path], list[Path]], module["parse_project_registry"])
+
+    project_root = tmp_path / "projects" / "project-a"
+    project_root.mkdir(parents=True)
+
+    registry = tmp_path / "kitty" / "semantic-projects.txt"
+    registry.parent.mkdir()
+    registry.write_text("../projects/project-a\n", encoding="utf-8")
+
+    assert parse_project_registry(registry) == [project_root.resolve()]
+
+
 def test_projects_validate_accepts_valid_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     project_root = tmp_path / "project"
     project_root.mkdir()
@@ -82,3 +107,19 @@ def test_projects_validate_accepts_valid_registry(tmp_path: Path, monkeypatch: p
     assert exit_code == 0
     assert stderr == ""
     assert stdout == f"validated 1 project root from {registry.resolve()}\n"
+
+
+def test_projects_validate_rejects_invalid_registry_encoding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry = tmp_path / "semantic-projects.txt"
+    registry.write_bytes(b"\xff\xfe/project\n")
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        ["projects", "validate", "--registry", str(registry)],
+        monkeypatch,
+    )
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == f"failed to read project registry: {registry.resolve()}\n"
