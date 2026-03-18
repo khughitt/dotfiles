@@ -63,7 +63,12 @@ Item {
   }
 
   function runAction(actionName) {
-    if (actionRunning || loading || !hasWallpaper || sourcePath === "") {
+    if (actionRunning || loading || !hasWallpaper) {
+      return;
+    }
+
+    var needsSource = (actionName === "save-current" || actionName === "edit-current");
+    if (needsSource && sourcePath === "") {
       return;
     }
 
@@ -77,7 +82,17 @@ Item {
       ToastService.showNotice("Wallpaper", "Saved current wallpaper to favorites.", "heart");
     } else if (actionName === "edit-current") {
       ToastService.showNotice("Wallpaper", "Opened current wallpaper in GIMP.", "wallpaper-selector");
+    } else if (actionName === "forward" || actionName === "backward" || actionName === "random") {
+      root.loadWallpaper();
     }
+  }
+
+  function copySourcePath() {
+    if (!hasWallpaper || sourcePath === "") {
+      return;
+    }
+
+    copyProcess.running = true;
   }
 
   Component.onCompleted: {
@@ -151,6 +166,21 @@ Item {
       }
 
       root.handleActionSuccess(actionName);
+    }
+  }
+
+  Process {
+    id: copyProcess
+
+    running: false
+    command: ["wl-copy", root.sourcePath]
+
+    onExited: function(exitCode) {
+      if (exitCode === 0) {
+        ToastService.showNotice("Wallpaper", "Path copied to clipboard.", "clipboard");
+      } else {
+        ToastService.showError("Wallpaper", "Failed to copy path to clipboard.");
+      }
     }
   }
 
@@ -233,25 +263,49 @@ Item {
         }
 
         RowLayout {
-          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignHCenter
           spacing: Style.marginM
 
-          NButton {
-            text: root.actionRunning && root.pendingAction === "save-current" ? "Saving..." : "Save to Favorites"
-            enabled: root.hasWallpaper && root.sourcePath !== "" && !root.loading && !root.actionRunning
-            Layout.fillWidth: true
-            onClicked: {
-              root.runAction("save-current");
-            }
+          NIconButton {
+            icon: "arrow-left"
+            tooltipText: "Previous wallpaper"
+            enabled: root.hasWallpaper && !root.loading && !root.actionRunning
+            onClicked: root.runAction("backward")
           }
 
-          NButton {
-            text: root.actionRunning && root.pendingAction === "edit-current" ? "Opening..." : "Edit in GIMP"
+          NIconButton {
+            icon: "arrow-right"
+            tooltipText: "Next wallpaper"
+            enabled: root.hasWallpaper && !root.loading && !root.actionRunning
+            onClicked: root.runAction("forward")
+          }
+
+          NIconButton {
+            icon: "dice"
+            tooltipText: "Random wallpaper"
+            enabled: root.hasWallpaper && !root.loading && !root.actionRunning
+            onClicked: root.runAction("random")
+          }
+
+          NIconButton {
+            icon: "heart"
+            tooltipText: "Save to favorites"
             enabled: root.hasWallpaper && root.sourcePath !== "" && !root.loading && !root.actionRunning
-            Layout.fillWidth: true
-            onClicked: {
-              root.runAction("edit-current");
-            }
+            onClicked: root.runAction("save-current")
+          }
+
+          NIconButton {
+            icon: "photo-edit"
+            tooltipText: "Edit in GIMP"
+            enabled: root.hasWallpaper && root.sourcePath !== "" && !root.loading && !root.actionRunning
+            onClicked: root.runAction("edit-current")
+          }
+
+          NIconButton {
+            icon: "clipboard"
+            tooltipText: "Copy source path"
+            enabled: root.hasWallpaper && root.sourcePath !== "" && !root.loading
+            onClicked: root.copySourcePath()
           }
         }
 
