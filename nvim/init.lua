@@ -462,14 +462,25 @@ vim.keymap.set('v', '<space>', '<leader>c<space>')
 -- ---------------------------------------------------------------------------
 --  treesitter
 -- ---------------------------------------------------------------------------
-require'nvim-treesitter.configs'.setup {
-  ensure_installed = { "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "javascript",
-                       "json",  "lua", "markdown", "markdown_inline", "python",
-                       "query", "r", "rust", "sql", "toml", "tsx", "typescript", "vimdoc", "yaml"},
-  auto_install = true,
-  sync_install = false,
-  highlight = { enable = true, },
+-- require'nvim-treesitter.configs'.setup {
+--   ensure_installed = { "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "javascript",
+--                        "json",  "lua", "markdown", "markdown_inline", "python",
+--                        "query", "r", "rust", "sql", "toml", "tsx", "typescript", "vimdoc", "yaml"},
+--   auto_install = true,
+--   sync_install = false,
+--   highlight = { enable = true, },
+-- }
+
+require'nvim-treesitter'.install {
+  "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "javascript",
+  "json",  "lua", "markdown", "markdown_inline", "python",
+  "query", "r", "rust", "sql", "toml", "tsx", "typescript", "vimdoc", "yaml"
 }
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = { '<filetype>' },
+  callback = function() vim.treesitter.start() end,
+})
 
 -- ---------------------------------------------------------------------------
 --  vim-textobj-underscore

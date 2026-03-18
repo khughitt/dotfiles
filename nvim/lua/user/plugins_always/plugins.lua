@@ -3,7 +3,7 @@ return {
   {'folke/tokyonight.nvim', lazy = false, priority = 1000, opts = {}, },
 
   -- plugins
-  {'ggandor/leap.nvim'},
+  {url = "https://codeberg.org/andyg/leap.nvim" },
   {'godlygeek/tabular'},
   {'scrooloose/nerdcommenter'},
   {'tomtom/tlib_vim'},
@@ -12,7 +12,7 @@ return {
   {'wellle/targets.vim'},
   { 'dstein64/nvim-scrollview', branch = 'main' },
   { 'nvim-lualine/lualine.nvim', dependencies = { 'nvim-tree/nvim-web-devicons', lazy=true }},
-  { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
+  { 'nvim-treesitter/nvim-treesitter', lazy = false, build = ':TSUpdate' },
   { 'vladdoster/remember.nvim', config = [[ require('remember') ]] },
 
   -- textobjs

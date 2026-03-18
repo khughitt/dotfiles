@@ -22,7 +22,7 @@
         (color "RGBA float" 16 "\0\0\200\77\0\0\0\0\0\0\200\77\0\0\200\77" 0))
     (show-rgb-u8 no)
     (show-hsv yes))
-(import-raw-plug-in "${gimp_plug_in_dir}/plug-ins/file-darktable/file-darktable")
+(import-raw-plug-in "${gimp_plug_in_dir}/plug-ins/file-raw-placeholder/file-raw-placeholder")
 (export-file-type webp)
 (monitor-xresolution 109)
 (monitor-yresolution 111)
