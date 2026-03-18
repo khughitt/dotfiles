@@ -22,6 +22,10 @@ uv remove pandas
 uv sync             # install deps
 uv sync --upgrade   # upgrade deps
 
+# update a single package
+uv lock --upgrade-package marimo
+uv sync
+
 # ruff
 uv run ruff check .
 uv run ruff check --show-settings --verbose

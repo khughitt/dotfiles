@@ -36,6 +36,10 @@ find . -maxdepth 2 -type f -atime +400
 find /var/www/tmp/ -mtime +5 -delete
 find -name *.jpg -mtime +15 -delete
 
+# preview / delete "conflicted"
+find /path/to/root -name "*conflicted*" \( -path "*/.git/*" -o -name "*.pyc" \) -type f
+find /path/to/root -name "*conflicted*" \( -path "*/.git/*" -o -name "*.pyc" \) -type f -delete
+
 # get a space-delimited string representing a list of files
 find . -type f | tr "\n" " "
 
