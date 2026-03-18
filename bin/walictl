@@ -34,6 +34,9 @@ def build_parser() -> argparse.ArgumentParser:
     current_parser.add_argument("--json", action="store_true", required=True)
     subparsers.add_parser("save-current")
     subparsers.add_parser("edit-current")
+    subparsers.add_parser("forward")
+    subparsers.add_parser("backward")
+    subparsers.add_parser("random")
 
     return parser
 
@@ -142,6 +145,47 @@ def save_current_source() -> Path:
     return source_path
 
 
+WALLPAPER_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+
+
+def ipc_call_wallpaper(*args: str) -> None:
+    try:
+        subprocess.run(
+            ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise WalictlError("qs command not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise WalictlError("wallpaper IPC call failed") from exc
+
+
+def get_wallpaper_siblings(current_path: Path) -> list[Path]:
+    parent = current_path.parent
+    return sorted(p for p in parent.iterdir() if p.suffix.lower() in WALLPAPER_EXTENSIONS)
+
+
+def navigate_wallpaper(direction: int) -> Path:
+    current_path = get_current_wallpaper_path()
+    siblings = get_wallpaper_siblings(current_path)
+    if not siblings:
+        raise WalictlError("no wallpapers found in directory")
+    try:
+        idx = siblings.index(current_path)
+    except ValueError:
+        raise WalictlError("current wallpaper not found in directory listing")
+    new_idx = (idx + direction) % len(siblings)
+    new_path = siblings[new_idx]
+    ipc_call_wallpaper("set", str(new_path), "all")
+    return new_path
+
+
+def random_wallpaper() -> None:
+    ipc_call_wallpaper("random", "all")
+
+
 def edit_current_source() -> Path:
     source_path = resolve_current_source_path()
     try:
@@ -178,6 +222,21 @@ def main() -> int:
         if args.command == "edit-current":
             source_path = edit_current_source()
             print(f"opened {source_path}")
+            return 0
+
+        if args.command == "forward":
+            new_path = navigate_wallpaper(1)
+            print(f"forward to {new_path}")
+            return 0
+
+        if args.command == "backward":
+            new_path = navigate_wallpaper(-1)
+            print(f"backward to {new_path}")
+            return 0
+
+        if args.command == "random":
+            random_wallpaper()
+            print("randomized wallpaper")
             return 0
 
         raise AssertionError("unreachable")
