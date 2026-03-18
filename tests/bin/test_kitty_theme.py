@@ -336,6 +336,75 @@ def test_build_project_corpus_reports_explicit_skips_for_unsupported_and_oversiz
     assert "SKIP src/logo.png unsupported" in corpus
 
 
+def test_semantic_corpus_section_counts_tracks_doc_metadata_code_and_skip_lines(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    semantic_corpus_section_counts = cast(
+        Callable[[str], tuple[int, int, int, int]], module["semantic_corpus_section_counts"]
+    )
+
+    corpus = "\n".join(
+        [
+            "DOC README.md",
+            "hello",
+            "DOC docs/guide.md",
+            "METADATA pyproject.toml",
+            "CODE src/app.py",
+            "SKIP assets/logo.png unsupported",
+            "SKIP oversized 10 more",
+        ]
+    )
+
+    assert semantic_corpus_section_counts(corpus) == (2, 1, 1, 2)
+
+
+def test_parse_semantic_stopwords_file_ignores_comments_and_deduplicates(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    parse_semantic_stopwords_file = cast(Callable[[Path], set[str]], module["parse_semantic_stopwords_file"])
+
+    stopwords_path = tmp_path / "semantic-stopwords.txt"
+    stopwords_path.write_text(
+        """
+# comment
+terminal
+Terminal
+shell
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert parse_semantic_stopwords_file(stopwords_path) == {"shell", "terminal"}
+
+
+def test_parse_semantic_stopwords_file_rejects_invalid_tokens(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    parse_semantic_stopwords_file = cast(Callable[[Path], set[str]], module["parse_semantic_stopwords_file"])
+    kitty_theme_error = cast(type[Exception], module["KittyThemeError"])
+
+    stopwords_path = tmp_path / "semantic-stopwords.txt"
+    stopwords_path.write_text("validtoken\ninvalid token\n", encoding="utf-8")
+
+    with pytest.raises(kitty_theme_error, match="semantic stopwords file has invalid token at line 2"):
+        parse_semantic_stopwords_file(stopwords_path)
+
+
+def test_tokenize_semantic_corpus_accepts_external_stopwords_file(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    load_semantic_stopwords = cast(Callable[[Path | None], frozenset[str]], module["load_semantic_stopwords"])
+    tokenize_semantic_corpus = cast(Callable[..., list[str]], module["tokenize_semantic_corpus"])
+
+    stopwords_path = tmp_path / "semantic-stopwords.txt"
+    stopwords_path.write_text("terminal\nprompt\n", encoding="utf-8")
+
+    stopwords = load_semantic_stopwords(stopwords_path)
+    tokens = tokenize_semantic_corpus(
+        "terminal shell prompt workflow sequence terminal",
+        stopwords=stopwords,
+    )
+
+    assert tokens == ["shell", "workflow", "sequence"]
+
+
 def test_semantic_embeddings_are_computed_for_each_fixture_project(tmp_path: Path) -> None:
     module = load_kitty_theme_module()
     semantic_project_input = cast(type[Any], module["SemanticProjectInput"])
@@ -370,9 +439,10 @@ def test_pairwise_similarity_output_is_symmetric_for_fixture_projects(tmp_path: 
         semantic_space.similarity_matrix[cli_b_index, cli_a_index]
     )
     assert semantic_space.similarity_matrix[cli_a_index, cli_a_index] == pytest.approx(1.0)
-    assert semantic_space.similarity_matrix[cli_a_index, cli_b_index] > semantic_space.similarity_matrix[
-        cli_a_index, react_a_index
-    ]
+    assert (
+        semantic_space.similarity_matrix[cli_a_index, cli_b_index]
+        > semantic_space.similarity_matrix[cli_a_index, react_a_index]
+    )
 
 
 def test_fixture_projects_cluster_into_deterministic_semantic_groups(tmp_path: Path) -> None:
@@ -437,7 +507,9 @@ def test_cluster_semantic_space_rejects_cluster_count_larger_than_project_count(
     project_inputs, _ = build_semantic_fixture_inputs(tmp_path, semantic_project_input)
     small_fixture_inputs = project_inputs[:2]
 
-    with pytest.raises(kitty_theme_error, match="semantic cluster count exceeds project count: requested 3 for 2 projects"):
+    with pytest.raises(
+        kitty_theme_error, match="semantic cluster count exceeds project count: requested 3 for 2 projects"
+    ):
         cluster_semantic_space(build_semantic_space(small_fixture_inputs), cluster_count=3)
 
 
@@ -558,6 +630,54 @@ def test_recompute_rejects_configured_cluster_count_larger_than_registry_size(
     assert exit_code == 1
     assert stdout == ""
     assert stderr == "semantic cluster count exceeds project count: requested 3 for 2 projects\n"
+    assert not cache_path.exists()
+
+
+def test_recompute_rejects_invalid_stopwords_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project_alpha = tmp_path / "projects" / "alpha"
+    project_alpha.mkdir(parents=True)
+    (project_alpha / ".git").mkdir()
+    (project_alpha / "README.md").write_text("Alpha service\n", encoding="utf-8")
+
+    project_beta = tmp_path / "projects" / "beta"
+    project_beta.mkdir()
+    (project_beta / ".git").mkdir()
+    (project_beta / "README.md").write_text("Beta service\n", encoding="utf-8")
+
+    registry = tmp_path / "kitty" / "semantic-projects.txt"
+    registry.parent.mkdir()
+    registry.write_text(f"{project_alpha}\n{project_beta}\n", encoding="utf-8")
+
+    themes_dir = tmp_path / "kitty" / "themes"
+    themes_dir.mkdir()
+    write_valid_theme(themes_dir / "Aurora.conf", background="#101010", foreground="#f0f0f0")
+    write_valid_theme(themes_dir / "Nordic.conf", background="#f5f5f5", foreground="#121212")
+
+    stopwords_path = tmp_path / "kitty" / "semantic-stopwords.txt"
+    stopwords_path.write_text("validtoken\ninvalid token\n", encoding="utf-8")
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "recompute",
+            "--registry",
+            str(registry),
+            "--themes-dir",
+            str(themes_dir),
+            "--cache",
+            str(cache_path),
+            "--cluster-count",
+            "2",
+            "--stopwords-file",
+            str(stopwords_path),
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == f"semantic stopwords file has invalid token at line 2: {stopwords_path.resolve()}\n"
     assert not cache_path.exists()
 
 
@@ -772,6 +892,99 @@ def test_recompute_writes_semantic_cache(tmp_path: Path, monkeypatch: pytest.Mon
     assert cache_path.read_text(encoding="utf-8") == cache_text
 
 
+def test_recompute_excludes_projects_with_no_docs_metadata_or_code(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    valid_project = tmp_path / "projects" / "valid"
+    valid_project.mkdir(parents=True)
+    (valid_project / ".git").mkdir()
+    (valid_project / "README.md").write_text("Valid project docs\n", encoding="utf-8")
+    (valid_project / "src").mkdir()
+    (valid_project / "src" / "main.py").write_text("def run() -> None:\n    return None\n", encoding="utf-8")
+
+    low_signal_project = tmp_path / "projects" / "low-signal"
+    low_signal_project.mkdir()
+    (low_signal_project / ".git").mkdir()
+    (low_signal_project / "assets").mkdir()
+    (low_signal_project / "assets" / "logo.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    registry = tmp_path / "kitty" / "semantic-projects.txt"
+    registry.parent.mkdir()
+    registry.write_text(f"{valid_project}\n{low_signal_project}\n", encoding="utf-8")
+
+    themes_dir = tmp_path / "kitty" / "themes"
+    themes_dir.mkdir()
+    write_valid_theme(themes_dir / "Aurora.conf", background="#101010", foreground="#f0f0f0")
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "recompute",
+            "--registry",
+            str(registry),
+            "--themes-dir",
+            str(themes_dir),
+            "--cache",
+            str(cache_path),
+            "--cluster-count",
+            "1",
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert stdout == f"wrote semantic cache for 1 project root to {cache_path.resolve()}\n"
+
+    cache_data = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert [project["project_root"] for project in cache_data["projects"]] == [str(valid_project.resolve())]
+    assert len(cache_data["excluded_projects"]) == 1
+    excluded_entry = cache_data["excluded_projects"][0]
+    assert excluded_entry["project_root"] == str(low_signal_project.resolve())
+    assert excluded_entry["reason"] == "no_doc_metadata_or_code_sections"
+    assert excluded_entry["token_count"] >= 1
+    assert excluded_entry["unique_token_count"] >= 1
+    assert excluded_entry["unique_token_count"] <= excluded_entry["token_count"]
+
+
+def test_diagnose_reports_low_confidence_and_excluded_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    valid_project = tmp_path / "projects" / "valid"
+    valid_project.mkdir(parents=True)
+    (valid_project / ".git").mkdir()
+    (valid_project / "README.md").write_text("Valid project docs\n", encoding="utf-8")
+    (valid_project / "src").mkdir()
+    (valid_project / "src" / "main.py").write_text("def run() -> None:\n    return None\n", encoding="utf-8")
+
+    low_signal_project = tmp_path / "projects" / "low-signal"
+    low_signal_project.mkdir()
+    (low_signal_project / ".git").mkdir()
+    (low_signal_project / "assets").mkdir()
+    (low_signal_project / "assets" / "logo.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    registry = tmp_path / "kitty" / "semantic-projects.txt"
+    registry.parent.mkdir()
+    registry.write_text(f"{valid_project}\n{low_signal_project}\n", encoding="utf-8")
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "diagnose",
+            "--registry",
+            str(registry),
+            "--cluster-count",
+            "1",
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert "diagnosed 1 project root (1 below 0.500, 1 excluded)" in stdout
+    assert f"- {low_signal_project.resolve()} reason=no_doc_metadata_or_code_sections" in stdout
+    assert f"{valid_project.resolve()}" in stdout
+    assert "nearest_in=<none> <none>" in stdout
+
+
 def test_recompute_normalizes_registry_entries_to_git_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     project_root = tmp_path / "workspace" / "service"
     nested_path = project_root / "src" / "package"
@@ -835,10 +1048,10 @@ def test_resolve_prints_target_theme_for_git_root(tmp_path: Path, monkeypatch: p
     cache_path.parent.mkdir()
     cache_path.write_text(
         json.dumps(
-                {
-                    "backend": SEMANTIC_BACKEND,
-                    "cluster_count": 1,
-                    "projects": [
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 1,
+                "projects": [
                     {
                         "cluster_id": "cluster-0003",
                         "confidence": 0.875,
@@ -863,6 +1076,112 @@ def test_resolve_prints_target_theme_for_git_root(tmp_path: Path, monkeypatch: p
     assert exit_code == 0
     assert stderr == ""
     assert stdout == "Nordic.conf\n"
+
+
+def test_list_groups_projects_by_theme_and_reports_excluded_entries(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+    cache_path.parent.mkdir()
+    cache_path.write_text(
+        json.dumps(
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 2,
+                "excluded_projects": [
+                    {
+                        "project_root": "/tmp/low-signal",
+                        "reason": "no_doc_metadata_or_code_sections",
+                        "token_count": 4,
+                        "unique_token_count": 3,
+                    }
+                ],
+                "projects": [
+                    {
+                        "cluster_id": "cluster-a",
+                        "confidence": 0.92,
+                        "project_root": "/tmp/project-a",
+                        "target_theme": "Nord.conf",
+                    },
+                    {
+                        "cluster_id": "cluster-b",
+                        "confidence": 0.63,
+                        "project_root": "/tmp/project-b",
+                        "target_theme": "Ayu Mirage.conf",
+                    },
+                    {
+                        "cluster_id": "cluster-a",
+                        "confidence": 0.88,
+                        "project_root": "/tmp/project-c",
+                        "target_theme": "Nord.conf",
+                    },
+                ],
+                "version": 1,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        ["list", "--cache", str(cache_path)],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Ayu Mirage.conf (1)" in stdout
+    assert "Nord.conf (2)" in stdout
+    assert "  /tmp/project-a cluster=cluster-a confidence=0.920000" in stdout
+    assert "  /tmp/project-c cluster=cluster-a confidence=0.880000" in stdout
+    assert "excluded (1)" in stdout
+    assert "  /tmp/low-signal reason=no_doc_metadata_or_code_sections tokens=4 unique=3" in stdout
+
+
+def test_list_can_group_projects_by_cluster(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+    cache_path.parent.mkdir()
+    cache_path.write_text(
+        json.dumps(
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 2,
+                "projects": [
+                    {
+                        "cluster_id": "cluster-a",
+                        "confidence": 0.92,
+                        "project_root": "/tmp/project-a",
+                        "target_theme": "Nord.conf",
+                    },
+                    {
+                        "cluster_id": "cluster-b",
+                        "confidence": 0.63,
+                        "project_root": "/tmp/project-b",
+                        "target_theme": "Ayu Mirage.conf",
+                    },
+                ],
+                "version": 1,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        ["list", "--cache", str(cache_path), "--group-by", "cluster"],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert "cluster-a (1)" in stdout
+    assert "cluster-b (1)" in stdout
+    assert "  /tmp/project-a cluster=cluster-a confidence=0.920000" in stdout
+    assert "  /tmp/project-b cluster=cluster-b confidence=0.630000" in stdout
 
 
 @pytest.mark.parametrize("metadata_name", ["pyproject.toml", "package.json", "uv.lock"])
@@ -927,7 +1246,10 @@ def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) 
             {"backend": SEMANTIC_BACKEND, "cluster_count": SEMANTIC_CLUSTER_COUNT, "projects": [], "version": 2},
             "semantic cache has unsupported version",
         ),
-        ({"backend": 123, "cluster_count": SEMANTIC_CLUSTER_COUNT, "projects": [], "version": 1}, "semantic cache is malformed"),
+        (
+            {"backend": 123, "cluster_count": SEMANTIC_CLUSTER_COUNT, "projects": [], "version": 1},
+            "semantic cache is malformed",
+        ),
         ({"backend": SEMANTIC_BACKEND, "projects": [], "version": 1}, "semantic cache is malformed"),
         (
             {"backend": SEMANTIC_BACKEND, "cluster_count": 0, "projects": [], "version": 1},
@@ -939,6 +1261,16 @@ def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) 
         ),
         (
             {"backend": SEMANTIC_BACKEND, "cluster_count": SEMANTIC_CLUSTER_COUNT, "projects": {}, "version": 1},
+            "semantic cache is malformed",
+        ),
+        (
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": SEMANTIC_CLUSTER_COUNT,
+                "excluded_projects": {},
+                "projects": [],
+                "version": 1,
+            },
             "semantic cache is malformed",
         ),
         (
@@ -988,6 +1320,30 @@ def test_load_semantic_cache_rejects_missing_or_malformed_files(tmp_path: Path) 
             },
             "semantic cache is malformed",
         ),
+        (
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 1,
+                "excluded_projects": [
+                    {
+                        "project_root": "/tmp/example",
+                        "reason": "no_doc_metadata_or_code_sections",
+                        "token_count": 5,
+                        "unique_token_count": 5,
+                    }
+                ],
+                "projects": [
+                    {
+                        "cluster_id": "cluster-0001",
+                        "confidence": 1.0,
+                        "project_root": "/tmp/example",
+                        "target_theme": "Nordic.conf",
+                    }
+                ],
+                "version": 1,
+            },
+            "semantic cache is malformed",
+        ),
     ],
 )
 def test_load_semantic_cache_validates_typed_contract(
@@ -1002,6 +1358,48 @@ def test_load_semantic_cache_validates_typed_contract(
 
     with pytest.raises(kitty_theme_error, match=message_pattern):
         load_semantic_cache(cache_path)
+
+
+def test_load_semantic_cache_accepts_excluded_projects_metadata(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    load_semantic_cache = cast(Callable[[Path], Any], module["load_semantic_cache"])
+
+    cache_path = tmp_path / "semantic-themes.json"
+    cache_path.write_text(
+        json.dumps(
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 1,
+                "excluded_projects": [
+                    {
+                        "project_root": "/tmp/low-signal",
+                        "reason": "no_doc_metadata_or_code_sections",
+                        "token_count": 5,
+                        "unique_token_count": 4,
+                    }
+                ],
+                "projects": [
+                    {
+                        "cluster_id": "cluster-0001",
+                        "confidence": 0.95,
+                        "project_root": "/tmp/semantic-project",
+                        "target_theme": "Nordic.conf",
+                    }
+                ],
+                "version": 1,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    loaded_cache = load_semantic_cache(cache_path)
+    assert len(loaded_cache.projects) == 1
+    assert len(loaded_cache.excluded_projects) == 1
+    assert loaded_cache.excluded_projects[0].project_root == Path("/tmp/low-signal")
+    assert loaded_cache.excluded_projects[0].reason == "no_doc_metadata_or_code_sections"
 
 
 def test_parse_kitty_theme_palette_extracts_required_colors(tmp_path: Path) -> None:
@@ -1125,7 +1523,10 @@ def test_select_attractor_themes_prefers_diverse_readable_candidates(tmp_path: P
                 "selection_background #303030",
                 "selection_foreground #ffffff",
                 "cursor #f0f0f0",
-                *[f"color{index} #{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}" for index in range(16)],
+                *[
+                    f"color{index} #{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}"
+                    for index in range(16)
+                ],
             ]
         )
         + "\n",
@@ -1139,7 +1540,10 @@ def test_select_attractor_themes_prefers_diverse_readable_candidates(tmp_path: P
                 "selection_background #2f2f2f",
                 "selection_foreground #ffffff",
                 "cursor #efefef",
-                *[f"color{index} #{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}" for index in range(16)],
+                *[
+                    f"color{index} #{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}{index:01x}"
+                    for index in range(16)
+                ],
             ]
         )
         + "\n",
@@ -1153,7 +1557,10 @@ def test_select_attractor_themes_prefers_diverse_readable_candidates(tmp_path: P
                 "selection_background #dddddd",
                 "selection_foreground #000000",
                 "cursor #121212",
-                *[f"color{index} #{15-index:01x}{15-index:01x}{15-index:01x}{15-index:01x}{15-index:01x}{15-index:01x}" for index in range(16)],
+                *[
+                    f"color{index} #{15 - index:01x}{15 - index:01x}{15 - index:01x}{15 - index:01x}{15 - index:01x}{15 - index:01x}"
+                    for index in range(16)
+                ],
             ]
         )
         + "\n",
@@ -1227,6 +1634,83 @@ def test_should_skip_transition_when_delta_is_negligible() -> None:
 
     assert should_skip_transition(start_palette, almost_same_palette, 4)
     assert not should_skip_transition(start_palette, very_different_palette, 4)
+
+
+def test_build_set_colors_command_includes_listen_socket_when_provided() -> None:
+    module = load_kitty_theme_module()
+    build_set_colors_command = cast(
+        Callable[[str, list[str], str | None], list[str]], module["build_set_colors_command"]
+    )
+
+    command = build_set_colors_command("42", ["Nord.conf"], "unix:/tmp/kitty.sock")
+
+    assert command[:4] == ["kitten", "@", "--to", "unix:/tmp/kitty.sock"]
+    assert command[4:] == ["set-colors", "-m", "id:42", "Nord.conf"]
+
+
+def test_build_set_colors_command_omits_listen_socket_when_not_provided() -> None:
+    module = load_kitty_theme_module()
+    build_set_colors_command = cast(
+        Callable[[str, list[str], str | None], list[str]], module["build_set_colors_command"]
+    )
+
+    command = build_set_colors_command("42", ["Nord.conf"], None)
+
+    assert command == ["kitten", "@", "set-colors", "-m", "id:42", "Nord.conf"]
+
+
+def test_apply_theme_file_uses_devnull_and_optional_listen_socket(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = load_kitty_theme_module()
+    apply_theme_file = cast(Callable[[str, Path, str | None], None], module["apply_theme_file"])
+
+    captured: dict[str, Any] = {}
+
+    def fake_run(command: list[str], **kwargs: Any) -> None:
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr(module["subprocess"], "run", fake_run)
+
+    apply_theme_file("42", Path("/tmp/Nord.conf"), "unix:/tmp/kitty.sock")
+
+    assert captured["command"] == [
+        "kitten",
+        "@",
+        "--to",
+        "unix:/tmp/kitty.sock",
+        "set-colors",
+        "-m",
+        "id:42",
+        "/tmp/Nord.conf",
+    ]
+    assert captured["kwargs"]["check"] is True
+    assert captured["kwargs"]["capture_output"] is True
+    assert captured["kwargs"]["text"] is True
+    assert captured["kwargs"]["stdin"] is module["subprocess"].DEVNULL
+
+
+def test_load_runtime_state_recovers_from_malformed_json(tmp_path: Path) -> None:
+    module = load_kitty_theme_module()
+    load_runtime_state = cast(Callable[[Path], Any], module["load_runtime_state"])
+
+    state_path = tmp_path / "kitty" / "runtime-state.json"
+    state_path.parent.mkdir(parents=True)
+    state_path.write_text('{"windows": [}', encoding="utf-8")
+
+    state = load_runtime_state(state_path)
+    assert state.windows == {}
+
+
+def test_runtime_state_window_id_is_namespaced_by_listen_socket() -> None:
+    module = load_kitty_theme_module()
+    runtime_state_window_id = cast(Callable[[str, str | None], str], module["runtime_state_window_id"])
+
+    assert runtime_state_window_id("1", None) == "1"
+    assert runtime_state_window_id("1", "") == "1"
+    assert runtime_state_window_id("1", "unix:@dotfiles-kitty-100") == "unix:@dotfiles-kitty-100|1"
+    assert runtime_state_window_id("1", "unix:@dotfiles-kitty-100") != runtime_state_window_id(
+        "1", "unix:@dotfiles-kitty-200"
+    )
 
 
 def test_temporary_override_clears_on_project_change(tmp_path: Path) -> None:
@@ -1457,7 +1941,13 @@ def test_shell_runtime_delegates_to_kitty_theme_cli() -> None:
     shell_text = shell_script.read_text(encoding="utf-8")
 
     assert "_KITTY_THEME_CLI" in shell_text
-    assert '"$_KITTY_THEME_CLI" apply' in shell_text
+    assert "_KITTY_THEME_APPLY_PID" in shell_text
+    assert "apply_args=(" in shell_text
+    assert 'apply_args+=(--listen-on "$KITTY_LISTEN_ON")' in shell_text
+    assert 'setsid "${apply_args[@]}" >/dev/null 2>&1 < /dev/null &!' in shell_text
+    assert '"${apply_args[@]}" >/dev/null 2>&1' in shell_text
+    assert '_KITTY_THEME_APPLY_PID="$!"' in shell_text
+    assert "applied_theme=$(" not in shell_text
     assert "md5sum" not in shell_text
     assert "set-colors" not in shell_text
 
@@ -1466,6 +1956,7 @@ def test_kitty_conf_manual_mappings_flow_through_override_commands() -> None:
     kitty_conf = Path(__file__).resolve().parents[2] / "kitty" / "kitty.conf"
     kitty_text = kitty_conf.read_text(encoding="utf-8")
 
+    assert "listen_on unix:@dotfiles-kitty" in kitty_text
     assert "kitty-theme override set" in kitty_text
     assert "kitty-theme override reset" in kitty_text
     assert "remote_control set-colors" not in kitty_text
@@ -1537,3 +2028,74 @@ def test_explain_command_reports_effective_assignment(tmp_path: Path, monkeypatc
     assert "assigned_theme: Nordic.conf" in stdout
     assert "override_mode: sticky" in stdout
     assert "effective_theme: manual/solarized-light.conf" in stdout
+
+
+def test_explain_command_reports_excluded_reason_for_low_signal_project(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project_root = tmp_path / "workspace" / "project-a"
+    project_root.mkdir(parents=True)
+    (project_root / ".git").mkdir()
+    nested_path = project_root / "src"
+    nested_path.mkdir()
+
+    other_project_root = tmp_path / "workspace" / "other-project"
+    other_project_root.mkdir()
+    (other_project_root / ".git").mkdir()
+
+    cache_path = tmp_path / "kitty" / "semantic-themes.json"
+    cache_path.parent.mkdir()
+    cache_path.write_text(
+        json.dumps(
+            {
+                "backend": SEMANTIC_BACKEND,
+                "cluster_count": 1,
+                "excluded_projects": [
+                    {
+                        "project_root": str(project_root.resolve()),
+                        "reason": "no_doc_metadata_or_code_sections",
+                        "token_count": 8,
+                        "unique_token_count": 6,
+                    }
+                ],
+                "projects": [
+                    {
+                        "cluster_id": "cluster-0001",
+                        "confidence": 0.9,
+                        "project_root": str(other_project_root.resolve()),
+                        "target_theme": "Nordic.conf",
+                    }
+                ],
+                "version": 1,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    state_path = tmp_path / "kitty" / "runtime-state.json"
+
+    exit_code, stdout, stderr = run_kitty_theme(
+        [
+            "explain",
+            str(nested_path),
+            "--window-id",
+            "42",
+            "--cache",
+            str(cache_path),
+            "--state",
+            str(state_path),
+            "--fallback-theme",
+            "noctalia.conf",
+        ],
+        monkeypatch,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert f"project_root: {project_root.resolve()}" in stdout
+    assert "cluster_id: <none>" in stdout
+    assert "assigned_theme: noctalia.conf" in stdout
+    assert "excluded_reason: no_doc_metadata_or_code_sections tokens=8 unique=6" in stdout

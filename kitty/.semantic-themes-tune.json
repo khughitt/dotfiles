@@ -1,0 +1,145 @@
+{
+  "backend": "tfidf-svd-agglomerative-v1",
+  "cluster_count": 6,
+  "projects": [
+    {
+      "cluster_id": "graph-operators",
+      "confidence": 0.455532,
+      "project_root": "/mnt/ssd/Dropbox/mindful/v5",
+      "target_theme": "1984 Dark.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.551042,
+      "project_root": "/mnt/ssd/Dropbox/seq-feats",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "graph-operators",
+      "confidence": 0.562722,
+      "project_root": "/mnt/ssd/Dropbox/science",
+      "target_theme": "1984 Dark.conf"
+    },
+    {
+      "cluster_id": "graph-operators",
+      "confidence": 0.457685,
+      "project_root": "/mnt/ssd/Dropbox/science-web",
+      "target_theme": "1984 Dark.conf"
+    },
+    {
+      "cluster_id": "graph-operators",
+      "confidence": 0.573274,
+      "project_root": "/mnt/ssd/Dropbox/mindful/natural-systems-guide",
+      "target_theme": "1984 Dark.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.333991,
+      "project_root": "/mnt/ssd/Dropbox/cats",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.306135,
+      "project_root": "/mnt/ssd/Dropbox/3d-attention-bias",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.345781,
+      "project_root": "/mnt/ssd/Dropbox/multiscale-detection",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "log-snakemake",
+      "confidence": 0.499731,
+      "project_root": "/mnt/ssd/Dropbox/biodat/web",
+      "target_theme": "Dracula.conf"
+    },
+    {
+      "cluster_id": "image-ohai",
+      "confidence": 0.590718,
+      "project_root": "/mnt/ssd/Dropbox/software/ohai",
+      "target_theme": "Ayu Mirage.conf"
+    },
+    {
+      "cluster_id": "image-ohai",
+      "confidence": 0.658557,
+      "project_root": "/mnt/ssd/Dropbox/nature/nature-gen",
+      "target_theme": "Ayu Mirage.conf"
+    },
+    {
+      "cluster_id": "image-ohai",
+      "confidence": 0.59044,
+      "project_root": "/mnt/ssd/Dropbox/r/colormage",
+      "target_theme": "Ayu Mirage.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.273734,
+      "project_root": "/mnt/ssd/Dropbox/r/mm30",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "ia15-ia18",
+      "confidence": 0.24,
+      "project_root": "/mnt/ssd/Dropbox/r/questions",
+      "target_theme": "noctalia.conf"
+    },
+    {
+      "cluster_id": "x94-x8c",
+      "confidence": 0.823092,
+      "project_root": "/mnt/ssd/Dropbox/r/cbioportal/meta",
+      "target_theme": "Tomorrow Night Eighties.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.419809,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/lit-embed",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.383835,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/lit-walk",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.375949,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/pubmed",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "x94-x8c",
+      "confidence": 0.81916,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/pubtator/pipeline",
+      "target_theme": "Tomorrow Night Eighties.conf"
+    },
+    {
+      "cluster_id": "x94-x8c",
+      "confidence": 0.499151,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/pubtator/disease-similarity",
+      "target_theme": "Tomorrow Night Eighties.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.405648,
+      "project_root": "/mnt/ssd/Dropbox/r/_backburner/ankichinese",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "seq-article",
+      "confidence": 0.245077,
+      "project_root": "/mnt/ssd/Dropbox/r/_backburner/dnabert-tritrypdb",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "log-snakemake",
+      "confidence": 0.469219,
+      "project_root": "/mnt/ssd/Dropbox/r/_backburner/gene-set-redundancy",
+      "target_theme": "Dracula.conf"
+    }
+  ],
+  "version": 1
+}
