@@ -5,3 +5,23 @@
 #
 # /mnt/ssd/src/example-project
 # ../relative-example-project
+
+~/d/mindful/v5
+~/d/seq-feats
+~/d/science
+~/d/science-web
+~/d/mindful/natural-systems-guide
+~/d/cats
+~/d/3d-attention-bias
+~/d/multiscale-detection
+~/d/software/ohai
+~/d/nature/nature-gen
+~/d/r/mm30
+~/d/r/cbioportal/meta
+~/d/r/lit-explore/lit-embed
+~/d/r/lit-explore/lit-walk
+~/d/r/lit-explore/pubmed
+~/d/r/lit-explore/pubtator/pipeline
+~/d/r/lit-explore/pubtator/disease-similarity
+~/d/r/_backburner/ankichinese
+~/d/r/_backburner/gene-set-redundancy

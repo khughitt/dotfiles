@@ -6,6 +6,7 @@ _KITTY_SEMANTIC_CACHE="${DOTFILES:-$HOME/.dotfiles}/kitty/semantic-themes.json"
 _KITTY_SEMANTIC_STATE="$HOME/.cache/kitty/semantic-runtime-state.json"
 _KITTY_THEMES_DIR="${DOTFILES:-$HOME/.dotfiles}/kitty/themes"
 _KITTY_FALLBACK_THEME="noctalia.conf"
+_KITTY_THEME_APPLY_PID=""
 
 # find nearest git root by walking up from $PWD
 _kitty_find_git_root() {
@@ -28,16 +29,36 @@ _kitty_project_colors() {
   git_root=$(_kitty_find_git_root)
   [[ -n "$git_root" ]] && project_path="$git_root"
 
-  local applied_theme
-  applied_theme=$(
-    "$_KITTY_THEME_CLI" apply "$project_path" \
-      --window-id "$KITTY_WINDOW_ID" \
-      --cache "$_KITTY_SEMANTIC_CACHE" \
-      --themes-dir "$_KITTY_THEMES_DIR" \
-      --state "$_KITTY_SEMANTIC_STATE" \
-      --fallback-theme "$_KITTY_FALLBACK_THEME" 2>/dev/null
-  ) || return
-  [[ -n "$applied_theme" ]] && _KITTY_CURRENT_THEME="$applied_theme"
+  if [[ -n "$_KITTY_THEME_APPLY_PID" ]]; then
+    if kill -0 "$_KITTY_THEME_APPLY_PID" 2>/dev/null; then
+      kill "$_KITTY_THEME_APPLY_PID" 2>/dev/null
+    fi
+    _KITTY_THEME_APPLY_PID=""
+  fi
+
+  local -a apply_args=(
+    "$_KITTY_THEME_CLI"
+    apply
+    "$project_path"
+    --window-id
+    "$KITTY_WINDOW_ID"
+    --cache
+    "$_KITTY_SEMANTIC_CACHE"
+    --themes-dir
+    "$_KITTY_THEMES_DIR"
+    --state
+    "$_KITTY_SEMANTIC_STATE"
+    --fallback-theme
+    "$_KITTY_FALLBACK_THEME"
+  )
+
+  if [[ -n "$KITTY_LISTEN_ON" ]]; then
+    apply_args+=(--listen-on "$KITTY_LISTEN_ON")
+    setsid "${apply_args[@]}" >/dev/null 2>&1 < /dev/null &!
+    _KITTY_THEME_APPLY_PID="$!"
+  else
+    "${apply_args[@]}" >/dev/null 2>&1
+  fi
 }
 
 # register chpwd hook

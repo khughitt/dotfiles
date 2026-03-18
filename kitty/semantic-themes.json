@@ -1,5 +1,123 @@
 {
-  "backend": "deterministic-placeholder-v1",
-  "projects": [],
+  "backend": "tfidf-svd-agglomerative-v1",
+  "cluster_count": 7,
+  "excluded_projects": [
+    {
+      "project_root": "/mnt/ssd/Dropbox/r/_backburner/gene-set-redundancy",
+      "reason": "no_doc_metadata_or_code_sections",
+      "token_count": 22,
+      "unique_token_count": 8
+    }
+  ],
+  "projects": [
+    {
+      "cluster_id": "operators-render",
+      "confidence": 0.623141,
+      "project_root": "/mnt/ssd/Dropbox/mindful/v5",
+      "target_theme": "One Dark.conf"
+    },
+    {
+      "cluster_id": "seq-str",
+      "confidence": 0.578023,
+      "project_root": "/mnt/ssd/Dropbox/seq-feats",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "seq-str",
+      "confidence": 0.411617,
+      "project_root": "/mnt/ssd/Dropbox/science",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "seq-str",
+      "confidence": 0.432396,
+      "project_root": "/mnt/ssd/Dropbox/science-web",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "operators-render",
+      "confidence": 0.724818,
+      "project_root": "/mnt/ssd/Dropbox/mindful/natural-systems-guide",
+      "target_theme": "One Dark.conf"
+    },
+    {
+      "cluster_id": "seq-str",
+      "confidence": 0.651552,
+      "project_root": "/mnt/ssd/Dropbox/cats",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "seq-str",
+      "confidence": 0.574436,
+      "project_root": "/mnt/ssd/Dropbox/3d-attention-bias",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "seq-str",
+      "confidence": 0.328804,
+      "project_root": "/mnt/ssd/Dropbox/multiscale-detection",
+      "target_theme": "Nord.conf"
+    },
+    {
+      "cluster_id": "ohai-readonly",
+      "confidence": 0.835182,
+      "project_root": "/mnt/ssd/Dropbox/software/ohai",
+      "target_theme": "noctalia.conf"
+    },
+    {
+      "cluster_id": "ohai-readonly",
+      "confidence": 0.794341,
+      "project_root": "/mnt/ssd/Dropbox/nature/nature-gen",
+      "target_theme": "noctalia.conf"
+    },
+    {
+      "cluster_id": "old-cor",
+      "confidence": 0.630437,
+      "project_root": "/mnt/ssd/Dropbox/r/mm30",
+      "target_theme": "Ayu Mirage.conf"
+    },
+    {
+      "cluster_id": "x94-x8c",
+      "confidence": 0.875367,
+      "project_root": "/mnt/ssd/Dropbox/r/cbioportal/meta",
+      "target_theme": "Tomorrow Night Eighties.conf"
+    },
+    {
+      "cluster_id": "article-articles",
+      "confidence": 0.74773,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/lit-embed",
+      "target_theme": "1984 Dark.conf"
+    },
+    {
+      "cluster_id": "article-articles",
+      "confidence": 0.698549,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/lit-walk",
+      "target_theme": "1984 Dark.conf"
+    },
+    {
+      "cluster_id": "article-articles",
+      "confidence": 0.811068,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/pubmed",
+      "target_theme": "1984 Dark.conf"
+    },
+    {
+      "cluster_id": "x94-x8c",
+      "confidence": 0.852565,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/pubtator/pipeline",
+      "target_theme": "Tomorrow Night Eighties.conf"
+    },
+    {
+      "cluster_id": "old-cor",
+      "confidence": 0.587359,
+      "project_root": "/mnt/ssd/Dropbox/r/lit-explore/pubtator/disease-similarity",
+      "target_theme": "Ayu Mirage.conf"
+    },
+    {
+      "cluster_id": "pinyin-chinese",
+      "confidence": 0.24,
+      "project_root": "/mnt/ssd/Dropbox/r/_backburner/ankichinese",
+      "target_theme": "Dracula.conf"
+    }
+  ],
   "version": 1
 }
