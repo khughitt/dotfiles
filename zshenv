@@ -19,6 +19,9 @@ export SYSTEMD_EDITOR=nvim
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_STATE_HOME="$HOME/.local/state"
 
+# hostname (use existing if already set)
+export HOSTNAME="${HOSTNAME:-$(hostname)}"
+
 # anki font size fix
 # https://changes.ankiweb.net/#/known-issues
 export ANKI_NOHIGHDPI=1

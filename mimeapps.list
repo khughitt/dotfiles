@@ -16,6 +16,7 @@ x-scheme-handler/mailto=google-chrome.desktop
 video/mp2t=vlc.desktop
 x-scheme-handler/webcal=firefox.desktop
 application/uproject=com.epicgames.UnrealEngineEditor.desktop
+audio/flac=vlc.desktop
 
 [Added Associations]
 image/jpeg=gimp.desktop;org.gnome.eog.desktop;feh.desktop;
@@ -42,3 +43,4 @@ audio/x-wav=vlc.desktop;
 application/postscript=org.gnome.Evince.desktop;
 application/pdf=zathura-usercreated-1.desktop;
 application/zip=localc-usercreated-1.desktop;
+audio/flac=vlc.desktop;

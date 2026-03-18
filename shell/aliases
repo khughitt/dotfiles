@@ -22,6 +22,7 @@ alias crg='rg $DOTFILES/cheatsheets'
 
 # claude code
 alias cl='claude --dangerously-skip-permissions'
+alias clp='claude --dangerously-skip-permissions --plugin-dir /mnt/ssd/Dropbox/science'
 
 # conda/mamba
 alias cde='micromamba deactivate'
