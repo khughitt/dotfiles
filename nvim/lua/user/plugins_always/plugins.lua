@@ -12,7 +12,17 @@ return {
   {'wellle/targets.vim'},
   { 'dstein64/nvim-scrollview', branch = 'main' },
   { 'nvim-lualine/lualine.nvim', dependencies = { 'nvim-tree/nvim-web-devicons', lazy=true }},
-  { 'nvim-treesitter/nvim-treesitter', lazy = false, build = ':TSUpdate' },
+  { 'nvim-treesitter/nvim-treesitter', lazy = false, build = ':TSUpdate',
+    opts = {
+      ensure_installed = {
+        "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "javascript",
+        "json", "lua", "markdown", "markdown_inline", "python",
+        "query", "r", "rust", "sql", "toml", "tsx", "typescript", "vimdoc", "yaml",
+      },
+      auto_install = true,
+      highlight = { enable = true },
+    },
+  },
   { 'vladdoster/remember.nvim', config = [[ require('remember') ]] },
 
   -- textobjs

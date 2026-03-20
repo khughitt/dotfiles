@@ -190,7 +190,7 @@ vim.opt.softtabstop = 2               -- tab width
 vim.opt.tabstop = 2
 vim.opt.textwidth = 100               -- wrap lines at 100 characters, when asked
 vim.opt.virtualedit = {"block"}       -- allow virtual edit in visual block ..
-vim.opt.wrap = false                  -- do not wrap lines
+vim.opt.wrap = true                   -- wrap lines
 vim.opt.linebreak = true              -- when wrapping, respect word boundaries
 
 -- when wrapping is on, wrap backspace, cursor keys, etc.
@@ -460,27 +460,8 @@ vim.keymap.set('v', '<space>', '<leader>c<space>')
 -- vim.g.SuperTabDefaultCompletionType = "context"
 
 -- ---------------------------------------------------------------------------
---  treesitter
+--  treesitter (configured in plugins_always/plugins.lua)
 -- ---------------------------------------------------------------------------
--- require'nvim-treesitter.configs'.setup {
---   ensure_installed = { "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "javascript",
---                        "json",  "lua", "markdown", "markdown_inline", "python",
---                        "query", "r", "rust", "sql", "toml", "tsx", "typescript", "vimdoc", "yaml"},
---   auto_install = true,
---   sync_install = false,
---   highlight = { enable = true, },
--- }
-
-require'nvim-treesitter'.install {
-  "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "javascript",
-  "json",  "lua", "markdown", "markdown_inline", "python",
-  "query", "r", "rust", "sql", "toml", "tsx", "typescript", "vimdoc", "yaml"
-}
-
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = { '<filetype>' },
-  callback = function() vim.treesitter.start() end,
-})
 
 -- ---------------------------------------------------------------------------
 --  vim-textobj-underscore
