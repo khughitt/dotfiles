@@ -12,6 +12,9 @@ alias bt='bluetoothcontrol'
 alias btc='bluetoothctl connect'
 alias btC='bluetoothctl devices Connected'
 
+# cats
+alias cats="$HOME/d/cats/.venv/bin/cats"
+
 # cd
 alias dl='cd ~/downloads'
 alias dots='cd $DOTFILES'
