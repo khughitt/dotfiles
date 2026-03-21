@@ -109,8 +109,6 @@ zinit snippet OMZ::lib/key-bindings.zsh
 # prompt
 zinit ice pick"async.zsh" src"pure.zsh"; zinit light sindresorhus/pure
 
-# fasd-fzf integration
-zinit light "khughitt/fzf-fasd"
 
 # ls colors 
 # zinit ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
@@ -178,7 +176,7 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-rust
 
 # additional shell settings (aliases, exports, etc.); keep near end to prioritize
-for file in ~/.shell/{aliases,audio,fasd,functions,fzf,kitty,macos,ubuntu,vconsole,wali}; do
+for file in ~/.shell/{aliases,audio,functions,fzf,kitty,macos,ubuntu,vconsole,wali,zoxide}; do
     [ -r "$file" ] && source "$file"
 done
 
