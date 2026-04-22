@@ -8,6 +8,17 @@ git reset
 # unstage file
 git reset <file>
 
+# reset to a specific commit
+git reset <commit>
+
+# squash recent commits up to a revision
+git reset --soft <uuid>~1
+git commit -am '...'
+
+# revise commit message for pushed commit
+git commit --amend -m "..."
+git push --force-with-lease
+
 # restore deleted file (uncommitted)
 git checkout HEAD <file>
 
@@ -16,6 +27,10 @@ git checkout .
 
 # checkout most recent commit
 git checkout <branch>
+
+# pull changes from main into feature branch
+git fetch origin
+git rebase origin/main
 
 # show changes made in most recent commit
 git show HEAD
@@ -52,9 +67,6 @@ git commit --amend
 # create & push a tag
 git tag -a v1.0 -m "..."
 git push origin v1.0
-
-# reset to a specific commit
-git reset <commit>
 
 # show all changes to a single file
 git rev-list HEAD --oneline <file>
@@ -104,10 +116,6 @@ git branch -m old new
 
 # restore stash
 git stash pop stash@{0}
-
-# save files / folders from an earlier commit to a directory
-mkdir orig-code
-git --work-tree=orig-code checkout <hash> -- <target>
 
 # use main branch version of file when conflicts are encountered
 git checkout --theirs <file>

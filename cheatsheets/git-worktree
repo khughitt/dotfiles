@@ -1,0 +1,28 @@
+# list worktrees
+git worktree list
+
+# create a feature worktree
+git fetch origin
+git worktree add .worktrees/my_feature -b my_feature origin/main
+cd .worktrees/my_feature
+
+# use a worktree
+cd .worktrees/foo
+
+# save files / folders from an earlier commit to a directory
+mkdir orig-code
+git --work-tree=orig-code checkout <hash> -- <target>
+
+# bring latest main into a feature branch
+cd .worktrees/foo/
+git fetch origin
+git rebase origin/main
+
+# merge + squash commits from worktee
+git merge --squash feature/foo
+git commit -m "..."
+
+# remove worktree
+git worktree remove .worktrees/foo
+git branch -D feature/foo
+
