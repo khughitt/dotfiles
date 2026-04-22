@@ -11,3 +11,5 @@ jq '.numFailedTests' frontend/tmp/styles-failures.json
 
 // list failing test names + messages
 jq -r '.testResults[].assertionResults[] | select(.status=="failed") | "\(.fullName)\n \(.failureMessages[0])\n"' frontend/tmp/styles-failures.json
+
+# vi:syntax=bash

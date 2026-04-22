@@ -69,3 +69,16 @@ for x in `ls -d -- */ .*/`; do
   echo $x; 
   fd -Luu . $x -t f | wc -l;
 done
+
+# find dropbox "conflicted" files and keep the named versions
+# dry-run
+fd -Luu "foo's conflicted copy" -t f -x bash -c '
+  orig=$(printf "%s" "$1" | sed "s/ (foo'\''s conflicted copy [0-9-]*)//")
+  echo mv -- "$1" "$orig"
+' _ {}
+
+# execute
+fd -Luu "foo's conflicted copy" -t f -x bash -c '
+  orig=$(printf "%s" "$1" | sed "s/ (foo'\''s conflicted copy [0-9-]*)//")
+  mv -- "$1" "$orig"
+' _ {}
