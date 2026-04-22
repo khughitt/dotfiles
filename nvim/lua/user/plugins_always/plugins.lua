@@ -15,9 +15,9 @@ return {
   { 'nvim-treesitter/nvim-treesitter', lazy = false, build = ':TSUpdate',
     opts = {
       ensure_installed = {
-        "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "javascript",
+        "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "hcl", "javascript",
         "json", "lua", "markdown", "markdown_inline", "python",
-        "query", "r", "rust", "sql", "toml", "tsx", "typescript", "vimdoc", "yaml",
+        "query", "r", "rnoweb", "rust", "sql", "terraform", "toml", "tsx", "typescript", "vimdoc", "yaml",
       },
       auto_install = true,
       highlight = { enable = true },
