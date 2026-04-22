@@ -190,7 +190,7 @@ vim.opt.softtabstop = 2               -- tab width
 vim.opt.tabstop = 2
 vim.opt.textwidth = 100               -- wrap lines at 100 characters, when asked
 vim.opt.virtualedit = {"block"}       -- allow virtual edit in visual block ..
-vim.opt.wrap = true                   -- wrap lines
+vim.opt.wrap = false                  -- dont wrap lines
 vim.opt.linebreak = true              -- when wrapping, respect word boundaries
 
 -- when wrapping is on, wrap backspace, cursor keys, etc.
