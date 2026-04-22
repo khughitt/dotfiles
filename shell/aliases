@@ -79,6 +79,16 @@ alias fd12='fd --changed-within 12h'
 alias fd24='fd --changed-within 1d'
 alias fd48='fd --changed-within 2d'
 
+alias fda1='fd -Luu --changed-within 1h'
+alias fda2='fd -Luu --changed-within 2h'
+alias fda3='fd -Luu --changed-within 3h'
+alias fda4='fd -Luu --changed-within 4h'
+alias fda5='fd -Luu --changed-within 5h'
+alias fda6='fd -Luu --changed-within 6h'
+alias fda12='fd -Luu --changed-within 12h'
+alias fda24='fd -Luu --changed-within 1d'
+alias fda48='fd -Luu --changed-within 2d'
+
 alias fd-1='fd --changed-before 1h'
 alias fd-2='fd --changed-before 2h'
 alias fd-24='fd --changed-before 1d'
@@ -236,7 +246,7 @@ alias tez="trans en:zh-TW"  # to chinese
 alias tree="tree -C --gitignore"
 
 # uv
-alias uvr="uv run"
+alias u="uv run"
 alias uvi="uv run ipython"
 
 # virtual env
