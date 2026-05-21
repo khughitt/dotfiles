@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Imposta la soglia di attività in byte al secondo (B/s).",
+      "label": "Zeige Aktive Schwelle"
+    },
+    "colorBackground": {
+      "desc": "Imposta il colore di sfondo per il widget.",
+      "label": "Hintergrund"
+    },
+    "colorRx": {
+      "desc": "Imposta il colore dell'icona di download (RX) quando è sopra la soglia.",
+      "label": "RX Aktiv"
+    },
+    "colorSilent": {
+      "desc": "Imposta il colore dell'icona quando il traffico è al di sotto della soglia.",
+      "label": "RX/TX Neaktivan"
+    },
+    "colorText": {
+      "desc": "Imposta il colore del testo utilizzato sia per i valori RX che TX.",
+      "label": "Please provide the English text you would like me to translate. I need the text to be able to provide the translation."
+    },
+    "colorTx": {
+      "desc": "Määritä lähetyskuvakkeen (TX) väri, kun raja-arvo ylittyy.",
+      "label": "TX Aktibo"
+    },
+    "fontSizeModifier": {
+      "desc": "Skala textstorleken relativt standardstorleken.",
+      "label": "Modifikator veličine fonta"
+    },
+    "forceMegabytes": {
+      "desc": "Zeigen Sie alle Verkehrswerte in MB an, anstatt bei geringer Nutzung auf KB umzuschalten.",
+      "label": "Megabajtów siłą (MB)"
+    },
+    "iconSizeModifier": {
+      "desc": "Mérje a ikon méretét a alapértelmezetthez képest.",
+      "label": "Modifikator za veličinu ikone"
+    },
+    "iconType": {
+      "desc": "Alege stilul pictogramei folosit pentru indicatorii TX/RX.",
+      "label": "Tip ikonë"
+    },
+    "minWidth": {
+      "desc": "Imposta una larghezza minima per il widget (in px).",
+      "label": "Breite des minimalen Widgets"
+    },
+    "showNumbers": {
+      "desc": "Zeige die aktuellen RX/TX-Geschwindigkeiten als Zahlen an.",
+      "label": "Ipakita ang mga Halaga"
+    },
+    "spacingInbetween": {
+      "desc": "Rregulloje hapësirën midis elementeve RX/TX.",
+      "label": "Vertikaler Abstand"
+    },
+    "useCustomColors": {
+      "desc": "Aktiviere benutzerdefinierte Farben anstelle der Standardfarben des Designs.",
+      "label": "Ngjyra të personalizuara"
+    }
+  }
+}

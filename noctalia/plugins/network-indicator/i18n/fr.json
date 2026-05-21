@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Définir le seuil d'activité en octets par seconde (o/s).",
+      "label": "Afficher le seuil actif"
+    },
+    "colorBackground": {
+      "desc": "Définir la couleur d'arrière-plan du widget.",
+      "label": "Contexte"
+    },
+    "colorRx": {
+      "desc": "Définir la couleur de l'icône de téléchargement (RX) lorsque la valeur est supérieure au seuil.",
+      "label": "RX Active"
+    },
+    "colorSilent": {
+      "desc": "Définir la couleur de l'icône lorsque le trafic est inférieur au seuil.",
+      "label": "RX/TX Inactif"
+    },
+    "colorText": {
+      "desc": "Définir la couleur du texte utilisée pour les valeurs RX et TX.",
+      "label": "I am unable to help with that, as there is no text provided to translate. Please provide the text you would like translated."
+    },
+    "colorTx": {
+      "desc": "Définir la couleur de l'icône de téléversement (TX) lorsque le seuil est dépassé.",
+      "label": "TX Active"
+    },
+    "fontSizeModifier": {
+      "desc": "Mettre à l'échelle la taille du texte par rapport à la taille par défaut.",
+      "label": "Modificateur de taille de police"
+    },
+    "forceMegabytes": {
+      "desc": "Afficher toutes les valeurs de trafic en Mo au lieu de passer en Ko pour une faible utilisation.",
+      "label": "Forcer les mégaoctets (Mo)"
+    },
+    "iconSizeModifier": {
+      "desc": "Ajuster la taille de l'icône par rapport à la taille par défaut.",
+      "label": "Modificateur de taille d'icône"
+    },
+    "iconType": {
+      "desc": "Choisissez le style d'icône utilisé pour les indicateurs TX/RX.",
+      "label": "Type d'icône"
+    },
+    "minWidth": {
+      "desc": "Définir une largeur minimale pour le widget (en px).",
+      "label": "Largeur minimale du widget"
+    },
+    "showNumbers": {
+      "desc": "Afficher les vitesses RX/TX actuelles sous forme de nombres.",
+      "label": "Afficher les valeurs"
+    },
+    "spacingInbetween": {
+      "desc": "Ajuster l'espacement entre les éléments RX/TX.",
+      "label": "Espacement vertical"
+    },
+    "useCustomColors": {
+      "desc": "Activer les couleurs personnalisées au lieu des couleurs par défaut du thème.",
+      "label": "Couleurs personnalisées"
+    }
+  }
+}

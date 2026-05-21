@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Establecer el umbral de actividad en bytes por segundo (B/s).",
+      "label": "Mostrar umbral activo"
+    },
+    "colorBackground": {
+      "desc": "Establecer el color de fondo para el widget.",
+      "label": "Antecedentes"
+    },
+    "colorRx": {
+      "desc": "Establecer el color del icono de descarga (RX) cuando esté por encima del umbral.",
+      "label": "RX Activo"
+    },
+    "colorSilent": {
+      "desc": "Establecer el color del icono cuando el tráfico esté por debajo del umbral.",
+      "label": "RX/TX Inactivo"
+    },
+    "colorText": {
+      "desc": "Establecer el color del texto utilizado tanto para los valores RX como TX.",
+      "label": "Texto"
+    },
+    "colorTx": {
+      "desc": "Establecer el color del icono de carga (TX) cuando esté por encima del umbral.",
+      "label": "TX Activo"
+    },
+    "fontSizeModifier": {
+      "desc": "Escalar el tamaño del texto en relación con el predeterminado.",
+      "label": "Modificador de tamaño de fuente"
+    },
+    "forceMegabytes": {
+      "desc": "Mostrar todos los valores de tráfico en MB en lugar de cambiar a KB para bajo uso.",
+      "label": "Forzar megabytes (MB)"
+    },
+    "iconSizeModifier": {
+      "desc": "Escalar el tamaño del icono en relación con el tamaño predeterminado.",
+      "label": "Modificador del tamaño del icono"
+    },
+    "iconType": {
+      "desc": "Elige el estilo de icono utilizado para los indicadores TX/RX.",
+      "label": "Tipo de icono"
+    },
+    "minWidth": {
+      "desc": "Establecer un ancho mínimo para el widget (en px).",
+      "label": "Ancho mínimo del widget"
+    },
+    "showNumbers": {
+      "desc": "Mostrar las velocidades actuales de RX/TX como números.",
+      "label": "Mostrar valores"
+    },
+    "spacingInbetween": {
+      "desc": "Ajustar el espaciado entre los elementos RX/TX.",
+      "label": "Espaciado vertical"
+    },
+    "useCustomColors": {
+      "desc": "Activar colores personalizados en lugar de los predeterminados del tema.",
+      "label": "Colores personalizados"
+    }
+  }
+}

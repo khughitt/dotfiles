@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Stel de activiteitsdrempel in bytes per seconde (B/s) in.",
+      "label": "Actieve drempel weergeven"
+    },
+    "colorBackground": {
+      "desc": "Stel de achtergrondkleur voor de widget in.",
+      "label": "Achtergrond"
+    },
+    "colorRx": {
+      "desc": "Stel de kleur van het download (RX) pictogram in wanneer deze boven de drempelwaarde ligt.",
+      "label": "RX Actief"
+    },
+    "colorSilent": {
+      "desc": "Stel de pictogramkleur in wanneer het verkeer onder de drempelwaarde is.",
+      "label": "RX/TX Inactief"
+    },
+    "colorText": {
+      "desc": "Stel de tekstkleur in die gebruikt wordt voor zowel RX- als TX-waarden.",
+      "label": "Tekst"
+    },
+    "colorTx": {
+      "desc": "Stel de kleur van het upload (TX) icoon in wanneer boven de drempelwaarde.",
+      "label": "TX Active"
+    },
+    "fontSizeModifier": {
+      "desc": "Schaal de tekstgrootte ten opzichte van de standaard.",
+      "label": "Lettergrootte aanpassing"
+    },
+    "forceMegabytes": {
+      "desc": "Toon alle verkeerswaarden in MB in plaats van over te schakelen naar KB bij laag gebruik.",
+      "label": "Forceer megabytes (MB)"
+    },
+    "iconSizeModifier": {
+      "desc": "Schaal de pictogramgrootte ten opzichte van de standaard.",
+      "label": "Icoongrootte aanpassing"
+    },
+    "iconType": {
+      "desc": "Kies de pictogramstijl die gebruikt wordt voor de TX/RX-indicatoren.",
+      "label": "Icoontype"
+    },
+    "minWidth": {
+      "desc": "Stel een minimale breedte in voor de widget (in px).",
+      "label": "Minimale widgetbreedte"
+    },
+    "showNumbers": {
+      "desc": "Toon de huidige RX/TX snelheden als getallen.",
+      "label": "Waarden weergeven"
+    },
+    "spacingInbetween": {
+      "desc": "Pas de afstand tussen de RX/TX-elementen aan.",
+      "label": "Verticale afstand"
+    },
+    "useCustomColors": {
+      "desc": "Schakel aangepaste kleuren in in plaats van de standaard themakleuren.",
+      "label": "Aangepaste kleuren"
+    }
+  }
+}

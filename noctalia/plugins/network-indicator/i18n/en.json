@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Set the activity threshold in bytes per second (B/s).",
+      "label": "Show Active Threshold"
+    },
+    "colorBackground": {
+      "desc": "Set the background color for the widget.",
+      "label": "Background"
+    },
+    "colorRx": {
+      "desc": "Set the download (RX) icon color when above the threshold.",
+      "label": "RX Active"
+    },
+    "colorSilent": {
+      "desc": "Set the icon color when traffic is below the threshold.",
+      "label": "RX/TX Inactive"
+    },
+    "colorText": {
+      "desc": "Set the text color used for both RX and TX values.",
+      "label": "Text"
+    },
+    "colorTx": {
+      "desc": "Set the upload (TX) icon color when above the threshold.",
+      "label": "TX Active"
+    },
+    "fontSizeModifier": {
+      "desc": "Scale the text size relative to the default.",
+      "label": "Font Size Modifier"
+    },
+    "forceMegabytes": {
+      "desc": "Show all traffic values in MB instead of switching to KB for low usage.",
+      "label": "Force megabytes (MB)"
+    },
+    "iconSizeModifier": {
+      "desc": "Scale the icon size relative to the default.",
+      "label": "Icon Size Modifier"
+    },
+    "iconType": {
+      "desc": "Choose the icon style used for the TX/RX indicators.",
+      "label": "Icon Type"
+    },
+    "minWidth": {
+      "desc": "Set a minimum width for the widget (in px).",
+      "label": "Minimum Widget Width"
+    },
+    "showNumbers": {
+      "desc": "Display the current RX/TX speeds as numbers.",
+      "label": "Show Values"
+    },
+    "spacingInbetween": {
+      "desc": "Adjust the spacing between RX/TX elements.",
+      "label": "Vertical Spacing"
+    },
+    "useCustomColors": {
+      "desc": "Enable custom colors instead of theme defaults.",
+      "label": "Custom Colors"
+    }
+  }
+}

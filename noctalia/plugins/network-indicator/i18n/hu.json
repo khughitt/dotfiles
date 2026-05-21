@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Állítsa be az aktivitási küszöbértéket bájt/másodpercben (B/s).",
+      "label": "Aktív küszöbérték mutatása"
+    },
+    "colorBackground": {
+      "desc": "Állítsa be a widget háttérszínét.",
+      "label": "Háttér"
+    },
+    "colorRx": {
+      "desc": "Állítsa be a letöltés (RX) ikon színét, ha az meghaladja a küszöbértéket.",
+      "label": "RX Aktív"
+    },
+    "colorSilent": {
+      "desc": "Állítsa be az ikon színét, ha a forgalom a küszöbérték alatt van.",
+      "label": "RX/TX inaktív"
+    },
+    "colorText": {
+      "desc": "Állítsa be az RX és TX értékekhez használt szövegszínt.",
+      "label": "Általános"
+    },
+    "colorTx": {
+      "desc": "Állítsa be a feltöltés (TX) ikon színét, ha a küszöbérték felett van.",
+      "label": "TX Aktív"
+    },
+    "fontSizeModifier": {
+      "desc": "A szövegméret skálázása az alapértelmezett mérethez képest.",
+      "label": "Betűméret módosító"
+    },
+    "forceMegabytes": {
+      "desc": "Az összes forgalmi értéket MB-ban mutassa, ahelyett, hogy alacsony használat esetén KB-ra váltana.",
+      "label": "Megabájt (MB) kényszerítése"
+    },
+    "iconSizeModifier": {
+      "desc": "Az ikonméret skálázása az alapértelmezett mérethez képest.",
+      "label": "Ikonméret módosító"
+    },
+    "iconType": {
+      "desc": "Válaszd ki az TX/RX indikátorokhoz használt ikonkészletet.",
+      "label": "Ikon típusa"
+    },
+    "minWidth": {
+      "desc": "Állítson be egy minimális szélességet a widget számára (px-ben).",
+      "label": "Minimum Widget Szélesség"
+    },
+    "showNumbers": {
+      "desc": "A pillanatnyi RX/TX sebességek megjelenítése számként.",
+      "label": "Értékek megjelenítése"
+    },
+    "spacingInbetween": {
+      "desc": "Állítsa be a RX/TX elemek közötti távolságot.",
+      "label": "Függőleges térköz"
+    },
+    "useCustomColors": {
+      "desc": "Egyéni színek engedélyezése a téma alapértelmezett színei helyett.",
+      "label": "Egyéni színek"
+    }
+  }
+}

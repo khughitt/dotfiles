@@ -5,6 +5,7 @@
   "author": "Keith Hughitt",
   "description": "Preview and manage the current wallpaper from the bar.",
   "entryPoints": {
+    "main": "Main.qml",
     "barWidget": "BarWidget.qml",
     "panel": "Panel.qml"
   },

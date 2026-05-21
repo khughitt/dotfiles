@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Defina o limite de atividade em bytes por segundo (B/s).",
+      "label": "Mostrar Limiar Ativo"
+    },
+    "colorBackground": {
+      "desc": "Definir a cor de fundo do widget.",
+      "label": "Fundo"
+    },
+    "colorRx": {
+      "desc": "Defina a cor do ícone de download (RX) quando acima do limite.",
+      "label": "RX Ativo"
+    },
+    "colorSilent": {
+      "desc": "Definir a cor do ícone quando o tráfego estiver abaixo do limite.",
+      "label": "RX/TX Inativo"
+    },
+    "colorText": {
+      "desc": "Definir a cor do texto usada para os valores de RX e TX.",
+      "label": "Texto"
+    },
+    "colorTx": {
+      "desc": "Definir a cor do ícone de upload (TX) quando acima do limite.",
+      "label": "TX Ativo"
+    },
+    "fontSizeModifier": {
+      "desc": "Ajustar o tamanho do texto em relação ao padrão.",
+      "label": "Modificador de Tamanho da Fonte"
+    },
+    "forceMegabytes": {
+      "desc": "Mostrar todos os valores de tráfego em MB em vez de mudar para KB para baixo uso.",
+      "label": "Forçar megabytes (MB)"
+    },
+    "iconSizeModifier": {
+      "desc": "Dimensionar o tamanho do ícone em relação ao padrão.",
+      "label": "Modificador de Tamanho do Ícone"
+    },
+    "iconType": {
+      "desc": "Escolha o estilo do ícone usado para os indicadores TX/RX.",
+      "label": "Tipo de Ícone"
+    },
+    "minWidth": {
+      "desc": "Defina uma largura mínima para o widget (em px).",
+      "label": "Largura Mínima do Widget"
+    },
+    "showNumbers": {
+      "desc": "Exibir as velocidades atuais de RX/TX como números.",
+      "label": "Mostrar Valores"
+    },
+    "spacingInbetween": {
+      "desc": "Ajustar o espaçamento entre os elementos RX/TX.",
+      "label": "Espaçamento vertical"
+    },
+    "useCustomColors": {
+      "desc": "Ativar cores personalizadas em vez das cores padrão do tema.",
+      "label": "Cores Personalizadas"
+    }
+  }
+}

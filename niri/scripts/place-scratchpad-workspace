@@ -1,0 +1,10 @@
+#!/bin/bash
+# Keep the scratchpad workspace after regular numbered workspaces.
+
+set -euo pipefail
+
+NIRI_BIN="${NIRI_BIN:-niri}"
+SCRATCHPAD_WORKSPACE="${NIRI_SCRATCHPAD_WORKSPACE:-scratchpad}"
+SCRATCHPAD_INDEX="${NIRI_SCRATCHPAD_INDEX:-99}"
+
+"$NIRI_BIN" msg action move-workspace-to-index --reference "$SCRATCHPAD_WORKSPACE" "$SCRATCHPAD_INDEX"
