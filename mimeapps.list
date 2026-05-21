@@ -14,9 +14,10 @@ video/mp4=vlc.desktop
 image/gif=org.gnome.eog.desktop
 x-scheme-handler/mailto=google-chrome.desktop
 video/mp2t=vlc.desktop
-x-scheme-handler/webcal=firefox.desktop
+x-scheme-handler/webcal=brave-browser.desktop
 application/uproject=com.epicgames.UnrealEngineEditor.desktop
 audio/flac=vlc.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 
 [Added Associations]
 image/jpeg=gimp.desktop;org.gnome.eog.desktop;feh.desktop;
@@ -41,6 +42,6 @@ video/mp2t=vlc.desktop;
 image/x-eps=org.gnome.Evince.desktop;
 audio/x-wav=vlc.desktop;
 application/postscript=org.gnome.Evince.desktop;
-application/pdf=zathura-usercreated-1.desktop;
 application/zip=localc-usercreated-1.desktop;
 audio/flac=vlc.desktop;
+application/pdf=org.pwmt.zathura-pdf-mupdf.desktop;

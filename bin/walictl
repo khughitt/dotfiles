@@ -148,10 +148,10 @@ def save_current_source() -> Path:
 WALLPAPER_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
-def ipc_call_wallpaper(*args: str) -> None:
+def ipc_call_noctalia(target: str, *args: str) -> None:
     try:
         subprocess.run(
-            ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", *args],
+            ["qs", "-c", "noctalia-shell", "ipc", "call", target, *args],
             check=True,
             capture_output=True,
             text=True,
@@ -160,6 +160,14 @@ def ipc_call_wallpaper(*args: str) -> None:
         raise WalictlError("qs command not found") from exc
     except subprocess.CalledProcessError as exc:
         raise WalictlError("wallpaper IPC call failed") from exc
+
+
+def ipc_call_wallpaper(*args: str) -> None:
+    ipc_call_noctalia("wallpaper", *args)
+
+
+def ipc_call_wali_panel(*args: str) -> None:
+    ipc_call_noctalia("plugin:wali-panel", *args)
 
 
 def get_wallpaper_siblings(current_path: Path) -> list[Path]:
@@ -183,7 +191,7 @@ def navigate_wallpaper(direction: int) -> Path:
 
 
 def random_wallpaper() -> None:
-    ipc_call_wallpaper("random", "all")
+    ipc_call_wali_panel("random", "all")
 
 
 def edit_current_source() -> Path:

@@ -75,6 +75,7 @@ alias fd3='fd --changed-within 3h'
 alias fd4='fd --changed-within 4h'
 alias fd5='fd --changed-within 5h'
 alias fd6='fd --changed-within 6h'
+alias fd8='fd --changed-within 8h'
 alias fd12='fd --changed-within 12h'
 alias fd24='fd --changed-within 1d'
 alias fd48='fd --changed-within 2d'
@@ -85,6 +86,7 @@ alias fda3='fd -Luu --changed-within 3h'
 alias fda4='fd -Luu --changed-within 4h'
 alias fda5='fd -Luu --changed-within 5h'
 alias fda6='fd -Luu --changed-within 6h'
+alias fda8='fd -Luu --changed-within 8h'
 alias fda12='fd -Luu --changed-within 12h'
 alias fda24='fd -Luu --changed-within 1d'
 alias fda48='fd -Luu --changed-within 2d'
@@ -197,6 +199,9 @@ alias r=radian
 # rust
 alias rc=rustc
 
+# science
+alias s='uv run science --color=always'
+
 # sd
 alias -g N='| sd "/\x1b\[[0-9;]*m/g" ""'   # strip ansi colors
 
@@ -214,8 +219,8 @@ alias s120="sleep 7200 &&"
 # snakemake
 alias snek="snakemake"
 
-# startx
-alias sx="start-hyprland"
+# wayland session
+alias sx="niri-session"
 
 # sudo
 alias sudo="sudo " # support aliases when using sudo

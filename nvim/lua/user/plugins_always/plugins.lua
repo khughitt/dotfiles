@@ -10,6 +10,13 @@ return {
   {'tpope/vim-surround'},
   {'tpope/vim-repeat'},
   {'wellle/targets.vim'},
+  {
+    dir = vim.fn.stdpath('config') .. '/plugins/science-md.nvim',
+    ft = 'markdown',
+    config = function()
+      require('science-md').setup()
+    end,
+  },
   { 'dstein64/nvim-scrollview', branch = 'main' },
   { 'nvim-lualine/lualine.nvim', dependencies = { 'nvim-tree/nvim-web-devicons', lazy=true }},
   { 'nvim-treesitter/nvim-treesitter', lazy = false, build = ':TSUpdate',
