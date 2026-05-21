@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Ustaw próg aktywności w bajtach na sekundę (B/s).",
+      "label": "Pokaż Aktywny Próg"
+    },
+    "colorBackground": {
+      "desc": "Ustaw kolor tła widżetu.",
+      "label": "Tło"
+    },
+    "colorRx": {
+      "desc": "Ustaw kolor ikony pobierania (RX), gdy wartość przekroczy próg.",
+      "label": "RX Aktywny"
+    },
+    "colorSilent": {
+      "desc": "Ustaw kolor ikony, gdy ruch jest poniżej progu.",
+      "label": "RX/TX Nieaktywne"
+    },
+    "colorText": {
+      "desc": "Ustaw kolor tekstu używany zarówno dla wartości RX, jak i TX.",
+      "label": "Uptime"
+    },
+    "colorTx": {
+      "desc": "Ustaw kolor ikony wysyłania (TX), gdy przekroczony zostanie próg.",
+      "label": "Aktywny TX"
+    },
+    "fontSizeModifier": {
+      "desc": "Skaluj rozmiar tekstu względem domyślnego.",
+      "label": "Modyfikator rozmiaru czcionki"
+    },
+    "forceMegabytes": {
+      "desc": "Wyświetlaj wszystkie wartości transferu w MB zamiast przełączać się na KB przy niskim użyciu.",
+      "label": "Wymuś megabajty (MB)"
+    },
+    "iconSizeModifier": {
+      "desc": "Skaluj rozmiar ikony względem domyślnego.",
+      "label": "Modyfikator rozmiaru ikony"
+    },
+    "iconType": {
+      "desc": "Wybierz styl ikony używany dla wskaźników TX/RX.",
+      "label": "Typ Ikony"
+    },
+    "minWidth": {
+      "desc": "Ustaw minimalną szerokość widżetu (w px).",
+      "label": "Minimalna szerokość widżetu"
+    },
+    "showNumbers": {
+      "desc": "Wyświetlaj aktualne prędkości RX/TX jako liczby.",
+      "label": "Pokaż wartości"
+    },
+    "spacingInbetween": {
+      "desc": "Dostosuj odstępy między elementami RX/TX.",
+      "label": "Odstęp pionowy"
+    },
+    "useCustomColors": {
+      "desc": "Włącz własne kolory zamiast domyślnych motywu.",
+      "label": "Własne kolory"
+    }
+  }
+}

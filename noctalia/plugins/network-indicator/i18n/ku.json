@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Sînorê çalakiyê bi bayt di duyemîn de (B/s) destnîşan bike.",
+      "label": "Derheqê Çalakîyê Nîşan Bide"
+    },
+    "colorBackground": {
+      "desc": "Rengê paşxaneyê ji bo widgetê destnîşan bike.",
+      "label": "Paşxan"
+    },
+    "colorRx": {
+      "desc": "Dema rengê îkona daxistinê (RX) dema ku ji tixûbê derbas dibe, destnîşan bike.",
+      "label": "RX Çalak"
+    },
+    "colorSilent": {
+      "desc": "Îkon rengê dema trafîk ji binê tixûbê be, saz bike.",
+      "label": "RX/TX Neçalak"
+    },
+    "colorText": {
+      "desc": "Rengê nivîsê yê ku ji bo nirxên RX û TX tê bikaranîn, destnîşan bike.",
+      "label": "Bar Height"
+    },
+    "colorTx": {
+      "desc": "Rengê îkona barkirinê (TX) dema ku ji tixûbê derbas dibe, destnîşan bike.",
+      "label": "TX Çalak"
+    },
+    "fontSizeModifier": {
+      "desc": "Mezinahiya nivîsê li gorî ya xwerû mezin bike.",
+      "label": "Guherînera Mezinahiya Tîpan"
+    },
+    "forceMegabytes": {
+      "desc": "Hemû nirxên trafîkê bi MB nîşan bide, li şûna ku ji bo bikaranîna kêm veguhere KB.",
+      "label": "Meqsed mekabyte (MB)"
+    },
+    "iconSizeModifier": {
+      "desc": "Mezinahiya îkonê li gorî ya xwerû mezin bike.",
+      "label": "Guherînerê Mezinahiya Îkonê"
+    },
+    "iconType": {
+      "desc": "Şêwaza îkonê ya ku ji bo nîşanderên TX/RX tê bikaranîn hilbijêre.",
+      "label": "Cureyê Îkonê"
+    },
+    "minWidth": {
+      "desc": "Ji bo widget firehiyeke kêmtirin (bi px) diyar bike.",
+      "label": "Firehiya Herî Kêm a Wîcêtê"
+    },
+    "showNumbers": {
+      "desc": "Leza lezahenên RX/TX yên niha wekî hejmaran.",
+      "label": "Nîşan bide Nirxan"
+    },
+    "spacingInbetween": {
+      "desc": "Cihêtiya navbera elementên RX/TX eyar bike.",
+      "label": "Valahiya Rastkirin"
+    },
+    "useCustomColors": {
+      "desc": "Çalak bike rengên xwerû li şûna rengên xwerû yên temayê.",
+      "label": "Rengên Xweser"
+    }
+  }
+}

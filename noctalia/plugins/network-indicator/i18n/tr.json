@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Etkinlik eşiğini saniye başına bayt (B/s) cinsinden ayarlayın.",
+      "label": "Aktif Eşiği Göster"
+    },
+    "colorBackground": {
+      "desc": "Araç için arka plan rengini ayarla.",
+      "label": "Arka plan"
+    },
+    "colorRx": {
+      "desc": "Eşiğin üzerindeyken indirme (RX) simge rengini ayarla.",
+      "label": "RX Aktif"
+    },
+    "colorSilent": {
+      "desc": "Trafiğin eşiğin altında olduğu durumlarda simge rengini ayarla.",
+      "label": "RX/TX Etkin Değil"
+    },
+    "colorText": {
+      "desc": "RX ve TX değerleri için kullanılan metin rengini ayarla.",
+      "label": "Metin"
+    },
+    "colorTx": {
+      "desc": "Eşik değerinin üzerindeyken yükleme (TX) simge rengini ayarla.",
+      "label": "TX Aktif"
+    },
+    "fontSizeModifier": {
+      "desc": "Metin boyutunu varsayılana göre ölçekle.",
+      "label": "Yazı Boyutu Değiştirici"
+    },
+    "forceMegabytes": {
+      "desc": "Düşük kullanımda KB'a geçmek yerine tüm trafik değerlerini MB olarak göster.",
+      "label": "Megabayt (MB) zorla"
+    },
+    "iconSizeModifier": {
+      "desc": "Simge boyutunu varsayılan değere göre ölçekle.",
+      "label": "Simge Boyutu Değiştirici"
+    },
+    "iconType": {
+      "desc": "TX/RX göstergeleri için kullanılan simge stilini seçin.",
+      "label": "Simge Türü"
+    },
+    "minWidth": {
+      "desc": "Araç için minimum genişlik (piksel cinsinden) belirleyin.",
+      "label": "Minimum Widget Genişliği"
+    },
+    "showNumbers": {
+      "desc": "Mevcut RX/TX hızlarını sayı olarak görüntüle.",
+      "label": "Değerleri Göster"
+    },
+    "spacingInbetween": {
+      "desc": "RX/TX öğeleri arasındaki boşluğu ayarlayın.",
+      "label": "Dikey Aralık"
+    },
+    "useCustomColors": {
+      "desc": "Tema varsayılanları yerine özel renkleri etkinleştir.",
+      "label": "Özel Renkler"
+    }
+  }
+}

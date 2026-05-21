@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "设置活动阈值，单位为字节/秒 (B/s)。",
+      "label": "显示活动阈值"
+    },
+    "colorBackground": {
+      "desc": "设置小部件的背景颜色。",
+      "label": "背景"
+    },
+    "colorRx": {
+      "desc": "设置高于阈值时的下载（RX）图标颜色。",
+      "label": "RX Active"
+    },
+    "colorSilent": {
+      "desc": "当流量低于阈值时，设置图标颜色。",
+      "label": "RX/TX 无活动"
+    },
+    "colorText": {
+      "desc": "设置用于RX和TX值的文本颜色。",
+      "label": "文本"
+    },
+    "colorTx": {
+      "desc": "设置上传（TX）图标颜色，当高于阈值时。",
+      "label": "TX Active"
+    },
+    "fontSizeModifier": {
+      "desc": "相对于默认值缩放文本大小。",
+      "label": "字体大小调整器"
+    },
+    "forceMegabytes": {
+      "desc": "显示所有流量值，以MB为单位，而不是在低使用量时切换到KB。",
+      "label": "强制兆字节 (MB)"
+    },
+    "iconSizeModifier": {
+      "desc": "相对于默认值缩放图标大小。",
+      "label": "图标大小修改器"
+    },
+    "iconType": {
+      "desc": "选择用于 TX/RX 指示器的图标样式。",
+      "label": "图标类型"
+    },
+    "minWidth": {
+      "desc": "设置小部件的最小宽度（以像素为单位）。",
+      "label": "最小部件宽度"
+    },
+    "showNumbers": {
+      "desc": "以数字形式显示当前的 RX/TX 速度。",
+      "label": "显示数值"
+    },
+    "spacingInbetween": {
+      "desc": "调整RX/TX元素之间的间距。",
+      "label": "垂直间距"
+    },
+    "useCustomColors": {
+      "desc": "启用自定义颜色，而非主题默认颜色。",
+      "label": "自定义颜色"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+#!/bin/bash
+# Toggle a floating niri scratchpad window by moving it between the focused
+# workspace and a named holding workspace.
+
+set -euo pipefail
+
+NIRI_BIN="${NIRI_BIN:-niri}"
+KITTY_BIN="${KITTY_BIN:-kitty}"
+SCRATCHPAD_WORKSPACE="${NIRI_SCRATCHPAD_WORKSPACE:-scratchpad}"
+
+scratchpad="${1:-terminal}"
+
+case "$scratchpad" in
+    terminal)
+        app_id="scratchpad-terminal"
+        title="scratchpad: terminal"
+        command=()
+        ;;
+    *)
+        printf 'unknown scratchpad: %s\n' "$scratchpad" >&2
+        exit 2
+        ;;
+esac
+
+windows_json="$("$NIRI_BIN" msg -j windows)"
+window_json="$(
+    jq -c --arg app_id "$app_id" '
+        map(select(.app_id == $app_id)) | sort_by(.focus_timestamp.secs // 0, .focus_timestamp.nanos // 0) | last
+    ' <<<"$windows_json"
+)"
+
+if [[ "$window_json" == "null" ]]; then
+    exec "$KITTY_BIN" --class "$app_id" --title "$title" "${command[@]}"
+fi
+
+window_id="$(jq -r '.id' <<<"$window_json")"
+is_focused="$(jq -r '.is_focused' <<<"$window_json")"
+
+if [[ "$is_focused" == "true" ]]; then
+    "$NIRI_BIN" msg action move-window-to-workspace --window-id "$window_id" --focus false "$SCRATCHPAD_WORKSPACE"
+    exit 0
+fi
+
+workspace_reference="$(
+    "$NIRI_BIN" msg -j workspaces \
+        | jq -er '.[] | select(.is_focused) | if .name != null then .name else (.idx | tostring) end'
+)"
+
+"$NIRI_BIN" msg action move-window-to-workspace --window-id "$window_id" --focus false "$workspace_reference"
+"$NIRI_BIN" msg action focus-window --id "$window_id"

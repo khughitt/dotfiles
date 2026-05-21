@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "byteThresholdActive": {
+      "desc": "Aktivitätsschwellwert in Byte pro Sekunde (B/s) festlegen.",
+      "label": "Aktivitätsschwellwert anzeigen"
+    },
+    "colorBackground": {
+      "desc": "Hintergrundfarbe festlegen.",
+      "label": "Hintergrund"
+    },
+    "colorRx": {
+      "desc": "Symbolfarbe für Download (RX), wenn der Schwellwert überschritten ist.",
+      "label": "RX aktiv"
+    },
+    "colorSilent": {
+      "desc": "Symbolfarbe, wenn der Datenverkehr unter dem Schwellwert liegt.",
+      "label": "RX/TX inaktiv"
+    },
+    "colorText": {
+      "desc": "Textfarbe für RX- und TX-Werte festlegen.",
+      "label": "Text"
+    },
+    "colorTx": {
+      "desc": "Symbolfarbe für Upload (TX), wenn der Schwellwert überschritten ist.",
+      "label": "TX aktiv"
+    },
+    "fontSizeModifier": {
+      "desc": "Schriftgröße relativ zum Standard skalieren.",
+      "label": "Schriftgrößen-Faktor"
+    },
+    "forceMegabytes": {
+      "desc": "Alle Verkehrs­werte in MB anzeigen, statt bei geringer Nutzung auf KB zu wechseln.",
+      "label": "Immer Megabyte (MB) verwenden"
+    },
+    "iconSizeModifier": {
+      "desc": "Symbolgröße relativ zum Standard skalieren.",
+      "label": "Symbolgrößen-Faktor"
+    },
+    "iconType": {
+      "desc": "Symbolstil auswählen",
+      "label": "Symboltyp"
+    },
+    "minWidth": {
+      "desc": "Mindestbreite für das Widget festlegen (in px).",
+      "label": "Minimale Widget-Breite"
+    },
+    "showNumbers": {
+      "desc": "Aktuelle RX/TX-Geschwindigkeiten als Zahlen anzeigen.",
+      "label": "Werte anzeigen"
+    },
+    "spacingInbetween": {
+      "desc": "Den Abstand zwischen den RX/TX-Elementen anpassen.",
+      "label": "Vertikaler Abstand"
+    },
+    "useCustomColors": {
+      "desc": "Eigene Farben statt der Standard-Themefarben verwenden.",
+      "label": "Eigene Farben"
+    }
+  }
+}

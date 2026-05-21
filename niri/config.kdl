@@ -1,4 +1,4 @@
-// Keith's Niri config.
+// Niri config.
 //
 // Keep Hyprland-specific settings out of this file. Noctalia owns wallpaper,
 // shell widgets, and generated colors; Niri owns compositor behavior.
@@ -37,12 +37,13 @@ input {
         natural-scroll
     }
 
-    focus-follows-mouse
+    // focus-follows-mouse
+    focus-follows-mouse max-scroll-amount="0%"
 }
 
 layout {
     gaps 8
-    center-focused-column "on-overflow"
+    center-focused-column "never" // "on-overflow"
     default-column-width { proportion 0.5; }
 
     preset-column-widths {
@@ -75,18 +76,22 @@ overview {
     workspace-shadow {
         off
     }
+    zoom 0.25
 }
 
 hotkey-overlay {
     skip-at-startup
 }
 
-screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+screenshot-path "~/Pictures/Screenshots/%Y-%m-%d %H-%M-%S.png"
 
+workspace "scratchpad"
+
+spawn-at-startup "~/.config/niri/scripts/place-scratchpad-workspace"
 spawn-at-startup "qs" "-c" "noctalia-shell"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
+spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
-spawn-at-startup "qs" "-p" "/mnt/ssd/Dropbox/software/ohai/ohai/shell.qml"
 
 prefer-no-csd
 
@@ -121,7 +126,7 @@ blur {
     passes 2
     offset 3.0
     noise 0.03
-    saturation 1.0
+    saturation 1.05
 }
 
 window-rule {
@@ -145,6 +150,14 @@ window-rule {
 }
 
 window-rule {
+    match app-id="^scratchpad-terminal$"
+    open-floating true
+    default-column-width { proportion 0.8; }
+    default-window-height { proportion 0.45; }
+    default-floating-position x=0 y=0 relative-to="top"
+}
+
+window-rule {
     match app-id=r#"firefox$"# title="^Picture-in-Picture$"
     open-floating true
 }
@@ -156,9 +169,10 @@ window-rule {
 }
 
 binds {
+    Mod+Shift+Slash { show-hotkey-overlay; }
     Ctrl+Space repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
     Super+S repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
-    Super+Comma repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "settings" "toggle"; }
+    Super+Alt+Comma repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "settings" "toggle"; }
 
     XF86AudioRaiseVolume allow-when-locked=true { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "volume" "increase"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "volume" "decrease"; }
@@ -174,6 +188,7 @@ binds {
     XF86AudioStop allow-when-locked=true { spawn-sh "playerctl stop"; }
 
     Super+Return hotkey-overlay-title="Open Terminal" { spawn "kitty"; }
+    Alt+Return hotkey-overlay-title="Toggle Scratchpad Terminal" repeat=false { spawn "~/.config/niri/scripts/scratchpad-toggle" "terminal"; }
     Super+E hotkey-overlay-title="Open File Manager" { spawn "kitty" "yazi"; }
     Super+Alt+L hotkey-overlay-title="Lock Screen" { spawn "swaylock"; }
     Super+Q repeat=false { close-window; }
@@ -205,17 +220,58 @@ binds {
     Super+Shift+Up { move-window-up; }
     Super+Shift+Right { move-column-right; }
 
-    Super+B { consume-or-expel-window-left; }
+    Super+Home { focus-column-first; }
+    Super+End { focus-column-last; }
+    Super+Ctrl+Home { move-column-to-first; }
+    Super+Ctrl+End { move-column-to-last; }
+
+    // Monitor movement candidates. Keep disabled until the multi-monitor
+    // workflow settles.
+    // Super+Ctrl+Left { focus-monitor-left; }
+    // Super+Ctrl+Down { focus-monitor-down; }
+    // Super+Ctrl+Up { focus-monitor-up; }
+    // Super+Ctrl+Right { focus-monitor-right; }
+    // Super+Shift+Ctrl+Left { move-column-to-monitor-left; }
+    // Super+Shift+Ctrl+Down { move-column-to-monitor-down; }
+    // Super+Shift+Ctrl+Up { move-column-to-monitor-up; }
+    // Super+Shift+Ctrl+Right { move-column-to-monitor-right; }
+
+    Super+Page_Down { focus-workspace-down; }
+    Super+Page_Up { focus-workspace-up; }
+    Super+U { focus-workspace-down; }
+    Super+I { focus-workspace-up; }
+    Super+Ctrl+Page_Down { move-column-to-workspace-down; }
+    Super+Ctrl+Page_Up { move-column-to-workspace-up; }
+    Super+Ctrl+U { move-column-to-workspace-down; }
+    Super+Ctrl+I { move-column-to-workspace-up; }
+    Super+Shift+Page_Down { move-workspace-down; }
+    Super+Shift+Page_Up { move-workspace-up; }
+    Super+Shift+U { move-workspace-down; }
+    Super+Shift+I { move-workspace-up; }
+
+    // Consume/expel candidates.
+    Super+Comma { consume-window-into-column; }
     Super+Period { expel-window-from-column; }
+    // Super+BracketLeft { consume-or-expel-window-left; }
+    // Super+BracketRight { consume-or-expel-window-right; }
+
     Super+R { switch-preset-column-width; }
     Super+Shift+R { switch-preset-column-width-back; }
+    Super+Ctrl+Shift+R { switch-preset-window-height; }
+    Super+Ctrl+R { reset-window-height; }
+    Super+M { maximize-window-to-edges; }
+    Super+Ctrl+F { expand-column-to-available-width; }
+    Super+C { center-column; }
+    Super+Ctrl+C { center-visible-columns; }
     Super+Minus { set-column-width "-10%"; }
     Super+Equal { set-column-width "+10%"; }
     Super+Shift+Minus { set-window-height "-10%"; }
     Super+Shift+Equal { set-window-height "+10%"; }
+    Super+W { toggle-column-tabbed-display; }
 
     F6 { screenshot-screen; }
     Super+F6 { screenshot; }
+    Alt+Print { screenshot-window; }
     Super+N { spawn-sh "wali"; }
 
     Super+1 { focus-workspace 1; }
