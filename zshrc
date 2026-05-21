@@ -12,8 +12,10 @@ export DOTFILES=${${(%):-%x}:A:h}
 
 # load zinit
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-[ ! -d $ZINIT_HOME ] && mkdir -p "$(dirname $ZINIT_HOME)"
-[ ! -d $ZINIT_HOME/.git ] && git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+if [[ ! -r "${ZINIT_HOME}/zinit.zsh" ]]; then
+    print -u2 "zinit is not installed at ${ZINIT_HOME}; run setup.sh"
+    return 1
+fi
 source "${ZINIT_HOME}/zinit.zsh"
 
 # local settings (early)
@@ -36,7 +38,7 @@ setopt extended_history       # record timestamp of command in HISTFILE
 setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
 setopt hist_ignore_dups       # ignore duplicated commands history list
 setopt hist_verify            # show command with history expansion to user before running it
-setopt inc_append_history     # add commands to HISTFILE as they are executed
+unsetopt inc_append_history   # share_history already appends incrementally
 setopt share_history          # share command history data
 
 # 
@@ -60,7 +62,7 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|=*' 'l:|=* r:|=*'  # sma
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # disable scroll lock
-stty -ixon
+[[ -t 0 ]] && stty -ixon
 
 # fix keybindings
 bindkey '^P' up-history
@@ -96,10 +98,6 @@ zinit snippet OMZ::plugins/pip
 
 [[ "$(uname)" != "Darwin" ]] && zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
 
-# fzf history search
-zinit ice lucid wait'0'
-zinit light joshskidmore/zsh-fzf-history-search
-
 # vi mode improvement
 #zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
 
@@ -109,16 +107,15 @@ zinit snippet OMZ::lib/key-bindings.zsh
 # prompt
 zinit ice pick"async.zsh" src"pure.zsh"; zinit light sindresorhus/pure
 
-
-# ls colors 
-# zinit ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
-# zinit load trapd00r/LS_COLORS
-
 # alias reminders
-# zinit light "djui/alias-tips"
+zinit light "djui/alias-tips"
 
 # cntl-z <-> fg
 zinit light "mdumitru/fancy-ctrl-z"
+
+# completion definitions
+zinit ice blockf
+zinit light zsh-users/zsh-completions
 
 # CLI completions
 fpath=(~/.local/share/zsh/site-functions $fpath)
@@ -132,7 +129,7 @@ zinit cdreplay -q
 compdef _gnu_generic snakemake
 
 # Xan completions
-eval "$(xan completions zsh)"
+(( $+commands[xan] )) && eval "$(xan completions zsh)"
 
 # host-specific settings
 if [ -e $DOTFILES/shell/local/$HOST.zsh ]; then
@@ -141,11 +138,8 @@ fi
 
 # remaining zinit plugins
 zinit wait lucid for \
- atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
  atload"fast-theme q-jmnemonic &>/dev/null" \
-    zdharma-continuum/fast-syntax-highlighting \
- blockf \
-    zsh-users/zsh-completions
+    zdharma-continuum/fast-syntax-highlighting
 
 # AWS completions (source after turbo compinit via sched)
 [[ -f /usr/bin/aws_zsh_completer.sh ]] && sched +0 source /usr/bin/aws_zsh_completer.sh
@@ -160,13 +154,15 @@ function zshaddhistory() {
 export MAMBA_EXE="$HOME/.local/bin/micromamba";
 export MAMBA_ROOT_PREFIX="$HOME/micromamba";
 
-__mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__mamba_setup"
-else
-    alias micromamba="$MAMBA_EXE"
+if [[ -x "$MAMBA_EXE" ]]; then
+    __mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        eval "$__mamba_setup"
+    else
+        alias micromamba="$MAMBA_EXE"
+    fi
+    unset __mamba_setup
 fi
-unset __mamba_setup
 
 # Load a few important annexes, without Turbo
 zinit light-mode for \
@@ -193,10 +189,9 @@ if [ -e ~/.zsh_local_late ]; then
 fi
 
 # print greeting
-if [ "$vconsole" = false ]; then
+if [[ -t 1 && "$vconsole" = false ]] && (( $+commands[figlet] )) && (( $+commands[lolcat] )); then
     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
 fi
 
 # stop profiling zshrc
 # zprof 
-

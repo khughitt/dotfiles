@@ -22,4 +22,6 @@ _fzf_compgen_dir() {
   fd --type d --hidden --follow --exclude ".git" . "$1"
 }
 
-source <(fzf --zsh)
+if [[ -o interactive && -t 0 && -t 1 ]] && (( $+commands[fzf] )); then
+  source <(fzf --zsh)
+fi

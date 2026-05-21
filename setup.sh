@@ -75,7 +75,7 @@ else
 fi
 
 # Define configuration components
-GRAPHICAL_CONFIGS=("feh" "hypr" "zathura")
+GRAPHICAL_CONFIGS=("feh" "hypr" "niri" "zathura")
 COMMON_CONFIGS=("fcitx" "git" "mimeapps.list" "nvim" "lsd" "powerline" "snakemake" "termcolors" "yazi")
 
 if [[ "$MACOS" == "true" ]]; then
@@ -98,6 +98,13 @@ mkdir -p $XDG_CONFIG_HOME
 
 # Create completions cache dir
 mkdir -p $HOME/.cache/zinit/completions
+
+# Install zinit outside shell startup.
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+if [[ ! -d "$ZINIT_HOME/.git" ]]; then
+    mkdir -p "$(dirname "$ZINIT_HOME")"
+    git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+fi
 
 # Checks for file or directory and creates a sym link if it doesn't already exist
 function ln_s() {
@@ -193,8 +200,19 @@ fi
 # Install ~/.config components
 if [[ "$HEADLESS" == "false" ]]; then
     for path in "${GRAPHICAL_CONFIGS[@]}"; do
+        if [[ "$path" == "niri" && -e "${XDG_CONFIG_HOME}/${path}" && ! -L "${XDG_CONFIG_HOME}/${path}" ]]; then
+            if [ -e "${XDG_CONFIG_HOME}/${path}.bak" ]; then
+                echo "Refusing to overwrite existing ${XDG_CONFIG_HOME}/${path}.bak"
+                exit 1
+            fi
+            mv "${XDG_CONFIG_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}.bak"
+        fi
         ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
     done
+
+    if [ -x "${XDG_CONFIG_HOME}/niri/host_specific.sh" ]; then
+        "${XDG_CONFIG_HOME}/niri/host_specific.sh"
+    fi
 fi
 
 for path in "${COMMON_CONFIGS[@]}"; do

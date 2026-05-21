@@ -1,7 +1,7 @@
 #
 # wallpaper switcher
 # wraps pywal + chooses a random image from a specified dir
-# supports X11 (feh), Wayland/Hyprland (swww), and noctalia-shell
+# supports X11 (feh), Wayland (swww), and noctalia-shell
 # https://github.com/khughitt/wali
 #
 
@@ -15,9 +15,9 @@ fi
 
 # detect display server / wallpaper backend
 # priority: noctalia > swww > feh
-if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ] && pgrep -f "noctalia-shell" > /dev/null 2>&1; then
+if [ -n "$WAYLAND_DISPLAY" ] && pgrep -f "noctalia-shell" > /dev/null 2>&1; then
   WALI_BACKEND="noctalia"
-elif [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
+elif [ -n "$WAYLAND_DISPLAY" ] && command -v swww > /dev/null 2>&1; then
   WALI_BACKEND="swww"
 else
   WALI_BACKEND="feh"

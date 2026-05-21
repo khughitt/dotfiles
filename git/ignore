@@ -1,14 +1,21 @@
 node_modules
+.agents
+.claude
+.codex
 .cursor
 .cursorrules
+.playwright
 .project
 .pydevproject
-.serena
+.impeccable.md
 .snakemake
 .vscode
+.worktrees
 *.pyc
 *.code-workspace
 archive
 GEMINI.md
+
+skills-lock.json
 
 **/.claude/settings.local.json
