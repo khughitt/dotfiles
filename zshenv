@@ -48,9 +48,6 @@ if [[ "$(uname)" != "Darwin" ]]; then
 fi
 export FREEPLANE_USE_UNSUPPORTED_JAVA_VERSION=1
 
-# let ncurses know where to find terminfo
-export TERMINFO=~/.terminfo
-
 # remap caps-lock in sway
 # export XKB_DEFAULT_OPTIONS=caps:escape
 
