@@ -1,15 +1,15 @@
 # get account id
 aws sts get-caller-identity --query Account --output text
 
+# cp / sync
+aws s3 cp --recursive s3://x/y/ ./y/
+aws s3 sync s3://x/y/ ./y/
+
 # logs
 aws logs list-log-groups
 aws logs tail /ecs/x --follow
 
-#
-# .aws/config
-#
-
-# disable pager
+# disable pager (add to .aws/config)
 cli_pager= 
 
 # vi:syntax=bash

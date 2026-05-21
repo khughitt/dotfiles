@@ -1,3 +1,8 @@
 # sync files from remote host using list of filepaths
 rsync -avz --files-from=files.txt user@remote:/ ./destination/
 
+# specify custom port + public key to use
+rsync -Pav -e "ssh -i $HOME/.ssh/id_ed25519 -p $PORT" \
+    "$HOST:/path/to/pull/" \
+    ./destination/
+

@@ -1,0 +1,251 @@
+// Keith's Niri config.
+//
+// Keep Hyprland-specific settings out of this file. Noctalia owns wallpaper,
+// shell widgets, and generated colors; Niri owns compositor behavior.
+
+include "./noctalia.kdl"
+include "./host.kdl"
+
+environment {
+    QT_QPA_PLATFORM "wayland"
+    QT_QPA_PLATFORMTHEME "gtk3"
+    QT_WAYLAND_DISABLE_WINDOWDECORATION "1"
+    GDK_BACKEND "wayland"
+    MOZ_ENABLE_WAYLAND "1"
+    GTK_IM_MODULE "fcitx"
+    QT_IM_MODULE "fcitx"
+    XMODIFIERS "@im=fcitx"
+    _JAVA_AWT_WM_NONREPARENTING "1"
+}
+
+cursor {
+    xcursor-theme "Adwaita"
+    xcursor-size 24
+}
+
+input {
+    keyboard {
+        xkb {
+            layout "us"
+            options "caps:escape"
+        }
+    }
+
+    touchpad {
+        tap
+        drag-lock
+        natural-scroll
+    }
+
+    focus-follows-mouse
+}
+
+layout {
+    gaps 8
+    center-focused-column "on-overflow"
+    default-column-width { proportion 0.5; }
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+        proportion 1.0
+    }
+
+    focus-ring {
+        width 2
+    }
+
+    border {
+        off
+    }
+
+    shadow {
+        on
+        softness 30
+        spread 5
+        offset x=0 y=5
+        color "#00000070"
+    }
+
+    background-color "transparent"
+}
+
+overview {
+    workspace-shadow {
+        off
+    }
+}
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+spawn-at-startup "qs" "-c" "noctalia-shell"
+spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
+spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
+spawn-at-startup "qs" "-p" "/mnt/ssd/Dropbox/software/ohai/ohai/shell.qml"
+
+prefer-no-csd
+
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+
+// Noctalia stationary wallpaper: keep the regular wallpaper visible behind
+// all workspaces. In Noctalia settings, leave overview wallpaper disabled.
+layer-rule {
+    match namespace="^noctalia-wallpaper*"
+    place-within-backdrop true
+}
+
+// Niri 26.04 blur support for Noctalia and regular apps.
+window-rule {
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+layer-rule {
+    match namespace="^noctalia-(background|launcher-overlay|dock)-.*$"
+
+    background-effect {
+        xray false
+    }
+}
+
+blur {
+    passes 2
+    offset 3.0
+    noise 0.03
+    saturation 1.0
+}
+
+window-rule {
+    geometry-corner-radius 20
+    clip-to-geometry true
+}
+
+window-rule {
+    match app-id="^text-input$"
+    open-floating true
+}
+
+window-rule {
+    match app-id="^peek$"
+    open-floating true
+}
+
+window-rule {
+    match app-id="^kitty$"
+    opacity 0.94
+}
+
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+
+window-rule {
+    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+    match app-id=r#"^org\.gnome\.World\.Secrets$"#
+    block-out-from "screen-capture"
+}
+
+binds {
+    Ctrl+Space repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
+    Super+S repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
+    Super+Comma repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "settings" "toggle"; }
+
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "volume" "increase"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "volume" "decrease"; }
+    XF86AudioMute allow-when-locked=true { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "volume" "muteOutput"; }
+    XF86AudioMicMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "brightness" "increase"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "brightness" "decrease"; }
+
+    XF86AudioNext allow-when-locked=true { spawn-sh "playerctl next"; }
+    XF86AudioPause allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioPlay allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioPrev allow-when-locked=true { spawn-sh "playerctl previous"; }
+    XF86AudioStop allow-when-locked=true { spawn-sh "playerctl stop"; }
+
+    Super+Return hotkey-overlay-title="Open Terminal" { spawn "kitty"; }
+    Super+E hotkey-overlay-title="Open File Manager" { spawn "kitty" "yazi"; }
+    Super+Alt+L hotkey-overlay-title="Lock Screen" { spawn "swaylock"; }
+    Super+Q repeat=false { close-window; }
+    Alt+F4 repeat=false { close-window; }
+    Super+Shift+E { quit; }
+    Super+Shift+C { spawn "niri" "msg" "action" "load-config-file"; }
+
+    Super+F { maximize-column; }
+    Super+Shift+F { fullscreen-window; }
+    Super+Shift+Space { toggle-window-floating; }
+    Super+V { toggle-window-floating; }
+    Super+Shift+V { switch-focus-between-floating-and-tiling; }
+
+    Super+H { focus-column-left; }
+    Super+J { focus-window-down; }
+    Super+K { focus-window-up; }
+    Super+L { focus-column-right; }
+    Super+Left { focus-column-left; }
+    Super+Down { focus-window-down; }
+    Super+Up { focus-window-up; }
+    Super+Right { focus-column-right; }
+
+    Super+Shift+H { move-column-left; }
+    Super+Shift+J { move-window-down; }
+    Super+Shift+K { move-window-up; }
+    Super+Shift+L { move-column-right; }
+    Super+Shift+Left { move-column-left; }
+    Super+Shift+Down { move-window-down; }
+    Super+Shift+Up { move-window-up; }
+    Super+Shift+Right { move-column-right; }
+
+    Super+B { consume-or-expel-window-left; }
+    Super+Period { expel-window-from-column; }
+    Super+R { switch-preset-column-width; }
+    Super+Shift+R { switch-preset-column-width-back; }
+    Super+Minus { set-column-width "-10%"; }
+    Super+Equal { set-column-width "+10%"; }
+    Super+Shift+Minus { set-window-height "-10%"; }
+    Super+Shift+Equal { set-window-height "+10%"; }
+
+    F6 { screenshot-screen; }
+    Super+F6 { screenshot; }
+    Super+N { spawn-sh "wali"; }
+
+    Super+1 { focus-workspace 1; }
+    Super+2 { focus-workspace 2; }
+    Super+3 { focus-workspace 3; }
+    Super+4 { focus-workspace 4; }
+    Super+5 { focus-workspace 5; }
+    Super+6 { focus-workspace 6; }
+    Super+7 { focus-workspace 7; }
+    Super+8 { focus-workspace 8; }
+    Super+9 { focus-workspace 9; }
+    Super+0 { focus-workspace 10; }
+
+    Super+Shift+1 { move-column-to-workspace 1; }
+    Super+Shift+2 { move-column-to-workspace 2; }
+    Super+Shift+3 { move-column-to-workspace 3; }
+    Super+Shift+4 { move-column-to-workspace 4; }
+    Super+Shift+5 { move-column-to-workspace 5; }
+    Super+Shift+6 { move-column-to-workspace 6; }
+    Super+Shift+7 { move-column-to-workspace 7; }
+    Super+Shift+8 { move-column-to-workspace 8; }
+    Super+Shift+9 { move-column-to-workspace 9; }
+    Super+Shift+0 { move-column-to-workspace 10; }
+
+    Super+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Super+WheelScrollUp cooldown-ms=150 { focus-workspace-up; }
+    Super+WheelScrollRight { focus-column-right; }
+    Super+WheelScrollLeft { focus-column-left; }
+
+    Super+O repeat=false { toggle-overview; }
+    Super+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    Super+Shift+P { power-off-monitors; }
+}

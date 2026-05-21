@@ -108,6 +108,12 @@ git branch -a
 # fetch all remote branches
 git fetch --all
 
+# update refs and remove deleted remote-tracking branches
+git fetch --prune origin
+
+# see remote branches merged into origin/main
+git branch -r --merged origin/main
+
 # clean up old remotes
 git remote prune origin --dry-run
 

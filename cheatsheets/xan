@@ -1,0 +1,31 @@
+# list columns
+xan headers in.csv
+
+# preview file
+xan view in.csv
+
+# select, filter, print
+xan filter 'eq(category, "foo")' input.tsv \
+    | xan slice -l 10 \
+    | xan select '1:6' \
+    | xan view
+
+# filter
+xan filter 'x == 5'
+xan filter 'eq(category, "foo")'
+xan filter 'category =~ "^foo$"'
+
+# sort
+xan sort -s col_name
+xan sort -s col_name -R
+xan sort -s numeric_col -N
+
+# top
+xan top score
+xan top score -R
+
+# head
+xan head -l 5
+
+# significant figures (digits)
+xan view -S 4
