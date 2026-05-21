@@ -5,9 +5,19 @@ in2csv -n in.xls
 
 # convert xls
 in2csv in.xls > out.csv
+in2csv --sheet 'foo' > out.csv
 in2csv in.xls | csvformat -T > out.tsv
 
 # markdown table / pretty print
 csvlook --max-rows 3 in.csv 
 csvlook --max-rows 3 -d $'\t' in.tsv
 csvlook --max-rows 3 --max-column-width 15 in.csv 
+
+# filter, select, print..
+csvgrep -t -c col_name -m col_value input.tsv \
+    | csvcut -t -c 1-6 \
+    | head -n 11 \
+    | csvlook -t
+
+# format numbers (significant figures / digits, ...)
+csvlook --max-precision 4 --no-number-ellipsis

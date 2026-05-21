@@ -1,0 +1,17 @@
+// titan: desktop, 4K, NVIDIA GPU.
+
+environment {
+    LIBVA_DRIVER_NAME "nvidia"
+    __GLX_VENDOR_LIBRARY_NAME "nvidia"
+}
+
+layout {
+    gaps 10
+
+    shadow {
+        on
+        softness 35
+        spread 5
+        offset x=0 y=5
+    }
+}
