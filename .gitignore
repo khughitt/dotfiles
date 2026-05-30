@@ -26,6 +26,7 @@ vim/tmp
 zeit/
 claude/commands
 hypr/host.conf
+kitty/os-local.conf
 docs/
 
 # noctalia colorscheme updates
