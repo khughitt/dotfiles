@@ -18,6 +18,7 @@ x-scheme-handler/webcal=brave-browser.desktop
 application/uproject=com.epicgames.UnrealEngineEditor.desktop
 audio/flac=vlc.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+x-scheme-handler/slack=slack.desktop
 
 [Added Associations]
 image/jpeg=gimp.desktop;org.gnome.eog.desktop;feh.desktop;
