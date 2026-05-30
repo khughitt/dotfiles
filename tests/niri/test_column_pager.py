@@ -263,6 +263,12 @@ class IpcFramingTests(unittest.TestCase):
         fake.chunks.append(b'3}\n')
         self.assertEqual(sock.read_json(), {"Ok": 3})
 
+    def test_niri_socket_decodes_utf8_after_complete_line_is_framed(self):
+        fake = cp.FakeRawSocket([b'{"Title":"caf\xc3', b'\xa9"}\n'])
+        sock = cp.NiriSocket(fake)
+
+        self.assertEqual(sock.read_json(), {"Title": "caf\u00e9"})
+
     def test_niri_socket_writes_json_with_newline(self):
         fake = cp.FakeRawSocket([])
         sock = cp.NiriSocket(fake)
