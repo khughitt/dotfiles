@@ -151,6 +151,8 @@ class CacheAndSchedulingTests(unittest.TestCase):
         ]
 
         needed = cache.filter_needed(workspace_id, second)
+        self.assertNotIn((4,), cache.by_workspace[workspace_id])
+        cache.mark_applied(workspace_id, needed)
         cache.prune(workspace_id, [item.column for item in second])
 
         self.assertEqual([(item.column.signature, item.target_percent) for item in needed], [((4,), 100.0 / 3)])
@@ -167,10 +169,21 @@ class CacheAndSchedulingTests(unittest.TestCase):
         self.assertTrue(scheduler.pending)
         self.assertEqual(scheduler.next_run_ms, 110)
 
+    def test_scheduler_batch_completion_does_not_enable_initial_scheduling(self):
+        scheduler = cp.Scheduler(debounce_ms=100)
+
+        scheduler.note_batch_completed(now_ms=100)
+        scheduler.schedule(now_ms=150)
+
+        self.assertFalse(scheduler.ready_for_first_pass)
+        self.assertFalse(scheduler.pending)
+        self.assertIsNone(scheduler.next_run_ms)
+
     def test_scheduler_ignores_self_layout_event_when_signature_unchanged(self):
         scheduler = cp.Scheduler(debounce_ms=100)
         scheduler.workspace_id = 1
         scheduler.workspace_signature = ((1,),)
+        scheduler.ready_for_first_pass = True
         scheduler.note_batch_completed(now_ms=100)
 
         scheduler.note_layout_event(workspace_id=1, signature=((1,),), now_ms=150)
@@ -181,6 +194,7 @@ class CacheAndSchedulingTests(unittest.TestCase):
         scheduler = cp.Scheduler(debounce_ms=100)
         scheduler.workspace_id = 1
         scheduler.workspace_signature = ((1,),)
+        scheduler.ready_for_first_pass = True
         scheduler.note_batch_completed(now_ms=100)
 
         scheduler.note_layout_event(workspace_id=1, signature=((1,), (2,)), now_ms=150)
