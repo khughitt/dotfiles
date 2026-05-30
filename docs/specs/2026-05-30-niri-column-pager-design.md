@@ -48,19 +48,21 @@ The script maintains:
 
 - A read socket subscribed to `EventStream`.
 - A separate action socket for `Action` requests.
-- In-memory focused-workspace and window state derived from startup queries and event stream updates.
+- In-memory focused-workspace and window state bootstrapped from the initial `EventStream` snapshots and maintained from later event stream updates.
 - A small debounce timer for layout-affecting events.
-- A target-width cache for the active workspace to prevent self-induced layout feedback loops.
+- A target-width cache for focused workspaces to prevent self-induced layout feedback loops.
 
 Direct IPC is preferred over repeated `niri msg` subprocesses because this helper is expected to run continuously and react to frequent window events.
 
 ## Data Model
 
-The script tracks tiled windows by workspace, but applies widths only on the active workspace. It must never focus a window on an inactive workspace, because `FocusWindow` would switch the user to that workspace and may also move focus across monitors.
+The script tracks tiled windows by workspace, but applies widths only on the globally focused workspace: the workspace whose niri state has `is_focused=true`.
+
+This is intentionally different from niri's per-output `is_active` workspaces. On multi-monitor setups, a workspace can be visible and active on another output without being focused. The daemon must not resize that workspace until it becomes focused, because `FocusWindow` would move keyboard focus across outputs. Those visible-but-unfocused workspaces reconcile the next time they receive focus.
 
 A managed column is identified by `window.layout.pos_in_scrolling_layout[0]`.
 
-For the active workspace:
+For the focused workspace:
 
 1. Collect windows where `is_floating` is false.
 2. Ignore windows without `workspace_id`.
@@ -95,29 +97,36 @@ The algorithm applies widths per page. It does not try to keep every page visibl
 
 ## Event Handling
 
-The daemon reacts to events that can change column membership or ordering on the active workspace:
+The daemon tracks events that can change focused workspace state, column membership, column ordering, or overview state:
 
 - `WindowsChanged`
 - `WindowOpenedOrChanged`
 - `WindowClosed`
 - `WindowLayoutsChanged`
 - `WorkspaceActivated`
+- `OverviewOpenedOrClosed`
 
-It ignores pure window focus changes for resizing, so normal navigation does not cause repeated width churn. When a workspace becomes focused through `WorkspaceActivated`, the daemon may apply widths to that newly active workspace because doing so does not require cross-workspace focus.
+It ignores pure window focus changes for resizing, so normal navigation does not cause repeated width churn. When a workspace becomes focused through `WorkspaceActivated`, the daemon may apply widths to that newly focused workspace because doing so does not require cross-workspace focus.
 
-After one of the layout-affecting events, the daemon schedules a short debounce before recomputing the active workspace. This gives niri time to finish related layout updates and prevents repeated resize passes during bursts of events.
+After a relevant event, the daemon recomputes the focused workspace signature. If the signature changed, or if a `WindowLayoutsChanged` event arrives outside the self-apply suppression window, it schedules a short debounce before recomputing widths. This gives niri time to finish related layout updates and prevents repeated resize passes during bursts of events.
+
+If the overview is open, the daemon records that a pass is pending but does not resize columns. It applies the pending pass after `OverviewOpenedOrClosed` reports that the overview closed.
 
 Applying `SetColumnWidth` emits `WindowLayoutsChanged`, so feedback-loop prevention is part of the core behavior, not an optimization:
 
 - When the daemon issues width actions, it records a short self-apply suppression deadline, initially the same duration as the debounce delay.
-- `WindowLayoutsChanged` events received before that deadline are ignored unless a structural event also occurred.
-- Structural events such as open, close, move, or workspace activation always invalidate suppression and schedule a fresh recompute.
-- The target-width cache is scoped to the active workspace and keyed by the ordered column signature: each column signature is the sorted set of window ids currently in that column, and the workspace signature is the ordered list of those column signatures.
-- When the workspace signature changes, the cache for that workspace is invalidated. This avoids stale cache entries after column indices shift.
+- During suppression, `WindowLayoutsChanged` events are ignored when the focused workspace signature is unchanged.
+- During suppression, any event that changes the focused workspace id or focused workspace signature cancels suppression and schedules a fresh recompute.
+- Each column signature is the sorted set of window ids currently in that column.
+- The focused workspace signature is the ordered list of those column signatures.
+- The target-width cache stores `last_applied[workspace_id][column_signature] = width`.
+- Each pass prunes cache entries for column signatures that no longer exist in that workspace. It does not invalidate the whole workspace cache on membership changes.
 
 ## Applying Widths
 
-Before applying widths, the script records the currently focused window id if one exists. If the focused window is not on the active workspace being managed, the script skips the pass rather than focusing across workspaces.
+Before applying widths, the script records the currently focused tiled window id if one exists on the focused workspace.
+
+If there is no focused tiled window to restore, such as when focus is on a layer-shell surface, a floating window, or no window, the script skips the pass. This avoids focusing a tiled window for resizing and then leaving keyboard focus somewhere different from where the user started.
 
 For each managed column:
 
@@ -129,6 +138,8 @@ After all width changes complete, refocus the original window if it still exists
 The script skips an action when its cached target width for that column signature already matches the desired width. The cache stores attempted target widths, not measured actual widths. This intentionally accepts niri clamping caused by min-width or max-width window rules; after a clamp, the daemon should not keep retrying the same target on every layout event.
 
 If a future implementation reads actual widths after applying actions, it may record clamped columns for diagnostics, but that is not required for the initial version.
+
+The first successful pass after daemon startup may focus each managed column because the target-width cache is empty. This is expected. Later passes should touch only columns whose target width changed or whose column signature has not been seen before.
 
 ## Error Handling
 
@@ -170,8 +181,10 @@ Unit-test the pure layout algorithm separately from niri IPC:
 - 7 columns map to `33.33333%, 33.33333%, 33.33333%, 33.33333%, 33.33333%, 33.33333%, 100%`.
 - Stacked windows in the same column produce one managed column.
 - Floating windows are ignored before column grouping.
-- A changed workspace signature invalidates the target-width cache.
+- A changed workspace signature prunes cache entries for removed column signatures without invalidating unchanged column signatures.
 - An unchanged workspace signature with unchanged target widths produces no resize actions.
+- A changed workspace signature during self-apply suppression schedules a new pass.
+- An unchanged workspace signature during self-apply suppression does not schedule a new pass for `WindowLayoutsChanged`.
 
 Manual verification in a running niri session:
 
@@ -182,8 +195,9 @@ Manual verification in a running niri session:
 5. Stack two windows in one column and confirm only the column count matters.
 6. Close windows and confirm remaining columns are recomputed.
 7. Confirm floating scratchpad windows are ignored.
-8. Switch workspaces and confirm the helper never pulls focus to an inactive workspace.
+8. On two monitors, open or move a window on a visible-but-unfocused workspace and confirm the helper does not pull keyboard focus to that output; confirm it reconciles after that workspace becomes focused.
 9. Confirm the helper does not spin on its own `WindowLayoutsChanged` events after applying widths.
+10. Open overview during a layout change and confirm resizing is deferred until overview closes.
 
 ## Open Decisions
 
