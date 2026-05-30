@@ -76,7 +76,7 @@ fi
 
 # Define configuration components
 GRAPHICAL_CONFIGS=("feh" "hypr" "niri" "zathura")
-COMMON_CONFIGS=("fcitx" "git" "mimeapps.list" "nvim" "lsd" "powerline" "snakemake" "termcolors" "yazi")
+COMMON_CONFIGS=("fcitx" "git" "kitty" "mimeapps.list" "nvim" "lsd" "powerline" "snakemake" "termcolors" "yazi")
 
 if [[ "$MACOS" == "true" ]]; then
     # Remove Linux-only configs
@@ -108,9 +108,14 @@ fi
 
 # Checks for file or directory and creates a sym link if it doesn't already exist
 function ln_s() {
-    # delete existing symlink if it exists
-    if [[ -e "$2" && -L "$2" ]]; then
-        rm $2
+    # Existing symlinks are replaced; a real file/dir is moved aside to .bak so
+    # we never nest a link inside it (e.g. an app-generated ~/.config/kitty) or
+    # clobber real data.
+    if [[ -L "$2" ]]; then
+        rm "$2"
+    elif [[ -e "$2" ]]; then
+        echo "[BACKUP] \"$2\" -> \"$2.bak\""
+        mv "$2" "$2.bak"
     fi
     echo "[CREATING] \"$2\""
     ln -sf $1 $2
@@ -218,6 +223,21 @@ fi
 for path in "${COMMON_CONFIGS[@]}"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
+
+# kitty OS-specific overrides (pulled in via `include os-local.conf`)
+if [[ "$MACOS" == "true" ]]; then
+    ln_s ${DOTS_HOME}/kitty/os-macos.conf ${DOTS_HOME}/kitty/os-local.conf
+
+    # macOS ships no xterm-kitty in its terminfo db, so git/less/etc. warn the
+    # "terminal is not fully functional". Compile kitty's bundled entry into
+    # ~/.terminfo, which ncurses auto-searches. (Linux gets it from the
+    # kitty-terminfo package.)
+    _kitty_terminfo="/Applications/kitty.app/Contents/Resources/kitty/terminfo/kitty.terminfo"
+    [[ -f "$_kitty_terminfo" ]] && tic -x -o ~/.terminfo "$_kitty_terminfo"
+    unset _kitty_terminfo
+else
+    ln_s ${DOTS_HOME}/kitty/os-linux.conf ${DOTS_HOME}/kitty/os-local.conf
+fi
 
 # Install ~/. components
 for path in "${COMMON_DOTFILES[@]}"; do
