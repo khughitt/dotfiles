@@ -231,16 +231,23 @@ class NiriSocket:
         encoded = json.dumps(message, separators=(",", ":")).encode("utf-8") + b"\n"
         self.raw_socket.sendall(encoded)
 
-    def read_json(self) -> dict[str, Any]:
-        while not self._pending:
-            chunk = self.raw_socket.recv(self.buffer_size)
-            if not chunk:
-                raise EOFError("niri IPC socket closed")
-            text = self._partial + chunk
-            pieces = text.split(b"\n")
-            self._partial = pieces.pop()
-            self._pending.extend(piece for piece in pieces if piece)
-        return json.loads(self._pending.pop(0).decode("utf-8"))
+    def read_json(self, timeout_ms: int | None = None) -> dict[str, Any]:
+        previous_timeout = self.raw_socket.gettimeout()
+        if timeout_ms is not None:
+            self.raw_socket.settimeout(timeout_ms / 1000)
+        try:
+            while not self._pending:
+                chunk = self.raw_socket.recv(self.buffer_size)
+                if not chunk:
+                    raise EOFError("niri IPC socket closed")
+                text = self._partial + chunk
+                pieces = text.split(b"\n")
+                self._partial = pieces.pop()
+                self._pending.extend(piece for piece in pieces if piece)
+            return json.loads(self._pending.pop(0).decode("utf-8"))
+        finally:
+            if timeout_ms is not None:
+                self.raw_socket.settimeout(previous_timeout)
 
     def close(self) -> None:
         self.raw_socket.close()
@@ -251,6 +258,13 @@ class FakeRawSocket:
         self.chunks = chunks
         self.sent: list[bytes] = []
         self.closed = False
+        self.timeout: float | None = None
+
+    def gettimeout(self) -> float | None:
+        return self.timeout
+
+    def settimeout(self, timeout: float | None) -> None:
+        self.timeout = timeout
 
     def recv(self, _buffer_size: int) -> bytes:
         if not self.chunks:
@@ -418,7 +432,17 @@ def run_daemon(
                     scheduler.pending = False
                     scheduler.next_run_ms = None
 
-        event = event_socket.read_json()
+        current_ms = now_ms()
+        timeout_ms = None
+        if scheduler.pending and scheduler.next_run_ms is not None:
+            timeout_ms = scheduler.next_run_ms - current_ms
+            if timeout_ms <= 0:
+                continue
+
+        try:
+            event = event_socket.read_json(timeout_ms=timeout_ms)
+        except socket.timeout:
+            continue
         event_name, event_data = event_name_and_data(event)
         state.apply_event(event_name, event_data)
         current_ms = now_ms()
@@ -458,9 +482,11 @@ def main(argv: list[str] | None = None) -> int:
         print("NIRI_SOCKET is not set", file=sys.stderr)
         return 1
 
-    event_socket = NiriSocket.connect(socket_path)
-    action_socket = NiriSocket.connect(socket_path)
+    event_socket = None
+    action_socket = None
     try:
+        event_socket = NiriSocket.connect(socket_path)
+        action_socket = NiriSocket.connect(socket_path)
         return run_daemon(
             event_socket=event_socket,
             action_socket=action_socket,
@@ -471,8 +497,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"niri IPC disconnected: {exc}", file=sys.stderr)
         return 1
     finally:
-        event_socket.close()
-        action_socket.close()
+        if event_socket is not None:
+            event_socket.close()
+        if action_socket is not None:
+            action_socket.close()
 
 
 if __name__ == "__main__":

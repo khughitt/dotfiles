@@ -1,8 +1,10 @@
+import io
 import importlib.machinery
 import importlib.util
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -307,6 +309,58 @@ class FailingActionSocket(FakeActionSocket):
                 raise RuntimeError("set width failed")
 
 
+class FakeClock:
+    def __init__(self):
+        self.value = 0
+
+    def __call__(self):
+        return self.value
+
+    def advance(self, delta_ms):
+        self.value += delta_ms
+
+
+class QuietEventSocket:
+    def __init__(self, clock):
+        self.clock = clock
+        self.sent = []
+        self.timed_out = False
+        self.events = [
+            {"Ok": {}},
+            {"WorkspacesChanged": {"workspaces": [{"id": 1, "is_focused": True}]}},
+            {
+                "WindowsChanged": {
+                    "windows": [
+                        window(1, col=0, is_focused=True),
+                        window(2, col=1),
+                    ],
+                },
+            },
+        ]
+
+    def send_request(self, request):
+        self.sent.append(request)
+
+    def read_json(self, timeout_ms=None):
+        if self.events:
+            return self.events.pop(0)
+        if timeout_ms is None:
+            if self.timed_out:
+                raise EOFError("stop test daemon")
+            raise AssertionError("daemon attempted an unbounded read with scheduled work pending")
+        self.timed_out = True
+        self.clock.advance(timeout_ms)
+        raise cp.socket.timeout("deadline reached")
+
+
+class FakeConnectedSocket:
+    def __init__(self):
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
+
 class DaemonStateTests(unittest.TestCase):
     def test_apply_widths_focuses_needed_columns_and_restores_focus(self):
         action_socket = FakeActionSocket()
@@ -433,6 +487,36 @@ class DaemonStateTests(unittest.TestCase):
         state.apply_event("OverviewOpenedOrClosed", {"is_open": False})
         self.assertFalse(state.overview_open)
 
+    def test_run_daemon_applies_pending_widths_after_deadline_without_next_event(self):
+        clock = FakeClock()
+        event_socket = QuietEventSocket(clock)
+        action_socket = FakeActionSocket()
+        original_now_ms = cp.now_ms
+        cp.now_ms = clock
+        try:
+            with self.assertRaises(EOFError):
+                cp.run_daemon(
+                    event_socket=event_socket,
+                    action_socket=action_socket,
+                    page_size=3,
+                    debounce_ms=100,
+                )
+        finally:
+            cp.now_ms = original_now_ms
+
+        self.assertEqual(event_socket.sent, ["EventStream"])
+        self.assertTrue(event_socket.timed_out)
+        self.assertEqual(
+            action_socket.messages,
+            [
+                cp.focus_window_message(1),
+                cp.set_column_width_message(50.0),
+                cp.focus_window_message(2),
+                cp.set_column_width_message(50.0),
+                cp.focus_window_message(1),
+            ],
+        )
+
 
 class CliTests(unittest.TestCase):
     def test_parse_args_defaults(self):
@@ -453,6 +537,22 @@ class CliTests(unittest.TestCase):
     def test_event_name_and_data_rejects_bad_event(self):
         with self.assertRaises(ValueError):
             cp.event_name_and_data({"A": {}, "B": {}})
+
+    def test_main_closes_first_socket_when_second_connect_fails(self):
+        first_socket = FakeConnectedSocket()
+        with (
+            patch.dict(cp.os.environ, {"NIRI_SOCKET": "/tmp/niri.sock"}),
+            patch.object(
+                cp.NiriSocket,
+                "connect",
+                side_effect=[first_socket, OSError("connect failed")],
+            ),
+            patch.object(cp.sys, "stderr", new=io.StringIO()),
+        ):
+            result = cp.main([])
+
+        self.assertEqual(result, 1)
+        self.assertTrue(first_socket.closed)
 
 
 if __name__ == "__main__":
