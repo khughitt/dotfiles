@@ -133,6 +133,15 @@ class PureColumnModelTests(unittest.TestCase):
 
 
 class CacheAndSchedulingTests(unittest.TestCase):
+    def test_width_cache_filter_needed_does_not_create_workspace_entry(self):
+        cache = cp.WidthCache()
+        workspace_id = 1
+        planned = [cp.PlannedWidth(cp.Column((1,), 1), 100.0)]
+
+        self.assertEqual(cache.filter_needed(workspace_id, planned), planned)
+
+        self.assertNotIn(workspace_id, cache.by_workspace)
+
     def test_width_cache_skips_unchanged_columns_and_prunes_removed_columns(self):
         cache = cp.WidthCache()
         workspace_id = 1

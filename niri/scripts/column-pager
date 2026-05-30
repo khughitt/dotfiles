@@ -106,7 +106,7 @@ class WidthCache:
         workspace_id: int,
         planned: list[PlannedWidth],
     ) -> list[PlannedWidth]:
-        workspace_cache = self.by_workspace.setdefault(workspace_id, {})
+        workspace_cache = self.by_workspace.get(workspace_id, {})
         return [
             item
             for item in planned
