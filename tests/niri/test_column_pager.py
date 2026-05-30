@@ -286,5 +286,100 @@ class IpcFramingTests(unittest.TestCase):
         self.assertEqual(fake.sent, [b'"EventStream"\n'])
 
 
+class FakeActionSocket:
+    def __init__(self):
+        self.messages = []
+
+    def send_json(self, message):
+        self.messages.append(message)
+
+
+class DaemonStateTests(unittest.TestCase):
+    def test_apply_widths_focuses_needed_columns_and_restores_focus(self):
+        action_socket = FakeActionSocket()
+        cache = cp.WidthCache()
+        state = cp.DaemonState(
+            workspaces={1: {"id": 1, "is_focused": True}},
+            windows={
+                1: window(1, col=0, is_focused=True),
+                2: window(2, col=1),
+            },
+        )
+
+        applied = cp.apply_widths(
+            state=state,
+            action_socket=action_socket,
+            cache=cache,
+            page_size=3,
+        )
+
+        self.assertEqual(len(applied), 2)
+        self.assertEqual(
+            action_socket.messages,
+            [
+                cp.focus_window_message(1),
+                cp.set_column_width_message(50.0),
+                cp.focus_window_message(2),
+                cp.set_column_width_message(50.0),
+                cp.focus_window_message(1),
+            ],
+        )
+
+    def test_apply_widths_skips_when_cache_matches(self):
+        action_socket = FakeActionSocket()
+        cache = cp.WidthCache()
+        state = cp.DaemonState(
+            workspaces={1: {"id": 1, "is_focused": True}},
+            windows={
+                1: window(1, col=0, is_focused=True),
+                2: window(2, col=1),
+            },
+        )
+        cp.apply_widths(state, action_socket, cache, page_size=3)
+        action_socket.messages.clear()
+
+        applied = cp.apply_widths(state, action_socket, cache, page_size=3)
+
+        self.assertEqual(applied, [])
+        self.assertEqual(action_socket.messages, [])
+
+    def test_apply_widths_skips_when_no_focused_tiled_window_can_be_restored(self):
+        action_socket = FakeActionSocket()
+        cache = cp.WidthCache()
+        state = cp.DaemonState(
+            workspaces={1: {"id": 1, "is_focused": True}},
+            windows={
+                1: window(1, col=0, is_focused=False),
+                2: window(2, col=1, is_floating=True, is_focused=True),
+            },
+        )
+
+        applied = cp.apply_widths(state, action_socket, cache, page_size=3)
+
+        self.assertEqual(applied, [])
+        self.assertEqual(action_socket.messages, [])
+
+    def test_state_updates_from_initial_snapshots_and_window_events(self):
+        state = cp.DaemonState()
+        state.apply_event("WorkspacesChanged", {"workspaces": [{"id": 1, "is_focused": True}]})
+        state.apply_event("WindowsChanged", {"windows": [window(1, col=0)]})
+
+        self.assertEqual(state.focused_workspace_id(), 1)
+        self.assertEqual(set(state.windows), {1})
+
+        state.apply_event("WindowOpenedOrChanged", {"window": window(2, col=1)})
+        self.assertEqual(set(state.windows), {1, 2})
+
+        state.apply_event("WindowClosed", {"id": 1})
+        self.assertEqual(set(state.windows), {2})
+
+    def test_state_tracks_overview(self):
+        state = cp.DaemonState()
+        state.apply_event("OverviewOpenedOrClosed", {"is_open": True})
+        self.assertTrue(state.overview_open)
+        state.apply_event("OverviewOpenedOrClosed", {"is_open": False})
+        self.assertFalse(state.overview_open)
+
+
 if __name__ == "__main__":
     unittest.main()
