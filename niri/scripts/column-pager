@@ -221,7 +221,11 @@ class NiriSocket:
     @classmethod
     def connect(cls, socket_path: str) -> "NiriSocket":
         raw = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        raw.connect(socket_path)
+        try:
+            raw.connect(socket_path)
+        except OSError:
+            raw.close()
+            raise
         return cls(raw)
 
     def send_request(self, request: str) -> None:
@@ -233,10 +237,14 @@ class NiriSocket:
 
     def read_json(self, timeout_ms: int | None = None) -> dict[str, Any]:
         previous_timeout = self.raw_socket.gettimeout()
-        if timeout_ms is not None:
-            self.raw_socket.settimeout(timeout_ms / 1000)
+        deadline = None if timeout_ms is None else time.monotonic() + (timeout_ms / 1000)
         try:
             while not self._pending:
+                if deadline is not None:
+                    remaining_seconds = deadline - time.monotonic()
+                    if remaining_seconds <= 0:
+                        raise socket.timeout("timed out waiting for niri IPC frame")
+                    self.raw_socket.settimeout(remaining_seconds)
                 chunk = self.raw_socket.recv(self.buffer_size)
                 if not chunk:
                     raise EOFError("niri IPC socket closed")

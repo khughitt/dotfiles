@@ -271,6 +271,57 @@ class IpcFramingTests(unittest.TestCase):
 
         self.assertEqual(sock.read_json(), {"Title": "caf\u00e9"})
 
+    def test_niri_socket_timeout_is_overall_deadline_for_partial_frame(self):
+        class MonotonicClock:
+            def __init__(self):
+                self.value = 1000.0
+
+            def __call__(self):
+                return self.value
+
+        class PartialDeadlineRawSocket:
+            def __init__(self, clock):
+                self.clock = clock
+                self.timeout = None
+                self.recv_count = 0
+                self.chunks = []
+
+            def gettimeout(self):
+                return self.timeout
+
+            def settimeout(self, timeout):
+                self.timeout = timeout
+
+            def recv(self, _buffer_size):
+                self.recv_count += 1
+                if self.recv_count == 1:
+                    self.clock.value += 0.075
+                    return b'{"Ok":'
+                if self.chunks:
+                    return self.chunks.pop(0)
+                if self.timeout is not None and self.timeout <= 0.03:
+                    raise cp.socket.timeout("deadline reached")
+                return b"1}\n"
+
+            def close(self):
+                pass
+
+        clock = MonotonicClock()
+        fake = PartialDeadlineRawSocket(clock)
+        sock = cp.NiriSocket(fake)
+        original_monotonic = cp.time.monotonic
+        cp.time.monotonic = clock
+        try:
+            with self.assertRaises(cp.socket.timeout):
+                sock.read_json(timeout_ms=100)
+        finally:
+            cp.time.monotonic = original_monotonic
+
+        self.assertEqual(sock._partial, b'{"Ok":')
+
+        fake.chunks.append(b"1}\n")
+        self.assertEqual(sock.read_json(), {"Ok": 1})
+
     def test_niri_socket_writes_json_with_newline(self):
         fake = cp.FakeRawSocket([])
         sock = cp.NiriSocket(fake)
