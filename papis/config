@@ -1,0 +1,9 @@
+[settings]
+opentool = zathura
+default-library = papers
+
+[papers]
+dir = /data/papis/papers
+
+[books]
+dir = ~/d/books
