@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
+import json
+import socket
 from typing import Any
 
 
@@ -183,6 +185,79 @@ class Scheduler:
         self.workspace_id = workspace_id
         self.workspace_signature = signature
         self.schedule(now_ms)
+
+
+def focus_window_message(window_id: int) -> dict[str, Any]:
+    return {"Action": {"FocusWindow": {"id": int(window_id)}}}
+
+
+def set_column_width_message(target_percent: float) -> dict[str, Any]:
+    return {
+        "Action": {
+            "SetColumnWidth": {
+                "change": {
+                    "SetProportion": float(target_percent),
+                },
+            },
+        },
+    }
+
+
+def event_stream_request() -> str:
+    return "EventStream"
+
+
+class NiriSocket:
+    def __init__(self, raw_socket: socket.socket, buffer_size: int = 4096) -> None:
+        self.raw_socket = raw_socket
+        self.buffer_size = buffer_size
+        self._pending: list[str] = []
+        self._partial = ""
+
+    @classmethod
+    def connect(cls, socket_path: str) -> "NiriSocket":
+        raw = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        raw.connect(socket_path)
+        return cls(raw)
+
+    def send_request(self, request: str) -> None:
+        self.raw_socket.sendall(json.dumps(request, separators=(",", ":")).encode("utf-8") + b"\n")
+
+    def send_json(self, message: dict[str, Any]) -> None:
+        encoded = json.dumps(message, separators=(",", ":")).encode("utf-8") + b"\n"
+        self.raw_socket.sendall(encoded)
+
+    def read_json(self) -> dict[str, Any]:
+        while not self._pending:
+            chunk = self.raw_socket.recv(self.buffer_size)
+            if not chunk:
+                raise EOFError("niri IPC socket closed")
+            text = self._partial + chunk.decode("utf-8")
+            pieces = text.split("\n")
+            self._partial = pieces.pop()
+            self._pending.extend(piece for piece in pieces if piece)
+        return json.loads(self._pending.pop(0))
+
+    def close(self) -> None:
+        self.raw_socket.close()
+
+
+class FakeRawSocket:
+    def __init__(self, chunks: list[bytes]) -> None:
+        self.chunks = chunks
+        self.sent: list[bytes] = []
+        self.closed = False
+
+    def recv(self, _buffer_size: int) -> bytes:
+        if not self.chunks:
+            return b""
+        return self.chunks.pop(0)
+
+    def sendall(self, data: bytes) -> None:
+        self.sent.append(data)
+
+    def close(self) -> None:
+        self.closed = True
 
 
 def main() -> int:
