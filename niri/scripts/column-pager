@@ -160,7 +160,9 @@ class Scheduler:
 
     def note_overview(self, is_open: bool, now_ms: int | None = None) -> None:
         self.overview_open = is_open
-        if not is_open and self.pending and self.next_run_ms is None and now_ms is not None:
+        if is_open and self.pending:
+            self.next_run_ms = None
+        elif self.pending and self.next_run_ms is None and now_ms is not None:
             self.next_run_ms = now_ms + self.debounce_ms
 
     def note_batch_completed(self, now_ms: int) -> None:
