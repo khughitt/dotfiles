@@ -242,5 +242,43 @@ class CacheAndSchedulingTests(unittest.TestCase):
         self.assertEqual(scheduler.next_run_ms, 120)
 
 
+class IpcFramingTests(unittest.TestCase):
+    def test_action_messages_match_niri_json_shape(self):
+        self.assertEqual(
+            cp.focus_window_message(42),
+            {"Action": {"FocusWindow": {"id": 42}}},
+        )
+        self.assertEqual(
+            cp.set_column_width_message(100.0 / 3),
+            {"Action": {"SetColumnWidth": {"change": {"SetProportion": 100.0 / 3}}}},
+        )
+
+    def test_niri_socket_reads_newline_delimited_json(self):
+        fake = cp.FakeRawSocket([b'{"Ok":1}\n{"Ok":2}\n{"Ok":'])
+        sock = cp.NiriSocket(fake)
+
+        self.assertEqual(sock.read_json(), {"Ok": 1})
+        self.assertEqual(sock.read_json(), {"Ok": 2})
+
+        fake.chunks.append(b'3}\n')
+        self.assertEqual(sock.read_json(), {"Ok": 3})
+
+    def test_niri_socket_writes_json_with_newline(self):
+        fake = cp.FakeRawSocket([])
+        sock = cp.NiriSocket(fake)
+
+        sock.send_json({"Action": {"FocusWindow": {"id": 7}}})
+
+        self.assertEqual(fake.sent, [b'{"Action":{"FocusWindow":{"id":7}}}\n'])
+
+    def test_niri_socket_writes_string_request_with_newline(self):
+        fake = cp.FakeRawSocket([])
+        sock = cp.NiriSocket(fake)
+
+        sock.send_request("EventStream")
+
+        self.assertEqual(fake.sent, [b'"EventStream"\n'])
+
+
 if __name__ == "__main__":
     unittest.main()
