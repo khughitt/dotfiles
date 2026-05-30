@@ -27,3 +27,10 @@ zeit/
 claude/commands
 hypr/host.conf
 docs/
+
+# noctalia colorscheme updates
+hypr/noctalia/noctalia-colors.conf
+kitty/themes/noctalia.conf
+niri/noctalia.kdl
+yazi/flavors/noctalia.yazi/flavor.toml
+zathura/noctaliarc
