@@ -111,6 +111,18 @@ class PureColumnModelTests(unittest.TestCase):
         self.assertEqual(columns[0].signature, (1, 2))
         self.assertEqual(columns[0].representative_id, 1)
 
+    def test_collect_columns_falls_back_to_lowest_row_representative(self):
+        windows = {
+            1: window(1, col=0, row=2),
+            2: window(2, col=0, row=0),
+            3: window(3, col=0, row=1),
+        }
+
+        columns = cp.collect_columns(windows, focused_workspace_id=1)
+
+        self.assertEqual(columns[0].signature, (1, 2, 3))
+        self.assertEqual(columns[0].representative_id, 2)
+
     def test_workspace_signature_is_ordered_column_signatures(self):
         columns = [
             cp.Column(signature=(1, 2), representative_id=1),
