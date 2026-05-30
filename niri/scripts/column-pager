@@ -310,6 +310,10 @@ class DaemonState:
             self.windows = {int(item["id"]): item for item in event_data["windows"]}
         elif event_name == "WindowOpenedOrChanged":
             window = event_data["window"]
+            if window.get("is_focused"):
+                focused_id = int(window["id"])
+                for existing in self.windows.values():
+                    existing["is_focused"] = int(existing["id"]) == focused_id
             self.windows[int(window["id"])] = window
         elif event_name == "WindowClosed":
             self.windows.pop(int(event_data["id"]), None)
@@ -347,10 +351,12 @@ def apply_widths(
         cache.prune(workspace_id, columns)
         return []
 
-    for item in needed:
-        action_socket.send_json(focus_window_message(item.column.representative_id))
-        action_socket.send_json(set_column_width_message(item.target_percent))
-    action_socket.send_json(focus_window_message(restore_id))
+    try:
+        for item in needed:
+            action_socket.send_json(focus_window_message(item.column.representative_id))
+            action_socket.send_json(set_column_width_message(item.target_percent))
+    finally:
+        action_socket.send_json(focus_window_message(restore_id))
     cache.mark_applied(workspace_id, needed)
     cache.prune(workspace_id, columns)
     return needed
