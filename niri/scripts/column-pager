@@ -3,10 +3,14 @@
 
 from __future__ import annotations
 
+import argparse
 from collections import defaultdict
 from dataclasses import dataclass
 import json
+import os
 import socket
+import sys
+import time
 from typing import Any
 
 
@@ -362,8 +366,113 @@ def apply_widths(
     return needed
 
 
-def main() -> int:
-    raise SystemExit("daemon implementation is not complete")
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Resize niri tiled columns into focused-workspace pages.",
+    )
+    parser.add_argument("--page-size", type=int, default=3)
+    parser.add_argument("--debounce-ms", type=int, default=100)
+    args = parser.parse_args(argv)
+    if args.page_size < 1:
+        parser.error("--page-size must be at least 1")
+    if args.debounce_ms < 0:
+        parser.error("--debounce-ms must be non-negative")
+    return args
+
+
+def event_name_and_data(event: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    if len(event) != 1:
+        raise ValueError(f"expected exactly one event variant, got {event!r}")
+    name, data = next(iter(event.items()))
+    return name, data
+
+
+def now_ms() -> int:
+    return round(time.monotonic() * 1000)
+
+
+def run_daemon(
+    event_socket: NiriSocket,
+    action_socket: NiriSocket,
+    page_size: int,
+    debounce_ms: int,
+) -> int:
+    state = DaemonState()
+    cache = WidthCache()
+    scheduler = Scheduler(debounce_ms=debounce_ms)
+
+    event_socket.send_request(event_stream_request())
+    response = event_socket.read_json()
+    if "Err" in response:
+        print(f"failed to start niri event stream: {response['Err']}", file=sys.stderr)
+        return 1
+
+    while True:
+        current_ms = now_ms()
+        if scheduler.pending and scheduler.next_run_ms is not None and current_ms >= scheduler.next_run_ms:
+            if not state.overview_open:
+                applied = apply_widths(state, action_socket, cache, page_size=page_size)
+                if applied:
+                    scheduler.note_batch_completed(now_ms())
+                else:
+                    scheduler.pending = False
+                    scheduler.next_run_ms = None
+
+        event = event_socket.read_json()
+        event_name, event_data = event_name_and_data(event)
+        state.apply_event(event_name, event_data)
+        current_ms = now_ms()
+
+        if event_name == "WorkspacesChanged":
+            scheduler.note_workspaces_snapshot(current_ms)
+        elif event_name == "WindowsChanged":
+            scheduler.note_windows_snapshot(current_ms)
+        elif event_name == "OverviewOpenedOrClosed":
+            scheduler.note_overview(state.overview_open, current_ms)
+
+        if not scheduler.ready_for_first_pass:
+            continue
+
+        signature = state.signature()
+        workspace_id = state.focused_workspace_id()
+
+        if event_name == "WindowLayoutsChanged":
+            scheduler.note_layout_event(workspace_id, signature, current_ms)
+        elif event_name in {
+            "WindowsChanged",
+            "WindowOpenedOrChanged",
+            "WindowClosed",
+            "WorkspaceActivated",
+            "OverviewOpenedOrClosed",
+        }:
+            if workspace_id != scheduler.workspace_id or signature != scheduler.workspace_signature:
+                scheduler.workspace_id = workspace_id
+                scheduler.workspace_signature = signature
+                scheduler.schedule(current_ms)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    socket_path = os.environ.get("NIRI_SOCKET")
+    if not socket_path:
+        print("NIRI_SOCKET is not set", file=sys.stderr)
+        return 1
+
+    event_socket = NiriSocket.connect(socket_path)
+    action_socket = NiriSocket.connect(socket_path)
+    try:
+        return run_daemon(
+            event_socket=event_socket,
+            action_socket=action_socket,
+            page_size=args.page_size,
+            debounce_ms=args.debounce_ms,
+        )
+    except (EOFError, OSError) as exc:
+        print(f"niri IPC disconnected: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        event_socket.close()
+        action_socket.close()
 
 
 if __name__ == "__main__":

@@ -434,5 +434,26 @@ class DaemonStateTests(unittest.TestCase):
         self.assertFalse(state.overview_open)
 
 
+class CliTests(unittest.TestCase):
+    def test_parse_args_defaults(self):
+        args = cp.parse_args([])
+        self.assertEqual(args.page_size, 3)
+        self.assertEqual(args.debounce_ms, 100)
+
+    def test_parse_args_rejects_invalid_page_size(self):
+        with self.assertRaises(SystemExit):
+            cp.parse_args(["--page-size", "0"])
+
+    def test_event_name_and_data_extracts_single_variant(self):
+        self.assertEqual(
+            cp.event_name_and_data({"WindowClosed": {"id": 7}}),
+            ("WindowClosed", {"id": 7}),
+        )
+
+    def test_event_name_and_data_rejects_bad_event(self):
+        with self.assertRaises(ValueError):
+            cp.event_name_and_data({"A": {}, "B": {}})
+
+
 if __name__ == "__main__":
     unittest.main()
