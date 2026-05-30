@@ -88,6 +88,7 @@ screenshot-path "~/Pictures/Screenshots/%Y-%m-%d %H-%M-%S.png"
 workspace "scratchpad"
 
 spawn-at-startup "~/.config/niri/scripts/place-scratchpad-workspace"
+spawn-at-startup "~/.config/niri/scripts/column-pager"
 spawn-at-startup "qs" "-c" "noctalia-shell"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
