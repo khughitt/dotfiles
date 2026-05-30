@@ -97,6 +97,94 @@ def workspace_signature(columns: list[Column]) -> tuple[tuple[int, ...], ...]:
     return tuple(column.signature for column in columns)
 
 
+class WidthCache:
+    def __init__(self) -> None:
+        self.by_workspace: dict[int, dict[tuple[int, ...], float]] = {}
+
+    def filter_needed(
+        self,
+        workspace_id: int,
+        planned: list[PlannedWidth],
+    ) -> list[PlannedWidth]:
+        workspace_cache = self.by_workspace.setdefault(workspace_id, {})
+        needed = []
+        for item in planned:
+            if workspace_cache.get(item.column.signature) != item.target_percent:
+                needed.append(item)
+                workspace_cache[item.column.signature] = item.target_percent
+        return needed
+
+    def mark_applied(self, workspace_id: int, planned: list[PlannedWidth]) -> None:
+        workspace_cache = self.by_workspace.setdefault(workspace_id, {})
+        for item in planned:
+            workspace_cache[item.column.signature] = item.target_percent
+
+    def prune(self, workspace_id: int, columns: list[Column]) -> None:
+        workspace_cache = self.by_workspace.setdefault(workspace_id, {})
+        live_signatures = {column.signature for column in columns}
+        for signature in list(workspace_cache):
+            if signature not in live_signatures:
+                del workspace_cache[signature]
+
+
+class Scheduler:
+    def __init__(self, debounce_ms: int = 100) -> None:
+        self.debounce_ms = debounce_ms
+        self.pending = False
+        self.next_run_ms: int | None = None
+        self.ready_for_first_pass = False
+        self._saw_workspaces_snapshot = False
+        self._saw_windows_snapshot = False
+        self.overview_open = False
+        self.workspace_id: int | None = None
+        self.workspace_signature: tuple[tuple[int, ...], ...] = ()
+        self.suppress_until_ms: int | None = None
+
+    def note_workspaces_snapshot(self, now_ms: int) -> None:
+        self._saw_workspaces_snapshot = True
+        self._maybe_ready(now_ms)
+
+    def note_windows_snapshot(self, now_ms: int) -> None:
+        self._saw_windows_snapshot = True
+        self._maybe_ready(now_ms)
+
+    def _maybe_ready(self, now_ms: int) -> None:
+        if self._saw_workspaces_snapshot and self._saw_windows_snapshot:
+            self.ready_for_first_pass = True
+            self.schedule(now_ms)
+
+    def schedule(self, now_ms: int) -> None:
+        if not self.ready_for_first_pass:
+            return
+        self.pending = True
+        self.next_run_ms = None if self.overview_open else now_ms + self.debounce_ms
+
+    def note_overview(self, is_open: bool, now_ms: int | None = None) -> None:
+        self.overview_open = is_open
+        if not is_open and self.pending and self.next_run_ms is None and now_ms is not None:
+            self.next_run_ms = now_ms + self.debounce_ms
+
+    def note_batch_completed(self, now_ms: int) -> None:
+        self.ready_for_first_pass = True
+        self.suppress_until_ms = now_ms + self.debounce_ms
+        self.pending = False
+        self.next_run_ms = None
+
+    def note_layout_event(
+        self,
+        workspace_id: int | None,
+        signature: tuple[tuple[int, ...], ...],
+        now_ms: int,
+    ) -> None:
+        unchanged = workspace_id == self.workspace_id and signature == self.workspace_signature
+        suppressed = self.suppress_until_ms is not None and now_ms <= self.suppress_until_ms
+        if suppressed and unchanged:
+            return
+        self.workspace_id = workspace_id
+        self.workspace_signature = signature
+        self.schedule(now_ms)
+
+
 def main() -> int:
     raise SystemExit("daemon implementation is not complete")
 
