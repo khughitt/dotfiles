@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+"""Keep niri tiled columns sized into focused-workspace pages."""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any
+
+
+@dataclass(frozen=True)
+class Column:
+    signature: tuple[int, ...]
+    representative_id: int
+
+
+@dataclass(frozen=True)
+class PlannedWidth:
+    column: Column
+    target_percent: float
+
+
+def focus_timestamp_key(window: dict[str, Any]) -> tuple[int, int]:
+    timestamp = window.get("focus_timestamp") or {}
+    return (
+        int(timestamp.get("secs") or 0),
+        int(timestamp.get("nanos") or 0),
+    )
+
+
+def collect_columns(
+    windows: dict[int, dict[str, Any]],
+    focused_workspace_id: int | None,
+) -> list[Column]:
+    grouped: dict[int, list[dict[str, Any]]] = defaultdict(list)
+
+    if focused_workspace_id is None:
+        return []
+
+    for win in windows.values():
+        if win.get("workspace_id") != focused_workspace_id:
+            continue
+        if win.get("is_floating"):
+            continue
+        layout = win.get("layout") or {}
+        position = layout.get("pos_in_scrolling_layout")
+        if position is None:
+            continue
+        col_idx = int(position[0])
+        grouped[col_idx].append(win)
+
+    columns: list[Column] = []
+    for _col_idx, column_windows in sorted(grouped.items()):
+        signature = tuple(sorted(int(win["id"]) for win in column_windows))
+        representative = choose_representative(column_windows)
+        columns.append(Column(signature=signature, representative_id=representative))
+    return columns
+
+
+def choose_representative(column_windows: list[dict[str, Any]]) -> int:
+    focused = [win for win in column_windows if win.get("is_focused")]
+    if focused:
+        return int(focused[0]["id"])
+
+    with_timestamp = sorted(
+        column_windows,
+        key=lambda win: (focus_timestamp_key(win), -row_index(win)),
+        reverse=True,
+    )
+    if focus_timestamp_key(with_timestamp[0]) != (0, 0):
+        return int(with_timestamp[0]["id"])
+
+    by_row = sorted(column_windows, key=row_index)
+    return int(by_row[0]["id"])
+
+
+def row_index(window: dict[str, Any]) -> int:
+    layout = window.get("layout") or {}
+    position = layout.get("pos_in_scrolling_layout") or [0, 0]
+    return int(position[1])
+
+
+def plan_widths(columns: list[Column], page_size: int = 3) -> list[PlannedWidth]:
+    if page_size < 1:
+        raise ValueError("page_size must be at least 1")
+
+    planned: list[PlannedWidth] = []
+    for start in range(0, len(columns), page_size):
+        page = columns[start : start + page_size]
+        target_percent = 100.0 / len(page)
+        for column in page:
+            planned.append(PlannedWidth(column=column, target_percent=target_percent))
+    return planned
+
+
+def workspace_signature(columns: list[Column]) -> tuple[tuple[int, ...], ...]:
+    return tuple(column.signature for column in columns)
+
+
+def main() -> int:
+    raise SystemExit("daemon implementation is not complete")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
