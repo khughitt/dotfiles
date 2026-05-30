@@ -132,5 +132,76 @@ class PureColumnModelTests(unittest.TestCase):
         self.assertEqual(cp.workspace_signature(columns), ((1, 2), (3,)))
 
 
+class CacheAndSchedulingTests(unittest.TestCase):
+    def test_width_cache_skips_unchanged_columns_and_prunes_removed_columns(self):
+        cache = cp.WidthCache()
+        workspace_id = 1
+        first = [
+            cp.PlannedWidth(cp.Column((1,), 1), 100.0 / 3),
+            cp.PlannedWidth(cp.Column((2,), 2), 100.0 / 3),
+            cp.PlannedWidth(cp.Column((3,), 3), 100.0 / 3),
+        ]
+        self.assertEqual(cache.filter_needed(workspace_id, first), first)
+        cache.mark_applied(workspace_id, first)
+
+        second = [
+            cp.PlannedWidth(cp.Column((1,), 1), 100.0 / 3),
+            cp.PlannedWidth(cp.Column((2,), 2), 100.0 / 3),
+            cp.PlannedWidth(cp.Column((4,), 4), 100.0 / 3),
+        ]
+
+        needed = cache.filter_needed(workspace_id, second)
+        cache.prune(workspace_id, [item.column for item in second])
+
+        self.assertEqual([(item.column.signature, item.target_percent) for item in needed], [((4,), 100.0 / 3)])
+        self.assertEqual(set(cache.by_workspace[workspace_id]), {(1,), (2,), (4,)})
+
+    def test_scheduler_waits_for_initial_snapshots(self):
+        scheduler = cp.Scheduler(debounce_ms=100)
+
+        scheduler.note_workspaces_snapshot(now_ms=0)
+        self.assertFalse(scheduler.ready_for_first_pass)
+        scheduler.note_windows_snapshot(now_ms=10)
+
+        self.assertTrue(scheduler.ready_for_first_pass)
+        self.assertTrue(scheduler.pending)
+        self.assertEqual(scheduler.next_run_ms, 110)
+
+    def test_scheduler_ignores_self_layout_event_when_signature_unchanged(self):
+        scheduler = cp.Scheduler(debounce_ms=100)
+        scheduler.workspace_id = 1
+        scheduler.workspace_signature = ((1,),)
+        scheduler.note_batch_completed(now_ms=100)
+
+        scheduler.note_layout_event(workspace_id=1, signature=((1,),), now_ms=150)
+
+        self.assertFalse(scheduler.pending)
+
+    def test_scheduler_schedules_during_suppression_when_signature_changes(self):
+        scheduler = cp.Scheduler(debounce_ms=100)
+        scheduler.workspace_id = 1
+        scheduler.workspace_signature = ((1,),)
+        scheduler.note_batch_completed(now_ms=100)
+
+        scheduler.note_layout_event(workspace_id=1, signature=((1,), (2,)), now_ms=150)
+
+        self.assertTrue(scheduler.pending)
+        self.assertEqual(scheduler.next_run_ms, 250)
+        self.assertEqual(scheduler.workspace_signature, ((1,), (2,)))
+
+    def test_scheduler_defers_while_overview_is_open(self):
+        scheduler = cp.Scheduler(debounce_ms=100)
+        scheduler.ready_for_first_pass = True
+
+        scheduler.note_overview(is_open=True)
+        scheduler.schedule(now_ms=0)
+        self.assertTrue(scheduler.pending)
+        self.assertIsNone(scheduler.next_run_ms)
+
+        scheduler.note_overview(is_open=False, now_ms=20)
+        self.assertTrue(scheduler.pending)
+        self.assertEqual(scheduler.next_run_ms, 120)
+
+
 if __name__ == "__main__":
     unittest.main()
