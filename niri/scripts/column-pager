@@ -211,8 +211,8 @@ class NiriSocket:
     def __init__(self, raw_socket: socket.socket, buffer_size: int = 4096) -> None:
         self.raw_socket = raw_socket
         self.buffer_size = buffer_size
-        self._pending: list[str] = []
-        self._partial = ""
+        self._pending: list[bytes] = []
+        self._partial = b""
 
     @classmethod
     def connect(cls, socket_path: str) -> "NiriSocket":
@@ -232,11 +232,11 @@ class NiriSocket:
             chunk = self.raw_socket.recv(self.buffer_size)
             if not chunk:
                 raise EOFError("niri IPC socket closed")
-            text = self._partial + chunk.decode("utf-8")
-            pieces = text.split("\n")
+            text = self._partial + chunk
+            pieces = text.split(b"\n")
             self._partial = pieces.pop()
             self._pending.extend(piece for piece in pieces if piece)
-        return json.loads(self._pending.pop(0))
+        return json.loads(self._pending.pop(0).decode("utf-8"))
 
     def close(self) -> None:
         self.raw_socket.close()
