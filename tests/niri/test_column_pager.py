@@ -225,6 +225,22 @@ class CacheAndSchedulingTests(unittest.TestCase):
         self.assertTrue(scheduler.pending)
         self.assertEqual(scheduler.next_run_ms, 120)
 
+    def test_scheduler_defers_existing_deadline_when_overview_opens(self):
+        scheduler = cp.Scheduler(debounce_ms=100)
+        scheduler.ready_for_first_pass = True
+
+        scheduler.schedule(now_ms=0)
+        self.assertTrue(scheduler.pending)
+        self.assertEqual(scheduler.next_run_ms, 100)
+
+        scheduler.note_overview(is_open=True)
+        self.assertTrue(scheduler.pending)
+        self.assertIsNone(scheduler.next_run_ms)
+
+        scheduler.note_overview(is_open=False, now_ms=20)
+        self.assertTrue(scheduler.pending)
+        self.assertEqual(scheduler.next_run_ms, 120)
+
 
 if __name__ == "__main__":
     unittest.main()
