@@ -4,7 +4,7 @@
 
 Create a small niri helper that keeps tiled columns sized into visible groups of up to three columns per workspace.
 
-The intended behavior is:
+The intended behavior with the default page size of 3 is:
 
 - 1 tiled column on a workspace: width 100%.
 - 2 tiled columns: each width 50%.
@@ -54,6 +54,8 @@ The script maintains:
 
 Direct IPC is preferred over repeated `niri msg` subprocesses because this helper is expected to run continuously and react to frequent window events.
 
+The first resize pass waits until both initial `WorkspacesChanged` and `WindowsChanged` snapshots have arrived from the event stream. This avoids computing against a half-populated state during startup.
+
 ## Data Model
 
 The script tracks tiled windows by workspace, but applies widths only on the globally focused workspace: the workspace whose niri state has `is_focused=true`.
@@ -84,10 +86,10 @@ Columns are split into consecutive pages of three:
 
 ```text
 page = columns[i:i + 3]
-width = 1.0 / len(page)
+target_percent = 100.0 / len(page)
 ```
 
-The action width values are:
+The `SetColumnWidth` action receives percentage values, not 0-1 fractions. The default page-size action values are:
 
 - `100%` for page size 1.
 - `50%` for page size 2.
@@ -112,11 +114,12 @@ After a relevant event, the daemon recomputes the focused workspace signature. I
 
 If the overview is open, the daemon records that a pass is pending but does not resize columns. It applies the pending pass after `OverviewOpenedOrClosed` reports that the overview closed.
 
-Applying `SetColumnWidth` emits `WindowLayoutsChanged`, so feedback-loop prevention is part of the core behavior, not an optimization:
+Applying `SetColumnWidth` emits `WindowLayoutsChanged`, so feedback-loop prevention is part of the core behavior:
 
-- When the daemon issues width actions, it records a short self-apply suppression deadline, initially the same duration as the debounce delay.
+- When the daemon completes a batch of width actions, it records a short self-apply suppression deadline, initially the same duration as the debounce delay.
 - During suppression, `WindowLayoutsChanged` events are ignored when the focused workspace signature is unchanged.
 - During suppression, any event that changes the focused workspace id or focused workspace signature cancels suppression and schedules a fresh recompute.
+- The signature check is the primary loop guard. The deadline only reduces unnecessary recompute work from trailing self-induced layout events.
 - Each column signature is the sorted set of window ids currently in that column.
 - The focused workspace signature is the ordered list of those column signatures.
 - The target-width cache stores `last_applied[workspace_id][column_signature] = width`.
@@ -140,6 +143,8 @@ The script skips an action when its cached target width for that column signatur
 If a future implementation reads actual widths after applying actions, it may record clamped columns for diagnostics, but that is not required for the initial version.
 
 The first successful pass after daemon startup may focus each managed column because the target-width cache is empty. This is expected. Later passes should touch only columns whose target width changed or whose column signature has not been seen before.
+
+Manual column resizing persists while the focused workspace signature is unchanged, because the daemon skips columns whose computed target already matches the last attempted target. The next structural change in that focused workspace recomputes the page targets and may reassert daemon widths for affected columns.
 
 ## Error Handling
 
