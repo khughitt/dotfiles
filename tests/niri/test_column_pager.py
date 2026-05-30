@@ -294,6 +294,19 @@ class FakeActionSocket:
         self.messages.append(message)
 
 
+class FailingActionSocket(FakeActionSocket):
+    def __init__(self):
+        super().__init__()
+        self.set_width_count = 0
+
+    def send_json(self, message):
+        self.messages.append(message)
+        if "SetColumnWidth" in message.get("Action", {}):
+            self.set_width_count += 1
+            if self.set_width_count == 2:
+                raise RuntimeError("set width failed")
+
+
 class DaemonStateTests(unittest.TestCase):
     def test_apply_widths_focuses_needed_columns_and_restores_focus(self):
         action_socket = FakeActionSocket()
@@ -359,6 +372,32 @@ class DaemonStateTests(unittest.TestCase):
         self.assertEqual(applied, [])
         self.assertEqual(action_socket.messages, [])
 
+    def test_apply_widths_restores_focus_and_does_not_cache_on_action_failure(self):
+        action_socket = FailingActionSocket()
+        cache = cp.WidthCache()
+        state = cp.DaemonState(
+            workspaces={1: {"id": 1, "is_focused": True}},
+            windows={
+                1: window(1, col=0, is_focused=True),
+                2: window(2, col=1),
+            },
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "set width failed"):
+            cp.apply_widths(state, action_socket, cache, page_size=3)
+
+        self.assertEqual(
+            action_socket.messages,
+            [
+                cp.focus_window_message(1),
+                cp.set_column_width_message(50.0),
+                cp.focus_window_message(2),
+                cp.set_column_width_message(50.0),
+                cp.focus_window_message(1),
+            ],
+        )
+        self.assertEqual(cache.by_workspace, {})
+
     def test_state_updates_from_initial_snapshots_and_window_events(self):
         state = cp.DaemonState()
         state.apply_event("WorkspacesChanged", {"workspaces": [{"id": 1, "is_focused": True}]})
@@ -372,6 +411,20 @@ class DaemonStateTests(unittest.TestCase):
 
         state.apply_event("WindowClosed", {"id": 1})
         self.assertEqual(set(state.windows), {2})
+
+    def test_focused_window_opened_or_changed_clears_other_window_focus(self):
+        state = cp.DaemonState(
+            workspaces={1: {"id": 1, "is_focused": True}},
+            windows={
+                1: window(1, col=0, is_focused=True),
+            },
+        )
+
+        state.apply_event("WindowOpenedOrChanged", {"window": window(2, col=1, is_focused=True)})
+
+        self.assertFalse(state.windows[1]["is_focused"])
+        self.assertTrue(state.windows[2]["is_focused"])
+        self.assertEqual(state.focused_tiled_window_id(), 2)
 
     def test_state_tracks_overview(self):
         state = cp.DaemonState()
