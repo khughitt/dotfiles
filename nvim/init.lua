@@ -399,7 +399,6 @@ vim.cmd('let g:float_preview#docked = 1')
 if not vim.g.vscode then
   local actions = require("telescope.actions")
   local builtin = require('telescope.builtin')
-  local extensions = require('telescope').extensions
 
   require('telescope').setup{
     defaults = {
@@ -419,7 +418,7 @@ if not vim.g.vscode then
 
   vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
   vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
-  vim.keymap.set('n', '<leader>fr', extensions.frecency.frecency, {})
+  vim.keymap.set('n', '<leader>fr', '<cmd>Telescope frecency<cr>', {})
   vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
   vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
 end
