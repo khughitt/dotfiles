@@ -1,5 +1,5 @@
 {
-  "R.nvim": { "branch": "main", "commit": "1c7b90262d7f377583d9860fc7d44235eefb56dc" },
+  "R.nvim": { "branch": "main", "commit": "00a18b8d866d225373369dc0b6663a6adb12ccef" },
   "barbar.nvim": { "branch": "master", "commit": "a4bef5b4fc1f064f2f673172252028eae18191c9" },
   "csv.vim": { "branch": "master", "commit": "8977f6890d235a6ba9948b63ff700d414c84c344" },
   "float-preview.nvim": { "branch": "master", "commit": "cd7974292f1bb87ed987a2b0e7ae6b632aa14ed6" },
