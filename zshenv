@@ -70,6 +70,11 @@ PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"; export PERL_MM_OPT;
 # pre-commit
 export PRE_COMMIT_HOME=$HOME/.cache/pre-commit
 
+# pytest: drop tmp_path dirs after passing runs so they don't pile up. On Linux,
+# systemd (>=256) sets a per-user usrquota on the /tmp + /dev/shm tmpfs, and
+# leaked pytest temp data can exhaust it; failed sessions are still kept (last 3).
+export PYTEST_ADDOPTS="-o tmp_path_retention_policy=failed"
+
 # ripgrep
 export RIPGREP_CONFIG_PATH="$DOTFILES/ripgreprc"
 
