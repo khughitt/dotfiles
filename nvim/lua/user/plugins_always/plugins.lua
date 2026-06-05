@@ -19,16 +19,26 @@ return {
   },
   { 'dstein64/nvim-scrollview', branch = 'main' },
   { 'nvim-lualine/lualine.nvim', dependencies = { 'nvim-tree/nvim-web-devicons', lazy=true }},
-  { 'nvim-treesitter/nvim-treesitter', lazy = false, build = ':TSUpdate',
+  { 'nvim-treesitter/nvim-treesitter', branch = 'main', lazy = false, build = ':TSUpdate',
     opts = {
       ensure_installed = {
         "bash", "c", "cmake", "cpp", "css", "csv", "dockerfile", "go", "hcl", "javascript",
         "json", "lua", "markdown", "markdown_inline", "python",
         "query", "r", "rnoweb", "rust", "sql", "terraform", "toml", "tsx", "typescript", "vimdoc", "yaml",
       },
-      auto_install = true,
-      highlight = { enable = true },
+      install_dir = vim.fn.stdpath('data') .. '/site',
     },
+    config = function(_, opts)
+      local treesitter = require('nvim-treesitter')
+      treesitter.setup({ install_dir = opts.install_dir })
+      treesitter.install(opts.ensure_installed)
+
+      vim.api.nvim_create_autocmd('FileType', {
+        callback = function(args)
+          pcall(vim.treesitter.start, args.buf)
+        end,
+      })
+    end,
   },
   { 'vladdoster/remember.nvim', config = [[ require('remember') ]] },
 

@@ -265,6 +265,10 @@ vim.keymap.set('', '<leader>P', '"*P')
 vim.api.nvim_create_autocmd('VimLeave', {
   pattern = {'*'},
   callback = function()
+    if #vim.api.nvim_list_uis() == 0 then
+      return
+    end
+
     -- Check if we're in Wayland or X11
     local wayland = vim.env.WAYLAND_DISPLAY ~= nil
     if wayland then

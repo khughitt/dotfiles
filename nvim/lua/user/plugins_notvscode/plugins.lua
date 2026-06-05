@@ -14,7 +14,7 @@ return {
   {'chentoast/marks.nvim'},
   {'lewis6991/gitsigns.nvim'},
   {'ncm2/float-preview.nvim'},
-  {'norcalli/nvim-colorizer.lua', lazy=true},
+  {'catgoose/nvim-colorizer.lua', lazy=true},
   {'nvim-telescope/telescope.nvim', tag = '0.1.8', dependencies = { 'nvim-lua/plenary.nvim' }},
   -- {'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
   {'nvim-telescope/telescope-frecency.nvim',
