@@ -3,7 +3,7 @@ return {
   {'folke/tokyonight.nvim', lazy = false, priority = 1000, opts = {}, },
 
   -- plugins
-  {url = "https://codeberg.org/andyg/leap.nvim" },
+  {'leap.nvim', url = "https://codeberg.org/andyg/leap.nvim" },
   {'godlygeek/tabular'},
   {'scrooloose/nerdcommenter'},
   {'tomtom/tlib_vim'},
