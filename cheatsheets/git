@@ -54,6 +54,9 @@ git diff --name-only 629feca
 git diff --name-status 629feca
 git diff --name-status 629feca 3e0800d
 
+# list files changed in a commit
+git diff-tree --no-commit-id --name-only -r 629feca
+
 # gui diff (e.g. meld)
 git difftool 629fec
 git difftool 629feca file.py
