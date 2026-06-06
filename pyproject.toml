@@ -18,13 +18,11 @@ dev = [
 [tool.pyright]
 include = [
   "bin/walictl",
-  "bin/kitty-theme",
   "tests/bin/test_walictl.py",
-  "tests/bin/test_kitty_theme.py",
 ]
 
 [tool.ruff]
 line-length = 120
 respect-gitignore = false
 include = ["pyproject.toml", "tests/**/*.py"]
-extend-include = ["bin/walictl", "bin/kitty-theme"]
+extend-include = ["bin/walictl"]

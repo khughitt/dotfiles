@@ -2,7 +2,7 @@
 
 ## Local plugins
 
-Running `./setup.sh` in graphical mode installs the local `wali-panel` plugin by symlinking:
+Running `setup.sh` in graphical mode installs the local `wali-panel` plugin by symlinking:
 
 `noctalia/plugins/wali-panel` -> `~/.config/noctalia/plugins/wali-panel`
 

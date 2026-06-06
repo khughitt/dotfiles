@@ -67,7 +67,7 @@ elif [[ "$UBUNTU" == "true" ]]; then
     PACKAGE_INSTALL_CMD="sudo apt install -y"
     PACKAGE_UPDATE_CMD="sudo apt update"
 else
-    PACKAGES=("bat" "dust" "fd" "fzf" "gotop-bin" "lolcat" "lsd" "moor" "powerline" "ripgrep" "tre-command" "thefuck" "tldr" "visidata" "xan" "zoxide")
+    PACKAGES=("bat" "dust" "fd" "fzf" "gotop-bin" "lolcat" "lsd" "moor" "ripgrep" "tre-command" "thefuck" "tldr" "visidata" "xan" "zoxide")
     FONT_PACKAGES=("ttf-nerd-fonts-symbols" "ttf-hack-nerd" "ttf-weather-icons")
     PACKAGE_MANAGER="yay"
     PACKAGE_INSTALL_CMD="yay -S"
@@ -76,7 +76,7 @@ fi
 
 # Define configuration components
 GRAPHICAL_CONFIGS=("feh" "hypr" "niri" "zathura")
-COMMON_CONFIGS=("fcitx" "git" "kitty" "mimeapps.list" "nvim" "lsd" "powerline" "snakemake" "termcolors" "yazi")
+COMMON_CONFIGS=("fcitx" "git" "kitty" "mimeapps.list" "nvim" "lsd" "snakemake" "termcolors" "yazi")
 
 if [[ "$MACOS" == "true" ]]; then
     # Remove Linux-only configs
@@ -88,7 +88,7 @@ if [[ "$MACOS" == "true" ]]; then
     unset _filtered
 fi
 
-COMMON_DOTFILES=("condarc" "ctags" "dir_colors" "plotly" "Rprofile" "Renviron" "tmux.conf" "visidatarc")
+COMMON_DOTFILES=("condarc" "ctags" "plotly" "Rprofile" "Renviron" "tmux.conf" "visidatarc")
 
 # Check for configuration directory
 if [ -z $XDG_CONFIG_HOME ]; then
@@ -305,7 +305,7 @@ ln_s ${DOTS_HOME}/rgignore ${HOME}/.rgignore
 # scripts, etc.
 ln_s ${DOTS_HOME}/bin ${HOME}/bin
 
-# mimetypes & fontconfig (Linux only)
+# mimetypes (Linux only)
 if [[ "$MACOS" != "true" ]]; then
     mkdir -p ~/.local/share/mime
     ln_s ${DOTS_HOME}/mime ~/.local/share/mime/packages
@@ -313,9 +313,6 @@ if [[ "$MACOS" != "true" ]]; then
 
     rm ${XDG_CONFIG_HOME}/mimeapps.list
     ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
-
-    mkdir -p $XDG_CONFIG_HOME/fontconfig
-    ln_s ${DOTS_HOME}/fonts.conf $XDG_CONFIG_HOME/fontconfig/fonts.conf
 fi
 
 # install tpm
