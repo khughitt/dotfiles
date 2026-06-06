@@ -303,7 +303,7 @@ ln_s ${DOTS_HOME}/lintr ${HOME}/.lintr
 ln_s ${DOTS_HOME}/rgignore ${HOME}/.rgignore
 
 # scripts, etc.
-ln_s ${DOTS_HOME}/bin ~/
+ln_s ${DOTS_HOME}/bin ${HOME}/bin
 
 # mimetypes & fontconfig (Linux only)
 if [[ "$MACOS" != "true" ]]; then
