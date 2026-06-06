@@ -1,0 +1,22 @@
+# create
+python -m venv path/to/venv
+
+# use
+path/to/venv/bin/python
+path/to/venv/bin/pip
+
+# activate
+source <venv>/bin/activate
+
+# list installed
+pip list
+
+# generate requirements.txt
+pip freeze > requirements.txt
+
+# install from requirements.txt
+pip install -r requirements.txt
+
+# from pip._internal.cli.main import main
+# ModuleNotFoundError: No module named 'pip'
+python -m ensurepip --default-pip
