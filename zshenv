@@ -51,15 +51,6 @@ export FREEPLANE_USE_UNSUPPORTED_JAVA_VERSION=1
 # remap caps-lock in sway
 # export XKB_DEFAULT_OPTIONS=caps:escape
 
-# less page colors to use for man pages
-export LESS_TERMCAP_mb=$'\E[01;31m'       # begin blinking
-export LESS_TERMCAP_md=$'\E[01;38;5;74m'  # begin bold
-export LESS_TERMCAP_me=$'\E[0m'           # end mode
-export LESS_TERMCAP_se=$'\E[0m'           # end standout-mode
-export LESS_TERMCAP_so=$'\E[38;5;204m'    # begin standout-mode - info/highlight
-export LESS_TERMCAP_ue=$'\E[0m'           # end underline
-export LESS_TERMCAP_us=$'\E[01;32m'       # begin underline
-
 # perl
 PATH="$HOME/perl5/bin${PATH:+:${PATH}}"; export PATH;
 PERL5LIB="$HOME/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
