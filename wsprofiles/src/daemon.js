@@ -1,7 +1,17 @@
 import { buildSlotMap } from './slots.js';
+import { ID_RE } from './catalog.js';
 import { themeCommands } from './theme.js';
 
 export const SOCKET_PATH = `${process.env.XDG_RUNTIME_DIR ?? '/tmp'}/wsprofiled.sock`;
+const CONTROL_USAGE = 'usage: open|new <profile-id>';
+
+export function parseControlLine(line) {
+  const match = /^(open|new) ([^\s]+)$/.exec(line);
+  if (!match) throw new Error(CONTROL_USAGE);
+  const [, cmd, id] = match;
+  if (!ID_RE.test(id) || /-\d+$/.test(id)) throw new Error(CONTROL_USAGE);
+  return { cmd, id };
+}
 
 export class Daemon {
   constructor({ catalog, niri, noctalia, occupancy }) {

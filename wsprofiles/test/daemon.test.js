@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Daemon } from '../src/daemon.js';
+import { Daemon, parseControlLine } from '../src/daemon.js';
 import { OccupancyTracker } from '../src/occupancy.js';
 
 function makeDaemon() {
@@ -39,6 +39,21 @@ test('open focuses the primary slot', async () => {
   const { d, focused } = makeDaemon();
   await d.open('tide');
   assert.deepEqual(focused, ['tide']);
+});
+
+test('parseControlLine accepts exact open and new requests', () => {
+  assert.deepEqual(parseControlLine('open ember'), { cmd: 'open', id: 'ember' });
+  assert.deepEqual(parseControlLine('new tide'), { cmd: 'new', id: 'tide' });
+});
+
+test('parseControlLine rejects malformed requests', () => {
+  assert.throws(() => parseControlLine('open ember extra'), /usage: open\|new <profile-id>/);
+  assert.throws(() => parseControlLine('open ember tide'), /usage: open\|new <profile-id>/);
+  assert.throws(() => parseControlLine('open'), /usage: open\|new <profile-id>/);
+  assert.throws(() => parseControlLine('open ember\t'), /usage: open\|new <profile-id>/);
+  assert.throws(() => parseControlLine('open ember\ntide'), /usage: open\|new <profile-id>/);
+  assert.throws(() => parseControlLine('open ember-2'), /usage: open\|new <profile-id>/);
+  assert.throws(() => parseControlLine('frob ember'), /usage: open\|new <profile-id>/);
 });
 
 test('open rejects an unknown profile id', async () => {

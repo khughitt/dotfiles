@@ -16,7 +16,7 @@ import { generateKdl } from '../src/kdl.js';
 import { parseEventLines, focusedName, focusWorkspace, loadConfig } from '../src/niri.js';
 import { runCommands } from '../src/noctalia.js';
 import { OccupancyTracker } from '../src/occupancy.js';
-import { Daemon, SOCKET_PATH } from '../src/daemon.js';
+import { Daemon, parseControlLine, SOCKET_PATH } from '../src/daemon.js';
 
 const CATALOG = `${homedir()}/d/dotfiles/wsprofiles/profiles.yaml`;
 const KDL_OUT = `${homedir()}/.config/niri/profiles.kdl`;
@@ -202,7 +202,7 @@ async function startControlSocket() {
       buf += d;
       const nl = buf.indexOf('\n');
       if (nl >= 0) {
-        const line = buf.slice(0, nl).trim();
+        const line = nl === buf.length - 1 ? buf.slice(0, nl) : buf;
         sock.removeAllListeners('data');
         handleCommand(line, sock);
       }
@@ -220,10 +220,8 @@ async function startControlSocket() {
 // Await + catch each command so a failed focus never becomes an unhandled
 // rejection, and the client gets an explicit ok/error reply.
 async function handleCommand(line, sock) {
-  const [cmd, id] = line.split(/\s+/);
   try {
-    if (!['open', 'new'].includes(cmd)) throw new Error(`unknown command: ${cmd}`);
-    if (!id) throw new Error(`missing profile id for ${cmd}`);
+    const { cmd, id } = parseControlLine(line);
     if (!daemon) throw new Error('daemon is not ready');
     if (cmd === 'open') await daemon.open(id);
     else await daemon.new(id);
