@@ -894,7 +894,7 @@ git commit -m "feat(wsprofiles): sequential qs ipc-call runner"
     - `async open(id)` — focus the profile's primary slot.
     - `async new(id)` — focus a free extra slot, or fall back to primary if none free.
   - `SOCKET_PATH` constant: `${XDG_RUNTIME_DIR}/wsprofiled.sock`.
-  - The entrypoint refuses to start a second instance (probes the socket; exits if a live daemon owns it; only unlinks a stale one) and replies `ok\n` / `error <msg>\n` to each control command.
+  - The entrypoint refuses to start a second instance before writing KDL, reloading niri, installing watchers, or starting an event stream. It probes the socket, exits if a live daemon owns it, unlinks only an `ECONNREFUSED` stale socket, and replies `ok\n` / `error <msg>\n` to each control command.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1040,6 +1040,10 @@ const occupancy = new OccupancyTracker();
 const buildDaemon = (cat) =>
   new Daemon({ catalog: cat, niri: { focusWorkspace }, noctalia: { runCommands }, occupancy });
 
+// Refuse duplicate daemons before doing any side effects such as KDL writes,
+// niri reloads, file watchers, or event-stream subscriptions.
+await assertSingleInstance();
+
 let catalog = loadCatalog(CATALOG);
 writeFileSync(KDL_OUT, generateKdl(catalog));
 await loadConfig().catch((e) => console.error('wsprofiled: initial niri reload failed:', e.message));
@@ -1071,22 +1075,29 @@ watchFile(CATALOG, { interval: 1000 }, async () => {
   daemon = buildDaemon(catalog);
 });
 
-// Control socket for wsprofilectl. Refuse to start a second daemon: if the
-// socket already accepts connections, another instance owns it. Only a stale
-// socket (connection refused) is safe to unlink.
-async function startControlSocket() {
+async function assertSingleInstance() {
   if (existsSync(SOCKET_PATH)) {
-    const alive = await new Promise((resolve) => {
+    const result = await new Promise((resolve) => {
       const probe = connect(SOCKET_PATH)
-        .once('connect', () => { probe.end(); resolve(true); })
-        .once('error', () => resolve(false));
+        .once('connect', () => { probe.end(); resolve({ alive: true }); })
+        .once('error', (e) => resolve({ alive: false, code: e.code }));
     });
-    if (alive) {
+    if (result.alive) {
       console.error('wsprofiled: another instance is already running; exiting.');
       process.exit(0);
     }
+    if (result.code === 'ENOENT') return; // socket disappeared between existsSync and connect
+    if (result.code !== 'ECONNREFUSED') {
+      console.error(`wsprofiled: cannot probe existing socket (${result.code}); exiting.`);
+      process.exit(1);
+    }
     unlinkSync(SOCKET_PATH);
   }
+}
+
+// Control socket for wsprofilectl. A second daemon has already been rejected by
+// assertSingleInstance(), so this function only creates the server.
+async function startControlSocket() {
   createServer((sock) => {
     let buf = '';
     sock.on('data', (d) => {
@@ -1106,9 +1117,10 @@ async function startControlSocket() {
 async function handleCommand(line, sock) {
   const [cmd, id] = line.split(/\s+/);
   try {
+    if (!['open', 'new'].includes(cmd)) throw new Error(`unknown command: ${cmd}`);
+    if (!id) throw new Error(`missing profile id for ${cmd}`);
     if (cmd === 'open') await daemon.open(id);
-    else if (cmd === 'new') await daemon.new(id);
-    else throw new Error(`unknown command: ${cmd}`);
+    else await daemon.new(id);
     sock.write('ok\n');
   } catch (e) {
     console.error('wsprofiled: command failed:', e.message);
