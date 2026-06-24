@@ -109,7 +109,7 @@ profiles:
     label: "Ember - client-api"     # selector text now; bar label in Phase 3
     instances: 1                    # how many named slots to pre-generate
     ring:   "#ff7a45"               # niri focus-ring active-color
-    border: "#ff7a45"               # optional; defaults to ring
+    border: "#ff7a45"               # optional; omit = no border block
     icon:   ""                     # nerd-font glyph for the bar
     theme:
       source: wallpaper             # wallpaper | builtin | custom
