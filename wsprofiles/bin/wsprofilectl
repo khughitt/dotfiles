@@ -11,7 +11,10 @@ export function formatCommand(argv) {
 }
 
 export function classifyReply(reply) {
-  const line = reply.endsWith('\n') ? reply.slice(0, -1) : reply;
+  if (!reply.includes('\n')) {
+    return { ok: false, message: `incomplete reply: ${reply}` };
+  }
+  const line = reply.slice(0, reply.indexOf('\n'));
   if (line === 'ok') return { ok: true };
   if (/^error .+/.test(line)) return { ok: false, message: line };
   return { ok: false, message: `unexpected reply: ${line}` };
@@ -28,20 +31,33 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const sock = connect(SOCKET_PATH, () => { sock.write(line); });
   let reply = '';
+  let done = false;
+  const finish = (result) => {
+    if (done) return;
+    done = true;
+    sock.end();
+    if (!result.ok) {
+      console.error('wsprofilectl:', result.message);
+      process.exit(1);
+    }
+    process.exit(0);
+  };
   sock.setEncoding('utf8');
   sock.on('data', (d) => {
     reply += d;
     if (reply.includes('\n')) {
-      sock.end();
-      const result = classifyReply(reply.slice(0, reply.indexOf('\n') + 1));
-      if (!result.ok) {
-        console.error('wsprofilectl:', result.message);
-        process.exit(1);
-      }
-      process.exit(0);
+      finish(classifyReply(reply));
     }
   });
+  sock.on('end', () => {
+    finish(classifyReply(reply));
+  });
+  sock.on('close', () => {
+    finish(classifyReply(reply));
+  });
   sock.on('error', (e) => {
+    if (done) return;
+    done = true;
     console.error('wsprofilectl:', e.message);
     process.exit(1);
   });

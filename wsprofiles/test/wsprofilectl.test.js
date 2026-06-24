@@ -30,3 +30,14 @@ test('rejects unexpected replies', () => {
     message: 'unexpected reply: error',
   });
 });
+
+test('rejects incomplete replies', () => {
+  assert.deepEqual(classifyReply('ok'), {
+    ok: false,
+    message: 'incomplete reply: ok',
+  });
+  assert.deepEqual(classifyReply(''), {
+    ok: false,
+    message: 'incomplete reply: ',
+  });
+});
