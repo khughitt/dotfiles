@@ -1,5 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { classifyReply, formatCommand } from '../bin/wsprofilectl';
 
 test('formats open/new into the line protocol', () => {
@@ -61,4 +66,49 @@ test('rejects incomplete replies', () => {
     ok: false,
     message: 'incomplete reply: ',
   });
+});
+
+test('cli rejects extra data sent after an ok line', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'wsprofilectl-'));
+  const sockets = new Set();
+  const server = createServer((sock) => {
+    sockets.add(sock);
+    sock.on('close', () => sockets.delete(sock));
+    sock.on('error', () => {});
+    sock.write('ok\n');
+    setTimeout(() => sock.end('extra'), 20);
+  });
+
+  try {
+    await new Promise((resolve, reject) => {
+      server
+        .once('listening', resolve)
+        .once('error', reject)
+        .listen(join(dir, 'wsprofiled.sock'));
+    });
+
+    const child = spawn(process.execPath, ['bin/wsprofilectl', 'open', 'ember'], {
+      cwd: process.cwd(),
+      env: { ...process.env, XDG_RUNTIME_DIR: dir },
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    let stderr = '';
+    child.stderr.on('data', (d) => { stderr += d; });
+
+    const code = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('wsprofilectl timed out')), 2000);
+      child.once('error', reject);
+      child.once('close', (c) => {
+        clearTimeout(timer);
+        resolve(c);
+      });
+    });
+
+    assert.equal(code, 1);
+    assert.match(stderr, /wsprofilectl: unexpected reply: ok\nextra/);
+  } finally {
+    for (const sock of sockets) sock.destroy();
+    await new Promise((resolve) => server.close(resolve));
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

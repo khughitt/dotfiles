@@ -56,9 +56,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   sock.setEncoding('utf8');
   sock.on('data', (d) => {
     reply += d;
-    if (reply.includes('\n')) {
-      finish(classifyReply(reply));
-    }
   });
   sock.on('end', () => {
     finish(classifyReply(reply));

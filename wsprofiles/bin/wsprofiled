@@ -200,10 +200,10 @@ async function startControlSocket() {
     let buf = '';
     sock.on('data', (d) => {
       buf += d;
-      let nl;
-      while ((nl = buf.indexOf('\n')) >= 0) {
+      const nl = buf.indexOf('\n');
+      if (nl >= 0) {
         const line = buf.slice(0, nl).trim();
-        buf = buf.slice(nl + 1);
+        sock.removeAllListeners('data');
         handleCommand(line, sock);
       }
     });
@@ -227,10 +227,10 @@ async function handleCommand(line, sock) {
     if (!daemon) throw new Error('daemon is not ready');
     if (cmd === 'open') await daemon.open(id);
     else await daemon.new(id);
-    sock.write('ok\n');
+    sock.end('ok\n');
   } catch (e) {
     console.error('wsprofiled: command failed:', e.message);
-    sock.write(`error ${e.message}\n`);
+    sock.end(`error ${e.message}\n`);
   }
 }
 
