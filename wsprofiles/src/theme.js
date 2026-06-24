@@ -12,6 +12,8 @@ export function themeCommands(profile) {
   const cmds = [];
   if (t.wallpaper) cmds.push(['wallpaper', 'set', expandHome(t.wallpaper), 'all']);
   if (t.colorscheme) cmds.push(['colorScheme', 'set', t.colorscheme]);
-  if (t.mode) cmds.push(['darkMode', t.mode === 'dark' ? 'setDark' : 'setLight']);
+  if (t.mode === 'dark') cmds.push(['darkMode', 'setDark']);
+  else if (t.mode === 'light') cmds.push(['darkMode', 'setLight']);
+  else if (t.mode) throw new Error(`theme.mode must be dark|light, got "${t.mode}"`);
   return cmds;
 }
