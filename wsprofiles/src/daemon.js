@@ -5,14 +5,18 @@ export const SOCKET_PATH = `${process.env.XDG_RUNTIME_DIR ?? '/tmp'}/wsprofiled.
 
 export class Daemon {
   constructor({ catalog, niri, noctalia, occupancy }) {
-    this.catalog = catalog;
     this.niri = niri;
     this.noctalia = noctalia;
     this.occupancy = occupancy;
-    this.slotMap = buildSlotMap(catalog);
-    this.profileById = new Map(catalog.profiles.map((p) => [p.id, p]));
+    this.updateCatalog(catalog);
     this._focusSeq = 0;
     this._applyChain = Promise.resolve();
+  }
+
+  updateCatalog(catalog) {
+    this.catalog = catalog;
+    this.slotMap = buildSlotMap(catalog);
+    this.profileById = new Map(catalog.profiles.map((p) => [p.id, p]));
   }
 
   onFocus(workspaceName) {
@@ -31,13 +35,13 @@ export class Daemon {
   }
 
   async open(id) {
-    if (!this.profileById.has(id)) return;
+    if (!this.profileById.has(id)) throw new Error(`unknown profile id: ${id}`);
     await this.niri.focusWorkspace(id);
   }
 
   async new(id) {
     const profile = this.profileById.get(id);
-    if (!profile) return;
+    if (!profile) throw new Error(`unknown profile id: ${id}`);
     const free = this.occupancy.freeInstance(id, profile.instances);
     await this.niri.focusWorkspace(free ?? id);
   }

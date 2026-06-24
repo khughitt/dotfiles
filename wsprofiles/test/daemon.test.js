@@ -41,6 +41,12 @@ test('open focuses the primary slot', async () => {
   assert.deepEqual(focused, ['tide']);
 });
 
+test('open rejects an unknown profile id', async () => {
+  const { d, focused } = makeDaemon();
+  await assert.rejects(() => d.open('missing'), /unknown profile id: missing/);
+  assert.deepEqual(focused, []);
+});
+
 test('new focuses a free extra slot, falling back to primary when full', async () => {
   const { d, focused, occupancy } = makeDaemon();
   await d.new('tide');
@@ -49,4 +55,29 @@ test('new focuses a free extra slot, falling back to primary when full', async (
   occupancy.apply({ WindowsChanged: { windows: [{ id: 9, workspace_id: 1 }] } });
   await d.new('tide');
   assert.equal(focused.at(-1), 'tide');
+});
+
+test('new rejects an unknown profile id', async () => {
+  const { d, focused } = makeDaemon();
+  await assert.rejects(() => d.new('missing'), /unknown profile id: missing/);
+  assert.deepEqual(focused, []);
+});
+
+test('updateCatalog refreshes mappings without replacing the apply chain', async () => {
+  const { d, focused, themed } = makeDaemon();
+  const chain = d._applyChain;
+  const nextCatalog = { profiles: [
+    { id: 'fern', instances: 2, ring: '#0f0',
+      theme: { colorscheme: 'Z', wallpaper: null, mode: 'light' } },
+  ] };
+
+  d.updateCatalog(nextCatalog);
+
+  assert.equal(d.catalog, nextCatalog);
+  assert.equal(d._applyChain, chain);
+  await d.open('fern');
+  assert.deepEqual(focused, ['fern']);
+  await d.onFocus('fern-2');
+  assert.deepEqual(themed.at(-1), [['colorScheme', 'set', 'Z'], ['darkMode', 'setLight']]);
+  await assert.rejects(() => d.open('tide'), /unknown profile id: tide/);
 });
