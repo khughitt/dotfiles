@@ -3,6 +3,7 @@ import { ID_RE } from './catalog.js';
 import { themeCommands } from './theme.js';
 
 export const SOCKET_PATH = `${process.env.XDG_RUNTIME_DIR ?? '/tmp'}/wsprofiled.sock`;
+export const CONTROL_MAX_REQUEST_BYTES = 1024;
 const CONTROL_USAGE = 'usage: open|new <profile-id>';
 
 export function parseControlLine(line) {
@@ -11,6 +12,46 @@ export function parseControlLine(line) {
   const [, cmd, id] = match;
   if (!ID_RE.test(id) || /-\d+$/.test(id)) throw new Error(CONTROL_USAGE);
   return { cmd, id };
+}
+
+export function parseControlRequest(request) {
+  if (Buffer.byteLength(request, 'utf8') > CONTROL_MAX_REQUEST_BYTES) {
+    throw new Error('request too large');
+  }
+  if (!request.endsWith('\n')) throw new Error(CONTROL_USAGE);
+  const line = request.slice(0, -1);
+  if (line.includes('\n')) throw new Error(CONTROL_USAGE);
+  return parseControlLine(line);
+}
+
+export function serveControlSocket(sock, dispatch, { onError = () => {} } = {}) {
+  let buf = '';
+  let done = false;
+  const fail = (error) => {
+    if (done) return;
+    done = true;
+    onError(error);
+    sock.end(`error ${error.message}\n`);
+  };
+
+  sock.on('data', (d) => {
+    if (done) return;
+    buf += d;
+    if (Buffer.byteLength(buf, 'utf8') > CONTROL_MAX_REQUEST_BYTES) {
+      fail(new Error('request too large'));
+    }
+  });
+  sock.on('end', async () => {
+    if (done) return;
+    done = true;
+    try {
+      await dispatch(parseControlRequest(buf));
+      sock.end('ok\n');
+    } catch (e) {
+      onError(e);
+      sock.end(`error ${e.message}\n`);
+    }
+  });
 }
 
 export class Daemon {

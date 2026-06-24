@@ -98,6 +98,53 @@ test('cli runs when invoked through a symlink', async () => {
   }
 });
 
+test('cli half-closes the request and still reads the reply', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'wsprofilectl-'));
+  const sockets = new Set();
+  let request = '';
+  const server = createServer((sock) => {
+    sockets.add(sock);
+    sock.setEncoding('utf8');
+    sock.on('data', (d) => { request += d; });
+    sock.on('end', () => { sock.end('ok\n'); });
+    sock.on('close', () => sockets.delete(sock));
+    sock.on('error', () => {});
+  });
+
+  try {
+    await new Promise((resolve, reject) => {
+      server
+        .once('listening', resolve)
+        .once('error', reject)
+        .listen(join(dir, 'wsprofiled.sock'));
+    });
+
+    const child = spawn(process.execPath, ['bin/wsprofilectl', 'open', 'ember'], {
+      cwd: process.cwd(),
+      env: { ...process.env, XDG_RUNTIME_DIR: dir },
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    let stderr = '';
+    child.stderr.on('data', (d) => { stderr += d; });
+
+    const code = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('wsprofilectl timed out')), 500);
+      child.once('error', reject);
+      child.once('close', (c) => {
+        clearTimeout(timer);
+        resolve(c);
+      });
+    });
+
+    assert.equal(code, 0, stderr);
+    assert.equal(request, 'open ember\n');
+  } finally {
+    for (const sock of sockets) sock.destroy();
+    await new Promise((resolve) => server.close(resolve));
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('cli rejects extra data sent after an ok line', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'wsprofilectl-'));
   const sockets = new Set();

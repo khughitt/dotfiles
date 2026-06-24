@@ -1,6 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Daemon, parseControlLine } from '../src/daemon.js';
+import { once } from 'node:events';
+import { connect, createServer } from 'node:net';
+import {
+  CONTROL_MAX_REQUEST_BYTES,
+  Daemon,
+  serveControlSocket,
+  parseControlLine,
+  parseControlRequest,
+} from '../src/daemon.js';
 import { OccupancyTracker } from '../src/occupancy.js';
 
 function makeDaemon() {
@@ -44,6 +52,57 @@ test('open focuses the primary slot', async () => {
 test('parseControlLine accepts exact open and new requests', () => {
   assert.deepEqual(parseControlLine('open ember'), { cmd: 'open', id: 'ember' });
   assert.deepEqual(parseControlLine('new tide'), { cmd: 'new', id: 'tide' });
+});
+
+test('parseControlRequest accepts exactly one newline-terminated request', () => {
+  assert.deepEqual(parseControlRequest('open ember\n'), { cmd: 'open', id: 'ember' });
+  assert.deepEqual(parseControlRequest('new tide\n'), { cmd: 'new', id: 'tide' });
+});
+
+test('parseControlRequest rejects incomplete and extra request data', () => {
+  assert.throws(() => parseControlRequest('open ember'), /usage: open\|new <profile-id>/);
+  assert.throws(() => parseControlRequest('open ember\nextra'), /usage: open\|new <profile-id>/);
+  assert.throws(() => parseControlRequest('open ember\nextra\n'), /usage: open\|new <profile-id>/);
+  assert.throws(() => parseControlRequest('open ember\n\n'), /usage: open\|new <profile-id>/);
+});
+
+test('parseControlRequest rejects overlarge requests', () => {
+  const tooLong = `open ${'a'.repeat(CONTROL_MAX_REQUEST_BYTES)}\n`;
+  assert.throws(() => parseControlRequest(tooLong), /request too large/);
+});
+
+test('control socket rejects trailing data sent after the first newline', async () => {
+  const handled = [];
+  const server = createServer((sock) => {
+    serveControlSocket(sock, async (request) => { handled.push(request); });
+  });
+
+  try {
+    await new Promise((resolve, reject) => {
+      server
+        .once('listening', resolve)
+        .once('error', reject)
+        .listen(0, '127.0.0.1');
+    });
+
+    const client = connect(server.address().port, '127.0.0.1');
+    client.setEncoding('utf8');
+    let reply = '';
+    client.on('data', (d) => { reply += d; });
+    await once(client, 'connect');
+
+    client.write('open ember\n');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    assert.equal(reply, '');
+
+    client.end('extra\n');
+    await once(client, 'close');
+
+    assert.equal(reply, 'error usage: open|new <profile-id>\n');
+    assert.deepEqual(handled, []);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
 
 test('parseControlLine rejects malformed requests', () => {
