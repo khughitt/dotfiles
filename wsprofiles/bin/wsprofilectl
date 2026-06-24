@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+import { connect } from 'node:net';
+import { SOCKET_PATH } from '../src/daemon.js';
+
+export function formatCommand(argv) {
+  const [verb, id] = argv;
+  if (!['open', 'new'].includes(verb) || !id) {
+    throw new Error('usage: wsprofilectl <open|new> <profile-id>');
+  }
+  return `${verb} ${id}\n`;
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const line = formatCommand(process.argv.slice(2));
+  const sock = connect(SOCKET_PATH, () => { sock.write(line); });
+  let reply = '';
+  sock.setEncoding('utf8');
+  sock.on('data', (d) => {
+    reply += d;
+    if (reply.includes('\n')) {
+      sock.end();
+      if (reply.startsWith('error')) {
+        console.error('wsprofilectl:', reply.trim());
+        process.exit(1);
+      }
+      process.exit(0);
+    }
+  });
+  sock.on('error', (e) => {
+    console.error('wsprofilectl:', e.message);
+    process.exit(1);
+  });
+}
