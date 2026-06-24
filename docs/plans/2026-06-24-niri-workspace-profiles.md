@@ -6,11 +6,11 @@
 
 **Architecture:** A YAML catalog (`profiles.yaml`) is the single source of truth. Pure modules turn it into a niri KDL include and a workspace-name→profile map. The daemon predeclares all workspace slots, subscribes to niri's JSON event stream, tracks window occupancy, and on a focus change runs noctalia IPC commands to apply the focused profile's theme. Phase 1 is driven by manually-added named-slot keybinds; there is no selector UI yet.
 
-**Tech Stack:** Node ≥ 20 (ESM), built-in `node:test` + `node:assert` for tests, the `yaml` npm package for catalog parsing, niri IPC (`niri msg`), noctalia native IPC (`noctalia msg`).
+**Tech Stack:** Node ≥ 20 (ESM), built-in `node:test` + `node:assert` for tests, the `yaml` npm package for catalog parsing, niri IPC (`niri msg`), noctalia **v4** IPC (`qs -c noctalia-shell ipc call`).
 
 ## Global Constraints
 
-- **Target shell:** native (C++) noctalia (`noctalia-origin`) only. Not the Quickshell/QML build. noctalia IPC command names (`wallpaper-set`, `color-scheme-set`, `theme-mode-set`) are taken from the `noctalia-origin` source and **must be verified against the installed build** before the live-verification steps; the native shell is in active flux.
+- **Target shell:** current stable **v4 noctalia** (Quickshell, `qs -c noctalia-shell`), which the user runs today. IPC is reached via `qs -c noctalia-shell ipc call <target> <function> <args>`; the targets/functions used (`colorScheme set <name>`, `wallpaper set <path> all`, `darkMode setDark|setLight`) are verified against `IPCService.qml` at tag v4.7.7. Native v5 is a later adapter swap (rewrite `src/noctalia.js` + `src/theme.js` only), out of scope here.
 - **`id` grammar:** a profile `id` must match `^[a-z][a-z0-9-]*$` and must **not** end in `-<digits>` (e.g. `api-2` is rejected). This prevents collisions between an instance slot (`api-2`) and a literal profile id.
 - **Name→profile resolution:** never parse the `-n` suffix to recover a profile. Resolve via the authoritative map built at slot generation.
 - **Reload-free hot path:** niri config is reloaded only when the catalog changes, never on a focus switch.
@@ -40,7 +40,7 @@ All paths under `~/d/dotfiles/wsprofiles/` unless noted.
   - `niri/profiles.kdl` — generated include (tracked so the `include` resolves on boot).
   - `niri/config.kdl` — add the `include`, the named-slot binds, and the `spawn-at-startup`.
 
-**Live-verification note:** any step that runs `niri msg` or `noctalia msg` against the real shell can only be fully verified **after** the noctalia migration. Those steps are marked **[live, post-migration]**. All pure-logic tasks are fully testable now.
+**Live-verification note:** steps that run `niri msg` or `qs ... ipc call` against the real shell are marked **[live]**. Because the target v4 shell is already running, these are runnable **now** — no migration needed. All pure-logic tasks are testable without any shell.
 
 ---
 
@@ -57,7 +57,7 @@ All paths under `~/d/dotfiles/wsprofiles/` unless noted.
 - Produces:
   - `loadCatalog(path: string) -> Catalog` (reads + parses + validates).
   - `parseCatalog(text: string) -> Catalog` (parse + validate a YAML string).
-  - Types: `Profile = { id, label, instances:number, ring:string, border:string|null, icon:string, theme:{ source:'wallpaper'|'builtin'|'custom', wallpaper:string|null, scheme:string|null, builtin:string|null, custom:string|null, mode:'dark'|'light' } }`; `Catalog = { profiles: Profile[] }`.
+  - Types: `Profile = { id, label, instances:number, ring:string, border:string|null, icon:string, theme:{ colorscheme:string|null, wallpaper:string|null, mode:'dark'|'light'|null } }`; `Catalog = { profiles: Profile[] }`.
   - `ID_RE = /^[a-z][a-z0-9-]*$/` and rejection of `/-\d+$/`.
 
 - [ ] **Step 1: Write `package.json`**
@@ -88,9 +88,8 @@ profiles:
     border: "#ff7a45"
     icon: ""
     theme:
-      source: wallpaper
+      colorscheme: "Tokyo Night"
       wallpaper: ~/Pictures/Walls/ember.jpg
-      scheme: m3-content
       mode: dark
   - id: tide
     label: "Tide - infra"
@@ -98,8 +97,7 @@ profiles:
     ring: "#3aa6ff"
     icon: ""
     theme:
-      source: builtin
-      builtin: "Catppuccin"
+      colorscheme: "Catppuccin"
       mode: dark
 ```
 
@@ -117,14 +115,25 @@ profiles:
   - id: ember
     label: "Ember"
     ring: "#ff7a45"
-    theme: { source: builtin, builtin: "Catppuccin", mode: dark }
+    theme: { colorscheme: "Catppuccin" }
 `);
   const p = cat.profiles[0];
   assert.equal(p.instances, 1);
   assert.equal(p.border, null);
   assert.equal(p.icon, '');
+  assert.equal(p.theme.colorscheme, 'Catppuccin');
   assert.equal(p.theme.wallpaper, null);
-  assert.equal(p.theme.scheme, null);
+  assert.equal(p.theme.mode, null);
+});
+
+test('rejects an invalid theme.mode', () => {
+  assert.throws(() => parseCatalog(`
+profiles:
+  - id: ember
+    label: "Ember"
+    ring: "#fff"
+    theme: { colorscheme: "X", mode: sideways }
+`), /theme.mode must be dark\\|light/);
 });
 
 test('rejects an id ending in -<digits>', () => {
@@ -133,7 +142,7 @@ profiles:
   - id: api-2
     label: "Api"
     ring: "#fff"
-    theme: { source: builtin, builtin: "X", mode: dark }
+    theme: { colorscheme: "X" }
 `), /id .* must not end in -<digits>/);
 });
 
@@ -143,7 +152,7 @@ profiles:
   - id: "Ember!"
     label: "Ember"
     ring: "#fff"
-    theme: { source: builtin, builtin: "X", mode: dark }
+    theme: { colorscheme: "X" }
 `), /id .* must match/);
 });
 
@@ -153,11 +162,11 @@ profiles:
   - id: a
     label: "A"
     ring: "#fff"
-    theme: { source: builtin, builtin: "X", mode: dark }
+    theme: { colorscheme: "X" }
   - id: a
     label: "A2"
     ring: "#000"
-    theme: { source: builtin, builtin: "Y", mode: dark }
+    theme: { colorscheme: "Y" }
 `), /duplicate id/);
 });
 ```
@@ -184,9 +193,7 @@ function validateProfile(raw, seen) {
   seen.add(raw.id);
   if (typeof raw.ring !== 'string') throw new Error(`profile "${raw.id}" is missing ring`);
   const t = raw.theme ?? {};
-  if (!['wallpaper', 'builtin', 'custom'].includes(t.source))
-    throw new Error(`profile "${raw.id}" theme.source must be wallpaper|builtin|custom`);
-  if (!['dark', 'light'].includes(t.mode))
+  if (t.mode != null && !['dark', 'light'].includes(t.mode))
     throw new Error(`profile "${raw.id}" theme.mode must be dark|light`);
   const instances = raw.instances ?? 1;
   if (!Number.isInteger(instances) || instances < 1)
@@ -199,12 +206,9 @@ function validateProfile(raw, seen) {
     border: raw.border ?? null,
     icon: raw.icon ?? '',
     theme: {
-      source: t.source,
+      colorscheme: t.colorscheme ?? null,
       wallpaper: t.wallpaper ?? null,
-      scheme: t.scheme ?? null,
-      builtin: t.builtin ?? null,
-      custom: t.custom ?? null,
-      mode: t.mode,
+      mode: t.mode ?? null,
     },
   };
 }
@@ -225,7 +229,7 @@ export function loadCatalog(path) {
 - [ ] **Step 6: Run test to verify it passes**
 
 Run: `cd ~/d/dotfiles/wsprofiles && node --test test/catalog.test.js`
-Expected: PASS — 4 tests.
+Expected: PASS — 5 tests.
 
 - [ ] **Step 7: Commit**
 
@@ -443,7 +447,7 @@ git commit -m "feat(wsprofiles): generate per-workspace ring/border KDL"
 
 **Interfaces:**
 - Consumes: `Profile` from Task 1.
-- Produces: `themeCommands(profile: Profile) -> string[][]` — ordered argv arrays (WITHOUT the leading `noctalia msg`), and `expandHome(p:string) -> string`.
+- Produces: `themeCommands(profile: Profile) -> string[][]` — ordered argv arrays (WITHOUT the leading `qs -c noctalia-shell ipc call`), and `expandHome(p:string) -> string`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -453,32 +457,34 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { themeCommands } from '../src/theme.js';
 
-test('wallpaper source sets wallpaper, wallpaper scheme, then mode', () => {
+test('full theme: wallpaper (all screens), colorscheme, then mode', () => {
   const cmds = themeCommands({
-    theme: { source: 'wallpaper', wallpaper: '/w/ember.jpg', scheme: 'm3-content', mode: 'dark' },
+    theme: { colorscheme: 'Tokyo Night', wallpaper: '/w/ember.jpg', mode: 'dark' },
   });
   assert.deepEqual(cmds, [
-    ['wallpaper-set', '/w/ember.jpg'],
-    ['color-scheme-set', 'wallpaper', 'm3-content'],
-    ['theme-mode-set', 'dark'],
+    ['wallpaper', 'set', '/w/ember.jpg', 'all'],
+    ['colorScheme', 'set', 'Tokyo Night'],
+    ['darkMode', 'setDark'],
   ]);
 });
 
-test('builtin source with no wallpaper sets builtin scheme then mode', () => {
+test('colorscheme + light mode, no wallpaper', () => {
   const cmds = themeCommands({
-    theme: { source: 'builtin', builtin: 'Catppuccin', wallpaper: null, mode: 'light' },
+    theme: { colorscheme: 'Catppuccin', wallpaper: null, mode: 'light' },
   });
   assert.deepEqual(cmds, [
-    ['color-scheme-set', 'builtin', 'Catppuccin'],
-    ['theme-mode-set', 'light'],
+    ['colorScheme', 'set', 'Catppuccin'],
+    ['darkMode', 'setLight'],
   ]);
 });
 
-test('builtin source WITH a wallpaper also sets the wallpaper first', () => {
-  const cmds = themeCommands({
-    theme: { source: 'builtin', builtin: 'Catppuccin', wallpaper: '/w/x.jpg', mode: 'dark' },
-  });
-  assert.deepEqual(cmds[0], ['wallpaper-set', '/w/x.jpg']);
+test('omits commands for absent fields (ring-only profile)', () => {
+  assert.deepEqual(themeCommands({ theme: { colorscheme: null, wallpaper: null, mode: null } }), []);
+});
+
+test('expands ~ in the wallpaper path', () => {
+  const cmds = themeCommands({ theme: { colorscheme: null, wallpaper: '~/w.jpg', mode: null } });
+  assert.match(cmds[0][2], /^\/.*\/w\.jpg$/);
 });
 ```
 
@@ -503,11 +509,9 @@ export function expandHome(p) {
 export function themeCommands(profile) {
   const t = profile.theme;
   const cmds = [];
-  if (t.wallpaper) cmds.push(['wallpaper-set', expandHome(t.wallpaper)]);
-  if (t.source === 'wallpaper') cmds.push(['color-scheme-set', 'wallpaper', t.scheme]);
-  else if (t.source === 'builtin') cmds.push(['color-scheme-set', 'builtin', t.builtin]);
-  else if (t.source === 'custom') cmds.push(['color-scheme-set', 'custom', t.custom]);
-  cmds.push(['theme-mode-set', t.mode]);
+  if (t.wallpaper) cmds.push(['wallpaper', 'set', expandHome(t.wallpaper), 'all']);
+  if (t.colorscheme) cmds.push(['colorScheme', 'set', t.colorscheme]);
+  if (t.mode) cmds.push(['darkMode', t.mode === 'dark' ? 'setDark' : 'setLight']);
   return cmds;
 }
 ```
@@ -515,7 +519,7 @@ export function themeCommands(profile) {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `cd ~/d/dotfiles/wsprofiles && node --test test/theme.test.js`
-Expected: PASS — 3 tests.
+Expected: PASS — 4 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -776,7 +780,7 @@ git commit -m "feat(wsprofiles): niri event parser + focus/reload adapter"
 
 **Interfaces:**
 - Consumes: argv arrays from `themeCommands` (Task 4).
-- Produces: `runCommands(cmds: string[][], opts?: { exec? }) -> Promise<void>` — runs `noctalia msg <argv...>` for each, sequentially; `exec` is an injectable runner for testing.
+- Produces: `runCommands(cmds: string[][], opts?: { exec? }) -> Promise<void>` — runs `qs -c noctalia-shell ipc call <argv...>` for each, sequentially; `exec` is an injectable runner for testing.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -786,13 +790,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { runCommands } from '../src/noctalia.js';
 
-test('prefixes each argv with noctalia msg and runs them in order', async () => {
+test('prefixes each argv with the qs ipc call invocation, in order', async () => {
   const calls = [];
   const exec = (file, args) => { calls.push([file, ...args]); return Promise.resolve(); };
-  await runCommands([['wallpaper-set', '/w.jpg'], ['theme-mode-set', 'dark']], { exec });
+  await runCommands([['colorScheme', 'set', 'Catppuccin'], ['darkMode', 'setDark']], { exec });
   assert.deepEqual(calls, [
-    ['noctalia', 'msg', 'wallpaper-set', '/w.jpg'],
-    ['noctalia', 'msg', 'theme-mode-set', 'dark'],
+    ['qs', '-c', 'noctalia-shell', 'ipc', 'call', 'colorScheme', 'set', 'Catppuccin'],
+    ['qs', '-c', 'noctalia-shell', 'ipc', 'call', 'darkMode', 'setDark'],
   ]);
 });
 ```
@@ -810,11 +814,12 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const defaultExec = promisify(execFile);
+const IPC_PREFIX = ['-c', 'noctalia-shell', 'ipc', 'call'];
 
 export async function runCommands(cmds, opts = {}) {
   const exec = opts.exec ?? defaultExec;
   for (const argv of cmds) {
-    await exec('noctalia', ['msg', ...argv]);
+    await exec('qs', [...IPC_PREFIX, ...argv]);
   }
 }
 ```
@@ -824,17 +829,17 @@ export async function runCommands(cmds, opts = {}) {
 Run: `cd ~/d/dotfiles/wsprofiles && node --test test/noctalia.test.js`
 Expected: PASS — 1 test.
 
-- [ ] **Step 5: [live, post-migration] Verify noctalia IPC names against the installed build**
+- [ ] **Step 5: [live] Verify the v4 IPC against the running shell**
 
-Run: `noctalia msg --help`
-Expected: `wallpaper-set`, `color-scheme-set`, `theme-mode-set` appear with the argument shapes used in `src/theme.js`. If a name/shape differs, update `src/theme.js` + its test and re-run `node --test test/theme.test.js`.
+Run: `qs -c noctalia-shell ipc call colorScheme set "Catppuccin"`
+Expected: the shell recolors to the Catppuccin scheme. Then `qs -c noctalia-shell ipc call darkMode setLight` flips to light. If a target/function differs, update `src/theme.js`/`src/noctalia.js` + tests and re-run them. (List all targets with `qs -c noctalia-shell ipc show`.)
 
 - [ ] **Step 6: Commit**
 
 ```bash
 cd ~/d/dotfiles
 git add -f wsprofiles/src/noctalia.js wsprofiles/test/noctalia.test.js
-git commit -m "feat(wsprofiles): sequential noctalia msg runner"
+git commit -m "feat(wsprofiles): sequential qs ipc-call runner"
 ```
 
 ---
@@ -872,9 +877,9 @@ function makeDaemon() {
   const noctalia = { runCommands: (c) => { themed.push(c); return Promise.resolve(); } };
   const catalog = { profiles: [
     { id: 'ember', instances: 1, ring: '#f00',
-      theme: { source: 'builtin', builtin: 'X', wallpaper: null, mode: 'dark' } },
+      theme: { colorscheme: 'X', wallpaper: null, mode: 'dark' } },
     { id: 'tide', instances: 2, ring: '#00f',
-      theme: { source: 'builtin', builtin: 'Y', wallpaper: null, mode: 'dark' } },
+      theme: { colorscheme: 'Y', wallpaper: null, mode: 'dark' } },
   ] };
   const occupancy = new OccupancyTracker();
   return { d: new Daemon({ catalog, niri, noctalia, occupancy }), focused, themed, occupancy };
@@ -883,7 +888,7 @@ function makeDaemon() {
 test('onFocus applies the resolved profile theme; unknown names are ignored', async () => {
   const { d, themed } = makeDaemon();
   await d.onFocus('tide-2');
-  assert.deepEqual(themed.at(-1), [['color-scheme-set', 'builtin', 'Y'], ['theme-mode-set', 'dark']]);
+  assert.deepEqual(themed.at(-1), [['colorScheme', 'set', 'Y'], ['darkMode', 'setDark']]);
   await d.onFocus('scratchpad'); // not a profile slot
   assert.equal(themed.length, 1);
 });
@@ -1166,17 +1171,17 @@ In `niri/config.kdl`, near the other `spawn-at-startup` lines (around line 90), 
 spawn-sh-at-startup "node ~/d/dotfiles/wsprofiles/bin/wsprofiled"
 ```
 
-- [ ] **Step 5: [live, post-migration] Validate niri parses the generated config**
+- [ ] **Step 5: [live] Validate niri parses the generated config**
 
 Run: `niri validate`
 Expected: no errors. (Confirms `include` resolves and per-workspace `focus-ring`/`border` blocks are accepted by the installed niri.)
 
-- [ ] **Step 6: [live, post-migration] Smoke-test focus + ring color (Risk #2)**
+- [ ] **Step 6: [live] Smoke-test focus + ring color (Risk #2)**
 
 Reload niri (`Super+Shift+C`), then press `Super+Alt+1`.
 Expected: focus jumps to the (empty) `ember` workspace and its focus-ring renders in `#ff7a45`; `Super+Alt+2` → `tide`, ring `#3aa6ff`. Confirms focusing an empty predeclared named workspace works.
 
-- [ ] **Step 7: [live, post-migration] Smoke-test the theme switch + control client**
+- [ ] **Step 7: [live] Smoke-test the theme switch + control client**
 
 Start the daemon if not already running (`node ~/d/dotfiles/wsprofiles/bin/wsprofiled &`), then:
 Run: `~/d/dotfiles/wsprofiles/bin/wsprofilectl open ember`
@@ -1198,12 +1203,12 @@ git commit -m "feat(niri): wire wsprofiled — include, named-slot binds, startu
 - Catalog (YAML, id/label/instances/ring/border/icon/theme) → Task 1. ✓
 - Predeclared named slots + name→profile map (no suffix parsing) → Tasks 2, 8. ✓
 - Per-workspace ring always, border only when set (global `border { off }`) → Task 3. ✓
-- Theme switch via noctalia IPC (wallpaper/builtin/custom + mode) → Tasks 4, 7. ✓
+- Theme switch via v4 IPC (`colorScheme set` / `wallpaper set` / `darkMode setDark|setLight`) → Tasks 4, 7. ✓
 - Free-instance via window occupancy (`Window.workspace_id`, not `WorkspacesChanged`) → Task 5. ✓
 - niri event subscription + focus-by-name + reload-on-catalog-change → Tasks 6, 8. ✓
 - Control socket + `wsprofilectl open/new` → Tasks 8, 9. ✓
 - Phase 1 manual named-slot binds; `profiles.kdl` owns workspace blocks only → Task 10. ✓
-- noctalia IPC name verification against installed build → Task 7 Step 5, Task 10 (live). ✓
+- v4 noctalia IPC verified against the running shell (`colorScheme set`, `wallpaper set`, `darkMode setDark/setLight`) → Task 7 Step 5, Task 10 (live). ✓
 - **Out of Phase 1 (own plans later):** the `mod-p` selector UI (Phase 2), bar label+icon (Phase 3), ohai avatars. Intentionally excluded.
 
 **Placeholder scan:** no TBD/TODO; every code step contains complete code; every command has an expected result. Live steps that need the migrated shell are explicitly marked rather than faked.

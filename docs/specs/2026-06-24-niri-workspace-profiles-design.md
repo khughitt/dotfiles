@@ -15,12 +15,16 @@ A single declarative catalog (`profiles.yaml`) is the source of truth. A small
 daemon applies a profile's feel whenever its workspace gains focus. A standalone
 `mod-p` menu is a front-end for picking and assigning profiles.
 
-This targets the **native (C++) noctalia rewrite** (`noctalia-origin`), which the
-user is migrating to. It is designed to be built and tested after that migration.
+This targets the **current stable v4 noctalia** (Quickshell, `qs -c noctalia-shell`),
+which the user runs today, so it is fully buildable and verifiable now. noctalia is
+touched only through one thin adapter; supporting the eventual native (C++) **v5**
+rewrite later is an **adapter swap** (see "Shell adapter & v5 path"), deferred
+because v5 is alpha with breaking config/behavior changes.
 
 ## Non-Goals
 
-- Do not target the current Quickshell/QML noctalia. Native only.
+- Do not target native v5 yet -- it is alpha with breaking changes. v5 support is a
+  later adapter swap, not part of this work.
 - Do not build the polished native noctalia "profile switcher" panel from the
   long-term vignette. The v1 selector is a standalone layer-shell menu.
 - Do not integrate ohai per-profile avatars yet (later phase).
@@ -40,9 +44,9 @@ user is migrating to. It is designed to be built and tested after that migration
                   +-----------+-------------+
                               | watched
                               v
-   niri --event-stream-->  +------------------+  --noctalia msg-->  noctalia
-  (WorkspaceActivated,     |   wsprofiled     |   color-scheme-set,  (recolor +
-   name=ember-2)           |   (Node daemon)  |   wallpaper-set       wallpaper)
+   niri --event-stream-->  +------------------+  --qs ipc call-->   noctalia v4
+  (WorkspaceActivated,     |   wsprofiled     |   colorScheme set,  (recolor +
+   name=ember-2)           |   (Node daemon)  |   wallpaper set      wallpaper)
                            +-------+----------+
         ^                          | generates
         | focus-workspace          v
@@ -112,11 +116,9 @@ profiles:
     border: "#ff7a45"               # optional; omit = no border block
     icon:   ""                     # nerd-font glyph for the bar
     theme:
-      source: wallpaper             # wallpaper | builtin | custom
-      wallpaper: ~/Pictures/Walls/ember.jpg
-      scheme: m3-content            # used when source=wallpaper
-      # builtin: "Catppuccin"       # used when source=builtin
-      mode: dark
+      colorscheme: "Catppuccin"     # name passed to `colorScheme set`
+      wallpaper: ~/Pictures/Walls/ember.jpg   # optional; `wallpaper set <path> all`
+      mode: dark                    # optional; dark|light -> darkMode setDark/setLight
 ```
 
 ### Daemon (`wsprofiled`, Node)
@@ -135,15 +137,25 @@ future avatar integration. Responsibilities:
   occupancy from window events (`Window.workspace_id`) for the instance
   allocator; on a focused `WorkspaceActivated`, resolve the workspace name to a
   profile via the name->profile map (built at slot generation) and apply the cues:
-  - `noctalia msg wallpaper-set <connector> <path>` and `color-scheme-set
-    wallpaper <scheme>`; or `color-scheme-set builtin <name>` +
-    `theme-mode-set <mode>` for builtin palettes.
+  - `qs -c noctalia-shell ipc call colorScheme set <name>`, optionally
+    `... wallpaper set <path> all`, and `... darkMode setDark|setLight`.
 - **Expose a control socket** (`wsprofilectl open <id>`) so the selector can
   request "a workspace of profile X."
 
-noctalia native IPC command names come from the `noctalia-origin` C++ source and
-must be verified against the installed build before wiring, since the native
-shell is in active flux.
+The v4 IPC targets/functions above (`colorScheme set`, `wallpaper set`,
+`darkMode setDark/setLight`) are verified against the running shell's
+`IPCService.qml` at tag v4.7.7.
+
+### Shell adapter & v5 path
+
+noctalia is reached only through `src/noctalia.js` (the command runner) and
+`src/theme.js` (profile -> command mapping). Everything else -- catalog, KDL
+generation, slots, occupancy, the daemon, the niri side -- is shell-agnostic.
+Migrating to native v5 later means rewriting just those two modules: the runner
+switches from `qs -c noctalia-shell ipc call ...` to `noctalia msg ...`, and the
+mapper emits v5's `color-scheme-set` / `wallpaper-set` / `theme-mode-set`. The
+catalog `theme` block may also gain v5's `source` (wallpaper-derived palettes).
+No other module changes.
 
 ### Selector (`mod-p`)
 
@@ -179,8 +191,9 @@ shell is in active flux.
 
 ## Risks
 
-1. Native noctalia IPC command names/behavior must be verified against the
-   installed build (native shell is in flux).
+1. `colorScheme set` applies the named scheme live and `darkMode setDark/setLight`
+   takes effect without a manual refresh -- quick live confirmation on the running
+   v4 shell.
 2. Focusing an **empty predeclared named workspace** (`focus-workspace "<name>"`)
    behaves as expected -- needs a quick live test to confirm.
 3. The Phase 3 bar colored-icon depends on the experimental Luau plugin API,
