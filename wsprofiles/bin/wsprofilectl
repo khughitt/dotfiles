@@ -1,5 +1,7 @@
 #!/usr/bin/env node
+import { realpathSync } from 'node:fs';
 import { connect } from 'node:net';
+import { fileURLToPath } from 'node:url';
 import { ID_RE } from '../src/catalog.js';
 import { SOCKET_PATH } from '../src/daemon.js';
 
@@ -31,7 +33,11 @@ export function classifyReply(reply) {
   return { ok: false, message: `unexpected reply: ${line}` };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+const isDirectExecution =
+  process.argv[1] &&
+  realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isDirectExecution) {
   let line;
   try {
     line = formatCommand(process.argv.slice(2));

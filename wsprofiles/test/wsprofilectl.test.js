@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -66,6 +66,36 @@ test('rejects incomplete replies', () => {
     ok: false,
     message: 'incomplete reply: ',
   });
+});
+
+test('cli runs when invoked through a symlink', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'wsprofilectl-'));
+  const linkPath = join(dir, 'wsprofilectl');
+
+  try {
+    symlinkSync(join(process.cwd(), 'bin/wsprofilectl'), linkPath);
+
+    const child = spawn(process.execPath, [linkPath, 'invalid'], {
+      cwd: process.cwd(),
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    let stderr = '';
+    child.stderr.on('data', (d) => { stderr += d; });
+
+    const code = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('wsprofilectl timed out')), 2000);
+      child.once('error', reject);
+      child.once('close', (c) => {
+        clearTimeout(timer);
+        resolve(c);
+      });
+    });
+
+    assert.equal(code, 1);
+    assert.match(stderr, /wsprofilectl: usage: wsprofilectl <open\|new> <profile-id>/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('cli rejects extra data sent after an ok line', async () => {
