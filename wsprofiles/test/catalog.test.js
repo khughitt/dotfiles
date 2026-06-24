@@ -50,6 +50,41 @@ profiles:
 `), /border must be a hex color/);
 });
 
+test('rejects a scalar theme', () => {
+  assert.throws(() => parseCatalog(`
+profiles:
+  - id: ember
+    label: "Ember"
+    ring: "#fff"
+    theme: dark
+`), /theme must be a mapping/);
+});
+
+test('rejects an array theme', () => {
+  assert.throws(() => parseCatalog(`
+profiles:
+  - id: ember
+    label: "Ember"
+    ring: "#fff"
+    theme:
+      - colorscheme
+`), /theme must be a mapping/);
+});
+
+test('rejects a null profile entry', () => {
+  assert.throws(() => parseCatalog(`
+profiles:
+  -
+`), /profile entry must be a mapping/);
+});
+
+test('rejects a scalar profile entry', () => {
+  assert.throws(() => parseCatalog(`
+profiles:
+  - ember
+`), /profile entry must be a mapping/);
+});
+
 test('rejects an id ending in -<digits>', () => {
   assert.throws(() => parseCatalog(`
 profiles:
