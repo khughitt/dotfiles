@@ -1,0 +1,19 @@
+profiles:
+  - id: ember
+    label: "Ember - client-api"
+    instances: 1
+    ring: "#ff7a45"
+    border: "#ff7a45"
+    icon: ""
+    theme:
+      colorscheme: "Tokyo Night"
+      wallpaper: ~/Pictures/Walls/ember.jpg
+      mode: dark
+  - id: tide
+    label: "Tide - infra"
+    instances: 2
+    ring: "#3aa6ff"
+    icon: ""
+    theme:
+      colorscheme: "Catppuccin"
+      mode: dark

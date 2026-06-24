@@ -1,0 +1,9 @@
+{
+  "name": "wsprofiles",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "wsprofiled": "bin/wsprofiled", "wsprofilectl": "bin/wsprofilectl" },
+  "scripts": { "test": "node --test" },
+  "dependencies": { "yaml": "^2.4.0" }
+}

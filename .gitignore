@@ -28,6 +28,7 @@ claude/commands
 hypr/host.conf
 kitty/os-local.conf
 docs/
+wsprofiles/node_modules/
 
 # noctalia colorscheme updates
 hypr/noctalia/noctalia-colors.conf
