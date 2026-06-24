@@ -5,6 +5,7 @@
 
 include "./noctalia.kdl"
 include "./host.kdl"
+include "./profiles.kdl"
 
 environment {
     QT_QPA_PLATFORM "wayland"
@@ -92,6 +93,7 @@ spawn-at-startup "qs" "-c" "noctalia-shell"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
+spawn-sh-at-startup "node ~/d/dotfiles/wsprofiles/bin/wsprofiled"
 
 prefer-no-csd
 
@@ -284,6 +286,9 @@ binds {
     Super+8 { focus-workspace 8; }
     Super+9 { focus-workspace 9; }
     Super+0 { focus-workspace 10; }
+
+    Super+Alt+1 { focus-workspace "ember"; }
+    Super+Alt+2 { focus-workspace "tide"; }
 
     Super+Shift+1 { move-column-to-workspace 1; }
     Super+Shift+2 { move-column-to-workspace 2; }
