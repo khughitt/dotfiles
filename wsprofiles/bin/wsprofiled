@@ -1,7 +1,15 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 import { createServer, connect } from 'node:net';
-import { existsSync, unlinkSync, writeFileSync, readFileSync, watchFile } from 'node:fs';
+import {
+  closeSync,
+  existsSync,
+  openSync,
+  readFileSync,
+  unlinkSync,
+  watchFile,
+  writeFileSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
 import { loadCatalog } from '../src/catalog.js';
 import { generateKdl } from '../src/kdl.js';
@@ -12,6 +20,7 @@ import { Daemon, SOCKET_PATH } from '../src/daemon.js';
 
 const CATALOG = `${homedir()}/d/dotfiles/wsprofiles/profiles.yaml`;
 const KDL_OUT = `${homedir()}/.config/niri/profiles.kdl`;
+const STARTUP_LOCK = `${SOCKET_PATH}.startup-lock`;
 
 const occupancy = new OccupancyTracker();
 const buildDaemon = (cat) =>
@@ -19,8 +28,21 @@ const buildDaemon = (cat) =>
 
 // Refuse duplicate daemons and reserve the socket before doing any side effects
 // such as catalog reads, KDL writes, niri reloads, watchers, or event streams.
-await assertSingleInstance();
-const controlServer = await startControlSocket();
+const startupLock = await acquireStartupLock();
+let controlServer;
+let startupError = null;
+try {
+  if (await assertSingleInstance()) controlServer = await startControlSocket();
+} catch (e) {
+  startupError = e;
+} finally {
+  releaseStartupLock(startupLock);
+}
+if (startupError) {
+  console.error(startupError.message);
+  process.exit(1);
+}
+if (!controlServer) process.exit(0);
 
 let catalog;
 let daemon;
@@ -74,31 +96,101 @@ async function reloadCatalog() {
   } catch (e) {
     console.error('wsprofiled: niri rejected new config, reverting:', e.message);
     if (prevKdl !== null) writeFileSync(KDL_OUT, prevKdl);
-    await loadConfig().catch(() => {});
+    await loadConfig().catch((restoreError) =>
+      console.error('wsprofiled: restoring previous niri config failed:', restoreError.message));
     return;
   }
   catalog = next;
   daemon.updateCatalog(catalog);
 }
 
-async function assertSingleInstance() {
-  if (existsSync(SOCKET_PATH)) {
-    const result = await new Promise((resolve) => {
-      const probe = connect(SOCKET_PATH)
-        .once('connect', () => { probe.end(); resolve({ alive: true }); })
-        .once('error', (e) => resolve({ alive: false, code: e.code }));
-    });
-    if (result.alive) {
-      console.error('wsprofiled: another instance is already running; exiting.');
-      process.exit(0);
+async function acquireStartupLock() {
+  for (;;) {
+    try {
+      const fd = openSync(STARTUP_LOCK, 'wx');
+      writeFileSync(fd, `${process.pid}\n`);
+      return { fd, path: STARTUP_LOCK };
+    } catch (e) {
+      if (e.code !== 'EEXIST') {
+        console.error('wsprofiled: cannot acquire startup lock:', e.message);
+        process.exit(1);
+      }
+      const probe = await probeSocket();
+      if (probe.alive) {
+        console.error('wsprofiled: another instance is already running; exiting.');
+        process.exit(0);
+      }
+      if (probe.code && probe.code !== 'ENOENT' && probe.code !== 'ECONNREFUSED') {
+        console.error(`wsprofiled: cannot probe existing socket (${probe.code}); exiting.`);
+        process.exit(1);
+      }
+      const pid = readLockPid();
+      if (!pid || isPidAlive(pid)) {
+        console.error('wsprofiled: startup already in progress; exiting.');
+        process.exit(1);
+      }
+      try {
+        unlinkSync(STARTUP_LOCK);
+      } catch (unlinkError) {
+        if (unlinkError.code !== 'ENOENT') throw unlinkError;
+      }
     }
-    if (result.code === 'ENOENT') return;
-    if (result.code !== 'ECONNREFUSED') {
-      console.error(`wsprofiled: cannot probe existing socket (${result.code}); exiting.`);
-      process.exit(1);
-    }
-    unlinkSync(SOCKET_PATH);
   }
+}
+
+function readLockPid() {
+  try {
+    const text = readFileSync(STARTUP_LOCK, 'utf8').trim();
+    const pid = Number.parseInt(text, 10);
+    return Number.isInteger(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+function isPidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return e.code !== 'ESRCH';
+  }
+}
+
+function releaseStartupLock(lock) {
+  try {
+    closeSync(lock.fd);
+  } catch (e) {
+    console.error('wsprofiled: closing startup lock failed:', e.message);
+  }
+  try {
+    unlinkSync(lock.path);
+  } catch (e) {
+    if (e.code !== 'ENOENT') console.error('wsprofiled: removing startup lock failed:', e.message);
+  }
+}
+
+async function probeSocket() {
+  if (!existsSync(SOCKET_PATH)) return { alive: false, code: 'ENOENT' };
+  return new Promise((resolve) => {
+    const probe = connect(SOCKET_PATH)
+      .once('connect', () => { probe.end(); resolve({ alive: true }); })
+      .once('error', (e) => resolve({ alive: false, code: e.code }));
+  });
+}
+
+async function assertSingleInstance() {
+  const result = await probeSocket();
+  if (result.alive) {
+    console.error('wsprofiled: another instance is already running; exiting.');
+    return false;
+  }
+  if (result.code === 'ENOENT') return true;
+  if (result.code !== 'ECONNREFUSED') {
+    throw new Error(`wsprofiled: cannot probe existing socket (${result.code}); exiting.`);
+  }
+  unlinkSync(SOCKET_PATH);
+  return true;
 }
 
 // Control socket for wsprofilectl. A second daemon has already been rejected by
@@ -116,13 +208,10 @@ async function startControlSocket() {
       }
     });
   });
-  await new Promise((resolve) => {
+  await new Promise((resolve, reject) => {
     server
       .once('listening', resolve)
-      .once('error', (e) => {
-        console.error('wsprofiled: cannot bind control socket:', e.message);
-        process.exit(1);
-      })
+      .once('error', (e) => reject(new Error(`wsprofiled: cannot bind control socket: ${e.message}`)))
       .listen(SOCKET_PATH);
   });
   return server;
