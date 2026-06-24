@@ -67,21 +67,30 @@ user is migrating to. It is designed to be built and tested after that migration
 ### Naming and selection model
 
 A profile's `id` **is** the name of its durable **primary** workspace (`ember`).
-Selecting a profile is **focus-or-create**: the daemon focuses that named
-workspace (`niri msg action focus-workspace "ember"`), which niri creates on
-demand if it does not yet exist. Because selection is by name, it never depends
-on numeric workspace position or declaration order after a config reload.
+All of a profile's workspaces are **predeclared** in the generated KDL include, so
+selecting a profile simply **focuses its predeclared named workspace**
+(`niri msg action focus-workspace "ember"`). niri named workspaces are persistent
+and survive being empty, so the target always exists and focus never depends on
+numeric position or declaration order after a config reload.
 
-Profiles remain reusable styles. A profile may declare `instances:` > 1, and a
-separate explicit **"open another instance"** action allocates the next free
-extra slot (`ember-2`, `ember-3`, ...), all sharing the profile's colors. "Free"
-means a generated slot of that profile that currently holds **no windows**,
-computed from `Window.workspace_id` (window events) -- not from
-`WorkspacesChanged`, which only exposes the single focused window per workspace.
+Profiles remain reusable styles. A profile may declare `instances:` > 1; the
+daemon predeclares that many named slots (`ember`, `ember-2`, `ember-3`, ...), all
+sharing the profile's colors. A separate explicit **"open another instance"**
+action focuses the next **free** extra slot -- free meaning a slot of that profile
+that currently holds **no windows**, computed from `Window.workspace_id` (window
+events), not from `WorkspacesChanged` (which only exposes the single focused
+window per workspace).
 
-The daemon pre-generates `instances` named slots per profile in the KDL include.
-This keeps the common path **reload-free**: niri only reloads config when a
-profile is added or edited in the catalog, never on a focus switch.
+To map a focused workspace name back to its profile, the daemon does **not** parse
+the `-n` suffix (which would misresolve an `id` that itself ends in a number, e.g.
+`api-2`). Instead it builds an authoritative **workspace-name -> profile** map when
+it generates the slots, and resolves by lookup. As a guard against slot-name
+collisions, `id` is constrained to `[a-z][a-z0-9-]*` and must not end in
+`-<digits>`.
+
+Predeclaring all slots up front keeps the common path **reload-free**: niri only
+reloads config when a profile is added or edited in the catalog, never on a focus
+switch.
 
 ### Key tradeoff
 
@@ -125,7 +134,7 @@ future avatar integration. Responsibilities:
 - **Subscribe** to `niri msg --json event-stream`; maintain window-to-workspace
   occupancy from window events (`Window.workspace_id`) for the instance
   allocator; on a focused `WorkspaceActivated`, resolve the workspace name to a
-  profile (strip any `-n` suffix) and apply the cues:
+  profile via the name->profile map (built at slot generation) and apply the cues:
   - `noctalia msg wallpaper-set <connector> <path>` and `color-scheme-set
     wallpaper <scheme>`; or `color-scheme-set builtin <name>` +
     `theme-mode-set <mode>` for builtin palettes.
@@ -142,20 +151,23 @@ shell is in active flux.
 - Lists profiles, each numbered, plus a "+ new" entry (fuzzel or a small
   Quickshell popup).
 - Picking `N` calls `wsprofilectl open <id>`; the daemon focuses the profile's
-  primary slot (`niri msg action focus-workspace "<id>"`, created on demand). A
-  modifier (e.g. `Shift+N`) calls `wsprofilectl new <id>` to allocate the next
-  free extra slot instead. Either way the event-stream listener applies the cues
-  on the resulting focus change, so menu-, modifier-, and keyboard-driven switches
-  share one code path.
+  primary slot (`niri msg action focus-workspace "<id>"`, predeclared and
+  persistent). A modifier (e.g. `Shift+N`) calls `wsprofilectl new <id>` to focus
+  the next free extra slot instead. Either way the event-stream listener applies
+  the cues on the resulting focus change, so menu-, modifier-, and keyboard-driven
+  switches share one code path.
 - "+ new" (v1) opens `profiles.yaml` in `$EDITOR`; the daemon's file-watch
   regenerates and reloads on save. A guided creator is a later phase.
 
 ## Phasing
 
 - **Phase 1 - Engine:** catalog + generated KDL + daemon + focus-driven
-  colorscheme/wallpaper + niri ring color. Triggered by **per-profile named-slot
-  binds** (e.g. `Mod+1 { focus-workspace "ember"; }`) -- not numeric position
-  binds, which do not map stably to named workspaces -- proving the full
+  colorscheme/wallpaper + niri ring color. Triggered by a few **manually added
+  named-slot binds** in `config.kdl` (e.g. `Mod+Shift+1 { focus-workspace
+  "ember"; }`); the generated `profiles.kdl` owns only workspace + style blocks,
+  **not** binds, and the existing numeric `Super+1...0` binds are left as-is.
+  (Auto-generating binds is deferred -- it depends on niri merging multiple
+  `binds` blocks across includes, which is unverified.) This proves the full
   feel-switching loop with no new UI.
 - **Phase 2 - Selector:** the `mod-p` menu (focus-or-create on tap, allocate-new
   via the `Shift` modifier + free-slot logic), and "+ new opens YAML."
@@ -169,7 +181,7 @@ shell is in active flux.
 
 1. Native noctalia IPC command names/behavior must be verified against the
    installed build (native shell is in flux).
-2. `focus-workspace "<name>"` creating an empty named workspace on demand
-   (focus-or-create) needs a quick live test to confirm.
+2. Focusing an **empty predeclared named workspace** (`focus-workspace "<name>"`)
+   behaves as expected -- needs a quick live test to confirm.
 3. The Phase 3 bar colored-icon depends on the experimental Luau plugin API,
    hence it is isolated to its own phase.
