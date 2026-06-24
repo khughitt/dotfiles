@@ -62,7 +62,14 @@ All paths under `~/d/dotfiles/wsprofiles/` unless noted.
   - `ID_RE = /^[a-z][a-z0-9-]*$/` and rejection of `/-\d+$/`.
   - `COLOR_RE` — hex colors (`#rgb`/`#rgba`/`#rrggbb`/`#rrggbbaa`, what niri accepts). `ring` (required) and `border` (when set) must match, so generated KDL is always valid and injection-safe.
 
-- [ ] **Step 1: Write `package.json`**
+- [ ] **Step 1: Create the project directories, then write `package.json`**
+
+First create the directory tree (must happen before any file is written into it):
+
+Run: `mkdir -p ~/d/dotfiles/wsprofiles/{src,test,bin}`
+Expected: the `wsprofiles/` tree with `src/`, `test/`, `bin/` exists.
+
+Then write `wsprofiles/package.json`:
 
 ```json
 {
@@ -76,8 +83,8 @@ All paths under `~/d/dotfiles/wsprofiles/` unless noted.
 }
 ```
 
-Run: `mkdir -p ~/d/dotfiles/wsprofiles/{src,test,bin} && cd ~/d/dotfiles/wsprofiles && npm install`
-Expected: the `src/`, `test/`, `bin/` dirs exist; `node_modules/` and `package-lock.json` created; `yaml` installed.
+Run: `cd ~/d/dotfiles/wsprofiles && npm install`
+Expected: `node_modules/` and `package-lock.json` created; `yaml` installed.
 
 - [ ] **Step 2: Write a starter `profiles.yaml`**
 
@@ -887,6 +894,7 @@ git commit -m "feat(wsprofiles): sequential qs ipc-call runner"
     - `async open(id)` — focus the profile's primary slot.
     - `async new(id)` — focus a free extra slot, or fall back to primary if none free.
   - `SOCKET_PATH` constant: `${XDG_RUNTIME_DIR}/wsprofiled.sock`.
+  - The entrypoint refuses to start a second instance (probes the socket; exits if a live daemon owns it; only unlinks a stale one) and replies `ok\n` / `error <msg>\n` to each control command.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1015,7 +1023,7 @@ Expected: PASS — 4 tests.
 #!/usr/bin/env node
 // wsprofiles/bin/wsprofiled
 import { spawn } from 'node:child_process';
-import { createServer } from 'node:net';
+import { createServer, connect } from 'node:net';
 import { existsSync, unlinkSync, writeFileSync, readFileSync, watchFile } from 'node:fs';
 import { homedir } from 'node:os';
 import { loadCatalog } from '../src/catalog.js';
@@ -1063,21 +1071,52 @@ watchFile(CATALOG, { interval: 1000 }, async () => {
   daemon = buildDaemon(catalog);
 });
 
-// Control socket for wsprofilectl.
-if (existsSync(SOCKET_PATH)) unlinkSync(SOCKET_PATH);
-createServer((sock) => {
-  let buf = '';
-  sock.on('data', (d) => {
-    buf += d;
-    let nl;
-    while ((nl = buf.indexOf('\n')) >= 0) {
-      const [cmd, id] = buf.slice(0, nl).trim().split(/\s+/);
-      buf = buf.slice(nl + 1);
-      if (cmd === 'open') daemon.open(id);
-      else if (cmd === 'new') daemon.new(id);
+// Control socket for wsprofilectl. Refuse to start a second daemon: if the
+// socket already accepts connections, another instance owns it. Only a stale
+// socket (connection refused) is safe to unlink.
+async function startControlSocket() {
+  if (existsSync(SOCKET_PATH)) {
+    const alive = await new Promise((resolve) => {
+      const probe = connect(SOCKET_PATH)
+        .once('connect', () => { probe.end(); resolve(true); })
+        .once('error', () => resolve(false));
+    });
+    if (alive) {
+      console.error('wsprofiled: another instance is already running; exiting.');
+      process.exit(0);
     }
-  });
-}).listen(SOCKET_PATH);
+    unlinkSync(SOCKET_PATH);
+  }
+  createServer((sock) => {
+    let buf = '';
+    sock.on('data', (d) => {
+      buf += d;
+      let nl;
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        handleCommand(line, sock);
+      }
+    });
+  }).listen(SOCKET_PATH);
+}
+
+// Await + catch each command so a failed focus never becomes an unhandled
+// rejection, and the client gets an explicit ok/error reply.
+async function handleCommand(line, sock) {
+  const [cmd, id] = line.split(/\s+/);
+  try {
+    if (cmd === 'open') await daemon.open(id);
+    else if (cmd === 'new') await daemon.new(id);
+    else throw new Error(`unknown command: ${cmd}`);
+    sock.write('ok\n');
+  } catch (e) {
+    console.error('wsprofiled: command failed:', e.message);
+    sock.write(`error ${e.message}\n`);
+  }
+}
+
+await startControlSocket();
 
 // Subscribe to the niri event stream.
 const stream = spawn('niri', ['msg', '--json', 'event-stream'], { stdio: ['ignore', 'pipe', 'inherit'] });
@@ -1122,7 +1161,7 @@ git commit -m "feat(wsprofiles): daemon wiring + control socket + entrypoint"
 
 **Interfaces:**
 - Consumes: `SOCKET_PATH` from Task 8.
-- Produces: `formatCommand(argv: string[]) -> string` — turn CLI args into the one-line socket protocol (`open <id>\n` / `new <id>\n`); exported from the bin for unit testing.
+- Produces: `formatCommand(argv: string[]) -> string` — turn CLI args into the one-line socket protocol (`open <id>\n` / `new <id>\n`); exported from the bin for unit testing. When run directly, the client writes one command line, reads a single `ok\n` / `error <msg>\n` reply, and exits 0 or 1 accordingly.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1167,7 +1206,17 @@ export function formatCommand(argv) {
 // Only act when run directly, so tests can import formatCommand cleanly.
 if (import.meta.url === `file://${process.argv[1]}`) {
   const line = formatCommand(process.argv.slice(2));
-  const sock = connect(SOCKET_PATH, () => { sock.end(line); });
+  const sock = connect(SOCKET_PATH, () => { sock.write(line); });
+  let reply = '';
+  sock.setEncoding('utf8');
+  sock.on('data', (d) => {
+    reply += d;
+    if (reply.includes('\n')) {           // one reply line ends the request
+      sock.end();
+      if (reply.startsWith('error')) { console.error('wsprofilectl:', reply.trim()); process.exit(1); }
+      process.exit(0);
+    }
+  });
   sock.on('error', (e) => { console.error('wsprofilectl:', e.message); process.exit(1); });
 }
 ```
@@ -1197,7 +1246,6 @@ git commit -m "feat(wsprofiles): wsprofilectl control client"
 **Files:**
 - Modify: `niri/config.kdl` (add include, named-slot binds, spawn-at-startup)
 - Create: `niri/profiles.kdl` (generated; tracked so the include resolves on boot)
-- Modify: `.gitignore` (keep `wsprofiles/node_modules/` ignored; `niri/profiles.kdl` stays tracked)
 
 **Interfaces:**
 - Consumes: `bin/wsprofiled` (Task 8), `generateKdl` (Task 3).
