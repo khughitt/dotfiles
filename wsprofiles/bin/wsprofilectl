@@ -1,11 +1,19 @@
 #!/usr/bin/env node
 import { connect } from 'node:net';
+import { ID_RE } from '../src/catalog.js';
 import { SOCKET_PATH } from '../src/daemon.js';
+
+const USAGE = 'usage: wsprofilectl <open|new> <profile-id>';
 
 export function formatCommand(argv) {
   const [verb, id] = argv;
-  if (!['open', 'new'].includes(verb) || !id) {
-    throw new Error('usage: wsprofilectl <open|new> <profile-id>');
+  if (
+    argv.length !== 2 ||
+    !['open', 'new'].includes(verb) ||
+    !ID_RE.test(id) ||
+    /-\d+$/.test(id)
+  ) {
+    throw new Error(USAGE);
   }
   return `${verb} ${id}\n`;
 }
@@ -14,7 +22,10 @@ export function classifyReply(reply) {
   if (!reply.includes('\n')) {
     return { ok: false, message: `incomplete reply: ${reply}` };
   }
-  const line = reply.slice(0, reply.indexOf('\n'));
+  if (reply.indexOf('\n') !== reply.length - 1) {
+    return { ok: false, message: `unexpected reply: ${reply}` };
+  }
+  const line = reply.slice(0, -1);
   if (line === 'ok') return { ok: true };
   if (/^error .+/.test(line)) return { ok: false, message: line };
   return { ok: false, message: `unexpected reply: ${line}` };
