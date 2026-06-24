@@ -1,0 +1,129 @@
+#!/usr/bin/env node
+import { spawn } from 'node:child_process';
+import { createServer, connect } from 'node:net';
+import { existsSync, unlinkSync, writeFileSync, readFileSync, watchFile } from 'node:fs';
+import { homedir } from 'node:os';
+import { loadCatalog } from '../src/catalog.js';
+import { generateKdl } from '../src/kdl.js';
+import { parseEventLines, focusedName, focusWorkspace, loadConfig } from '../src/niri.js';
+import { runCommands } from '../src/noctalia.js';
+import { OccupancyTracker } from '../src/occupancy.js';
+import { Daemon, SOCKET_PATH } from '../src/daemon.js';
+
+const CATALOG = `${homedir()}/d/dotfiles/wsprofiles/profiles.yaml`;
+const KDL_OUT = `${homedir()}/.config/niri/profiles.kdl`;
+
+const occupancy = new OccupancyTracker();
+const buildDaemon = (cat) =>
+  new Daemon({ catalog: cat, niri: { focusWorkspace }, noctalia: { runCommands }, occupancy });
+
+// Refuse duplicate daemons before doing any side effects such as KDL writes,
+// niri reloads, file watchers, or event-stream subscriptions.
+await assertSingleInstance();
+
+let catalog = loadCatalog(CATALOG);
+writeFileSync(KDL_OUT, generateKdl(catalog));
+await loadConfig().catch((e) => console.error('wsprofiled: initial niri reload failed:', e.message));
+let daemon = buildDaemon(catalog);
+const nameById = new Map();
+
+// On catalog edits: regenerate the KDL, reload niri, and only swap in the new
+// catalog/daemon if niri accepted it. On failure, revert the KDL and keep the
+// old daemon so runtime state stays in sync with the compositor.
+watchFile(CATALOG, { interval: 1000 }, async () => {
+  let next;
+  try {
+    next = loadCatalog(CATALOG);
+  } catch (e) {
+    console.error('wsprofiled: catalog parse failed, keeping previous:', e.message);
+    return;
+  }
+  const prevKdl = existsSync(KDL_OUT) ? readFileSync(KDL_OUT, 'utf8') : null;
+  writeFileSync(KDL_OUT, generateKdl(next));
+  try {
+    await loadConfig();
+  } catch (e) {
+    console.error('wsprofiled: niri rejected new config, reverting:', e.message);
+    if (prevKdl !== null) writeFileSync(KDL_OUT, prevKdl);
+    await loadConfig().catch(() => {});
+    return;
+  }
+  catalog = next;
+  daemon = buildDaemon(catalog);
+});
+
+async function assertSingleInstance() {
+  if (existsSync(SOCKET_PATH)) {
+    const result = await new Promise((resolve) => {
+      const probe = connect(SOCKET_PATH)
+        .once('connect', () => { probe.end(); resolve({ alive: true }); })
+        .once('error', (e) => resolve({ alive: false, code: e.code }));
+    });
+    if (result.alive) {
+      console.error('wsprofiled: another instance is already running; exiting.');
+      process.exit(0);
+    }
+    if (result.code === 'ENOENT') return;
+    if (result.code !== 'ECONNREFUSED') {
+      console.error(`wsprofiled: cannot probe existing socket (${result.code}); exiting.`);
+      process.exit(1);
+    }
+    unlinkSync(SOCKET_PATH);
+  }
+}
+
+// Control socket for wsprofilectl. A second daemon has already been rejected by
+// assertSingleInstance(), so this function only creates the server.
+async function startControlSocket() {
+  createServer((sock) => {
+    let buf = '';
+    sock.on('data', (d) => {
+      buf += d;
+      let nl;
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        handleCommand(line, sock);
+      }
+    });
+  }).listen(SOCKET_PATH);
+}
+
+// Await + catch each command so a failed focus never becomes an unhandled
+// rejection, and the client gets an explicit ok/error reply.
+async function handleCommand(line, sock) {
+  const [cmd, id] = line.split(/\s+/);
+  try {
+    if (!['open', 'new'].includes(cmd)) throw new Error(`unknown command: ${cmd}`);
+    if (!id) throw new Error(`missing profile id for ${cmd}`);
+    if (cmd === 'open') await daemon.open(id);
+    else await daemon.new(id);
+    sock.write('ok\n');
+  } catch (e) {
+    console.error('wsprofiled: command failed:', e.message);
+    sock.write(`error ${e.message}\n`);
+  }
+}
+
+await startControlSocket();
+
+const stream = spawn('niri', ['msg', '--json', 'event-stream'], { stdio: ['ignore', 'pipe', 'inherit'] });
+let carry = '';
+stream.stdout.setEncoding('utf8');
+stream.stdout.on('data', (chunk) => {
+  const { events, carry: c } = parseEventLines(chunk, carry);
+  carry = c;
+  for (const ev of events) {
+    occupancy.apply(ev);
+    if (ev.WorkspacesChanged) {
+      nameById.clear();
+      for (const ws of ev.WorkspacesChanged.workspaces) if (ws.name) nameById.set(ws.id, ws.name);
+    }
+    const name = focusedName(ev, nameById);
+    if (name) daemon.onFocus(name);
+  }
+});
+stream.on('exit', (code) => {
+  console.error(`wsprofiled: niri event-stream exited (${code})`);
+  process.exit(1);
+});
