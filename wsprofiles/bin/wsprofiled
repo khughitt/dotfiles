@@ -64,7 +64,7 @@ try {
 try {
   await applyCatalog({ catalog, kdlPath: KDL_OUT, jsonPath: JSON_OUT, loadConfig });
 } catch (e) {
-  console.error('wsprofiled: initial niri reload failed:', e.message);
+  console.error('wsprofiled: initial catalog apply failed:', e.message);
   controlServer.close();
   process.exit(1);
 }
@@ -90,7 +90,7 @@ async function reloadCatalog() {
   try {
     await applyCatalog({ catalog: next, kdlPath: KDL_OUT, jsonPath: JSON_OUT, loadConfig });
   } catch (e) {
-    console.error('wsprofiled: niri rejected new config, reverting:', e.message);
+    console.error('wsprofiled: catalog apply failed, keeping previous:', e.message);
     return;
   }
   catalog = next;
