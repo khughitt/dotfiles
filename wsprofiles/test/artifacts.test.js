@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
+import { chmodSync, mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { serializeViewModel, applyCatalog } from '../src/artifacts.js';
@@ -49,6 +49,28 @@ test('loadConfig rejection restores both files and best-effort reverts', async (
     assert.equal(readFileSync(t.kdl, 'utf8'), 'PREV_KDL');
     assert.equal(readFileSync(t.json, 'utf8'), 'PREV_JSON');
   } finally { rmSync(t.dir, { recursive: true, force: true }); }
+});
+
+test('rollback restore errors preserve primary loadConfig rejection and continue rollback', async () => {
+  const t = tmp();
+  try {
+    writeFileSync(t.kdl, 'PREV_KDL');
+    writeFileSync(t.json, 'PREV_JSON');
+    let caught;
+    await applyCatalog({ catalog: catalogB, kdlPath: t.kdl, jsonPath: t.json,
+      loadConfig: async () => {
+        chmodSync(t.kdl, 0o400);
+        throw new Error('niri rejected');
+      } }).catch((error) => { caught = error; });
+
+    assert.equal(caught?.message, 'niri rejected');
+    assert.equal(readFileSync(t.json, 'utf8'), 'PREV_JSON');
+    assert.equal(Array.isArray(caught.rollbackErrors), true);
+    assert.ok(caught.rollbackErrors.length >= 1);
+  } finally {
+    if (existsSync(t.kdl)) chmodSync(t.kdl, 0o600);
+    rmSync(t.dir, { recursive: true, force: true });
+  }
 });
 
 test('write failure before reload restores both and does NOT reload', async () => {
