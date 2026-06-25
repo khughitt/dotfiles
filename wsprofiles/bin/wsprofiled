@@ -12,7 +12,7 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { loadCatalog } from '../src/catalog.js';
-import { generateKdl } from '../src/kdl.js';
+import { applyCatalog } from '../src/artifacts.js';
 import { parseEventLines, focusedName, focusWorkspace, loadConfig } from '../src/niri.js';
 import { runCommands } from '../src/noctalia.js';
 import { OccupancyTracker } from '../src/occupancy.js';
@@ -24,6 +24,7 @@ import {
 
 const CATALOG = `${homedir()}/d/dotfiles/wsprofiles/profiles.yaml`;
 const KDL_OUT = `${homedir()}/.config/niri/profiles.kdl`;
+const JSON_OUT = `${homedir()}/.config/niri/wsprofiles.json`;
 const STARTUP_LOCK = `${SOCKET_PATH}.startup-lock`;
 
 const occupancy = new OccupancyTracker();
@@ -55,30 +56,23 @@ let reloadChain = Promise.resolve();
 
 try {
   catalog = loadCatalog(CATALOG);
-  const prevKdl = existsSync(KDL_OUT) ? readFileSync(KDL_OUT, 'utf8') : null;
-  writeFileSync(KDL_OUT, generateKdl(catalog));
-  try {
-    await loadConfig();
-  } catch (e) {
-    console.error('wsprofiled: initial niri reload failed:', e.message);
-    if (prevKdl !== null) {
-      writeFileSync(KDL_OUT, prevKdl);
-      await loadConfig().catch((restoreError) =>
-        console.error('wsprofiled: restoring previous niri config failed:', restoreError.message));
-    }
-    controlServer.close();
-    process.exit(1);
-  }
-  daemon = buildDaemon(catalog);
 } catch (e) {
   console.error('wsprofiled: startup failed:', e.message);
   controlServer.close();
   process.exit(1);
 }
+try {
+  await applyCatalog({ catalog, kdlPath: KDL_OUT, jsonPath: JSON_OUT, loadConfig });
+} catch (e) {
+  console.error('wsprofiled: initial niri reload failed:', e.message);
+  controlServer.close();
+  process.exit(1);
+}
+daemon = buildDaemon(catalog);
 
-// On catalog edits: regenerate the KDL, reload niri, and only swap in the new
-// catalog if niri accepted it. On failure, revert the KDL and keep the
-// old daemon so runtime state stays in sync with the compositor.
+// On catalog edits: regenerate artifacts, reload niri, and only swap in the new
+// catalog if niri accepted it. On failure, keep the old daemon so runtime state
+// stays in sync with the compositor.
 watchFile(CATALOG, { interval: 1000 }, () => {
   reloadChain = reloadChain
     .then(reloadCatalog, reloadCatalog)
@@ -93,15 +87,10 @@ async function reloadCatalog() {
     console.error('wsprofiled: catalog parse failed, keeping previous:', e.message);
     return;
   }
-  const prevKdl = existsSync(KDL_OUT) ? readFileSync(KDL_OUT, 'utf8') : null;
-  writeFileSync(KDL_OUT, generateKdl(next));
   try {
-    await loadConfig();
+    await applyCatalog({ catalog: next, kdlPath: KDL_OUT, jsonPath: JSON_OUT, loadConfig });
   } catch (e) {
     console.error('wsprofiled: niri rejected new config, reverting:', e.message);
-    if (prevKdl !== null) writeFileSync(KDL_OUT, prevKdl);
-    await loadConfig().catch((restoreError) =>
-      console.error('wsprofiled: restoring previous niri config failed:', restoreError.message));
     return;
   }
   catalog = next;
