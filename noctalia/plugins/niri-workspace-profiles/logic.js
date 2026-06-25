@@ -24,6 +24,9 @@ function parseProfiles(text) {
         || typeof p.ring !== 'string') {
       return { profiles: [], error: 'bad profile shape at index ' + i };
     }
+    if (!parseHexColor(p.ring)) {
+      return { profiles: [], error: 'bad profile ring at index ' + i };
+    }
   }
 
   return { profiles: data, error: null };
@@ -59,7 +62,7 @@ function resolveProfile(name, profiles) {
 }
 
 function filterWorkspaces(workspaces, opts) {
-  var result = workspaces.slice(0, 0);
+  var result = [];
   var screenName = normalizeText(opts && opts.screenName);
   var focusedOutput = normalizeText(opts && opts.focusedOutput);
   var globalWorkspaces = !!(opts && opts.globalWorkspaces);
@@ -164,14 +167,24 @@ function channelLuminance(value) {
   return Math.pow((normalized + 0.055) / 1.055, 2.4);
 }
 
+function relativeLuminance(rgb) {
+  return 0.2126 * channelLuminance(rgb.r)
+    + 0.7152 * channelLuminance(rgb.g)
+    + 0.0722 * channelLuminance(rgb.b);
+}
+
+function contrastRatio(lighter, darker) {
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 function pickForeground(ring) {
   var rgb = parseHexColor(ring);
   if (!rgb) {
     return '#ffffff';
   }
 
-  var luminance = 0.2126 * channelLuminance(rgb.r)
-    + 0.7152 * channelLuminance(rgb.g)
-    + 0.0722 * channelLuminance(rgb.b);
-  return luminance > 0.35 ? '#000000' : '#ffffff';
+  var luminance = relativeLuminance(rgb);
+  var blackContrast = contrastRatio(luminance, 0);
+  var whiteContrast = contrastRatio(1, luminance);
+  return blackContrast > whiteContrast ? '#000000' : '#ffffff';
 }

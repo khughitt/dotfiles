@@ -37,7 +37,13 @@ test('parseProfiles: valid profile array returns profiles and no error', () => {
 });
 
 test('parseProfiles: invalid inputs return empty profiles and an error', () => {
-  for (const text of ['', '{ not json', '{}', JSON.stringify([{ id: 'ember' }])]) {
+  for (const text of [
+    '',
+    '{ not json',
+    '{}',
+    JSON.stringify([{ id: 'ember' }]),
+    JSON.stringify([{ id: 'bad', label: 'Bad', ring: 'nothex' }]),
+  ]) {
     const result = Logic.parseProfiles(text);
     assert.deepEqual(plain(result.profiles), []);
     assert.equal(typeof result.error, 'string');
@@ -61,7 +67,7 @@ test('filterWorkspaces: globalWorkspaces keeps all outputs', () => {
     followFocusedScreen: false,
     hideUnoccupied: false,
   });
-  assert.deepEqual(result.map(ws => ws.name), ['ember', 'tide-2', 'scratchpad']);
+  assert.deepEqual(plain(result.map(ws => ws.name)), ['ember', 'tide-2', 'scratchpad']);
 });
 
 test('filterWorkspaces: follows current screen with case-insensitive output matching', () => {
@@ -72,7 +78,7 @@ test('filterWorkspaces: follows current screen with case-insensitive output matc
     followFocusedScreen: false,
     hideUnoccupied: false,
   });
-  assert.deepEqual(result.map(ws => ws.name), ['ember', 'tide-2']);
+  assert.deepEqual(plain(result.map(ws => ws.name)), ['ember', 'tide-2']);
 });
 
 test('filterWorkspaces: follows focused screen and can hide unoccupied workspaces', () => {
@@ -83,7 +89,7 @@ test('filterWorkspaces: follows focused screen and can hide unoccupied workspace
     followFocusedScreen: true,
     hideUnoccupied: true,
   });
-  assert.deepEqual(result.map(ws => ws.name), ['ember']);
+  assert.deepEqual(plain(result.map(ws => ws.name)), ['ember']);
 });
 
 test('filterWorkspaces: hideUnoccupied keeps the focused workspace even when empty', () => {
@@ -97,7 +103,7 @@ test('filterWorkspaces: hideUnoccupied keeps the focused workspace even when emp
     followFocusedScreen: false,
     hideUnoccupied: true,
   });
-  assert.deepEqual(result.map(ws => ws.name), ['empty-focused']);
+  assert.deepEqual(plain(result.map(ws => ws.name)), ['empty-focused']);
 });
 
 test('buildCells: maps profiled and unprofiled workspaces in order', () => {
@@ -161,7 +167,26 @@ test('pickForeground: returns readable black or white foreground', () => {
   assert.equal(Logic.pickForeground('#000000'), '#ffffff');
   assert.equal(Logic.pickForeground('#1e1e2e'), '#ffffff');
   assert.equal(Logic.pickForeground('#fff'), '#000000');
+  assert.equal(Logic.pickForeground('#777777'), '#000000');
+  assert.equal(Logic.pickForeground('#808080'), '#000000');
   assert.equal(Logic.pickForeground(''), '#ffffff');
   assert.equal(Logic.pickForeground('nothex'), '#ffffff');
   assert.equal(Logic.pickForeground(undefined), '#ffffff');
+});
+
+test('parseHexColor: parses shorthand and long hex colors', () => {
+  assert.deepEqual(plain(Logic.parseHexColor('#fff')), { r: 255, g: 255, b: 255 });
+  assert.deepEqual(plain(Logic.parseHexColor('#112233')), { r: 17, g: 34, b: 51 });
+});
+
+test('parseHexColor: invalid values return null', () => {
+  assert.equal(Logic.parseHexColor(''), null);
+  assert.equal(Logic.parseHexColor('nothex'), null);
+  assert.equal(Logic.parseHexColor('#12'), null);
+  assert.equal(Logic.parseHexColor(undefined), null);
+});
+
+test('channelLuminance: maps black and white endpoints', () => {
+  assert.equal(Logic.channelLuminance(0), 0);
+  assert.equal(Logic.channelLuminance(255), 1);
 });
