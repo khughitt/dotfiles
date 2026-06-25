@@ -17,8 +17,8 @@ requires **no changes** to the daemon, niri, or the selector.
 
 - No daemon, niri, or `wsprofile-menu` changes. This phase reads existing state only.
 - No scroll-to-cycle over the strip in v1 (click-to-switch only).
-- No per-monitor / multi-output specialization beyond what noctalia's
-  `CompositorService` already provides.
+- No *new* multi-monitor features. The strip replicates the core Workspace widget's
+  existing per-screen filtering (so it is not a regression) but adds nothing beyond it.
 - No ohai avatars yet (later phase). The cell shows the catalog `icon` glyph.
 - No guided settings UI in v1 beyond an optional manifest `metadata.defaultSettings`.
 - No patching of the installed noctalia package (`/etc/xdg/quickshell/noctalia-shell/`,
@@ -102,28 +102,59 @@ Symlinked into `~/.config/noctalia/plugins/niri-workspace-profiles` (the same wa
   - A `FileView` on `~/.config/niri/wsprofiles.json` with `watchChanges: true` +
     `onFileChanged: reload()`; on `onLoaded` parse `JSON.parse(text())` into a
     `profiles` array, on `onLoadFailed` set `profiles = []` (degrade to neutral).
-  - A `Repeater` over `CompositorService.workspaces` rendering one cell per
-    workspace from the model produced by `logic.buildCells(...)`.
+    Either change triggers a refresh.
+  - **Reactivity bridge.** `CompositorService.workspaces` is a `ListModel`, not a
+    plain array, so a computed `buildCells(...)` would not refresh on its own. A
+    `refreshCells()` function snapshots the live model into a plain JS array
+    (`for i in 0..count: workspaces.get(i)`), runs `filterWorkspaces(snapshot, opts)`
+    then `buildCells(filtered, profiles)`, and assigns the result to a `cells`
+    property. The `Repeater` uses **`cells`** as its model (not the live ListModel).
+    `refreshCells()` is invoked from `Connections { target: CompositorService;
+    function onWorkspacesChanged(); function onWindowListChanged();
+    function onActiveWindowChanged() }` and on profiles reload, coalesced with
+    `Qt.callLater(refreshCells)` (matching the core widget's dedupe).
+  - `opts` for `filterWorkspaces` is read from the bar context: `screenName =
+    screen?.name`, `focusedOutput` from `CompositorService`, and
+    `globalWorkspaces`/`followFocusedScreen`/`hideUnoccupied` from the widget/Settings
+    (defaults: `followFocusedScreen=false`, `hideUnoccupied=false`,
+    `globalWorkspaces=CompositorService.globalWorkspaces`).
   - Each cell renders per the **Rendering** section; click →
-    `CompositorService.switchToWorkspace(ws)`; hover → tooltip with the label.
-  - Theme fallbacks: when a cell has no profile (`ring === null`) it uses neutral
-    `Color` tokens; the profile `ring` hex is used directly otherwise.
+    `CompositorService.switchToWorkspace(ws)` (the snapshot keeps each cell's `idx`
+    so the matching live workspace can be passed); hover → tooltip with the label.
+  - Theme fallbacks: a cell with `ring === null` uses neutral `Color` tokens; a
+    profiled cell uses its `ring` hex directly, with the focused pill's foreground
+    from `logic.pickForeground(cell.ring)`.
 
 - **`logic.js`** — pure classic-QML-JS library (`.pragma library` + top-level
   `function` declarations, **no** `export`), node-tested via the `node:vm` loader
-  pattern established in Phase 2's `menu-logic.js`. Holds the only non-trivial logic:
+  pattern established in Phase 2's `menu-logic.js`. Holds all non-trivial logic:
   - `resolveProfile(name, profiles) -> profile | null`
     - exact `id` match first;
     - else strip a single trailing `-<digits>` from `name` and match (so instance
       slots `tide-2`/`tide-3` resolve to `tide`). Unambiguous because the Phase 1
       `id` grammar forbids ids ending in `-<digits>`.
     - no match → `null`.
+  - `filterWorkspaces(workspaces, opts) -> Array` — replicates noctalia's core
+    Workspace filtering so replacing that widget is not a multi-monitor regression.
+    `opts = { screenName, focusedOutput, globalWorkspaces, followFocusedScreen,
+    hideUnoccupied }`. For each ws keep it when
+    `globalWorkspaces || (followFocusedScreen && ws.output.toLowerCase() ===
+    focusedOutput) || (!followFocusedScreen && ws.output.toLowerCase() ===
+    screenName)`, then drop it when `hideUnoccupied && !ws.isOccupied &&
+    !ws.isFocused`. Order preserved. (Mirrors Workspace.qml:343–347.)
   - `buildCells(workspaces, profiles) -> Array<cell>` where each `cell` is
-    `{ id, idx, name, hasProfile, ring|null, icon, label, isFocused, isOccupied, isUrgent }`,
-    in `workspaces` order. `ring`/`icon`/`label` come from the resolved profile;
-    when unresolved, `hasProfile=false`, `ring=null`, `icon=''`, `label=name`. The
-    function is pure — it never references `Color`/`Style`; the QML maps `ring===null`
-    to a neutral theme token at render time.
+    `{ id, idx, name, output, hasProfile, ring|null, glyph, label, isFocused, isOccupied, isUrgent }`,
+    in `workspaces` order (caller passes the already-`filterWorkspaces`'d list).
+    `ring`/`label` come from the resolved profile; when unresolved,
+    `hasProfile=false`, `ring=null`, `label=name`. **`glyph`** is the profile `icon`
+    when non-empty, else the first character of `label` (so empty-icon catalogs —
+    the current state — still render a visible cell). Pure: never references
+    `Color`/`Style`; the QML maps `ring===null` to a neutral theme token.
+  - `pickForeground(ring) -> '#000000' | '#ffffff'` — deterministic readable
+    foreground for the focused pill: parse the `#rgb`/`#rrggbb` hex, compute relative
+    luminance, return black for light rings and white for dark rings. Invalid or
+    missing `ring` → `'#ffffff'`. (Self-contained and node-testable, rather than
+    coupling to noctalia's internal `ColorsConvert.generateOnColor`.)
 
 ### Bar swap (one-time, manual)
 
@@ -138,13 +169,14 @@ step, not a scripted change: enable the plugin in noctalia → place its widget 
 A horizontal row of cells in niri workspace order (`idx`), each sized to the bar
 capsule height (`Style.getCapsuleHeightForScreen(screenName)`):
 
-- **Profiled, not focused:** the profile **icon** glyph drawn in the profile's
-  **ring color**, transparent background. `isOccupied === false` dims the icon
-  (reduced opacity); occupied is full strength.
-- **Profiled, focused:** a **filled pill in the ring color** containing the **icon +
-  `label`**, with a contrasting foreground (white/black chosen for legibility on the
-  ring color, or `Color.mOnSurface`/`mSurface` as the theme-aware default). This is
-  the only cell that shows a label.
+- **Profiled, not focused:** the cell's **`glyph`** (profile `icon`, or the first
+  label character when the icon is empty — the current catalog state) drawn in the
+  profile's **ring color**, transparent background. `isOccupied === false` dims the
+  glyph (reduced opacity); occupied is full strength.
+- **Profiled, focused:** a **filled pill in the ring color** containing the **glyph +
+  `label`**, with foreground from `logic.pickForeground(ring)` (black on light rings,
+  white on dark) so the text stays legible on any catalog color. This is the only
+  cell that shows a label.
 - **Unprofiled** (no `resolveProfile` match — e.g. `scratchpad`): a **neutral** cell
   using `Color` tokens — the `idx` number (or a dot) in `Color.mOnSurface`; focused
   unprofiled = a neutral filled pill with the number. Kept visible for navigation.
@@ -157,8 +189,9 @@ capsule height (`Style.getCapsuleHeightForScreen(screenName)`):
 - **catalog edit** → daemon rewrites `wsprofiles.json` (Phase 1) → plugin
   `FileView.onFileChanged` reloads → `profiles` updates → cells recompute.
 - **workspace focus / occupancy change** (any source: `Mod+P`, keyboard, click) →
-  `CompositorService.workspaces` updates → `buildCells` recomputes → strip
-  re-renders; the daemon separately applies the theme on focus.
+  `CompositorService` signals → `Qt.callLater(refreshCells)` →
+  `filterWorkspaces` + `buildCells` → `cells` updates → strip re-renders; the daemon
+  separately applies the theme on focus.
 - **click a cell** → `CompositorService.switchToWorkspace(ws)` → focus changes →
   (daemon applies theme; strip re-renders with the new focused pill).
 
@@ -182,18 +215,37 @@ capsule height (`Style.getCapsuleHeightForScreen(screenName)`):
   - an id that itself contains digits but does not end in `-<digits>` still matches
     exactly and is not mis-stripped (`'api'` with a profile `api`)
   - unknown name → `null` (`'scratchpad'` → null)
+- `filterWorkspaces(workspaces, opts)`:
+  - `globalWorkspaces=true` keeps workspaces from every output
+  - `followFocusedScreen=false` keeps only `ws.output === screenName`
+  - `followFocusedScreen=true` keeps only `ws.output === focusedOutput`
+  - `hideUnoccupied=true` drops empty workspaces but keeps the focused one even if
+    empty; `hideUnoccupied=false` keeps all
+  - order is preserved
 - `buildCells(workspaces, profiles)`:
-  - maps each workspace in order to `{hasProfile, ring, icon, label, isFocused, …}`
-  - unprofiled workspace → `hasProfile=false`, `ring=null`, `icon=''`, `label=name`
-  - profiled workspace → `ring`/`icon`/`label` from the profile
-  - carries through `isFocused`, `isOccupied`, `isUrgent`, `idx`
+  - maps each workspace in order to `{hasProfile, ring, glyph, label, isFocused, …}`
+  - unprofiled workspace → `hasProfile=false`, `ring=null`, `label=name`
+  - profiled workspace → `ring`/`label` from the profile
+  - `glyph` = profile `icon` when non-empty; first character of `label` when the
+    icon is `''` (verifies the empty-catalog fallback)
+  - carries through `isFocused`, `isOccupied`, `isUrgent`, `idx`, `output`
   - empty profiles array → all cells neutral; empty workspaces → `[]`
+- `pickForeground(ring)`:
+  - light ring (`'#ffffff'`, `'#ff7a45'`) → `'#000000'`
+  - dark ring (`'#000000'`, `'#1e1e2e'`) → `'#ffffff'`
+  - invalid/missing (`''`, `'nothex'`, `undefined`) → `'#ffffff'`
+
+The QML reactivity bridge (`refreshCells()` + `Connections` + `Qt.callLater`) is
+exercised by the manual checks, not unit tests, since it depends on noctalia's live
+`CompositorService` model.
 
 **Manual verification (running niri + noctalia v4 bar):**
 
 1. Symlink + enable the plugin; swap its widget in for the core `Workspace` widget.
    The strip renders one cell per workspace.
-2. `ember` shows its icon in `#ff7a45`; `tide`/`tide-2` show theirs in `#3aa6ff`.
+2. With the current empty-icon catalog, `ember` shows the glyph `E` in `#ff7a45`
+   and `tide`/`tide-2` show `T` in `#3aa6ff` (the first-label-character fallback);
+   setting a real `icon` in the catalog shows that glyph instead.
 3. Focus `tide` (via `Mod+P` or click) → its cell becomes a filled pill in
    `#3aa6ff` with the icon + "Tide — infra"; the previously focused cell collapses
    to its icon.
