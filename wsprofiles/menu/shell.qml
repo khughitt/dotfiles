@@ -315,7 +315,7 @@ ShellRoot {
         // Footer hint.
         Text {
           topPadding: 6
-          text: "1-9 switch | Shift+N new instance | + add | Esc close"
+          text: "1-9 switch | Shift+1-9 new instance | + add | Esc close"
           color: "#6c7086"; font.pixelSize: 11
         }
       }
