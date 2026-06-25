@@ -8,7 +8,7 @@ ShellRoot {
   id: root
   property bool shown: false
   property var profiles: []
-  property string loadError: ""
+  property string loadError: "loading"
   property int highlight: 0
   property bool modelReady: false
 
