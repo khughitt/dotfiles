@@ -102,13 +102,19 @@ machine-readable view model:
     their captured previous contents and leaves the daemon's in-memory catalog
     **not** swapped. So the JSON never gets ahead of the KDL, and neither artifact
     gets ahead of what niri actually accepted.
+  - **"Previous contents" includes absence.** For each of the KDL and the JSON, if
+    no previous file existed (`prev* === null`), restoring means **removing** the
+    freshly written file, not leaving the rejected one behind. Both artifacts are
+    treated identically, so a never-accepted config can never be left on disk for
+    niri or the menu to pick up.
   - This generalizes the Phase 1 KDL-only revert: the writes + reload are wrapped so
     the restore branch runs on either a write error or a reload rejection.
-  - **Startup failure** (initial `loadConfig()` rejects): if a previous
-    `wsprofiles.json` exists it is restored to that content (matching the existing
-    `prevKdl` restore), then the daemon exits non-zero as today. If none existed,
-    the freshly written JSON is removed so a stale/never-accepted file is not left
-    behind for the menu to read.
+  - **Startup failure** (initial `loadConfig()` rejects) applies the same
+    absence-aware restore to **both** artifacts: each of `profiles.kdl` and
+    `wsprofiles.json` is restored to its previous content if one existed, or removed
+    if it did not, then the daemon exits non-zero as today. (This tightens the Phase
+    1 startup path, which currently leaves a rejected KDL on disk when no previous
+    one existed.)
 
 ### Selector (`wsprofile-menu`, Quickshell)
 
@@ -133,9 +139,19 @@ Responsibilities:
       onFileChanged: this.reload()
     }
     ```
-    The model is `JSON.parse(catalogView.text())`, recomputed on `reload()`. Without
-    `watchChanges: true` + the `onFileChanged` reload, a saved catalog would not
-    appear until the menu restarted (manual step 6 would fail).
+    The model is **not** a raw `JSON.parse` binding (which would throw on a missing
+    or corrupt file and crash the render, undercutting the error state). It goes
+    through a safe parser in the pure JS layer:
+    ```
+    parseProfiles(text) -> { profiles, error }
+    ```
+    - valid JSON of the expected shape → `{ profiles: [...], error: null }`
+    - empty string, invalid JSON, or wrong shape (not an array, or an element
+      missing `id`/`label`/`ring`) → `{ profiles: [], error: '<reason>' }`
+    QML binds the model to `parseProfiles(catalogView.text())` and renders the
+    error state (manual step 10) when `error` is non-null. The recompute happens on
+    `reload()`. Without `watchChanges: true` + the `onFileChanged` reload, a saved
+    catalog would not appear until the menu restarted (manual step 6 would fail).
   - **Keyboard focus tracks visibility**, using the exact Wayland API:
     `WlrLayershell.keyboardFocus` is `WlrKeyboardFocus.OnDemand` while the popup is
     shown (so it accepts digits/arrows) and `WlrKeyboardFocus.None` while hidden
@@ -201,23 +217,33 @@ keyToAction(key, modifiers, state) -> action
 - Digits beyond the profile count, or digit `0`, return `null` (no-op).
 - Only the first 9 profiles get digit hotkeys; the rest are reachable via arrows.
 - `move` wraps at the ends and includes the `+ new` row as the last stop.
+- When the model changes while the menu is open (a `FileView` reload shrinks the
+  list), `highlight` is re-clamped before the next dispatch so `Enter` can never
+  target a removed profile. A pure helper handles it:
+  ```
+  clampHighlight(highlight, profileCount) -> 0..profileCount   // profileCount == the "+ new" index
+  ```
+  QML calls it on every model update; values past the new `+ new` index collapse to
+  it, negatives to `0`.
 
 QML calls `keyToAction` on each key event and dispatches the returned action:
 `open`/`new` → spawn the control client then hide; `move` → update highlight;
 `editor` → spawn editor then hide; `hide` → hide.
 
-**Spawning uses absolute paths, not bare names.** Quickshell's `Process` takes an
-argv array and runs **no shell**, so neither `$PATH` lookup of `wsprofilectl` nor
-`~` expansion applies (Phase 1 already spawns the daemon as
-`node ~/d/dotfiles/wsprofiles/bin/wsprofiled`). The selector spawns the client the
-same way, with the home directory resolved to an absolute path at runtime:
+**The program is found on `PATH`; arguments are literal.** Quickshell's `Process`
+takes an argv array and runs **no shell**. The program (argv[0]) is resolved on
+`PATH` like any process, so `node` needs no absolute path. But the *arguments* are
+passed verbatim — there is no shell to expand `~` — so the script path must be
+absolute, resolved at runtime from `$HOME` (Phase 1 likewise spawns the daemon as
+`node ~/d/dotfiles/wsprofiles/bin/wsprofiled`, but there `~` is expanded by
+`spawn-sh-at-startup`'s shell, which `Process` does not provide):
 
 ```
 command: [ "node", Quickshell.env("HOME") + "/d/dotfiles/wsprofiles/bin/wsprofilectl", verb, id ]
 ```
 
-(`verb` is `"open"` or `"new"`.) The `+ new` editor spawn resolves `$EDITOR`
-similarly and falls back to a default when unset.
+(`verb` is `"open"` or `"new"`.) The `+ new` editor spawn resolves `$EDITOR` from
+the environment similarly and falls back to a default when unset.
 
 ### niri wiring (`config.kdl`)
 
@@ -294,6 +320,19 @@ on its next show. No guided form in v1.
   - `Up`/`Shift+Tab` moves back, wrapping
   - `Escape` → `{type:'hide'}`
   - unmapped key → `null`
+
+- `parseProfiles(text)`:
+  - valid JSON array of well-shaped entries → `{ profiles: [...], error: null }`
+  - `''` (missing/unloaded file) → `{ profiles: [], error: <non-null> }`
+  - malformed JSON (`'{ not json'`) → `{ profiles: [], error: <non-null> }`
+  - wrong shape (`'{}'` not an array; or an element missing `id`/`label`/`ring`) →
+    `{ profiles: [], error: <non-null> }`
+
+- `clampHighlight(highlight, profileCount)`:
+  - in-range value passes through
+  - value `> profileCount` collapses to `profileCount` (the `+ new` index)
+  - negative collapses to `0`
+  - `profileCount === 0` → always `0` (only the `+ new` row exists)
 
 **Manual verification (running niri + noctalia v4 session):**
 
