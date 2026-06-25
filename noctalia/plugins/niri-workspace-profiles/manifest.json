@@ -1,0 +1,23 @@
+{
+  "id": "niri-workspace-profiles",
+  "name": "Niri Workspace Profiles",
+  "version": "1.0.0",
+  "minNoctaliaVersion": "4.7.0",
+  "author": "Keith Hughitt",
+  "license": "MIT",
+  "description": "Horizontal niri workspace strip showing per-profile icon, color, and label.",
+  "tags": ["Bar", "Niri"],
+  "entryPoints": {
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "followFocusedScreen": false,
+      "hideUnoccupied": false
+    }
+  }
+}
