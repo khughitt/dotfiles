@@ -126,7 +126,7 @@ Item {
   }
 
   function switchCell(cell) {
-    if (!cell || cell.idx === undefined || cell.idx === null) {
+    if (!cell || cell.idx === undefined || cell.idx === null || cell.isFocused) {
       return;
     }
     CompositorService.switchToWorkspace(root.liveWorkspaceForCell(cell));
@@ -198,7 +198,7 @@ Item {
       this.reload();
     }
     onLoaded: root.applyProfileText(catalogView.text())
-    onLoadFailed: root.clearProfiles("load failed")
+    onLoadFailed: root.clearProfiles("load failed: " + catalogView.path)
   }
 
   Row {
@@ -214,7 +214,9 @@ Item {
 
         property var cell: modelData
         readonly property bool expanded: cell.isFocused
-        readonly property real expandedWidth: Math.max(root.cellSize * 2.4, content.implicitWidth + Style.marginM * 2)
+        readonly property real maxExpandedWidth: Math.max(root.cellSize * 3, root.capsuleHeight * 7)
+        readonly property real maxLabelWidth: Math.max(0, maxExpandedWidth - root.cellSize - Style.marginXS - Style.marginM * 2)
+        readonly property real expandedWidth: Math.min(maxExpandedWidth, Math.max(root.cellSize * 2.4, content.implicitWidth + Style.marginM * 2))
 
         width: expanded ? expandedWidth : root.cellSize
         height: root.barHeight
@@ -272,6 +274,7 @@ Item {
           NText {
             id: labelText
             visible: cellItem.expanded
+            width: cellItem.expanded ? Math.min(implicitWidth, cellItem.maxLabelWidth) : 0
             text: cellItem.cell.label
             pointSize: root.barFontSize
             applyUiScale: false
@@ -279,6 +282,8 @@ Item {
             color: root.cellForeground(cellItem.cell, mouseArea.containsMouse)
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
+            maximumLineCount: 1
+            elide: Text.ElideRight
           }
         }
 
