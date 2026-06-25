@@ -94,8 +94,17 @@ machine-readable view model:
 - A pure function `viewModel(catalog)` produces the object (mirroring the existing
   `generateKdl(catalog)`), so it is unit-testable with `node:test`.
 - The write happens wherever `generateKdl` output is written today (startup +
-  `reloadCatalog`), and is included in the revert-on-reload-failure handling so
-  the JSON never gets ahead of the KDL niri actually accepted.
+  `reloadCatalog`). The KDL and the JSON form **one artifact transaction**: both
+  are written from the next catalog, and if `loadConfig()` fails, **both** are
+  restored to their previous on-disk contents and the daemon's in-memory catalog is
+  **not** swapped — so the JSON never gets ahead of the KDL niri actually accepted.
+  This mirrors the Phase 1 KDL-only revert; the JSON is captured (`prevJson`) and
+  restored on the same failure branch.
+  - **Startup failure** (initial `loadConfig()` rejects): if a previous
+    `wsprofiles.json` exists it is restored to that content (matching the existing
+    `prevKdl` restore), then the daemon exits non-zero as today. If none existed,
+    the freshly written JSON is removed so a stale/never-accepted file is not left
+    behind for the menu to read.
 
 ### Selector (`wsprofile-menu`, Quickshell)
 
@@ -107,9 +116,28 @@ it (identical pattern to the existing noctalia `launcher toggle` bind).
 
 Responsibilities:
 
-- On show: read `wsprofiles.json` via a reactive `FileView` (catalog edits reflect
-  without restarting the menu), render the vertical list, and grab layer-shell
-  keyboard focus (`keyboard-focus: OnDemand`). On hide: release focus.
+- On show: read `wsprofiles.json` via a `FileView` and render the vertical list,
+  then take keyboard focus. On hide: release focus.
+  - **Reactivity is not automatic.** `FileView.watchChanges` defaults to `false`,
+    so the contract is explicit:
+    ```qml
+    FileView {
+      id: catalogView
+      path: "/home/<user>/.config/niri/wsprofiles.json"
+      blockLoading: true        // so JSON.parse(text()) sees loaded content
+      watchChanges: true        // default is false — required for live reflect
+      onFileChanged: this.reload()
+    }
+    ```
+    The model is `JSON.parse(catalogView.text())`, recomputed on `reload()`. Without
+    `watchChanges: true` + the `onFileChanged` reload, a saved catalog would not
+    appear until the menu restarted (manual step 6 would fail).
+  - **Keyboard focus** uses the exact Wayland API, not prose:
+    `WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand`. The `OnDemand` docs
+    warn it can, on some systems, retain focus over another window unexpectedly; if
+    that happens the fallback is `WlrKeyboardFocus.None` with focus handed back
+    explicitly. Manual step 7 verifies focus returns to the underlying window after
+    hide.
 - Render one row per profile: ring-color **swatch**, **number** (catalog position,
   1..N), nerd-font **icon**, **label**. A muted `+ new profile…` row last.
 - Highlighted row (arrow/Tab target) gets a raised background and a left **accent
@@ -122,9 +150,24 @@ Responsibilities:
 The key→action mapping is a **pure module** that QML imports (Quickshell supports
 `.js` imports), keeping the testable logic out of QML:
 
+The **input contract is normalized**, so QML-specific key constants never leak
+into the logic and unit tests exercise the same values the QML adapter produces:
+
+```
+key       : '1'..'9' | 'Enter' | 'Escape' | 'Up' | 'Down' | 'Tab' | '+'
+modifiers : { shift: boolean }            // only shift is significant in v1
+state     : { profiles, highlight }       // highlight: 0..N-1, or N for "+ new"
+```
+
+A thin QML key-event adapter maps Qt's `event.key`/`event.text`/`event.modifiers`
+to this normalized `(key, modifiers)` shape before calling `keyToAction`
+(`Qt.Key_Return`/`Qt.Key_Enter → 'Enter'`, `Qt.Key_Escape → 'Escape'`,
+`Qt.Key_Up/Down`, `Qt.Key_Tab`/`Qt.Key_Backtab → 'Tab'` with `shift`,
+`event.text` `'1'..'9'`/`'+'`). The adapter is the one piece confirmed by manual
+testing; everything below it is unit-tested.
+
 ```
 keyToAction(key, modifiers, state) -> action
-  where state = { profiles, highlight }   // highlight: index, 0..N-1, or N for "+ new"
   and action is one of:
     { type: 'open',   id }          // digit 1..9, or Enter on a profile row
     { type: 'new',    id }          // Shift+digit, or Shift+Enter on a profile row
@@ -192,6 +235,18 @@ on its next show. No guided form in v1.
   - maps id/label/icon/ring/instances in catalog order
   - emits `border: null` when a profile omits `border`, and the hex when present
   - empty catalog → `[]`
+
+- **Artifact transaction** (the KDL+JSON write/rollback seam, tested with a faked
+  `loadConfig` and a temp dir so no real niri is needed):
+  - success path: a catalog edit writes both `profiles.kdl` and `wsprofiles.json`
+    from the next catalog, and the in-memory catalog is swapped
+  - rollback path: previous KDL + previous JSON exist, the next catalog is written
+    to both files, `loadConfig()` rejects → **both** files are restored to their
+    previous contents and the in-memory catalog is **not** swapped
+  - startup with no previous JSON: `loadConfig()` rejects → the freshly written
+    `wsprofiles.json` is removed (no stale file left behind)
+  - startup with a previous JSON: `loadConfig()` rejects → the previous JSON
+    content is restored
 - `keyToAction(key, modifiers, state)`:
   - digit `1` with N≥1 profiles → `{type:'open', id:<profiles[0].id>}`
   - `Shift`+digit `1` → `{type:'new', id:<profiles[0].id>}`
@@ -220,17 +275,22 @@ on its next show. No guided form in v1.
 8. Toggle `Mod+P` twice quickly — show then hide, no stacking.
 9. Kill `wsprofiled`, press a number — `wsprofilectl` fails, popup hides without
    crashing (stderr logs the error).
+10. Temporarily rename or corrupt `~/.config/niri/wsprofiles.json`, press `Mod+P` —
+    popup shows the empty/error state ("No profiles — is wsprofiled running?") and
+    `+ new` / `Esc` still work; restore the file and confirm rows return.
 
 ## Risks
 
-1. Layer-shell keyboard focus grab/release (`OnDemand`) behaves correctly under
-   niri so the popup receives digits/arrows and returns focus on hide — quick live
-   confirmation.
+1. `WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand` is documented to
+   sometimes retain focus over another window on some systems. Manual step 7
+   confirms focus returns after hide; the fallback is `WlrKeyboardFocus.None` with
+   focus handed back explicitly.
 2. A resident `qs -c wsprofile-menu` process started from `spawn-at-startup`
    coexists cleanly with the resident noctalia shell — confirm no IPC name clash
    (distinct `-c` config name isolates it).
-3. `FileView` reactivity reflects `wsprofiles.json` rewrites without a menu
-   restart — confirmed by manual step 6.
+3. `FileView` reactivity requires `watchChanges: true` + `onFileChanged: reload()`
+   (default is no watching); manual step 6 confirms a saved catalog reflects without
+   a menu restart.
 
 ## Out of scope (later phases)
 
