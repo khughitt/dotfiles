@@ -41,7 +41,7 @@ function keyToAction(key, modifiers, state) {
   if (key === 'Escape') return { type: 'hide' };
   if (key === '+') return { type: 'editor' };
 
-  if (key >= '1' && key <= '9') {
+  if (/^[1-9]$/.test(key)) {
     var idx = Number(key) - 1;
     if (idx >= profiles.length) return null;
     return shift ? { type: 'new', id: profiles[idx].id }

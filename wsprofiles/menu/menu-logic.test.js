@@ -64,6 +64,12 @@ test('digit beyond profile count and digit 0 are no-ops', () => {
   assert.equal(Logic.keyToAction('0', { shift: false }, state(P, 0)), null);
 });
 
+test('multi-character digit-like keys are unmapped', () => {
+  const manyProfiles = Array.from({ length: 10 }, (_, i) => ({ id: 'p' + i }));
+  assert.equal(Logic.keyToAction('10', { shift: false }, state(manyProfiles, 0)), null);
+  assert.equal(Logic.keyToAction('1a', { shift: false }, state(manyProfiles, 0)), null);
+});
+
 test('Enter on a profile row opens it; Shift+Enter opens a new instance', () => {
   assert.deepEqual(plain(Logic.keyToAction('Enter', { shift: false }, state(P, 1))), { type: 'open', id: 'tide' });
   assert.deepEqual(plain(Logic.keyToAction('Enter', { shift: true }, state(P, 0))), { type: 'new', id: 'ember' });
