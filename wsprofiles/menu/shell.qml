@@ -42,7 +42,10 @@ ShellRoot {
     path: Quickshell.env("HOME") + "/.config/niri/wsprofiles.json"
     blockLoading: true
     watchChanges: true
-    onFileChanged: this.reload()
+    onFileChanged: {
+      root.beginModelReload();
+      this.reload();
+    }
     onLoaded: root.applyModel()
     // On I/O failure (missing file) set the error state directly. Do NOT parse
     // text() here - it can still hold previously-loaded content during a reload,
@@ -81,7 +84,7 @@ ShellRoot {
       color: "#1e1e2e"
       border.color: "#45475a"
       border.width: 1
-      implicitHeight: content.implicitHeight + 24
+      height: content.implicitHeight + 24
 
       // Swallow clicks inside the card so they don't dismiss.
       MouseArea { anchors.fill: parent }
