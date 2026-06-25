@@ -122,14 +122,20 @@ Item {
         return ws;
       }
     }
-    return { idx: cell.idx };
+    return null;
   }
 
   function switchCell(cell) {
-    if (!cell || cell.idx === undefined || cell.idx === null || cell.isFocused) {
+    if (!cell || cell.idx === undefined || cell.idx === null) {
       return;
     }
-    CompositorService.switchToWorkspace(root.liveWorkspaceForCell(cell));
+
+    var live = root.liveWorkspaceForCell(cell);
+    if (!live || live.isFocused) {
+      return;
+    }
+
+    CompositorService.switchToWorkspace(live);
   }
 
   function cellBackground(cell, hovered) {
