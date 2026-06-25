@@ -14,7 +14,7 @@
 - **No new npm dependencies.** The view model serializes with built-in `JSON`.
 - Daemon-side pure modules live in `~/d/dotfiles/wsprofiles/src/` as ESM; menu-side pure logic lives in `~/d/dotfiles/wsprofiles/menu/menu-logic.js` as a **classic QML JS library** (`.pragma library` + top-level `function` declarations, **no** `export`), node-tested via a `node:vm` loader.
 - The view-model file is `~/.config/niri/wsprofiles.json` (beside `profiles.kdl` at `~/.config/niri/profiles.kdl`).
-- Quickshell `Process` runs **no shell**: argv[0] (`node`, `kitty`) resolves on `PATH`, but every path argument must be absolute (resolve `~` via `Quickshell.env("HOME")`). No `~` in argv.
+- Quickshell `Process` runs **no shell by default**: argv[0] (`node`, `kitty`) resolves on `PATH`, but every path argument must be absolute (resolve `~` via `Quickshell.env("HOME")`). No `~` in argv. The only intentional shell is the detached editor launch in Task 6, used so `$EDITOR` values with flags work while the profile path remains a single positional argument.
 - Keyboard focus: `WlrLayershell.keyboardFocus` is `WlrKeyboardFocus.OnDemand` while shown, `WlrKeyboardFocus.None` while hidden.
 - Digits come from `event.key` (`Qt.Key_1..Qt.Key_9`), never `event.text`; `Shift` only selects `new` vs `open`. `'+'` comes from `event.text`.
 - Profile `id` grammar and color rules are inherited from Phase 1 (`ID_RE = /^[a-z][a-z0-9-]*$/`, no `-<digits>` suffix); the selector never re-validates — it trusts the daemon-emitted JSON.
@@ -702,12 +702,24 @@ ShellRoot {
   property var profiles: []
   property string loadError: ""
   property int highlight: 0
+  property bool modelReady: false
 
   function applyModel() {
     var res = Logic.parseProfiles(catalogView.text());
     root.profiles = res.profiles;
     root.loadError = res.error ? res.error : "";
+    root.modelReady = root.loadError === "";
     root.highlight = Logic.clampHighlight(root.highlight, root.profiles.length);
+  }
+
+  function beginModelReload() {
+    // FileView.text() can return the previous contents while reload() is pending.
+    // Clear the dispatchable model first so a fast keypress after opening cannot
+    // act on stale profile ids.
+    root.profiles = [];
+    root.loadError = "loading";
+    root.modelReady = false;
+    root.highlight = 0;
   }
 
   IpcHandler {
@@ -730,6 +742,7 @@ ShellRoot {
     onLoadFailed: {
       root.profiles = [];
       root.loadError = "load failed";
+      root.modelReady = false;
       root.highlight = 0;
     }
   }
@@ -780,7 +793,7 @@ ShellRoot {
 
         // Error state.
         Text {
-          visible: root.loadError !== ""
+          visible: root.loadError !== "" && root.loadError !== "loading"
           text: "No profiles — is wsprofiled running?"
           color: "#f38ba8"
           font.pixelSize: 14
@@ -788,9 +801,19 @@ ShellRoot {
           verticalAlignment: Text.AlignVCenter
         }
 
+        // Loading state. Briefly visible when the menu opens and FileView reloads.
+        Text {
+          visible: root.loadError === "loading"
+          text: "Loading profiles..."
+          color: "#9399b2"
+          font.pixelSize: 14
+          height: 40
+          verticalAlignment: Text.AlignVCenter
+        }
+
         // Profile rows.
         Repeater {
-          model: root.loadError === "" ? root.profiles : []
+          model: root.modelReady ? root.profiles : []
           delegate: Rectangle {
             required property var modelData
             required property int index
@@ -937,6 +960,13 @@ elements inside `ShellRoot` (next to `applyModel`):
         if (this.text.length > 0) console.error("wsprofile-menu: wsprofilectl:", this.text);
       }
     }
+    onExited: function(exitCode) {
+      var stderrText = String(ctl.stderr.text || "").trim();
+      if (exitCode !== 0) {
+        console.error("wsprofile-menu: wsprofilectl exited " + exitCode
+          + (stderrText.length > 0 ? ": " + stderrText : " with no stderr"));
+      }
+    }
   }
   Process { id: editorProc }
 
@@ -956,7 +986,9 @@ elements inside `ShellRoot` (next to `applyModel`):
     // "nvim -u NONE") word-split correctly; the file is passed as "$1" so the
     // path itself is never re-split. This shell is intentional, for this path only.
     editorProc.command = ["kitty", "sh", "-c", editor + ' "$1"', "sh", file];
-    editorProc.running = true;
+    // The editor should survive quickshell reloads/menu restarts while the user is
+    // editing profiles.yaml.
+    editorProc.startDetached();
   }
 
   function dispatch(action) {
@@ -999,6 +1031,7 @@ elements inside `ShellRoot` (next to `applyModel`):
     var key = root.normKey(event);
     if (key === null) return;
     event.accepted = true;
+    if (!root.modelReady && key !== "Escape" && key !== "+") return;
     var action = Logic.keyToAction(
       key,
       { shift: (event.modifiers & Qt.ShiftModifier) !== 0 },
@@ -1010,20 +1043,22 @@ elements inside `ShellRoot` (next to `applyModel`):
 - [ ] **Step 2: Re-clamp the highlight whenever the model changes**
 
 Update `applyModel` to clamp (already calls `clampHighlight`, confirm it stays) and
-ensure highlight resets to `0` each time the menu opens. Replace the existing
-`applyModel` function and add an `onShownChanged` handler:
+ensure highlight resets to `0` each time the menu opens. `beginModelReload` was
+added in Task 5; confirm it remains present. Replace the existing `applyModel`
+function and add an `onShownChanged` handler:
 
 ```qml
   function applyModel() {
     var res = Logic.parseProfiles(catalogView.text());
     root.profiles = res.profiles;
     root.loadError = res.error ? res.error : "";
+    root.modelReady = root.loadError === "";
     root.highlight = Logic.clampHighlight(root.highlight, root.profiles.length);
   }
 
   onShownChanged: {
     if (root.shown) {
-      root.highlight = 0;
+      root.beginModelReload();
       // Re-read fresh from disk; onLoaded/onLoadFailed update the model. Avoid
       // parsing text() directly here, which can be stale mid-reload.
       catalogView.reload();
@@ -1088,13 +1123,18 @@ Walk these (each should behave as noted):
    ring color and wrap through `+ new` back to the top; `Up`/`Shift+Tab` reverse.
 5. On a highlighted profile, press `Enter` → switches as the number would.
 6. Press `+` (or `Enter` on `+ new`) → `kitty` opens the editor on `profiles.yaml`;
-   add a third profile, save; reopen the menu → the new row appears (no menu
-   restart), with its swatch.
+   restart `wsprofile-menu` while the editor is open and confirm the editor survives;
+   add a third profile, save; reopen the menu → the new row appears (no menu restart),
+   with its swatch.
 7. Toggle, press `Esc` → hides, focus returns to the underlying window (confirms
    the `OnDemand`→`None` focus release).
 8. Toggle twice quickly → show then hide, no stacking.
 9. `pkill -f wsprofiled`, toggle, press a number → menu hides; `wsprofilectl`
-   error is logged to the `qs` stderr, no crash. (Restart the daemon afterwards.)
+   error is logged to the `qs` stderr even if stderr is empty, no crash. (Restart the
+   daemon afterwards.)
+10. Temporarily move `wsprofiles.json` aside, toggle open, then restore the file and
+    immediately press `2` while the menu shows the loading state. Expected: no stale
+    switch happens until the FileView reload completes and rows are visible.
 
 - [ ] **Step 5: Commit**
 
@@ -1174,9 +1214,10 @@ git commit -m "feat(niri): start wsprofile-menu and bind Mod+P to toggle it"
   absence-aware restore + write-failure path (Task 2–3), `parseProfiles` /
   `keyToAction` / `clampHighlight` (Task 4), FileView `watchChanges`+reload &
   `WlrKeyboardFocus` visibility binding & rendering & error state (Task 5),
-  digit-from-`event.key` adapter, absolute-path spawns, editor launch, highlight
-  re-clamp, all nine manual checks + the corrupt-JSON check (Task 6), niri wiring
-  (Task 7). Every spec section maps to a task.
+  digit-from-`event.key` adapter, absolute-path spawns, detached editor launch,
+  highlight re-clamp, nonzero `wsprofilectl` logging, stale-model dispatch guard,
+  the Task 6 live manual checks, and niri wiring (Task 7). Every spec section maps
+  to a task.
 - **No new switching logic:** Tasks 6 routes only through `wsprofilectl`; the daemon
   and event-stream are unchanged from Phase 1.
 - **Type consistency:** `viewModel` fields `{id,label,icon,ring,border,instances}`
