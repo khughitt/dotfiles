@@ -146,7 +146,7 @@ git commit -m "feat(wsprofiles): catalog -> menu view model"
 - Consumes: `generateKdl(catalog)` from `src/kdl.js`; `viewModel(catalog)` from `src/viewmodel.js`.
 - Produces:
   - `serializeViewModel(catalog) -> string` (pretty JSON + trailing newline).
-  - `applyCatalog({ catalog, kdlPath, jsonPath, loadConfig }) -> Promise<void>` — captures both files' prior contents, writes both, awaits `loadConfig()`; on **any** failure restores both to prior contents (removing a file that did not exist before), best-effort reloads, and rethrows. `loadConfig` is an injected `() => Promise<void>`.
+  - `applyCatalog({ catalog, kdlPath, jsonPath, loadConfig }) -> Promise<void>` — captures both files' prior contents, writes both, awaits `loadConfig()`; on **any** failure restores both to prior contents (removing a file that did not exist before) and rethrows. It best-effort re-reloads **only if `loadConfig()` had already been attempted** — a write failure before the reload leaves niri on the still-current previous config, so no reload is needed. `loadConfig` is an injected `() => Promise<void>`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -190,34 +190,36 @@ test('success path writes both files', async () => {
   } finally { rmSync(t.dir, { recursive: true, force: true }); }
 });
 
-test('loadConfig rejection restores both files to prior contents', async () => {
-  const t = tmp();
-  try {
-    writeFileSync(t.kdl, 'PREV_KDL');
-    writeFileSync(t.json, 'PREV_JSON');
-    await assert.rejects(
-      applyCatalog({ catalog: catalogB, kdlPath: t.kdl, jsonPath: t.json,
-        loadConfig: async () => { throw new Error('niri rejected'); } }),
-      /niri rejected/);
-    assert.equal(readFileSync(t.kdl, 'utf8'), 'PREV_KDL');
-    assert.equal(readFileSync(t.json, 'utf8'), 'PREV_JSON');
-  } finally { rmSync(t.dir, { recursive: true, force: true }); }
-});
-
-test('JSON write failure (before reload) restores both and never reloads', async () => {
+test('loadConfig rejection restores both files and best-effort reverts', async () => {
   const t = tmp();
   try {
     writeFileSync(t.kdl, 'PREV_KDL');
     writeFileSync(t.json, 'PREV_JSON');
     let reloads = 0;
-    // jsonPath points at a directory path component that cannot be written -> write throws.
+    await assert.rejects(
+      applyCatalog({ catalog: catalogB, kdlPath: t.kdl, jsonPath: t.json,
+        loadConfig: async () => { reloads++; throw new Error('niri rejected'); } }),
+      /niri rejected/);
+    assert.equal(reloads, 2); // initial attempt + best-effort revert reload
+    assert.equal(readFileSync(t.kdl, 'utf8'), 'PREV_KDL');
+    assert.equal(readFileSync(t.json, 'utf8'), 'PREV_JSON');
+  } finally { rmSync(t.dir, { recursive: true, force: true }); }
+});
+
+test('write failure before reload restores both and does NOT reload', async () => {
+  const t = tmp();
+  try {
+    writeFileSync(t.kdl, 'PREV_KDL');
+    writeFileSync(t.json, 'PREV_JSON');
+    let reloads = 0;
+    // Parent path component is a file, so writing under it throws ENOTDIR.
     const badJson = join(t.json, 'nope', 'x.json');
     await assert.rejects(
       applyCatalog({ catalog: catalogB, kdlPath: t.kdl, jsonPath: badJson,
         loadConfig: async () => { reloads++; } }));
-    // KDL restored; the original JSON file untouched; loadConfig never succeeded with new config.
-    assert.equal(readFileSync(t.kdl, 'utf8'), 'PREV_KDL');
-    assert.equal(readFileSync(t.json, 'utf8'), 'PREV_JSON');
+    assert.equal(reloads, 0); // reload never attempted -> no revert reload
+    assert.equal(readFileSync(t.kdl, 'utf8'), 'PREV_KDL'); // KDL restored
+    assert.equal(readFileSync(t.json, 'utf8'), 'PREV_JSON'); // original JSON untouched
   } finally { rmSync(t.dir, { recursive: true, force: true }); }
 });
 
@@ -272,15 +274,21 @@ function restore(path, prev) {
 export async function applyCatalog({ catalog, kdlPath, jsonPath, loadConfig }) {
   const prevKdl = readOrNull(kdlPath);
   const prevJson = readOrNull(jsonPath);
+  let reloadAttempted = false;
   try {
     writeFileSync(kdlPath, generateKdl(catalog));
     writeFileSync(jsonPath, serializeViewModel(catalog));
+    reloadAttempted = true;
     await loadConfig();
   } catch (e) {
     restore(kdlPath, prevKdl);
     restore(jsonPath, prevJson);
-    // Best-effort: bring niri back onto the restored (previously accepted) config.
-    try { await loadConfig(); } catch { /* caller logs the primary failure */ }
+    // Only re-reload when niri may already have loaded the rejected config. If a
+    // write threw before the reload, niri still runs the previous config, which
+    // now matches the restored files, so no reload is needed.
+    if (reloadAttempted) {
+      try { await loadConfig(); } catch { /* caller logs the primary failure */ }
+    }
     throw e;
   }
 }
@@ -465,7 +473,11 @@ git commit -m "feat(wsprofiles): daemon emits wsprofiles.json transactionally"
     `{type:'open',id}` · `{type:'new',id}` · `{type:'move',highlight}` ·
     `{type:'editor'}` · `{type:'hide'}` · `null`.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Create the menu directory and write the failing test**
+
+```bash
+mkdir -p ~/d/dotfiles/wsprofiles/menu
+```
 
 Create `~/d/dotfiles/wsprofiles/menu/menu-logic.test.js`:
 
@@ -712,10 +724,18 @@ ShellRoot {
     watchChanges: true
     onFileChanged: this.reload()
     onLoaded: root.applyModel()
-    onLoadFailed: root.applyModel()
+    // On I/O failure (missing file) set the error state directly. Do NOT parse
+    // text() here — it can still hold previously-loaded content during a reload,
+    // which would render stale profiles instead of the error state.
+    onLoadFailed: {
+      root.profiles = [];
+      root.loadError = "load failed";
+      root.highlight = 0;
+    }
   }
 
-  Component.onCompleted: root.applyModel()
+  // The initial load is driven by FileView's preload firing onLoaded/onLoadFailed;
+  // no Component.onCompleted parse is needed (and it would risk a stale read).
 
   PanelWindow {
     id: win
@@ -908,7 +928,16 @@ elements inside `ShellRoot` (next to `applyModel`):
 ```qml
   // --- Actions -------------------------------------------------------------
 
-  Process { id: ctl }
+  // A null stderr parser would close the channel, so wsprofilectl failures would
+  // vanish. Collect stderr and forward it to the qs log for manual check 9.
+  Process {
+    id: ctl
+    stderr: StdioCollector {
+      onStreamFinished: {
+        if (this.text.length > 0) console.error("wsprofile-menu: wsprofilectl:", this.text);
+      }
+    }
+  }
   Process { id: editorProc }
 
   function runCtl(verb, id) {
@@ -921,9 +950,12 @@ elements inside `ShellRoot` (next to `applyModel`):
   function openEditor() {
     var editor = Quickshell.env("EDITOR");
     if (!editor || editor.length === 0) editor = "nano";
+    var file = Quickshell.env("HOME") + "/d/dotfiles/wsprofiles/profiles.yaml";
     editorProc.running = false;
-    editorProc.command = ["kitty", editor,
-      Quickshell.env("HOME") + "/d/dotfiles/wsprofiles/profiles.yaml"];
+    // Launch the editor through sh so EDITOR values that carry flags (e.g.
+    // "nvim -u NONE") word-split correctly; the file is passed as "$1" so the
+    // path itself is never re-split. This shell is intentional, for this path only.
+    editorProc.command = ["kitty", "sh", "-c", editor + ' "$1"', "sh", file];
     editorProc.running = true;
   }
 
@@ -992,7 +1024,9 @@ ensure highlight resets to `0` each time the menu opens. Replace the existing
   onShownChanged: {
     if (root.shown) {
       root.highlight = 0;
-      root.applyModel();
+      // Re-read fresh from disk; onLoaded/onLoadFailed update the model. Avoid
+      // parsing text() directly here, which can be stale mid-reload.
+      catalogView.reload();
       keyCatcher.forceActiveFocus();
     }
   }
@@ -1107,12 +1141,16 @@ the `Super+S` controlCenter line), add:
 - [ ] **Step 3: Reload niri and verify the bind**
 
 ```bash
+# Validate the edited config first and fix any reported error before loading.
+niri validate
+# Only load once validation passes.
 niri msg action load-config-file
-niri validate || true
 ```
 
-Expected: config reloads with no error. (If `wsprofile-menu` was not already
-running from Task 6, start it once: `qs -c wsprofile-menu &`.)
+Expected: `niri validate` exits 0 (no diagnostics), then the reload applies cleanly.
+If validation reports an error, fix `config.kdl` and re-run before loading. (If
+`wsprofile-menu` was not already running from Task 6, start it once:
+`qs -c wsprofile-menu &`.)
 
 - [ ] **Step 4: Manual verification — the real keybind**
 
