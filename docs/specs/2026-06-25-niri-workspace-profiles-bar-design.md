@@ -91,11 +91,16 @@ Symlinked into `~/.config/noctalia/plugins/niri-workspace-profiles` (the same wa
     "minNoctaliaVersion": "4.7.0",
     "author": "Keith Hughitt",
     "license": "MIT",
-    "description": "Recolored niri workspace strip showing per-profile icon, color, and label.",
+    "description": "Horizontal niri workspace strip showing per-profile icon, color, and label.",
     "tags": ["Bar", "Niri"],
     "entryPoints": { "main": "Main.qml", "barWidget": "BarWidget.qml" },
     "dependencies": { "plugins": [] },
-    "metadata": { "defaultSettings": {} }
+    "metadata": {
+      "defaultSettings": {
+        "followFocusedScreen": false,
+        "hideUnoccupied": false
+      }
+    }
   }
   ```
   `Main.qml` is a minimal `QtObject {}` (no panel features in v1), mirroring the
