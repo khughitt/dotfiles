@@ -94,12 +94,16 @@ machine-readable view model:
 - A pure function `viewModel(catalog)` produces the object (mirroring the existing
   `generateKdl(catalog)`), so it is unit-testable with `node:test`.
 - The write happens wherever `generateKdl` output is written today (startup +
-  `reloadCatalog`). The KDL and the JSON form **one artifact transaction**: both
-  are written from the next catalog, and if `loadConfig()` fails, **both** are
-  restored to their previous on-disk contents and the daemon's in-memory catalog is
-  **not** swapped — so the JSON never gets ahead of the KDL niri actually accepted.
-  This mirrors the Phase 1 KDL-only revert; the JSON is captured (`prevJson`) and
-  restored on the same failure branch.
+  `reloadCatalog`). The KDL and the JSON form **one artifact transaction**:
+  - Both previous on-disk contents are captured (`prevKdl`, `prevJson`) **before
+    either file is written.**
+  - **Any** failure after either file changes — the JSON write itself throwing
+    after the KDL write, *or* `loadConfig()` rejecting — restores **both** files to
+    their captured previous contents and leaves the daemon's in-memory catalog
+    **not** swapped. So the JSON never gets ahead of the KDL, and neither artifact
+    gets ahead of what niri actually accepted.
+  - This generalizes the Phase 1 KDL-only revert: the writes + reload are wrapped so
+    the restore branch runs on either a write error or a reload rejection.
   - **Startup failure** (initial `loadConfig()` rejects): if a previous
     `wsprofiles.json` exists it is restored to that content (matching the existing
     `prevKdl` restore), then the daemon exits non-zero as today. If none existed,
@@ -132,12 +136,19 @@ Responsibilities:
     The model is `JSON.parse(catalogView.text())`, recomputed on `reload()`. Without
     `watchChanges: true` + the `onFileChanged` reload, a saved catalog would not
     appear until the menu restarted (manual step 6 would fail).
-  - **Keyboard focus** uses the exact Wayland API, not prose:
-    `WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand`. The `OnDemand` docs
-    warn it can, on some systems, retain focus over another window unexpectedly; if
-    that happens the fallback is `WlrKeyboardFocus.None` with focus handed back
-    explicitly. Manual step 7 verifies focus returns to the underlying window after
-    hide.
+  - **Keyboard focus tracks visibility**, using the exact Wayland API:
+    `WlrLayershell.keyboardFocus` is `WlrKeyboardFocus.OnDemand` while the popup is
+    shown (so it accepts digits/arrows) and `WlrKeyboardFocus.None` while hidden
+    (so it cannot retain focus over another window). Binding it to the visible state
+    is what guarantees focus release on hide:
+    ```qml
+    WlrLayershell.keyboardFocus: root.shown ? WlrKeyboardFocus.OnDemand
+                                            : WlrKeyboardFocus.None
+    ```
+    `None` is **not** a static fallback — a `None` popup accepts no keys at all, so
+    it is only ever used while hidden. The `OnDemand` docs warn it can, on some
+    systems, retain focus unexpectedly; the visibility binding is the mitigation,
+    and manual step 7 verifies focus returns to the underlying window after hide.
 - Render one row per profile: ring-color **swatch**, **number** (catalog position,
   1..N), nerd-font **icon**, **label**. A muted `+ new profile…` row last.
 - Highlighted row (arrow/Tab target) gets a raised background and a left **accent
@@ -160,11 +171,21 @@ state     : { profiles, highlight }       // highlight: 0..N-1, or N for "+ new"
 ```
 
 A thin QML key-event adapter maps Qt's `event.key`/`event.text`/`event.modifiers`
-to this normalized `(key, modifiers)` shape before calling `keyToAction`
-(`Qt.Key_Return`/`Qt.Key_Enter → 'Enter'`, `Qt.Key_Escape → 'Escape'`,
-`Qt.Key_Up/Down`, `Qt.Key_Tab`/`Qt.Key_Backtab → 'Tab'` with `shift`,
-`event.text` `'1'..'9'`/`'+'`). The adapter is the one piece confirmed by manual
-testing; everything below it is unit-tested.
+to this normalized `(key, modifiers)` shape before calling `keyToAction`:
+
+- **Digits come from `event.key`, never `event.text`.** `Qt.Key_1..Qt.Key_9 →
+  '1'..'9'`. This is required because with Shift held, `event.text` is the shifted
+  glyph (`Shift+2 → "@"` on US layouts), so reading digits from text would break the
+  `new`-instance modifier. `modifiers.shift` is passed through and only chooses
+  `new` vs `open`; it never changes which digit was pressed.
+- `Qt.Key_Return`/`Qt.Key_Enter → 'Enter'`, `Qt.Key_Escape → 'Escape'`,
+  `Qt.Key_Up → 'Up'`, `Qt.Key_Down → 'Down'`, `Qt.Key_Tab`/`Qt.Key_Backtab →
+  'Tab'` (with `shift` distinguishing forward/back).
+- `'+'` is read from `event.text` (it is `Shift+Equal`, whose text is reliably
+  `"+"`).
+
+The adapter is the one piece confirmed by manual testing; everything below it is
+unit-tested.
 
 ```
 keyToAction(key, modifiers, state) -> action
@@ -182,8 +203,21 @@ keyToAction(key, modifiers, state) -> action
 - `move` wraps at the ends and includes the `+ new` row as the last stop.
 
 QML calls `keyToAction` on each key event and dispatches the returned action:
-`open`/`new` → `Process` running `wsprofilectl <verb> <id>` then hide; `move` →
-update highlight; `editor` → spawn editor then hide; `hide` → hide.
+`open`/`new` → spawn the control client then hide; `move` → update highlight;
+`editor` → spawn editor then hide; `hide` → hide.
+
+**Spawning uses absolute paths, not bare names.** Quickshell's `Process` takes an
+argv array and runs **no shell**, so neither `$PATH` lookup of `wsprofilectl` nor
+`~` expansion applies (Phase 1 already spawns the daemon as
+`node ~/d/dotfiles/wsprofiles/bin/wsprofiled`). The selector spawns the client the
+same way, with the home directory resolved to an absolute path at runtime:
+
+```
+command: [ "node", Quickshell.env("HOME") + "/d/dotfiles/wsprofiles/bin/wsprofilectl", verb, id ]
+```
+
+(`verb` is `"open"` or `"new"`.) The `+ new` editor spawn resolves `$EDITOR`
+similarly and falls back to a default when unset.
 
 ### niri wiring (`config.kdl`)
 
@@ -243,6 +277,9 @@ on its next show. No guided form in v1.
   - rollback path: previous KDL + previous JSON exist, the next catalog is written
     to both files, `loadConfig()` rejects → **both** files are restored to their
     previous contents and the in-memory catalog is **not** swapped
+  - write-failure path: the KDL write succeeds but the JSON write throws (faked) →
+    both files are restored to their previous contents, `loadConfig()` is not
+    reached, and the in-memory catalog is **not** swapped
   - startup with no previous JSON: `loadConfig()` rejects → the freshly written
     `wsprofiles.json` is removed (no stale file left behind)
   - startup with a previous JSON: `loadConfig()` rejects → the previous JSON
@@ -282,9 +319,11 @@ on its next show. No guided form in v1.
 ## Risks
 
 1. `WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand` is documented to
-   sometimes retain focus over another window on some systems. Manual step 7
-   confirms focus returns after hide; the fallback is `WlrKeyboardFocus.None` with
-   focus handed back explicitly.
+   sometimes retain focus over another window on some systems. The mitigation is
+   binding `keyboardFocus` to visibility (`OnDemand` shown, `None` hidden); manual
+   step 7 confirms focus returns after hide. If `OnDemand` fails to grab keys *while
+   visible* on some system, that is a host-specific limitation with no clean
+   QML-only fix and is out of scope for v1.
 2. A resident `qs -c wsprofile-menu` process started from `spawn-at-startup`
    coexists cleanly with the resident noctalia shell — confirm no IPC name clash
    (distinct `-c` config name isolates it).
