@@ -94,6 +94,7 @@ spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
 spawn-sh-at-startup "node ~/d/dotfiles/wsprofiles/bin/wsprofiled"
+spawn-at-startup "qs" "-c" "wsprofile-menu"
 
 prefer-no-csd
 
@@ -174,6 +175,7 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
     Ctrl+Space repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
     Super+S repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
+    Mod+P repeat=false { spawn "qs" "-c" "wsprofile-menu" "ipc" "call" "menu" "toggle"; }
     Super+Alt+Comma repeat=false { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "settings" "toggle"; }
 
     XF86AudioRaiseVolume allow-when-locked=true { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "volume" "increase"; }
