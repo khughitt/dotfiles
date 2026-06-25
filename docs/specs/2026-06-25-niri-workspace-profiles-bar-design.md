@@ -17,8 +17,11 @@ requires **no changes** to the daemon, niri, or the selector.
 
 - No daemon, niri, or `wsprofile-menu` changes. This phase reads existing state only.
 - No scroll-to-cycle over the strip in v1 (click-to-switch only).
+- No left/right vertical bar layout in v1. This phase targets horizontal noctalia
+  bars; vertical bars should keep the core `Workspace` widget until a later phase
+  adds a Column-oriented version.
 - No *new* multi-monitor features. The strip replicates the core Workspace widget's
-  existing per-screen filtering (so it is not a regression) but adds nothing beyond it.
+  existing per-screen filtering on horizontal bars, but adds nothing beyond it.
 - No ohai avatars yet (later phase). The cell shows the catalog `icon` glyph.
 - No guided settings UI in v1 beyond an optional manifest `metadata.defaultSettings`.
 - No patching of the installed noctalia package (`/etc/xdg/quickshell/noctalia-shell/`,
@@ -63,7 +66,7 @@ CompositorService.workspaces  ───────────►  niri-workspa
                                              │  Repeater → one cell / ws     │
                                              │  click → switchToWorkspace    │
                                              └──────────────────────────────┘
-        replaces noctalia's core "Workspace" bar widget
+        replaces noctalia's core "Workspace" bar widget on horizontal bars
 ```
 
 The plugin is a **view + click launcher** over existing state: it renders a cell
@@ -100,9 +103,11 @@ Symlinked into `~/.config/noctalia/plugins/niri-workspace-profiles` (the same wa
 
 - **`BarWidget.qml`** — the strip. Responsibilities:
   - A `FileView` on `~/.config/niri/wsprofiles.json` with `watchChanges: true` +
-    `onFileChanged: reload()`; on `onLoaded` parse `JSON.parse(text())` into a
-    `profiles` array, on `onLoadFailed` set `profiles = []` (degrade to neutral).
-    Either change triggers a refresh.
+    `onFileChanged: reload()`; on `onLoaded`, call `logic.parseProfiles(text())`
+    inside the view layer and assign the returned `profiles` array. Missing,
+    corrupt, or wrong-shaped JSON sets `profiles = []` and records a load error,
+    then refreshes cells so the strip degrades to neutral instead of crashing or
+    rendering stale profile data. `onLoadFailed` follows the same neutral path.
   - **Reactivity bridge.** `CompositorService.workspaces` is a `ListModel`, not a
     plain array, so a computed `buildCells(...)` would not refresh on its own. A
     `refreshCells()` function snapshots the live model into a plain JS array
@@ -117,7 +122,9 @@ Symlinked into `~/.config/noctalia/plugins/niri-workspace-profiles` (the same wa
     screen?.name`, `focusedOutput` from `CompositorService`, and
     `globalWorkspaces`/`followFocusedScreen`/`hideUnoccupied` from the widget/Settings
     (defaults: `followFocusedScreen=false`, `hideUnoccupied=false`,
-    `globalWorkspaces=CompositorService.globalWorkspaces`).
+    `globalWorkspaces=CompositorService.globalWorkspaces`). `filterWorkspaces`
+    lowercases `screenName`, `focusedOutput`, and each `ws.output` internally before
+    comparing, so mixed-case output names such as `DP-1` do not disappear.
   - Each cell renders per the **Rendering** section; click →
     `CompositorService.switchToWorkspace(ws)` (the snapshot keeps each cell's `idx`
     so the matching live workspace can be passed); hover → tooltip with the label.
@@ -128,6 +135,11 @@ Symlinked into `~/.config/noctalia/plugins/niri-workspace-profiles` (the same wa
 - **`logic.js`** — pure classic-QML-JS library (`.pragma library` + top-level
   `function` declarations, **no** `export`), node-tested via the `node:vm` loader
   pattern established in Phase 2's `menu-logic.js`. Holds all non-trivial logic:
+  - `parseProfiles(text) -> {profiles, error}` — parses the JSON view model and
+    validates that it is an array of objects with string `id`, `label`, and valid
+    hex `ring` fields. Empty, malformed, non-array, wrong-shaped, or invalid-ring
+    input returns `{profiles: [], error: <string>}`. Valid input returns
+    `{profiles, error: null}`.
   - `resolveProfile(name, profiles) -> profile | null`
     - exact `id` match first;
     - else strip a single trailing `-<digits>` from `name` and match (so instance
@@ -138,31 +150,37 @@ Symlinked into `~/.config/noctalia/plugins/niri-workspace-profiles` (the same wa
     Workspace filtering so replacing that widget is not a multi-monitor regression.
     `opts = { screenName, focusedOutput, globalWorkspaces, followFocusedScreen,
     hideUnoccupied }`. For each ws keep it when
-    `globalWorkspaces || (followFocusedScreen && ws.output.toLowerCase() ===
-    focusedOutput) || (!followFocusedScreen && ws.output.toLowerCase() ===
-    screenName)`, then drop it when `hideUnoccupied && !ws.isOccupied &&
-    !ws.isFocused`. Order preserved. (Mirrors Workspace.qml:343–347.)
+    `globalWorkspaces || (followFocusedScreen && output === focusedOutput) ||
+    (!followFocusedScreen && output === screenName)`, where `output`, `screenName`,
+    and `focusedOutput` are all normalized to lowercase strings inside the function.
+    Then drop it when `hideUnoccupied && !ws.isOccupied && !ws.isFocused`. Order
+    preserved. (Mirrors Workspace.qml:343–347, with explicit normalization.)
   - `buildCells(workspaces, profiles) -> Array<cell>` where each `cell` is
     `{ id, idx, name, output, hasProfile, ring|null, glyph, label, isFocused, isOccupied, isUrgent }`,
     in `workspaces` order (caller passes the already-`filterWorkspaces`'d list).
-    `ring`/`label` come from the resolved profile; when unresolved,
-    `hasProfile=false`, `ring=null`, `label=name`. **`glyph`** is the profile `icon`
-    when non-empty, else the first character of `label` (so empty-icon catalogs —
-    the current state — still render a visible cell). Pure: never references
-    `Color`/`Style`; the QML maps `ring===null` to a neutral theme token.
+    `ring`/`label` come from the resolved profile. **Profiled `glyph`** is the
+    profile `icon` when non-empty, else the first character of `label` (so empty-icon
+    catalogs — the current state — still render a visible cell). **Unprofiled
+    cells** have `hasProfile=false`, `ring=null`, `label=name`, and `glyph =
+    String(idx)` when `idx` is present, else `'.'`; QML renders that glyph with
+    neutral theme tokens. Pure: never references `Color`/`Style`; the QML maps
+    `ring===null` to a neutral theme token.
   - `pickForeground(ring) -> '#000000' | '#ffffff'` — deterministic readable
     foreground for the focused pill: parse the `#rgb`/`#rrggbb` hex, compute relative
-    luminance, return black for light rings and white for dark rings. Invalid or
-    missing `ring` → `'#ffffff'`. (Self-contained and node-testable, rather than
-    coupling to noctalia's internal `ColorsConvert.generateOnColor`.)
+    luminance, compare black and white contrast ratios, and return the higher
+    contrast foreground. Invalid or missing `ring` → `'#ffffff'`. (Self-contained
+    and node-testable, rather than coupling to noctalia's internal
+    `ColorsConvert.generateOnColor`.)
 
 ### Bar swap (one-time, manual)
 
-`plugin:niri-workspace-profiles` replaces noctalia's core `Workspace` widget. Bar
-layout lives in `~/.config/noctalia/settings.json` (`bar.widgets.{left,center,right}`),
-which is **not** tracked in the dotfiles repo, so this is a documented one-time
-step, not a scripted change: enable the plugin in noctalia → place its widget where
-`Workspace` sat (typically `center`) → remove the core `Workspace` entry.
+`plugin:niri-workspace-profiles` replaces noctalia's core `Workspace` widget on
+horizontal bars. Bar layout lives in `~/.config/noctalia/settings.json`
+(`bar.widgets.{left,center,right}`), which is **not** tracked in the dotfiles repo,
+so this is a documented one-time step, not a scripted change: enable the plugin in
+noctalia → place its widget where `Workspace` sat on a horizontal bar (typically
+`center`) → remove the core `Workspace` entry for that horizontal bar. Keep the
+core `Workspace` widget on left/right vertical bars in v1.
 
 ## Rendering
 
@@ -176,10 +194,13 @@ capsule height (`Style.getCapsuleHeightForScreen(screenName)`):
 - **Profiled, focused:** a **filled pill in the ring color** containing the **glyph +
   `label`**, with foreground from `logic.pickForeground(ring)` (black on light rings,
   white on dark) so the text stays legible on any catalog color. This is the only
-  cell that shows a label.
+  cell that shows a label. Hover must preserve the focused pill's ring background
+  and readable foreground; hover styling only changes non-focused cells. The focused
+  label is capped and elided so long profile labels cannot consume the whole bar.
 - **Unprofiled** (no `resolveProfile` match — e.g. `scratchpad`): a **neutral** cell
-  using `Color` tokens — the `idx` number (or a dot) in `Color.mOnSurface`; focused
-  unprofiled = a neutral filled pill with the number. Kept visible for navigation.
+  using `Color` tokens — `cell.glyph`, which is the `idx` number or `.` when `idx`
+  is absent, in `Color.mOnSurface`; focused unprofiled = a neutral filled pill with
+  that same glyph. Kept visible for navigation.
 - **Urgent** (`isUrgent`): subtle highlight using `Color.mError`.
 - Color treatment is **focused-pill + colored-icons**: only the focused cell is a
   filled ring-color pill; other profiled cells carry color via their icon only.
@@ -209,6 +230,11 @@ capsule height (`Style.getCapsuleHeightForScreen(screenName)`):
 
 **Unit (node:test via `node:vm` loader, mirroring `menu-logic.test.js`):**
 
+- `parseProfiles(text)`:
+  - valid array of objects with `id`/`label`/`ring` returns profiles and `error=null`
+  - empty string, malformed JSON, non-array JSON, and wrong-shaped entries return
+    `profiles=[]` and a non-empty `error`
+  - invalid `ring` color strings return `profiles=[]` and a non-empty `error`
 - `resolveProfile(name, profiles)`:
   - exact id match returns that profile (`'ember'` → ember)
   - instance slot strips the suffix (`'tide-2'` → tide, `'tide-3'` → tide)
@@ -219,12 +245,15 @@ capsule height (`Style.getCapsuleHeightForScreen(screenName)`):
   - `globalWorkspaces=true` keeps workspaces from every output
   - `followFocusedScreen=false` keeps only `ws.output === screenName`
   - `followFocusedScreen=true` keeps only `ws.output === focusedOutput`
+  - mixed-case values (`screenName='DP-1'`, `ws.output='dp-1'`) still match because
+    normalization happens inside `filterWorkspaces`
   - `hideUnoccupied=true` drops empty workspaces but keeps the focused one even if
     empty; `hideUnoccupied=false` keeps all
   - order is preserved
 - `buildCells(workspaces, profiles)`:
   - maps each workspace in order to `{hasProfile, ring, glyph, label, isFocused, …}`
-  - unprofiled workspace → `hasProfile=false`, `ring=null`, `label=name`
+  - unprofiled workspace → `hasProfile=false`, `ring=null`, `label=name`,
+    `glyph=String(idx)` (or `'.'` without an `idx`)
   - profiled workspace → `ring`/`label` from the profile
   - `glyph` = profile `icon` when non-empty; first character of `label` when the
     icon is `''` (verifies the empty-catalog fallback)
@@ -233,6 +262,8 @@ capsule height (`Style.getCapsuleHeightForScreen(screenName)`):
 - `pickForeground(ring)`:
   - light ring (`'#ffffff'`, `'#ff7a45'`) → `'#000000'`
   - dark ring (`'#000000'`, `'#1e1e2e'`) → `'#ffffff'`
+  - middle-gray rings choose the higher-contrast foreground (`'#777777'` and
+    `'#808080'` return `'#000000'`)
   - invalid/missing (`''`, `'nothex'`, `undefined`) → `'#ffffff'`
 
 The QML reactivity bridge (`refreshCells()` + `Connections` + `Qt.callLater`) is
@@ -241,8 +272,9 @@ exercised by the manual checks, not unit tests, since it depends on noctalia's l
 
 **Manual verification (running niri + noctalia v4 bar):**
 
-1. Symlink + enable the plugin; swap its widget in for the core `Workspace` widget.
-   The strip renders one cell per workspace.
+1. Symlink + enable the plugin on a horizontal bar; swap its widget in for the core
+   `Workspace` widget on that horizontal bar only. The strip renders one cell per
+   workspace. Leave vertical left/right bars on the core `Workspace` widget in v1.
 2. With the current empty-icon catalog, `ember` shows the glyph `E` in `#ff7a45`
    and `tide`/`tide-2` show `T` in `#3aa6ff` (the first-label-character fallback);
    setting a real `icon` in the catalog shows that glyph instead.
@@ -258,6 +290,9 @@ exercised by the manual checks, not unit tests, since it depends on noctalia's l
    `wsprofiles.json` → the strip updates live without a noctalia restart.
 8. Rename/remove `wsprofiles.json` → strip degrades to neutral numbered cells, no
    crash; restoring the file restores colors.
+9. Temporarily replace `wsprofiles.json` with malformed JSON → strip degrades to
+   neutral numbered cells, logs the load error, and does not crash; restoring the
+   valid file restores colors.
 
 ## Risks
 
