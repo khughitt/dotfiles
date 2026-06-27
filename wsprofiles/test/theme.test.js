@@ -24,6 +24,16 @@ test('colorscheme + light mode, no wallpaper', () => {
   ]);
 });
 
+test('always emits wallpaper even when previous theme has the same path', () => {
+  const cmds = themeCommands(
+    { theme: { colorscheme: 'Tokyo Night', wallpaper: '/w/ember.jpg', mode: 'dark' } },
+    { colorscheme: 'Tokyo Night', wallpaper: '/w/ember.jpg', mode: 'dark' },
+  );
+  assert.deepEqual(cmds, [
+    ['wallpaper', 'set', '/w/ember.jpg', 'all'],
+  ]);
+});
+
 test('omits commands for absent fields (ring-only profile)', () => {
   assert.deepEqual(themeCommands({ theme: { colorscheme: null, wallpaper: null, mode: null } }), []);
 });

@@ -7,7 +7,7 @@ profiles:
     icon: ""
     theme:
       colorscheme: "Tokyo Night"
-      wallpaper: ~/Pictures/Walls/ember.jpg
+      wallpaper: ~/d/linux/backgrounds/3440/PXL_20210602_024124219.jpg
       mode: dark
   - id: tide
     label: "Tide - infra"
@@ -16,4 +16,5 @@ profiles:
     icon: ""
     theme:
       colorscheme: "Catppuccin"
+      wallpaper: ~/d/linux/backgrounds/3440/PXL_20210603_114137918.jpg
       mode: dark

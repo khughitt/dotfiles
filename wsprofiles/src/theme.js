@@ -7,13 +7,24 @@ export function expandHome(p) {
   return p;
 }
 
-export function themeCommands(profile) {
+export function themeState(profile) {
   const t = profile.theme;
+  if (t.mode && !['dark', 'light'].includes(t.mode))
+    throw new Error(`theme.mode must be dark|light, got "${t.mode}"`);
+  return {
+    wallpaper: t.wallpaper ? expandHome(t.wallpaper) : null,
+    colorscheme: t.colorscheme ?? null,
+    mode: t.mode ?? null,
+  };
+}
+
+export function themeCommands(profile, previous = null) {
+  const t = themeState(profile);
   const cmds = [];
-  if (t.wallpaper) cmds.push(['wallpaper', 'set', expandHome(t.wallpaper), 'all']);
-  if (t.colorscheme) cmds.push(['colorScheme', 'set', t.colorscheme]);
-  if (t.mode === 'dark') cmds.push(['darkMode', 'setDark']);
-  else if (t.mode === 'light') cmds.push(['darkMode', 'setLight']);
-  else if (t.mode) throw new Error(`theme.mode must be dark|light, got "${t.mode}"`);
+  if (t.wallpaper) cmds.push(['wallpaper', 'set', t.wallpaper, 'all']);
+  if (t.colorscheme && t.colorscheme !== previous?.colorscheme)
+    cmds.push(['colorScheme', 'set', t.colorscheme]);
+  if (t.mode === 'dark' && t.mode !== previous?.mode) cmds.push(['darkMode', 'setDark']);
+  else if (t.mode === 'light' && t.mode !== previous?.mode) cmds.push(['darkMode', 'setLight']);
   return cmds;
 }

@@ -1,6 +1,6 @@
 import { buildSlotMap } from './slots.js';
 import { ID_RE } from './catalog.js';
-import { themeCommands } from './theme.js';
+import { themeCommands, themeState } from './theme.js';
 
 export const SOCKET_PATH = `${process.env.XDG_RUNTIME_DIR ?? '/tmp'}/wsprofiled.sock`;
 export const CONTROL_MAX_REQUEST_BYTES = 1024;
@@ -62,6 +62,7 @@ export class Daemon {
     this.updateCatalog(catalog);
     this._focusSeq = 0;
     this._applyChain = Promise.resolve();
+    this._lastAppliedTheme = null;
   }
 
   updateCatalog(catalog) {
@@ -79,7 +80,10 @@ export class Daemon {
     this._applyChain = this._applyChain
       .then(async () => {
         if (seq !== this._focusSeq) return;
-        await this.noctalia.runCommands(themeCommands(profile));
+        const cmds = themeCommands(profile, this._lastAppliedTheme);
+        if (cmds.length === 0) return;
+        await this.noctalia.runCommands(cmds);
+        this._lastAppliedTheme = themeState(profile);
       })
       .catch((e) => console.error('wsprofiled: theme apply failed:', e.message));
     return this._applyChain;

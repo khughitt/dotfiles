@@ -34,6 +34,49 @@ test('onFocus applies the resolved profile theme; unknown names are ignored', as
   assert.equal(themed.length, 1);
 });
 
+test('onFocus skips theme IPC when the target theme is already applied', async () => {
+  const { d, themed } = makeDaemon();
+  await d.onFocus('ember');
+  await d.onFocus('ember');
+  assert.deepEqual(themed, [[['colorScheme', 'set', 'X'], ['darkMode', 'setDark']]]);
+});
+
+test('onFocus reapplies wallpaper even when the target theme is already cached', async () => {
+  const focused = [];
+  const themed = [];
+  const niri = { focusWorkspace: (n) => { focused.push(n); return Promise.resolve(); } };
+  const noctalia = { runCommands: (c) => { themed.push(c); return Promise.resolve(); } };
+  const catalog = { profiles: [
+    { id: 'ember', instances: 1, ring: '#f00',
+      theme: { colorscheme: 'X', wallpaper: '/w/ember.jpg', mode: 'dark' } },
+  ] };
+  const occupancy = new OccupancyTracker();
+  const d = new Daemon({ catalog, niri, noctalia, occupancy });
+
+  await d.onFocus('ember');
+  await d.onFocus('ember');
+
+  assert.deepEqual(themed, [
+    [['wallpaper', 'set', '/w/ember.jpg', 'all'], ['colorScheme', 'set', 'X'], ['darkMode', 'setDark']],
+    [['wallpaper', 'set', '/w/ember.jpg', 'all']],
+  ]);
+});
+
+test('onFocus still applies a changed profile theme after catalog reload', async () => {
+  const { d, themed } = makeDaemon();
+  await d.onFocus('ember');
+  d.updateCatalog({ profiles: [
+    { id: 'ember', instances: 1, ring: '#f00',
+      theme: { colorscheme: 'Z', wallpaper: null, mode: 'dark' } },
+  ] });
+  await d.onFocus('ember');
+
+  assert.deepEqual(themed, [
+    [['colorScheme', 'set', 'X'], ['darkMode', 'setDark']],
+    [['colorScheme', 'set', 'Z']],
+  ]);
+});
+
 test('a newer focus supersedes an older queued one (no stale apply)', async () => {
   const { d, themed } = makeDaemon();
   const p1 = d.onFocus('ember');

@@ -86,9 +86,6 @@ hotkey-overlay {
 
 screenshot-path "~/Pictures/Screenshots/%Y-%m-%d %H-%M-%S.png"
 
-workspace "scratchpad"
-
-spawn-at-startup "~/.config/niri/scripts/place-scratchpad-workspace"
 spawn-at-startup "qs" "-c" "noctalia-shell"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
@@ -153,14 +150,6 @@ window-rule {
 }
 
 window-rule {
-    match app-id="^scratchpad-terminal$"
-    open-floating true
-    default-column-width { proportion 0.8; }
-    default-window-height { proportion 0.45; }
-    default-floating-position x=0 y=0 relative-to="top"
-}
-
-window-rule {
     match app-id=r#"firefox$"# title="^Picture-in-Picture$"
     open-floating true
 }
@@ -192,7 +181,6 @@ binds {
     XF86AudioStop allow-when-locked=true { spawn-sh "playerctl stop"; }
 
     Super+Return hotkey-overlay-title="Open Terminal" { spawn "kitty"; }
-    Alt+Return hotkey-overlay-title="Toggle Scratchpad Terminal" repeat=false { spawn "~/.config/niri/scripts/scratchpad-toggle" "terminal"; }
     Super+E hotkey-overlay-title="Open File Manager" { spawn "kitty" "yazi"; }
     Super+Alt+L hotkey-overlay-title="Lock Screen" { spawn "swaylock"; }
     Super+Q repeat=false { close-window; }
