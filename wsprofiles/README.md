@@ -54,7 +54,6 @@ profiles:
     border: "#ff7a45"
     icon: ""
     theme:
-      colorscheme: "Tokyo Night"
       wallpaper: ~/d/linux/backgrounds/3440/PXL_20210602_024124219.jpg
       mode: dark
 ```
@@ -69,7 +68,6 @@ Fields:
 | `ring` | yes | Focus-ring color for generated niri workspaces. Hex color such as `#ff7a45`. |
 | `border` | no | Optional active border color. If omitted, no explicit border block is generated. |
 | `icon` | no | Optional glyph shown in Noctalia UI. Empty means QML falls back to the first label character. |
-| `theme.colorscheme` | no | Noctalia predefined color scheme name. |
 | `theme.wallpaper` | no | Wallpaper path passed to Noctalia for all screens. `~/` is expanded by the daemon. |
 | `theme.mode` | no | `dark` or `light`; applied through Noctalia dark-mode IPC. |
 
@@ -97,27 +95,17 @@ On workspace focus, the daemon resolves the workspace name back to its profile a
 
 ```sh
 qs -c noctalia-shell ipc call wallpaper set <path> all
-qs -c noctalia-shell ipc call colorScheme set <name>
 qs -c noctalia-shell ipc call darkMode setDark
 qs -c noctalia-shell ipc call darkMode setLight
 ```
 
-The daemon remembers the last theme it successfully applied and skips unchanged color-scheme and dark-mode fields. Wallpaper commands are still sent on focus when `theme.wallpaper` is set, because Noctalia wallpaper automation and manual wallpaper changes can alter the current wallpaper outside `wsprofiled`.
+The daemon remembers the last theme it successfully applied and skips unchanged dark-mode fields. Wallpaper commands are still sent on focus when `theme.wallpaper` is set, because Noctalia wallpaper automation and manual wallpaper changes can alter the current wallpaper outside `wsprofiled`.
 
 ## Color Schemes
 
-`theme.colorscheme` is passed directly to Noctalia's `colorScheme set` IPC function. Use the exact display name Noctalia expects.
+Workspace profiles intentionally do not set Noctalia color schemes. Noctalia shows a toast each time `colorScheme set` applies a scheme, so the local catalog uses profile rings and wallpapers for workspace identity instead.
 
-Confirmed scheme names in this setup:
-
-| Name | Used by |
-| --- | --- |
-| `Tokyo Night` | `ember` |
-| `Catppuccin` | `tide` |
-
-No custom scheme files are currently present under `~/.config/noctalia/colorschemes/`. To discover more available built-in names, choose a scheme in Noctalia's settings UI and read the value written to `~/.config/noctalia/settings.json` at `colorSchemes.predefinedScheme`, then copy that exact string into `profiles.yaml`.
-
-The active resolved palette is written to `~/.config/noctalia/colors.json`. That file contains color tokens such as `mPrimary` and `mSurface`; it is not the list of selectable scheme names.
+The parser still accepts `theme.colorscheme` for experiments, but adding it back will call Noctalia's `colorScheme set` IPC and can reintroduce the `Color Scheme <name>` popup.
 
 ## Integrations
 
