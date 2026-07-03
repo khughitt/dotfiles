@@ -1,0 +1,20 @@
+// general
+shift+super+slash    // show key bindings
+super+s              // settings
+super+e              // yazi
+
+// window selection
+super + home   // focus first column
+super + end    // focus last column
+
+// workspace selection
+super + u     // focus workspace down
+super + i     // focus workspace up
+shift + super + u   // move workspace down
+shift + super + i   // move workspace up
+
+// stack / unstack
+super + ,
+super + .
+
+// vi:syntax=kdl
