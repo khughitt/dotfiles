@@ -204,6 +204,57 @@ test_dotfiles_health_ignores_brave_runtime_symlinks() {
   trap - EXIT
 }
 
+test_dotfiles_health_ignores_unmanaged_config_symlinks() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "${tmp}/home" "${tmp}/config/unmanaged-app" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+  ln -s "${tmp}/missing-runtime-link" "${tmp}/config/unmanaged-app/runtime-link"
+
+  output=$(
+    HOME="${tmp}/home" \
+      XDG_CONFIG_HOME="${tmp}/config" \
+      XDG_DATA_HOME="${tmp}/data" \
+      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
+  )
+
+  [[ "$output" != *"unmanaged-app"* ]] || fail "health should ignore unmanaged config symlinks"
+  [[ "$output" != *"[WARN] broken symlinks under"* ]] || fail "health should not scan all config symlinks"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
+test_dotfiles_health_fails_broken_managed_config_link() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+  rm "${tmp}/config/kitty"
+  ln -s "${tmp}/missing-kitty" "${tmp}/config/kitty"
+
+  set +e
+  output=$(
+    HOME="${tmp}/home" \
+      XDG_CONFIG_HOME="${tmp}/config" \
+      XDG_DATA_HOME="${tmp}/data" \
+      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
+  )
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "health should fail for broken managed config links"
+  [[ "$output" == *"wrong link target"* || "$output" == *"broken link"* ]] || \
+    fail "expected broken managed config link failure"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
 test_dotfiles_health_checks_enabled_user_timer() {
   local tmp mockbin systemctl_log
   tmp=$(make_tmpdir)
@@ -258,6 +309,8 @@ test_setup_only_rejects_unknown_phase
 test_dotfiles_health_passes_after_link_only_setup
 test_dotfiles_health_fails_stale_removed_config_links
 test_dotfiles_health_ignores_brave_runtime_symlinks
+test_dotfiles_health_ignores_unmanaged_config_symlinks
+test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_checks_enabled_user_timer
 
 print -- "setup and health tests passed"

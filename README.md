@@ -36,13 +36,39 @@ Tools
 Installation
 ------------
 
-To install, simply clone this repo and run `setup.sh`:
+To install, clone this repo and run `setup.sh`:
 
     git clone https://github.com/khughitt/dotfiles
     cd dotfiles && ./setup.sh
 
 Symbolic links will be created in `$HOME` / `$XDG_CONFIG_DIR` to all of the major
 configuration files.
+
+For a safe preview of the headless link setup:
+
+    just setup-dry-run
+
+For a link-only setup that skips package installation and external clones:
+
+    ./setup.sh --link-only --headless
+
+`setup.sh` can also run selected phases. This is useful when refreshing a small
+piece of the setup after a change:
+
+    ./setup.sh --dry-run --link-only --headless --only shell,systemd
+    just setup-only shell,systemd
+
+Valid phases are:
+
+    external-clones shell gtk graphical-config common-config systemd kitty home app-config mime tmux packages
+
+To install the systemd user timer that keeps high-flux Dropbox folders ignored:
+
+    ./setup.sh --link-only --headless --only systemd --enable-user-timers
+
+The timer runs `dropbox_ignore_flux` periodically. It sets Dropbox's
+`com.dropbox.ignored` attribute on common high-churn directories such as
+`node_modules`, `.venv`, `.worktrees`, `.snakemake`, and `__pycache__`.
 
 Configuration files are included for both Bash and Z shell. If you plan to use
 Z shell, you will also want to install [zinit](https://github.com/zdharma/zinit).
@@ -54,6 +80,25 @@ Additional Z shell plugins I'm currently using:
  * [zsh-completions](https://github.com/zsh-users/zsh-completions)
 
 ..And a bunch others. 
+
+Commands
+--------
+
+Common maintenance commands are wrapped in `just`:
+
+```
+just check          # run shell syntax, shellcheck, and modeline checks
+just test           # run focused zsh tests
+just health         # check links and local setup without querying systemd state
+just health-systemd # include systemd user timer state
+just setup-dry-run  # preview headless link-only setup
+just setup-only ... # preview selected setup phases, e.g. shell,systemd
+just verify         # run check, test, and health
+```
+
+`bin/dotfiles-health` verifies required tools, important managed symlinks,
+shell sourceability, Dropbox ignore timer links, and stale config links that
+were intentionally removed from setup management.
 
 Aliases / Functions
 -------------------

@@ -70,6 +70,11 @@ check_link() {
         return
     fi
 
+    if [[ ! -e "$dest" ]]; then
+        fail "broken link: $dest -> $(readlink "$dest"), expected $expected"
+        return
+    fi
+
     local actual
     actual="$(readlink "$dest")"
     if [[ "$actual" == "$expected" ]]; then
@@ -79,6 +84,11 @@ check_link() {
     else
         fail "wrong link target: $dest -> $actual, expected $expected"
     fi
+}
+
+check_config_link() {
+    local name="$1"
+    check_link "${XDG_CONFIG_HOME}/${name}" "${DOTS_HOME}/${name}"
 }
 
 check_absent_stale_config_link() {
@@ -91,38 +101,6 @@ check_absent_stale_config_link() {
         warn "config path exists but is no longer managed: $dest"
     else
         pass "stale managed config absent: $dest"
-    fi
-}
-
-is_ignored_broken_symlink() {
-    local path="$1"
-
-    case "$path" in
-        "${XDG_CONFIG_HOME}/BraveSoftware/Brave-Browser/Singleton"*)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
-check_no_broken_symlinks() {
-    local root="$1"
-    [[ -d "$root" ]] || return
-
-    local broken=()
-    local path
-    while IFS= read -r path; do
-        is_ignored_broken_symlink "$path" && continue
-        broken+=("$path")
-    done < <(find "$root" -xtype l -print 2>/dev/null || true)
-
-    if [[ "${#broken[@]}" -eq 0 ]]; then
-        pass "no broken symlinks under $root"
-    else
-        warn "broken symlinks under $root"
-        printf '%s\n' "${broken[@]}" >&2
     fi
 }
 
@@ -147,6 +125,16 @@ check_link "${HOME}/.zshenv" "${DOTS_HOME}/zshenv"
 check_link "${HOME}/.shell" "${DOTS_HOME}/shell"
 check_link "${HOME}/.gitconfig" "${DOTS_HOME}/git/config"
 check_link "${HOME}/.gitignore_global" "${DOTS_HOME}/git/ignore"
+
+managed_config_links=(git glow kitty nvim lsd termcolors yazi)
+if [[ "$(uname)" != "Darwin" ]]; then
+    managed_config_links=(fcitx mimeapps.list "${managed_config_links[@]}")
+fi
+
+for config_name in "${managed_config_links[@]}"; do
+    check_config_link "$config_name"
+done
+unset config_name managed_config_links
 
 check_absent_stale_config_link "snakemake"
 check_absent_stale_config_link "tealdeer"
@@ -183,8 +171,6 @@ if [[ "$(uname)" != "Darwin" ]]; then
         fi
     fi
 fi
-
-check_no_broken_symlinks "$XDG_CONFIG_HOME"
 
 if [[ "$failures" -gt 0 ]]; then
     echo "Health check failed: $failures failure(s), $warnings warning(s)" >&2
