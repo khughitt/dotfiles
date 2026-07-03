@@ -3,7 +3,9 @@
 .stignore
 .stversions
 _archive
-bin
+bin/*
+!bin/
+!bin/dotfiles-health
 bookmarks
 dojo/
 mime/x-wine-extension-*

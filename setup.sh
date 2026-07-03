@@ -3,12 +3,19 @@
 # dotfiles setup script
 # KH
 #
+set -euo pipefail
+
 DOTS_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # Parse command line arguments
 HEADLESS=false
 UBUNTU=false
 MACOS=false
+DRY_RUN=false
+LINK_ONLY=false
+SKIP_PACKAGES=false
+SKIP_EXTERNAL_CLONES=false
+ENABLE_USER_TIMERS=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -24,12 +31,41 @@ while [[ $# -gt 0 ]]; do
             MACOS=true
             shift
             ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        --link-only)
+            LINK_ONLY=true
+            SKIP_PACKAGES=true
+            SKIP_EXTERNAL_CLONES=true
+            shift
+            ;;
+        --no-packages)
+            SKIP_PACKAGES=true
+            shift
+            ;;
+        --no-external-clones)
+            SKIP_EXTERNAL_CLONES=true
+            shift
+            ;;
+        --enable-user-timers)
+            ENABLE_USER_TIMERS=true
+            shift
+            ;;
         --help)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
             echo "  --headless        Install only non-graphical components"
             echo "  -u, --ubuntu      Configure for Ubuntu (default: Arch Linux)"
             echo "  -m, --macos       Configure for macOS with Homebrew"
+            echo "  --dry-run         Print planned filesystem and command actions without running them"
+            echo "  --link-only       Link dotfiles only; skip package installation and external clones"
+            echo "  --no-packages     Skip package installation"
+            echo "  --no-external-clones"
+            echo "                    Skip cloning external tools such as zinit and tmux TPM"
+            echo "  --enable-user-timers"
+            echo "                    Enable linked systemd user timers on Linux"
             echo "  --help            Show this help message"
             exit 0
             ;;
@@ -50,6 +86,11 @@ echo "Installing dotfiles relative to: $DOTS_HOME..."
 echo "Headless mode: $HEADLESS"
 echo "Ubuntu mode: $UBUNTU"
 echo "macOS mode: $MACOS"
+echo "Dry run: $DRY_RUN"
+echo "Link only: $LINK_ONLY"
+echo "Skip packages: $SKIP_PACKAGES"
+echo "Skip external clones: $SKIP_EXTERNAL_CLONES"
+echo "Enable user timers: $ENABLE_USER_TIMERS"
 
 # Define package lists based on distribution
 if [[ "$MACOS" == "true" ]]; then
@@ -76,7 +117,7 @@ fi
 
 # Define configuration components
 GRAPHICAL_CONFIGS=("feh" "hypr" "niri" "zathura")
-COMMON_CONFIGS=("fcitx" "git" "glow" "kitty" "mimeapps.list" "nvim" "lsd" "snakemake" "termcolors" "yazi")
+COMMON_CONFIGS=("fcitx" "git" "glow" "kitty" "mimeapps.list" "nvim" "lsd" "termcolors" "yazi")
 
 if [[ "$MACOS" == "true" ]]; then
     # Remove Linux-only configs
@@ -91,19 +132,45 @@ fi
 COMMON_DOTFILES=("condarc" "ctags" "plotly" "Rprofile" "Renviron" "tmux.conf" "visidatarc")
 
 # Check for configuration directory
-if [ -z $XDG_CONFIG_HOME ]; then
+if [ -z "${XDG_CONFIG_HOME:-}" ]; then
     XDG_CONFIG_HOME=$HOME/.config
 fi
-mkdir -p $XDG_CONFIG_HOME
 
-# Create completions cache dir
-mkdir -p $HOME/.cache/zinit/completions
+function describe_cmd() {
+    printf '%q ' "$@"
+    echo ""
+}
 
-# Install zinit outside shell startup.
-ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-if [[ ! -d "$ZINIT_HOME/.git" ]]; then
-    mkdir -p "$(dirname "$ZINIT_HOME")"
-    git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+function run() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo "[DRY-RUN] $(describe_cmd "$@")"
+    else
+        "$@"
+    fi
+}
+
+function ensure_dir() {
+    local dir="$1"
+    if [[ -d "$dir" ]]; then
+        return
+    fi
+    run mkdir -p "$dir"
+}
+
+ensure_dir "$XDG_CONFIG_HOME"
+
+if [[ "$SKIP_EXTERNAL_CLONES" != "true" ]]; then
+    # Create completions cache dir
+    ensure_dir "$HOME/.cache/zinit/completions"
+
+    # Install zinit outside shell startup.
+    ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+    if [[ ! -d "$ZINIT_HOME/.git" ]]; then
+        ensure_dir "$(dirname "$ZINIT_HOME")"
+        run git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+    fi
+else
+    echo "Skipping external clone setup..."
 fi
 
 # Checks for file or directory and creates a sym link if it doesn't already exist
@@ -111,18 +178,43 @@ function ln_s() {
     # Existing symlinks are replaced; a real file/dir is moved aside to .bak so
     # we never nest a link inside it (e.g. an app-generated ~/.config/kitty) or
     # clobber real data.
-    if [[ -L "$2" ]]; then
-        rm "$2"
-    elif [[ -e "$2" ]]; then
-        echo "[BACKUP] \"$2\" -> \"$2.bak\""
-        mv "$2" "$2.bak"
+    local src="$1"
+    local dest="$2"
+
+    if [[ ! -e "$src" ]]; then
+        echo "Link source does not exist: $src"
+        exit 1
     fi
-    echo "[CREATING] \"$2\""
-    ln -sf $1 $2
+
+    if [[ -L "$dest" && "$(readlink "$dest")" == "$src" ]]; then
+        echo "[SKIPPING] \"$dest\" already points to \"$src\""
+        return
+    fi
+
+    ensure_dir "$(dirname "$dest")"
+
+    if [[ -e "$dest" && ! -L "$dest" && -e "${dest}.bak" ]]; then
+        echo "Refusing to overwrite existing backup: ${dest}.bak"
+        exit 1
+    fi
+
+    if [[ -L "$2" ]]; then
+        run rm "$dest"
+    elif [[ -e "$2" ]]; then
+        echo "[BACKUP] \"$dest\" -> \"$dest.bak\""
+        run mv "$dest" "$dest.bak"
+    fi
+    echo "[CREATING] \"$dest\""
+    run ln -sf "$src" "$dest"
 }
 
 # Function to install packages
 function install_packages() {
+    if [[ "$SKIP_PACKAGES" == "true" ]]; then
+        echo "Skipping package installation..."
+        return
+    fi
+
     local packages=("$@")
     local distro_name
     if [[ "$MACOS" == "true" ]]; then
@@ -145,25 +237,37 @@ function install_packages() {
             [yY][eE][sS]|[yY])
                 if [[ "$MACOS" == "true" ]]; then
                     echo "Installing macOS packages via Homebrew..."
-                    brew update
-                    brew install "${packages[@]}"
-                    brew install --cask "${FONT_PACKAGES[@]}"
+                    run brew update
+                    run brew install "${packages[@]}"
+                    run brew install --cask "${FONT_PACKAGES[@]}"
                 elif [[ "$UBUNTU" == "true" ]]; then
                     echo "Installing Ubuntu packages..."
-                    $PACKAGE_UPDATE_CMD
-                    $PACKAGE_INSTALL_CMD "${packages[@]}"
-                    $PACKAGE_INSTALL_CMD "${FONT_PACKAGES[@]}"
+                    if [[ -n "$PACKAGE_UPDATE_CMD" ]]; then
+                        # shellcheck disable=SC2086
+                        run $PACKAGE_UPDATE_CMD
+                    fi
+                    # shellcheck disable=SC2086
+                    run $PACKAGE_INSTALL_CMD "${packages[@]}"
+                    # shellcheck disable=SC2086
+                    run $PACKAGE_INSTALL_CMD "${FONT_PACKAGES[@]}"
                 else
-                    echo "Installing yay AUR helper..."
-                    cd /tmp
-                    git clone https://aur.archlinux.org/yay.git
-                    cd yay
-                    makepkg -si
-                    cd -
-                    echo "Finished installing yay..."
+                    if [[ ! -x "/usr/bin/yay" && ! -x "$HOME/.local/bin/yay" ]]; then
+                        echo "Installing yay AUR helper..."
+                        local cwd
+                        cwd="$(pwd)"
+                        run git clone https://aur.archlinux.org/yay.git /tmp/yay
+                        if [[ "$DRY_RUN" != "true" ]]; then
+                            cd /tmp/yay
+                            run makepkg -si
+                            cd "$cwd"
+                        fi
+                        echo "Finished installing yay..."
+                    fi
                     echo "Installing Arch packages..."
-                    $PACKAGE_INSTALL_CMD "${packages[@]}"
-                    $PACKAGE_INSTALL_CMD "${FONT_PACKAGES[@]}"
+                    # shellcheck disable=SC2086
+                    run $PACKAGE_INSTALL_CMD "${packages[@]}"
+                    # shellcheck disable=SC2086
+                    run $PACKAGE_INSTALL_CMD "${FONT_PACKAGES[@]}"
                 fi
                 break
                 ;;
@@ -181,25 +285,21 @@ function install_packages() {
 echo "Setting up dotfiles..."
 
 # Setup zsh
-ln_s ${DOTS_HOME}/zshrc ~/.zshrc
-ln_s ${DOTS_HOME}/zshenv ~/.zshenv
-ln_s ${DOTS_HOME}/shell ~/.shell
+ln_s "${DOTS_HOME}/zshrc" "${HOME}/.zshrc"
+ln_s "${DOTS_HOME}/zshenv" "${HOME}/.zshenv"
+ln_s "${DOTS_HOME}/shell" "${HOME}/.shell"
 
 # Create needed directories (only for graphical mode)
 if [[ "$HEADLESS" == "false" ]]; then
     # Gtk 3.0
-    if [ ! -e ${XDG_CONFIG_HOME}/gtk-3.0/ ]; then
-        mkdir ${XDG_CONFIG_HOME}/gtk-3.0/
-    fi
-    ln_s ${DOTS_HOME}/gtk-3.0/settings.ini ${XDG_CONFIG_HOME}/gtk-3.0/settings.ini
-    ln_s ${DOTS_HOME}/gtk-3.0/gtk.css ${XDG_CONFIG_HOME}/gtk-3.0/gtk.css
+    ensure_dir "${XDG_CONFIG_HOME}/gtk-3.0"
+    ln_s "${DOTS_HOME}/gtk-3.0/settings.ini" "${XDG_CONFIG_HOME}/gtk-3.0/settings.ini"
+    ln_s "${DOTS_HOME}/gtk-3.0/gtk.css" "${XDG_CONFIG_HOME}/gtk-3.0/gtk.css"
 
     # Gtk 4.0
-    if [ ! -e ${XDG_CONFIG_HOME}/gtk-4.0/ ]; then
-        mkdir ${XDG_CONFIG_HOME}/gtk-4.0/
-    fi
-    ln_s ${DOTS_HOME}/gtk-4.0/settings.ini ${XDG_CONFIG_HOME}/gtk-4.0/settings.ini
-    ln_s ${DOTS_HOME}/gtk-4.0/gtk.css ${XDG_CONFIG_HOME}/gtk-4.0/gtk.css
+    ensure_dir "${XDG_CONFIG_HOME}/gtk-4.0"
+    ln_s "${DOTS_HOME}/gtk-4.0/settings.ini" "${XDG_CONFIG_HOME}/gtk-4.0/settings.ini"
+    ln_s "${DOTS_HOME}/gtk-4.0/gtk.css" "${XDG_CONFIG_HOME}/gtk-4.0/gtk.css"
 fi
 
 # Install ~/.config components
@@ -210,51 +310,56 @@ if [[ "$HEADLESS" == "false" ]]; then
                 echo "Refusing to overwrite existing ${XDG_CONFIG_HOME}/${path}.bak"
                 exit 1
             fi
-            mv "${XDG_CONFIG_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}.bak"
+            run mv "${XDG_CONFIG_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}.bak"
         fi
-        ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
+        ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
     done
 
-    if [ -x "${XDG_CONFIG_HOME}/niri/host_specific.sh" ]; then
+    if [[ "$DRY_RUN" != "true" && -x "${XDG_CONFIG_HOME}/niri/host_specific.sh" ]]; then
         "${XDG_CONFIG_HOME}/niri/host_specific.sh"
     fi
 fi
 
 for path in "${COMMON_CONFIGS[@]}"; do
-    ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
+    ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
 done
 
 # systemd user units (Linux only). Link individual units instead of replacing
 # ~/.config/systemd, which may contain host-local services.
 if [[ "$MACOS" != "true" ]]; then
-    mkdir -p "${XDG_CONFIG_HOME}/systemd/user"
-    ln_s ${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service ${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service
-    ln_s ${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer ${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer
+    ensure_dir "${XDG_CONFIG_HOME}/systemd/user"
+    ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service"
+    ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer"
+
+    if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
+        run systemctl --user daemon-reload
+        run systemctl --user enable --now dropbox-ignore-flux.timer
+    fi
 fi
 
 # kitty OS-specific overrides (pulled in via `include os-local.conf`)
 if [[ "$MACOS" == "true" ]]; then
-    ln_s ${DOTS_HOME}/kitty/os-macos.conf ${DOTS_HOME}/kitty/os-local.conf
+    ln_s "${DOTS_HOME}/kitty/os-macos.conf" "${DOTS_HOME}/kitty/os-local.conf"
 
     # macOS ships no xterm-kitty in its terminfo db, so git/less/etc. warn the
     # "terminal is not fully functional". Compile kitty's bundled entry into
     # ~/.terminfo, which ncurses auto-searches. (Linux gets it from the
     # kitty-terminfo package.)
     _kitty_terminfo="/Applications/kitty.app/Contents/Resources/kitty/terminfo/kitty.terminfo"
-    [[ -f "$_kitty_terminfo" ]] && tic -x -o ~/.terminfo "$_kitty_terminfo"
+    [[ -f "$_kitty_terminfo" ]] && run tic -x -o "${HOME}/.terminfo" "$_kitty_terminfo"
     unset _kitty_terminfo
 else
-    ln_s ${DOTS_HOME}/kitty/os-linux.conf ${DOTS_HOME}/kitty/os-local.conf
+    ln_s "${DOTS_HOME}/kitty/os-linux.conf" "${DOTS_HOME}/kitty/os-local.conf"
 fi
 
 # Install ~/. components
 for path in "${COMMON_DOTFILES[@]}"; do
-    ln_s ${DOTS_HOME}/${path} ~/.${path}
+    ln_s "${DOTS_HOME}/${path}" "${HOME}/.${path}"
 done
 
 # ghci
-mkdir -p ${HOME}/.ghc
-ln_s ${DOTS_HOME}/ghci.conf ${HOME}/.ghc/ghci.conf
+ensure_dir "${HOME}/.ghc"
+ln_s "${DOTS_HOME}/ghci.conf" "${HOME}/.ghc/ghci.conf"
 
 # gimp (only for graphical mode)
 if [[ "$HEADLESS" == "false" ]]; then
@@ -262,17 +367,17 @@ if [[ "$HEADLESS" == "false" ]]; then
     GIMP_PLUGIN_DIR="${XDG_CONFIG_HOME}/GIMP/3.0/plug-ins"
     GIMPRC="${GIMP_DIR}/gimprc"
 
-    mkdir -p "${GIMP_DIR}"
+    ensure_dir "${GIMP_DIR}"
 
-    if [ -e $GIMPRC ]; then
-      mv $GIMPRC $GIMPRC.bak
+    if [ -e "$GIMPRC" ]; then
+      run mv "$GIMPRC" "$GIMPRC.bak"
     fi
-    if [ -e $GIMP_PLUGIN_DIR ]; then
-      mv $GIMP_PLUGIN_DIR $GIMP_PLUGIN_DIR.bak
+    if [ -e "$GIMP_PLUGIN_DIR" ]; then
+      run mv "$GIMP_PLUGIN_DIR" "$GIMP_PLUGIN_DIR.bak"
     fi
 
-    ln -s "${DOTS_HOME}/gimp/gimprc" $GIMPRC 
-    ln -s "${DOTS_HOME}/gimp/plug-ins" $GIMP_PLUGIN_DIR
+    ln_s "${DOTS_HOME}/gimp/gimprc" "$GIMPRC"
+    ln_s "${DOTS_HOME}/gimp/plug-ins" "$GIMP_PLUGIN_DIR"
 fi
 
 # noctalia local assets (only for graphical mode)
@@ -282,11 +387,11 @@ if [[ "$HEADLESS" == "false" ]]; then
     WALI_PANEL_PLUGIN="${NOCTALIA_PLUGIN_DIR}/wali-panel"
     GLOW_PALETTE="${NOCTALIA_PALETTE_DIR}/Glow.json"
 
-    mkdir -p "${NOCTALIA_PLUGIN_DIR}"
-    mkdir -p "${NOCTALIA_PALETTE_DIR}"
+    ensure_dir "${NOCTALIA_PLUGIN_DIR}"
+    ensure_dir "${NOCTALIA_PALETTE_DIR}"
 
     if [ -e "${WALI_PANEL_PLUGIN}" ] && [ ! -L "${WALI_PANEL_PLUGIN}" ]; then
-      mv "${WALI_PANEL_PLUGIN}" "${WALI_PANEL_PLUGIN}.bak"
+      run mv "${WALI_PANEL_PLUGIN}" "${WALI_PANEL_PLUGIN}.bak"
     fi
 
     ln_s "${DOTS_HOME}/noctalia/plugins/wali-panel" "${WALI_PANEL_PLUGIN}"
@@ -294,41 +399,47 @@ if [[ "$HEADLESS" == "false" ]]; then
 fi
 
 # git
-ln_s ${DOTS_HOME}/git/ignore ${HOME}/.gitignore_global
-ln_s ${DOTS_HOME}/git/config ${HOME}/.gitconfig
+ln_s "${DOTS_HOME}/git/ignore" "${HOME}/.gitignore_global"
+ln_s "${DOTS_HOME}/git/config" "${HOME}/.gitconfig"
 
 # julia
-mkdir -p ${HOME}/.julia/config
-ln_s ${DOTS_HOME}/julia/startup.jl ${HOME}/.julia/config/startup.jl
+ensure_dir "${HOME}/.julia/config"
+ln_s "${DOTS_HOME}/julia/startup.jl" "${HOME}/.julia/config/startup.jl"
 
 # jupyter
-mkdir -p ${HOME}/.jupyter
-ln_s ${DOTS_HOME}/jupyter/jupyter_qtconsole_config.py ${HOME}/.jupyter/jupyter_qtconsole_config.py
+ensure_dir "${HOME}/.jupyter"
+ln_s "${DOTS_HOME}/jupyter/jupyter_qtconsole_config.py" "${HOME}/.jupyter/jupyter_qtconsole_config.py"
 
 # mamba
-ln_s ${DOTS_HOME}/condarc ${HOME}/.mambarc
+ln_s "${DOTS_HOME}/condarc" "${HOME}/.mambarc"
 
 # r
-ln_s ${DOTS_HOME}/lintr ${HOME}/.lintr
+ln_s "${DOTS_HOME}/lintr" "${HOME}/.lintr"
 
 # ripgrep
-ln_s ${DOTS_HOME}/rgignore ${HOME}/.rgignore
+ln_s "${DOTS_HOME}/rgignore" "${HOME}/.rgignore"
 
 # scripts, etc.
-ln_s ${DOTS_HOME}/bin ${HOME}/bin
+ln_s "${DOTS_HOME}/bin" "${HOME}/bin"
 
 # mimetypes (Linux only)
 if [[ "$MACOS" != "true" ]]; then
-    mkdir -p ~/.local/share/mime
-    ln_s ${DOTS_HOME}/mime ~/.local/share/mime/packages
-    update-mime-database ~/.local/share/mime
+    ensure_dir "${HOME}/.local/share/mime"
+    ln_s "${DOTS_HOME}/mime" "${HOME}/.local/share/mime/packages"
+    if [[ "$LINK_ONLY" != "true" ]] && command -v update-mime-database >/dev/null; then
+        run update-mime-database "${HOME}/.local/share/mime"
+    fi
 
-    rm ${XDG_CONFIG_HOME}/mimeapps.list
-    ln_s ${DOTS_HOME}/mimeapps.list ${XDG_CONFIG_HOME}/mimeapps.list
+    ln_s "${DOTS_HOME}/mimeapps.list" "${XDG_CONFIG_HOME}/mimeapps.list"
 fi
 
 # install tpm
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+if [[ "$SKIP_EXTERNAL_CLONES" != "true" ]]; then
+    if [[ ! -d "${HOME}/.tmux/plugins/tpm/.git" ]]; then
+        ensure_dir "${HOME}/.tmux/plugins"
+        run git clone https://github.com/tmux-plugins/tpm "${HOME}/.tmux/plugins/tpm"
+    fi
+fi
 
 #
 # external dependencies

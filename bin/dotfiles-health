@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOTS_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+SKIP_SYSTEMD=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --skip-systemd)
+            SKIP_SYSTEMD=true
+            shift
+            ;;
+        --help)
+            cat <<'EOF'
+Usage: dotfiles-health [--skip-systemd]
+
+Check key dotfiles symlinks, required commands, shell sourceability, and user timers.
+EOF
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            exit 2
+            ;;
+    esac
+done
+
+failures=0
+warnings=0
+
+pass() {
+    echo "[OK] $*"
+}
+
+warn() {
+    echo "[WARN] $*" >&2
+    warnings=$((warnings + 1))
+}
+
+fail() {
+    echo "[FAIL] $*" >&2
+    failures=$((failures + 1))
+}
+
+check_command() {
+    local cmd="$1"
+    if command -v "$cmd" >/dev/null 2>&1; then
+        pass "command found: $cmd"
+    else
+        fail "missing command: $cmd"
+    fi
+}
+
+check_link() {
+    local dest="$1"
+    local expected="$2"
+
+    if [[ ! -L "$dest" ]]; then
+        fail "not a symlink: $dest"
+        return
+    fi
+
+    local actual
+    actual="$(readlink "$dest")"
+    if [[ "$actual" == "$expected" ]]; then
+        pass "link: $dest -> $expected"
+    elif [[ "$(realpath "$dest")" == "$(realpath "$expected")" ]]; then
+        pass "link: $dest -> $actual"
+    else
+        fail "wrong link target: $dest -> $actual, expected $expected"
+    fi
+}
+
+check_no_broken_symlinks() {
+    local root="$1"
+    [[ -d "$root" ]] || return
+
+    local broken
+    broken="$(find "$root" -xtype l -print 2>/dev/null || true)"
+    if [[ -z "$broken" ]]; then
+        pass "no broken symlinks under $root"
+    else
+        warn "broken symlinks under $root"
+        printf '%s\n' "$broken" >&2
+    fi
+}
+
+echo "Dotfiles root: $DOTS_HOME"
+echo "Home: $HOME"
+echo "XDG config: $XDG_CONFIG_HOME"
+
+for cmd in zsh git rg fd; do
+    check_command "$cmd"
+done
+
+if [[ "$(uname)" != "Darwin" ]]; then
+    check_command attr
+fi
+
+check_link "${HOME}/.zshrc" "${DOTS_HOME}/zshrc"
+check_link "${HOME}/.zshenv" "${DOTS_HOME}/zshenv"
+check_link "${HOME}/.shell" "${DOTS_HOME}/shell"
+check_link "${HOME}/.gitconfig" "${DOTS_HOME}/git/config"
+check_link "${HOME}/.gitignore_global" "${DOTS_HOME}/git/ignore"
+
+if HOME="$HOME" zsh -fc 'source "$HOME/.shell/functions"' >/dev/null 2>&1; then
+    pass "shell functions source cleanly"
+else
+    fail "shell functions do not source cleanly"
+fi
+
+if [[ "$(uname)" != "Darwin" ]]; then
+    check_link \
+        "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service" \
+        "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service"
+    check_link \
+        "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer" \
+        "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer"
+
+    if [[ "$SKIP_SYSTEMD" != "true" ]]; then
+        if command -v systemctl >/dev/null 2>&1; then
+            if systemctl --user list-timers dropbox-ignore-flux.timer --no-pager >/dev/null 2>&1; then
+                pass "systemd user timer is queryable"
+            else
+                warn "systemd user timer could not be queried"
+            fi
+        else
+            warn "systemctl is not available"
+        fi
+    fi
+fi
+
+check_no_broken_symlinks "$XDG_CONFIG_HOME"
+
+if [[ "$failures" -gt 0 ]]; then
+    echo "Health check failed: $failures failure(s), $warnings warning(s)" >&2
+    exit 1
+fi
+
+echo "Health check passed: $warnings warning(s)"

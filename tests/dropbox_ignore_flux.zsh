@@ -110,7 +110,20 @@ EOF
   trap - EXIT
 }
 
+test_fu_finds_functions_d_modules() {
+  local tmp
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  ln -s "${repo_root}/shell" "${tmp}/.shell"
+
+  HOME="$tmp" zsh -fc 'source "$HOME/.shell/functions"; fu dropbox_ignore_flux | rg -q "dropbox_ignore_flux"'
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
 test_candidates_keep_only_top_level_matches
 test_dropbox_ignore_flux_sets_only_missing_attrs_without_sudo
+test_fu_finds_functions_d_modules
 
 print -- "dropbox_ignore_flux tests passed"
