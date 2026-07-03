@@ -1,0 +1,6 @@
+[Unit]
+Description=Mark high-churn Dropbox directories as ignored
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/zsh -lc 'source "$HOME/.shell/functions" && dropbox_ignore_flux --quiet'

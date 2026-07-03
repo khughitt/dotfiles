@@ -224,6 +224,14 @@ for path in "${COMMON_CONFIGS[@]}"; do
     ln_s ${DOTS_HOME}/${path} ${XDG_CONFIG_HOME}/${path}
 done
 
+# systemd user units (Linux only). Link individual units instead of replacing
+# ~/.config/systemd, which may contain host-local services.
+if [[ "$MACOS" != "true" ]]; then
+    mkdir -p "${XDG_CONFIG_HOME}/systemd/user"
+    ln_s ${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service ${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service
+    ln_s ${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer ${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer
+fi
+
 # kitty OS-specific overrides (pulled in via `include os-local.conf`)
 if [[ "$MACOS" == "true" ]]; then
     ln_s ${DOTS_HOME}/kitty/os-macos.conf ${DOTS_HOME}/kitty/os-local.conf

@@ -1,0 +1,12 @@
+[Unit]
+Description=Periodically mark high-churn Dropbox directories as ignored
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=2h
+AccuracySec=15min
+Persistent=true
+Unit=dropbox-ignore-flux.service
+
+[Install]
+WantedBy=timers.target
