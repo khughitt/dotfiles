@@ -2,7 +2,7 @@
 
 # alias lookup
 function al {
-    alias | grep "$1"
+  alias | grep "$1"
 }
 
 # function lookup
@@ -30,17 +30,17 @@ function count_files {
 
   # non-hidden folders
   for x in */; do
-    echo "$x";
-    fd -Luu . "$x" -t f | wc -l;
+    echo "$x"
+    fd -Luu . "$x" -t f | wc -l
   done
 
   # if hidden directories present, include them..
   num_hidden=$(/bin/ls -Ap | grep "^\..*/$" | wc -l)
 
-  if [ "$num_hidden" -ne "0" ]; then
+  if [[ "$num_hidden" -ne 0 ]]; then
     for x in .*/; do
-      echo "$x";
-      fd -Luu . "$x" -t f | wc -l;
+      echo "$x"
+      fd -Luu . "$x" -t f | wc -l
     done
   fi
 }
@@ -52,12 +52,12 @@ function cfp {
 
 # relative working directory
 function wd {
-    echo ${$(pwd)/$HOME\//}
+  echo ${$(pwd)/$HOME\//}
 }
 
 # quick history searches
 function h {
-    history -df -100000 | grep "$1"
+  history -df -100000 | grep "$1"
 }
 
 # mkdir & cd into it
@@ -68,12 +68,12 @@ function mdd {
 
 # process management
 function pg {
-    ps -Af | grep "$1" | grep -v grep
+  ps -Af | grep "$1" | grep -v grep
 }
 
 # zcat | wc -l
 function zcl {
-    zcat "$1" | wc -l
+  zcat "$1" | wc -l
 }
 
 # fahrenheit to celsius
@@ -102,9 +102,9 @@ function yank {
 
 # translate (中文 -> 英語)
 function tt {
-    sdcv -c "$1"
-    echo "------------------------\n"
-    trans zh-TW:en "$1"
+  sdcv -c "$1"
+  echo "------------------------\n"
+  trans zh-TW:en "$1"
 }
 
 # preview generated colormage palettes
@@ -112,13 +112,13 @@ function color_preview {
   local img base x
 
   for img in ~/d/colors/_inc/*-preview.jpg; do
-    echo "$img";
-    kitty +kitten icat "$img";
+    echo "$img"
+    kitty +kitten icat "$img"
 
     base=${img/-preview.jpg/}
 
     for x in ${base}*.(png|jpg); do
-      kitty +kitten icat "$x";
+      kitty +kitten icat "$x"
     done
   done
 }

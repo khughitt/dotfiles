@@ -16,14 +16,14 @@ function merp {
 # glslviewer
 # note: may want to remove --headless option when working more on animated shaders..
 function gls2png {
-    local outfile="output/${1/.frag/.png}"
+  local outfile="output/${1/.frag/.png}"
 
-    glslviewer "$1" \
-        -w 1080 \
-        -h 1080 \
-        -s 1 \
-        --headless \
-        -o "$outfile"
+  glslviewer "$1" \
+    -w 1080 \
+    -h 1080 \
+    -s 1 \
+    --headless \
+    -o "$outfile"
 
-    icat "$outfile"
+  icat "$outfile"
 }

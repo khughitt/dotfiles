@@ -2,7 +2,7 @@
 
 # docker
 function dty {
-    docker exec -it "$1" /bin/bash
+  docker exec -it "$1" /bin/bash
 }
 
 function up {
@@ -33,66 +33,66 @@ function down {
 
 # fzf confs
 function C {
-    local target
-    target=$(fd . "$DOTFILES" -t f \
-            --no-ignore-vcs \
-            --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" \
-            --exclude "*.xml" --exclude "*.png" --exclude "*.desktop" \
-            --exclude "plugged" --exclude "black")
+  local target
+  target=$(fd . "$DOTFILES" -t f \
+    --no-ignore-vcs \
+    --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" \
+    --exclude "*.xml" --exclude "*.png" --exclude "*.desktop" \
+    --exclude "plugged" --exclude "black")
 
-    target=$(echo "$target" |\
-            grep --color='none' "$1" |\
-            fzf -1 --exact)
+  target=$(echo "$target" |
+    grep --color='none' "$1" |
+    fzf -1 --exact)
 
-    if [ ! -z "$target" ]; then
-        kitty @ set-window-title vim "$target"
-        vim "$target"
-    fi
+  if [[ -n "$target" ]]; then
+    kitty @ set-window-title vim "$target"
+    vim "$target"
+  fi
 }
 
 # cheatsheets
 function c {
-    local target
-    target=$(/bin/ls "$DOTFILES/cheatsheets/" |\
-            grep --color='none' "$1" |\
-            fzf -1 --exact --preview 'bat $DOTFILES/cheatsheets/{}' --preview-window up)
+  local target
+  target=$(/bin/ls "$DOTFILES/cheatsheets/" |
+    grep --color='none' "$1" |
+    fzf -1 --exact --preview 'bat $DOTFILES/cheatsheets/{}' --preview-window up)
 
-    if [ ! -z "$target" ]; then
-        kitty @ set-window-title vim "$DOTFILES/cheatsheets/$target"
-        vim "$DOTFILES/cheatsheets/$target"
-    fi
+  if [[ -n "$target" ]]; then
+    kitty @ set-window-title vim "$DOTFILES/cheatsheets/$target"
+    vim "$DOTFILES/cheatsheets/$target"
+  fi
 }
 
 # vim + rg
 function vr {
-    local files=($(rg -l "$1"))
-    [ ${#files[@]} -gt 0 ] && $EDITOR "${files[@]}"
+  local files=("${(@f)$(rg -l "$1")}")
+  [[ ${#files[@]} -gt 0 ]] && ${=EDITOR} "${files[@]}"
 }
 function vru {
-    local files=($(rg -uuu --no-ignore-files -l "$1"))
-    [ ${#files[@]} -gt 0 ] && $EDITOR "${files[@]}"
+  local files=("${(@f)$(rg -uuu --no-ignore-files -l "$1")}")
+  [[ ${#files[@]} -gt 0 ]] && ${=EDITOR} "${files[@]}"
 }
 
 # vim + fzf
 function vI {
-    local target
-    target=$(fd -t f \
-            --exclude "*.svg" --exclude "*.png")
+  local target
+  target=$(fd -t f \
+    --exclude "*.svg" --exclude "*.png")
 
-    target=$(echo "$target" |\
-            grep --color='none' "$1" |\
-            fzf -1 --exact)
+  target=$(echo "$target" |
+    grep --color='none' "$1" |
+    fzf -1 --exact)
 
-    if [ ! -z "$target" ]; then
-        kitty @ set-window-title vim "$target"
-        vim "$target"
-    fi
+  if [[ -n "$target" ]]; then
+    kitty @ set-window-title vim "$target"
+    vim "$target"
+  fi
 }
 
 # pytest
 function pyf {
   local files=("${(@f)$(fd "$1")}")
-  [ ${#files[@]} -gt 0 ] && uv run pytest --no-cov "${files[@]}"
+  [[ ${#files[@]} -gt 0 ]] && uv run pytest --no-cov "${files[@]}"
 }
 
 # create new vite + react proj

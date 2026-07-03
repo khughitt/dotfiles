@@ -23,7 +23,7 @@ function _dropbox_ignore_flux_candidates {
   shift
 
   local -a names candidates kept
-  if [ $# -gt 0 ]; then
+  if [[ $# -gt 0 ]]; then
     names=("$@")
   else
     names=(node_modules .venv .worktrees .snakemake __pycache__)
@@ -72,7 +72,7 @@ function dropbox_ignore_flux {
   local dry_run=false
   local -a names
 
-  while [ $# -gt 0 ]; do
+  while [[ $# -gt 0 ]]; do
     case "$1" in
       --root)
         shift
@@ -109,7 +109,7 @@ EOF
     shift
   done
 
-  if [ ! -d "$root" ]; then
+  if [[ ! -d "$root" ]]; then
     print -u2 -- "Dropbox root not found: $root"
     return 1
   fi
@@ -122,7 +122,7 @@ EOF
     return 127
   }
 
-  if [ ${#names[@]} -eq 0 ]; then
+  if [[ ${#names[@]} -eq 0 ]]; then
     names=(node_modules .venv .worktrees .snakemake __pycache__)
   fi
 
@@ -158,5 +158,5 @@ EOF
     print -- "Checked: $checked, already ignored: $ignored, updated: $updated, failed: $failed"
   fi
 
-  [ "$failed" -eq 0 ]
+  [[ "$failed" -eq 0 ]]
 }
