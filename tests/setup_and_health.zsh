@@ -135,6 +135,36 @@ test_setup_only_rejects_unknown_phase() {
   trap - EXIT
 }
 
+test_setup_and_health_share_managed_link_metadata() {
+  local metadata="${repo_root}/lib/dotfiles-setup-data.bash"
+
+  [[ -f "$metadata" ]] || fail "expected shared setup metadata file"
+  bash -n "$metadata"
+
+  bash -c '
+    set -euo pipefail
+    source "$1"
+    [[ "${DOTFILES_COMMON_CONFIGS[*]}" == *"kitty"* ]]
+    [[ "${DOTFILES_COMMON_CONFIGS[*]}" == *"nvim"* ]]
+    [[ "${DOTFILES_COMMON_CONFIGS[*]}" == *"fcitx"* ]]
+    [[ "${DOTFILES_MACOS_EXCLUDED_COMMON_CONFIGS[*]}" == *"mimeapps.list"* ]]
+    [[ "${DOTFILES_COMMON_DOTFILES[*]}" == *"tmux.conf"* ]]
+  ' bash "$metadata"
+
+  rg -q 'dotfiles-setup-data.bash' "${repo_root}/setup.sh" || \
+    fail "setup.sh should source shared setup metadata"
+  rg -q 'dotfiles-setup-data.bash' "${repo_root}/bin/dotfiles-health" || \
+    fail "dotfiles-health should source shared setup metadata"
+  ! rg -q -F 'COMMON_CONFIGS=("fcitx"' "${repo_root}/setup.sh" || \
+    fail "setup.sh should not hardcode common config links"
+  ! rg -q -F 'COMMON_CONFIGS=("git"' "${repo_root}/setup.sh" || \
+    fail "setup.sh should not hardcode common config links"
+  ! rg -q -F 'managed_config_links=(git' "${repo_root}/bin/dotfiles-health" || \
+    fail "dotfiles-health should not hardcode managed config links"
+  ! rg -q -F 'managed_config_links=("git"' "${repo_root}/bin/dotfiles-health" || \
+    fail "dotfiles-health should not hardcode managed config links"
+}
+
 test_dotfiles_health_passes_after_link_only_setup() {
   local tmp
   tmp=$(make_tmpdir)
@@ -306,6 +336,7 @@ test_setup_dry_run_can_enable_user_timers
 test_setup_only_runs_selected_phase
 test_setup_only_accepts_multiple_phases
 test_setup_only_rejects_unknown_phase
+test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_passes_after_link_only_setup
 test_dotfiles_health_fails_stale_removed_config_links
 test_dotfiles_health_ignores_brave_runtime_symlinks

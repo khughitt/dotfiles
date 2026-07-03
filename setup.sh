@@ -6,6 +6,8 @@
 set -euo pipefail
 
 DOTS_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# shellcheck source=lib/dotfiles-setup-data.bash
+source "${DOTS_HOME}/lib/dotfiles-setup-data.bash"
 
 # Parse command line arguments
 HEADLESS=false
@@ -164,21 +166,15 @@ else
     PACKAGE_UPDATE_CMD=""
 fi
 
-# Define configuration components
-GRAPHICAL_CONFIGS=("feh" "hypr" "niri" "zathura")
-COMMON_CONFIGS=("fcitx" "git" "glow" "kitty" "mimeapps.list" "nvim" "lsd" "termcolors" "yazi")
-
-if [[ "$MACOS" == "true" ]]; then
-    # Remove Linux-only configs
-    _filtered=()
-    for item in "${COMMON_CONFIGS[@]}"; do
-        [[ "$item" != "fcitx" && "$item" != "mimeapps.list" ]] && _filtered+=("$item")
-    done
-    COMMON_CONFIGS=("${_filtered[@]}")
-    unset _filtered
+GRAPHICAL_CONFIGS=("${DOTFILES_GRAPHICAL_CONFIGS[@]}")
+if [[ "$MACOS" != "true" ]]; then
+    dotfiles_select_common_configs true
+else
+    dotfiles_select_common_configs false
 fi
+COMMON_CONFIGS=("${DOTFILES_SELECTED_COMMON_CONFIGS[@]}")
 
-COMMON_DOTFILES=("condarc" "ctags" "plotly" "Rprofile" "Renviron" "tmux.conf" "visidatarc")
+COMMON_DOTFILES=("${DOTFILES_COMMON_DOTFILES[@]}")
 
 # Check for configuration directory
 if [ -z "${XDG_CONFIG_HOME:-}" ]; then

@@ -8,6 +8,7 @@ bash_files=(
     setup.sh
     bin/dotfiles-check
     bin/dotfiles-health
+    lib/dotfiles-setup-data.bash
     hypr/host_specific.sh
     hypr/scripts/monitor-handler.sh
     hypr/scripts/monitor-info.sh
@@ -45,7 +46,7 @@ echo "bash -n"
 bash -n "${bash_files[@]}"
 
 echo "shellcheck"
-shellcheck "${bash_files[@]}"
+shellcheck -x "${bash_files[@]}"
 
 echo "zsh -n"
 zsh -n "${zsh_files[@]}"

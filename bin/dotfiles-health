@@ -5,6 +5,9 @@ DOTS_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 SKIP_SYSTEMD=false
 
+# shellcheck source=lib/dotfiles-setup-data.bash
+source "${DOTS_HOME}/lib/dotfiles-setup-data.bash"
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip-systemd)
@@ -126,10 +129,12 @@ check_link "${HOME}/.shell" "${DOTS_HOME}/shell"
 check_link "${HOME}/.gitconfig" "${DOTS_HOME}/git/config"
 check_link "${HOME}/.gitignore_global" "${DOTS_HOME}/git/ignore"
 
-managed_config_links=(git glow kitty nvim lsd termcolors yazi)
 if [[ "$(uname)" != "Darwin" ]]; then
-    managed_config_links=(fcitx mimeapps.list "${managed_config_links[@]}")
+    dotfiles_select_common_configs true
+else
+    dotfiles_select_common_configs false
 fi
+managed_config_links=("${DOTFILES_SELECTED_COMMON_CONFIGS[@]}")
 
 for config_name in "${managed_config_links[@]}"; do
     check_config_link "$config_name"
