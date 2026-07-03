@@ -52,6 +52,15 @@ check_command() {
     fi
 }
 
+check_optional_command() {
+    local cmd="$1"
+    if command -v "$cmd" >/dev/null 2>&1; then
+        pass "optional command found: $cmd"
+    else
+        warn "optional command missing: $cmd"
+    fi
+}
+
 check_link() {
     local dest="$1"
     local expected="$2"
@@ -72,17 +81,48 @@ check_link() {
     fi
 }
 
+check_absent_stale_config_link() {
+    local name="$1"
+    local dest="${XDG_CONFIG_HOME}/${name}"
+
+    if [[ -L "$dest" ]]; then
+        fail "stale managed config link: $dest"
+    elif [[ -e "$dest" ]]; then
+        warn "config path exists but is no longer managed: $dest"
+    else
+        pass "stale managed config absent: $dest"
+    fi
+}
+
+is_ignored_broken_symlink() {
+    local path="$1"
+
+    case "$path" in
+        "${XDG_CONFIG_HOME}/BraveSoftware/Brave-Browser/Singleton"*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 check_no_broken_symlinks() {
     local root="$1"
     [[ -d "$root" ]] || return
 
-    local broken
-    broken="$(find "$root" -xtype l -print 2>/dev/null || true)"
-    if [[ -z "$broken" ]]; then
+    local broken=()
+    local path
+    while IFS= read -r path; do
+        is_ignored_broken_symlink "$path" && continue
+        broken+=("$path")
+    done < <(find "$root" -xtype l -print 2>/dev/null || true)
+
+    if [[ "${#broken[@]}" -eq 0 ]]; then
         pass "no broken symlinks under $root"
     else
         warn "broken symlinks under $root"
-        printf '%s\n' "$broken" >&2
+        printf '%s\n' "${broken[@]}" >&2
     fi
 }
 
@@ -94,6 +134,10 @@ for cmd in zsh git rg fd; do
     check_command "$cmd"
 done
 
+for cmd in fzf shellcheck systemd-analyze; do
+    check_optional_command "$cmd"
+done
+
 if [[ "$(uname)" != "Darwin" ]]; then
     check_command attr
 fi
@@ -103,6 +147,9 @@ check_link "${HOME}/.zshenv" "${DOTS_HOME}/zshenv"
 check_link "${HOME}/.shell" "${DOTS_HOME}/shell"
 check_link "${HOME}/.gitconfig" "${DOTS_HOME}/git/config"
 check_link "${HOME}/.gitignore_global" "${DOTS_HOME}/git/ignore"
+
+check_absent_stale_config_link "snakemake"
+check_absent_stale_config_link "tealdeer"
 
 if HOME="$HOME" zsh -fc 'source "$HOME/.shell/functions"' >/dev/null 2>&1; then
     pass "shell functions source cleanly"
@@ -120,6 +167,12 @@ if [[ "$(uname)" != "Darwin" ]]; then
 
     if [[ "$SKIP_SYSTEMD" != "true" ]]; then
         if command -v systemctl >/dev/null 2>&1; then
+            if systemctl --user is-enabled dropbox-ignore-flux.timer >/dev/null 2>&1; then
+                pass "systemd user timer is enabled"
+            else
+                fail "systemd user timer is not enabled: dropbox-ignore-flux.timer"
+            fi
+
             if systemctl --user list-timers dropbox-ignore-flux.timer --no-pager >/dev/null 2>&1; then
                 pass "systemd user timer is queryable"
             else

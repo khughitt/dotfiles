@@ -2,7 +2,7 @@
 
 # docker
 function dty {
-    docker exec -it $1 /bin/bash
+    docker exec -it "$1" /bin/bash
 }
 
 function up {
@@ -33,31 +33,33 @@ function down {
 
 # fzf confs
 function C {
-    target=`fd . "$DOTFILES" -t f \
+    local target
+    target=$(fd . "$DOTFILES" -t f \
             --no-ignore-vcs \
             --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" \
             --exclude "*.xml" --exclude "*.png" --exclude "*.desktop" \
-            --exclude "plugged" --exclude "black"`
+            --exclude "plugged" --exclude "black")
 
-    target=`echo $target |\
+    target=$(echo "$target" |\
             grep --color='none' "$1" |\
-            fzf -1 --exact`
+            fzf -1 --exact)
 
     if [ ! -z "$target" ]; then
-        kitty @ set-window-title vim $target
-        vim $target
+        kitty @ set-window-title vim "$target"
+        vim "$target"
     fi
 }
 
 # cheatsheets
 function c {
-    target=`/bin/ls $DOTFILES/cheatsheets/ |\
+    local target
+    target=$(/bin/ls "$DOTFILES/cheatsheets/" |\
             grep --color='none' "$1" |\
-            fzf -1 --exact --preview 'bat $DOTFILES/cheatsheets/{}' --preview-window up`
+            fzf -1 --exact --preview 'bat $DOTFILES/cheatsheets/{}' --preview-window up)
 
     if [ ! -z "$target" ]; then
-        kitty @ set-window-title vim $DOTFILES/cheatsheets/$target
-        vim $DOTFILES/cheatsheets/$target
+        kitty @ set-window-title vim "$DOTFILES/cheatsheets/$target"
+        vim "$DOTFILES/cheatsheets/$target"
     fi
 }
 
@@ -73,28 +75,30 @@ function vru {
 
 # vim + fzf
 function vI {
-    target=`fd -t f \
-            --exclude "*.svg" --exclude "*.png"`
+    local target
+    target=$(fd -t f \
+            --exclude "*.svg" --exclude "*.png")
 
-    target=`echo $target |\
+    target=$(echo "$target" |\
             grep --color='none' "$1" |\
-            fzf -1 --exact`
+            fzf -1 --exact)
 
     if [ ! -z "$target" ]; then
-        kitty @ set-window-title vim $target
-        vim $target
+        kitty @ set-window-title vim "$target"
+        vim "$target"
     fi
 }
 
 # pytest
 function pyf {
-  uv run pytest --no-cov $(fd $1)
+  local files=("${(@f)$(fd "$1")}")
+  [ ${#files[@]} -gt 0 ] && uv run pytest --no-cov "${files[@]}"
 }
 
 # create new vite + react proj
 function vite_proj {
-  export projname="$1"
-  npm create vite@latest "$projname"  -- --template react-ts
+  local projname="$1"
+  npm create vite@latest "$projname" -- --template react-ts
 
   cd "$projname"
   npm i
@@ -110,7 +114,7 @@ function vite_proj {
   # feb25; use r3f rc compat for now to support react 19
   # npm install three @types/three @react-three/fiber@rc \
   #   @react-three/drei@rc
-    #@react-three/postprocessing leva
+  # @react-three/postprocessing leva
 
   # .glsl support
   npm i vite-plugin-glsl --save-dev

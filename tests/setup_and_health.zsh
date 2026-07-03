@@ -31,6 +31,9 @@ test_setup_dry_run_link_only_does_not_write_home() {
   output=$(run_setup "$tmp" --dry-run --link-only --headless)
 
   [[ "$output" == *"[DRY-RUN]"* ]] || fail "expected dry-run output"
+  [[ "$output" == *"==> Shell links"* ]] || fail "expected shell links phase"
+  [[ "$output" == *"==> Systemd user units"* ]] || fail "expected systemd user units phase"
+  [[ "$output" == *"==> Package installation"* ]] || fail "expected package installation phase"
   [[ ! -e "${tmp}/home/.zshrc" ]] || fail "dry-run should not create ~/.zshrc"
   [[ ! -e "${tmp}/home/.shell" ]] || fail "dry-run should not create ~/.shell"
   [[ ! -e "${tmp}/config/systemd/user/dropbox-ignore-flux.timer" ]] || \
@@ -96,9 +99,109 @@ test_dotfiles_health_passes_after_link_only_setup() {
   trap - EXIT
 }
 
+test_dotfiles_health_fails_stale_removed_config_links() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+  ln -s "${repo_root}/snakemake" "${tmp}/config/snakemake"
+
+  set +e
+  output=$(
+    HOME="${tmp}/home" \
+      XDG_CONFIG_HOME="${tmp}/config" \
+      XDG_DATA_HOME="${tmp}/data" \
+      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
+  )
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "health should fail for stale managed config links"
+  [[ "$output" == *"stale managed config link"* ]] || \
+    fail "expected stale managed config link failure"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
+test_dotfiles_health_ignores_brave_runtime_symlinks() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "${tmp}/home" "${tmp}/config/BraveSoftware/Brave-Browser" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+  ln -s "${tmp}/missing-SingletonLock" "${tmp}/config/BraveSoftware/Brave-Browser/SingletonLock"
+  ln -s "${tmp}/missing-SingletonCookie" "${tmp}/config/BraveSoftware/Brave-Browser/SingletonCookie"
+
+  output=$(
+    HOME="${tmp}/home" \
+      XDG_CONFIG_HOME="${tmp}/config" \
+      XDG_DATA_HOME="${tmp}/data" \
+      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
+  )
+
+  [[ "$output" != *"SingletonLock"* ]] || fail "health should ignore Brave SingletonLock"
+  [[ "$output" != *"SingletonCookie"* ]] || fail "health should ignore Brave SingletonCookie"
+  [[ "$output" != *"[WARN] broken symlinks under"* ]] || fail "health should not warn for ignored Brave symlinks"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
+test_dotfiles_health_checks_enabled_user_timer() {
+  local tmp mockbin systemctl_log
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mockbin="${tmp}/bin"
+  systemctl_log="${tmp}/systemctl.log"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "$mockbin"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+
+  cat > "${mockbin}/systemctl" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$*" >> "$SYSTEMCTL_LOG"
+
+if [[ "$*" == "--user is-enabled dropbox-ignore-flux.timer" ]]; then
+  printf 'enabled\n'
+  exit 0
+fi
+
+if [[ "$*" == "--user list-timers dropbox-ignore-flux.timer --no-pager" ]]; then
+  printf 'NEXT LEFT LAST PASSED UNIT ACTIVATES\n'
+  exit 0
+fi
+
+exit 64
+EOF
+  chmod +x "${mockbin}/systemctl"
+
+  HOME="${tmp}/home" \
+    XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" \
+    SYSTEMCTL_LOG="$systemctl_log" \
+    PATH="${mockbin}:$PATH" \
+    "${repo_root}/bin/dotfiles-health" >/dev/null
+
+  rg -q -- '--user is-enabled dropbox-ignore-flux.timer' "$systemctl_log" || \
+    fail "expected health to query timer enabled state"
+  rg -q -- '--user list-timers dropbox-ignore-flux.timer --no-pager' "$systemctl_log" || \
+    fail "expected health to query timer schedule"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
 test_setup_dry_run_can_enable_user_timers
 test_dotfiles_health_passes_after_link_only_setup
+test_dotfiles_health_fails_stale_removed_config_links
+test_dotfiles_health_ignores_brave_runtime_symlinks
+test_dotfiles_health_checks_enabled_user_timer
 
 print -- "setup and health tests passed"

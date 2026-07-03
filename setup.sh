@@ -154,8 +154,13 @@ function ensure_dir() {
     run mkdir -p "$dir"
 }
 
+function phase() {
+    echo "==> $1"
+}
+
 ensure_dir "$XDG_CONFIG_HOME"
 
+phase "External clone setup"
 if [[ "$SKIP_EXTERNAL_CLONES" != "true" ]]; then
     # Create completions cache dir
     ensure_dir "$HOME/.cache/zinit/completions"
@@ -282,12 +287,14 @@ function install_packages() {
 echo "Setting up dotfiles..."
 
 # Setup zsh
+phase "Shell links"
 ln_s "${DOTS_HOME}/zshrc" "${HOME}/.zshrc"
 ln_s "${DOTS_HOME}/zshenv" "${HOME}/.zshenv"
 ln_s "${DOTS_HOME}/shell" "${HOME}/.shell"
 
 # Create needed directories (only for graphical mode)
 if [[ "$HEADLESS" == "false" ]]; then
+    phase "GTK links"
     # Gtk 3.0
     ensure_dir "${XDG_CONFIG_HOME}/gtk-3.0"
     ln_s "${DOTS_HOME}/gtk-3.0/settings.ini" "${XDG_CONFIG_HOME}/gtk-3.0/settings.ini"
@@ -301,6 +308,7 @@ fi
 
 # Install ~/.config components
 if [[ "$HEADLESS" == "false" ]]; then
+    phase "Graphical config links"
     for path in "${GRAPHICAL_CONFIGS[@]}"; do
         if [[ "$path" == "niri" && -e "${XDG_CONFIG_HOME}/${path}" && ! -L "${XDG_CONFIG_HOME}/${path}" ]]; then
             if [ -e "${XDG_CONFIG_HOME}/${path}.bak" ]; then
@@ -317,6 +325,7 @@ if [[ "$HEADLESS" == "false" ]]; then
     fi
 fi
 
+phase "Common config links"
 for path in "${COMMON_CONFIGS[@]}"; do
     ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
 done
@@ -324,6 +333,7 @@ done
 # systemd user units (Linux only). Link individual units instead of replacing
 # ~/.config/systemd, which may contain host-local services.
 if [[ "$MACOS" != "true" ]]; then
+    phase "Systemd user units"
     ensure_dir "${XDG_CONFIG_HOME}/systemd/user"
     ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service"
     ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer"
@@ -335,6 +345,7 @@ if [[ "$MACOS" != "true" ]]; then
 fi
 
 # kitty OS-specific overrides (pulled in via `include os-local.conf`)
+phase "Kitty OS overrides"
 if [[ "$MACOS" == "true" ]]; then
     ln_s "${DOTS_HOME}/kitty/os-macos.conf" "${DOTS_HOME}/kitty/os-local.conf"
 
@@ -350,10 +361,12 @@ else
 fi
 
 # Install ~/. components
+phase "Home dotfile links"
 for path in "${COMMON_DOTFILES[@]}"; do
     ln_s "${DOTS_HOME}/${path}" "${HOME}/.${path}"
 done
 
+phase "Application config links"
 # ghci
 ensure_dir "${HOME}/.ghc"
 ln_s "${DOTS_HOME}/ghci.conf" "${HOME}/.ghc/ghci.conf"
@@ -421,6 +434,7 @@ ln_s "${DOTS_HOME}/bin" "${HOME}/bin"
 
 # mimetypes (Linux only)
 if [[ "$MACOS" != "true" ]]; then
+    phase "MIME links"
     ensure_dir "${HOME}/.local/share/mime"
     ln_s "${DOTS_HOME}/mime" "${HOME}/.local/share/mime/packages"
     if [[ "$LINK_ONLY" != "true" ]] && command -v update-mime-database >/dev/null; then
@@ -431,6 +445,7 @@ if [[ "$MACOS" != "true" ]]; then
 fi
 
 # install tpm
+phase "Tmux plugin manager"
 if [[ "$SKIP_EXTERNAL_CLONES" != "true" ]]; then
     if [[ ! -d "${HOME}/.tmux/plugins/tpm/.git" ]]; then
         ensure_dir "${HOME}/.tmux/plugins"
@@ -442,6 +457,7 @@ fi
 # external dependencies
 #
 
+phase "Package installation"
 install_packages "${PACKAGES[@]}"
 
 echo "Done!"
