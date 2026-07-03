@@ -37,6 +37,7 @@ wsprofiles/node_modules/
 noctalia/plugins/
 
 # noctalia colorscheme updates
+gtk-3.0/gtk.css
 hypr/noctalia/noctalia-colors.conf
 kitty/themes/noctalia.conf
 niri/noctalia.kdl
