@@ -98,19 +98,16 @@ if [[ "$MACOS" == "true" ]]; then
               "lolcat" "lsd" "neovim" "ripgrep" "thefuck" "tldr"
               "tmux" "tre-command" "visidata" "zoxide")
     FONT_PACKAGES=("font-hack-nerd-font" "font-symbols-only-nerd-font")
-    PACKAGE_MANAGER="brew"
     PACKAGE_INSTALL_CMD="brew install"
     PACKAGE_UPDATE_CMD="brew update"
 elif [[ "$UBUNTU" == "true" ]]; then
     PACKAGES=("bat" "fd-find" "fzf" "lsd" "ripgrep" "thefuck" "tldr" "visidata" "zoxide")
     FONT_PACKAGES=("fonts-nerd-fonts" "fonts-weather-icons")
-    PACKAGE_MANAGER="apt"
     PACKAGE_INSTALL_CMD="sudo apt install -y"
     PACKAGE_UPDATE_CMD="sudo apt update"
 else
     PACKAGES=("bat" "dust" "fd" "fzf" "glow" "gotop-bin" "lolcat" "lsd" "moor" "ripgrep" "tre-command" "thefuck" "tldr" "visidata" "xan" "zoxide")
     FONT_PACKAGES=("ttf-nerd-fonts-symbols" "ttf-hack-nerd" "ttf-weather-icons")
-    PACKAGE_MANAGER="yay"
     PACKAGE_INSTALL_CMD="yay -S"
     PACKAGE_UPDATE_CMD=""
 fi

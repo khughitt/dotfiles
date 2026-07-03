@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOTS_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
+cd "$DOTS_HOME"
+
+bash_files=(
+    setup.sh
+    bin/dotfiles-check
+    bin/dotfiles-health
+    hypr/host_specific.sh
+    hypr/scripts/monitor-handler.sh
+    hypr/scripts/monitor-info.sh
+    hypr/scripts/restore-wallpaper.sh
+    niri/host_specific.sh
+    niri/scripts/monitor-handler.sh
+)
+
+zsh_files=(
+    zshrc
+    zshenv
+    shell/aliases
+    shell/audio
+    shell/functions
+    shell/functions.d/dropbox.zsh
+    shell/fzf
+    shell/kitty
+    shell/macos
+    shell/tmux
+    shell/ubuntu
+    shell/vconsole
+    shell/vi
+    shell/wali
+    shell/zoxide
+    tests/dropbox_ignore_flux.zsh
+    tests/setup_and_health.zsh
+    tests/dotfiles_check.zsh
+)
+
+echo "bash -n"
+bash -n "${bash_files[@]}"
+
+echo "shellcheck"
+shellcheck "${bash_files[@]}"
+
+echo "zsh -n"
+zsh -n "${zsh_files[@]}"
+
+echo "dotfiles checks passed"

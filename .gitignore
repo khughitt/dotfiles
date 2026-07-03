@@ -5,6 +5,7 @@
 _archive
 bin/*
 !bin/
+!bin/dotfiles-check
 !bin/dotfiles-health
 bookmarks
 dojo/
