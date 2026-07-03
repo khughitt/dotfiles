@@ -1,0 +1,6 @@
+# create pull request
+gh pr create --title "" --body ""
+gh pr --draft
+
+# auto-fill using local commit
+gh pr create --fill

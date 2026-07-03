@@ -49,7 +49,7 @@ git rev-list HEAD --oneline
 git log --oneline --graph
 git log --oneline --graph --all --decorate
 
-# show files that different between two commits
+# show files that differ between two commits
 git diff --name-only 629feca
 git diff --name-status 629feca
 git diff --name-status 629feca 3e0800d
