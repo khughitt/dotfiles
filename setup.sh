@@ -67,7 +67,7 @@ elif [[ "$UBUNTU" == "true" ]]; then
     PACKAGE_INSTALL_CMD="sudo apt install -y"
     PACKAGE_UPDATE_CMD="sudo apt update"
 else
-    PACKAGES=("bat" "dust" "fd" "fzf" "gotop-bin" "lolcat" "lsd" "moor" "ripgrep" "tre-command" "thefuck" "tldr" "visidata" "xan" "zoxide")
+    PACKAGES=("bat" "dust" "fd" "fzf" "glow" "gotop-bin" "lolcat" "lsd" "moor" "ripgrep" "tre-command" "thefuck" "tldr" "visidata" "xan" "zoxide")
     FONT_PACKAGES=("ttf-nerd-fonts-symbols" "ttf-hack-nerd" "ttf-weather-icons")
     PACKAGE_MANAGER="yay"
     PACKAGE_INSTALL_CMD="yay -S"
@@ -76,7 +76,7 @@ fi
 
 # Define configuration components
 GRAPHICAL_CONFIGS=("feh" "hypr" "niri" "zathura")
-COMMON_CONFIGS=("fcitx" "git" "kitty" "mimeapps.list" "nvim" "lsd" "snakemake" "termcolors" "yazi")
+COMMON_CONFIGS=("fcitx" "git" "glow" "kitty" "mimeapps.list" "nvim" "lsd" "snakemake" "termcolors" "yazi")
 
 if [[ "$MACOS" == "true" ]]; then
     # Remove Linux-only configs
@@ -267,18 +267,22 @@ if [[ "$HEADLESS" == "false" ]]; then
     ln -s "${DOTS_HOME}/gimp/plug-ins" $GIMP_PLUGIN_DIR
 fi
 
-# noctalia plugin (only for graphical mode)
+# noctalia local assets (only for graphical mode)
 if [[ "$HEADLESS" == "false" ]]; then
     NOCTALIA_PLUGIN_DIR="${XDG_CONFIG_HOME}/noctalia/plugins"
+    NOCTALIA_PALETTE_DIR="${XDG_CONFIG_HOME}/noctalia/palettes"
     WALI_PANEL_PLUGIN="${NOCTALIA_PLUGIN_DIR}/wali-panel"
+    GLOW_PALETTE="${NOCTALIA_PALETTE_DIR}/Glow.json"
 
     mkdir -p "${NOCTALIA_PLUGIN_DIR}"
+    mkdir -p "${NOCTALIA_PALETTE_DIR}"
 
     if [ -e "${WALI_PANEL_PLUGIN}" ] && [ ! -L "${WALI_PANEL_PLUGIN}" ]; then
       mv "${WALI_PANEL_PLUGIN}" "${WALI_PANEL_PLUGIN}.bak"
     fi
 
     ln_s "${DOTS_HOME}/noctalia/plugins/wali-panel" "${WALI_PANEL_PLUGIN}"
+    ln_s "${DOTS_HOME}/noctalia/palettes/Glow.json" "${GLOW_PALETTE}"
 fi
 
 # git

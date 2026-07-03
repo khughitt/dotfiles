@@ -30,6 +30,9 @@ kitty/os-local.conf
 docs/
 wsprofiles/node_modules/
 
+# noctalia plugins
+noctalia/plugins/
+
 # noctalia colorscheme updates
 hypr/noctalia/noctalia-colors.conf
 kitty/themes/noctalia.conf

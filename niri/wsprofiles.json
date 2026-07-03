@@ -1,0 +1,18 @@
+[
+  {
+    "id": "ember",
+    "label": "Ember - client-api",
+    "icon": "",
+    "ring": "#ff7a45",
+    "border": "#ff7a45",
+    "instances": 1
+  },
+  {
+    "id": "tide",
+    "label": "Tide - infra",
+    "icon": "",
+    "ring": "#3aa6ff",
+    "border": null,
+    "instances": 2
+  }
+]
