@@ -1,0 +1,25 @@
+set dotenv-load := false
+
+default:
+    @just --list
+
+check:
+    just --fmt --check --justfile justfile
+    bin/dotfiles-check
+
+health:
+    bin/dotfiles-health --skip-systemd
+
+health-systemd:
+    bin/dotfiles-health
+
+setup-dry-run:
+    bash setup.sh --dry-run --link-only --headless
+
+test:
+    zsh tests/dropbox_ignore_flux.zsh
+    zsh tests/setup_and_health.zsh
+    zsh tests/dotfiles_check.zsh
+    zsh tests/justfile.zsh
+
+verify: check test health
