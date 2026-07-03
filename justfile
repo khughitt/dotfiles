@@ -16,6 +16,9 @@ health-systemd:
 setup-dry-run:
     bash setup.sh --dry-run --link-only --headless
 
+setup-only phases:
+    bash setup.sh --dry-run --link-only --headless --only {{ phases }}
+
 test:
     zsh tests/dropbox_ignore_flux.zsh
     zsh tests/setup_and_health.zsh

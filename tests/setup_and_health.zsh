@@ -82,6 +82,59 @@ test_setup_dry_run_can_enable_user_timers() {
   trap - EXIT
 }
 
+test_setup_only_runs_selected_phase() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  output=$(run_setup "$tmp" --dry-run --link-only --headless --only shell)
+
+  [[ "$output" == *"Only phases: shell"* ]] || fail "expected selected phase summary"
+  [[ "$output" == *"==> Shell links"* ]] || fail "expected selected shell phase"
+  [[ "$output" != *"==> Common config links"* ]] || fail "should skip unselected common config phase"
+  [[ "$output" != *"==> Systemd user units"* ]] || fail "should skip unselected systemd phase"
+  [[ "$output" != *"==> Package installation"* ]] || fail "should skip unselected package phase"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
+test_setup_only_accepts_multiple_phases() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  output=$(run_setup "$tmp" --dry-run --link-only --headless --only shell,systemd)
+
+  [[ "$output" == *"Only phases: shell systemd"* ]] || fail "expected multiple selected phases"
+  [[ "$output" == *"==> Shell links"* ]] || fail "expected shell phase"
+  [[ "$output" == *"==> Systemd user units"* ]] || fail "expected systemd phase"
+  [[ "$output" != *"==> Common config links"* ]] || fail "should skip common config phase"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
+test_setup_only_rejects_unknown_phase() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  set +e
+  output=$(run_setup "$tmp" --dry-run --link-only --headless --only missing 2>&1)
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "setup should reject unknown phases"
+  [[ "$output" == *"Unknown setup phase: missing"* ]] || fail "expected unknown phase message"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
 test_dotfiles_health_passes_after_link_only_setup() {
   local tmp
   tmp=$(make_tmpdir)
@@ -199,6 +252,9 @@ EOF
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
 test_setup_dry_run_can_enable_user_timers
+test_setup_only_runs_selected_phase
+test_setup_only_accepts_multiple_phases
+test_setup_only_rejects_unknown_phase
 test_dotfiles_health_passes_after_link_only_setup
 test_dotfiles_health_fails_stale_removed_config_links
 test_dotfiles_health_ignores_brave_runtime_symlinks

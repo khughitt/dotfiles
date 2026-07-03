@@ -16,6 +16,35 @@ LINK_ONLY=false
 SKIP_PACKAGES=false
 SKIP_EXTERNAL_CLONES=false
 ENABLE_USER_TIMERS=false
+ONLY_PHASES=()
+
+VALID_PHASES=(
+    external-clones
+    shell
+    gtk
+    graphical-config
+    common-config
+    systemd
+    kitty
+    home
+    app-config
+    mime
+    tmux
+    packages
+)
+
+function is_valid_phase() {
+    local candidate="$1"
+    local phase_name
+    for phase_name in "${VALID_PHASES[@]}"; do
+        [[ "$phase_name" == "$candidate" ]] && return 0
+    done
+    return 1
+}
+
+function print_valid_phases() {
+    printf 'Valid phases: %s\n' "${VALID_PHASES[*]}"
+}
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -53,6 +82,24 @@ while [[ $# -gt 0 ]]; do
             ENABLE_USER_TIMERS=true
             shift
             ;;
+        --only)
+            if [[ $# -lt 2 ]]; then
+                echo "--only requires a comma-separated phase list"
+                print_valid_phases
+                exit 1
+            fi
+            IFS=',' read -r -a _requested_phases <<< "$2"
+            for phase_name in "${_requested_phases[@]}"; do
+                if [[ -z "$phase_name" ]] || ! is_valid_phase "$phase_name"; then
+                    echo "Unknown setup phase: $phase_name"
+                    print_valid_phases
+                    exit 1
+                fi
+                ONLY_PHASES+=("$phase_name")
+            done
+            unset _requested_phases phase_name
+            shift 2
+            ;;
         --help)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
@@ -66,6 +113,8 @@ while [[ $# -gt 0 ]]; do
             echo "                    Skip cloning external tools such as zinit and tmux TPM"
             echo "  --enable-user-timers"
             echo "                    Enable linked systemd user timers on Linux"
+            echo "  --only PHASES     Run only comma-separated setup phases"
+            print_valid_phases
             echo "  --help            Show this help message"
             exit 0
             ;;
@@ -91,6 +140,9 @@ echo "Link only: $LINK_ONLY"
 echo "Skip packages: $SKIP_PACKAGES"
 echo "Skip external clones: $SKIP_EXTERNAL_CLONES"
 echo "Enable user timers: $ENABLE_USER_TIMERS"
+if [[ "${#ONLY_PHASES[@]}" -gt 0 ]]; then
+    echo "Only phases: ${ONLY_PHASES[*]}"
+fi
 
 # Define package lists based on distribution
 if [[ "$MACOS" == "true" ]]; then
@@ -158,21 +210,36 @@ function phase() {
     echo "==> $1"
 }
 
+function should_run_phase() {
+    local requested="$1"
+    local phase_name
+
+    [[ "${#ONLY_PHASES[@]}" -eq 0 ]] && return 0
+
+    for phase_name in "${ONLY_PHASES[@]}"; do
+        [[ "$phase_name" == "$requested" ]] && return 0
+    done
+
+    return 1
+}
+
 ensure_dir "$XDG_CONFIG_HOME"
 
-phase "External clone setup"
-if [[ "$SKIP_EXTERNAL_CLONES" != "true" ]]; then
-    # Create completions cache dir
-    ensure_dir "$HOME/.cache/zinit/completions"
+if should_run_phase external-clones; then
+    phase "External clone setup"
+    if [[ "$SKIP_EXTERNAL_CLONES" != "true" ]]; then
+        # Create completions cache dir
+        ensure_dir "$HOME/.cache/zinit/completions"
 
-    # Install zinit outside shell startup.
-    ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-    if [[ ! -d "$ZINIT_HOME/.git" ]]; then
-        ensure_dir "$(dirname "$ZINIT_HOME")"
-        run git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+        # Install zinit outside shell startup.
+        ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+        if [[ ! -d "$ZINIT_HOME/.git" ]]; then
+            ensure_dir "$(dirname "$ZINIT_HOME")"
+            run git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+        fi
+    else
+        echo "Skipping external clone setup..."
     fi
-else
-    echo "Skipping external clone setup..."
 fi
 
 # Checks for file or directory and creates a sym link if it doesn't already exist
@@ -287,13 +354,15 @@ function install_packages() {
 echo "Setting up dotfiles..."
 
 # Setup zsh
-phase "Shell links"
-ln_s "${DOTS_HOME}/zshrc" "${HOME}/.zshrc"
-ln_s "${DOTS_HOME}/zshenv" "${HOME}/.zshenv"
-ln_s "${DOTS_HOME}/shell" "${HOME}/.shell"
+if should_run_phase shell; then
+    phase "Shell links"
+    ln_s "${DOTS_HOME}/zshrc" "${HOME}/.zshrc"
+    ln_s "${DOTS_HOME}/zshenv" "${HOME}/.zshenv"
+    ln_s "${DOTS_HOME}/shell" "${HOME}/.shell"
+fi
 
 # Create needed directories (only for graphical mode)
-if [[ "$HEADLESS" == "false" ]]; then
+if [[ "$HEADLESS" == "false" ]] && should_run_phase gtk; then
     phase "GTK links"
     # Gtk 3.0
     ensure_dir "${XDG_CONFIG_HOME}/gtk-3.0"
@@ -307,7 +376,7 @@ if [[ "$HEADLESS" == "false" ]]; then
 fi
 
 # Install ~/.config components
-if [[ "$HEADLESS" == "false" ]]; then
+if [[ "$HEADLESS" == "false" ]] && should_run_phase graphical-config; then
     phase "Graphical config links"
     for path in "${GRAPHICAL_CONFIGS[@]}"; do
         if [[ "$path" == "niri" && -e "${XDG_CONFIG_HOME}/${path}" && ! -L "${XDG_CONFIG_HOME}/${path}" ]]; then
@@ -325,14 +394,16 @@ if [[ "$HEADLESS" == "false" ]]; then
     fi
 fi
 
-phase "Common config links"
-for path in "${COMMON_CONFIGS[@]}"; do
-    ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
-done
+if should_run_phase common-config; then
+    phase "Common config links"
+    for path in "${COMMON_CONFIGS[@]}"; do
+        ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
+    done
+fi
 
 # systemd user units (Linux only). Link individual units instead of replacing
 # ~/.config/systemd, which may contain host-local services.
-if [[ "$MACOS" != "true" ]]; then
+if [[ "$MACOS" != "true" ]] && should_run_phase systemd; then
     phase "Systemd user units"
     ensure_dir "${XDG_CONFIG_HOME}/systemd/user"
     ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service"
@@ -345,95 +416,101 @@ if [[ "$MACOS" != "true" ]]; then
 fi
 
 # kitty OS-specific overrides (pulled in via `include os-local.conf`)
-phase "Kitty OS overrides"
-if [[ "$MACOS" == "true" ]]; then
-    ln_s "${DOTS_HOME}/kitty/os-macos.conf" "${DOTS_HOME}/kitty/os-local.conf"
+if should_run_phase kitty; then
+    phase "Kitty OS overrides"
+    if [[ "$MACOS" == "true" ]]; then
+        ln_s "${DOTS_HOME}/kitty/os-macos.conf" "${DOTS_HOME}/kitty/os-local.conf"
 
-    # macOS ships no xterm-kitty in its terminfo db, so git/less/etc. warn the
-    # "terminal is not fully functional". Compile kitty's bundled entry into
-    # ~/.terminfo, which ncurses auto-searches. (Linux gets it from the
-    # kitty-terminfo package.)
-    _kitty_terminfo="/Applications/kitty.app/Contents/Resources/kitty/terminfo/kitty.terminfo"
-    [[ -f "$_kitty_terminfo" ]] && run tic -x -o "${HOME}/.terminfo" "$_kitty_terminfo"
-    unset _kitty_terminfo
-else
-    ln_s "${DOTS_HOME}/kitty/os-linux.conf" "${DOTS_HOME}/kitty/os-local.conf"
+        # macOS ships no xterm-kitty in its terminfo db, so git/less/etc. warn the
+        # "terminal is not fully functional". Compile kitty's bundled entry into
+        # ~/.terminfo, which ncurses auto-searches. (Linux gets it from the
+        # kitty-terminfo package.)
+        _kitty_terminfo="/Applications/kitty.app/Contents/Resources/kitty/terminfo/kitty.terminfo"
+        [[ -f "$_kitty_terminfo" ]] && run tic -x -o "${HOME}/.terminfo" "$_kitty_terminfo"
+        unset _kitty_terminfo
+    else
+        ln_s "${DOTS_HOME}/kitty/os-linux.conf" "${DOTS_HOME}/kitty/os-local.conf"
+    fi
 fi
 
 # Install ~/. components
-phase "Home dotfile links"
-for path in "${COMMON_DOTFILES[@]}"; do
-    ln_s "${DOTS_HOME}/${path}" "${HOME}/.${path}"
-done
-
-phase "Application config links"
-# ghci
-ensure_dir "${HOME}/.ghc"
-ln_s "${DOTS_HOME}/ghci.conf" "${HOME}/.ghc/ghci.conf"
-
-# gimp (only for graphical mode)
-if [[ "$HEADLESS" == "false" ]]; then
-    GIMP_DIR="${XDG_CONFIG_HOME}/GIMP/3.0"
-    GIMP_PLUGIN_DIR="${XDG_CONFIG_HOME}/GIMP/3.0/plug-ins"
-    GIMPRC="${GIMP_DIR}/gimprc"
-
-    ensure_dir "${GIMP_DIR}"
-
-    if [ -e "$GIMPRC" ]; then
-      run mv "$GIMPRC" "$GIMPRC.bak"
-    fi
-    if [ -e "$GIMP_PLUGIN_DIR" ]; then
-      run mv "$GIMP_PLUGIN_DIR" "$GIMP_PLUGIN_DIR.bak"
-    fi
-
-    ln_s "${DOTS_HOME}/gimp/gimprc" "$GIMPRC"
-    ln_s "${DOTS_HOME}/gimp/plug-ins" "$GIMP_PLUGIN_DIR"
+if should_run_phase home; then
+    phase "Home dotfile links"
+    for path in "${COMMON_DOTFILES[@]}"; do
+        ln_s "${DOTS_HOME}/${path}" "${HOME}/.${path}"
+    done
 fi
 
-# noctalia local assets (only for graphical mode)
-if [[ "$HEADLESS" == "false" ]]; then
-    NOCTALIA_PLUGIN_DIR="${XDG_CONFIG_HOME}/noctalia/plugins"
-    NOCTALIA_PALETTE_DIR="${XDG_CONFIG_HOME}/noctalia/palettes"
-    WALI_PANEL_PLUGIN="${NOCTALIA_PLUGIN_DIR}/wali-panel"
-    GLOW_PALETTE="${NOCTALIA_PALETTE_DIR}/Glow.json"
+if should_run_phase app-config; then
+    phase "Application config links"
+    # ghci
+    ensure_dir "${HOME}/.ghc"
+    ln_s "${DOTS_HOME}/ghci.conf" "${HOME}/.ghc/ghci.conf"
 
-    ensure_dir "${NOCTALIA_PLUGIN_DIR}"
-    ensure_dir "${NOCTALIA_PALETTE_DIR}"
+    # gimp (only for graphical mode)
+    if [[ "$HEADLESS" == "false" ]]; then
+        GIMP_DIR="${XDG_CONFIG_HOME}/GIMP/3.0"
+        GIMP_PLUGIN_DIR="${XDG_CONFIG_HOME}/GIMP/3.0/plug-ins"
+        GIMPRC="${GIMP_DIR}/gimprc"
 
-    if [ -e "${WALI_PANEL_PLUGIN}" ] && [ ! -L "${WALI_PANEL_PLUGIN}" ]; then
-      run mv "${WALI_PANEL_PLUGIN}" "${WALI_PANEL_PLUGIN}.bak"
+        ensure_dir "${GIMP_DIR}"
+
+        if [ -e "$GIMPRC" ]; then
+          run mv "$GIMPRC" "$GIMPRC.bak"
+        fi
+        if [ -e "$GIMP_PLUGIN_DIR" ]; then
+          run mv "$GIMP_PLUGIN_DIR" "$GIMP_PLUGIN_DIR.bak"
+        fi
+
+        ln_s "${DOTS_HOME}/gimp/gimprc" "$GIMPRC"
+        ln_s "${DOTS_HOME}/gimp/plug-ins" "$GIMP_PLUGIN_DIR"
     fi
 
-    ln_s "${DOTS_HOME}/noctalia/plugins/wali-panel" "${WALI_PANEL_PLUGIN}"
-    ln_s "${DOTS_HOME}/noctalia/palettes/Glow.json" "${GLOW_PALETTE}"
+    # noctalia local assets (only for graphical mode)
+    if [[ "$HEADLESS" == "false" ]]; then
+        NOCTALIA_PLUGIN_DIR="${XDG_CONFIG_HOME}/noctalia/plugins"
+        NOCTALIA_PALETTE_DIR="${XDG_CONFIG_HOME}/noctalia/palettes"
+        WALI_PANEL_PLUGIN="${NOCTALIA_PLUGIN_DIR}/wali-panel"
+        GLOW_PALETTE="${NOCTALIA_PALETTE_DIR}/Glow.json"
+
+        ensure_dir "${NOCTALIA_PLUGIN_DIR}"
+        ensure_dir "${NOCTALIA_PALETTE_DIR}"
+
+        if [ -e "${WALI_PANEL_PLUGIN}" ] && [ ! -L "${WALI_PANEL_PLUGIN}" ]; then
+          run mv "${WALI_PANEL_PLUGIN}" "${WALI_PANEL_PLUGIN}.bak"
+        fi
+
+        ln_s "${DOTS_HOME}/noctalia/plugins/wali-panel" "${WALI_PANEL_PLUGIN}"
+        ln_s "${DOTS_HOME}/noctalia/palettes/Glow.json" "${GLOW_PALETTE}"
+    fi
+
+    # git
+    ln_s "${DOTS_HOME}/git/ignore" "${HOME}/.gitignore_global"
+    ln_s "${DOTS_HOME}/git/config" "${HOME}/.gitconfig"
+
+    # julia
+    ensure_dir "${HOME}/.julia/config"
+    ln_s "${DOTS_HOME}/julia/startup.jl" "${HOME}/.julia/config/startup.jl"
+
+    # jupyter
+    ensure_dir "${HOME}/.jupyter"
+    ln_s "${DOTS_HOME}/jupyter/jupyter_qtconsole_config.py" "${HOME}/.jupyter/jupyter_qtconsole_config.py"
+
+    # mamba
+    ln_s "${DOTS_HOME}/condarc" "${HOME}/.mambarc"
+
+    # r
+    ln_s "${DOTS_HOME}/lintr" "${HOME}/.lintr"
+
+    # ripgrep
+    ln_s "${DOTS_HOME}/rgignore" "${HOME}/.rgignore"
+
+    # scripts, etc.
+    ln_s "${DOTS_HOME}/bin" "${HOME}/bin"
 fi
-
-# git
-ln_s "${DOTS_HOME}/git/ignore" "${HOME}/.gitignore_global"
-ln_s "${DOTS_HOME}/git/config" "${HOME}/.gitconfig"
-
-# julia
-ensure_dir "${HOME}/.julia/config"
-ln_s "${DOTS_HOME}/julia/startup.jl" "${HOME}/.julia/config/startup.jl"
-
-# jupyter
-ensure_dir "${HOME}/.jupyter"
-ln_s "${DOTS_HOME}/jupyter/jupyter_qtconsole_config.py" "${HOME}/.jupyter/jupyter_qtconsole_config.py"
-
-# mamba
-ln_s "${DOTS_HOME}/condarc" "${HOME}/.mambarc"
-
-# r
-ln_s "${DOTS_HOME}/lintr" "${HOME}/.lintr"
-
-# ripgrep
-ln_s "${DOTS_HOME}/rgignore" "${HOME}/.rgignore"
-
-# scripts, etc.
-ln_s "${DOTS_HOME}/bin" "${HOME}/bin"
 
 # mimetypes (Linux only)
-if [[ "$MACOS" != "true" ]]; then
+if [[ "$MACOS" != "true" ]] && should_run_phase mime; then
     phase "MIME links"
     ensure_dir "${HOME}/.local/share/mime"
     ln_s "${DOTS_HOME}/mime" "${HOME}/.local/share/mime/packages"
@@ -445,11 +522,13 @@ if [[ "$MACOS" != "true" ]]; then
 fi
 
 # install tpm
-phase "Tmux plugin manager"
-if [[ "$SKIP_EXTERNAL_CLONES" != "true" ]]; then
-    if [[ ! -d "${HOME}/.tmux/plugins/tpm/.git" ]]; then
-        ensure_dir "${HOME}/.tmux/plugins"
-        run git clone https://github.com/tmux-plugins/tpm "${HOME}/.tmux/plugins/tpm"
+if should_run_phase tmux; then
+    phase "Tmux plugin manager"
+    if [[ "$SKIP_EXTERNAL_CLONES" != "true" ]]; then
+        if [[ ! -d "${HOME}/.tmux/plugins/tpm/.git" ]]; then
+            ensure_dir "${HOME}/.tmux/plugins"
+            run git clone https://github.com/tmux-plugins/tpm "${HOME}/.tmux/plugins/tpm"
+        fi
     fi
 fi
 
@@ -457,7 +536,9 @@ fi
 # external dependencies
 #
 
-phase "Package installation"
-install_packages "${PACKAGES[@]}"
+if should_run_phase packages; then
+    phase "Package installation"
+    install_packages "${PACKAGES[@]}"
+fi
 
 echo "Done!"

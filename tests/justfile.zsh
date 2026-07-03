@@ -18,7 +18,7 @@ assert_contains() {
 
 list_output=$(just --justfile "${repo_root}/justfile" --list)
 
-for recipe in check health setup-dry-run test; do
+for recipe in check health setup-dry-run setup-only test; do
   assert_contains "$list_output" "$recipe" "expected just recipe: $recipe"
 done
 
@@ -36,6 +36,10 @@ assert_contains "$(just --justfile "${repo_root}/justfile" --dry-run health 2>&1
 assert_contains "$(just --justfile "${repo_root}/justfile" --dry-run setup-dry-run 2>&1)" \
   "bash setup.sh --dry-run --link-only --headless" \
   "expected setup-dry-run recipe to run safe dry-run setup"
+
+assert_contains "$(just --justfile "${repo_root}/justfile" --dry-run setup-only shell,systemd 2>&1)" \
+  "bash setup.sh --dry-run --link-only --headless --only shell,systemd" \
+  "expected setup-only recipe to run selected safe dry-run setup phases"
 
 test_dry_run=$(just --justfile "${repo_root}/justfile" --dry-run test 2>&1)
 assert_contains "$test_dry_run" "zsh tests/dropbox_ignore_flux.zsh" \
