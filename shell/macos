@@ -42,4 +42,4 @@ unalias duin 2>/dev/null
 # sed -i requires '' on macOS; provide a wrapper
 alias gsed='sed'  # if user installs gnu-sed via brew
 
-# vi:syntax=bash
+# vi:syntax=zsh

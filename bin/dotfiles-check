@@ -37,6 +37,10 @@ zsh_files=(
     tests/dotfiles_check.zsh
 )
 
+while IFS= read -r file; do
+    zsh_files+=("$file")
+done < <(find shell -path 'shell/private' -prune -o -path 'shell/local' -prune -o -type f -name '*.zsh' -print | sort)
+
 echo "bash -n"
 bash -n "${bash_files[@]}"
 
@@ -45,5 +49,11 @@ shellcheck "${bash_files[@]}"
 
 echo "zsh -n"
 zsh -n "${zsh_files[@]}"
+
+echo "zsh modelines"
+if rg -n 'vi:syntax=bash' shell --glob '!private/**' --glob '!local/**'; then
+    echo "shell files are zsh-sourced; use vi:syntax=zsh instead of vi:syntax=bash" >&2
+    exit 1
+fi
 
 echo "dotfiles checks passed"
