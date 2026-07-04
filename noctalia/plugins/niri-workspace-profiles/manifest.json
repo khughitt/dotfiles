@@ -1,7 +1,7 @@
 {
   "id": "niri-workspace-profiles",
   "name": "Niri Workspace Profiles",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "minNoctaliaVersion": "4.7.0",
   "author": "Keith Hughitt",
   "license": "MIT",
@@ -17,7 +17,8 @@
   "metadata": {
     "defaultSettings": {
       "followFocusedScreen": false,
-      "hideUnoccupied": false
+      "hideUnoccupied": false,
+      "showAgentStatus": true
     }
   }
 }

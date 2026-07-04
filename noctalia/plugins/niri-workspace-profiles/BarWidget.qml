@@ -38,6 +38,9 @@ Item {
   readonly property bool hideUnoccupied: widgetSettings.hideUnoccupied !== undefined
     ? widgetSettings.hideUnoccupied
     : (defaultSettings.hideUnoccupied !== undefined ? defaultSettings.hideUnoccupied : false)
+  readonly property bool showAgentStatus: widgetSettings.showAgentStatus !== undefined
+    ? widgetSettings.showAgentStatus
+    : (defaultSettings.showAgentStatus !== undefined ? defaultSettings.showAgentStatus : true)
   readonly property real barHeight: Style.getBarHeightForScreen(screenName)
   readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
   readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
@@ -46,6 +49,7 @@ Item {
   property var profiles: []
   property string loadError: "loading"
   property var cells: []
+  property var agents: ({})
   property bool isDestroying: false
 
   implicitWidth: strip.implicitWidth
@@ -79,6 +83,17 @@ Item {
     return result;
   }
 
+  function windowIndexSnapshot() {
+    var idx = {};
+    for (var i = 0; i < CompositorService.windows.count; i++) {
+      var w = CompositorService.windows.get(i);
+      if (w && w.id !== undefined && w.workspaceId !== undefined) {
+        idx[w.id] = w.workspaceId;
+      }
+    }
+    return idx;
+  }
+
   function refreshCells() {
     var filtered = Logic.filterWorkspaces(root.workspaceSnapshot(), {
       screenName: root.screenName,
@@ -87,7 +102,11 @@ Item {
       followFocusedScreen: root.followFocusedScreen,
       hideUnoccupied: root.hideUnoccupied
     });
-    root.cells = Logic.buildCells(filtered, root.profiles);
+    var cells = Logic.buildCells(filtered, root.profiles);
+    if (root.showAgentStatus) {
+      cells = Logic.rollupAgents(cells, root.agents, root.windowIndexSnapshot());
+    }
+    root.cells = cells;
   }
 
   function scheduleRefresh() {
@@ -112,6 +131,20 @@ Item {
     if (errorText) {
       Logger.w("WorkspaceProfilesBar", "wsprofiles.json load failed:", errorText);
     }
+    root.scheduleRefresh();
+  }
+
+  function applyAgentsText(text) {
+    var result = Logic.parseAgents(text);
+    root.agents = result.agents;
+    if (result.error && result.error !== "empty") {
+      Logger.w("WorkspaceProfilesBar", "agents.json parse issue:", result.error);
+    }
+    root.scheduleRefresh();
+  }
+
+  function clearAgents(errorText) {
+    root.agents = ({});
     root.scheduleRefresh();
   }
 
@@ -181,6 +214,7 @@ Item {
   onScreenNameChanged: scheduleRefresh()
   onFollowFocusedScreenChanged: scheduleRefresh()
   onHideUnoccupiedChanged: scheduleRefresh()
+  onShowAgentStatusChanged: scheduleRefresh()
 
   Connections {
     target: CompositorService
@@ -205,6 +239,32 @@ Item {
     }
     onLoaded: root.applyProfileText(catalogView.text())
     onLoadFailed: root.clearProfiles("load failed: " + catalogView.path)
+  }
+
+  FileView {
+    id: agentsView
+    path: Quickshell.env("HOME") + "/.local/state/ohai/agents.json"
+    blockLoading: true
+    watchChanges: true
+    onFileChanged: {
+      this.reload();
+    }
+    onLoaded: {
+      agentsRetryTimer.running = false;
+      root.applyAgentsText(agentsView.text());
+    }
+    onLoadFailed: {
+      root.clearAgents("load failed: " + agentsView.path);
+      agentsRetryTimer.running = true;
+    }
+  }
+
+  Timer {
+    id: agentsRetryTimer
+    interval: 3000
+    repeat: true
+    running: false
+    onTriggered: agentsView.reload()
   }
 
   Row {
@@ -308,6 +368,27 @@ Item {
           onClicked: {
             TooltipService.hide();
             root.switchCell(cellItem.cell);
+          }
+        }
+
+        Rectangle {
+          id: statusDot
+          visible: root.showAgentStatus && !!cellItem.cell.agentStatus
+          width: Math.max(4, Math.round(root.cellSize * 0.3))
+          height: width
+          radius: width / 2
+          anchors.right: pill.right
+          anchors.top: pill.top
+          anchors.rightMargin: 1
+          anchors.topMargin: 1
+          color: cellItem.cell.agentStatus === "waiting" ? Color.mError : Color.mPrimary
+          opacity: cellItem.cell.agentStatus === "waiting" ? Style.opacityFull : Style.opacityMedium
+
+          Behavior on opacity {
+            NumberAnimation {
+              duration: Style.animationFast
+              easing.type: Easing.InOutCubic
+            }
           }
         }
       }
