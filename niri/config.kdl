@@ -90,6 +90,7 @@ spawn-at-startup "qs" "-c" "noctalia-shell"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
+spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-status reset < /dev/null"
 spawn-sh-at-startup "node ~/d/dotfiles/wsprofiles/bin/wsprofiled"
 spawn-at-startup "qs" "-c" "wsprofile-menu"
 
