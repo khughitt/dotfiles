@@ -188,3 +188,79 @@ function pickForeground(ring) {
   var whiteContrast = contrastRatio(1, luminance);
   return blackContrast > whiteContrast ? '#000000' : '#ffffff';
 }
+
+function parseAgents(text) {
+  if (typeof text !== 'string' || text.trim() === '') {
+    return { agents: {}, error: 'empty' };
+  }
+
+  var data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    return { agents: {}, error: 'invalid json' };
+  }
+
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { agents: {}, error: 'not an object' };
+  }
+
+  var out = {};
+  var keys = Object.keys(data);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var rec = data[key];
+    if (rec && typeof rec === 'object'
+        && typeof rec.windowId === 'number'
+        && (rec.state === 'working' || rec.state === 'waiting')) {
+      out[key] = {
+        windowId: rec.windowId,
+        state: rec.state,
+        project: typeof rec.project === 'string' ? rec.project : '',
+        reason: typeof rec.reason === 'string' ? rec.reason : null,
+      };
+    }
+  }
+
+  return { agents: out, error: null };
+}
+
+function rollupAgents(cells, agents, windowIndex) {
+  var severity = { working: 1, waiting: 2 };
+  var byWorkspace = {};
+  var map = agents || {};
+  var index = windowIndex || {};
+  var keys = Object.keys(map);
+
+  for (var i = 0; i < keys.length; i++) {
+    var rec = map[keys[i]];
+    if (!rec) {
+      continue;
+    }
+    var wsId = index[rec.windowId];
+    if (wsId === undefined || wsId === null) {
+      continue;
+    }
+    var current = byWorkspace[wsId];
+    if (!current || severity[rec.state] > severity[current]) {
+      byWorkspace[wsId] = rec.state;
+    }
+  }
+
+  var result = [];
+  for (var j = 0; j < cells.length; j++) {
+    var cell = cells[j];
+    var copy = {};
+    for (var prop in cell) {
+      if (Object.prototype.hasOwnProperty.call(cell, prop)) {
+        copy[prop] = cell[prop];
+      }
+    }
+    copy.agentStatus = Object.prototype.hasOwnProperty.call(byWorkspace, cell.id)
+      ? byWorkspace[cell.id]
+      : null;
+    result.push(copy);
+  }
+
+  return result;
+}

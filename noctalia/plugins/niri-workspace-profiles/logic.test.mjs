@@ -190,3 +190,87 @@ test('channelLuminance: maps black and white endpoints', () => {
   assert.equal(Logic.channelLuminance(0), 0);
   assert.equal(Logic.channelLuminance(255), 1);
 });
+
+test('parseAgents: keeps valid records and reports no error', () => {
+  const text = JSON.stringify({
+    s1: { windowId: 42, state: 'waiting', project: 'ohai' },
+    s2: { windowId: 57, state: 'working', project: 'dotfiles', reason: null },
+  });
+  const result = Logic.parseAgents(text);
+  assert.equal(result.error, null);
+  assert.deepEqual(plain(result.agents), {
+    s1: { windowId: 42, state: 'waiting', project: 'ohai', reason: null },
+    s2: { windowId: 57, state: 'working', project: 'dotfiles', reason: null },
+  });
+});
+
+test('parseAgents: drops one malformed record but keeps its valid siblings', () => {
+  const text = JSON.stringify({
+    good: { windowId: 42, state: 'waiting', project: 'ohai' },
+    badState: { windowId: 5, state: 'idle' },
+    badWindow: { windowId: 'x', state: 'working' },
+    notObject: 7,
+  });
+  const result = Logic.parseAgents(text);
+  assert.equal(result.error, null);
+  assert.deepEqual(Object.keys(plain(result.agents)), ['good']);
+});
+
+test('parseAgents: unparseable or non-object top level yields empty map with error', () => {
+  for (const text of ['', '{ not json', '[1,2,3]', 'null', '42']) {
+    const result = Logic.parseAgents(text);
+    assert.deepEqual(plain(result.agents), {});
+    assert.equal(typeof result.error, 'string');
+    assert.ok(result.error.length > 0);
+  }
+});
+
+const rollupCells = [
+  { id: 1, idx: 1, name: 'ember', ring: '#ff7a45', label: 'Ember' },
+  { id: 2, idx: 2, name: 'tide', ring: '#3aa6ff', label: 'Tide' },
+  { id: 3, idx: 3, name: 'scratch', ring: null, label: 'scratch' },
+];
+// window 42 -> ws 1, window 57 -> ws 1, window 60 -> ws 2, window 99 -> ws 2
+const windowIndex = { 42: 1, 57: 1, 60: 2, 99: 2 };
+
+test('rollupAgents: a single waiting agent marks its workspace waiting', () => {
+  const agents = { s1: { windowId: 60, state: 'waiting', project: 'x', reason: null } };
+  const out = Logic.rollupAgents(rollupCells, agents, windowIndex);
+  assert.deepEqual(plain(out.map((c) => c.agentStatus)), [null, 'waiting', null]);
+});
+
+test('rollupAgents: waiting beats working on the same workspace', () => {
+  const agents = {
+    a: { windowId: 42, state: 'working', project: 'x', reason: null },
+    b: { windowId: 57, state: 'waiting', project: 'y', reason: null },
+  };
+  const out = Logic.rollupAgents(rollupCells, agents, windowIndex);
+  assert.equal(out[0].agentStatus, 'waiting'); // ws 1
+});
+
+test('rollupAgents: only-working workspace reads working; empty reads null', () => {
+  const agents = { a: { windowId: 99, state: 'working', project: 'x', reason: null } };
+  const out = Logic.rollupAgents(rollupCells, agents, windowIndex);
+  assert.deepEqual(plain(out.map((c) => c.agentStatus)), [null, 'working', null]);
+});
+
+test('rollupAgents: a record whose window is not in the index contributes nothing', () => {
+  const agents = { a: { windowId: 12345, state: 'waiting', project: 'x', reason: null } };
+  const out = Logic.rollupAgents(rollupCells, agents, windowIndex);
+  assert.deepEqual(plain(out.map((c) => c.agentStatus)), [null, null, null]);
+});
+
+test('rollupAgents: a record on an off-screen workspace does not leak onto another cell', () => {
+  // window 88 maps to workspace 9, which is not present in cells.
+  const agents = { a: { windowId: 88, state: 'waiting', project: 'x', reason: null } };
+  const out = Logic.rollupAgents(rollupCells, agents, { 88: 9 });
+  assert.deepEqual(plain(out.map((c) => c.agentStatus)), [null, null, null]);
+});
+
+test('rollupAgents: preserves order and passes existing cell fields through', () => {
+  const out = Logic.rollupAgents(rollupCells, {}, windowIndex);
+  assert.deepEqual(plain(out.map((c) => c.id)), [1, 2, 3]);
+  assert.equal(out[0].ring, '#ff7a45');
+  assert.equal(out[0].label, 'Ember');
+  assert.equal(out[0].agentStatus, null);
+});
