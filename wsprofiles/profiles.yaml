@@ -6,7 +6,6 @@ profiles:
     border: "#ff7a45"
     icon: ""
     theme:
-      wallpaper: ~/d/linux/backgrounds/3440/PXL_20210602_024124219.jpg
       mode: dark
   - id: tide
     label: "Tide - infra"
@@ -14,5 +13,4 @@ profiles:
     ring: "#3aa6ff"
     icon: ""
     theme:
-      wallpaper: ~/d/linux/backgrounds/3440/PXL_20210603_114137918.jpg
       mode: dark
