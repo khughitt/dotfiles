@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseEventLines, focusedName } from '../src/niri.js';
+import { parseEventLines, focusedName, setWorkspaceNameArgs, unsetWorkspaceNameArgs } from '../src/niri.js';
 
 test('parses complete JSON lines and carries a partial line forward', () => {
   const a = parseEventLines('{"A":1}\n{"B":2}\n{"C', '');
@@ -28,4 +28,20 @@ test('focusedName resolves a WorkspaceActivated focused=true via the id map', ()
 
 test('focusedName ignores non-focus events', () => {
   assert.equal(focusedName({ WindowClosed: { id: 1 } }, new Map()), null);
+});
+
+test('setWorkspaceNameArgs targets a workspace by reference', () => {
+  assert.deepEqual(
+    setWorkspaceNameArgs(14, 'dotfiles'),
+    ['msg', 'action', 'set-workspace-name', '--workspace', '14', 'dotfiles']
+  );
+  assert.deepEqual(
+    setWorkspaceNameArgs('tide', 'tide-2'),
+    ['msg', 'action', 'set-workspace-name', '--workspace', 'tide', 'tide-2']
+  );
+});
+
+test('unsetWorkspaceNameArgs targets a workspace by reference', () => {
+  assert.deepEqual(unsetWorkspaceNameArgs('tide'), ['msg', 'action', 'unset-workspace-name', 'tide']);
+  assert.deepEqual(unsetWorkspaceNameArgs(3), ['msg', 'action', 'unset-workspace-name', '3']);
 });

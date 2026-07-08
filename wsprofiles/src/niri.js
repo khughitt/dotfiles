@@ -32,3 +32,19 @@ export function focusWorkspace(name) {
 export function loadConfig() {
   return run('niri', ['msg', 'action', 'load-config-file']).then(() => {});
 }
+
+export function setWorkspaceNameArgs(ref, name) {
+  return ['msg', 'action', 'set-workspace-name', '--workspace', String(ref), name];
+}
+
+export function unsetWorkspaceNameArgs(ref) {
+  return ['msg', 'action', 'unset-workspace-name', String(ref)];
+}
+
+export function setWorkspaceName(ref, name) {
+  return run('niri', setWorkspaceNameArgs(ref, name)).then(() => {});
+}
+
+export function unsetWorkspaceName(ref) {
+  return run('niri', unsetWorkspaceNameArgs(ref)).then(() => {});
+}
