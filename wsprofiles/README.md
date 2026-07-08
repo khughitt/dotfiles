@@ -113,6 +113,25 @@ The launcher menu in `menu/` reads `~/.config/niri/wsprofiles.json` and sends `o
 
 The Noctalia bar plugin at `~/d/dotfiles/noctalia/plugins/niri-workspace-profiles` also reads `wsprofiles.json`. It renders the horizontal workspace strip with profile colors and labels, and falls back to plain workspace numbers for unprofiled workspaces.
 
+## wsnamed — auto-derived workspace names
+
+`bin/wsnamed` watches the niri event stream and names each occupied workspace
+after the project its focused window is in: for a kitty window it resolves the
+foreground shell's cwd via `/proc` and uses the git repo root basename; for a
+GUI app it uses the app id. Names are shown by noctalia (`labelMode: index+name`)
+and the Expo overview.
+
+It is a **single, safe name authority**: it only ever writes a name that is
+empty or one it previously set itself, so `ember`/`tide` and manual names are
+never touched (ownership is re-validated against the live name every pass, so an
+externally renamed workspace is released and never unset by us). Duplicate
+project names get unique `-2`/`-3` slots.
+
+Assumes one kitty process per OS-window; a window with multiple tabs/splits is
+ambiguous and falls back to the (sanitized) window title. Started from
+`niri/config.kdl` via `spawn-sh-at-startup`; on unrecoverable error it exits so
+the failure is visible (a session restart relaunches it).
+
 ## Testing
 
 Run the wsprofiles unit tests from this directory:
