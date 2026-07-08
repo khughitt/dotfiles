@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": { "wsprofiled": "bin/wsprofiled", "wsprofilectl": "bin/wsprofilectl" },
+  "bin": { "wsprofiled": "bin/wsprofiled", "wsprofilectl": "bin/wsprofilectl", "wsnamed": "bin/wsnamed" },
   "scripts": { "test": "node --test" },
   "dependencies": { "yaml": "^2.4.0" }
 }

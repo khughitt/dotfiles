@@ -1,0 +1,105 @@
+#!/usr/bin/env node
+import { spawn, execFileSync } from 'node:child_process';
+import { readFileSync, readlinkSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { parseEventLines, setWorkspaceName, unsetWorkspaceName } from '../src/niri.js';
+import { WorkspaceState } from '../src/wsstate.js';
+import { deriveName } from '../src/derive.js';
+import { foregroundCwd } from '../src/proc.js';
+import { reconcile } from '../src/reconcile.js';
+
+const HOME = homedir();
+const TERMINALS = new Set(['kitty']);
+const isTerminal = (appId) => TERMINALS.has(appId);
+const DEBOUNCE_MS = 250;
+
+// --- real /proc + git I/O (best-effort; any failure → no name this cycle) ---
+const readChildren = (pid) => {
+  try {
+    return readFileSync(`/proc/${pid}/task/${pid}/children`, 'utf8')
+      .trim().split(/\s+/).filter(Boolean).map(Number);
+  } catch { return []; }
+};
+const readStat = (pid) => { try { return readFileSync(`/proc/${pid}/stat`, 'utf8'); } catch { return null; } };
+const readCwd = (pid) => { try { return readlinkSync(`/proc/${pid}/cwd`); } catch { return null; } };
+// Returns { cwd, ambiguous } (see src/proc.js). A null pid is "unavailable".
+const boundForegroundCwd = (pid) =>
+  pid == null ? { cwd: null, ambiguous: false } : foregroundCwd(pid, { readChildren, readStat, readCwd });
+
+// git toplevel; throws (caught by cwdName) when cwd is not a repo.
+const git = (cwd) =>
+  execFileSync('git', ['-C', cwd, 'rev-parse', '--show-toplevel'], {
+    encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 500,
+  }).trim();
+
+const deriveWindow = (win) =>
+  deriveName(win, { foregroundCwd: boundForegroundCwd, git, home: HOME, isTerminal });
+
+// --- state + debounced reconcile loop ---
+const state = new WorkspaceState();
+let ownedNames = new Map();
+let timer = null;
+let running = false;
+let dirty = false;
+
+function schedule() {
+  if (timer) return;
+  timer = setTimeout(runReconcile, DEBOUNCE_MS);
+}
+
+async function runReconcile() {
+  timer = null;
+  if (running) { dirty = true; return; } // coalesce: re-run after the in-flight pass
+  running = true;
+  try {
+    const states = [];
+    for (const ws of state.workspaces.values()) {
+      const win = state.namingWindow(ws.id);
+      states.push({
+        id: ws.id,
+        idx: ws.idx,
+        currentName: ws.name,
+        empty: win == null,
+        desiredBase: win == null ? null : deriveWindow(win),
+      });
+    }
+    const result = reconcile(states, ownedNames);
+    ownedNames = result.ownedNames; // observation-based updates only
+    for (const a of result.actions) {
+      try {
+        if (a.type === 'set') {
+          await setWorkspaceName(a.ref, a.name);
+          ownedNames.set(a.wsId, a.name); // record ownership only after success
+        } else {
+          await unsetWorkspaceName(a.ref);
+          ownedNames.delete(a.wsId);
+        }
+      } catch (e) {
+        // Leave ownedNames unchanged so this action retries on the next pass.
+        console.error(`wsnamed: ${a.type} failed for ${a.ref}: ${e.message}`);
+      }
+    }
+  } finally {
+    running = false;
+    if (dirty) { dirty = false; schedule(); }
+  }
+}
+
+const stream = spawn('niri', ['msg', '--json', 'event-stream'], { stdio: ['ignore', 'pipe', 'inherit'] });
+let carry = '';
+stream.stdout.setEncoding('utf8');
+stream.stdout.on('data', (chunk) => {
+  let events;
+  try {
+    ({ events, carry } = parseEventLines(chunk, carry));
+  } catch (e) {
+    console.error(`wsnamed: bad event stream: ${e.message}`);
+    process.exit(1);
+  }
+  for (const ev of events) state.apply(ev);
+  if (events.length) schedule();
+});
+stream.on('exit', (code) => {
+  console.error(`wsnamed: niri event-stream exited (${code})`);
+  process.exit(1);
+});
