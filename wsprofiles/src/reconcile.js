@@ -1,3 +1,12 @@
+// True when `name` is a name the allocator could have assigned for `base`:
+// the base itself, or `base-N` with N >= 2.
+function ownsAllocatedForm(name, base) {
+  if (name === base) return true;
+  if (!name.startsWith(`${base}-`)) return false;
+  const suffix = name.slice(base.length + 1);
+  return /^\d+$/.test(suffix) && Number(suffix) >= 2;
+}
+
 // Pure reconciliation. See the design doc for the full algorithm.
 //   states: [{ id, idx, currentName, empty, desiredBase }]
 //   ownedNames: Map<wsId, name>  (names THIS daemon previously set)
@@ -30,11 +39,16 @@ export function reconcile(states, ownedNames) {
   const allocated = new Set(taken);
   const want = new Map(); // wsId -> allocated name
 
-  // 3a. Contenders already owning their base keep it.
+  // 3a. Contenders that already own a valid allocated form of their base (the
+  //     base itself or base-N) keep that exact name, so a stable, already-unique
+  //     assignment never churns just because idx order differs from the order
+  //     suffixes were first handed out.
   for (const s of ordered) {
-    if (writable(s) && s.desiredBase && owned.get(s.id) === s.desiredBase && !taken.has(s.desiredBase)) {
-      want.set(s.id, s.desiredBase);
-      allocated.add(s.desiredBase);
+    if (!writable(s) || !s.desiredBase) continue;
+    const cur = owned.get(s.id);
+    if (cur !== undefined && ownsAllocatedForm(cur, s.desiredBase) && !taken.has(cur)) {
+      want.set(s.id, cur);
+      allocated.add(cur);
     }
   }
   // 3b. Every other contender gets base, or base-2/base-3… on collision.

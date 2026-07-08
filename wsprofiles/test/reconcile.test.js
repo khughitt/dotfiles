@@ -88,3 +88,17 @@ test('duplicate allocation is stable once owned', () => {
   assert.deepEqual(r.actions, []); // both already correct, no churn
   assert.equal(r.ownedNames.get(2), 'dotfiles-2');
 });
+
+// FINDING (task-6 review): already-correct suffixed owners must not churn when
+// niri idx order differs from the order the suffixes were originally assigned.
+test('stable suffixed ownership does not churn when idx order differs from suffix order', () => {
+  const owned = new Map([[3, 'x-3'], [2, 'x-2'], [1, 'x']]);
+  const r = reconcile(
+    [S(3, 1, 'x-3', 'x'), S(2, 5, 'x-2', 'x'), S(1, 9, 'x', 'x')],
+    owned
+  );
+  assert.deepEqual(r.actions, []); // all three already correct and unique
+  assert.equal(r.ownedNames.get(3), 'x-3');
+  assert.equal(r.ownedNames.get(2), 'x-2');
+  assert.equal(r.ownedNames.get(1), 'x');
+});
