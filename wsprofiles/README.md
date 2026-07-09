@@ -132,6 +132,11 @@ ambiguous and falls back to the (sanitized) window title. Started from
 `niri/config.kdl` via `spawn-sh-at-startup`; on unrecoverable error it exits so
 the failure is visible (a session restart relaunches it).
 
+First-time naming targets a workspace by its niri `idx`, which is per-output; on
+a multi-monitor setup two workspaces can share an `idx`, so the very first name
+for an unnamed workspace is best-effort and self-corrects on the next pass
+(renames and unsets use the unique name and are unaffected).
+
 ## Testing
 
 Run the wsprofiles unit tests from this directory:

@@ -65,6 +65,11 @@ async function runReconcile() {
     }
     const result = reconcile(states, ownedNames);
     ownedNames = result.ownedNames; // observation-based updates only
+    // Reclaim ownership entries for workspaces niri has destroyed. Their ids are
+    // monotonic and never reappear, and a destroyed workspace loses its name in
+    // niri anyway, so dropping our record is safe and keeps the map bounded.
+    const liveIds = new Set(states.map((s) => s.id));
+    for (const id of ownedNames.keys()) if (!liveIds.has(id)) ownedNames.delete(id);
     for (const a of result.actions) {
       try {
         if (a.type === 'set') {
