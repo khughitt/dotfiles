@@ -5,7 +5,7 @@ alias cl='claude --dangerously-skip-permissions'
 alias clp='claude --dangerously-skip-permissions --plugin-dir /mnt/ssd/Dropbox/science'
 
 # codex (linux symlink work-around)
-alias codex='codex -C `pwd`'
+# alias codex='codex -C `pwd`'
 
 # conda/mamba
 alias cde='micromamba deactivate'

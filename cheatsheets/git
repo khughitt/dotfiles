@@ -1,3 +1,18 @@
+# show files that differ between two commits
+git diff --name-only 629feca
+git diff --name-status 629feca
+git diff --name-status 629feca 3e0800d
+
+# see differences for staged files
+git diff --staged
+
+# list files changed in a commit
+git diff-tree --no-commit-id --name-only -r 629feca
+
+# gui diff (e.g. meld)
+git difftool 629fec
+git difftool 629feca file.py
+
 # undo push
 git reset --soft "HEAD^"  # undos local commit
 git push -f               # pushes previous commit
@@ -15,8 +30,12 @@ git reset <commit>
 git reset --soft <uuid>~1
 git commit -am '...'
 
-# revise commit message for pushed commit
+# revise commit message
+git commit --amend
 git commit --amend -m "..."
+
+# revise commit message for pushed commit
+git commit --amend
 git push --force-with-lease
 
 # restore deleted file (uncommitted)
@@ -48,24 +67,6 @@ git rev-list HEAD --oneline
 # show branch history
 git log --oneline --graph
 git log --oneline --graph --all --decorate
-
-# show files that differ between two commits
-git diff --name-only 629feca
-git diff --name-status 629feca
-git diff --name-status 629feca 3e0800d
-
-# list files changed in a commit
-git diff-tree --no-commit-id --name-only -r 629feca
-
-# gui diff (e.g. meld)
-git difftool 629fec
-git difftool 629feca file.py
-
-# see differences for staged files
-git diff --staged
-
-# edit commit message
-git commit --amend
 
 # create & push a tag
 git tag -a v1.0 -m "..."
