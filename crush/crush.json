@@ -1,0 +1,27 @@
+{
+  "$schema": "https://charm.land/crush.json",
+  "lsp": {
+    "typescript": {
+      "command": "npx",
+      "args": ["--yes", "@vtsls/language-server", "--stdio"]
+    },
+    "python": {
+      "command": "pyright",
+      "args": ["--stdio"]
+    }
+  },
+  "map": {
+    "openrouter": {
+      "type": "http",
+      "url": "https://mcp.openrouter.ai/mcp",
+      "timeout": 120,
+      "disabled": false
+    },
+  },
+  "options": {
+    "tui": {
+      "compact_mode": true,
+      "diff_mode": "unified"
+    }
+  }
+}
