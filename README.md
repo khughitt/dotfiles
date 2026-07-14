@@ -5,28 +5,28 @@ Current setup
 -------------
 
 * [Arch Linux](https://www.archlinux.org/)
-* [Hyprland](https://hypr.land/)
+* [Niri](https://niri-wm.github.io/)
+* [Noctalia](https://github.com/noctalia-dev/noctalia-shell)
 * [Zsh](http://www.zsh.org/)
 * [kitty](https://sw.kovidgoyal.net/kitty/)
-* [Waybar](https://github.com/Alexays/Waybar)
-* [Rofi](https://github.com/davatorium/rofi)
 
 Tools
 -----
 
 * [bat](https://github.com/sharkdp/bat)
+* [btop](https://github.com/aristocratos/btop)
 * [dust](https://github.com/bootandy/dust)
 * [fasd](https://github.com/clvv/fasd)
 * [fd](https://github.com/sharkdp/fd)
 * [feh](https://feh.finalrewind.org/)
 * [fzf](https://github.com/junegunn/fzf)
-* [gotop](https://github.com/xxxserxxx/gotop)
 * [lsd](https://github.com/Peltoche/lsd)
 * [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)
 * [moor](https://github.com/walles/moor)
 * [neovim](https://neovim.io/)
 * [radian](https://github.com/randy3k/radian)
 * [rg](https://github.com/BurntSushi/ripgrep)
+* [sd](https://github.com/chmln/sd)
 * [tmux](https://github.com/tmux/tmux/wiki)
 * [tre](https://github.com/dduan/tre)
 * [visidata](https://www.visidata.org/)

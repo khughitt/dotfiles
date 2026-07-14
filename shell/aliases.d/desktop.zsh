@@ -14,7 +14,7 @@ alias feh_edit='gimp $(cat ~/.fehbg | /bin/grep -Eo "[\/a-z0-9]+PXL.*.png")'
 alias gls='glslviewer -w 1720 -h 1413'
 
 # htop
-alias htop=gotop
+alias htop=btop
 
 # kitty
 alias icat='kitty +kitten icat'
