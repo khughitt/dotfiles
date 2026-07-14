@@ -1,1 +1,5 @@
-{"tui": {"theme": "noctalia"}}
+{
+  "$schema": "https://opencode.ai/config.json",
+  "tui": {"theme": "noctalia"},
+  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]
+}

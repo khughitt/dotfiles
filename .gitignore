@@ -44,3 +44,6 @@ niri/noctalia.kdl
 opencode/themes/noctalia.json
 yazi/flavors/noctalia.yazi/flavor.toml
 zathura/noctaliarc
+
+# superpowers scratch (plans, brainstorm mockups, sdd ledger)
+.superpowers/
