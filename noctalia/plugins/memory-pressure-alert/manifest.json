@@ -1,0 +1,23 @@
+{
+  "id": "memory-pressure-alert",
+  "name": "Memory Pressure Alert",
+  "version": "1.0.0",
+  "minNoctaliaVersion": "4.7.7",
+  "author": "Keith Hughitt",
+  "license": "MIT",
+  "description": "Persistent warning and critical memory-pressure banners.",
+  "tags": ["System", "Alert"],
+  "entryPoints": {
+    "main": "Main.qml",
+    "settings": "Settings.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "recoveryThreshold": 65,
+      "monitorCommand": ["ghostty", "-e", "btop"]
+    }
+  }
+}
