@@ -7,9 +7,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#d68251"
-        width 2
+        inactive-color "#d68251"
     }
 }
 
@@ -20,9 +19,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#d2a956"
-        width 2
+        inactive-color "#d2a956"
     }
 }
 
@@ -33,9 +31,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#c1b967"
-        width 2
+        inactive-color "#c1b967"
     }
 }
 
@@ -46,9 +43,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#8dbd6b"
-        width 2
+        inactive-color "#8dbd6b"
     }
 }
 
@@ -59,9 +55,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#64c47c"
-        width 2
+        inactive-color "#64c47c"
     }
 }
 
@@ -72,9 +67,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#60c7ba"
-        width 2
+        inactive-color "#60c7ba"
     }
 }
 
@@ -85,9 +79,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#5990cf"
-        width 2
+        inactive-color "#5990cf"
     }
 }
 
@@ -98,9 +91,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#7164c4"
-        width 2
+        inactive-color "#7164c4"
     }
 }
 
@@ -111,9 +103,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#9764c4"
-        width 2
+        inactive-color "#9764c4"
     }
 }
 
@@ -124,9 +115,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#c464bc"
-        width 2
+        inactive-color "#c464bc"
     }
 }
 
@@ -137,9 +127,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#bd6b79"
-        width 2
+        inactive-color "#bd6b79"
     }
 }
 
@@ -150,9 +139,8 @@ window-rule {
         width 2
     }
     border {
-        on
         active-color "#9a8d8d"
-        width 2
+        inactive-color "#9a8d8d"
     }
 }
 
@@ -163,9 +151,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#e5af8f"
-        width 4
+        inactive-color "#e5af8f"
     }
 }
 
@@ -176,9 +163,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#e2c792"
-        width 4
+        inactive-color "#e2c792"
     }
 }
 
@@ -189,9 +175,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#d7d29d"
-        width 4
+        inactive-color "#d7d29d"
     }
 }
 
@@ -202,9 +187,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#b6d4a0"
-        width 4
+        inactive-color "#b6d4a0"
     }
 }
 
@@ -215,9 +199,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#9bd9ab"
-        width 4
+        inactive-color "#9bd9ab"
     }
 }
 
@@ -228,9 +211,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#99dbd2"
-        width 4
+        inactive-color "#99dbd2"
     }
 }
 
@@ -241,9 +223,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#94b8e0"
-        width 4
+        inactive-color "#94b8e0"
     }
 }
 
@@ -254,9 +235,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#a39bd9"
-        width 4
+        inactive-color "#a39bd9"
     }
 }
 
@@ -267,9 +247,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#bc9bd9"
-        width 4
+        inactive-color "#bc9bd9"
     }
 }
 
@@ -280,9 +259,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#d99bd4"
-        width 4
+        inactive-color "#d99bd4"
     }
 }
 
@@ -293,9 +271,8 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#d4a0a9"
-        width 4
+        inactive-color "#d4a0a9"
     }
 }
 
@@ -306,8 +283,7 @@ window-rule {
         width 4
     }
     border {
-        on
         active-color "#beb6b6"
-        width 4
+        inactive-color "#beb6b6"
     }
 }
