@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_root=${0:A:h:h}
+source "${0:A:h}/tmp_cleanup.zsh"
 
 fail() {
   print -u2 -- "FAIL: $*"
@@ -10,6 +11,61 @@ fail() {
 
 make_tmpdir() {
   mktemp -d "${TMPDIR:-/tmp}/dotfiles-setup.XXXXXX"
+}
+
+test_tmp_cleanup_is_centralized() {
+  local output exit_status
+
+  set +e
+  output=$(
+    rg -n '^[[:space:]]*trap([[:space:]]|$)' \
+      "${repo_root}/tests/setup_and_health.zsh" \
+      "${repo_root}/tests/dropbox_ignore_flux.zsh" 2>&1
+  )
+  exit_status=$?
+  set -e
+
+  if (( exit_status == 0 )); then
+    fail "test harnesses should not install traps:
+${output}"
+  fi
+  (( exit_status == 1 )) || fail "failed to scan test harness traps: ${output}"
+}
+
+test_tmp_cleanup_runs_only_at_process_exit() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+
+  set +e
+  output=$(
+    zsh -fc '
+      set -euo pipefail
+      source "$1"
+
+      exercise_cleanup() {
+        local tmp="$1"
+        register_tmp_cleanup "$tmp"
+        [[ -d "$tmp" ]] || {
+          print -u2 -- "temporary directory removed during registration"
+          exit 91
+        }
+        print -- registered > "${tmp}/after-register"
+        exit 17
+      }
+
+      exercise_cleanup "$2"
+    ' zsh "${repo_root}/tests/tmp_cleanup.zsh" "$tmp" 2>&1
+  )
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -eq 17 ]] || \
+    fail "cleanup subprocess should preserve status 17, got ${exit_status}: ${output}"
+  [[ ! -e "$tmp" ]] || fail "cleanup subprocess should remove its registered directory"
+  [[ "$output" != *"parameter not set"* ]] || \
+    fail "cleanup subprocess referenced an expired local variable: ${output}"
+  [[ -z "$output" ]] || fail "cleanup subprocess wrote unexpected output: ${output}"
 }
 
 run_setup() {
@@ -25,7 +81,7 @@ run_setup() {
 test_setup_dry_run_link_only_does_not_write_home() {
   local tmp output
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   output=$(run_setup "$tmp" --dry-run --link-only --headless)
@@ -41,13 +97,12 @@ test_setup_dry_run_link_only_does_not_write_home() {
   [[ ! -e "${tmp}/data/zinit" ]] || fail "link-only dry-run should not clone zinit"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_setup_link_only_creates_expected_links_without_external_clones() {
   local tmp
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
@@ -62,13 +117,12 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ ! -e "${tmp}/home/.tmux/plugins/tpm" ]] || fail "link-only should not clone tpm"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_setup_dry_run_can_enable_user_timers() {
   local tmp output
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   output=$(run_setup "$tmp" --dry-run --link-only --headless --enable-user-timers)
@@ -79,13 +133,12 @@ test_setup_dry_run_can_enable_user_timers() {
     fail "expected dry-run timer enable command"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_setup_only_runs_selected_phase() {
   local tmp output
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   output=$(run_setup "$tmp" --dry-run --link-only --headless --only shell)
@@ -97,13 +150,12 @@ test_setup_only_runs_selected_phase() {
   [[ "$output" != *"==> Package installation"* ]] || fail "should skip unselected package phase"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_setup_only_accepts_multiple_phases() {
   local tmp output
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   output=$(run_setup "$tmp" --dry-run --link-only --headless --only shell,systemd)
@@ -114,13 +166,12 @@ test_setup_only_accepts_multiple_phases() {
   [[ "$output" != *"==> Common config links"* ]] || fail "should skip common config phase"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_setup_only_rejects_unknown_phase() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   set +e
@@ -132,7 +183,6 @@ test_setup_only_rejects_unknown_phase() {
   [[ "$output" == *"Unknown setup phase: missing"* ]] || fail "expected unknown phase message"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_setup_and_health_share_managed_link_metadata() {
@@ -168,7 +218,7 @@ test_setup_and_health_share_managed_link_metadata() {
 test_dotfiles_health_passes_after_link_only_setup() {
   local tmp
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
@@ -179,13 +229,12 @@ test_dotfiles_health_passes_after_link_only_setup() {
     "${repo_root}/bin/dotfiles-health" --skip-systemd >/dev/null
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_dotfiles_health_fails_stale_removed_config_links() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
@@ -206,13 +255,12 @@ test_dotfiles_health_fails_stale_removed_config_links() {
     fail "expected stale managed config link failure"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_dotfiles_health_ignores_brave_runtime_symlinks() {
   local tmp output
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config/BraveSoftware/Brave-Browser" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
@@ -231,13 +279,12 @@ test_dotfiles_health_ignores_brave_runtime_symlinks() {
   [[ "$output" != *"[WARN] broken symlinks under"* ]] || fail "health should not warn for ignored Brave symlinks"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_dotfiles_health_ignores_unmanaged_config_symlinks() {
   local tmp output
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config/unmanaged-app" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
@@ -254,13 +301,12 @@ test_dotfiles_health_ignores_unmanaged_config_symlinks() {
   [[ "$output" != *"[WARN] broken symlinks under"* ]] || fail "health should not scan all config symlinks"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_dotfiles_health_fails_broken_managed_config_link() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
@@ -282,13 +328,12 @@ test_dotfiles_health_fails_broken_managed_config_link() {
     fail "expected broken managed config link failure"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_dotfiles_health_checks_enabled_user_timer() {
   local tmp mockbin systemctl_log
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mockbin="${tmp}/bin"
   systemctl_log="${tmp}/systemctl.log"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "$mockbin"
@@ -327,13 +372,12 @@ EOF
     fail "expected health to query timer schedule"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_setup_graphical_app_config_links_memory_alert() {
   local tmp
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --only app-config >/dev/null
@@ -345,13 +389,12 @@ test_setup_graphical_app_config_links_memory_alert() {
     fail "expected memory alert plugin to point into the repository"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_dotfiles_health_fails_wrong_memory_alert_link() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
@@ -375,9 +418,10 @@ test_dotfiles_health_fails_wrong_memory_alert_link() {
     fail "expected wrong memory alert link failure"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
+test_tmp_cleanup_runs_only_at_process_exit
+test_tmp_cleanup_is_centralized
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
 test_setup_dry_run_can_enable_user_timers

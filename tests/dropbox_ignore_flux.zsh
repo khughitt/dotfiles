@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_root=${0:A:h:h}
+source "${0:A:h}/tmp_cleanup.zsh"
 source "${repo_root}/shell/functions"
 
 fail() {
@@ -24,7 +25,7 @@ make_tmpdir() {
 test_candidates_keep_only_top_level_matches() {
   local tmp
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
 
   mkdir -p \
     "${tmp}/project/node_modules/pkg/node_modules" \
@@ -42,13 +43,12 @@ ${tmp}/project/src/__pycache__"
 
   assert_eq "$expected" "$actual" "top-level candidate filtering"
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_dropbox_ignore_flux_sets_only_missing_attrs_without_sudo() {
   local tmp mockbin attr_log sudo_log
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   mockbin="${tmp}/bin"
   attr_log="${tmp}/attr.log"
   sudo_log="${tmp}/sudo.log"
@@ -107,19 +107,17 @@ EOF
     fail "should not inspect nested matches under ignored parents"
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_fu_finds_functions_d_modules() {
   local tmp
   tmp=$(make_tmpdir)
-  trap 'rm -rf "$tmp"' EXIT
+  register_tmp_cleanup "$tmp"
   ln -s "${repo_root}/shell" "${tmp}/.shell"
 
   HOME="$tmp" zsh -fc 'source "$HOME/.shell/functions"; fu dropbox_ignore_flux | rg -q "dropbox_ignore_flux"'
 
   rm -rf "$tmp"
-  trap - EXIT
 }
 
 test_candidates_keep_only_top_level_matches

@@ -36,6 +36,7 @@ zsh_files=(
     tests/dropbox_ignore_flux.zsh
     tests/setup_and_health.zsh
     tests/dotfiles_check.zsh
+    tests/tmp_cleanup.zsh
 )
 
 while IFS= read -r file; do
