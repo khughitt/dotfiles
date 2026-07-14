@@ -14,7 +14,8 @@
 - Install the `EXIT` trap only at the top level of the sourced helper, never inside `register_tmp_cleanup`.
 - Keep successful tests' explicit `rm -rf "$tmp"` cleanup and remove their per-function `trap - EXIT` lines.
 - Neither `tests/setup_and_health.zsh` nor `tests/dropbox_ignore_flux.zsh` may contain a `trap` command; the shared helper wholly owns traps.
-- Do not change `setup.sh`, `bin/dotfiles-health`, shell functions under test, or the pre-existing suite-list mismatch between `justfile` and `bin/dotfiles-check`.
+- Every new zsh file must be covered by `zsh -n`. `bin/dotfiles-check` maintains that coverage as a hand-written `zsh_files` array, so `tests/tmp_cleanup.zsh` has to be added to it; nothing globs `tests/`.
+- Do not change `setup.sh`, `bin/dotfiles-health`, or shell functions under test. Leave the pre-existing suite-list mismatch alone: `justfile` runs four suites and `bin/dotfiles-check` runs three. Editing the `zsh_files` lint array is not that mismatch and is in scope.
 - Preserve the user's unrelated `niri/familiar.kdl` and `ghostty/` changes.
 
 ---
@@ -25,6 +26,7 @@
 - Create: `tests/tmp_cleanup.zsh`
 - Modify: `tests/setup_and_health.zsh:1-397`
 - Modify: `tests/dropbox_ignore_flux.zsh:1-130`
+- Modify: `bin/dotfiles-check:19-38`
 - Test: `tests/setup_and_health.zsh`
 
 **Interfaces:**
@@ -99,7 +101,29 @@ register_tmp_cleanup() {
 
 Do not move `trap cleanup_registered_tmpdirs EXIT` into either function. In zsh, a function-scoped `EXIT` trap runs when that function returns.
 
-- [ ] **Step 4: Source the helper from each harness's own directory**
+- [ ] **Step 4: Put the helper under `zsh -n` coverage**
+
+`bin/dotfiles-check` syntax-checks a hand-written list; nothing globs `tests/`, so a new file is linted only if it is listed. Add it to the `zsh_files` array alongside the existing test entries:
+
+```bash
+    tests/dropbox_ignore_flux.zsh
+    tests/setup_and_health.zsh
+    tests/dotfiles_check.zsh
+    tests/tmp_cleanup.zsh
+```
+
+Do not touch the suite list further down the file; only the lint array changes.
+
+Verify the helper is now parsed:
+
+```bash
+rg -n 'tests/tmp_cleanup.zsh' bin/dotfiles-check
+bin/dotfiles-check
+```
+
+Expected: `rg` finds the new entry, and `bin/dotfiles-check` exits 0 printing `dotfiles checks passed`. It is lint-only — it runs `bash -n`, `shellcheck`, and `zsh -n`, not the test suites — so it passes here even though the Step 1 guard is still red.
+
+- [ ] **Step 5: Source the helper from each harness's own directory**
 
 In `tests/setup_and_health.zsh`, keep `repo_root` and add the source immediately after it:
 
@@ -116,7 +140,7 @@ source "${0:A:h}/tmp_cleanup.zsh"
 source "${repo_root}/shell/functions"
 ```
 
-- [ ] **Step 5: Add the process-level timing regression test**
+- [ ] **Step 6: Add the process-level timing regression test**
 
 Add this function to `tests/setup_and_health.zsh` after `test_tmp_cleanup_is_centralized`:
 
@@ -158,17 +182,42 @@ test_tmp_cleanup_runs_only_at_process_exit() {
 }
 ```
 
-Invoke it immediately after the static guard and before the setup tests:
+Invoke it **before** the static guard, so the invocation list at the bottom of the file reads:
 
 ```zsh
-test_tmp_cleanup_is_centralized
 test_tmp_cleanup_runs_only_at_process_exit
+test_tmp_cleanup_is_centralized
 test_setup_dry_run_link_only_does_not_write_home
 ```
 
+Order matters. `fail` calls `exit 1`, so the first failing test aborts the suite. The guard stays red until Step 8 converts the call sites; if the guard ran first, the timing test added here would never execute and you would never observe it passing.
+
+Run `zsh tests/setup_and_health.zsh` and confirm the timing test runs and passes, and that the run still ends on the guard's red (`FAIL: test harnesses should not install traps:`).
+
 The child's status 17 proves it reached the code after registration, and the parent checks removal only after the child process has exited.
 
-- [ ] **Step 6: Convert every cleanup call site**
+- [ ] **Step 7: Prove the timing test actually catches the regression**
+
+This test exists to detect one specific mistake: an `EXIT` trap installed inside `register_tmp_cleanup`, which in zsh fires when that function returns and deletes the directory before the test body uses it. An earlier version of this regression test passed against exactly that broken helper, so verify non-vacuity rather than assuming it.
+
+Temporarily rewrite `tests/tmp_cleanup.zsh` to the broken form:
+
+```zsh
+#!/usr/bin/env zsh
+
+register_tmp_cleanup() {
+  local cleanup_path="$1"
+  trap "rm -rf -- ${(q)cleanup_path}" EXIT
+}
+```
+
+Run `zsh tests/setup_and_health.zsh`.
+
+Expected: `test_tmp_cleanup_runs_only_at_process_exit` fails with `cleanup subprocess should preserve status 17, got 91` and the child's message `temporary directory removed during registration`. A status of 17 here means the test is vacuous and must be fixed before continuing.
+
+Then restore `tests/tmp_cleanup.zsh` to the Step 3 implementation and re-run to confirm the timing test passes again.
+
+- [ ] **Step 8: Convert every cleanup call site**
 
 In all 14 temporary-directory tests in `tests/setup_and_health.zsh` and all three in `tests/dropbox_ignore_flux.zsh`, replace this registration:
 
@@ -210,7 +259,7 @@ Delete the `trap - EXIT` line that currently follows each explicit cleanup. Conv
 - `test_dropbox_ignore_flux_sets_only_missing_attrs_without_sudo`
 - `test_fu_finds_functions_d_modules`
 
-- [ ] **Step 7: Run the focused harnesses and guard**
+- [ ] **Step 9: Run the focused harnesses and guard**
 
 Run:
 
@@ -223,7 +272,7 @@ zsh tests/dropbox_ignore_flux.zsh
 
 Expected: both harnesses exit 0 and print `setup and health tests passed` and `dropbox_ignore_flux tests passed`; the negated `rg` exits 0 with no matches.
 
-- [ ] **Step 8: Run the full repository verification**
+- [ ] **Step 10: Run the full repository verification**
 
 Run:
 
@@ -234,15 +283,17 @@ git diff --check
 git status --short
 ```
 
-Expected: both Just recipes and `git diff --check` exit 0. `git status --short` lists only the three intended test files plus the user's pre-existing `niri/familiar.kdl` and `ghostty/` changes; it must not show changes to production files.
+Expected: both Just recipes and `git diff --check` exit 0. `git status --short` lists exactly four changed files — `tests/tmp_cleanup.zsh`, `tests/setup_and_health.zsh`, `tests/dropbox_ignore_flux.zsh`, and `bin/dotfiles-check` — plus the user's pre-existing `niri/familiar.kdl` and `ghostty/` changes. It must not show changes to `setup.sh`, `bin/dotfiles-health`, or any shell function under test.
 
-- [ ] **Step 9: Commit the test-harness fix**
+Confirm the `bin/dotfiles-check` diff is the single added `zsh_files` entry and nothing else.
+
+- [ ] **Step 11: Commit the test-harness fix**
 
 Run:
 
 ```bash
-git add tests/tmp_cleanup.zsh tests/setup_and_health.zsh tests/dropbox_ignore_flux.zsh
+git add tests/tmp_cleanup.zsh tests/setup_and_health.zsh tests/dropbox_ignore_flux.zsh bin/dotfiles-check
 git commit -m "test: make temp cleanup reliable"
 ```
 
-Expected: one commit containing only the shared cleanup helper and the two harness changes, with no `Co-Authored-By` trailer.
+Expected: one commit containing the shared cleanup helper, the two harness changes, and the one-line lint-coverage addition, with no `Co-Authored-By` trailer.
