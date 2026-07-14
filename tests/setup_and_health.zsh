@@ -330,6 +330,54 @@ EOF
   trap - EXIT
 }
 
+test_setup_graphical_app_config_links_memory_alert() {
+  local tmp
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --only app-config >/dev/null
+
+  local plugin_link="${tmp}/config/noctalia/plugins/memory-pressure-alert"
+  [[ -L "$plugin_link" ]] || fail "expected linked memory pressure alert plugin"
+  [[ "$(readlink "$plugin_link")" == \
+      "${repo_root}/noctalia/plugins/memory-pressure-alert" ]] || \
+    fail "expected memory alert plugin to point into the repository"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
+test_dotfiles_health_fails_wrong_memory_alert_link() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+  run_setup "$tmp" --link-only --only app-config >/dev/null
+  rm "${tmp}/config/noctalia/plugins/memory-pressure-alert"
+  ln -s "${repo_root}/noctalia/plugins/wali-panel" \
+    "${tmp}/config/noctalia/plugins/memory-pressure-alert"
+
+  set +e
+  output=$(
+    HOME="${tmp}/home" \
+      XDG_CONFIG_HOME="${tmp}/config" \
+      XDG_DATA_HOME="${tmp}/data" \
+      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
+  )
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "health should reject the wrong memory alert link"
+  [[ "$output" == *"wrong link target"* ]] || \
+    fail "expected wrong memory alert link failure"
+
+  rm -rf "$tmp"
+  trap - EXIT
+}
+
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
 test_setup_dry_run_can_enable_user_timers
@@ -343,5 +391,7 @@ test_dotfiles_health_ignores_brave_runtime_symlinks
 test_dotfiles_health_ignores_unmanaged_config_symlinks
 test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_checks_enabled_user_timer
+test_setup_graphical_app_config_links_memory_alert
+test_dotfiles_health_fails_wrong_memory_alert_link
 
 print -- "setup and health tests passed"

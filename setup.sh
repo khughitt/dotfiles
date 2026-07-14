@@ -467,6 +467,7 @@ function setup_application_config_links() {
         local noctalia_plugin_dir="${XDG_CONFIG_HOME}/noctalia/plugins"
         local noctalia_palette_dir="${XDG_CONFIG_HOME}/noctalia/palettes"
         local wali_panel_plugin="${noctalia_plugin_dir}/wali-panel"
+        local memory_alert_plugin="${noctalia_plugin_dir}/memory-pressure-alert"
         local glow_palette="${noctalia_palette_dir}/Glow.json"
 
         ensure_dir "$noctalia_plugin_dir"
@@ -477,6 +478,7 @@ function setup_application_config_links() {
         fi
 
         ln_s "${DOTS_HOME}/noctalia/plugins/wali-panel" "$wali_panel_plugin"
+        ln_s "${DOTS_HOME}/noctalia/plugins/memory-pressure-alert" "$memory_alert_plugin"
         ln_s "${DOTS_HOME}/noctalia/palettes/Glow.json" "$glow_palette"
     fi
 

@@ -141,6 +141,12 @@ for config_name in "${managed_config_links[@]}"; do
 done
 unset config_name managed_config_links
 
+if [[ -d "${XDG_CONFIG_HOME}/noctalia" ]]; then
+    check_link \
+        "${XDG_CONFIG_HOME}/noctalia/plugins/memory-pressure-alert" \
+        "${DOTS_HOME}/noctalia/plugins/memory-pressure-alert"
+fi
+
 check_absent_stale_config_link "snakemake"
 check_absent_stale_config_link "tealdeer"
 
