@@ -26,6 +26,12 @@ export HOSTNAME="${HOSTNAME:-$(hostname)}"
 # https://changes.ankiweb.net/#/known-issues
 export ANKI_NOHIGHDPI=1
 
+# claude-code writes a spinner into the window title once a second while it works, which
+# overwrites familiar's ⟨familiar:sNN:state⟩ marker -- the string niri's window rules match on
+# for the identity border. The border therefore failed precisely while the agent was busy, and
+# looked fine whenever you checked it at rest. familiar owns the title; claude-code does not.
+export CLAUDE_CODE_DISABLE_TERMINAL_TITLE=1
+
 # go
 export GOPATH="$HOME/go"
 
