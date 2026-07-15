@@ -183,41 +183,59 @@ function wali_reload {
 # angle: rotation degrees (default: 90). use -90 for left, 90 for right
 function _wali_process_image {
   local src="$1" outfile="$2" mode="$3" angle="${4:-90}"
+  local -a cmd
+
+  case "$mode" in
+    landscape|crop)
+      ;;
+    rotate|rotate-crop)
+      case "$angle" in
+        -180|-90|90|180) ;;
+        *) print -u2 -- "Unsupported rotation angle: $angle"; return 1 ;;
+      esac
+      ;;
+    *)
+      print -u2 -- "Unsupported wallpaper processing mode: $mode"
+      return 1
+      ;;
+  esac
 
   local dims=$(identify "$src" | cut -d ' ' -f 3)
   local w=$(echo "$dims" | cut -d 'x' -f 1)
   local h=$(echo "$dims" | cut -d 'x' -f 2)
 
-  local cmd="magick $src"
+  cmd=(magick "$src")
 
   case "$mode" in
     rotate)
-      cmd="$cmd -rotate $angle"
+      cmd+=(-rotate "$angle")
       ;;
     crop)
       local crop_h=$((w * 9 / 21))
-      cmd="$cmd -gravity center -crop ${w}x${crop_h}+0+0 +repage"
+      cmd+=(-gravity center -crop "${w}x${crop_h}+0+0" +repage)
       ;;
     rotate-crop)
-      cmd="$cmd -rotate $angle"
+      cmd+=(-rotate "$angle")
       # 90°/270° swaps dimensions; 180° preserves them
       local rw=$w rh=$h
       if [ "$angle" != 180 ] && [ "$angle" != -180 ]; then
-        rw=$h; rh=$w
+        rw=$h
+        rh=$w
       fi
       local crop_h=$((rw * 9 / 21))
-      cmd="$cmd -gravity center -crop ${rw}x${crop_h}+0+0 +repage"
+      cmd+=(-gravity center -crop "${rw}x${crop_h}+0+0" +repage)
       ;;
   esac
 
-  cmd="$cmd -resize 3440x"
+  cmd+=(-resize 3440x)
   if [ "$WALI_FORMAT" = "jpg" ]; then
-    cmd="$cmd -quality 90"
+    cmd+=(-quality 90)
   fi
-  cmd="$cmd $outfile"
+  cmd+=("$outfile")
 
-  echo "$cmd"
-  eval "$cmd"
+  printf '%q ' "${cmd[@]}"
+  printf '\n'
+  command "${cmd[@]}" || return
 
   if [ "$WALI_FORMAT" = "jpg" ]; then
     jpegoptim --strip-none "$outfile"

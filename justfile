@@ -23,6 +23,7 @@ test:
     zsh tests/dropbox_ignore_flux.zsh
     zsh tests/setup_and_health.zsh
     zsh tests/dotfiles_check.zsh
+    zsh tests/wali.zsh
     zsh tests/justfile.zsh
 
 verify: check test health

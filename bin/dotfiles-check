@@ -37,6 +37,7 @@ zsh_files=(
     tests/setup_and_health.zsh
     tests/dotfiles_check.zsh
     tests/tmp_cleanup.zsh
+    tests/wali.zsh
 )
 
 while IFS= read -r file; do

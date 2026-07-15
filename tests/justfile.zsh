@@ -48,5 +48,7 @@ assert_contains "$test_dry_run" "zsh tests/setup_and_health.zsh" \
   "expected test recipe to include setup and health tests"
 assert_contains "$test_dry_run" "zsh tests/dotfiles_check.zsh" \
   "expected test recipe to include dotfiles check tests"
+assert_contains "$test_dry_run" "zsh tests/wali.zsh" \
+  "expected test recipe to include wali tests"
 
 print -- "justfile tests passed"
