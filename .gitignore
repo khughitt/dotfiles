@@ -1,4 +1,19 @@
 .credentials
+# secret-bearing local configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+.netrc
+.npmrc
+kubeconfig
+kubeconfig.*
 .worktrees/
 .stignore
 .stversions
