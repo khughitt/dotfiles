@@ -131,5 +131,4 @@ alias tree="tree -C --gitignore"
 alias wcl="wc -l"
 
 # "whatip"; get external ip addr
-# https://bbs.archlinux.org/viewtopic.php?pid=408739#p408739
-alias whatip='wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1'
+alias whatip='curl --fail --silent --show-error https://api.ipify.org && echo'

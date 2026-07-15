@@ -28,6 +28,11 @@ zsh -fc '
   alias dropbox_ignore | rg -q "attr -s com.dropbox.ignored -V 1"
   alias dropbox_ignore | rg -vq "sudo"
   alias vi | rg -q "nvim"
+  alias whatip | rg -Fq "curl --fail --silent --show-error https://api.ipify.org" \
+    || exit 21
+  if alias whatip | rg -Fq "http://"; then
+    exit 22
+  fi
   type pyf >/dev/null
   type yank >/dev/null
   type csvpeek >/dev/null
