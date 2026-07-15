@@ -1,0 +1,26 @@
+# shell history and directory-aware extended history
+
+[[ -n "${HISTFILE:-}" ]] || HISTFILE="$HOME/.zsh_history"
+
+HISTSIZE=100000
+SAVEHIST=100000
+
+setopt extended_history
+setopt hist_expire_dups_first
+setopt hist_ignore_dups
+setopt hist_ignore_space
+setopt hist_verify
+unsetopt inc_append_history
+setopt share_history
+
+function zshaddhistory() {
+  local entry="${1%%$'\n'}"
+
+  if [[ "$entry" != ' '* ]]; then
+    (umask 077; print -r -- "${entry}|${PWD}   " >> "${HOME}/.zsh_history_ext")
+  fi
+
+  return 0
+}
+
+# vi:syntax=zsh

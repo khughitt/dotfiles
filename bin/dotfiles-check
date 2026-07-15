@@ -25,6 +25,7 @@ zsh_files=(
     shell/functions
     shell/functions.d/dropbox.zsh
     shell/fzf
+    shell/history
     shell/kitty
     shell/macos
     shell/tmux
@@ -34,6 +35,7 @@ zsh_files=(
     shell/wali
     shell/zoxide
     tests/dropbox_ignore_flux.zsh
+    tests/history.zsh
     tests/setup_and_health.zsh
     tests/dotfiles_check.zsh
     tests/tmp_cleanup.zsh

@@ -31,23 +31,7 @@ source "${HOME}/.shell/tmux"
 # History
 #
 
-[ -z "$HISTFILE" ] && HISTFILE="$HOME/.zsh_history"
-
-HISTSIZE=100000
-SAVEHIST=100000
-
-setopt extended_history       # record timestamp of command in HISTFILE
-setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
-setopt hist_ignore_dups       # ignore duplicated commands history list
-setopt hist_verify            # show command with history expansion to user before running it
-unsetopt inc_append_history   # share_history already appends incrementally
-setopt share_history          # share command history data
-
-# directory-specific command history
-# https://github.com/natethinks/jog
-function zshaddhistory() {
-    echo "${1%%$'\n'}|${PWD}   " >> "${HOME}/.zsh_history_ext"
-}
+source "${DOTFILES}/shell/history"
 
 #
 # Shell behavior

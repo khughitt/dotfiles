@@ -44,6 +44,8 @@ assert_contains "$(just --justfile "${repo_root}/justfile" --dry-run setup-only 
 test_dry_run=$(just --justfile "${repo_root}/justfile" --dry-run test 2>&1)
 assert_contains "$test_dry_run" "zsh tests/dropbox_ignore_flux.zsh" \
   "expected test recipe to include dropbox_ignore_flux tests"
+assert_contains "$test_dry_run" "zsh tests/history.zsh" \
+  "expected test recipe to include history tests"
 assert_contains "$test_dry_run" "zsh tests/setup_and_health.zsh" \
   "expected test recipe to include setup and health tests"
 assert_contains "$test_dry_run" "zsh tests/dotfiles_check.zsh" \

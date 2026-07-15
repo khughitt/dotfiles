@@ -21,6 +21,7 @@ setup-only phases:
 
 test:
     zsh tests/dropbox_ignore_flux.zsh
+    zsh tests/history.zsh
     zsh tests/setup_and_health.zsh
     zsh tests/dotfiles_check.zsh
     zsh tests/wali.zsh
