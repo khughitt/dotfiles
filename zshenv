@@ -3,6 +3,13 @@
 #        kept in an array variable.
 typeset -U PATH path
 
+# Resolve the dotfiles root from this file's own location so $DOTFILES is set even
+# in a clean environment (e.g. a systemd unit), before anything below references it.
+# %x = the file being sourced (this zshenv, possibly via the ~/.zshenv symlink);
+# :A resolves symlinks to an absolute path, :h takes its directory.
+: "${DOTFILES:=${${(%):-%x}:A:h}}"
+export DOTFILES
+
 # Homebrew (Apple Silicon)
 if [[ -d /opt/homebrew ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -31,6 +38,7 @@ export ANKI_NOHIGHDPI=1
 # for the identity border. The border therefore failed precisely while the agent was busy, and
 # looked fine whenever you checked it at rest. familiar owns the title; claude-code does not.
 export CLAUDE_CODE_DISABLE_TERMINAL_TITLE=1
+export OPENCODE_DISABLE_TERMINAL_TITLE=1
 
 # go
 export GOPATH="$HOME/go"
@@ -71,6 +79,28 @@ export PRE_COMMIT_HOME=$HOME/.cache/pre-commit
 # systemd (>=256) sets a per-user usrquota on the /tmp + /dev/shm tmpfs, and
 # leaked pytest temp data can exhaust it; failed sessions are still kept (last 3).
 export PYTEST_ADDOPTS="-o tmp_path_retention_policy=failed"
+
+# Keep tool caches OUT of ~/d (Dropbox): thousands of tiny churny cache files
+# wedge the Dropbox sync engine. Redirect them to a host-local base dir, CACHE_DIR.
+#
+# CACHE_DIR defaults to XDG ~/.cache (already outside Dropbox, per host). To park
+# caches elsewhere on a given machine (e.g. a separate data disk), export CACHE_DIR
+# from shell/local/${HOST}.env.zsh — sourced here at zshenv time (not zshrc) so
+# non-interactive tool runs (scripts, systemd, uv) see it too. No host currently
+# overrides it; ~/.cache is an NVMe SSD with room, so the default is used.
+#   - PYTHONPYCACHEPREFIX: writes all __pycache__/.pyc to a shadow tree, so none
+#     appear next to source (Python >=3.8).
+#   - RUFF_CACHE_DIR / MYPY_CACHE_DIR: single shared cache, safe across projects.
+# pytest's .pytest_cache is intentionally NOT redirected here: cache_dir has no
+# per-project env var, so a global one collides (lastfailed/nodeids) and races
+# under parallel runs. It stays in-tree and is handled by dropbox-ignore-flux.
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+[[ -n "$DOTFILES" && -r "${DOTFILES}/shell/local/${HOST}.env.zsh" ]] \
+    && source "${DOTFILES}/shell/local/${HOST}.env.zsh"
+export CACHE_DIR="${CACHE_DIR:-$XDG_CACHE_HOME}"
+export PYTHONPYCACHEPREFIX="$CACHE_DIR/pycache"
+export RUFF_CACHE_DIR="$CACHE_DIR/ruff"
+export MYPY_CACHE_DIR="$CACHE_DIR/mypy"
 
 # ripgrep
 export RIPGREP_CONFIG_PATH="$DOTFILES/ripgreprc"

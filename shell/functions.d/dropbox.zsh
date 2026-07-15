@@ -26,7 +26,7 @@ function _dropbox_ignore_flux_candidates {
   if [[ $# -gt 0 ]]; then
     names=("$@")
   else
-    names=(node_modules .venv .worktrees .snakemake __pycache__)
+    names=(node_modules .venv .worktrees .snakemake __pycache__ .pytest_cache .ruff_cache .mypy_cache .uv-cache)
   fi
 
   local pattern
@@ -90,6 +90,7 @@ Usage: dropbox_ignore_flux [--root DIR] [--quiet] [--dry-run] [NAME ...]
 
 Set com.dropbox.ignored=1 on top-level high-churn Dropbox directories.
 Default names: node_modules .venv .worktrees .snakemake __pycache__
+               .pytest_cache .ruff_cache .mypy_cache .uv-cache
 EOF
         return 0
         ;;
@@ -123,7 +124,7 @@ EOF
   }
 
   if [[ ${#names[@]} -eq 0 ]]; then
-    names=(node_modules .venv .worktrees .snakemake __pycache__)
+    names=(node_modules .venv .worktrees .snakemake __pycache__ .pytest_cache .ruff_cache .mypy_cache .uv-cache)
   fi
 
   local -a candidates
