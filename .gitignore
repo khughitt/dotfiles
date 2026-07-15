@@ -22,6 +22,7 @@ bin/*
 !bin/
 !bin/dotfiles-check
 !bin/dotfiles-health
+!bin/dotfiles-secrets-check
 bookmarks
 dojo/
 mime/x-wine-extension-*

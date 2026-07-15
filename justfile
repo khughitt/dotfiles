@@ -19,9 +19,13 @@ setup-dry-run:
 setup-only phases:
     bash setup.sh --dry-run --link-only --headless --only {{ phases }}
 
+secrets:
+    bin/dotfiles-secrets-check
+
 test:
     zsh tests/dropbox_ignore_flux.zsh
     zsh tests/history.zsh
+    zsh tests/secrets_check.zsh
     zsh tests/setup_and_health.zsh
     zsh tests/dotfiles_check.zsh
     zsh tests/wali.zsh
