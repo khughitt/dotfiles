@@ -1,14 +1,14 @@
 profiles:
-  - id: ember
-    label: "Ember - client-api"
+  - id: i
+    label: "i"
     instances: 1
     ring: "#ff7a45"
     border: "#ff7a45"
     icon: ""
     theme:
       mode: dark
-  - id: tide
-    label: "Tide - infra"
+  - id: ii
+    label: "ii"
     instances: 2
     ring: "#3aa6ff"
     icon: ""

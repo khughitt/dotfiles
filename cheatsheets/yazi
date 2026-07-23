@@ -1,3 +1,29 @@
+# general
+ctrl-c   cancel
+
+# jump
+z   # fzf
+Z   # zoxide
+
+# selection
+space     toggle selection
+v         enter visual mode (selection mode)
+V         enter visual mode (unset mode)
+ctrl + a  select all files
+esc       cancel selection
+
+# cut & paste
 x   cut
 y   yank
 p   paste
+
+# sort by
+,m     # modification time
+,M
+,b
+,B
+
+# copy paths
+cc      # copy file path
+cd      # copy dir path
+cf      # copy filename

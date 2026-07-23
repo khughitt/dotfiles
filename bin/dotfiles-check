@@ -58,8 +58,8 @@ echo "zsh -n"
 zsh -n "${zsh_files[@]}"
 
 echo "zsh modelines"
-if rg -n 'vi:syntax=bash' shell --glob '!private/**' --glob '!local/**'; then
-    echo "shell files are zsh-sourced; use vi:syntax=zsh instead of vi:syntax=bash" >&2
+if rg -n 'vi:syntax=(bash|zsh)' shell --glob '!private/**' --glob '!local/**'; then
+    echo "shell files are zsh-sourced; use vi:filetype=zsh modelines" >&2
     exit 1
 fi
 

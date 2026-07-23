@@ -4,3 +4,6 @@ gh pr --draft
 
 # auto-fill using local commit
 gh pr create --fill
+
+# execute commands on inactive accounts
+GH_TOKEN=$(gh auth token --user other-account) ...

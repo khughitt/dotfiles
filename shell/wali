@@ -357,4 +357,4 @@ function wali_rotate {
   wali_set "$current"
 }
 
-# vi:syntax=zsh
+# vi:filetype=zsh

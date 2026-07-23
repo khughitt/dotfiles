@@ -211,8 +211,8 @@ binds {
     Super+Shift+V { switch-focus-between-floating-and-tiling; }
 
     Super+H { focus-column-left; }
-    Super+J { focus-window-down; }
-    Super+K { focus-window-up; }
+    // Super+J { focus-window-down; }
+    // Super+K { focus-window-up; }
     Super+L { focus-column-right; }
     Super+Left { focus-column-left; }
     Super+Down { focus-window-down; }
@@ -220,8 +220,8 @@ binds {
     Super+Right { focus-column-right; }
 
     Super+Shift+H { move-column-left; }
-    Super+Shift+J { move-window-down; }
-    Super+Shift+K { move-window-up; }
+    // Super+Shift+J { move-window-down; }
+    // Super+Shift+K { move-window-up; }
     Super+Shift+L { move-column-right; }
     Super+Shift+Left { move-column-left; }
     Super+Shift+Down { move-window-down; }
@@ -246,17 +246,21 @@ binds {
 
     Super+Page_Down { focus-workspace-down; }
     Super+Page_Up { focus-workspace-up; }
-    Super+U { focus-workspace-down; }
-    Super+I { focus-workspace-up; }
+    // Super+U { focus-workspace-down; }
+    // Super+I { focus-workspace-up; }
+    Super+J { focus-workspace-down; }
+    Super+K { focus-workspace-up; }
     Super+Ctrl+Page_Down { move-column-to-workspace-down; }
     Super+Ctrl+Page_Up { move-column-to-workspace-up; }
-    Super+Ctrl+U { move-column-to-workspace-down; }
-    Super+Ctrl+I { move-column-to-workspace-up; }
+    // Super+Ctrl+U { move-column-to-workspace-down; }
+    // Super+Ctrl+I { move-column-to-workspace-up; }
     Super+Shift+Page_Down { move-workspace-down; }
     Super+Shift+Page_Up { move-workspace-up; }
-    Super+Shift+U { move-workspace-down; }
-    Super+Shift+I { move-workspace-up; }
-
+    Super+Shift+J { move-workspace-down; }
+    Super+Shift+K { move-workspace-up; }
+    // Super+Shift+U { move-workspace-down; }
+    // Super+Shift+I { move-workspace-up; }
+    //
     // Consume/expel candidates.
     Super+Comma { consume-window-into-column; }
     Super+Period { expel-window-from-column; }

@@ -18,4 +18,4 @@ if $vconsole && [ -f "$HOME/.Xresources" ]; then
     fi
 fi
 
-# vi:syntax=zsh
+# vi:filetype=zsh

@@ -1,5 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "tui": {"theme": "noctalia"},
-  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]
+  "tui": {
+    "theme": "noctalia"
+  },
+  "lsp": true,
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    "/mnt/ssd/Dropbox/familiar/integrations/opencode/plugin.js"
+  ]
 }

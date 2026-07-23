@@ -8,4 +8,4 @@ alias j='z'
 alias jk='zi'
 alias v='nvim $(fd -t f | fzf -1 --exact)'
 
-# vi:syntax=zsh
+# vi:filetype=zsh

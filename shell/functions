@@ -14,4 +14,4 @@ if [ -d "$_shell_functions_dir" ]; then
 fi
 unset _shell_functions_dir file
 
-# vi:syntax=zsh
+# vi:filetype=zsh

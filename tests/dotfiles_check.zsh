@@ -21,6 +21,37 @@ assert_not_ignored() {
 
 "${repo_root}/bin/dotfiles-check"
 
+modeline_files=(
+  zshrc
+  shell/aliases
+  shell/audio
+  shell/functions
+  shell/history
+  shell/kitty
+  shell/macos
+  shell/tmux
+  shell/ubuntu
+  shell/vconsole
+  shell/vi
+  shell/wali
+  shell/zoxide
+)
+
+for file in "${modeline_files[@]}"; do
+  output=$(
+    nvim --headless -i NONE -u NONE \
+      --cmd 'set noswapfile' \
+      --cmd 'filetype on' \
+      --cmd 'syntax on' \
+      "${repo_root}/${file}" \
+      '+lua print("DOTFILES_FT:" .. vim.bo.filetype .. ":" .. vim.bo.syntax)' \
+      '+qa!' 2>&1
+  )
+
+  [[ "$output" == "DOTFILES_FT:zsh:zsh" ]] || \
+    fail "Neovim did not load ${file} cleanly as zsh: ${output}"
+done
+
 zsh -fc '
   source "$1/shell/aliases"
   source "$1/shell/functions"

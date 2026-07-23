@@ -1,15 +1,15 @@
 [
   {
-    "id": "ember",
-    "label": "Ember - client-api",
+    "id": "i",
+    "label": "i",
     "icon": "",
     "ring": "#ff7a45",
     "border": "#ff7a45",
     "instances": 1
   },
   {
-    "id": "tide",
-    "label": "Tide - infra",
+    "id": "ii",
+    "label": "ii",
     "icon": "",
     "ring": "#3aa6ff",
     "border": null,

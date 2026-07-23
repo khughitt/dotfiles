@@ -7,4 +7,4 @@ alias fd="fdfind"
 alias bat='batcat'
 alias cat='batcat --wrap=never --paging=never'
 
-# vi:syntax=zsh
+# vi:filetype=zsh

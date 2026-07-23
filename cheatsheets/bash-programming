@@ -3,6 +3,12 @@
 # ~strict mode
 set -euo pipefail 
 
+# list of args ($1 $2...)
+$@ 
+
+# number of args
+$#
+
 # file/dir exists/not
 [ -e "$path" ]
 [ ! -e "$path" ]
@@ -130,5 +136,11 @@ echo $x[$RANDOM % $#x + 1]
 if [ "$#" -eq 0 ]; then
   echo "no args"
 fi
+
+# no-op / "true"
+:
+
+# empty a file without deleting it
+: > file.txt
 
 # vi:syntax=bash

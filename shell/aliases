@@ -14,4 +14,4 @@ if [ -d "$_shell_aliases_dir" ]; then
 fi
 unset _shell_aliases_dir file
 
-# vi:syntax=zsh
+# vi:filetype=zsh

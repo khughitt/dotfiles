@@ -182,4 +182,4 @@ fi
 # stop profiling zshrc
 # zprof
 
-# vi:syntax=zsh
+# vi:filetype=zsh
