@@ -18,10 +18,23 @@
       "disabled": false
     }
   },
+  "permissions": {
+    "allowed_tools": [
+      "view",
+      "ls",
+      "glob",
+      "grep"
+    ]
+  },
   "options": {
     "tui": {
       "compact_mode": true,
       "diff_mode": "unified"
-    }
+    },
+    "attribution": {
+      "trailer_style": "none",
+      "generated_with": false
+    },
+    "disable_metrics": true
   }
 }

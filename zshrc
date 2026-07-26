@@ -116,6 +116,7 @@ zinit cdreplay -q
 
 compdef _gnu_generic snakemake
 (( $+commands[xan] )) && eval "$(xan completions zsh)"
+(( $+commands[crush] )) && eval "$(crush completion zsh)"
 
 if [[ -r "${DOTFILES}/shell/local/${HOST}.zsh" ]]; then
     source "${DOTFILES}/shell/local/${HOST}.zsh"
