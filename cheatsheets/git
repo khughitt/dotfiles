@@ -6,6 +6,14 @@ git diff --name-status 629feca 3e0800d
 # see differences for staged files
 git diff --staged
 
+# show files that differ between a feature branch and main
+git diff main...HEAD --name-only              # if feat branch checked out 
+git diff main...feature-branch --name-only    # otherwise                  
+
+# show changes for a particular file in a feature branch
+git diff main...HEAD -- path/to/file            # if feat branch checked out  
+git diff main...feature-branch -- path/to/file  # otherwise                   
+
 # list files changed in a commit
 git diff-tree --no-commit-id --name-only -r 629feca
 

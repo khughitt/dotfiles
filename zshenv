@@ -118,6 +118,10 @@ export UV_CONCURRENT_DOWNLOADS=3
 # qt
 export QT_SCALE_FACTOR=1
 
+# sudo password prompt when no tty is available (e.g. shells spawned by an agent
+# or editor). With a real terminal sudo prompts inline as usual and never uses this.
+export SUDO_ASKPASS=/usr/bin/ksshaskpass
+
 # Predictable SSH authentication socket location.
 # https://unix.stackexchange.com/a/76256/39903
 # SOCK="/tmp/ssh-agent-keith-screen"
