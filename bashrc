@@ -19,4 +19,4 @@ bind '"\eOB": history-search-forward'
 
 [[ -t 0 ]] && stty -ixon
 
-PS1='\u@\h:\w\$ '
+PS1='\[\e[36m\]\w\[\e[33m\]\$\[\e[0m\] '

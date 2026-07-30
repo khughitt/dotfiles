@@ -107,7 +107,7 @@ test_bash_config_is_native_and_minimal() {
         forward=$(bind -q history-search-forward)
         [[ "$backward" == *"$2"* && "$backward" == *"$3"* ]]
         [[ "$forward" == *"$4"* && "$forward" == *"$5"* ]]
-      ' bash '\u@\h:\w\$ ' '\eOA' '\e[A' '\eOB' '\e[B' \
+      ' bash '\[\e[36m\]\w\[\e[33m\]\$\[\e[0m\] ' '\eOA' '\e[A' '\eOB' '\e[B' \
       2>/dev/null; then
     fail "bashrc should configure the native interactive environment"
   fi
