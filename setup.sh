@@ -354,6 +354,8 @@ function setup_external_clones() {
 
 function setup_shell_links() {
     phase "Shell links"
+    ln_s "${DOTS_HOME}/bashrc" "${HOME}/.bashrc"
+    ln_s "${DOTS_HOME}/bash_profile" "${HOME}/.bash_profile"
     ln_s "${DOTS_HOME}/zshrc" "${HOME}/.zshrc"
     ln_s "${DOTS_HOME}/zshenv" "${HOME}/.zshenv"
     ln_s "${DOTS_HOME}/shell" "${HOME}/.shell"

@@ -123,6 +123,8 @@ if [[ "$(uname)" != "Darwin" ]]; then
     check_command attr
 fi
 
+check_link "${HOME}/.bashrc" "${DOTS_HOME}/bashrc"
+check_link "${HOME}/.bash_profile" "${DOTS_HOME}/bash_profile"
 check_link "${HOME}/.zshrc" "${DOTS_HOME}/zshrc"
 check_link "${HOME}/.zshenv" "${DOTS_HOME}/zshenv"
 check_link "${HOME}/.shell" "${DOTS_HOME}/shell"

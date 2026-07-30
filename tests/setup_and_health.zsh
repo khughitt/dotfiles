@@ -137,6 +137,8 @@ test_setup_dry_run_link_only_does_not_write_home() {
   [[ "$output" == *"==> Shell links"* ]] || fail "expected shell links phase"
   [[ "$output" == *"==> Systemd user units"* ]] || fail "expected systemd user units phase"
   [[ "$output" == *"==> Package installation"* ]] || fail "expected package installation phase"
+  [[ ! -e "${tmp}/home/.bashrc" ]] || fail "dry-run should not create ~/.bashrc"
+  [[ ! -e "${tmp}/home/.bash_profile" ]] || fail "dry-run should not create ~/.bash_profile"
   [[ ! -e "${tmp}/home/.zshrc" ]] || fail "dry-run should not create ~/.zshrc"
   [[ ! -e "${tmp}/home/.shell" ]] || fail "dry-run should not create ~/.shell"
   [[ ! -e "${tmp}/config/systemd/user/dropbox-ignore-flux.timer" ]] || \
@@ -154,6 +156,12 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
 
   run_setup "$tmp" --link-only --headless >/dev/null
 
+  [[ -L "${tmp}/home/.bashrc" ]] || fail "expected ~/.bashrc symlink"
+  [[ "$(readlink "${tmp}/home/.bashrc")" == "${repo_root}/bashrc" ]] || \
+    fail "expected ~/.bashrc to point at repo bashrc"
+  [[ -L "${tmp}/home/.bash_profile" ]] || fail "expected ~/.bash_profile symlink"
+  [[ "$(readlink "${tmp}/home/.bash_profile")" == "${repo_root}/bash_profile" ]] || \
+    fail "expected ~/.bash_profile to point at repo bash_profile"
   [[ -L "${tmp}/home/.zshrc" ]] || fail "expected ~/.zshrc symlink"
   [[ "$(readlink "${tmp}/home/.zshrc")" == "${repo_root}/zshrc" ]] || \
     fail "expected ~/.zshrc to point at repo zshrc"
