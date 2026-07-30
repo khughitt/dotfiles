@@ -78,6 +78,53 @@ run_setup() {
     bash "${repo_root}/setup.sh" "$@"
 }
 
+test_bash_config_is_native_and_minimal() {
+  local tmp
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home"
+
+  if ! env -i \
+      HOME="${tmp}/home" \
+      HISTFILE="${tmp}/home/.bash_history" \
+      PATH=/usr/bin:/bin \
+      TERM=xterm-256color \
+      bash --noprofile --rcfile "${repo_root}/bashrc" -i -c '
+        set -euo pipefail
+
+        [[ "$PATH" == "$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:/usr/bin:/bin" ]]
+        [[ "$EDITOR" == nvim ]]
+        [[ "$PAGER" == less ]]
+        [[ "$HISTCONTROL" == ignoreboth:erasedups ]]
+        [[ "$HISTSIZE" == 10000 ]]
+        [[ "$HISTFILESIZE" == 100000 ]]
+        [[ "$PROMPT_COMMAND" == "history -a; history -n" ]]
+        shopt -q histappend
+        shopt -q checkwinsize
+        [[ "$PS1" == "$1" ]]
+
+        backward=$(bind -q history-search-backward)
+        forward=$(bind -q history-search-forward)
+        [[ "$backward" == *"$2"* && "$backward" == *"$3"* ]]
+        [[ "$forward" == *"$4"* && "$forward" == *"$5"* ]]
+      ' bash '\u@\h:\w\$ ' '\eOA' '\e[A' '\eOB' '\e[B' \
+      2>/dev/null; then
+    fail "bashrc should configure the native interactive environment"
+  fi
+
+  if ! env -i HOME="${tmp}/home" PATH=/usr/bin:/bin \
+      bash --noprofile --norc -c '
+        source "$1"
+        [[ "$PATH" == /usr/bin:/bin ]]
+        [[ -z "${EDITOR+x}" ]]
+        [[ -z "${PAGER+x}" ]]
+      ' bash "${repo_root}/bashrc"; then
+    fail "bashrc should leave non-interactive shells unchanged"
+  fi
+
+  rm -rf "$tmp"
+}
+
 test_setup_dry_run_link_only_does_not_write_home() {
   local tmp output
   tmp=$(make_tmpdir)
@@ -422,6 +469,7 @@ test_dotfiles_health_fails_wrong_memory_alert_link() {
 
 test_tmp_cleanup_runs_only_at_process_exit
 test_tmp_cleanup_is_centralized
+test_bash_config_is_native_and_minimal
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
 test_setup_dry_run_can_enable_user_timers

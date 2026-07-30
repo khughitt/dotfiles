@@ -5,6 +5,8 @@ DOTS_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
 cd "$DOTS_HOME"
 
 bash_files=(
+    bashrc
+    bash_profile
     setup.sh
     bin/dotfiles-check
     bin/dotfiles-health
