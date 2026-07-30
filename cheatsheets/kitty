@@ -7,6 +7,7 @@ kitty +list-fonts
 # copy & paste
 ctrl+shift+c   # copy to clipboard
 ctrl+shift+v   # paste from clipboard
+ctrl+shift+y   # copy previous command output
 ctrl+;         # show clipboard manager
 
 # themes
