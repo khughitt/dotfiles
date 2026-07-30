@@ -33,7 +33,10 @@ copying the Zsh setup or adding plugins and dependencies.
   (`\e[A`/`\e[B`) and SS3 (`\eOA`/`\eOB`) terminal encodings;
 - `Ctrl-S` as a usable terminal key by disabling software flow control when stdin
   is a terminal; and
-- the compact native prompt `user@host:path$` (or `#` for root).
+- a compact prompt with no username or hostname: the working directory in cyan,
+  followed by the dynamic `$` (or `#` for root) in yellow, then an ANSI reset.
+  Standard 16-color codes and Readline non-printing guards keep it portable and
+  preserve correct line wrapping.
 
 `erasedups` deduplicates the current in-memory history only. Concurrent shells can
 still append duplicate lines to the history file and read them back, and the last
