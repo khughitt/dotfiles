@@ -10,6 +10,9 @@ f5-8  select sub-panel 1-4
 f1-f7     choose section
 f1        everything
 
+# knobs
+<ctrl-click>  enter value
+
 # appearance
 <c-shift-+>  increase gui scaling
 <c-shift-->  decrease gui scaling
@@ -38,11 +41,11 @@ c-`                 scale... (or: alt + drag clip)
 
 toggle micopitch editing     shift-alt-m
 
-toggle adaptive beat grid   /
-toggle snap                 
+toggle snap                 shift-s              
 toggle snap to events       shift-/
 toggle snap to grid         shift-,
 toggle snap to grid offset  shift-.
+toggle adaptive beat grid   /
 
 # show multiple tracks together
 # 1. in bottom left TRACK/CLIP section, choose "TRACK"
