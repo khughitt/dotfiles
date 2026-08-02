@@ -1,0 +1,12 @@
+lsp add typescript --command npx --args --yes --args @vtsls/language-server --args --stdio
+lsp add python --command pyright --args --stdio
+
+mcp add openrouter --type http --url "https://mcp.openrouter.ai/mcp" --timeout 120
+
+permissions allow view ls glob grep
+
+option ui compact true
+option ui diff unified
+option attribution-trailer-style none
+option attribution-generated-with false
+option metrics false
