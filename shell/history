@@ -8,19 +8,19 @@ SAVEHIST=100000
 setopt extended_history
 setopt hist_expire_dups_first
 setopt hist_ignore_dups
-setopt hist_ignore_space
+unsetopt hist_ignore_space
 setopt hist_verify
 unsetopt inc_append_history
 setopt share_history
 
 function zshaddhistory() {
-  local entry="${1%%$'\n'}"
+  setopt local_options extended_glob
+  local entry="${${1%%$'\n'}##[[:blank:]]#}"
 
-  if [[ "$entry" != ' '* ]]; then
-    (umask 077; print -r -- "${entry}|${PWD}   " >> "${HOME}/.zsh_history_ext")
-  fi
+  print -sr -- "$entry"
+  (umask 077; print -r -- "${entry}|${PWD}   " >> "${HOME}/.zsh_history_ext")
 
-  return 0
+  return 1
 }
 
 # vi:filetype=zsh
