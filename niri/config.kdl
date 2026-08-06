@@ -197,12 +197,14 @@ window-rule {
     block-out-from "screen-capture"
 }
 
-// Dim inactive windows: drop opacity so the blurred backdrop bleeds through.
-// Bleed desaturation/noise inherit the global blur block above — keep tuning
-// them there. Spec: docs/superpowers/specs/2026-08-05-niri-inactive-dim-design.md
+// Dim inactive terminals: drop opacity so the blurred backdrop bleeds through.
+// Terminal-only allowlist — content apps (browsers, bitwig, vlc, ...) stay
+// opaque when inactive, so no PiP exclusion is needed. Bleed desaturation/noise
+// inherit the global blur block above — keep tuning them there.
+// Spec: docs/superpowers/specs/2026-08-05-niri-inactive-dim-design.md
 window-rule {
-    match is-active=false
-    exclude app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    match app-id="kitty" is-active=false
+    match app-id="ghostty" is-active=false
     opacity 0.78
     background-effect {
         blur true
