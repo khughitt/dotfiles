@@ -49,7 +49,7 @@ input {
 }
 
 layout {
-    gaps 8
+    gaps 10
     center-focused-column "never" // "on-overflow"
     default-column-width { proportion 0.5; }
 
@@ -61,7 +61,8 @@ layout {
     }
 
     focus-ring {
-        width 3
+        width 5
+        active-gradient from="#ffaa33" to="#ffd090" angle=45 relative-to="workspace-view"
     }
 
     border {
@@ -70,10 +71,28 @@ layout {
 
     shadow {
         on
-        softness 30
+        softness 15
         spread 5
-        offset x=0 y=5
+        offset x=2 y=5
         color "#00000070"
+    }
+    tab-indicator {
+        on
+        hide-when-single-tab
+        place-within-column
+        gap 0
+        width 5
+        length total-proportion=0.98
+        position "left"
+        gaps-between-tabs 4
+        corner-radius 2
+    }
+
+    // TESTING (2026-08-03)
+    insert-hint {
+        on
+        color "#ffc87f80"
+        gradient from="#ffbb6680" to="#ffc88080" angle=45 relative-to="workspace-view"
     }
 
     background-color "transparent"
@@ -124,6 +143,8 @@ layer-rule {
 
 // Niri 26.04 blur support for Noctalia and regular apps.
 window-rule {
+    //exclude is-focused=true 
+    //match is-focused=false
     background-effect {
         blur true
         xray false
@@ -141,8 +162,8 @@ layer-rule {
 blur {
     passes 2
     offset 3.0
-    noise 0.03
-    saturation 1.05
+    noise 0.25
+    saturation 0.2
 }
 
 window-rule {
@@ -160,10 +181,10 @@ window-rule {
     open-floating true
 }
 
-window-rule {
-    match app-id="^kitty$"
-    opacity 0.94
-}
+// window-rule {
+//     match app-id="^kitty$"
+//     opacity 1.0
+// }
 
 window-rule {
     match app-id=r#"firefox$"# title="^Picture-in-Picture$"
@@ -174,6 +195,32 @@ window-rule {
     match app-id=r#"^org\.keepassxc\.KeePassXC$"#
     match app-id=r#"^org\.gnome\.World\.Secrets$"#
     block-out-from "screen-capture"
+}
+
+// Dim inactive windows: drop opacity so the blurred backdrop bleeds through.
+// Bleed desaturation/noise inherit the global blur block above — keep tuning
+// them there. Spec: docs/superpowers/specs/2026-08-05-niri-inactive-dim-design.md
+window-rule {
+    match is-active=false
+    exclude app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    opacity 0.78
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// Lift the active window off the backdrop: bigger, darker shadow than the
+// layout default.
+window-rule {
+    match is-active=true
+    shadow {
+        on
+        softness 30
+        spread 10
+        offset x=2 y=10
+        color "#000000b0"
+    }
 }
 
 binds {
@@ -211,8 +258,8 @@ binds {
     Super+Shift+V { switch-focus-between-floating-and-tiling; }
 
     Super+H { focus-column-left; }
-    // Super+J { focus-window-down; }
-    // Super+K { focus-window-up; }
+    Super+J { focus-window-down; }
+    Super+K { focus-window-up; }
     Super+L { focus-column-right; }
     Super+Left { focus-column-left; }
     Super+Down { focus-window-down; }
@@ -220,8 +267,6 @@ binds {
     Super+Right { focus-column-right; }
 
     Super+Shift+H { move-column-left; }
-    // Super+Shift+J { move-window-down; }
-    // Super+Shift+K { move-window-up; }
     Super+Shift+L { move-column-right; }
     Super+Shift+Left { move-column-left; }
     Super+Shift+Down { move-window-down; }
@@ -233,39 +278,28 @@ binds {
     Super+Ctrl+Home { move-column-to-first; }
     Super+Ctrl+End { move-column-to-last; }
 
-    // Monitor movement candidates. Keep disabled until the multi-monitor
-    // workflow settles.
-    // Super+Ctrl+Left { focus-monitor-left; }
-    // Super+Ctrl+Down { focus-monitor-down; }
-    // Super+Ctrl+Up { focus-monitor-up; }
-    // Super+Ctrl+Right { focus-monitor-right; }
-    // Super+Shift+Ctrl+Left { move-column-to-monitor-left; }
-    // Super+Shift+Ctrl+Down { move-column-to-monitor-down; }
-    // Super+Shift+Ctrl+Up { move-column-to-monitor-up; }
-    // Super+Shift+Ctrl+Right { move-column-to-monitor-right; }
-
-    Super+Page_Down { focus-workspace-down; }
-    Super+Page_Up { focus-workspace-up; }
-    // Super+U { focus-workspace-down; }
-    // Super+I { focus-workspace-up; }
-    Super+J { focus-workspace-down; }
-    Super+K { focus-workspace-up; }
-    Super+Ctrl+Page_Down { move-column-to-workspace-down; }
-    Super+Ctrl+Page_Up { move-column-to-workspace-up; }
-    // Super+Ctrl+U { move-column-to-workspace-down; }
-    // Super+Ctrl+I { move-column-to-workspace-up; }
-    Super+Shift+Page_Down { move-workspace-down; }
-    Super+Shift+Page_Up { move-workspace-up; }
+    Super+Page_Down { focus-window-down; }
+    Super+Page_Up { focus-window-up; }
+    Alt+J { focus-workspace-down; }
+    Alt+K { focus-workspace-up; }
+    Alt+Page_Down { focus-workspace-down; }
+    Alt+Page_Up { focus-workspace-up; }
+    Super+Shift+Page_Down { move-column-to-workspace-down; }
+    Super+Shift+Page_Up { move-column-to-workspace-up; }
     Super+Shift+J { move-workspace-down; }
     Super+Shift+K { move-workspace-up; }
-    // Super+Shift+U { move-workspace-down; }
-    // Super+Shift+I { move-workspace-up; }
-    //
-    // Consume/expel candidates.
+    Alt+Shift+J { move-workspace-down; }
+    Alt+Shift+K { move-workspace-up; }
+    Alt+Shift+Page_Down { move-workspace-down; }
+    Alt+Shift+Page_Up { move-workspace-up; }
+
+    // take in, push out
     Super+Comma { consume-window-into-column; }
     Super+Period { expel-window-from-column; }
-    // Super+BracketLeft { consume-or-expel-window-left; }
-    // Super+BracketRight { consume-or-expel-window-right; }
+
+    // take in, take in
+    Super+BracketLeft { consume-or-expel-window-left; }
+    Super+BracketRight { consume-or-expel-window-right; }
 
     Super+R { switch-preset-column-width; }
     Super+Shift+R { switch-preset-column-width-back; }
@@ -311,8 +345,11 @@ binds {
     Super+Shift+9 { move-column-to-workspace 9; }
     Super+Shift+0 { move-column-to-workspace 10; }
 
-    Super+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
-    Super+WheelScrollUp cooldown-ms=150 { focus-workspace-up; }
+    Alt+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Alt+WheelScrollUp cooldown-ms=150 { focus-workspace-up; }
+    Alt+Shift+WheelScrollDown cooldown-ms=150 { move-workspace-down; }
+    Alt+Shift+WheelScrollUp cooldown-ms=150 { move-workspace-up; }
+
     Super+WheelScrollRight { focus-column-right; }
     Super+WheelScrollLeft { focus-column-left; }
 
