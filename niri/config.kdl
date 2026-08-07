@@ -49,7 +49,9 @@ input {
 }
 
 layout {
-    gaps 10
+    // 18 shows the glass pane lip between windows; glasspanes/shell.qml's
+    // layoutGaps must match — change both together.
+    gaps 18
     center-focused-column "never" // "on-overflow"
     default-column-width { proportion 0.5; }
 
@@ -114,6 +116,7 @@ screenshot-path "~/Pictures/Screenshots/%Y-%m-%d %H-%M-%S.png"
 spawn-at-startup "qs" "-c" "noctalia-shell"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
+spawn-sh-at-startup "qs -p ~/d/dotfiles/glasspanes/shell.qml"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
 
 // Replaces `ohai-status reset`, whose binary is deleted — familiar owns agent state now.
@@ -141,60 +144,27 @@ layer-rule {
     place-within-backdrop true
 }
 
-// Niri 26.04 blur support for Noctalia and regular apps.
+// blur + noise
 window-rule {
-    //exclude is-focused=true 
-    //match is-focused=false
     background-effect {
         blur true
         xray false
     }
 }
 
-layer-rule {
-    match namespace="^noctalia-(background|launcher-overlay|dock)-.*$"
-
-    background-effect {
-        xray false
-    }
-}
-
 blur {
-    passes 2
+    passes 1
     offset 3.0
-    noise 0.25
+    //noise 0.25
+    noise 0.08
     saturation 0.2
 }
 
-window-rule {
-    geometry-corner-radius 20
-    clip-to-geometry true
-}
-
-window-rule {
-    match app-id="^text-input$"
-    open-floating true
-}
-
-window-rule {
-    match app-id="^peek$"
-    open-floating true
-}
-
-// window-rule {
-//     match app-id="^kitty$"
-//     opacity 1.0
-// }
-
-window-rule {
-    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
-    open-floating true
-}
-
-window-rule {
-    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
-    match app-id=r#"^org\.gnome\.World\.Secrets$"#
-    block-out-from "screen-capture"
+layer-rule {
+    match namespace="^noctalia-(background|launcher-overlay|dock)-.*$"
+    background-effect {
+        xray false
+    }
 }
 
 // Dim inactive terminals: drop opacity so the blurred backdrop bleeds through.
@@ -212,17 +182,53 @@ window-rule {
     }
 }
 
+// Terminal-glass fusion: even the focused terminal stays faintly translucent
+// so the glass pane's tint and grid bleed through the content area — terminal
+// and slab read as one object. Blur inherits from the global rule above.
+// Spec: docs/superpowers/specs/2026-08-05-glass-panes-design.md
+window-rule {
+    match app-id="kitty" is-active=true
+    match app-id="ghostty" is-active=true
+    opacity 0.93
+}
+
 // Lift the active window off the backdrop: bigger, darker shadow than the
 // layout default.
 window-rule {
     match is-active=true
     shadow {
         on
-        softness 30
+        softness 15
         spread 10
         offset x=2 y=10
         color "#000000b0"
     }
+}
+
+window-rule {
+    geometry-corner-radius 20
+    clip-to-geometry true
+}
+
+window-rule {
+    match app-id="^text-input$"
+    open-floating true
+}
+
+window-rule {
+    match app-id="^peek$"
+    open-floating true
+}
+
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+
+window-rule {
+    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+    match app-id=r#"^org\.gnome\.World\.Secrets$"#
+    block-out-from "screen-capture"
 }
 
 binds {
