@@ -49,9 +49,9 @@ input {
 }
 
 layout {
-    // 18 shows the glass pane lip between windows; glasspanes/shell.qml's
+    // 24 leaves clear wallpaper between adjacent glass lips; shell.qml's
     // layoutGaps must match — change both together.
-    gaps 18
+    gaps 24
     center-focused-column "never" // "on-overflow"
     default-column-width { proportion 0.5; }
 
@@ -147,18 +147,19 @@ layer-rule {
 // blur + noise
 window-rule {
     background-effect {
-        blur true
+        // blur true
         xray false
     }
 }
 
-blur {
-    passes 1
-    offset 3.0
-    //noise 0.25
-    noise 0.08
-    saturation 0.2
-}
+
+// blur {
+//     passes 2
+//     offset 2.0
+//     //noise 0.25
+//     noise 0.05
+//     saturation 0.75
+// }
 
 layer-rule {
     match namespace="^noctalia-(background|launcher-overlay|dock)-.*$"
@@ -175,9 +176,9 @@ layer-rule {
 window-rule {
     match app-id="kitty" is-active=false
     match app-id="ghostty" is-active=false
-    opacity 0.78
+    opacity 0.7
     background-effect {
-        blur true
+        // blur true
         xray false
     }
 }
