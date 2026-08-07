@@ -49,7 +49,7 @@ input {
 }
 
 layout {
-    // 24 leaves clear wallpaper between adjacent glass lips; shell.qml's
+    // 24 leaves clear wallpaper between adjacent glass lips; niri-glass shell.qml's
     // layoutGaps must match — change both together.
     gaps 24
     center-focused-column "never" // "on-overflow"
@@ -116,7 +116,7 @@ screenshot-path "~/Pictures/Screenshots/%Y-%m-%d %H-%M-%S.png"
 spawn-at-startup "qs" "-c" "noctalia-shell"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
-spawn-sh-at-startup "qs -p ~/d/dotfiles/glasspanes/shell.qml"
+spawn-sh-at-startup "qs -p ~/d/niri-glass/shell.qml"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
 
 // Replaces `ohai-status reset`, whose binary is deleted — familiar owns agent state now.
@@ -186,7 +186,7 @@ window-rule {
 // Terminal-glass fusion: even the focused terminal stays faintly translucent
 // so the glass pane's tint and grid bleed through the content area — terminal
 // and slab read as one object. Blur inherits from the global rule above.
-// Spec: docs/superpowers/specs/2026-08-05-glass-panes-design.md
+// Spec: ~/d/niri-glass/docs/2026-08-05-glass-panes-design.md
 window-rule {
     match app-id="kitty" is-active=true
     match app-id="ghostty" is-active=true
