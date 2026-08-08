@@ -1,6 +1,17 @@
+#
+# commands
+#
 /clear                    # clear context
 /resume                   # resume earlier conversation
 /compact                  # compact context
 /compact "keep x,y,z.."   # compact + instructions
 
+#
+# keyboard shortcuts
+#
+ctrl+s                    # stash prompt
+
+#
+# cli args
+#
 claude --dangerously-skip-permissions   # yolo

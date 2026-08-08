@@ -7,7 +7,7 @@ pager: false
 # word-wrap at width
 width: 120
 # show all files, including hidden and ignored.
-all: false
+all: true
 # show line numbers (TUI-mode only)
 showLineNumbers: false
 # preserve newlines in the output

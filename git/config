@@ -43,3 +43,7 @@
 [credential "https://gist.github.com"]
 	helper = 
 	helper = !/usr/bin/gh auth git-credential
+[includeIf "gitdir:~/d/cainex/"]
+	path = /home/keith/.gitconfig-cainex
+[includeIf "gitdir:/mnt/ssd/Dropbox/cainex/"]
+	path = /home/keith/.gitconfig-cainex

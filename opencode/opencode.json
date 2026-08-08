@@ -4,7 +4,7 @@
     "theme": "noctalia"
   },
   "formatter": true,
-  "lsp": true,
+  "lsp": {},
   "plugin": [
     "superpowers@git+https://github.com/obra/superpowers.git",
     "/mnt/ssd/Dropbox/familiar/integrations/opencode/plugin.js"

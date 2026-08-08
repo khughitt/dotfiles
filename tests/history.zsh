@@ -15,13 +15,13 @@ export HOME="$tmp"
 
 source "${repo_root}/shell/history"
 
-[[ -o hist_ignore_space ]] || fail 'HIST_IGNORE_SPACE should be enabled'
+[[ ! -o hist_ignore_space ]] || fail 'HIST_IGNORE_SPACE should be disabled'
 
 set +e
 zshaddhistory $'echo visible\n'
 normal_status=$?
 set -e
-(( normal_status == 0 )) || fail 'normal history hook path should return success'
+(( normal_status == 1 )) || fail 'history hook should replace the original entry'
 
 [[ -f "${HOME}/.zsh_history_ext" ]] || fail 'normal command should create extended history'
 rg -q '^echo visible\|' "${HOME}/.zsh_history_ext" || \
@@ -30,11 +30,13 @@ rg -q '^echo visible\|' "${HOME}/.zsh_history_ext" || \
   fail 'new extended history should use mode 600'
 
 set +e
-zshaddhistory $' echo hidden\n'
-hidden_status=$?
+zshaddhistory $'   echo  spaced\n'
+spaced_status=$?
 set -e
-(( hidden_status == 0 )) || fail 'leading-space hook path should return success'
-! rg -q 'echo hidden' "${HOME}/.zsh_history_ext" || \
-  fail 'leading-space command should not enter extended history'
+(( spaced_status == 1 )) || fail 'leading-space hook should replace the original entry'
+[[ "$(fc -ln "$HISTCMD")" == 'echo  spaced' ]] || \
+  fail 'normal history should trim only leading whitespace'
+rg -q '^echo  spaced\|' "${HOME}/.zsh_history_ext" || \
+  fail 'extended history should trim only leading whitespace'
 
 print -- 'history tests passed'

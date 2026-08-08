@@ -13,6 +13,9 @@ super + i     // focus workspace up
 shift + super + u   // move workspace down
 shift + super + i   // move workspace up
 
+// tabs
+super + w   // toggle column tabs
+
 // stack / unstack
 super + ,
 super + .

@@ -9,6 +9,9 @@ $@
 # number of args
 $#
 
+# end of "-x" style arguments
+--
+
 # file/dir exists/not
 [ -e "$path" ]
 [ ! -e "$path" ]

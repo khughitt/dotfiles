@@ -2,7 +2,7 @@
 
 # claude code
 alias cl='claude --dangerously-skip-permissions'
-alias clp='claude --dangerously-skip-permissions --plugin-dir /mnt/ssd/Dropbox/science'
+alias clp='claude --dangerously-skip-permissions --plugin-dir /mnt/ssd/Dropbox/proto-science'
 
 # codex (linux symlink work-around)
 # alias codex='codex -C `pwd`'
