@@ -143,11 +143,10 @@ window-rule {
 
 
 blur {
-    passes 2
-    offset 2.0
-    //noise 0.25
-    noise 0.05
-    saturation 0.75
+    passes 1
+    offset 3.5
+    noise 0.12
+    saturation 0.6
 }
 
 layer-rule {
@@ -163,9 +162,19 @@ layer-rule {
 // inherit the global blur block above — keep tuning them there.
 // Spec: docs/superpowers/specs/2026-08-05-niri-inactive-dim-design.md
 window-rule {
+    match app-id="kitty" is-active=true
+    match app-id="ghostty" is-active=true
+    opacity 0.8
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+window-rule {
     match app-id="kitty" is-active=false
     match app-id="ghostty" is-active=false
-    opacity 0.8
+    opacity 0.5
     background-effect {
         blur true
         xray false
