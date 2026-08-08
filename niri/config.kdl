@@ -49,8 +49,8 @@ input {
 }
 
 layout {
-    // 24 leaves clear wallpaper between adjacent glass lips; niri-glass shell.qml's
-    // layoutGaps must match — change both together.
+    // 24 leaves clear wallpaper between adjacent glass lips; niri-glass.json (this
+    // dir)'s layoutGaps must match — change both together.
     gaps 24
     center-focused-column "never" // "on-overflow"
     default-column-width { proportion 0.5; }
