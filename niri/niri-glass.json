@@ -1,10 +1,10 @@
 {
     "layoutGaps": 24,
-    "paneLip": 6,
+    "paneLip": 4,
     "paneShiftX": -3,
     "paneShiftY": 3,
     "paneApps": ["kitty", "ghostty"],
     "gridOverlay": false,
     "calibrate": false,
-    "probeExposure": 0.01
+    "probeExposure": 0.0
 }

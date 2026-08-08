@@ -142,9 +142,15 @@ window-rule {
 }
 
 
+// blur {
+//     passes 1
+//     offset 3.5
+//     noise 0.12
+//     saturation 0.6
+// }
 blur {
-    passes 1
-    offset 3.5
+    passes 2
+    offset 2
     noise 0.12
     saturation 0.6
 }
