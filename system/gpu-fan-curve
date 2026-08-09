@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+# Fan curve with a floor for an NVIDIA GPU under Wayland.
+#
+# Why this exists: the card's zero-RPM mode stops the fans below ~49 C, which is
+# exactly where this desktop idles. The controller then start/stops the fans
+# every ~10s without ever moving the temperature. A floor keeps them turning
+# steadily instead.
+#
+# nvfancontrol cannot be used here: it drives XNVCtrl, which needs a real NVIDIA
+# X screen. Xwayland does not provide one. nvidia-settings talks to the driver
+# over the Wayland session instead, which is why this needs WAYLAND_DISPLAY and
+# XDG_RUNTIME_DIR rather than DISPLAY.
+#
+# Measured on this card: 30% -> fans do not spin at all. 40% -> marginal, right
+# at the stall edge. 50/60/70% -> balanced and linear at ~42 RPM per point.
+# Hence a floor of 45%, comfortably clear of the stall edge and ~620 RPM.
+
+set -uo pipefail
+
+DESKTOP_UID=${DESKTOP_UID:-1000}
+POLL=${POLL:-4}            # seconds between samples
+HYST=${HYST:-3}            # only re-issue when the target moves this much
+MAXTEMP=${MAXTEMP:-88}     # above this, hand control back to the card
+
+# Curve as ascending "tempC:fanPct" points; linear interpolation between them.
+CURVE=(0:45 55:45 65:55 75:70 85:100)
+
+log() { printf '%s %s\n' "$(date -Is)" "$*"; }
+
+# --- session discovery ----------------------------------------------------
+# The wayland socket name is not stable across sessions (wayland-0/1/2...), so
+# discover it rather than hardcoding.
+find_session() {
+    local rt="/run/user/${DESKTOP_UID}" sock
+    [ -d "$rt" ] || return 1
+    for sock in "$rt"/wayland-[0-9]*; do
+        [ -S "$sock" ] || continue
+        case "$sock" in *.lock) continue;; esac
+        export XDG_RUNTIME_DIR="$rt"
+        export WAYLAND_DISPLAY="$(basename "$sock")"
+        return 0
+    done
+    return 1
+}
+
+ns() { timeout 10 nvidia-settings "$@" 2>/dev/null; }
+
+gpu_temp() {
+    timeout 10 nvidia-smi --query-gpu=temperature.gpu \
+        --format=csv,noheader,nounits 2>/dev/null | tr -dc '0-9'
+}
+
+set_manual() { ns -a '[gpu:0]/GPUFanControlState=1' >/dev/null; }
+set_auto()   { ns -a '[gpu:0]/GPUFanControlState=0' >/dev/null; }
+
+set_speed() {
+    ns -a "[fan:0]/GPUTargetFanSpeed=$1" -a "[fan:1]/GPUTargetFanSpeed=$1" >/dev/null
+}
+
+# --- curve ----------------------------------------------------------------
+curve_pct() {
+    local t=$1 i lo_t lo_p hi_t hi_p
+    for ((i = 0; i < ${#CURVE[@]}; i++)); do
+        hi_t=${CURVE[i]%%:*}; hi_p=${CURVE[i]##*:}
+        if (( t <= hi_t )); then
+            (( i == 0 )) && { echo "$hi_p"; return; }
+            lo_t=${CURVE[i-1]%%:*}; lo_p=${CURVE[i-1]##*:}
+            (( hi_t == lo_t )) && { echo "$hi_p"; return; }
+            echo $(( lo_p + (t - lo_t) * (hi_p - lo_p) / (hi_t - lo_t) ))
+            return
+        fi
+    done
+    echo "${CURVE[-1]##*:}"
+}
+
+# --- lifecycle ------------------------------------------------------------
+revert() {
+    if find_session; then
+        set_auto
+        log "reverted to automatic fan control"
+    else
+        log "no session; cannot revert (card resets to auto on driver reinit)"
+    fi
+}
+
+if [ "${1:-}" = "--revert" ]; then
+    revert
+    exit 0
+fi
+
+trap 'revert; exit 0' EXIT INT TERM
+
+log "starting: floor=${CURVE[0]##*:}% poll=${POLL}s curve=${CURVE[*]}"
+
+last_set=-100
+have_control=0
+waiting_logged=0
+
+while :; do
+    if ! find_session; then
+        (( have_control )) && { have_control=0; last_set=-100; }
+        # Log this once per wait episode, not every 15s forever.
+        (( waiting_logged )) || log "waiting for a Wayland session on /run/user/${DESKTOP_UID}"
+        waiting_logged=1
+        sleep 15
+        continue
+    fi
+    (( waiting_logged )) && { log "session found: $WAYLAND_DISPLAY"; waiting_logged=0; }
+
+    temp=$(gpu_temp)
+    if [ -z "$temp" ]; then
+        log "could not read GPU temperature; handing back to automatic control"
+        set_auto; have_control=0; last_set=-100
+        sleep 15
+        continue
+    fi
+
+    if (( temp >= MAXTEMP )); then
+        log "temp ${temp}C >= ${MAXTEMP}C; handing back to automatic control"
+        set_auto; have_control=0; last_set=-100
+        sleep "$POLL"
+        continue
+    fi
+
+    if (( ! have_control )); then
+        set_manual
+        if [ "$(ns -q '[gpu:0]/GPUFanControlState' -t)" != "1" ]; then
+            log "could not engage manual control (need root?); retrying"
+            sleep 15
+            continue
+        fi
+        have_control=1
+        log "manual control engaged"
+    fi
+
+    want=$(curve_pct "$temp")
+    diff=$(( want > last_set ? want - last_set : last_set - want ))
+    if (( diff >= HYST )); then
+        set_speed "$want"
+        log "temp ${temp}C -> fan ${want}%"
+        last_set=$want
+    fi
+
+    sleep "$POLL"
+done

@@ -1,0 +1,27 @@
+[Unit]
+Description=NVIDIA GPU fan curve with a floor (stops zero-RPM start/stop cycling)
+Documentation=file:///usr/local/bin/gpu-fan-curve
+# Deliberately NO "After=graphical.target". Combined with WantedBy=multi-user
+# below that forms an ordering cycle (graphical.target is itself After=
+# multi-user.target), and systemd resolves it by silently DELETING this job --
+# the service is left enabled but never starts. The daemon waits for a Wayland
+# session on its own, so no ordering dependency is needed.
+#
+# The daemon's wait loop means a restart cycle before login is expected and
+# harmless -- keep it from being rate-limited into failure.
+# NOTE: this key lives in [Unit], not [Service]; systemd silently ignores it
+# in [Service] and falls back to the 5-starts-per-10s default.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/gpu-fan-curve
+# Always hand the card back to its own curve when this service stops, however
+# it stops. Without this, a stopped daemon would leave the fans pinned at
+# whatever speed was last commanded.
+ExecStopPost=/usr/local/bin/gpu-fan-curve --revert
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
