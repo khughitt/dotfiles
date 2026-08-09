@@ -6,5 +6,16 @@
     "paneApps": ["kitty", "ghostty"],
     "gridOverlay": false,
     "calibrate": false,
-    "probeExposure": 0.0
+    "probeExposure": 0.0,
+    "ior": 1.5,
+    "thickness": 20,
+    "roughness": 0.08,
+    "transmission": 0.95,
+    "attenuationColor": "#dfe8ff",
+    "attenuationDistance": 60,
+    "chromaticAberration": 0,
+    "distortion": 0,
+    "distortionScale": 0.5,
+    "samples": 4,
+    "anisotropicBlur": 0
 }
