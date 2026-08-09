@@ -4,6 +4,8 @@
 -- Ported from markdown.vim (Aug 2026). Every mapping here used to be global,
 -- so opening one markdown file rebound <leader>s/o/r/f and <c-g> for every
 -- other buffer for the rest of the session; they are buffer-local now.
+-- Link-paste also moved from <leader>f to <localleader>f, out of the way of
+-- telescope's <leader>f* pickers.
 --
 -- Also dropped in that port:
 --   - `au BufNewFile,BufRead *.md set conceallevel=2`, a *global* autocmd
@@ -68,6 +70,10 @@ map('n', '<c-g>', 'ysiw_', 'italicise word')
 --
 -- Commands are run as argv lists rather than through a shell, so a URL
 -- containing shell metacharacters cannot be executed.
+--
+-- Bound to <localleader>f rather than <leader>f: the latter is a prefix of
+-- telescope's <leader>ff/fg/fb/fh/fr, so in a markdown buffer every one of
+-- those either stalled for timeoutlen or fired this instead.
 -- ---------------------------------------------------------------------------
 
 local IMAGE_EXTENSIONS = { gif = true, jpg = true, jpeg = true, png = true,
@@ -105,7 +111,7 @@ local function download_image(url)
   return '.img/' .. name
 end
 
-map('n', '<leader>f', function()
+map('n', '<localleader>f', function()
   local url = vim.fn.getreg('+'):gsub('%s+$', '')
   if not url:match('^https?://') then
     vim.notify('clipboard does not hold a URL', vim.log.levels.WARN)
