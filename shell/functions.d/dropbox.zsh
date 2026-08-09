@@ -43,6 +43,14 @@ function _dropbox_ignore_flux_candidates {
     [[ -n "${name_set[${candidate:t}]-}" ]] && candidates+=("$candidate")
   done < <(fd -Luu -0 -t d --prune "$pattern" "$root")
 
+  # Sort by byte value, not locale collation. UTF-8 locales ignore leading
+  # punctuation when collating, so under en_US.UTF-8 "$root/.venv" collates as
+  # "venv" and lands after "$root/src/__pycache__" -- making this function's
+  # output depend on the caller's environment, so an interactive run and the
+  # systemd unit can disagree. The prune loop below also assumes an ancestor
+  # sorts before its descendants, which only byte order guarantees.
+  # zsh restores this on return; it is set after the fd call deliberately.
+  local LC_COLLATE=C
   for candidate in ${(o)candidates}; do
     skip=false
     for existing in "${kept[@]}"; do
