@@ -1,23 +1,92 @@
+// Mirrors the binds block in niri/config.kdl — resync when that changes.
+
 // general
 shift+super+slash    // show key bindings
-super+s              // settings
+super+return         // terminal
+shift+super+return   // terminal in a new workspace below this one
 super+e              // yazi
+ctrl+space           // launcher
+super+s              // control center
+super+alt+comma      // settings
+super+o              // overview
+super+n              // wallpaper picker (wali)
+super+q              // close window
+alt+f4               // close window
+super+alt+l          // lock screen
+shift+super+c        // reload niri config
+shift+super+p        // power off monitors
+super+escape         // toggle shortcut inhibit (pass keys through to app)
+shift+super+e        // quit niri
+
+// screenshots
+f6                   // whole screen
+super+f6             // region
+alt+print            // window
 
 // window selection
-super + home   // focus first column
-super + end    // focus last column
+super+h              // focus column left
+super+l              // focus column right
+super+j              // focus window down
+super+k              // focus window up
+super+page_down      // focus window down
+super+page_up        // focus window up
+super+home           // focus first column
+super+end            // focus last column
+
+// window movement — note shift+super+j/k move the WORKSPACE, not the window
+shift+super+h        // move column left
+shift+super+l        // move column right
+shift+super+up       // move window up in column
+shift+super+down     // move window down in column
+super+ctrl+home      // move column to first
+super+ctrl+end       // move column to last
 
 // workspace selection
-super + u     // focus workspace down
-super + i     // focus workspace up
-shift + super + u   // move workspace down
-shift + super + i   // move workspace up
+alt+j                // focus workspace down
+alt+k                // focus workspace up
+alt+page_down        // focus workspace down
+alt+page_up          // focus workspace up
+alt+scroll           // focus workspace down / up
+super+1 .. super+0   // focus workspace 1-10
+
+// workspace movement
+alt+shift+j          // move workspace down
+alt+shift+k          // move workspace up
+shift+super+j        // move workspace down
+shift+super+k        // move workspace up
+alt+shift+scroll     // move workspace down / up
+shift+super+page_down   // move column to workspace below
+shift+super+page_up     // move column to workspace above
+shift+super+1 .. shift+super+0   // move column to workspace 1-10
+
+// sizing
+super+r              // cycle preset column widths
+shift+super+r        // cycle preset column widths backwards
+super+minus          // column width -10%
+super+equal          // column width +10%
+shift+super+minus    // window height -10%
+shift+super+equal    // window height +10%
+super+ctrl+shift+r   // cycle preset window heights
+super+ctrl+r         // reset window height
+super+f              // maximize column
+shift+super+f        // fullscreen window
+super+m              // maximize window to edges
+super+ctrl+f         // expand column to available width
+super+c              // center column
+super+ctrl+c         // center visible columns
+
+// floating
+super+v              // toggle window floating
+shift+super+space    // toggle window floating
+shift+super+v        // switch focus between floating and tiling
 
 // tabs
-super + w   // toggle column tabs
+super+w              // toggle column tabs
 
 // stack / unstack
-super + ,
-super + .
+super+,              // consume window into column
+super+.              // expel window from column
+super+[              // consume or expel window left
+super+]              // consume or expel window right
 
 // vi:syntax=kdl

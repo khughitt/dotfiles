@@ -19,9 +19,18 @@ environment {
     _JAVA_AWT_WM_NONREPARENTING "1"
 }
 
+// Keep theme and size in lockstep with gtk-3.0/ and gtk-4.0/settings.ini and with
+// gsettings org.gnome.desktop.interface — GTK reads those, not the XCURSOR_* env
+// niri exports, so a mismatch makes the pointer resize as it crosses windows.
+// Adwaita's native sizes are 24/30/36/48/72/96; anything else gets resampled soft.
 cursor {
     xcursor-theme "Adwaita"
-    xcursor-size 24
+    xcursor-size 30
+
+    // Get the pointer out of the way of text you are reading or typing over. Both
+    // are pure compositor-side hiding — any movement or click brings it straight back.
+    hide-when-typing
+    hide-after-inactive-ms 5000
 }
 
 input {
@@ -281,6 +290,8 @@ binds {
     XF86AudioStop allow-when-locked=true { spawn-sh "playerctl stop"; }
 
     Super+Return hotkey-overlay-title="Open Terminal" { spawn "kitty"; }
+    // Borrows niri's trailing empty workspace and slides it up to current+1 — see the script.
+    Super+Shift+Return hotkey-overlay-title="Open Terminal in a New Workspace Below" { spawn-sh "~/.config/niri/scripts/spawn-in-new-workspace kitty"; }
     Super+E hotkey-overlay-title="Open File Manager" { spawn "kitty" "yazi"; }
     Super+Alt+L hotkey-overlay-title="Lock Screen" { spawn "swaylock"; }
     Super+Q repeat=false { close-window; }

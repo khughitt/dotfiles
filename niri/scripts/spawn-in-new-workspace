@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Spawn a command on a fresh, empty workspace inserted directly below the current one.
+#
+# niri keeps exactly one empty workspace at the tail of every monitor, so there is
+# never a "create workspace" action to call. Borrow the tail instead: focus it, slide
+# it up to current+1, then exec there. niri immediately grows a new empty tail to
+# replace it. If the command never maps a window, the borrowed workspace evaporates
+# on its own the moment focus leaves it.
+set -euo pipefail
+
+if [[ $# -eq 0 ]]; then
+    echo "usage: ${0##*/} <command> [args...]" >&2
+    exit 2
+fi
+
+ws=$(niri msg -j workspaces)
+read -r output idx < <(jq -r '.[] | select(.is_focused) | "\(.output) \(.idx)"' <<<"$ws")
+tail_idx=$(jq --arg o "$output" '[.[] | select(.output == $o).idx] | max' <<<"$ws")
+
+# Workspace indices are per-monitor, which is exactly what both actions take.
+niri msg action focus-workspace "$tail_idx"
+if ((tail_idx > idx + 1)); then
+    niri msg action move-workspace-to-index $((idx + 1))
+fi
+
+exec "$@"
