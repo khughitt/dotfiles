@@ -155,7 +155,7 @@ fi
 # Dotfile fragments
 #
 
-shell_fragments=(aliases audio functions fzf kitty macos ubuntu vconsole wali zoxide)
+shell_fragments=(aliases audio functions fzf macos ubuntu vconsole wali zoxide)
 for file in "${shell_fragments[@]}"; do
     [[ -r "${HOME}/.shell/${file}" ]] && source "${HOME}/.shell/${file}"
 done

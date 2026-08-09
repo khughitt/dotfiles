@@ -29,7 +29,6 @@ zsh_files=(
     shell/functions.d/dropbox.zsh
     shell/fzf
     shell/history
-    shell/kitty
     shell/macos
     shell/tmux
     shell/ubuntu

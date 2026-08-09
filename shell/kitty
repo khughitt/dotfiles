@@ -1,6 +1,0 @@
-# Kitty shell integration.
-#
-# This file is still sourced from zshrc, but it intentionally does not install
-# directory-change hooks or change terminal colors.
-
-# vi:filetype=zsh

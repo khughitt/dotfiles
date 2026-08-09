@@ -27,7 +27,6 @@ modeline_files=(
   shell/audio
   shell/functions
   shell/history
-  shell/kitty
   shell/macos
   shell/tmux
   shell/ubuntu
