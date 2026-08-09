@@ -17,5 +17,8 @@
     "distortion": 0,
     "distortionScale": 0.5,
     "samples": 4,
-    "anisotropicBlur": 0
+    "anisotropicBlur": 0,
+    "springDampingRatio": 1.0,
+    "springStiffness": 800,
+    "springEpsilon": 0.0001
 }
