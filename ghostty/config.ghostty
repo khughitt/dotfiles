@@ -1,2 +1,8 @@
 theme = noctalia
 font-family = "Fira Code Retina Nerd Font Complete"
+
+# Match kitty's *active* background opacity so niri's blur/saturation/noise
+# shows through. ghostty has no focus-change hook, so it cannot do kitty's
+# background-vs-text split; the inactive dim is approximated by a whole-window
+# fade in niri/config.kdl, which dims ghostty's text too.
+background-opacity = 0.85
