@@ -3,96 +3,98 @@
 -- Neovim Configuration
 -- KH (Aug 2023)
 --
--- ---------------------------------------------------------------------------
+-- Layout:
+--   init.lua                 options, global keymaps, autocmds  (this file)
+--   lua/config/lazy.lua      plugin manager bootstrap
+--   lua/user/plugins/*.lua   plugin specs; each plugin configures itself
+--   lua/user/lsp.lua         language servers, diagnostics, completion
+--   lua/user/glass.lua       highlight fixups for kitty's translucency
 --
 -- Useful commands:
+--   :verbose set <var>?    find where a setting was made
+--   :Lazy                  plugin status / update
+--   :checkhealth           diagnose provider and plugin problems
 --
--- :verbose set <var>?    find where a setting was made
--- :scriptnames           list vimscripts loaded
---
+-- ---------------------------------------------------------------------------
+
+-- Leader keys must be set before lazy.nvim loads, or plugin keymaps bind to
+-- the wrong prefix.
+vim.g.mapleader      = ";"
+vim.g.maplocalleader = ","
 
 -- ---------------------------------------------------------------------------
 -- General
 -- ---------------------------------------------------------------------------
-vim.opt.complete:append({'i'})        -- complete filenames
+vim.opt.complete:append({ 'i' })      -- complete from included files
 vim.opt.cursorline = true             -- highlight current line
 vim.opt.foldenable = false            -- disable folding
-vim.opt.hidden = true                 -- easy buffer switching
-vim.opt.isk:append({'%', '#', '-'})   -- additional vim word characters
-vim.opt.modeline = true               -- make sure modeline support is enabled
-vim.opt.showmode = false              -- hide <INSERT>
+vim.opt.isk:append({ '%', '#', '-' }) -- additional vim word characters
+vim.opt.mouse = 'a'                   -- mouse wheel in terminal, etc.
+vim.opt.showmode = false              -- hide <INSERT>; lualine shows the mode
 
 -- reduce keycode mapping timeout delay
 vim.opt.ttimeoutlen = 5
 vim.opt.timeoutlen = 500
 
--- Remap leader / localleader
-vim.g.mapleader      = ";"
-vim.g.maplocalleader = ","
-
 -- Fast save/quit
-vim.keymap.set('n', '<leader>w', ':update<cr>')
-vim.keymap.set('n', '<leader>q', ':q<cr>')
-vim.keymap.set('n', '<leader>z', ':wq<cr>')
+vim.keymap.set('n', '<leader>w', '<cmd>update<cr>',  { desc = 'save' })
+vim.keymap.set('n', '<leader>q', '<cmd>q<cr>',       { desc = 'quit' })
+vim.keymap.set('n', '<leader>z', '<cmd>wq<cr>',      { desc = 'save and quit' })
 
--- remap macro recording to Q
+-- remap macro recording to Q, so a stray q does not start recording
 vim.keymap.set('n', 'Q', 'q')
 vim.keymap.set('n', 'q', '<nop>')
-
--- enable mouse wheel in terminal, etc.
-vim.opt.mouse = 'a'
-
--- enable syntax highlighting by default
-vim.opt.syntax = "on"
-
--- refresh syntax when saving new files
-vim.api.nvim_create_autocmd('BufWritePost', {
-  pattern = {'*'},
-  command = 'if &syntax == "" | :filetype detect | endif'
-})
 
 -- faster command execution
 vim.keymap.set('n', '!', ':!')
 
--- ----------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
 --  Backup and undo
--- ----------------------------------------------------------------------------
-vim.opt.backupdir = (os.getenv('XDG_STATE_HOME') or  (os.getenv('HOME') .. ".local")) .. 'nvim/backup'
-vim.opt.undodir = (os.getenv('XDG_STATE_HOME') or  (os.getenv('HOME') .. ".local")) .. 'nvim/undo'
+-- ---------------------------------------------------------------------------
+-- stdpath('state') is $XDG_STATE_HOME/nvim, and already correct on macOS.
+-- (These were hand-assembled until Aug 2026 and were missing a path
+-- separator, quietly filling ~/.local/statenvim/ with 100+ MB.)
+local state = vim.fn.stdpath('state')
+vim.opt.backupdir = state .. '/backup//'
+vim.opt.undodir   = state .. '/undo//'
 vim.opt.backup = true
-vim.opt.history = 5000
 vim.opt.undofile = true
+vim.opt.history = 5000
 vim.opt.undolevels = 200
 
--- enable undo using c-u in insert mode
+vim.fn.mkdir(state .. '/backup', 'p')
+vim.fn.mkdir(state .. '/undo', 'p')
+
+-- break undo before c-u, so an accidental line-kill is recoverable
 -- http://vim.wikia.com/wiki/Recover_from_accidental_Ctrl-U
 vim.keymap.set('i', '<c-u>', '<c-g>u<c-u>')
 
--- ----------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
 --  UI
--- ----------------------------------------------------------------------------
-vim.opt.number = true                         -- line numbers
-vim.opt.report = 0                            -- tell us about changes
-vim.opt.scrolloff = 5                         -- keep cursor at least this far away from top/bottom
-vim.opt.sidescrolloff = 1                     -- keep cursor this far from sides of screen
-vim.opt.signcolumn = 'yes'                    -- always show signcolumn
-vim.opt.wildignore = {'*.o', '*~', '*.pyc'}   -- ignore compiled files
-vim.opt.wildmode = {'longest', 'list'}        -- for filename completion, fill longest and list others
+-- ---------------------------------------------------------------------------
+vim.opt.number = true                           -- line numbers
+vim.opt.report = 0                              -- tell us about changes
+vim.opt.scrolloff = 5                           -- keep cursor away from top/bottom
+vim.opt.sidescrolloff = 1                       -- ... and from the sides
+vim.opt.signcolumn = 'yes'                      -- always show signcolumn
+vim.opt.showtabline = 2                         -- always show tabline (barbar)
+vim.opt.wildignore = { '*.o', '*~', '*.pyc' }   -- ignore compiled files
+vim.opt.wildmode = { 'longest', 'list' }        -- fill longest, then list
 
--- Enable cursor shape support
-vim.opt.guicursor = {'n-v-c:block-Cursor/lCursor-blinkon0',
-                     'i-ci:ver25-Cursor/lCursor',
-                     'r-cr:hor20-Cursor/lCursor'}
+-- cursor shape per mode
+vim.opt.guicursor = { 'n-v-c:block-Cursor/lCursor-blinkon0',
+                      'i-ci:ver25-Cursor/lCursor',
+                      'r-cr:hor20-Cursor/lCursor' }
 
--- ----------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
 -- Visual Cues
--- ----------------------------------------------------------------------------
-vim.opt.colorcolumn = {100}   -- show right margin
-vim.opt.showmatch = true    -- show matching braces when being added
+-- ---------------------------------------------------------------------------
+vim.opt.colorcolumn = { 100 }  -- show right margin
+vim.opt.showmatch = true       -- show matching braces when being added
 
--- ----------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
 -- Navigation
--- ----------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
 
 -- quick navigation in insert mode using "alt" key
 vim.keymap.set('i', '<m-h>', '<c-o>h')
@@ -101,146 +103,150 @@ vim.keymap.set('i', '<m-k>', '<c-o>k')
 vim.keymap.set('i', '<m-l>', '<c-o>l')
 
 -- treat long lines as break lines (useful when moving around in them)
-vim.keymap.set('', 'j', 'gj', {silent = true})
-vim.keymap.set('', 'k', 'gk', {silent = true})
+vim.keymap.set('', 'j', 'gj', { silent = true })
+vim.keymap.set('', 'k', 'gk', { silent = true })
 
 -- ---------------------------------------------------------------------------
---  Search Options
+--  Search
 -- ---------------------------------------------------------------------------
-vim.opt.ignorecase = true -- ignore case
-vim.opt.smartcase = true  -- enforce case when pattern contains uppercase chars
+vim.opt.ignorecase = true  -- ignore case
+vim.opt.smartcase = true   -- ... unless the pattern contains uppercase
 
--- stop highlighting matches
-vim.keymap.set('n', '<leader>n', ':nohlsearch<cr>')
+vim.keymap.set('n', '<leader>n', '<cmd>nohlsearch<cr>', { desc = 'clear search highlight' })
 
--- ----------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
 -- Tabs, windows and buffers
--- ----------------------------------------------------------------------------
-vim.opt.switchbuf = {'useopen', 'usetab', 'newtab'} -- behavior when switching between buffers
-vim.opt.showtabline = 2 			    -- always show tabline
+-- ---------------------------------------------------------------------------
+vim.opt.switchbuf = { 'useopen', 'usetab', 'newtab' }
 
-vim.keymap.set('', '<leader>cd', ':cd %:p:h<cr>:pwd<cr>') -- cd to directory of current file
-vim.keymap.set('', '<localleader>gf', ':e <cfile><cr>')   -- create file under cursor
-vim.keymap.set('', '<leader>ba', ':1,1000 bd!<cr>')       -- close all the buffers
+vim.keymap.set('n', '<leader>cd', '<cmd>cd %:p:h<cr><cmd>pwd<cr>', { desc = 'cd to file directory' })
+vim.keymap.set('n', '<localleader>gf', '<cmd>e <cfile><cr>',       { desc = 'create file under cursor' })
+vim.keymap.set('n', '<leader>ba', '<cmd>%bdelete!<cr>',            { desc = 'close all buffers' })
 
+-- window navigation, matching the terminal-mode maps below
+vim.keymap.set('n', '<c-h>', '<c-w>h')
+vim.keymap.set('n', '<c-j>', '<c-w>j')
+vim.keymap.set('n', '<c-k>', '<c-w>k')
+vim.keymap.set('n', '<c-l>', '<c-w>l')
+
+-- zoom the current window into its own tab, tmux ^az style. (This used to be
+-- defined in the R ftplugin, where it leaked into every buffer anyway.)
+vim.keymap.set('n', 'gz', function()
+  local pos = vim.api.nvim_win_get_cursor(0)
+  vim.cmd('tabnew %')
+  pcall(vim.api.nvim_win_set_cursor, 0, pos)
+  vim.cmd('normal! zz')
+end, { desc = 'zoom window into a new tab' })
 
 -- ---------------------------------------------------------------------------
---  Tab completion
+--  Completion
+--
+--  There is no completion plugin: Neovim's own LSP completion is enabled per
+--  buffer in lua/user/lsp.lua. `popup` shows the documentation window that
+--  float-preview.nvim used to provide, and `noselect` keeps the first entry
+--  from being inserted as you type.
 -- ---------------------------------------------------------------------------
-vim.opt.infercase = true  -- case insensitive tab completion
-
--- enable completion of filenames following '='
--- vim.opt.isfname.remove({'='})
+vim.opt.infercase = true
+vim.opt.completeopt = { 'menuone', 'noselect', 'popup' }
 
 -- ---------------------------------------------------------------------------
 --  Terminal
 -- ---------------------------------------------------------------------------
 
--- h/j/k/l
-vim.keymap.set('t', '<c-h>', [[ <c-\><c-n><c-w>h ]])
-vim.keymap.set('t', '<c-j>', [[ <c-\><c-n><c-w>j ]])
-vim.keymap.set('t', '<c-k>', [[ <c-\><c-n><c-w>k ]])
-vim.keymap.set('t', '<c-l>', [[ <c-\><c-n><c-w>l ]])
-vim.keymap.set('n', '<c-h>', [[ <c-w>h ]])
-vim.keymap.set('n', '<c-j>', [[ <c-w>j ]])
-vim.keymap.set('n', '<c-k>', [[ <c-w>k ]])
-vim.keymap.set('n', '<c-l>', [[ <c-w>l ]])
+-- escape to the window under h/j/k/l without leaving terminal mode first
+vim.keymap.set('t', '<c-h>', [[<c-\><c-n><c-w>h]])
+vim.keymap.set('t', '<c-j>', [[<c-\><c-n><c-w>j]])
+vim.keymap.set('t', '<c-k>', [[<c-\><c-n><c-w>k]])
+vim.keymap.set('t', '<c-l>', [[<c-\><c-n><c-w>l]])
 
--- cntl + arrow keys
-vim.keymap.set('t', '<c-left>', '<m-b>')
+-- word-wise movement, as in a normal shell
+vim.keymap.set('t', '<c-left>',  '<m-b>')
 vim.keymap.set('t', '<c-right>', '<m-f>')
 
--- automatically enter insert mode
-vim.api.nvim_create_autocmd({'BufWinEnter', 'WinEnter'}, {
-  pattern = {'term://*'},
-  command = 'startinsert'
-})
-
--- exclude terminal from buffer list
-vim.api.nvim_create_autocmd('TermOpen', {
-  pattern = {'*'},
-  command = 'set nobuflisted'
-})
+local term_group = vim.api.nvim_create_augroup('user.terminal', { clear = true })
 
 vim.api.nvim_create_autocmd('TermOpen', {
-  pattern = {'*'},
-  command = 'noremap <buffer> <tab> <nop>'
+  group = term_group,
+  callback = function(args)
+    vim.bo[args.buf].buflisted = false
+    vim.wo.number = false
+    vim.wo.relativenumber = false
+    vim.wo.signcolumn = 'no'
+    -- <tab>/<s-tab> are buffer switching; in a terminal they belong to the
+    -- program running inside it.
+    vim.keymap.set('n', '<tab>',   '<nop>', { buffer = args.buf })
+    vim.keymap.set('n', '<s-tab>', '<nop>', { buffer = args.buf })
+  end,
 })
 
-vim.api.nvim_create_autocmd('TermOpen', {
-  pattern = {'*'},
-  command = 'noremap <buffer> <s-tab> <nop>'
+-- automatically enter insert mode when focusing a terminal
+vim.api.nvim_create_autocmd({ 'BufWinEnter', 'WinEnter' }, {
+  group = term_group,
+  pattern = 'term://*',
+  command = 'startinsert',
 })
 
--- disable terminal line numbers
-vim.api.nvim_create_autocmd('TermOpen', {
-  pattern = {'*'},
-  command = 'setlocal nonumber norelativenumber'
-})
-
--- ----------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
 -- Text Formatting
--- ----------------------------------------------------------------------------
-
-vim.opt.expandtab = true              -- expand tabs to spaces
-vim.opt.formatoptions:append({'n'})   -- support for numbered/bulleted lists
-vim.opt.shiftround = true             -- round indents to multiple of shift width
+-- ---------------------------------------------------------------------------
+vim.opt.expandtab = true                -- expand tabs to spaces
+vim.opt.formatoptions:append({ 'n' })   -- support for numbered/bulleted lists
+vim.opt.shiftround = true               -- round indents to multiple of shiftwidth
 vim.opt.shiftwidth = 2
-vim.opt.softtabstop = 2               -- tab width
+vim.opt.softtabstop = 2
 vim.opt.tabstop = 2
-vim.opt.textwidth = 100               -- wrap lines at 100 characters, when asked
-vim.opt.virtualedit = {"block"}       -- allow virtual edit in visual block ..
-vim.opt.wrap = false                  -- dont wrap lines
-vim.opt.linebreak = true              -- when wrapping, respect word boundaries
+vim.opt.textwidth = 100                 -- wrap at 100 characters, when asked
+vim.opt.virtualedit = { 'block' }       -- allow virtual edit in visual block
+vim.opt.wrap = false                    -- do not wrap lines
+vim.opt.linebreak = true                -- when wrapping, respect word boundaries
 
 -- when wrapping is on, wrap backspace, cursor keys, etc.
-vim.opt.whichwrap:append ({
-  ['<'] = true,
-  ['>'] = true,
-  ['['] = true,
-  [']'] = true,
-  h = true,
-  l = true,
-})
-
--- copy and comment current line
-vim.keymap.set('n', 'zz', 'yy<leader>ccp', { remap = true })
-vim.keymap.set('v', 'zz', 'ygv<leader>cc`.jP', { remap = true })
+vim.opt.whichwrap:append({ ['<'] = true, ['>'] = true, ['['] = true, [']'] = true,
+                           h = true, l = true })
 
 -- strip all trailing whitespace in file
-vim.keymap.set('', '<localleader>s', [[ <cmd>%s/ \+$//gc<cr> ]])
+vim.keymap.set('n', '<localleader>s', [[<cmd>%s/ \+$//gc<cr>]], { desc = 'strip trailing whitespace' })
 
--- split paragraph into sentences
-vim.keymap.set('', '<localleader>p', [[ :s/[!\?\.] /.\r\r/g ]])
+-- split paragraph into one sentence per line
+vim.keymap.set('n', '<localleader>p', [[:s/[!\?\.] /.\r\r/g]], { desc = 'split into sentences' })
 
--- Shortuct to toggle textwidth wrapping
-vim.cmd([[
-function! ToggleTextWidth()
-  if &textwidth != 0
-    let b:oldtextwidth = &textwidth
-    set textwidth=0
-  elseif exists("b:oldtextwidth")
-    let &textwidth = b:oldtextwidth
+-- toggle the textwidth wrap limit, remembering the previous value
+vim.keymap.set('n', '<localleader>r', function()
+  if vim.bo.textwidth ~= 0 then
+    vim.b.saved_textwidth = vim.bo.textwidth
+    vim.bo.textwidth = 0
   else
-    set textwidth=100
-  endif
-endfunction
-]])
-vim.keymap.set('n', '<localleader>r', ':call ToggleTextWidth()<cr>', { silent = true })
+    vim.bo.textwidth = vim.b.saved_textwidth or 100
+  end
+  vim.notify('textwidth=' .. vim.bo.textwidth)
+end, { desc = 'toggle textwidth' })
+
+-- ---------------------------------------------------------------------------
+--  Commenting
+--
+--  Neovim has built-in gc/gcc since 0.10, so nerdcommenter is gone. Embedded
+--  languages are handled by nvim-ts-context-commentstring, which hooks
+--  vim.filetype.get_option (see lua/user/plugins/lang.lua).
+-- ---------------------------------------------------------------------------
+vim.keymap.set('n', '<space>', 'gcc', { remap = true, desc = 'toggle comment' })
+vim.keymap.set('x', '<space>', 'gc',  { remap = true, desc = 'toggle comment' })
+
+-- copy the current line/selection and comment out the original
+vim.keymap.set('n', 'zz', 'yygccp',       { remap = true, desc = 'duplicate line, comment original' })
+vim.keymap.set('x', 'zz', 'ygvgc`.jP',    { remap = true, desc = 'duplicate selection, comment original' })
 
 -- ---------------------------------------------------------------------------
 --  Copy and Paste
+--
+--  unnamed     -> CLIPBOARD (ctrl-shift-v)
+--  unnamedplus -> PRIMARY   (middle mouse)
 -- ---------------------------------------------------------------------------
+vim.opt.clipboard:prepend({ 'unnamed', 'unnamedplus' })
 
--- Some useful clipboard options:
--- unnamed        CLIPBOARD (shift-control v)
--- unnamedplus    PRIMARY   (middlemouse)
--- autoselect     Automatically save visual selections
-
--- switching to unnamedplus to allow pasting to chromium, etc. in wayland
-vim.opt.clipboard:prepend({'unnamed', 'unnamedplus'})
-
--- Explicitly configure clipboard provider for Wayland
+-- Neovim auto-detects a clipboard provider, but pin wl-clipboard explicitly on
+-- Wayland so PRIMARY (*) is wired up as well as CLIPBOARD (+). Left unset
+-- elsewhere on purpose: over ssh/tmux with no clipboard tool available,
+-- Neovim falls back to OSC 52 and yanks reach the local machine.
 if vim.env.WAYLAND_DISPLAY then
   vim.g.clipboard = {
     name = 'wl-clipboard',
@@ -257,341 +263,100 @@ if vim.env.WAYLAND_DISPLAY then
 end
 
 -- paste from primary in normal mode
-vim.keymap.set('', '<leader>p', '"*p')
-vim.keymap.set('', '<leader>P', '"*P')
+vim.keymap.set('n', '<leader>p', '"*p')
+vim.keymap.set('n', '<leader>P', '"*P')
 
--- preserve clipboard on exit (Wayland/X11 compatible)
--- https://stackoverflow.com/questions/6453595/prevent-vim-from-clearing-the-clipboard-on-exit
-vim.api.nvim_create_autocmd('VimLeave', {
-  pattern = {'*'},
-  callback = function()
-    if #vim.api.nvim_list_uis() == 0 then
-      return
-    end
+-- X11 hands the selection back when the owning process exits, so a yank is
+-- lost on :q. Hand it to a longer-lived owner first. Wayland does not need
+-- this -- wl-copy forks a helper that keeps serving the selection.
+if not vim.env.WAYLAND_DISPLAY and vim.fn.executable('xsel') == 1 then
+  vim.api.nvim_create_autocmd('VimLeave', {
+    group = vim.api.nvim_create_augroup('user.clipboard', { clear = true }),
+    callback = function()
+      if #vim.api.nvim_list_uis() > 0 then
+        vim.fn.system('xsel -ip', vim.fn.getreg('+'))
+      end
+    end,
+  })
+end
 
-    -- Check if we're in Wayland or X11
-    local wayland = vim.env.WAYLAND_DISPLAY ~= nil
-    if wayland then
-      -- Use wl-copy for Wayland
-      vim.fn.system("wl-copy", vim.fn.getreg('+'))
-      vim.fn.system("wl-copy --primary", vim.fn.getreg('*'))
-    else
-      -- Use xsel for X11
-      vim.fn.system("xsel -ip", vim.fn.getreg('+'))
-    end
-  end
+-- ---------------------------------------------------------------------------
+--  Filetypes
+-- ---------------------------------------------------------------------------
+vim.filetype.add({
+  extension = {
+    har = 'json',
+  },
 })
 
------------------------------------------------------------------------------
--- lazy
------------------------------------------------------------------------------
-require("config.lazy")
+local ft_group = vim.api.nvim_create_augroup('user.filetype', { clear = true })
 
------------------------------------------------------------------------------
--- mason
------------------------------------------------------------------------------
-if not vim.g.vscode then
-  require("mason").setup()
-  require("mason-lspconfig").setup()
-end
+-- javascript's bundled indent script fights with treesitter indentation
+vim.api.nvim_create_autocmd('FileType', {
+  group = ft_group,
+  pattern = 'javascript',
+  callback = function() vim.b.did_indent = 1 end,
+})
 
------------------------------------------------------------------------------
--- nvim-lspconfig
------------------------------------------------------------------------------
-if not vim.g.vscode then
-  -- local lspconfig = require'lspconfig'
-  vim.lsp.config('quick_lint_js', {
-      filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"}
-  })
+vim.api.nvim_create_autocmd('FileType', {
+  group = ft_group,
+  pattern = 'vim',
+  callback = function()
+    vim.bo.softtabstop, vim.bo.shiftwidth, vim.bo.tabstop = 4, 4, 4
+  end,
+})
 
-  vim.lsp.config('r_language_server', {
-    cmd = {"R", "--slave", "-e", "languageserver::run()"},
-    filetypes = {"r", "rmd"},
-    -- root_dir = function(fname)
-    --   return lspconfig.util.find_git_ancestor(fname)
-    -- end,
-    settings = {},
-  })
-end
-
------------------------------------------------------------------------------
--- Kitty glass palette
---
--- kitty renders a cell translucent only when its background is the default
--- background, or one of the (max 7) colors listed under
--- transparent_background_colors in kitty.conf. Slots are scarce -- 6 of 7 are
--- used -- so UI that paints its own background reuses one of these rather than
--- spending a slot on a new color. A background not listed here is an opaque
--- rectangle over the wallpaper. See also the fixups after the colorscheme.
------------------------------------------------------------------------------
-local glass = {
-  chrome     = '#1e2030',  -- StatusLine / lualine_c / TabLine
-  cursorline = '#2f334d',
-  tab_on     = '#222436',  -- barbar current buffer
-  tab_off    = '#272a3f',  -- barbar inactive buffer
-  tab_fill   = '#2c3048',  -- barbar tabpage fill
-  raised     = '#3b4261',  -- lualine_b / Folded
-}
-local glass_registered = {}
-for _, color in pairs(glass) do glass_registered[color] = true end
-
------------------------------------------------------------------------------
--- lualine
---
--- The mode badge (section a, mirrored by z) paints a different background per
--- mode -- blue/green/purple/red/yellow/teal, six colors against one free kitty
--- slot -- so they cannot all be registered. Instead move the mode color to the
--- *text* and put the badge itself on registered glass: every mode goes
--- translucent and no slot is spent. Sections b and c already use registered
--- colors, so they are left alone.
---
--- Separators stay opaque whatever we do: kitty has no per-cell text alpha, so
--- a glyph is always solid. Thin lines simply leave far less opaque area than
--- filled powerline chevrons, which render as solid triangles even when both
--- neighbouring section backgrounds are translucent.
------------------------------------------------------------------------------
--- Must differ from section b (glass.raised) and section c (glass.chrome), or
--- the badge merges into its neighbour and the separator between them vanishes.
--- This lands a/b/c on mid / light / dark.
-local lualine_badge_bg = glass.cursorline
-
-local function glass_lualine_theme()
-  local theme = vim.deepcopy(require('lualine.themes.tokyonight'))
-  for _, sections in pairs(theme) do
-    for _, key in ipairs({ 'a', 'b', 'c', 'x', 'y', 'z' }) do
-      local section = sections[key]
-      if type(section) == 'table' and section.bg
-         and not glass_registered[section.bg:lower()] then
-        section.fg, section.bg = section.bg, lualine_badge_bg
-      end
+-- re-detect the filetype of a new file the first time it is written, so a
+-- buffer started as "untitled" picks up highlighting from its new name
+vim.api.nvim_create_autocmd('BufWritePost', {
+  group = ft_group,
+  callback = function()
+    if vim.bo.syntax == '' and vim.bo.filetype == '' then
+      vim.cmd('filetype detect')
     end
-  end
-  return theme
-end
-
-require('lualine').setup {
-  options = {
-    theme = glass_lualine_theme(),
-    section_separators   = { left = '│', right = '│' },
-    component_separators = { left = '│', right = '│' },
-  },
-  sections = {
-    lualine_y = {'searchcount', 'progress'}
-  }
-}
-
------------------------------------------------------------------------------
--- marks.nvim
------------------------------------------------------------------------------
-if not vim.g.vscode then
-  require'marks'.setup {
-    refresh_interval = 350
-  }
-end
-
------------------------------------------------------------------------------
--- nvim-colorizer
------------------------------------------------------------------------------
-if not vim.g.vscode then
-  vim.cmd('set termguicolors')
-  require('colorizer').setup {}
-end
-
------------------------------------------------------------------------------
--- R.nvim
------------------------------------------------------------------------------
-if not vim.g.vscode then
-  require'r'.setup {
-    -- show term on bottom
-    rconsole_width = 0,
-    source_args = "echo = TRUE"
-
-    -- show term on left side (jan25: not working..)
-    -- nosplitright = true
-  }
-end
-
------------------------------------------------------------------------------
--- which-key (testing)
------------------------------------------------------------------------------
--- require("which-key").setup {}
-
------------------------------------------------------------------------------
--- barbar.nvim
------------------------------------------------------------------------------
-if not vim.g.vscode then
-  local map = vim.api.nvim_set_keymap
-  local opts = { silent = true }
-
-  map('n', '<leader>bd', '<cmd>BufferClose<cr>', opts)
-  map('n', '<s-tab>', '<cmd>BufferPrevious<cr>', opts)
-  map('n', '<tab>', '<cmd>BufferNext<cr>', opts)
-  map('n', '<s-left>', '<cmd>BufferPrevious<cr>', opts)
-  map('n', '<s-right>', '<cmd>BufferNext<cr>', opts)
-end
+  end,
+})
 
 -- ---------------------------------------------------------------------------
--- csv.vim
--- ---------------------------------------------------------------------------
--- vim.g.csv_no_conceal = 1
-
--- ---------------------------------------------------------------------------
---  Colorscheme
--- ---------------------------------------------------------------------------
--- require('onedark').load()
--- require("cyberdream").setup({
---   transparent = true,
---   italic_comments = true,
---   hide_fillchars = true,
--- })
--- vim.cmd("colorscheme cyberdream")
--- vim.cmd[[colorscheme tokyonight-day]]
-vim.cmd[[colorscheme tokyonight]]
-
--- ---------------------------------------------------------------------------
--- Kitty glass fixups
+--  Restore cursor position when reopening a file
 --
--- kitty decides transparency per *cell background color*: only cells painted
--- in the default background, or in one of the (max 7) colors listed under
--- transparent_background_colors in kitty.conf, are translucent. Everything
--- else paints a solid rectangle over the wallpaper.
---
--- Two consequences drive this whole section:
---   1. Slots are scarce (6 of 7 used), so UI that paints its own background is
---      *recolored here to reuse an already-registered color* rather than
---      spending a slot on it.
---   2. Glyphs are always opaque -- kitty has no per-cell text alpha. Anything
---      drawn as a character (window separators, barbar's dividers, lualine's
---      powerline chevrons) can only be recolored or removed, never softened.
+--  (Replaces remember.nvim; Neovim still has no built-in for this.)
 -- ---------------------------------------------------------------------------
-
--- `glass` (the registered-color palette) is defined above, next to lualine.
--- Reuse those colors, do not invent new ones: an unregistered color is an
--- opaque rectangle.
-
--- Popups must stay solid: tokyonight paints NormalFloat/Pmenu/FloatBorder in
--- #1e2030, the same color as the statusline, so registering that color would
--- drag completion menus and LSP hovers along with it -- over the text they
--- exist to occlude. Repaint them in a color that is NOT on kitty's list.
-local float_bg = '#16161e'
-
--- group -> registered color. These paint their own background and would
--- otherwise punch through the glass.
-local recolor = {
-  ColorColumn = glass.tab_off,     -- the colorcolumn=100 right margin (was #222222)
-  ScrollView  = glass.raised,      -- nvim-scrollview's bar (was #2d3f76)
-}
-
-local function glass_fixups()
-  for _, group in ipairs({ 'NormalFloat', 'FloatBorder', 'Pmenu' }) do
-    vim.api.nvim_set_hl(0, group, vim.tbl_extend('force',
-      vim.api.nvim_get_hl(0, { name = group, link = false }), { bg = float_bg }))
-  end
-  for group, bg in pairs(recolor) do
-    vim.api.nvim_set_hl(0, group, vim.tbl_extend('force',
-      vim.api.nvim_get_hl(0, { name = group, link = false }), { bg = bg }))
-  end
-end
-glass_fixups()
-vim.api.nvim_create_autocmd('ColorScheme', { callback = glass_fixups })
+vim.api.nvim_create_autocmd('BufReadPost', {
+  group = vim.api.nvim_create_augroup('user.lastplace', { clear = true }),
+  callback = function(args)
+    -- skip commit messages and the like, where the top of the file is right
+    if vim.tbl_contains({ 'gitcommit', 'gitrebase', 'help' }, vim.bo[args.buf].filetype) then
+      return
+    end
+    local mark = vim.api.nvim_buf_get_mark(args.buf, '"')
+    if mark[1] > 0 and mark[1] <= vim.api.nvim_buf_line_count(args.buf) then
+      pcall(vim.api.nvim_win_set_cursor, 0, mark)
+      vim.cmd('normal! zvzz')
+    end
+  end,
+})
 
 -- ---------------------------------------------------------------------------
--- float-preview.nvim
+--  Plugins
 -- ---------------------------------------------------------------------------
-vim.cmd('let g:float_preview#docked = 1')
+require('config.lazy')
 
--- ---------------------------------------------------------------------------
--- Telescope
--- ---------------------------------------------------------------------------
-if not vim.g.vscode then
-  local actions = require("telescope.actions")
-  local builtin = require('telescope.builtin')
+vim.cmd.colorscheme('tokyonight')
 
-  require('telescope').setup{
-    defaults = {
-      mappings = {
-        i = {
-          ["<C-h>"] = "which_key",   -- show keyboard shortcuts ("help")
-          ["<C-u>"] = false,         -- clear line
-          ["<esc>"] = actions.close  -- exit picker
-        }
-      }
-    },
-    pickers = {},
-    extensions = {}
-  }
+-- Recolor the chrome that would otherwise punch opaque rectangles through
+-- kitty's translucent background. Must run after the colorscheme.
+require('user.glass').setup()
 
-  -- require('telescope').load_extension('fzf')
-
-  vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-  vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
-  vim.keymap.set('n', '<leader>fr', '<cmd>Telescope frecency<cr>', {})
-  vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
-  vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
-end
-
--- ---------------------------------------------------------------------------
---  gitgutter
--- ---------------------------------------------------------------------------
-vim.g.gitgutter_diff_args = '--ignore-all-space'
-
-
--- ----------------------------------------------------------------------------
---  leap
--- ----------------------------------------------------------------------------
-vim.keymap.set({'n', 'x', 'o'}, 's', '<Plug>(leap)')
-vim.keymap.set('n',             'S', '<Plug>(leap-from-window)')
-
--- ---------------------------------------------------------------------------
---  NERDcommenter
--- ---------------------------------------------------------------------------
-vim.g.NERDDefaultAlign = 'left'
-vim.g.NERDSpaceDelims = 1
-vim.g.NERDCommentEmptyLines = 1
-vim.g.NERDTrimTrailingWhitespace = 1
-
-vim.g.NERDCustomDelimiters = {
-  snakemake = { left = '#' },
-  rmd = { left = '#' }}
-
--- may cause problems with nvim-ipy..
--- { remap=true? }
-vim.keymap.set('n', '<space>', '<leader>c<space>')
-vim.keymap.set('v', '<space>', '<leader>c<space>')
-
--- ---------------------------------------------------------------------------
--- supertab.vim
--- ---------------------------------------------------------------------------
--- vim.g.SuperTabCrMapping=1
--- vim.g.SuperTabDefaultCompletionType = "context"
-
--- ---------------------------------------------------------------------------
---  treesitter (configured in plugins_always/plugins.lua)
--- ---------------------------------------------------------------------------
-
--- ---------------------------------------------------------------------------
---  vim-textobj-underscore
--- ---------------------------------------------------------------------------
-vim.keymap.set('n', 'cid', 'ci_', { remap = true })
-vim.keymap.set('n', 'cad', 'ca_', { remap = true })
-vim.keymap.set('n', 'did', 'di_', { remap = true })
-vim.keymap.set('n', 'dad', 'da_', { remap = true })
-
--- ---------------------------------------------------------------------------
---  Language-specific Options
--- ---------------------------------------------------------------------------
--- vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.jl', command = 'set syntax=julia' })
-vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.md', command = 'set syntax=markdown' })
-vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, { pattern = '*.har', command = 'set ft=json' })
-vim.api.nvim_create_autocmd('FileType', { pattern = 'javascript', command = 'let b:did_indent = 1' })
-vim.api.nvim_create_autocmd('FileType', { pattern = 'vimscript', command = 'setlocal softtabstop=4 shiftwidth=4 tabstop=4' })
+require('user.lsp')
 
 -- ---------------------------------------------------------------------------
 --  Appearance (post-colorscheme)
+--
+--  ColorColumn's gui background is set in user/glass.lua -- it has to be a
+--  color kitty renders translucent, and it must survive a ColorScheme event.
+--  Only the 256-color fallback lives here.
 -- ---------------------------------------------------------------------------
--- ColorColumn's gui background is set in the kitty glass fixups above (it has
--- to be a color kitty renders translucent, and it must survive ColorScheme).
--- Only the cterm fallback lives here.
 vim.cmd('highlight ColorColumn ctermbg=234')
 vim.cmd('highlight Conceal guibg=background guifg=foreground')
 vim.cmd('highlight MatchParen cterm=bold ctermbg=none ctermfg=red')

@@ -1,19 +1,9 @@
 " ---------------------------------------------------------------------------
 "  Python
 " ---------------------------------------------------------------------------
-map <silent> <leader>b obreakpoint()<esc>
+nnoremap <buffer> <leader>b obreakpoint()<esc>
 
-" ---------------------------------------------------------------------------
-"  nvim-ipy
-" ---------------------------------------------------------------------------
-let g:nvim_ipy_perform_mappings = 0
-
-" note: <c-w> <c-r> swaps two vertical buffers
-vmap <silent> <Space> <Plug>(IPy-Run)
-nmap <silent><space> <Plug>(IPy-Run)
-vmap <silent> <C-M> <Plug>(IPy-Run)
-nmap <silent> <C-M> <Plug>(IPy-Run)
-nmap <silent> <localleader>p <Plug>(IPy-WordObjInfo)
-nmap <silent> <localleader>cc <Plug>(IPy-RunAll)
-
-nmap <localleader>rf :IPython<CR>
+" (The nvim-ipy mappings that used to live here were removed in Aug 2026:
+"  the plugin has not been installed for years, so <Space> was silently bound
+"  to a nonexistent <Plug>(IPy-Run) and did nothing in Python buffers --
+"  including not toggling comments like it does everywhere else.)

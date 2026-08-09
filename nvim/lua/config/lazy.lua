@@ -1,6 +1,6 @@
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
   local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
   if vim.v.shell_error ~= 0 then
@@ -15,31 +15,15 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Make sure to setup `mapleader` and `maplocalleader` before
--- loading lazy.nvim so that mappings are correct.
--- This is also a good place to setup other settings (vim.opt)
---vim.g.mapleader      = ";"
---vim.g.maplocalleader = ","
-
--- Setup lazy.nvim
--- require("lazy").setup({
---   spec = {
---     { import = "plugins" },
---   },
---   install = { colorscheme = { "habamax" } },
---   checker = { enabled = false },
--- })
--- require("lazy").setup({
---   { import = "plugins_notvscode", cond = (function() return not vim.g.vscode end) },
---   { import = "plugins_always",    cond = true },
---   { import = "plugins_vscode",    cond = (function() return vim.g.vscode end) },
--- })
+-- Every file under lua/user/plugins/ returns a plugin spec list.
+--
+-- git.filter = false disables lazy's blobless partial clone. leap.nvim is
+-- hosted on Codeberg, which does not serve --filter=blob:none, so the default
+-- makes its install fail.
 require("lazy").setup({
-	{ import = "user.plugins_notvscode", cond = (function() return not vim.g.vscode end) },
-	{ import = "user.plugins_always",    cond = true },
-	{ import = "user.plugins_vscode",    cond = (function() return vim.g.vscode end) },
+  { import = "user.plugins" },
 }, {
-	git = {
-		filter = false,
-	},
+  git = { filter = false },
+  install = { colorscheme = { "tokyonight", "habamax" } },
+  change_detection = { notify = false },
 })

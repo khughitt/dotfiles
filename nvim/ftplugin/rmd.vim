@@ -1,1 +1,0 @@
-/home/keith/.config/nvim/ftplugin/r.vim
