@@ -315,10 +315,66 @@ if not vim.g.vscode then
 end
 
 -----------------------------------------------------------------------------
--- lualine
+-- Kitty glass palette
+--
+-- kitty renders a cell translucent only when its background is the default
+-- background, or one of the (max 7) colors listed under
+-- transparent_background_colors in kitty.conf. Slots are scarce -- 6 of 7 are
+-- used -- so UI that paints its own background reuses one of these rather than
+-- spending a slot on a new color. A background not listed here is an opaque
+-- rectangle over the wallpaper. See also the fixups after the colorscheme.
 -----------------------------------------------------------------------------
+local glass = {
+  chrome     = '#1e2030',  -- StatusLine / lualine_c / TabLine
+  cursorline = '#2f334d',
+  tab_on     = '#222436',  -- barbar current buffer
+  tab_off    = '#272a3f',  -- barbar inactive buffer
+  tab_fill   = '#2c3048',  -- barbar tabpage fill
+  raised     = '#3b4261',  -- lualine_b / Folded
+}
+local glass_registered = {}
+for _, color in pairs(glass) do glass_registered[color] = true end
+
+-----------------------------------------------------------------------------
+-- lualine
+--
+-- The mode badge (section a, mirrored by z) paints a different background per
+-- mode -- blue/green/purple/red/yellow/teal, six colors against one free kitty
+-- slot -- so they cannot all be registered. Instead move the mode color to the
+-- *text* and put the badge itself on registered glass: every mode goes
+-- translucent and no slot is spent. Sections b and c already use registered
+-- colors, so they are left alone.
+--
+-- Separators stay opaque whatever we do: kitty has no per-cell text alpha, so
+-- a glyph is always solid. Thin lines simply leave far less opaque area than
+-- filled powerline chevrons, which render as solid triangles even when both
+-- neighbouring section backgrounds are translucent.
+-----------------------------------------------------------------------------
+-- Must differ from section b (glass.raised) and section c (glass.chrome), or
+-- the badge merges into its neighbour and the separator between them vanishes.
+-- This lands a/b/c on mid / light / dark.
+local lualine_badge_bg = glass.cursorline
+
+local function glass_lualine_theme()
+  local theme = vim.deepcopy(require('lualine.themes.tokyonight'))
+  for _, sections in pairs(theme) do
+    for _, key in ipairs({ 'a', 'b', 'c', 'x', 'y', 'z' }) do
+      local section = sections[key]
+      if type(section) == 'table' and section.bg
+         and not glass_registered[section.bg:lower()] then
+        section.fg, section.bg = section.bg, lualine_badge_bg
+      end
+    end
+  end
+  return theme
+end
+
 require('lualine').setup {
-  options = { theme  = 'tokyonight' },
+  options = {
+    theme = glass_lualine_theme(),
+    section_separators   = { left = '│', right = '│' },
+    component_separators = { left = '│', right = '│' },
+  },
   sections = {
     lualine_y = {'searchcount', 'progress'}
   }
@@ -391,6 +447,53 @@ end
 -- vim.cmd("colorscheme cyberdream")
 -- vim.cmd[[colorscheme tokyonight-day]]
 vim.cmd[[colorscheme tokyonight]]
+
+-- ---------------------------------------------------------------------------
+-- Kitty glass fixups
+--
+-- kitty decides transparency per *cell background color*: only cells painted
+-- in the default background, or in one of the (max 7) colors listed under
+-- transparent_background_colors in kitty.conf, are translucent. Everything
+-- else paints a solid rectangle over the wallpaper.
+--
+-- Two consequences drive this whole section:
+--   1. Slots are scarce (6 of 7 used), so UI that paints its own background is
+--      *recolored here to reuse an already-registered color* rather than
+--      spending a slot on it.
+--   2. Glyphs are always opaque -- kitty has no per-cell text alpha. Anything
+--      drawn as a character (window separators, barbar's dividers, lualine's
+--      powerline chevrons) can only be recolored or removed, never softened.
+-- ---------------------------------------------------------------------------
+
+-- `glass` (the registered-color palette) is defined above, next to lualine.
+-- Reuse those colors, do not invent new ones: an unregistered color is an
+-- opaque rectangle.
+
+-- Popups must stay solid: tokyonight paints NormalFloat/Pmenu/FloatBorder in
+-- #1e2030, the same color as the statusline, so registering that color would
+-- drag completion menus and LSP hovers along with it -- over the text they
+-- exist to occlude. Repaint them in a color that is NOT on kitty's list.
+local float_bg = '#16161e'
+
+-- group -> registered color. These paint their own background and would
+-- otherwise punch through the glass.
+local recolor = {
+  ColorColumn = glass.tab_off,     -- the colorcolumn=100 right margin (was #222222)
+  ScrollView  = glass.raised,      -- nvim-scrollview's bar (was #2d3f76)
+}
+
+local function glass_fixups()
+  for _, group in ipairs({ 'NormalFloat', 'FloatBorder', 'Pmenu' }) do
+    vim.api.nvim_set_hl(0, group, vim.tbl_extend('force',
+      vim.api.nvim_get_hl(0, { name = group, link = false }), { bg = float_bg }))
+  end
+  for group, bg in pairs(recolor) do
+    vim.api.nvim_set_hl(0, group, vim.tbl_extend('force',
+      vim.api.nvim_get_hl(0, { name = group, link = false }), { bg = bg }))
+  end
+end
+glass_fixups()
+vim.api.nvim_create_autocmd('ColorScheme', { callback = glass_fixups })
 
 -- ---------------------------------------------------------------------------
 -- float-preview.nvim
@@ -486,7 +589,10 @@ vim.api.nvim_create_autocmd('FileType', { pattern = 'vimscript', command = 'setl
 -- ---------------------------------------------------------------------------
 --  Appearance (post-colorscheme)
 -- ---------------------------------------------------------------------------
-vim.cmd('highlight ColorColumn ctermbg=234 guibg=#222222')
+-- ColorColumn's gui background is set in the kitty glass fixups above (it has
+-- to be a color kitty renders translucent, and it must survive ColorScheme).
+-- Only the cterm fallback lives here.
+vim.cmd('highlight ColorColumn ctermbg=234')
 vim.cmd('highlight Conceal guibg=background guifg=foreground')
 vim.cmd('highlight MatchParen cterm=bold ctermbg=none ctermfg=red')
 vim.cmd('highlight SpecialKey ctermfg=DarkGray ctermbg=Black')
