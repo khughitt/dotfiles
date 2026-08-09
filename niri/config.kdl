@@ -162,39 +162,64 @@ layer-rule {
     }
 }
 
-// Dim inactive terminals: drop opacity so the blurred backdrop bleeds through.
+// ===========================================================================
+// TERMINAL GLASS — active/inactive knobs
+//
+//                          active   inactive   owned by
+//   background opacity      0.85      0.40     kitty  (focus-opacity.py)
+//   text opacity            1.00      0.90     kitty  (inactive_text_alpha)
+//   blur                     on        on      niri   (below)
+//   backdrop saturation     0.30      0.90     niri   (below)
+//   backdrop noise          0.12      0.12     niri   (below)
+//
+// Why the split across two configs: niri's `opacity` is a whole-window alpha
+// multiplier — it scales text, kitty graphics and background together, so it
+// cannot dim only the background. kitty can: its transparency is keyed on a
+// cell's background *color* (default bg, plus transparent_background_colors),
+// so glyphs and images stay opaque no matter how low the background goes.
+// Terminals therefore stay at niri opacity 1.0 and kitty owns both opacity
+// knobs.
+//
+// Why saturation/noise live here and passes/offset don't: `passes` and
+// `offset` drive one screen-wide downsample chain shared by every window, so
+// they are global-only (the `blur` block above). Only `noise` and `saturation`
+// resolve per-window at composite time, so only those two can vary per rule.
+//
 // Terminal-only allowlist — content apps (browsers, bitwig, vlc, ...) stay
-// opaque when inactive, so no PiP exclusion is needed. Bleed desaturation/noise
-// inherit the global blur block above — keep tuning them there.
+// opaque when inactive, so no PiP exclusion is needed.
 // Spec: docs/superpowers/specs/2026-08-05-niri-inactive-dim-design.md
+// Glass fusion: ~/d/niri-glass/docs/2026-08-05-glass-panes-design.md
+// ===========================================================================
 window-rule {
     match app-id="kitty" is-active=true
     match app-id="ghostty" is-active=true
-    opacity 0.8
+    opacity 1.0
     background-effect {
         blur true
         xray false
+        saturation 0.3
+        noise 0.12
     }
 }
 
 window-rule {
     match app-id="kitty" is-active=false
     match app-id="ghostty" is-active=false
-    opacity 0.5
+    opacity 1.0
     background-effect {
         blur true
         xray false
+        saturation 0.9
+        noise 0.12
     }
 }
 
-// Terminal-glass fusion: even the focused terminal stays faintly translucent
-// so the glass pane's tint and grid bleed through the content area — terminal
-// and slab read as one object. Blur inherits from the global rule above.
-// Spec: ~/d/niri-glass/docs/2026-08-05-glass-panes-design.md
+// ghostty has no focus-change hook, so it cannot do kitty's background/text
+// split. Approximate the inactive dim with a whole-window fade — this dims
+// ghostty's text too, unlike kitty's.
 window-rule {
-    match app-id="kitty" is-active=true
-    match app-id="ghostty" is-active=true
-    opacity 0.97
+    match app-id="ghostty" is-active=false
+    opacity 0.7
 }
 
 // Lift the active window off the backdrop: bigger, darker shadow than the
