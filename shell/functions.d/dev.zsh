@@ -37,7 +37,15 @@ function C {
   target=$(fd . "$DOTFILES" -t f \
     --no-ignore-vcs \
     --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" \
-    --exclude "*.xml" --exclude "*.png" --exclude "*.desktop" \
+    --exclude "*.xml" --exclude "*.png" --exclude "*.svg" --exclude "*.desktop" \
+    --exclude "**/i18n/*.json" \
+    --exclude "zhuyin_data" \
+    --exclude "dbus" \
+    --exclude "node_modules" \
+    --exclude "*.js" --exclude "*.mjs" \
+    --exclude "cheatsheets" \
+    --exclude "bin/*" \
+    --exclude "*.pyc" --exclude "*.md" --exclude "kitty/themes/*.conf" \
     --exclude "plugged" --exclude "black")
 
   target=$(echo "$target" |
