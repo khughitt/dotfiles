@@ -61,5 +61,8 @@ opencode/themes/noctalia.json
 yazi/flavors/noctalia.yazi/flavor.toml
 zathura/noctaliarc
 
+# familiar project paths
+familiar/identities.yaml
+
 # superpowers scratch (plans, brainstorm mockups, sdd ledger)
 .superpowers/
