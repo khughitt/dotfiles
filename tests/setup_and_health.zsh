@@ -149,7 +149,7 @@ test_setup_dry_run_link_only_does_not_write_home() {
 }
 
 test_setup_link_only_creates_expected_links_without_external_clones() {
-  local tmp
+  local tmp unit
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
@@ -168,6 +168,18 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ -L "${tmp}/home/.shell" ]] || fail "expected ~/.shell symlink"
   [[ -L "${tmp}/config/systemd/user/dropbox-ignore-flux.timer" ]] || \
     fail "expected linked Dropbox ignore timer"
+  [[ -L "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
+    fail "expected linked niri stop-timeout override"
+  [[ "$(readlink "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf")" == \
+      "${repo_root}/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
+    fail "expected niri stop-timeout override to point into the repository"
+  for unit in codex-ssh-agent.service familiar-reap.service familiar-reap.timer mindful-docker.service; do
+    [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
+      fail "expected linked ${unit}"
+    [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
+        "${repo_root}/systemd/user/${unit}" ]] || \
+      fail "expected ${unit} to point into the repository"
+  done
   [[ ! -e "${tmp}/data/zinit" ]] || fail "link-only should not clone zinit"
   [[ ! -e "${tmp}/home/.tmux/plugins/tpm" ]] || fail "link-only should not clone tpm"
 

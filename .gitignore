@@ -23,6 +23,7 @@ bin/*
 !bin/dotfiles-check
 !bin/dotfiles-health
 !bin/dotfiles-secrets-check
+!bin/gpu-fan-curve
 bookmarks
 dojo/
 mime/x-wine-extension-*
@@ -47,6 +48,9 @@ claude/commands
 hypr/host.conf
 kitty/os-local.conf
 docs/
+!/docs/
+/docs/*
+!/docs/fresh-install-hardening.md
 wsprofiles/node_modules/
 
 # noctalia plugins

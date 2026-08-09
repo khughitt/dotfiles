@@ -410,6 +410,11 @@ function setup_systemd_user_units() {
     ensure_dir "${XDG_CONFIG_HOME}/systemd/user"
     ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service"
     ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer"
+    ln_s "${DOTS_HOME}/systemd/user/niri.service.d/stop-timeout.conf" "${XDG_CONFIG_HOME}/systemd/user/niri.service.d/stop-timeout.conf"
+    ln_s "${DOTS_HOME}/systemd/user/codex-ssh-agent.service" "${XDG_CONFIG_HOME}/systemd/user/codex-ssh-agent.service"
+    ln_s "${DOTS_HOME}/systemd/user/familiar-reap.service" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.service"
+    ln_s "${DOTS_HOME}/systemd/user/familiar-reap.timer" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.timer"
+    ln_s "${DOTS_HOME}/systemd/user/mindful-docker.service" "${XDG_CONFIG_HOME}/systemd/user/mindful-docker.service"
 
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload

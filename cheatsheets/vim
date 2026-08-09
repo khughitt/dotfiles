@@ -14,6 +14,9 @@ Qx (record..)
 Q  (stop recording)
 @x (replay)
 
+# toggle comments
+<space>
+
 # add string to end of each line
 1. c-v (select lines)
 2. $
@@ -44,4 +47,4 @@ nvim --clean
 :sort
 
 # specify syntax at bottom of a file
-# vi:syntax=glsl
+# vi:syntax=python
