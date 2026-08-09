@@ -1,0 +1,9 @@
+[Unit]
+Description=Sweep dead agents from the familiar bus, every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target
