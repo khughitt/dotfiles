@@ -105,12 +105,15 @@ override used only by tests.
 
 **Invariant:** kitty's transparent list is *generated from* the same artifact
 nvim reads, validated before either program is signalled. Mapping for the six
-registered tones: `surface_container_low`, `surface_container`,
-`surface_container_high`, `surface_container_highest`, `surface_variant`,
-`outline_variant`; `float` = `surface_container_lowest` — the only material
-token darker than `surface`, and `float` must be darker-than-bg, solid, and
-unregistered, so it cannot sit among the six. (The mapping lives solely in
-the template and may be re-shuffled during the swatch comparison.)
+registered tones: `surface_container_low`, `surface_bright`,
+`surface_container`, `surface_container_high`,
+`surface_container_highest`, `outline_variant`; `float` =
+`surface_container_lowest` — the only material token darker than `surface`,
+and `float` must be darker-than-bg, solid, and unregistered, so it cannot sit
+among the six. `surface_bright` is used for `cursorline` because the prior
+`surface_variant` mapping collided with `surface_container` in the real active
+predefined Tokyo Night expansion (the `tab_on` token). The mapping lives
+solely in the template; the Task 9 swatch comparison accepted this remap.
 Noctalia's built-in kitty template writing `themes/noctalia.conf` into the
 synced tree is a pre-existing noctalia behavior, out of scope here.
 

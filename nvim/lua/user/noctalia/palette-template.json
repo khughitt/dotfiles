@@ -17,7 +17,7 @@
   "surface_variant": "{{colors.surface_variant.default.hex}}",
   "glass": {
     "chrome": "{{colors.surface_container_low.default.hex}}",
-    "cursorline": "{{colors.surface_variant.default.hex}}",
+    "cursorline": "{{colors.surface_bright.default.hex}}",
     "tab_on": "{{colors.surface_container.default.hex}}",
     "tab_off": "{{colors.surface_container_high.default.hex}}",
     "tab_fill": "{{colors.surface_container_highest.default.hex}}",

@@ -820,7 +820,7 @@ Expected: FAIL — `template file missing`
   "surface_variant": "{{colors.surface_variant.default.hex}}",
   "glass": {
     "chrome": "{{colors.surface_container_low.default.hex}}",
-    "cursorline": "{{colors.surface_variant.default.hex}}",
+    "cursorline": "{{colors.surface_bright.default.hex}}",
     "tab_on": "{{colors.surface_container.default.hex}}",
     "tab_off": "{{colors.surface_container_high.default.hex}}",
     "tab_fill": "{{colors.surface_container_highest.default.hex}}",
@@ -830,7 +830,7 @@ Expected: FAIL — `template file missing`
 }
 ```
 
-(JSON has no comments; the glass-mapping rationale lives here in the plan and in the spec: `float` needs a darker-than-`surface` tone that is NOT registered, and `surface_container_lowest` is the only material token darker than surface — so `_lowest` is `float` and `outline_variant` takes the sixth registered slot. The swatch session in Task 9 may re-shuffle this mapping; that is expected and only touches this file.)
+(JSON has no comments; the glass-mapping rationale lives here and in the spec: `float` needs a darker-than-`surface` tone that is NOT registered, and `surface_container_lowest` is the only material token darker than surface — so `_lowest` is `float`. `surface_bright` is used for `cursorline` because the active predefined Tokyo Night expansion makes `surface_variant` collide with `surface_container` (the `tab_on` token); the swatch session accepted this remap. `outline_variant` remains the sixth registered slot.)
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -1671,6 +1671,7 @@ git commit -m "feat: wire noctalia palette into tokyonight, lualine, and kitty g
 
 **Files:**
 - Create: `bin/noctalia-mood-swatches` (mode 755)
+- Test: `nvim/tests/noctalia/mood_swatches_test.sh` (mode 755)
 
 **Interfaces:**
 - Consumes: `palette.load()`, `derive.MOODS`, `derive.accents` (Tasks 2–3).
@@ -1703,14 +1704,15 @@ end
 
 local ACCENT_ORDER = { 'red', 'orange', 'yellow', 'green', 'teal', 'cyan', 'blue', 'magenta', 'purple' }
 local GLASS_ORDER = { 'chrome', 'tab_on', 'tab_off', 'tab_fill', 'cursorline', 'raised', 'float' }
+local function line(text) io.write(text, '\n') end
 
-print('surface ' .. block(raw.surface) .. '  glass:')
+line('surface ' .. block(raw.surface) .. '  glass:')
 local row = {}
 for _, role in ipairs(GLASS_ORDER) do
   row[#row + 1] = block(raw.glass[role], role)
 end
-print('  ' .. table.concat(row, ' '))
-print('')
+line('  ' .. table.concat(row, ' '))
+line('')
 
 for _, mood in ipairs(derive.MOODS) do
   local acc = derive.accents(raw, mood)
@@ -1718,23 +1720,38 @@ for _, mood in ipairs(derive.MOODS) do
   for _, name in ipairs(ACCENT_ORDER) do
     row[#row + 1] = block(acc[name])
   end
-  print(string.format('%-9s %s', mood, table.concat(row, ' ')))
+  line(string.format('%-9s %s', mood, table.concat(row, ' ')))
 end
 ```
 
-- [ ] **Step 2: Run it**
+- [ ] **Step 2: Write and run the regression test**
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+output=$(bin/noctalia-mood-swatches 2>&1)
+[[ $output == *$'\033[48;2;'* ]]
+[[ $output != *'^['* ]]
+```
+
+Run: `chmod +x nvim/tests/noctalia/mood_swatches_test.sh && nvim/tests/noctalia/mood_swatches_test.sh`
+Expected: the test fails before the raw-output fix because Neovim's message layer sanitizes ESC as literal `^[`.
+
+- [ ] **Step 3: Run it**
 
 Run: `chmod +x bin/noctalia-mood-swatches && bin/noctalia-mood-swatches`
 Expected: a glass ladder row and one row of nine colored blocks per mood, no errors. (Colors come from the promoted artifact, or the default palette with a warning if none exists.)
 
-- [ ] **Step 3: CHECKPOINT — interactive tuning with the user**
+- [ ] **Step 4: CHECKPOINT — interactive tuning with the user**
 
 Show the swatches against the current wallpaper and iterate on `derive.lua`'s `ANCHORS`/`TRANSFORMS` (and, if tone roles read wrong, the template's glass mapping from Task 4) until the user is satisfied. The exact-behavior assertions in `derive_scheme_test.lua` encode the transform constants — update them in the same change as any tuning. Moods may be added or removed here — keep `derive.MOODS`, the tests, and the spec's mood table in sync, and update the spec with `git add -f` if the mood set changes.
 
-- [ ] **Step 4: Commit**
+Checkpoint outcome: KEEP all four moods and their transforms unchanged; accept the Task 4 glass remap `cursorline` → `surface_bright` after visual comparison.
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add bin/noctalia-mood-swatches nvim/lua/user/noctalia/derive.lua nvim/tests/noctalia/derive_scheme_test.lua
+git add bin/noctalia-mood-swatches nvim/tests/noctalia/mood_swatches_test.sh nvim/lua/user/noctalia/derive.lua nvim/tests/noctalia/derive_scheme_test.lua
 git commit -m "feat: noctalia mood swatch preview tool"
 ```
 

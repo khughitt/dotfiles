@@ -1,0 +1,42 @@
+#!/usr/bin/env -S nvim -l
+-- bin/noctalia-mood-swatches: print each mood's accent palette as truecolor
+-- blocks, plus the glass chrome ladder, for comparison against the live
+-- wallpaper. Run from anywhere; resolves the repo via this script's path.
+
+local script = debug.getinfo(1, 'S').source:sub(2)
+local root = vim.fs.dirname(vim.fs.dirname(vim.uv.fs_realpath(script)))
+package.path = table.concat({
+  root .. '/nvim/lua/?.lua',
+  root .. '/nvim/lua/?/init.lua',
+  package.path,
+}, ';')
+
+local derive = require('user.noctalia.derive')
+local raw = require('user.noctalia.palette').load()
+
+local function block(hex, label)
+  local r, g, b = hex:match('^#(%x%x)(%x%x)(%x%x)$')
+  return string.format('\27[48;2;%d;%d;%dm  %s  \27[0m',
+    tonumber(r, 16), tonumber(g, 16), tonumber(b, 16), label or hex)
+end
+
+local ACCENT_ORDER = { 'red', 'orange', 'yellow', 'green', 'teal', 'cyan', 'blue', 'magenta', 'purple' }
+local GLASS_ORDER = { 'chrome', 'tab_on', 'tab_off', 'tab_fill', 'cursorline', 'raised', 'float' }
+local function line(text) io.write(text, '\n') end
+
+line('surface ' .. block(raw.surface) .. '  glass:')
+local row = {}
+for _, role in ipairs(GLASS_ORDER) do
+  row[#row + 1] = block(raw.glass[role], role)
+end
+line('  ' .. table.concat(row, ' '))
+line('')
+
+for _, mood in ipairs(derive.MOODS) do
+  local acc = derive.accents(raw, mood)
+  row = {}
+  for _, name in ipairs(ACCENT_ORDER) do
+    row[#row + 1] = block(acc[name])
+  end
+  line(string.format('%-9s %s', mood, table.concat(row, ' ')))
+end
