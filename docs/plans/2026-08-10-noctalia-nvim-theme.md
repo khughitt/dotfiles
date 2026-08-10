@@ -854,7 +854,7 @@ git commit -m "feat(nvim): noctalia palette template with glass tone mapping"
 
 **Interfaces:**
 - Consumes: `$NOCTALIA_GLASS_DIR/nvim-palette.candidate.json` where `NOCTALIA_GLASS_DIR` defaults to `~/.cache/noctalia` (env override is for tests ONLY; production is the literal default).
-- Produces on success: a new version dir `$NOCTALIA_GLASS_DIR/nvim-glass/v-*/` containing `nvim-palette.json` (candidate content verbatim) and `kitty-glass.conf` (one `transparent_background_colors` line, tones in role order); the `current` symlink atomically renamed onto it; the candidate consumed; older version dirs pruned; then `pkill -SIGUSR1 -x kitty` and `pkill -SIGUSR1 -x nvim`. Flag `--no-signal` skips the pkills (tests). On any PRE-COMMIT failure — missing candidate, JSON syntax error, missing/invalid key, glass invariant violation, or an error while staging the version dir before the rename: stderr message + `notify-send` (if available), `current` and existing version dirs untouched, exit 1. A failure AFTER the rename (pkill, prune) leaves the new generation committed; fresh reads through `current` see it, and already-running processes stay on their loaded generation until the next successful run signals them.
+- Produces on success: a new version dir `$NOCTALIA_GLASS_DIR/nvim-glass/v-*/` containing `nvim-palette.json` (candidate bytes verbatim) and `kitty-glass.conf` (exactly one `transparent_background_colors` line, tones in role order); the relative sibling `current` symlink atomically renamed onto it; the candidate consumed; only superseded `v-*` version dirs pruned; then `pkill -SIGUSR1 -x kitty` and `pkill -SIGUSR1 -x nvim`. Flag `--no-signal` skips the pkills (tests). `pkill` exits 0 and 1 are successful; any other exit is a clean post-commit failure. On any PRE-COMMIT failure — missing candidate, invalid JSON syntax/encoding, missing/invalid key, glass invariant violation, or a staging error before the rename: stderr message + best-effort `notify-send`, this invocation's temporary symlink and fresh `v-*` directory removed, `current` and pre-existing version dirs untouched, exit 1. A failure AFTER the rename (candidate consumption, prune, pkill) leaves the new generation committed; fresh reads through `current` see it, and already-running processes stay on their loaded generation until the next successful run signals them.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -868,48 +868,99 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 export NOCTALIA_GLASS_DIR="$TMP"
 CUR="$TMP/nvim-glass/current"
+CANDIDATE="$TMP/nvim-palette.candidate.json"
+FAKE_BIN="$TMP/fake-bin"
+export PKILL_LOG="$TMP/pkill.log"
 
 good_candidate() {
-  cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
+  cp nvim/tests/noctalia/fixtures/raw_palette.json "$CANDIDATE"
 }
+
+snapshot_versions() {
+  find "$TMP/nvim-glass" -mindepth 1 -maxdepth 1 -type d -name 'v-*' -printf '%f\n' | sort
+}
+
+make_fake_pkill() {
+  mkdir -p "$FAKE_BIN"
+  printf '%s\n' '#!/usr/bin/env bash' 'printf "%s\n" "$*" >> "$PKILL_LOG"' \
+    'exit "${PKILL_RC:-0}"' > "$FAKE_BIN/pkill"
+  chmod +x "$FAKE_BIN/pkill"
+  export PATH="$FAKE_BIN:$PATH"
+}
+
+expect_reject() {
+  local why=$1 before versions candidate_state candidate_copy err
+  before=$(readlink "$CUR")
+  versions=$(snapshot_versions)
+  if [[ -f "$CANDIDATE" ]]; then
+    candidate_state=file
+    candidate_copy="$TMP/candidate-before"
+    cp "$CANDIDATE" "$candidate_copy"
+  elif [[ -d "$CANDIDATE" ]]; then
+    candidate_state=directory
+  else
+    candidate_state=missing
+  fi
+  if err=$("$SYNC" --no-signal 2>&1); then
+    echo "FAIL: accepted $why"
+    exit 1
+  fi
+  grep -q '^noctalia-glass-sync:' <<<"$err" || { echo "FAIL: missing clean prefix for $why"; exit 1; }
+  ! grep -q 'Traceback' <<<"$err" || { echo "FAIL: traceback for $why"; exit 1; }
+  [[ "$(readlink "$CUR")" == "$before" ]] || { echo "FAIL: current moved on $why"; exit 1; }
+  [[ "$(snapshot_versions)" == "$versions" ]] || { echo "FAIL: version dirs changed on $why"; exit 1; }
+  case "$candidate_state" in
+    file) cmp "$candidate_copy" "$CANDIDATE" || { echo "FAIL: candidate changed on $why"; exit 1; } ;;
+    directory) [[ -d "$CANDIDATE" ]] || { echo "FAIL: candidate directory changed on $why"; exit 1; } ;;
+    missing) [[ ! -e "$CANDIDATE" ]] || { echo "FAIL: missing candidate changed on $why"; exit 1; } ;;
+  esac
+}
+
+make_fake_pkill
 
 # 1. success: current symlink appears, both files inside, candidate consumed
 good_candidate
 "$SYNC" --no-signal
 [[ -L "$CUR" ]] || { echo "FAIL: current symlink missing"; exit 1; }
+target=$(readlink "$CUR")
+[[ "$target" == v-* && "$target" != */* ]] || { echo "FAIL: current target is not a sibling v-* dir"; exit 1; }
 [[ -f "$CUR/nvim-palette.json" && -f "$CUR/kitty-glass.conf" ]] || { echo "FAIL: staged files missing"; exit 1; }
-[[ ! -f "$TMP/nvim-palette.candidate.json" ]] || { echo "FAIL: candidate left behind"; exit 1; }
-grep -q '^transparent_background_colors #1e2030 #2f334d #222436 #272a3f #2c3048 #3b4261$' \
+cmp nvim/tests/noctalia/fixtures/raw_palette.json "$CUR/nvim-palette.json" || { echo "FAIL: palette bytes changed"; exit 1; }
+[[ ! -e "$CANDIDATE" ]] || { echo "FAIL: candidate left behind"; exit 1; }
+[[ "$(wc -l < "$CUR/kitty-glass.conf")" == 1 ]] || { echo "FAIL: kitty conf has extra lines"; exit 1; }
+grep -qx 'transparent_background_colors #1e2030 #2f334d #222436 #272a3f #2c3048 #3b4261' \
   "$CUR/kitty-glass.conf" || { echo "FAIL: kitty conf wrong"; cat "$CUR/kitty-glass.conf"; exit 1; }
+[[ ! -e "$PKILL_LOG" ]] || { echo "FAIL: --no-signal invoked pkill"; exit 1; }
 
-# 2. second success: symlink flips, exactly one version dir remains
-first_target=$(readlink "$CUR")
+# 2. second success: symlink flips, only v-* versions prune, other directories persist
+mkdir "$TMP/nvim-glass/keep"
+printf 'keep\n' > "$TMP/nvim-glass/keep/marker"
+first_target=$target
 good_candidate
-sed -i 's/#82aaff/#83abff/' "$TMP/nvim-palette.candidate.json"
+sed -i 's/#82aaff/#83abff/' "$CANDIDATE"
+cp "$CANDIDATE" "$TMP/expected-palette.json"
 "$SYNC" --no-signal
-[[ "$(readlink "$CUR")" != "$first_target" ]] || { echo "FAIL: symlink did not flip"; exit 1; }
-grep -q '#83abff' "$CUR/nvim-palette.json" || { echo "FAIL: new palette not promoted"; exit 1; }
-ndirs=$(find "$TMP/nvim-glass" -mindepth 1 -maxdepth 1 -type d | wc -l)
-[[ "$ndirs" == 1 ]] || { echo "FAIL: expected 1 version dir, got $ndirs"; exit 1; }
-
-# helper: run sync expecting failure, assert current untouched
-expect_reject() {
-  local why=$1
-  local before=$(readlink "$CUR")
-  if "$SYNC" --no-signal 2>/dev/null; then echo "FAIL: accepted $why"; exit 1; fi
-  [[ "$(readlink "$CUR")" == "$before" ]] || { echo "FAIL: current moved on $why"; exit 1; }
-}
+target=$(readlink "$CUR")
+[[ "$target" != "$first_target" ]] || { echo "FAIL: symlink did not flip"; exit 1; }
+[[ "$target" == v-* && "$target" != */* ]] || { echo "FAIL: current target is not a sibling v-* dir"; exit 1; }
+cmp "$TMP/expected-palette.json" "$CUR/nvim-palette.json" || { echo "FAIL: new palette bytes changed"; exit 1; }
+[[ "$(snapshot_versions | wc -l)" == 1 ]] || { echo "FAIL: expected one v-* dir"; exit 1; }
+[[ -f "$TMP/nvim-glass/keep/marker" ]] || { echo "FAIL: non-v-* directory was pruned"; exit 1; }
 
 # 3. missing candidate
 expect_reject "missing candidate"
 
 # 4. invalid JSON syntax
-echo '{ not json' > "$TMP/nvim-palette.candidate.json"
+echo '{ not json' > "$CANDIDATE"
 expect_reject "broken JSON"
 
-# 5. missing accent key (complete-artifact validation, not just glass)
+# 5. invalid JSON encoding
+printf '\xff' > "$CANDIDATE"
+expect_reject "invalid JSON encoding"
+
+# 6. missing accent key (complete-artifact validation, not just glass)
 good_candidate
-python3 - "$TMP/nvim-palette.candidate.json" <<'EOF'
+python3 - "$CANDIDATE" <<'EOF'
 import json, sys
 p = sys.argv[1]
 d = json.load(open(p))
@@ -918,32 +969,48 @@ json.dump(d, open(p, 'w'))
 EOF
 expect_reject "missing accent key"
 
-# 6. colliding glass tones
+# 7. colliding glass tones
 good_candidate
-sed -i 's/"tab_on": "#222436"/"tab_on": "#1e2030"/' "$TMP/nvim-palette.candidate.json"
+sed -i 's/"tab_on": "#222436"/"tab_on": "#1e2030"/' "$CANDIDATE"
 expect_reject "glass collision"
 
-# 7. float equal to a registered tone
+# 8. float equal to a registered tone
 good_candidate
-sed -i 's/"float": "#16161e"/"float": "#3b4261"/' "$TMP/nvim-palette.candidate.json"
+sed -i 's/"float": "#16161e"/"float": "#3b4261"/' "$CANDIDATE"
 expect_reject "registered float"
 
-# 8. float equal to surface
+# 9. float equal to surface
 good_candidate
-sed -i 's/"float": "#16161e"/"float": "#222436"/' "$TMP/nvim-palette.candidate.json"
+sed -i 's/"float": "#16161e"/"float": "#222436"/' "$CANDIDATE"
 expect_reject "float==surface"
 
-# 9. candidate I/O error uses the clean failure path, not a traceback
-rm -f "$TMP/nvim-palette.candidate.json"
-mkdir "$TMP/nvim-palette.candidate.json"
+# 10. candidate I/O error uses the clean failure path, not a traceback
+rm -f "$CANDIDATE"
+mkdir "$CANDIDATE"
+expect_reject "unreadable candidate"
+rm -r "$CANDIDATE"
+
+# 11. staging failure removes this run's temporary version and preserves prior state
+good_candidate
+chmod u-w "$TMP/nvim-glass"
+expect_reject "unstageable version directory"
+chmod u+w "$TMP/nvim-glass"
+
+# 12. signal failure is post-commit: promotion remains visible and candidate is consumed
+good_candidate
+cp "$CANDIDATE" "$TMP/expected-post-commit.json"
 before=$(readlink "$CUR")
-if err=$("$SYNC" --no-signal 2>&1); then
-  echo "FAIL: accepted unreadable candidate"
+if err=$(PKILL_RC=2 "$SYNC" 2>&1); then
+  echo "FAIL: accepted failing pkill"
   exit 1
 fi
-[[ "$(readlink "$CUR")" == "$before" ]] || { echo "FAIL: current moved on candidate I/O error"; exit 1; }
-grep -q '^noctalia-glass-sync:' <<<"$err" || { echo "FAIL: missing clean error prefix"; exit 1; }
-! grep -q 'Traceback' <<<"$err" || { echo "FAIL: candidate I/O error produced traceback"; exit 1; }
+grep -q '^noctalia-glass-sync:' <<<"$err" || { echo "FAIL: missing clean prefix for pkill failure"; exit 1; }
+! grep -q 'Traceback' <<<"$err" || { echo "FAIL: traceback for pkill failure"; exit 1; }
+[[ "$(readlink "$CUR")" != "$before" ]] || { echo "FAIL: post-commit failure rolled back current"; exit 1; }
+cmp "$TMP/expected-post-commit.json" "$CUR/nvim-palette.json" || { echo "FAIL: post-commit palette not promoted"; exit 1; }
+[[ ! -e "$CANDIDATE" ]] || { echo "FAIL: post-commit candidate not consumed"; exit 1; }
+grep -qx -- '-SIGUSR1 -x kitty' "$PKILL_LOG" || { echo "FAIL: fake pkill did not receive kitty signal"; exit 1; }
+! grep -qx -- '-SIGUSR1 -x nvim' "$PKILL_LOG" || { echo "FAIL: pkill continued after failure"; exit 1; }
 
 echo "OK glass_sync"
 ```
@@ -1008,11 +1075,18 @@ def is_hex(v: object) -> bool:
             and all(ch in '0123456789abcdefABCDEF' for ch in v[1:]))
 
 
+def notify(msg: str) -> None:
+    if shutil.which('notify-send'):
+        try:
+            subprocess.run(
+                ['notify-send', '-u', 'critical', 'noctalia-glass-sync', msg], check=False)
+        except OSError:
+            pass
+
+
 def fail(msg: str) -> None:
     print(f'noctalia-glass-sync: {msg}', file=sys.stderr)
-    if shutil.which('notify-send'):
-        subprocess.run(
-            ['notify-send', '-u', 'critical', 'noctalia-glass-sync', msg], check=False)
+    notify(msg)
     sys.exit(1)
 
 
@@ -1047,27 +1121,44 @@ def main() -> None:
     signal = '--no-signal' not in sys.argv[1:]
     if not CANDIDATE.exists():
         fail(f'candidate missing: {CANDIDATE}')
-    text = CANDIDATE.read_text()
+    data = CANDIDATE.read_bytes()
     try:
-        raw = json.loads(text)
-    except json.JSONDecodeError as exc:
+        raw = json.loads(data)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         fail(f'candidate is not valid JSON: {exc}')
     validate(raw)
     tones = [raw['glass'][role].lower() for role in REGISTERED_ROLES]
 
-    GLASS_DIR.mkdir(parents=True, exist_ok=True)
-    vdir = Path(tempfile.mkdtemp(dir=GLASS_DIR, prefix='v-'))
-    os.chmod(vdir, 0o755)  # mkdtemp defaults to 0700
-    (vdir / 'nvim-palette.json').write_text(text)
-    (vdir / 'kitty-glass.conf').write_text(
-        'transparent_background_colors ' + ' '.join(tones) + '\n')
+    vdir = None
+    tmplink = None
+    tmplink_created = False
+    try:
+        GLASS_DIR.mkdir(parents=True, exist_ok=True)
+        vdir = Path(tempfile.mkdtemp(dir=GLASS_DIR, prefix='v-'))
+        os.chmod(vdir, 0o755)  # mkdtemp defaults to 0700
+        (vdir / 'nvim-palette.json').write_bytes(data)
+        (vdir / 'kitty-glass.conf').write_text(
+            'transparent_background_colors ' + ' '.join(tones) + '\n')
 
-    # Single atomic switch: rename a prepared symlink over `current`.
-    tmplink = GLASS_DIR / f'.current-tmp-{os.getpid()}'
-    if tmplink.is_symlink() or tmplink.exists():
-        tmplink.unlink()
-    os.symlink(vdir.name, tmplink)
-    os.replace(tmplink, CURRENT)
+        # Single atomic switch: rename a prepared symlink over `current`.
+        tmplink = GLASS_DIR / f'.current-tmp-{os.getpid()}'
+        os.symlink(vdir.name, tmplink)
+        tmplink_created = True
+        os.replace(tmplink, CURRENT)
+    except OSError:
+        if tmplink_created:
+            try:
+                tmplink.unlink()
+            except FileNotFoundError:
+                pass
+            except OSError:
+                pass
+        if vdir is not None:
+            try:
+                shutil.rmtree(vdir)
+            except OSError:
+                pass
+        raise
 
     CANDIDATE.unlink()  # consumed only after the flip succeeded
 
@@ -1075,13 +1166,15 @@ def main() -> None:
     # them keep their fds; new readers only ever see `current`).
     target = os.readlink(CURRENT)
     for entry in GLASS_DIR.iterdir():
-        if entry.is_dir() and not entry.is_symlink() and entry.name != target:
-            shutil.rmtree(entry, ignore_errors=True)
+        if entry.is_dir() and not entry.is_symlink() and entry.name.startswith('v-') and entry.name != target:
+            shutil.rmtree(entry)
 
     if signal:
         # pkill exits 1 when no process matched; that is fine (nothing running).
-        subprocess.run(['pkill', '-SIGUSR1', '-x', 'kitty'], check=False)
-        subprocess.run(['pkill', '-SIGUSR1', '-x', 'nvim'], check=False)
+        for process in ('kitty', 'nvim'):
+            result = subprocess.run(['pkill', '-SIGUSR1', '-x', process], check=False)
+            if result.returncode not in (0, 1):
+                fail(f'pkill {process} failed with exit {result.returncode}')
 
 
 if __name__ == '__main__':
@@ -1099,7 +1192,7 @@ Expected: `OK glass_sync`
 - [ ] **Step 5: Commit**
 
 ```bash
-git add bin/noctalia-glass-sync nvim/tests/noctalia/glass_sync_test.sh
+git add -f bin/noctalia-glass-sync nvim/tests/noctalia/glass_sync_test.sh docs/plans/2026-08-10-noctalia-nvim-theme.md
 git commit -m "feat: noctalia-glass-sync validate-stage-flip hook"
 ```
 

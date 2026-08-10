@@ -50,11 +50,18 @@ def is_hex(v: object) -> bool:
             and all(ch in '0123456789abcdefABCDEF' for ch in v[1:]))
 
 
+def notify(msg: str) -> None:
+    if shutil.which('notify-send'):
+        try:
+            subprocess.run(
+                ['notify-send', '-u', 'critical', 'noctalia-glass-sync', msg], check=False)
+        except OSError:
+            pass
+
+
 def fail(msg: str) -> None:
     print(f'noctalia-glass-sync: {msg}', file=sys.stderr)
-    if shutil.which('notify-send'):
-        subprocess.run(
-            ['notify-send', '-u', 'critical', 'noctalia-glass-sync', msg], check=False)
+    notify(msg)
     sys.exit(1)
 
 
@@ -89,27 +96,44 @@ def main() -> None:
     signal = '--no-signal' not in sys.argv[1:]
     if not CANDIDATE.exists():
         fail(f'candidate missing: {CANDIDATE}')
-    text = CANDIDATE.read_text()
+    data = CANDIDATE.read_bytes()
     try:
-        raw = json.loads(text)
-    except json.JSONDecodeError as exc:
+        raw = json.loads(data)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         fail(f'candidate is not valid JSON: {exc}')
     validate(raw)
     tones = [raw['glass'][role].lower() for role in REGISTERED_ROLES]
 
-    GLASS_DIR.mkdir(parents=True, exist_ok=True)
-    vdir = Path(tempfile.mkdtemp(dir=GLASS_DIR, prefix='v-'))
-    os.chmod(vdir, 0o755)  # mkdtemp defaults to 0700
-    (vdir / 'nvim-palette.json').write_text(text)
-    (vdir / 'kitty-glass.conf').write_text(
-        'transparent_background_colors ' + ' '.join(tones) + '\n')
+    vdir = None
+    tmplink = None
+    tmplink_created = False
+    try:
+        GLASS_DIR.mkdir(parents=True, exist_ok=True)
+        vdir = Path(tempfile.mkdtemp(dir=GLASS_DIR, prefix='v-'))
+        os.chmod(vdir, 0o755)  # mkdtemp defaults to 0700
+        (vdir / 'nvim-palette.json').write_bytes(data)
+        (vdir / 'kitty-glass.conf').write_text(
+            'transparent_background_colors ' + ' '.join(tones) + '\n')
 
-    # Single atomic switch: rename a prepared symlink over `current`.
-    tmplink = GLASS_DIR / f'.current-tmp-{os.getpid()}'
-    if tmplink.is_symlink() or tmplink.exists():
-        tmplink.unlink()
-    os.symlink(vdir.name, tmplink)
-    os.replace(tmplink, CURRENT)
+        # Single atomic switch: rename a prepared symlink over `current`.
+        tmplink = GLASS_DIR / f'.current-tmp-{os.getpid()}'
+        os.symlink(vdir.name, tmplink)
+        tmplink_created = True
+        os.replace(tmplink, CURRENT)
+    except OSError:
+        if tmplink_created:
+            try:
+                tmplink.unlink()
+            except FileNotFoundError:
+                pass
+            except OSError:
+                pass
+        if vdir is not None:
+            try:
+                shutil.rmtree(vdir)
+            except OSError:
+                pass
+        raise
 
     CANDIDATE.unlink()  # consumed only after the flip succeeded
 
@@ -117,13 +141,15 @@ def main() -> None:
     # them keep their fds; new readers only ever see `current`).
     target = os.readlink(CURRENT)
     for entry in GLASS_DIR.iterdir():
-        if entry.is_dir() and not entry.is_symlink() and entry.name != target:
-            shutil.rmtree(entry, ignore_errors=True)
+        if entry.is_dir() and not entry.is_symlink() and entry.name.startswith('v-') and entry.name != target:
+            shutil.rmtree(entry)
 
     if signal:
         # pkill exits 1 when no process matched; that is fine (nothing running).
-        subprocess.run(['pkill', '-SIGUSR1', '-x', 'kitty'], check=False)
-        subprocess.run(['pkill', '-SIGUSR1', '-x', 'nvim'], check=False)
+        for process in ('kitty', 'nvim'):
+            result = subprocess.run(['pkill', '-SIGUSR1', '-x', process], check=False)
+            if result.returncode not in (0, 1):
+                fail(f'pkill {process} failed with exit {result.returncode}')
 
 
 if __name__ == '__main__':
