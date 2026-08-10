@@ -65,6 +65,8 @@ if rg -n 'vi:syntax=(bash|zsh)' shell --glob '!private/**' --glob '!local/**'; t
     exit 1
 fi
 
+python3 tests/noctalia_agent_themes_test.py
+
 # noctalia glass invariant: kitty's generated transparent list must equal the
 # six chrome tones in the promoted nvim palette. Fails on partial/desynced
 # state; passes on fresh machines. See bin/noctalia-glass-check.

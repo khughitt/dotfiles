@@ -27,6 +27,34 @@ post_hook = "~/bin/noctalia-glass-sync"
 Use `:NoctaliaMood <name>` to switch syntax mood variants. See
 `docs/specs/2026-08-09-noctalia-nvim-theme-design.md` for the full pipeline.
 
+## Agent themes
+
+Noctalia directly renders the Claude Code semantic theme and Codex syntax
+theme. Register both templates in `~/.config/noctalia/user-templates.toml`:
+
+```toml
+[templates.claude]
+input_path = "~/d/dotfiles/noctalia/templates/claude.json"
+output_path = "~/.claude/themes/noctalia.json"
+
+[templates.codex]
+input_path = "~/d/dotfiles/noctalia/templates/codex.tmTheme"
+output_path = "~/.codex/themes/noctalia.tmTheme"
+```
+
+Select `Noctalia` in Claude Code's `/theme` picker. Set Codex's syntax theme in
+`~/.codex/config.toml`:
+
+```toml
+[tui]
+theme = "noctalia"
+```
+
+Claude Code reloads theme-file changes live. If its themes directory did not
+exist when Claude started, restart once after the first render. Codex applies
+its syntax theme in new sessions; the rest of its interface continues to use
+the terminal palette.
+
 ## Persistent memory-pressure alerts
 
 The memory-pressure-alert plugin is installed through this managed link:
