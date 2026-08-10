@@ -571,12 +571,17 @@ assert(not ok, 'invalid promoted palette must hard-error')
 
 -- load: a PRESENT but unreadable file is a hard error, never a fallback
 -- (only ENOENT may fall back; EACCES etc. must surface)
+-- The locked file holds VALID content: if the chmod were silently skipped
+-- (or bypassed), load() would succeed and the assert below would still catch
+-- it — the test cannot pass by tripping over invalid content instead of EACCES.
 local locked = os.tmpname()
-fh = io.open(locked, 'w'); fh:write('{}'); fh:close()
-os.execute("chmod 000 '" .. locked .. "'")
+fh = io.open(locked, 'w')
+fh:write(assert(io.open(fixture)):read('*a'))
+fh:close()
+assert(vim.uv.fs_chmod(locked, 0), 'chmod 000 must succeed')
 p.path = locked
 ok = pcall(p.load)
-os.execute("chmod 600 '" .. locked .. "'")
+vim.uv.fs_chmod(locked, 384)  -- 0600, so os.remove can clean up
 os.remove(locked)
 assert(not ok, 'unreadable present palette must hard-error, not fall back')
 
@@ -826,7 +831,7 @@ Expected: FAIL — `template file missing`
 }
 ```
 
-(JSON has no comments; the glass-mapping rationale lives here in the plan and in the spec: the spec's candidate list put `surface_container_lowest` among the six, but `float` needs a darker-than-`surface` tone that is NOT registered, and `_lowest` is the only material token darker than surface — so `_lowest` becomes `float` and `outline_variant` takes the sixth registered slot. The swatch session in Task 9 may re-shuffle this mapping; that is expected and only touches this file.)
+(JSON has no comments; the glass-mapping rationale lives here in the plan and in the spec: `float` needs a darker-than-`surface` tone that is NOT registered, and `surface_container_lowest` is the only material token darker than surface — so `_lowest` is `float` and `outline_variant` takes the sixth registered slot. The swatch session in Task 9 may re-shuffle this mapping; that is expected and only touches this file.)
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -850,7 +855,7 @@ git commit -m "feat(nvim): noctalia palette template with glass tone mapping"
 
 **Interfaces:**
 - Consumes: `$NOCTALIA_GLASS_DIR/nvim-palette.candidate.json` where `NOCTALIA_GLASS_DIR` defaults to `~/.cache/noctalia` (env override is for tests ONLY; production is the literal default).
-- Produces on success: a new version dir `$NOCTALIA_GLASS_DIR/nvim-glass/v-*/` containing `nvim-palette.json` (candidate content verbatim) and `kitty-glass.conf` (one `transparent_background_colors` line, tones in role order); the `current` symlink atomically renamed onto it; the candidate consumed; older version dirs pruned; then `pkill -SIGUSR1 -x kitty` and `pkill -SIGUSR1 -x nvim`. Flag `--no-signal` skips the pkills (tests). On ANY failure — missing candidate, JSON syntax error, missing/invalid key, glass invariant violation: stderr message + `notify-send` (if available), `current` and existing version dirs untouched, exit 1.
+- Produces on success: a new version dir `$NOCTALIA_GLASS_DIR/nvim-glass/v-*/` containing `nvim-palette.json` (candidate content verbatim) and `kitty-glass.conf` (one `transparent_background_colors` line, tones in role order); the `current` symlink atomically renamed onto it; the candidate consumed; older version dirs pruned; then `pkill -SIGUSR1 -x kitty` and `pkill -SIGUSR1 -x nvim`. Flag `--no-signal` skips the pkills (tests). On any PRE-COMMIT failure — missing candidate, JSON syntax error, missing/invalid key, glass invariant violation, or an error while staging the version dir before the rename: stderr message + `notify-send` (if available), `current` and existing version dirs untouched, exit 1. A failure AFTER the rename (pkill, prune) leaves the new generation committed; fresh reads through `current` see it, and already-running processes stay on their loaded generation until the next successful run signals them.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1811,3 +1816,4 @@ git commit -m "feat: activate noctalia nvim theming (glass check, docs)"
 - Type consistency: `palette.path` / `noctalia.state_file` reassignability used by tests in T3/T6/T7; glass roles are the same seven strings everywhere (artifact contract, `REGISTERED_ROLES` in Lua and Python, `GLASS_ORDER`); the fixture doubles as the hook-test candidate (T5) and equals `default_palette.lua` (asserted in T3).
 - Spec sync: the spec was updated alongside this revision (JSON artifact, symlink promotion, full hook validation, mood error semantics, pinned cache path).
 - Review round 3 fixes: palette/mood loaders distinguish ENOENT (fallback) from other I/O failures (hard error), with unreadable-present-file tests (T3/T6); the spec's glass mapping matches the template (float = `surface_container_lowest`, sixth slot = `outline_variant`); the transaction guarantee names the symlink rename as the commit point with signalling as post-commit reconciliation (T5 + spec); `noctalia-glass-check` routes shape/read errors through `fail()` with a traceback-regression test (T10).
+- Review round 4 fixes: T5's interface scopes the untouched-`current` guarantee to pre-commit failures and describes post-rename failures as leaving the generation committed; the spec's commit-point paragraph limits its claim to fresh reads through `current`; T3's permission test locks a VALID palette copy and asserts `vim.uv.fs_chmod` succeeded, so it can only pass by exercising EACCES; T4's mapping note drops the stale reference to the spec's superseded candidate list.

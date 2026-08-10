@@ -82,12 +82,13 @@ read the render target directly — only the promoted path:
 
   Readers go only through `current/`. The symlink rename is the commit
   point: a failed validation, a hook that never ran, or a kill BEFORE the
-  rename leaves running *and newly started* programs on the previous
-  consistent generation. The signals are post-commit reconciliation — a
-  kill between commit and signalling leaves running processes un-notified
-  (on the old generation) until the next successful run signals them; newly
-  started processes always read the committed generation, and kitty and
-  nvim always read the same one.
+  rename leaves `current` on the previous consistent generation, so every
+  fresh read sees it whole. The signals are post-commit reconciliation — a
+  kill between commit and signalling leaves already-running processes on
+  whatever generation they last loaded until the next successful run
+  signals them. The guarantee is about reads, not about the momentary
+  state of running processes: any fresh read of both files through
+  `current` sees a single consistent generation.
 
 - `kitty.conf` keeps its hardcoded `transparent_background_colors` line as
   the fallback and gains, after it,
