@@ -1,0 +1,92 @@
+package.path = 'nvim/lua/?.lua;nvim/lua/?/init.lua;' .. package.path
+local p = require('user.noctalia.palette')
+local fixture = 'nvim/tests/noctalia/fixtures/raw_palette.json'
+
+local function read_json(path)
+  local fh = assert(io.open(path))
+  local text = fh:read('*a')
+  fh:close()
+  return vim.json.decode(text)
+end
+
+-- validate: fixture passes
+assert(p.validate(read_json(fixture)), 'fixture must validate')
+
+-- validate: missing key
+local bad = read_json(fixture); bad.primary = nil
+local ok, err = p.validate(bad)
+assert(not ok and err:match('primary'), 'missing key detected')
+
+-- validate: glass collision
+bad = read_json(fixture); bad.glass.tab_on = bad.glass.chrome
+ok, err = p.validate(bad)
+assert(not ok and err:match('collide'), 'glass collision detected')
+
+-- validate: float registered
+bad = read_json(fixture); bad.glass.float = bad.glass.raised
+ok, err = p.validate(bad)
+assert(not ok and err:match('float'), 'registered float detected')
+
+-- validate: float equals surface
+bad = read_json(fixture); bad.glass.float = bad.surface
+ok, err = p.validate(bad)
+assert(not ok and err:match('surface'), 'float==surface detected')
+
+-- load: falls back to default when file absent
+p.path = '/nonexistent/nvim-palette.json'
+local raw = p.load()
+assert(raw.glass.chrome == '#1e2030', 'default fallback used')
+
+-- load: reads promoted file when present
+p.path = fixture
+assert(p.load().primary == '#82aaff', 'artifact loaded')
+
+-- load: hard error on malformed JSON
+local malformed = os.tmpname()
+local fh = io.open(malformed, 'w'); fh:write('{ not json'); fh:close()
+p.path = malformed
+ok = pcall(p.load)
+assert(not ok, 'malformed promoted palette must hard-error')
+
+-- load: hard error on valid JSON that fails validation
+fh = io.open(malformed, 'w'); fh:write('{"primary": "notahex"}'); fh:close()
+ok = pcall(p.load)
+os.remove(malformed)
+assert(not ok, 'invalid promoted palette must hard-error')
+
+-- load: a PRESENT but unreadable file is a hard error, never a fallback
+-- (only ENOENT may fall back; EACCES etc. must surface)
+-- The locked file holds VALID content: if the chmod were silently skipped
+-- (or bypassed), load() would succeed and the assert below would still catch
+-- it — the test cannot pass by tripping over invalid content instead of EACCES.
+local locked = os.tmpname()
+fh = io.open(locked, 'w')
+fh:write(assert(io.open(fixture)):read('*a'))
+fh:close()
+assert(vim.uv.fs_chmod(locked, 0), 'chmod 000 must succeed')
+p.path = locked
+ok = pcall(p.load)
+vim.uv.fs_chmod(locked, 384)  -- 0600, so os.remove can clean up
+os.remove(locked)
+assert(not ok, 'unreadable present palette must hard-error, not fall back')
+
+-- default palette itself validates and equals the fixture
+local default = require('user.noctalia.default_palette')
+assert(p.validate(default), 'default must validate')
+assert(vim.deep_equal(default, read_json(fixture)), 'default must equal fixture values')
+
+-- fresh-machine invariant: kitty.conf's hardcoded fallback line carries the
+-- default glass six, in registered-role order
+local conf = assert(io.open('kitty/kitty.conf')):read('*a')
+local line = conf:match('\ntransparent_background_colors ([^\n]+)')
+assert(line, 'kitty.conf fallback line missing')
+local tones = {}
+for hex in line:gmatch('#%x%x%x%x%x%x') do tones[#tones + 1] = hex end
+local order = { 'chrome', 'cursorline', 'tab_on', 'tab_off', 'tab_fill', 'raised' }
+assert(#tones == #order, 'kitty fallback must list exactly six tones')
+for i, role in ipairs(order) do
+  assert(tones[i] == default.glass[role],
+    ('kitty fallback tone %d != default glass.%s'):format(i, role))
+end
+
+print('OK palette')
