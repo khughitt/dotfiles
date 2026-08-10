@@ -64,4 +64,9 @@ if rg -n 'vi:syntax=(bash|zsh)' shell --glob '!private/**' --glob '!local/**'; t
     exit 1
 fi
 
+# noctalia glass invariant: kitty's generated transparent list must equal the
+# six chrome tones in the promoted nvim palette. Fails on partial/desynced
+# state; passes on fresh machines. See bin/noctalia-glass-check.
+bin/noctalia-glass-check
+
 echo "dotfiles checks passed"

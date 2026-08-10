@@ -14,7 +14,12 @@ return {
     'folke/tokyonight.nvim',
     lazy = false,
     priority = 1000,
-    opts = { transparent = true },
+    opts = {
+      transparent = true,
+      on_colors = function(colors)
+        require('user.noctalia').on_colors(colors)
+      end,
+    },
   },
 
   -- ---------------------------------------------------------------------
@@ -33,7 +38,10 @@ return {
     opts = function()
       return {
         options = {
-          theme = require('user.glass').lualine_theme(),
+          -- A FUNCTION, not a call: lualine re-runs setup() on every
+          -- ColorScheme event and re-evaluates function themes, which is what
+          -- keeps the statusline in sync with noctalia reloads.
+          theme = function() return require('user.glass').lualine_theme() end,
           section_separators   = { left = '│', right = '│' },
           component_separators = { left = '│', right = '│' },
         },

@@ -48,6 +48,9 @@ Link the user units and enable the Dropbox maintenance timer:
 ./setup.sh --link-only --headless --only systemd --enable-user-timers
 ```
 
+Apply a Noctalia color scheme once so `~/.cache/noctalia/nvim-glass/current/`
+exists; until then nvim and kitty use the committed tokyonight-moon fallbacks.
+
 Enable the host-specific units only after their referenced projects and tools
 exist:
 

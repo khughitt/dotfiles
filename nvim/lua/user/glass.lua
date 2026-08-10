@@ -14,39 +14,30 @@
 --      drawn as a character (window separators, barbar's dividers, lualine's
 --      powerline chevrons) can only be recolored or removed, never softened.
 --
--- Keep `palette` in sync with transparent_background_colors in kitty.conf.
+-- `palette` stays in sync automatically through the shared artifact;
+-- kitty.conf's hardcoded line is only the fresh-machine fallback.
 -- ---------------------------------------------------------------------------
 
 local M = {}
 
-M.palette = {
-  chrome     = '#1e2030',  -- StatusLine / lualine_c / TabLine
-  cursorline = '#2f334d',
-  tab_on     = '#222436',  -- barbar current buffer
-  tab_off    = '#272a3f',  -- barbar inactive buffer
-  tab_fill   = '#2c3048',  -- barbar tabpage fill
-  raised     = '#3b4261',  -- lualine_b / Folded
-}
-
--- Reverse index, so code can ask "is this color one kitty will make
--- translucent?" without hardcoding the list a second time.
+-- Filled by refresh(); role -> hex (incl. float). Exposed because
+-- lualine_theme() and plugins/ui.lua read roles from it.
+M.palette = {}
+-- hex -> true for the six tones kitty will render translucent.
 M.registered = {}
-for _, color in pairs(M.palette) do
-  M.registered[color] = true
+
+local ROLE_KEYS = { 'chrome', 'cursorline', 'tab_on', 'tab_off', 'tab_fill', 'raised' }
+
+local function refresh()
+  local glass = require('user.noctalia.palette').load().glass
+  M.palette = {}
+  M.registered = {}
+  for _, role in ipairs(ROLE_KEYS) do
+    M.palette[role] = glass[role]
+    M.registered[glass[role]:lower()] = true
+  end
+  M.palette.float = glass.float
 end
-
--- Popups must stay solid: tokyonight paints NormalFloat/Pmenu/FloatBorder in
--- #1e2030, the same color as the statusline, so registering that color would
--- drag completion menus and LSP hovers along with it -- over the text they
--- exist to occlude. Repaint them in a color that is NOT on kitty's list.
-local float_bg = '#16161e'
-
--- group -> registered color. These paint their own background and would
--- otherwise punch an opaque rectangle through the glass.
-local recolor = {
-  ColorColumn = M.palette.tab_off,  -- the colorcolumn=100 right margin
-  ScrollView  = M.palette.raised,   -- nvim-scrollview's bar
-}
 
 local function repaint(group, bg)
   vim.api.nvim_set_hl(0, group, vim.tbl_extend('force',
@@ -54,12 +45,16 @@ local function repaint(group, bg)
 end
 
 function M.apply()
+  refresh()
+  -- Popups must stay solid: paint them in a color that is NOT on kitty's
+  -- transparent list (and differs from the default background).
   for _, group in ipairs({ 'NormalFloat', 'FloatBorder', 'Pmenu' }) do
-    repaint(group, float_bg)
+    repaint(group, M.palette.float)
   end
-  for group, bg in pairs(recolor) do
-    repaint(group, bg)
-  end
+  -- Groups that paint their own background and would otherwise punch an
+  -- opaque rectangle through the glass: reuse already-registered tones.
+  repaint('ColorColumn', M.palette.tab_off)
+  repaint('ScrollView', M.palette.raised)
 end
 
 -- Apply now and re-apply on every colorscheme change, since loading a
@@ -80,6 +75,7 @@ end
 -- (chrome), or the badge merges into its neighbour and the separator between
 -- them vanishes. cursorline lands a/b/c on mid / light / dark.
 function M.lualine_theme()
+  refresh()
   local theme = vim.deepcopy(require('lualine.themes.tokyonight'))
   for _, sections in pairs(theme) do
     for _, key in ipairs({ 'a', 'b', 'c', 'x', 'y', 'z' }) do

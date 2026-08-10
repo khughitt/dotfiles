@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+"""Promote the noctalia nvim palette and its kitty glass include, atomically.
+
+Noctalia renders the nvim palette template to nvim-palette.candidate.json and
+then runs this hook. We validate the COMPLETE candidate (JSON syntax, every
+required key, glass invariants), stage the promoted palette and kitty's
+transparent_background_colors include into a fresh version directory, and
+flip the `current` symlink over both with a single atomic rename.
+
+The rename is the COMMIT POINT. Before it, any failure or kill leaves the
+previous generation fully intact -- readers (kitty include, nvim load) go
+through `current` and never see a half-promoted state. The SIGUSR1 signals
+after it are post-commit reconciliation, not part of the transaction: a kill
+between commit and signalling leaves already-running processes on the old
+generation until the next successful run signals them (new processes always
+read the committed generation).
+
+Spec: docs/specs/2026-08-09-noctalia-nvim-theme-design.md
+"""
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+BASE = Path(os.environ.get('NOCTALIA_GLASS_DIR', str(Path.home() / '.cache' / 'noctalia')))
+CANDIDATE = BASE / 'nvim-palette.candidate.json'
+GLASS_DIR = BASE / 'nvim-glass'
+CURRENT = GLASS_DIR / 'current'
+
+# Keep in sync with REQUIRED in nvim/lua/user/noctalia/palette.lua.
+REQUIRED = (
+    'primary', 'primary_fixed_dim', 'on_primary',
+    'secondary', 'secondary_fixed_dim',
+    'tertiary', 'tertiary_fixed_dim',
+    'error', 'error_container',
+    'surface', 'on_surface', 'on_surface_variant', 'on_background',
+    'outline', 'outline_variant', 'surface_variant',
+)
+# Order matters: the order tones appear on kitty's line.
+REGISTERED_ROLES = ('chrome', 'cursorline', 'tab_on', 'tab_off', 'tab_fill', 'raised')
+
+
+def is_hex(v: object) -> bool:
+    return (isinstance(v, str) and len(v) == 7 and v[0] == '#'
+            and all(ch in '0123456789abcdefABCDEF' for ch in v[1:]))
+
+
+def notify(msg: str) -> None:
+    if shutil.which('notify-send'):
+        try:
+            subprocess.run(
+                ['notify-send', '-u', 'critical', 'noctalia-glass-sync', msg], check=False)
+        except OSError:
+            pass
+
+
+def fail(msg: str) -> None:
+    print(f'noctalia-glass-sync: {msg}', file=sys.stderr)
+    notify(msg)
+    sys.exit(1)
+
+
+def validate(raw: object) -> dict:
+    if not isinstance(raw, dict):
+        fail('candidate is not a JSON object')
+    for key in REQUIRED:
+        if not is_hex(raw.get(key)):
+            fail(f'missing/invalid key {key!r}')
+    glass = raw.get('glass')
+    if not isinstance(glass, dict):
+        fail('missing glass table')
+    seen = set()
+    for role in REGISTERED_ROLES:
+        v = glass.get(role)
+        if not is_hex(v):
+            fail(f'glass.{role} missing/invalid')
+        v = v.lower()
+        if v in seen:
+            fail(f'glass tones collide on {v}')
+        seen.add(v)
+    if not is_hex(glass.get('float')):
+        fail('glass.float missing/invalid')
+    if glass['float'].lower() in seen:
+        fail('glass.float is a registered tone')
+    if glass['float'].lower() == raw['surface'].lower():
+        fail('glass.float equals surface (floats would go translucent)')
+    return raw
+
+
+def main() -> None:
+    signal = '--no-signal' not in sys.argv[1:]
+    if not CANDIDATE.exists():
+        fail(f'candidate missing: {CANDIDATE}')
+    data = CANDIDATE.read_bytes()
+    try:
+        raw = json.loads(data)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        fail(f'candidate is not valid JSON: {exc}')
+    validate(raw)
+    tones = [raw['glass'][role].lower() for role in REGISTERED_ROLES]
+
+    vdir = None
+    tmplink = None
+    tmplink_created = False
+    try:
+        GLASS_DIR.mkdir(parents=True, exist_ok=True)
+        vdir = Path(tempfile.mkdtemp(dir=GLASS_DIR, prefix='v-'))
+        os.chmod(vdir, 0o755)  # mkdtemp defaults to 0700
+        (vdir / 'nvim-palette.json').write_bytes(data)
+        (vdir / 'kitty-glass.conf').write_text(
+            'transparent_background_colors ' + ' '.join(tones) + '\n')
+
+        # Single atomic switch: rename a prepared symlink over `current`.
+        tmplink = GLASS_DIR / f'.current-tmp-{os.getpid()}'
+        os.symlink(vdir.name, tmplink)
+        tmplink_created = True
+        os.replace(tmplink, CURRENT)
+    except OSError:
+        if tmplink_created:
+            try:
+                tmplink.unlink()
+            except FileNotFoundError:
+                pass
+            except OSError:
+                pass
+        if vdir is not None:
+            try:
+                shutil.rmtree(vdir)
+            except OSError:
+                pass
+        raise
+
+    CANDIDATE.unlink()  # consumed only after the flip succeeded
+
+    # Prune superseded version dirs (readers that already opened files in
+    # them keep their fds; new readers only ever see `current`).
+    target = os.readlink(CURRENT)
+    for entry in GLASS_DIR.iterdir():
+        if entry.is_dir() and not entry.is_symlink() and entry.name.startswith('v-') and entry.name != target:
+            shutil.rmtree(entry)
+
+    if signal:
+        # pkill exits 1 when no process matched; that is fine (nothing running).
+        for process in ('kitty', 'nvim'):
+            result = subprocess.run(['pkill', '-SIGUSR1', '-x', process], check=False)
+            if result.returncode not in (0, 1):
+                fail(f'pkill {process} failed with exit {result.returncode}')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except OSError as exc:
+        fail(str(exc))

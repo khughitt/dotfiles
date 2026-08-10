@@ -1,0 +1,27 @@
+{
+  "primary": "{{colors.primary.default.hex}}",
+  "primary_fixed_dim": "{{colors.primary_fixed_dim.default.hex}}",
+  "on_primary": "{{colors.on_primary.default.hex}}",
+  "secondary": "{{colors.secondary.default.hex}}",
+  "secondary_fixed_dim": "{{colors.secondary_fixed_dim.default.hex}}",
+  "tertiary": "{{colors.tertiary.default.hex}}",
+  "tertiary_fixed_dim": "{{colors.tertiary_fixed_dim.default.hex}}",
+  "error": "{{colors.error.default.hex}}",
+  "error_container": "{{colors.error_container.default.hex}}",
+  "surface": "{{colors.surface.default.hex}}",
+  "on_surface": "{{colors.on_surface.default.hex}}",
+  "on_surface_variant": "{{colors.on_surface_variant.default.hex}}",
+  "on_background": "{{colors.on_background.default.hex}}",
+  "outline": "{{colors.outline.default.hex}}",
+  "outline_variant": "{{colors.outline_variant.default.hex}}",
+  "surface_variant": "{{colors.surface_variant.default.hex}}",
+  "glass": {
+    "chrome": "{{colors.surface_container_low.default.hex}}",
+    "cursorline": "{{colors.surface_bright.default.hex}}",
+    "tab_on": "{{colors.surface_container.default.hex}}",
+    "tab_off": "{{colors.surface_container_high.default.hex}}",
+    "tab_fill": "{{colors.surface_container_highest.default.hex}}",
+    "raised": "{{colors.outline_variant.default.hex}}",
+    "float": "{{colors.surface_container_lowest.default.hex}}"
+  }
+}

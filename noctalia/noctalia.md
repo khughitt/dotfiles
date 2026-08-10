@@ -10,6 +10,23 @@ Noctalia will discover the plugin from disk on startup or plugin refresh. If the
 
 The plugin expects `~/bin/walictl` to exist, which is provided by the existing top-level `bin` symlink created by `setup.sh`.
 
+## Neovim theming
+
+Noctalia renders a palette template to candidate JSON; `~/bin/noctalia-glass-sync`
+validates it, writes both generated files to a version directory, flips the
+`~/.cache/noctalia/nvim-glass/current/` symlink, then signals kitty and nvim.
+Register the template in `~/.config/noctalia/user-templates.toml`:
+
+```toml
+[templates.nvim]
+input_path = "~/.config/nvim/lua/user/noctalia/palette-template.json"
+output_path = "~/.cache/noctalia/nvim-palette.candidate.json"
+post_hook = "~/bin/noctalia-glass-sync"
+```
+
+Use `:NoctaliaMood <name>` to switch syntax mood variants. See
+`docs/specs/2026-08-09-noctalia-nvim-theme-design.md` for the full pipeline.
+
 ## Persistent memory-pressure alerts
 
 The memory-pressure-alert plugin is installed through this managed link:
