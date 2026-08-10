@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+"""Check the promoted noctalia glass state for consistency.
+
+Fresh machines (no `current` symlink) pass: the committed fallbacks apply.
+Anything else must be fully consistent: both promoted files present and
+kitty's transparent tones equal to the palette's glass tones in role order.
+Partial or desynced state fails loudly -- it means a generated file was
+hand-edited or a promotion was interrupted, which bin/noctalia-glass-sync
+is designed to make impossible.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+from pathlib import Path
+
+BASE = Path(os.environ.get('NOCTALIA_GLASS_DIR', str(Path.home() / '.cache' / 'noctalia')))
+CURRENT = BASE / 'nvim-glass' / 'current'
+REGISTERED_ROLES = ('chrome', 'cursorline', 'tab_on', 'tab_off', 'tab_fill', 'raised')
+
+
+def fail(msg: str) -> None:
+    print(f'FAIL: noctalia-glass-check: {msg}')
+    sys.exit(1)
+
+
+def main() -> None:
+    if not CURRENT.is_symlink() and not CURRENT.exists():
+        return  # fresh machine: fallbacks in kitty.conf / default_palette.lua apply
+    palette_file = CURRENT / 'nvim-palette.json'
+    kitty_file = CURRENT / 'kitty-glass.conf'
+    if not palette_file.is_file():
+        fail(f'{palette_file} missing (partial promote?)')
+    if not kitty_file.is_file():
+        fail(f'{kitty_file} missing (partial promote?)')
+    # Every failure mode must come out as a FAIL: line, never a traceback --
+    # dotfiles-check consumers grep for FAIL.
+    try:
+        data = json.loads(palette_file.read_text())
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        fail(f'{palette_file} unreadable: {exc}')
+    glass = data.get('glass') if isinstance(data, dict) else None
+    if not isinstance(glass, dict):
+        fail(f'{palette_file} has no glass object')
+    palette_tones = []
+    for role in REGISTERED_ROLES:
+        tone = glass.get(role)
+        if not isinstance(tone, str):
+            fail(f'{palette_file} glass.{role} missing/malformed')
+        palette_tones.append(tone.lower())
+    try:
+        kitty_text = kitty_file.read_text()
+    except (OSError, UnicodeError) as exc:
+        fail(f'{kitty_file} unreadable: {exc}')
+    m = re.search(r'^transparent_background_colors (.+)$', kitty_text, re.M)
+    if not m:
+        fail(f'{kitty_file} has no transparent_background_colors line')
+    kitty_tones = m.group(1).split()
+    if kitty_tones != palette_tones:
+        fail(f'tones desynced: kitty={kitty_tones} palette={palette_tones}')
+
+
+if __name__ == '__main__':
+    main()

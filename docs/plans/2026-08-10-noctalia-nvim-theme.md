@@ -1797,13 +1797,15 @@ cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.js
 # 3. partial state (palette missing): FAIL — this is the case the old
 #    dotfiles-check guard silently skipped
 rm "$TMP/nvim-glass/current/nvim-palette.json"
-if "$CHECK" 2>/dev/null; then echo "FAIL: partial state must fail"; exit 1; fi
+if out=$("$CHECK" 2>&1); then echo "FAIL: partial state must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
 # 4. desynced tones: FAIL
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 sed -i 's/#1e2030/#111111/' "$TMP/nvim-glass/current/kitty-glass.conf"
-if "$CHECK" 2>/dev/null; then echo "FAIL: desync must fail"; exit 1; fi
+if out=$("$CHECK" 2>&1); then echo "FAIL: desync must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
 # 5. malformed palette shape: a clean FAIL: line, never a traceback
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
@@ -1945,12 +1947,17 @@ Expected: both files with fresh timestamps, six distinct hexes on the kitty line
 
 - [ ] **Step 10: Final commit + spec status**
 
-Update the spec's `**Status:**` line to `Implemented (<short-sha range>)` in the same change, per the design-doc rules.
+Commit the implementation first. Then update the spec's `**Status:**` line to
+`Implemented (<short-sha range ending at the implementation commit>)` and
+commit that status change separately, because the status cannot name the commit
+that contains it.
 
 ```bash
 git add bin/noctalia-glass-check bin/dotfiles-check nvim/tests/noctalia/glass_check_test.sh noctalia/noctalia.md
-git add -f docs/fresh-install-hardening.md docs/specs/2026-08-09-noctalia-nvim-theme-design.md
+git add -f docs/fresh-install-hardening.md docs/plans/2026-08-10-noctalia-nvim-theme.md
 git commit -m "feat: activate noctalia nvim theming (glass check, docs)"
+git add -f docs/specs/2026-08-09-noctalia-nvim-theme-design.md
+git commit -m "docs: mark noctalia nvim theming implemented"
 ```
 
 ---
