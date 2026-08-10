@@ -54,7 +54,7 @@ def main() -> None:
         kitty_text = kitty_file.read_text()
     except (OSError, UnicodeError) as exc:
         fail(f'{kitty_file} unreadable: {exc}')
-    m = re.search(r'^transparent_background_colors (.+)$', kitty_text, re.M)
+    m = re.fullmatch(r'transparent_background_colors (.+)', kitty_text.strip())
     if not m:
         fail(f'{kitty_file} has no transparent_background_colors line')
     kitty_tones = m.group(1).split()

@@ -29,7 +29,14 @@ sed -i 's/#1e2030/#111111/' "$TMP/nvim-glass/current/kitty-glass.conf"
 if out=$("$CHECK" 2>&1); then echo "FAIL: desync must fail"; exit 1; fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
-# 5. malformed palette shape: a clean FAIL: line, never a traceback
+# 5. kitty applies the final directive, so duplicates must fail
+cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
+"$SYNC" --no-signal
+echo 'transparent_background_colors #111111' >> "$TMP/nvim-glass/current/kitty-glass.conf"
+if out=$("$CHECK" 2>&1); then echo "FAIL: duplicate directive must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
+
+# 6. malformed palette shape: a clean FAIL: line, never a traceback
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 echo '{"glass": []}' > "$TMP/nvim-glass/current/nvim-palette.json"
