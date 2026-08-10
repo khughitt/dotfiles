@@ -19,8 +19,9 @@ switchable mood variant for syntax hues.
   lockstep or the statusline/tabs punch opaque rectangles through the glass.
 - `~/.config/nvim` and `~/.config/kitty` are symlinks into this Dropbox-synced
   repo; per-machine generated files must not land where they would sync between
-  machines with different wallpapers. (Precedent: noctalia already generates
-  `kitty/themes/noctalia.conf` in-tree; the new kitty include follows it.)
+  machines with different wallpapers — all generated outputs go under
+  `~/.cache/noctalia/`. (Noctalia's built-in kitty template already writes
+  `themes/noctalia.conf` in-tree; that pre-existing flaw is out of scope.)
 - Noctalia's `colors.json` exposes only ~12 keys; the surface-container ladder
   needed for chrome tones is available only through template variables
   (`{{colors.surface_container.default.hex}}` etc.), so a user template is
@@ -39,32 +40,44 @@ glass + lualine integration.
 
 ## Architecture
 
-### Noctalia user templates (`~/.config/noctalia/user-templates.toml`)
+### Single template + sync hook (`~/.config/noctalia/user-templates.toml`)
 
-1. `[templates.nvim]`
-   - input: `nvim/lua/user/noctalia/palette-template.lua` (in repo)
-   - output: `~/.cache/noctalia/nvim-palette.lua` (outside repo, per-machine)
-   - post_hook: `pkill -SIGUSR1 nvim`
-   - Emits a plain Lua table of raw material colors: the 4 accents (+ on_/
-     fixed_dim variants), the surface-container ladder, outline, on_surface
-     tones.
+One user template produces the single palette artifact; everything else is
+derived from that artifact by a hook script, so kitty and nvim cannot disagree
+(one failed render leaves *both* on the previous state, never one of them):
 
-2. `[templates.kitty-glass]`
-   - input: kitty glass template (in repo)
-   - output: `kitty/themes/noctalia-glass.conf`
-   - post_hook: `pkill -SIGUSR1 kitty` (kitty's config reload)
-   - Emits exactly one line: `transparent_background_colors` with the six
-     chrome tones. `kitty.conf` replaces its hardcoded line 84 with
-     `include themes/noctalia-glass.conf`.
+- `[templates.nvim]`
+  - input: `nvim/lua/user/noctalia/palette-template.lua` (in repo)
+  - output: `~/.cache/noctalia/nvim-palette.lua` (outside repo, per-machine;
+    generated files must never land in the Dropbox-synced tree)
+  - post_hook: `bin/noctalia-glass-sync`
+  - Emits a plain Lua table of raw material colors: the 4 accents (+ on_/
+    fixed_dim variants), the surface-container ladder, outline, on_surface
+    tones.
 
-**Invariant:** both templates draw the six chrome tones from the same noctalia
-surface variables, so nvim chrome and kitty's transparent list agree by
-construction. Candidate mapping for the six tones: `surface_container_lowest`,
-`surface_container_low`, `surface_container`, `surface_container_high`,
-`surface_container_highest`, `surface_variant`. They must be pairwise distinct
-(glass.lua's badge/separator constraint); if a generated scheme collapses two
-of them to the same hex, the scripted invariant check fails and the mapping is
-adjusted (final assignment settled during the swatch comparison).
+- **`bin/noctalia-glass-sync`** (committed, executable) does, in order:
+  1. Parse the six chrome tones and `float_bg` out of the palette artifact.
+  2. Validate: all hexes well-formed, six tones pairwise distinct (glass.lua's
+     badge/separator constraint), `float_bg` not among the six. On failure:
+     leave the previous kitty include untouched, emit a `notify-send` warning,
+     signal nothing, exit non-zero.
+  3. Atomically write `~/.cache/noctalia/kitty-glass.conf` containing one
+     line: `transparent_background_colors` with the six tones.
+  4. `pkill -SIGUSR1 kitty` (config reload), then `pkill -SIGUSR1 nvim`.
+
+- `kitty.conf` keeps its hardcoded `transparent_background_colors` line as the
+  fallback and gains, after it, `include ${HOME}/.cache/noctalia/kitty-glass.conf`
+  (env-var expansion in include paths is already used for `${HOSTNAME}.conf`;
+  kitty is last-value-wins, so the include overrides when present and a
+  missing file is only a startup warning).
+
+**Invariant:** kitty's transparent list is *generated from* the same artifact
+nvim reads, validated before either program is signalled. Candidate mapping
+for the six tones: `surface_container_lowest`, `surface_container_low`,
+`surface_container`, `surface_container_high`, `surface_container_highest`,
+`surface_variant` (final assignment settled during the swatch comparison).
+Noctalia's built-in kitty template writing `themes/noctalia.conf` into the
+synced tree is a pre-existing noctalia behavior, out of scope here.
 
 ### Nvim modules (`nvim/lua/user/noctalia/`)
 
@@ -73,12 +86,24 @@ adjusted (final assignment settled during the swatch comparison).
   committed tokyonight-moon-flavored default palette and `vim.notify` once.
   Malformed palette: hard error, no partial theming.
 - **`derive.lua`** — pure-Lua hex↔HSL math. Input: raw palette + mood name.
-  Output: full tokyonight-shaped color table (~30 named colors). Derived hues
-  (green, yellow, orange, cyan, magenta, …) are synthesized by hue rotation at
-  the lightness/chroma of the source accents.
-- **`glass.lua`** (existing, modified) — `M.palette`'s six chrome colors read
-  from the raw palette's surface ladder instead of hardcoded hexes; `float_bg`
-  also palette-derived (must NOT be one of the six). Logic otherwise unchanged.
+  Output: a **complete** tokyonight `ColorScheme` table — the ~31 base palette
+  fields *and* every field tokyonight derives before invoking `on_colors`
+  (`diff`, `git.ignore`, `black`, `border`/`border_highlight`, all `bg_*`,
+  `fg_*`, `error`/`warning`/`info`/`hint`/`todo`, `rainbow`, `terminal`),
+  honoring our fixed opts (`transparent = true`). This is required because
+  tokyonight calls `on_colors(colors)` *after* deriving those fields and
+  ignores the callback's return value: mutating only base fields would leave
+  moon-derived values behind. Derived hues (green, yellow, orange, cyan,
+  magenta, …) are synthesized by hue rotation at the lightness/chroma of the
+  source accents.
+- **`on_colors` contract** — the callback mutates `colors` in place: clear the
+  table's keys, then copy in every field from derive.lua's output (including
+  the nested `diff`/`git`/`terminal`/`rainbow` tables).
+- **`glass.lua`** (existing, modified) — `M.palette`, `M.registered`,
+  `float_bg`, and the `recolor` map are **recomputed inside `apply()`** from
+  the current palette, not captured at module load; today they are one-time
+  snapshots (`glass.lua:22-49`), which would reapply stale colors on reload.
+  `float_bg` is palette-derived and must NOT be one of the six chrome tones.
 
 ### Moods
 
@@ -100,33 +125,45 @@ may be tuned or culled there.
 ### Wiring
 
 - tokyonight opts: `transparent = true` (unchanged) plus `on_colors` replacing
-  its palette with the derived table.
+  its palette per the contract above.
+- lualine: `options.theme` is passed as a **function** (`ui.lua` currently
+  calls `glass.lualine_theme()` once at setup, freezing the colors), and the
+  reload path re-invokes lualine so the theme function re-evaluates.
 - SIGUSR1 handler (pattern from noctalia docs): re-`dofile` the palette,
-  re-derive with current mood, re-apply colorscheme. Existing `ColorScheme`
-  autocmd re-applies glass; lualine refreshes.
+  re-derive with current mood, re-apply colorscheme, refresh lualine. The
+  `ColorScheme` autocmd re-applies glass (which now recomputes from the fresh
+  palette).
 
 ### Data flow
 
-wallpaper change → noctalia regenerates colors → both user templates rewrite
-their outputs → kitty reloads via SIGUSR1 → nvim reloads via SIGUSR1 →
-palette → derive(mood) → tokyonight `on_colors` → ColorScheme autocmd → glass.
+wallpaper change → noctalia regenerates colors → template writes the palette
+artifact → `bin/noctalia-glass-sync` validates it, writes the kitty include,
+and signals kitty then nvim → nvim: palette → derive(mood) → tokyonight
+`on_colors` → ColorScheme autocmd → glass recompute → lualine refresh.
 
 ## Error handling
 
-- Palette file missing → committed default + single `vim.notify`.
-- Palette malformed → hard error at load with clear message.
+- Palette file missing (fresh machine) → nvim falls back to its committed
+  tokyonight-moon default palette + single `vim.notify`; kitty's hardcoded
+  fallback line carries the *matching* tokyonight-moon chrome tones, so glass
+  works before noctalia has ever run. The missing include is only a kitty
+  startup warning. Fresh-install doc gains a one-line "apply a noctalia
+  scheme once" step.
+- Palette malformed → nvim: hard error at load, no partial theming;
+  glass-sync: refuses to touch the kitty include or signal anything.
 - Unknown mood → error listing valid moods.
-- `themes/noctalia-glass.conf` absent on fresh install → kitty warns but
-  starts; fresh-install doc gains a one-line "apply a noctalia scheme once"
-  step.
 
 ## Verification
 
 - Manual: switch wallpapers; kitty + nvim recolor live; statusline, tabs and
   cursorline stay translucent (no opaque rectangles); floats stay solid.
-- Scripted: check that the six hexes in the generated
-  `kitty/themes/noctalia-glass.conf` equal the six chrome tones exposed by the
-  generated nvim palette — the one invariant glass depends on.
+- Structural: kitty's transparent list is generated from the same artifact
+  nvim reads, and `bin/noctalia-glass-sync` validates distinctness and
+  `float_bg` exclusion before signalling — a desync requires the validation
+  itself to be wrong, not a race between templates.
+- Scripted spot-check (usable manually and in `dotfiles-check`): compare the
+  six hexes in `~/.cache/noctalia/kitty-glass.conf` against the chrome tones
+  in the palette artifact.
 
 ## Out of scope
 
