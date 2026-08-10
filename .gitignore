@@ -31,6 +31,7 @@ mindful/
 nvim/.netrwhist
 nvim/tmp
 nvim/user
+nvim.log
 packer_compiled.lua
 plan/
 polybar/modules/forecast

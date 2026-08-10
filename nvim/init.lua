@@ -342,7 +342,7 @@ vim.api.nvim_create_autocmd('BufReadPost', {
 -- ---------------------------------------------------------------------------
 require('config.lazy')
 
-vim.cmd.colorscheme('tokyonight')
+vim.cmd.colorscheme('tokyonight-moon')
 
 -- Recolor the chrome that would otherwise punch opaque rectangles through
 -- kitty's translucent background. Must run after the colorscheme.
