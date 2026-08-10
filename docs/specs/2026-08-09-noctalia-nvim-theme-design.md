@@ -80,9 +80,14 @@ read the render target directly — only the promoted path:
   4. Only after the flip: `pkill -SIGUSR1 kitty` (config reload), then
      `pkill -SIGUSR1 nvim`.
 
-  Readers go only through `current/`, so a failed validation, a hook that
-  never ran, or a kill at any point leaves running *and newly started*
-  programs on the previous consistent state.
+  Readers go only through `current/`. The symlink rename is the commit
+  point: a failed validation, a hook that never ran, or a kill BEFORE the
+  rename leaves running *and newly started* programs on the previous
+  consistent generation. The signals are post-commit reconciliation — a
+  kill between commit and signalling leaves running processes un-notified
+  (on the old generation) until the next successful run signals them; newly
+  started processes always read the committed generation, and kitty and
+  nvim always read the same one.
 
 - `kitty.conf` keeps its hardcoded `transparent_background_colors` line as
   the fallback and gains, after it,
@@ -98,10 +103,13 @@ cannot express an XDG fallback, so nothing in this pipeline honors
 override used only by tests.
 
 **Invariant:** kitty's transparent list is *generated from* the same artifact
-nvim reads, validated before either program is signalled. Candidate mapping
-for the six tones: `surface_container_lowest`, `surface_container_low`,
-`surface_container`, `surface_container_high`, `surface_container_highest`,
-`surface_variant` (final assignment settled during the swatch comparison).
+nvim reads, validated before either program is signalled. Mapping for the six
+registered tones: `surface_container_low`, `surface_container`,
+`surface_container_high`, `surface_container_highest`, `surface_variant`,
+`outline_variant`; `float` = `surface_container_lowest` — the only material
+token darker than `surface`, and `float` must be darker-than-bg, solid, and
+unregistered, so it cannot sit among the six. (The mapping lives solely in
+the template and may be re-shuffled during the swatch comparison.)
 Noctalia's built-in kitty template writing `themes/noctalia.conf` into the
 synced tree is a pre-existing noctalia behavior, out of scope here.
 
@@ -110,9 +118,11 @@ synced tree is a pre-existing noctalia behavior, out of scope here.
 - **`palette.lua`** — loads
   `~/.cache/noctalia/nvim-glass/current/nvim-palette.json` via
   `vim.json.decode`, validates expected keys and the glass invariants.
-  Missing file (fresh machine): fall back to a committed
-  tokyonight-moon-flavored default palette and `vim.notify` once. Present but
-  malformed or invalid: hard error, no partial theming.
+  Missing file — ENOENT specifically — (fresh machine): fall back to a
+  committed tokyonight-moon-flavored default palette and `vim.notify` once.
+  Present but unreadable (EACCES, I/O error), malformed, or invalid: hard
+  error, no partial theming and no silent fallback. The mood state file
+  follows the same rule.
 - **`derive.lua`** — pure-Lua hex↔HSL math. Input: raw palette + mood name.
   Output: a **complete** tokyonight `ColorScheme` table — the ~31 base palette
   fields *and* every field tokyonight derives before invoking `on_colors`

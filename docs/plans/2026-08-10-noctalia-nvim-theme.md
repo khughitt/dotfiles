@@ -569,6 +569,17 @@ ok = pcall(p.load)
 os.remove(malformed)
 assert(not ok, 'invalid promoted palette must hard-error')
 
+-- load: a PRESENT but unreadable file is a hard error, never a fallback
+-- (only ENOENT may fall back; EACCES etc. must surface)
+local locked = os.tmpname()
+fh = io.open(locked, 'w'); fh:write('{}'); fh:close()
+os.execute("chmod 000 '" .. locked .. "'")
+p.path = locked
+ok = pcall(p.load)
+os.execute("chmod 600 '" .. locked .. "'")
+os.remove(locked)
+assert(not ok, 'unreadable present palette must hard-error, not fall back')
+
 -- default palette itself validates and equals the fixture
 local default = require('user.noctalia.default_palette')
 assert(p.validate(default), 'default must validate')
@@ -685,28 +696,39 @@ M.path = vim.fn.expand('~/.cache/noctalia/nvim-glass/current/nvim-palette.json')
 local warned = false
 
 function M.load()
-  local fh = io.open(M.path)
-  if fh then
-    local text = fh:read('*a')
-    fh:close()
-    local ok, raw = pcall(vim.json.decode, text)
-    if not ok then
-      error(('noctalia palette %s is not valid JSON: %s'):format(M.path, raw))
+  -- Only a genuinely ABSENT file may fall back (fresh machine). Any other
+  -- failure -- permission denied, I/O error, present-but-unopenable -- must
+  -- surface, or a broken install silently themes with stale colors.
+  local stat, stat_err = vim.uv.fs_stat(M.path)
+  if not stat then
+    if stat_err and not stat_err:match('^ENOENT') then
+      error(('noctalia palette %s: %s'):format(M.path, stat_err))
     end
-    local valid, err = M.validate(raw)
-    if not valid then
-      error(('noctalia palette %s invalid: %s'):format(M.path, err))
+    if not warned then
+      warned = true
+      vim.schedule(function()
+        vim.notify('noctalia palette missing; using built-in default (apply a noctalia color scheme once)',
+          vim.log.levels.WARN)
+      end)
     end
-    return valid
+    return require('user.noctalia.default_palette')
   end
-  if not warned then
-    warned = true
-    vim.schedule(function()
-      vim.notify('noctalia palette missing; using built-in default (apply a noctalia color scheme once)',
-        vim.log.levels.WARN)
-    end)
+  local fh, open_err = io.open(M.path)
+  if not fh then
+    error(('noctalia palette %s exists but cannot be read: %s'):format(
+      M.path, tostring(open_err)))
   end
-  return require('user.noctalia.default_palette')
+  local text = fh:read('*a')
+  fh:close()
+  local ok, raw = pcall(vim.json.decode, text)
+  if not ok then
+    error(('noctalia palette %s is not valid JSON: %s'):format(M.path, raw))
+  end
+  local valid, err = M.validate(raw)
+  if not valid then
+    error(('noctalia palette %s invalid: %s'):format(M.path, err))
+  end
+  return valid
 end
 
 return M
@@ -924,11 +946,16 @@ Expected: FAIL — `bin/noctalia-glass-sync` does not exist
 Noctalia renders the nvim palette template to nvim-palette.candidate.json and
 then runs this hook. We validate the COMPLETE candidate (JSON syntax, every
 required key, glass invariants), stage the promoted palette and kitty's
-transparent_background_colors include into a fresh version directory, flip
-the `current` symlink over both with a single atomic rename, and only then
-signal kitty and nvim. Readers (kitty include, nvim dofile) go through
-`current`, so no failure or kill point leaves them seeing a half-promoted
-state.
+transparent_background_colors include into a fresh version directory, and
+flip the `current` symlink over both with a single atomic rename.
+
+The rename is the COMMIT POINT. Before it, any failure or kill leaves the
+previous generation fully intact -- readers (kitty include, nvim load) go
+through `current` and never see a half-promoted state. The SIGUSR1 signals
+after it are post-commit reconciliation, not part of the transaction: a kill
+between commit and signalling leaves already-running processes on the old
+generation until the next successful run signals them (new processes always
+read the committed generation).
 
 Spec: docs/specs/2026-08-09-noctalia-nvim-theme-design.md
 """
@@ -1070,7 +1097,7 @@ git commit -m "feat: noctalia-glass-sync validate-stage-flip hook"
 - Consumes: `palette.load()` (Task 3), `derive.colorscheme(raw, mood)` / `derive.MOODS` (Task 2), `require('tokyonight.util')` (installed plugin).
 - Produces (consumed by Task 7's glass and Task 8's wiring):
   - `noctalia.state_file` — string path (reassignable for tests); default `vim.fn.stdpath('state') .. '/noctalia-mood'`
-  - `noctalia.mood() -> string` — persisted mood; `'spectrum'` ONLY when the state file is missing. A present-but-invalid state file is a hard error listing valid moods (fail early — no silent fallback).
+  - `noctalia.mood() -> string` — persisted mood; `'spectrum'` ONLY when the state file is missing (ENOENT). A present-but-invalid state file is a hard error listing valid moods, and a present-but-unreadable one (EACCES, I/O error) is a hard error too (fail early — no silent fallback).
   - `noctalia.set_mood(name)` — validates against `derive.MOODS`, persists, calls `M.reload()`
   - `noctalia.colors() -> colors` — derived ColorScheme for current palette+mood
   - `noctalia.on_colors(colors)` — clears the passed table, repopulates from `colors()`, AND updates `require('tokyonight.util').bg/.fg`. Tokyonight caches `Util.bg`/`Util.fg` BEFORE invoking the callback and its highlight groups blend against them afterwards — without this update, blends keep using moon's background.
@@ -1108,6 +1135,14 @@ assert(noctalia.mood() == 'pastel', 'mood persisted')
 local fh = io.open(noctalia.state_file, 'w'); fh:write('vaporwave\n'); fh:close()
 local ok, err = pcall(noctalia.mood)
 assert(not ok and err:match('spectrum'), 'corrupt state must error listing moods')
+
+-- a PRESENT but unreadable state file is a hard error, never a default
+-- (only ENOENT may default; EACCES etc. must surface)
+fh = io.open(noctalia.state_file, 'w'); fh:write('spectrum\n'); fh:close()
+os.execute("chmod 000 '" .. noctalia.state_file .. "'")
+ok = pcall(noctalia.mood)
+os.execute("chmod 600 '" .. noctalia.state_file .. "'")
+assert(not ok, 'unreadable state file must error, not default')
 
 -- unknown mood rejected by set_mood
 os.remove(noctalia.state_file)
@@ -1187,8 +1222,19 @@ local function moods() return require('user.noctalia.derive').MOODS end
 local function valid_mood(name) return vim.tbl_contains(moods(), name) end
 
 function M.mood()
-  local fh = io.open(M.state_file)
-  if not fh then return DEFAULT_MOOD end  -- missing file = fresh machine
+  -- Only a genuinely ABSENT state file defaults (fresh machine); any other
+  -- I/O failure must surface rather than silently resetting the mood.
+  local stat, stat_err = vim.uv.fs_stat(M.state_file)
+  if not stat then
+    if stat_err and not stat_err:match('^ENOENT') then
+      error(('%s: %s'):format(M.state_file, stat_err))
+    end
+    return DEFAULT_MOOD
+  end
+  local fh, open_err = io.open(M.state_file)
+  if not fh then
+    error(('%s exists but cannot be read: %s'):format(M.state_file, tostring(open_err)))
+  end
   local name = (fh:read('*l') or ''):gsub('%s+$', '')
   fh:close()
   if not valid_mood(name) then
@@ -1609,6 +1655,13 @@ cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.js
 sed -i 's/#1e2030/#111111/' "$TMP/nvim-glass/current/kitty-glass.conf"
 if "$CHECK" 2>/dev/null; then echo "FAIL: desync must fail"; exit 1; fi
 
+# 5. malformed palette shape: a clean FAIL: line, never a traceback
+cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
+"$SYNC" --no-signal
+echo '{"glass": []}' > "$TMP/nvim-glass/current/nvim-palette.json"
+if out=$("$CHECK" 2>&1); then echo "FAIL: malformed shape must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
+
 echo "OK glass_check"
 ```
 
@@ -1657,15 +1710,29 @@ def main() -> None:
         fail(f'{palette_file} missing (partial promote?)')
     if not kitty_file.is_file():
         fail(f'{kitty_file} missing (partial promote?)')
+    # Every failure mode must come out as a FAIL: line, never a traceback --
+    # dotfiles-check consumers grep for FAIL.
     try:
-        glass = json.loads(palette_file.read_text())['glass']
-    except (json.JSONDecodeError, KeyError) as exc:
+        data = json.loads(palette_file.read_text())
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         fail(f'{palette_file} unreadable: {exc}')
-    m = re.search(r'^transparent_background_colors (.+)$', kitty_file.read_text(), re.M)
+    glass = data.get('glass') if isinstance(data, dict) else None
+    if not isinstance(glass, dict):
+        fail(f'{palette_file} has no glass object')
+    palette_tones = []
+    for role in REGISTERED_ROLES:
+        tone = glass.get(role)
+        if not isinstance(tone, str):
+            fail(f'{palette_file} glass.{role} missing/malformed')
+        palette_tones.append(tone.lower())
+    try:
+        kitty_text = kitty_file.read_text()
+    except (OSError, UnicodeError) as exc:
+        fail(f'{kitty_file} unreadable: {exc}')
+    m = re.search(r'^transparent_background_colors (.+)$', kitty_text, re.M)
     if not m:
         fail(f'{kitty_file} has no transparent_background_colors line')
     kitty_tones = m.group(1).split()
-    palette_tones = [glass[r].lower() for r in REGISTERED_ROLES]
     if kitty_tones != palette_tones:
         fail(f'tones desynced: kitty={kitty_tones} palette={palette_tones}')
 
@@ -1743,3 +1810,4 @@ git commit -m "feat: activate noctalia nvim theming (glass check, docs)"
 - Review round 2 fixes: `on_colors` updates `tokyonight.util.bg/fg` with an integration test using a non-moon surface (T6); the hook validates the COMPLETE artifact and JSON syntax via `json.loads` (T5); promotion is a version-dir + symlink flip — single atomic rename, tested for reject-leaves-current-untouched and flip-then-prune (T5); path contract pinned to `~/.cache/noctalia` with `NOCTALIA_GLASS_DIR` as a tests-only override (Global Constraints, T5, T10); corrupt mood state hard-errors, only a missing file defaults (T6); Task 4 is red-first; `dotfiles-check` delegates to `bin/noctalia-glass-check`, which fails on partial state (T10); mood transforms have exact behavioral tests (T2); the fallback/kitty equality is a committed test, not a manual step (T3); `reload()` and Task 8 use `vim.cmd.colorscheme('tokyonight')` matching `nvim/init.lua:345`.
 - Type consistency: `palette.path` / `noctalia.state_file` reassignability used by tests in T3/T6/T7; glass roles are the same seven strings everywhere (artifact contract, `REGISTERED_ROLES` in Lua and Python, `GLASS_ORDER`); the fixture doubles as the hook-test candidate (T5) and equals `default_palette.lua` (asserted in T3).
 - Spec sync: the spec was updated alongside this revision (JSON artifact, symlink promotion, full hook validation, mood error semantics, pinned cache path).
+- Review round 3 fixes: palette/mood loaders distinguish ENOENT (fallback) from other I/O failures (hard error), with unreadable-present-file tests (T3/T6); the spec's glass mapping matches the template (float = `surface_container_lowest`, sixth slot = `outline_variant`); the transaction guarantee names the symlink rename as the commit point with signalling as post-commit reconciliation (T5 + spec); `noctalia-glass-check` routes shape/read errors through `fail()` with a traceback-regression test (T10).
