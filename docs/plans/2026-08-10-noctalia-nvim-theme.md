@@ -19,7 +19,7 @@
 - **Cache path contract:** production paths are pinned to literal `~/.cache/noctalia/` everywhere — kitty's `include` line and noctalia's `user-templates.toml` cannot express an XDG fallback, so nothing in this pipeline honors `XDG_CACHE_HOME`. The Python scripts accept a dedicated `NOCTALIA_GLASS_DIR` env override, used ONLY by tests.
 - No new nvim plugin dependencies; no Python packages beyond stdlib.
 - Do not use paths like `/home/keith` or `/mnt/ssd/Dropbox` in code comments or docs; `~` is fine.
-- Lua tests run headless from the repo root: `nvim -l nvim/tests/noctalia/<name>_test.lua` — they must print `OK <name>` and exit 0. `nvim -l` does not load user config, which is what we want.
+- Lua tests run headless from the repo root: `nvim -l nvim/tests/noctalia/<name>_test.lua` — they must print `OK <name>` and exit 0. `nvim -l` may load config and cached modules here; tests for existing config modules must prepend the worktree's `nvim` directory to `runtimepath` and clear the relevant `package.loaded` entries before requiring them.
 - Every task is red-first: write the test, watch it fail for the expected reason, then implement.
 - The glass-role → material-token mapping lives ONLY in the template (Task 4). Every other component consumes the artifact's `glass` table verbatim.
 - The committed fallback palette's `glass` table MUST stay byte-identical to the hardcoded `transparent_background_colors` line in `kitty/kitty.conf` (fresh-machine invariant; enforced by a test in Task 3).
@@ -1459,6 +1459,9 @@ Today `glass.lua:22-49` computes `M.palette`, `M.registered`, `float_bg`, and `r
 ```lua
 -- nvim/tests/noctalia/glass_test.lua
 package.path = 'nvim/lua/?.lua;nvim/lua/?/init.lua;' .. package.path
+vim.opt.rtp:prepend(vim.fn.getcwd() .. '/nvim')
+package.loaded['user.noctalia.palette'] = nil
+package.loaded['user.glass'] = nil
 local palette = require('user.noctalia.palette')
 local glass = require('user.glass')
 
