@@ -934,6 +934,18 @@ good_candidate
 sed -i 's/"float": "#16161e"/"float": "#222436"/' "$TMP/nvim-palette.candidate.json"
 expect_reject "float==surface"
 
+# 9. candidate I/O error uses the clean failure path, not a traceback
+rm -f "$TMP/nvim-palette.candidate.json"
+mkdir "$TMP/nvim-palette.candidate.json"
+before=$(readlink "$CUR")
+if err=$("$SYNC" --no-signal 2>&1); then
+  echo "FAIL: accepted unreadable candidate"
+  exit 1
+fi
+[[ "$(readlink "$CUR")" == "$before" ]] || { echo "FAIL: current moved on candidate I/O error"; exit 1; }
+grep -q '^noctalia-glass-sync:' <<<"$err" || { echo "FAIL: missing clean error prefix"; exit 1; }
+! grep -q 'Traceback' <<<"$err" || { echo "FAIL: candidate I/O error produced traceback"; exit 1; }
+
 echo "OK glass_sync"
 ```
 
@@ -1074,7 +1086,10 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except OSError as exc:
+        fail(str(exc))
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
