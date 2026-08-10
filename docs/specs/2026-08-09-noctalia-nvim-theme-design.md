@@ -42,28 +42,37 @@ glass + lualine integration.
 
 ### Single template + sync hook (`~/.config/noctalia/user-templates.toml`)
 
-One user template produces the single palette artifact; everything else is
-derived from that artifact by a hook script, so kitty and nvim cannot disagree
-(one failed render leaves *both* on the previous state, never one of them):
+One user template renders a *candidate* palette artifact; the hook script
+validates it and promotes both final outputs before signalling anyone. Noctalia
+overwrites the template's output_path before the hook runs, so nvim must never
+read the render target directly — only the promoted path:
 
 - `[templates.nvim]`
   - input: `nvim/lua/user/noctalia/palette-template.lua` (in repo)
-  - output: `~/.cache/noctalia/nvim-palette.lua` (outside repo, per-machine;
-    generated files must never land in the Dropbox-synced tree)
-  - post_hook: `bin/noctalia-glass-sync`
+  - output: `~/.cache/noctalia/nvim-palette.candidate.lua` (candidate path;
+    all generated files live outside the Dropbox-synced tree)
+  - post_hook: `~/bin/noctalia-glass-sync` (setup links the repo's `bin/` to
+    `~/bin`; noctalia runs hooks through the shell without setting the repo
+    as cwd, so the path must not be repo-relative)
   - Emits a plain Lua table of raw material colors: the 4 accents (+ on_/
     fixed_dim variants), the surface-container ladder, outline, on_surface
     tones.
 
 - **`bin/noctalia-glass-sync`** (committed, executable) does, in order:
-  1. Parse the six chrome tones and `float_bg` out of the palette artifact.
+  1. Parse the six chrome tones and `float_bg` out of the candidate artifact.
   2. Validate: all hexes well-formed, six tones pairwise distinct (glass.lua's
      badge/separator constraint), `float_bg` not among the six. On failure:
-     leave the previous kitty include untouched, emit a `notify-send` warning,
-     signal nothing, exit non-zero.
-  3. Atomically write `~/.cache/noctalia/kitty-glass.conf` containing one
-     line: `transparent_background_colors` with the six tones.
-  4. `pkill -SIGUSR1 kitty` (config reload), then `pkill -SIGUSR1 nvim`.
+     leave the promoted palette AND the kitty include untouched, emit a
+     `notify-send` warning, signal nothing, exit non-zero.
+  3. Atomically write `~/.cache/noctalia/kitty-glass.conf` (tmp + rename),
+     then atomically promote the candidate to
+     `~/.cache/noctalia/nvim-palette.lua` (rename, same filesystem).
+  4. Only after both promotions: `pkill -SIGUSR1 kitty` (config reload), then
+     `pkill -SIGUSR1 nvim`.
+
+  Nvim reads only the promoted `nvim-palette.lua`, so a failed validation —
+  or a hook that never ran — leaves running *and newly started* programs on
+  the previous consistent state.
 
 - `kitty.conf` keeps its hardcoded `transparent_background_colors` line as the
   fallback and gains, after it, `include ${HOME}/.cache/noctalia/kitty-glass.conf`
@@ -136,10 +145,11 @@ may be tuned or culled there.
 
 ### Data flow
 
-wallpaper change → noctalia regenerates colors → template writes the palette
-artifact → `bin/noctalia-glass-sync` validates it, writes the kitty include,
-and signals kitty then nvim → nvim: palette → derive(mood) → tokyonight
-`on_colors` → ColorScheme autocmd → glass recompute → lualine refresh.
+wallpaper change → noctalia regenerates colors → template writes the
+*candidate* artifact → `bin/noctalia-glass-sync` validates it, atomically
+writes the kitty include and promotes the palette, then signals kitty and
+nvim → nvim: palette → derive(mood) → tokyonight `on_colors` → ColorScheme
+autocmd → glass recompute → lualine refresh.
 
 ## Error handling
 
@@ -149,8 +159,10 @@ and signals kitty then nvim → nvim: palette → derive(mood) → tokyonight
   works before noctalia has ever run. The missing include is only a kitty
   startup warning. Fresh-install doc gains a one-line "apply a noctalia
   scheme once" step.
-- Palette malformed → nvim: hard error at load, no partial theming;
-  glass-sync: refuses to touch the kitty include or signal anything.
+- Candidate malformed → glass-sync refuses to promote either output or signal
+  anything; nvim keeps reading the last promoted palette. If the promoted
+  palette is somehow malformed anyway, nvim hard-errors at load rather than
+  partially theming (defense in depth).
 - Unknown mood → error listing valid moods.
 
 ## Verification
