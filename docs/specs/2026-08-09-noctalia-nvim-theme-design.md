@@ -48,37 +48,54 @@ overwrites the template's output_path before the hook runs, so nvim must never
 read the render target directly — only the promoted path:
 
 - `[templates.nvim]`
-  - input: `nvim/lua/user/noctalia/palette-template.lua` (in repo)
-  - output: `~/.cache/noctalia/nvim-palette.candidate.lua` (candidate path;
+  - input: `nvim/lua/user/noctalia/palette-template.json` (in repo)
+  - output: `~/.cache/noctalia/nvim-palette.candidate.json` (candidate path;
     all generated files live outside the Dropbox-synced tree)
   - post_hook: `~/bin/noctalia-glass-sync` (setup links the repo's `bin/` to
     `~/bin`; noctalia runs hooks through the shell without setting the repo
     as cwd, so the path must not be repo-relative)
-  - Emits a plain Lua table of raw material colors: the 4 accents (+ on_/
-    fixed_dim variants), the surface-container ladder, outline, on_surface
-    tones.
+  - Emits a JSON object of raw material colors — the 4 accents (+ fixed_dim
+    variants), surfaces, outline, on_surface tones — plus a `glass` table of
+    role → hex. JSON so the hook syntax-validates the whole file with
+    `json.loads` and nvim reads it with `vim.json.decode`; no hand-rolled
+    parsing anywhere.
 
 - **`bin/noctalia-glass-sync`** (committed, executable) does, in order:
-  1. Parse the six chrome tones and `float_bg` out of the candidate artifact.
-  2. Validate: all hexes well-formed, six tones pairwise distinct (glass.lua's
-     badge/separator constraint), `float_bg` not among the six. On failure:
-     leave the promoted palette AND the kitty include untouched, emit a
-     `notify-send` warning, signal nothing, exit non-zero.
-  3. Atomically write `~/.cache/noctalia/kitty-glass.conf` (tmp + rename),
-     then atomically promote the candidate to
-     `~/.cache/noctalia/nvim-palette.lua` (rename, same filesystem).
-  4. Only after both promotions: `pkill -SIGUSR1 kitty` (config reload), then
+  1. Parse the candidate with `json.loads` (a syntax error is a validation
+     failure).
+  2. Validate the COMPLETE artifact: every required key present and
+     well-formed hex (mirror of palette.lua's list — a missing accent must
+     never reach nvim), six glass tones pairwise distinct (glass.lua's
+     badge/separator constraint), `float` not among the six and ≠ `surface`.
+     On failure: `notify-send` warning, nothing written, signal nothing,
+     exit non-zero.
+  3. Stage BOTH outputs into a fresh version directory
+     `~/.cache/noctalia/nvim-glass/v-*/` — `nvim-palette.json` (candidate
+     verbatim) and `kitty-glass.conf` (one `transparent_background_colors`
+     line, tones in role order) — then atomically rename a prepared symlink
+     over `~/.cache/noctalia/nvim-glass/current`. One rename switches both
+     files; there is no interleaving in which kitty and nvim can read
+     different generations. Superseded version dirs are pruned after the
+     flip; the consumed candidate is deleted.
+  4. Only after the flip: `pkill -SIGUSR1 kitty` (config reload), then
      `pkill -SIGUSR1 nvim`.
 
-  Nvim reads only the promoted `nvim-palette.lua`, so a failed validation —
-  or a hook that never ran — leaves running *and newly started* programs on
-  the previous consistent state.
+  Readers go only through `current/`, so a failed validation, a hook that
+  never ran, or a kill at any point leaves running *and newly started*
+  programs on the previous consistent state.
 
-- `kitty.conf` keeps its hardcoded `transparent_background_colors` line as the
-  fallback and gains, after it, `include ${HOME}/.cache/noctalia/kitty-glass.conf`
+- `kitty.conf` keeps its hardcoded `transparent_background_colors` line as
+  the fallback and gains, after it,
+  `include ${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf`
   (env-var expansion in include paths is already used for `${HOSTNAME}.conf`;
   kitty is last-value-wins, so the include overrides when present and a
   missing file is only a startup warning).
+
+**Path contract:** production paths are pinned to literal `~/.cache/noctalia/`
+everywhere — kitty's `include` line and noctalia's `user-templates.toml`
+cannot express an XDG fallback, so nothing in this pipeline honors
+`XDG_CACHE_HOME`. The Python scripts accept a `NOCTALIA_GLASS_DIR` env
+override used only by tests.
 
 **Invariant:** kitty's transparent list is *generated from* the same artifact
 nvim reads, validated before either program is signalled. Candidate mapping
@@ -90,10 +107,12 @@ synced tree is a pre-existing noctalia behavior, out of scope here.
 
 ### Nvim modules (`nvim/lua/user/noctalia/`)
 
-- **`palette.lua`** — loads `~/.cache/noctalia/nvim-palette.lua` via `dofile`,
-  validates expected keys. Missing file (fresh machine): fall back to a
-  committed tokyonight-moon-flavored default palette and `vim.notify` once.
-  Malformed palette: hard error, no partial theming.
+- **`palette.lua`** — loads
+  `~/.cache/noctalia/nvim-glass/current/nvim-palette.json` via
+  `vim.json.decode`, validates expected keys and the glass invariants.
+  Missing file (fresh machine): fall back to a committed
+  tokyonight-moon-flavored default palette and `vim.notify` once. Present but
+  malformed or invalid: hard error, no partial theming.
 - **`derive.lua`** — pure-Lua hex↔HSL math. Input: raw palette + mood name.
   Output: a **complete** tokyonight `ColorScheme` table — the ~31 base palette
   fields *and* every field tokyonight derives before invoking `on_colors`
@@ -107,7 +126,10 @@ synced tree is a pre-existing noctalia behavior, out of scope here.
   source accents.
 - **`on_colors` contract** — the callback mutates `colors` in place: clear the
   table's keys, then copy in every field from derive.lua's output (including
-  the nested `diff`/`git`/`terminal`/`rainbow` tables).
+  the nested `diff`/`git`/`terminal`/`rainbow` tables). It must ALSO update
+  `require('tokyonight.util').bg` and `.fg`: tokyonight caches them before
+  invoking the callback and its highlight groups blend against them
+  afterwards — without the update, every blend stays moon-based.
 - **`glass.lua`** (existing, modified) — `M.palette`, `M.registered`,
   `float_bg`, and the `recolor` map are **recomputed inside `apply()`** from
   the current palette, not captured at module load; today they are one-time
@@ -129,7 +151,9 @@ may be tuned or culled there.
 
 - `:NoctaliaMood <name>` (with completion) re-derives and re-applies live.
 - Choice persists to `~/.local/state/nvim/noctalia-mood` (one line), read at
-  startup. Unknown mood: error listing valid moods.
+  startup. Only a MISSING state file defaults to `spectrum`; a present file
+  with unknown content is a hard error listing valid moods (fail early — no
+  silent fallback), as is an unknown name passed to the command.
 
 ### Wiring
 
@@ -138,18 +162,20 @@ may be tuned or culled there.
 - lualine: `options.theme` is passed as a **function** (`ui.lua` currently
   calls `glass.lualine_theme()` once at setup, freezing the colors), and the
   reload path re-invokes lualine so the theme function re-evaluates.
-- SIGUSR1 handler (pattern from noctalia docs): re-`dofile` the palette,
-  re-derive with current mood, re-apply colorscheme, refresh lualine. The
-  `ColorScheme` autocmd re-applies glass (which now recomputes from the fresh
-  palette).
+- SIGUSR1 handler (pattern from noctalia docs): re-read the palette,
+  re-derive with current mood, re-run `vim.cmd.colorscheme('tokyonight')`
+  (the call at `nvim/init.lua:345`; the moon style comes from tokyonight's
+  default `style`). lualine re-runs its setup on every `ColorScheme` event
+  and re-evaluates function themes; the `ColorScheme` autocmd re-applies
+  glass (which now recomputes from the fresh palette).
 
 ### Data flow
 
 wallpaper change → noctalia regenerates colors → template writes the
-*candidate* artifact → `bin/noctalia-glass-sync` validates it, atomically
-writes the kitty include and promotes the palette, then signals kitty and
-nvim → nvim: palette → derive(mood) → tokyonight `on_colors` → ColorScheme
-autocmd → glass recompute → lualine refresh.
+*candidate* artifact → `bin/noctalia-glass-sync` validates it, stages both
+outputs into a version dir and flips the `current` symlink, then signals
+kitty and nvim → nvim: palette → derive(mood) → tokyonight `on_colors` →
+ColorScheme autocmd → glass recompute → lualine refresh.
 
 ## Error handling
 
@@ -159,23 +185,25 @@ autocmd → glass recompute → lualine refresh.
   works before noctalia has ever run. The missing include is only a kitty
   startup warning. Fresh-install doc gains a one-line "apply a noctalia
   scheme once" step.
-- Candidate malformed → glass-sync refuses to promote either output or signal
-  anything; nvim keeps reading the last promoted palette. If the promoted
-  palette is somehow malformed anyway, nvim hard-errors at load rather than
-  partially theming (defense in depth).
-- Unknown mood → error listing valid moods.
+- Candidate malformed (bad JSON, missing key, glass violation) → glass-sync
+  leaves the `current` symlink untouched and signals nothing; running and
+  newly started programs keep the last promoted generation. If the promoted
+  palette is somehow malformed anyway (hand-edited), nvim hard-errors at load
+  rather than partially theming (defense in depth).
+- Unknown mood (command argument or corrupt state file) → error listing valid
+  moods; only a MISSING state file falls back to the default.
 
 ## Verification
 
 - Manual: switch wallpapers; kitty + nvim recolor live; statusline, tabs and
   cursorline stay translucent (no opaque rectangles); floats stay solid.
-- Structural: kitty's transparent list is generated from the same artifact
-  nvim reads, and `bin/noctalia-glass-sync` validates distinctness and
-  `float_bg` exclusion before signalling — a desync requires the validation
-  itself to be wrong, not a race between templates.
-- Scripted spot-check (usable manually and in `dotfiles-check`): compare the
-  six hexes in `~/.cache/noctalia/kitty-glass.conf` against the chrome tones
-  in the palette artifact.
+- Structural: kitty's transparent list and nvim's palette live in one version
+  directory switched by a single atomic symlink rename — a desync requires
+  the validation itself to be wrong, not a race or a partial promote.
+- Scripted: `bin/noctalia-glass-check` (run manually and from
+  `dotfiles-check`) — passes on fresh machines (no `current` symlink), FAILS
+  on partial state (symlink present but a file missing) or when kitty's six
+  tones differ from the palette's glass tones in role order.
 
 ## Out of scope
 
