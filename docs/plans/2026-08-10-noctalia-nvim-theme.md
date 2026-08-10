@@ -1729,7 +1729,7 @@ end
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-output=$(bin/noctalia-mood-swatches 2>&1)
+output=$(bin/noctalia-mood-swatches)
 [[ $output == *$'\033[48;2;'* ]]
 [[ $output != *'^['* ]]
 ```
