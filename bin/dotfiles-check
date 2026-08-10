@@ -18,6 +18,7 @@ bash_files=(
     hypr/scripts/restore-wallpaper.sh
     niri/host_specific.sh
     niri/scripts/monitor-handler.sh
+    nvim/tests/noctalia/run.sh
 )
 
 zsh_files=(
