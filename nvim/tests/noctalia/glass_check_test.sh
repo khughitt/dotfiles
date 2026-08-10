@@ -36,7 +36,32 @@ echo 'transparent_background_colors #111111' >> "$TMP/nvim-glass/current/kitty-g
 if out=$("$CHECK" 2>&1); then echo "FAIL: duplicate directive must fail"; exit 1; fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
-# 6. malformed palette shape: a clean FAIL: line, never a traceback
+# 6. current must be the syncer's sibling v-* symlink, not a directory
+cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
+"$SYNC" --no-signal
+target=$(readlink "$TMP/nvim-glass/current")
+rm "$TMP/nvim-glass/current"
+mkdir "$TMP/nvim-glass/current"
+cp "$TMP/nvim-glass/$target/nvim-palette.json" "$TMP/nvim-glass/current/"
+cp "$TMP/nvim-glass/$target/kitty-glass.conf" "$TMP/nvim-glass/current/"
+if out=$("$CHECK" 2>&1); then echo "FAIL: directory current must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
+rm -r "$TMP/nvim-glass/current"
+
+# 7. absolute and escaping targets are not sibling version directories
+cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
+"$SYNC" --no-signal
+target=$(readlink "$TMP/nvim-glass/current")
+rm "$TMP/nvim-glass/current"
+ln -s "$TMP/nvim-glass/$target" "$TMP/nvim-glass/current"
+if out=$("$CHECK" 2>&1); then echo "FAIL: absolute current target must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
+rm "$TMP/nvim-glass/current"
+ln -s "../nvim-glass/$target" "$TMP/nvim-glass/current"
+if out=$("$CHECK" 2>&1); then echo "FAIL: escaping current target must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
+
+# 8. malformed palette shape: a clean FAIL: line, never a traceback
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 echo '{"glass": []}' > "$TMP/nvim-glass/current/nvim-palette.json"

@@ -29,6 +29,18 @@ def fail(msg: str) -> None:
 def main() -> None:
     if not CURRENT.is_symlink() and not CURRENT.exists():
         return  # fresh machine: fallbacks in kitty.conf / default_palette.lua apply
+    if not CURRENT.is_symlink():
+        fail(f'{CURRENT} is not a promotion symlink')
+    try:
+        target = os.readlink(CURRENT)
+    except OSError as exc:
+        fail(f'{CURRENT} unreadable: {exc}')
+    target_path = Path(target)
+    if target_path.is_absolute() or target != target_path.name or not target.startswith('v-'):
+        fail(f'{CURRENT} target {target!r} is not a sibling v-* directory')
+    version_dir = CURRENT.parent / target
+    if not version_dir.is_dir() or version_dir.is_symlink():
+        fail(f'{CURRENT} target {target!r} is not a version directory')
     palette_file = CURRENT / 'nvim-palette.json'
     kitty_file = CURRENT / 'kitty-glass.conf'
     if not palette_file.is_file():
