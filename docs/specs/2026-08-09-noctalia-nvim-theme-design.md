@@ -1,6 +1,6 @@
 # Noctalia → Neovim theming (glass-preserving)
 
-**Status:** Design approved, not yet implemented.
+**Status:** Implemented (753305e..0c3962a).
 
 ## Goal
 
