@@ -40,8 +40,8 @@ function M.set_mood(name)
       name, table.concat(moods(), ', ')))
   end
   local fh = assert(io.open(M.state_file, 'w'))
-  fh:write(name, '\n')
-  fh:close()
+  assert(fh:write(name, '\n'))
+  assert(fh:close())
   M.reload()
 end
 

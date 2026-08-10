@@ -16,6 +16,24 @@ noctalia.set_mood('pastel')
 assert(called, 'set_mood must reload')
 assert(noctalia.mood() == 'pastel', 'mood persisted')
 
+local original_open = io.open
+local function persistence_failure(handle, message)
+  called = false
+  io.open = function() return handle end
+  local ok, err = pcall(noctalia.set_mood, 'warm')
+  io.open = original_open
+  assert(not ok and err:match(message), message .. ' must error')
+  assert(not called, message .. ' must not reload')
+end
+persistence_failure({
+  write = function() return nil, 'write failed' end,
+  close = function() return true end,
+}, 'write failed')
+persistence_failure({
+  write = function() return true end,
+  close = function() return nil, 'close failed' end,
+}, 'close failed')
+
 local fh = io.open(noctalia.state_file, 'w'); fh:write('vaporwave\n'); fh:close()
 local ok, err = pcall(noctalia.mood)
 assert(not ok and err:match('spectrum'), 'corrupt state must error listing moods')
