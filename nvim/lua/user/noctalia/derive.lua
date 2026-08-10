@@ -55,7 +55,7 @@ end
 
 function M.saturate(hex, factor)
   local h, s, l = M.hex_to_hsl(hex)
-  return M.hsl_to_hex(h, clamp01(s * factor + 0.02), l)
+  return M.hsl_to_hex(h, clamp01(s * factor), l)
 end
 
 function M.lighten(hex, amt)

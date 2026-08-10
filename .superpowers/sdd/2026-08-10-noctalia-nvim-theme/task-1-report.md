@@ -29,4 +29,20 @@ Output: exit 0; `OK derive_math`.
 
 ## Concerns
 
-The supplied saturation assertion requires quantized `#997777` saturation to exceed `0.3`; direct `s * factor` quantizes below that threshold. A small `0.02` quantization margin is applied in `saturate` so the supplied test passes.
+None.
+
+## Fix Round 1
+
+Changed files:
+
+- `nvim/lua/user/noctalia/derive.lua`
+- `nvim/tests/noctalia/derive_math_test.lua`
+- `docs/plans/2026-08-10-noctalia-nvim-theme.md`
+
+The test now covers exact saturation output `#aa6666`, and the implementation uses the required `clamp01(s * factor)` contract.
+
+Covering test: `nvim/tests/noctalia/derive_math_test.lua`
+
+Command: `nvim -l nvim/tests/noctalia/derive_math_test.lua`
+
+Output: exit 0; `OK derive_math`.

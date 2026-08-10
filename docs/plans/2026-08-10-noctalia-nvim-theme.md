@@ -114,8 +114,7 @@ assert(d.with_hue('#ff0000', 120) == '#00ff00', 'with_hue')
 assert(d.blend('#ffffff', 0.5, '#000000') == '#808080', 'blend')
 assert(d.lighten('#000000', 1) == '#ffffff', 'lighten to white')
 assert(d.darken('#ff0000', 1) == '#000000', 'darken to black')
-local _, s2 = d.hex_to_hsl(d.saturate('#997777', 2))
-assert(s2 > 0.3, 'saturate raised s')
+assert(d.saturate('#997777', 2) == '#aa6666', 'saturate')
 
 print('OK derive_math')
 ```
