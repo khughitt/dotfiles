@@ -342,6 +342,10 @@ vim.api.nvim_create_autocmd('BufReadPost', {
 -- ---------------------------------------------------------------------------
 require('config.lazy')
 
+-- Noctalia-derived colors: :NoctaliaMood + SIGUSR1 live-reload. Must be set
+-- up before the colorscheme loads so the first load already uses on_colors.
+require('user.noctalia').setup()
+
 vim.cmd.colorscheme('tokyonight')
 
 -- Recolor the chrome that would otherwise punch opaque rectangles through
