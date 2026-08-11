@@ -443,38 +443,41 @@ git commit -m "feat(noctalia): generate kitty selection pair"
 **Files:**
 - Modify: `nvim/tests/noctalia/palette_test.lua:93-112`
 - Modify: `kitty/kitty.conf:80-123`
+- Create: `kitty/noctalia-selection-fallback.conf`
+- Modify: `.gitignore`
 - Modify: `noctalia/noctalia.md:30-58`
 
 **Interfaces:**
 - Consumes: the three-line generated include from Task 3.
 - Produces: a fresh-machine foreground `#c8d3f5` / background `#003dbe`
-  fallback pair and generated include precedence over every static include.
+  fallback pair in a committed include and generated include precedence over
+  every static include. The separate file prevents `kitty +kitten themes` from
+  commenting the pair while it rewrites `kitty.conf` during Noctalia reloads.
 
 - [ ] **Step 1: Extend the fresh-machine invariant test**
 
 Add after the existing fallback-tone loop in `palette_test.lua`:
 
 ```lua
-local selection_foreground = conf:match('\nselection_foreground ([^\n]+)')
+local fallback_file = assert(io.open('kitty/noctalia-selection-fallback.conf')):read('*a')
+local selection_foreground = fallback_file:match('\nselection_foreground ([^\n]+)')
 assert(selection_foreground == default.glass.selection_fg,
   'kitty selection foreground fallback must equal default glass.selection_fg')
-local selection_background = conf:match('\nselection_background ([^\n]+)')
+local selection_background = fallback_file:match('\nselection_background ([^\n]+)')
 assert(selection_background == default.glass.selection,
   'kitty selection fallback must equal default glass.selection')
 local os_include = assert(conf:find('include os-local.conf', 1, true),
   'os-local include missing')
-local fallback_foreground = assert(conf:find(
-  '\nselection_foreground #c8d3f5', 1, true),
-  'selection foreground fallback missing')
-local fallback_background = assert(conf:find(
-  '\nselection_background #003dbe', 1, true),
-  'selection background fallback missing')
+local fallback_include = assert(conf:find(
+  'include noctalia-selection-fallback.conf', 1, true),
+  'selection fallback include missing')
 local glass_include = assert(conf:find(
   'include ${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf', 1, true),
   'generated glass include missing')
-assert(os_include < fallback_foreground and
-  fallback_foreground < fallback_background and
-  fallback_background < glass_include,
+assert(not conf:find('\nselection_foreground ', 1, true) and
+  not conf:find('\nselection_background ', 1, true),
+  'kitty.conf must delegate the selection fallback pair')
+assert(os_include < fallback_include and fallback_include < glass_include,
   'selection pair must follow other includes and precede generated glass')
 assert(not conf:find('\ninclude ', glass_include + 1, true),
   'generated glass include must be the final include')
@@ -494,18 +497,26 @@ glass.selection_fg`.
 - [ ] **Step 3: Add the fallback and move the generated include**
 
 Delete the generated include from its current position above the tmux settings.
-After `include os-local.conf`, make these the final settings in the file:
+Create `kitty/noctalia-selection-fallback.conf`:
 
 ```conf
 # Fixed selection fallback pair applies when no promoted generation exists.
 selection_foreground #c8d3f5
 selection_background #003dbe
+```
+
+After `include os-local.conf`, make these the final settings in `kitty.conf`:
+
+```conf
+# Keep this pair out of kitty.conf: `kitty +kitten themes` rewrites it and
+# comments direct color settings during Noctalia reloads.
+include noctalia-selection-fallback.conf
 # Generated Noctalia transparency and selection-pair override. This must be the
 # final include because Kitty applies the last value for each setting.
 include ${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf
 ```
 
-This placement makes the fallback win over `themes/noctalia.conf` and
+This placement makes the fallback include win over `themes/noctalia.conf` and
 `current-theme.conf` when the generated include is missing, while a present
 generated include wins over every static include.
 
@@ -582,7 +593,8 @@ intentionally old until Task 6 runs after merge.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add kitty/kitty.conf nvim/tests/noctalia/palette_test.lua \
+git add .gitignore kitty/kitty.conf kitty/noctalia-selection-fallback.conf \
+  nvim/tests/noctalia/palette_test.lua \
   noctalia/noctalia.md
 git diff --cached --check
 git commit -m "feat(noctalia): activate codex selection pair"
@@ -646,12 +658,13 @@ In sync step 3, replace the one-line `kitty-glass.conf` parenthetical with:
 Replace the pending Kitty architecture bullet with:
 
 ```markdown
-- `kitty.conf` keeps hardcoded `transparent_background_colors` and paired
-  `selection_foreground`/`selection_background` fallbacks after all static
-  includes, then includes
-  `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf` last. Kitty is
-  last-value-wins, so the fixed pair wins when no generation exists and the
-  generated pair wins when it does.
+- `kitty.conf` keeps hardcoded `transparent_background_colors`; the paired
+  `selection_foreground`/`selection_background` fallback belongs in committed
+  `kitty/noctalia-selection-fallback.conf`, included after all static includes,
+  then `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf` is included
+  last. Kitty is last-value-wins, so the fixed pair wins when no generation
+  exists and the generated pair wins when it does. The separate file prevents
+  `kitty +kitten themes` from commenting the pair while it rewrites `kitty.conf`.
 ```
 
 Replace the pending Codex subsection through its acceptance paragraph with:

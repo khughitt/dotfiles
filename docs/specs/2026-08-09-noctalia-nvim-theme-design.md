@@ -1,7 +1,7 @@
 # Noctalia → Neovim theming (glass-preserving)
 
 **Status:** Implemented (753305e..0485858); Codex diff/selection refinement
-implemented (c8b7e7f..593806b).
+implemented (c8b7e7f..e03628a).
 
 ## Goal
 
@@ -92,12 +92,14 @@ read the render target directly — only the promoted path:
   state of running processes: any fresh read of both files through
   `current` sees a single consistent generation.
 
-- `kitty.conf` keeps hardcoded `transparent_background_colors` and paired
-  `selection_foreground`/`selection_background` fallbacks after all static
-  includes, then includes
-  `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf` last. Kitty is
-  last-value-wins, so the fixed pair wins when no generation exists and the
-  generated pair wins when it does.
+- `kitty.conf` keeps its hardcoded `transparent_background_colors`; the paired
+  `selection_foreground`/`selection_background` fallback lives in committed
+  `kitty/noctalia-selection-fallback.conf`, included after all static includes,
+  then `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf` is included
+  last. Kitty is last-value-wins, so the fixed pair wins when no generation
+  exists and the generated pair wins when it does. The separate fallback file
+  is necessary because `kitty +kitten themes` rewrites `kitty.conf` and comments
+  direct color settings there during Noctalia reloads.
 
 **Path contract:** production paths are pinned to literal `~/.cache/noctalia/`
 everywhere — kitty's `include` line and noctalia's `user-templates.toml`
@@ -118,7 +120,7 @@ before substituting `selection_background`, so Kitty selection can share the
 live background but cannot be translucent. The refinement pairs it
 with `glass.selection_fg`, mapped from Noctalia's matching
 `on_primary_container`, so both halves live in the same artifact object and
-update path; the committed fallback pair is `#c8d3f5` on `#003dbe`
+update path; the committed fallback include carries `#c8d3f5` on `#003dbe`
 (approximately 5.84:1 contrast).
 `selection_foreground` is a normal Kitty setting and consumes no transparency
 slot.
@@ -244,8 +246,8 @@ ColorScheme autocmd → glass recompute → lualine refresh.
 
 - Palette file missing (fresh machine) → nvim falls back to its committed
   tokyonight-moon default palette + single `vim.notify`; Kitty's hardcoded
-  fallback carries the four matching tokyonight-moon chrome tones, fixed agent
-  diff colors, and the paired selection foreground/background
+  transparency list and committed fallback include carry the four matching
+  tokyonight-moon chrome tones, fixed agent diff colors, and the paired selection foreground/background
   `#c8d3f5`/`#003dbe`, so glass and readable selection work before Noctalia has
   ever run. The missing include is
   only a Kitty startup warning. Fresh-install docs tell the user to apply a
