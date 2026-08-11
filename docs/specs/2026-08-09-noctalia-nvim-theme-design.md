@@ -96,12 +96,13 @@ read the render target directly — only the promoted path:
 - `kitty.conf` keeps its hardcoded `transparent_background_colors` fallback
   and includes
   `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf`. The pending
-  Codex refinement below adds required `on_primary_container` to the artifact,
-  adds paired `selection_foreground`/`selection_background` fallbacks after all
-  static includes, extends the generated include with the same pair, and makes
-  it the final include. Kitty is last-value-wins: the fixed pair must beat
-  Noctalia's built-in theme when generation is absent, and the generated pair
-  must beat every static include when it exists.
+  Codex refinement below adds required non-registered `glass.selection_fg`
+  (mapped from `on_primary_container`), adds paired
+  `selection_foreground`/`selection_background` fallbacks after all static
+  includes, extends the generated include with the same pair, and makes it the
+  final include. Kitty is last-value-wins: the fixed pair must beat Noctalia's
+  built-in theme when generation is absent, and the generated pair must beat
+  every static include when it exists.
 
 **Path contract:** production paths are pinned to literal `~/.cache/noctalia/`
 everywhere — kitty's `include` line and noctalia's `user-templates.toml`
@@ -120,9 +121,10 @@ opacity `0.55`. That selection opacity applies to ordinary cells painted by
 Claude via SGR. Kitty 0.48.2 forces its own selected cells to alpha `1.0`
 before substituting `selection_background`, so Kitty selection can share the
 live background but cannot be translucent. The pending refinement pairs it
-with Noctalia's matching `on_primary_container` foreground so contrast is not
-split across independent theme roles or update paths; the committed fallback
-pair is `#c8d3f5` on `#003dbe` (approximately 5.84:1 contrast).
+with `glass.selection_fg`, mapped from Noctalia's matching
+`on_primary_container`, so both halves live in the same artifact object and
+update path; the committed fallback pair is `#c8d3f5` on `#003dbe`
+(approximately 5.84:1 contrast).
 `selection_foreground` is a normal Kitty setting and consumes no transparency
 slot.
 `float = surface_container_lowest` — the only material token darker than
@@ -146,12 +148,13 @@ Codex's custom `.tmTheme` has a narrower but useful UI contract. Its
 diff backgrounds, so the Noctalia theme will set them to the same fixed green
 and red already registered for Claude. Terminal text selection is owned by
 Kitty, not Codex; the generated `selection_foreground` and
-`selection_background` will use `on_primary_container` and the registered
-`primary_container` tone, so the complete pair updates live on wallpaper
-changes. Kitty forces selected cells fully opaque, so this supplies live color,
-not translucency. `kitty-glass.conf` will contain the transparency directive
-plus both selection settings, and its include will become Kitty's final include
-so the generated pair wins.
+`selection_background` will use `glass.selection_fg` and the registered
+`glass.selection` tone (`on_primary_container`/`primary_container`), so the
+complete pair updates live on wallpaper changes. Kitty forces selected cells
+fully opaque, so this supplies live color, not translucency.
+`kitty-glass.conf` will contain the transparency directive plus both selection
+settings, and its include will become Kitty's final include so the generated
+pair wins.
 
 Acceptance: in a newly started Codex session, added/deleted diff backgrounds
 are colored and translucent; terminal text selection is Noctalia-colored,
@@ -257,6 +260,13 @@ ColorScheme autocmd → glass recompute → lualine refresh.
   newly started programs keep the last promoted generation. If the promoted
   palette is somehow malformed anyway (hand-edited), nvim hard-errors at load
   rather than partially theming (defense in depth).
+- The Codex refinement is an intentional artifact schema break with no
+  compatibility reader. A previous one-line live generation is
+  present-but-invalid under the new code (`glass.selection_fg` and two Kitty
+  directives are missing), so a new Neovim process hard-errors until Noctalia
+  renders once. Noctalia's installed template resolves through the main
+  checkout, not an implementation worktree; activation order is therefore
+  merge → immediate Noctalia re-render → production checker → Neovim.
 - Unknown mood (command argument or corrupt state file) → error listing valid
   moods; only a MISSING state file falls back to the default.
 

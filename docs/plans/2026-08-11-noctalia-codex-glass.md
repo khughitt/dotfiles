@@ -11,9 +11,9 @@ unchanged.
 
 **Architecture:** Codex's existing `.tmTheme` supplies the fixed diff cell
 backgrounds already registered in Kitty. The atomic Noctalia promotion writes
-the current `on_primary_container`/`primary_container` selection pair beside
-Kitty's seven-slot transparency directive, and Kitty includes that generated
-file last so last-value-wins applies both live selection colors.
+the current `glass.selection_fg`/`glass.selection` pair beside Kitty's
+seven-slot transparency directive, and Kitty includes that generated file last
+so last-value-wins applies both live selection colors.
 
 **Tech Stack:** XML plist (`.tmTheme`), Python 3 stdlib, Bash tests, Lua/Neovim
 tests, Kitty configuration.
@@ -42,7 +42,7 @@ tests, Kitty configuration.
   match the fixed Kitty registrations and Claude theme.
 - `kitty-glass.conf` contains exactly three directives, in this order:
   `transparent_background_colors ...`,
-  `selection_foreground <on_primary_container>`, then
+  `selection_foreground <glass.selection_fg>`, then
   `selection_background <glass.selection>`.
 - The `current` symlink rename remains the commit point. Both generated files
   are staged before the flip; signals remain post-commit reconciliation.
@@ -51,6 +51,13 @@ tests, Kitty configuration.
   WCAG contrast ratio is approximately 5.84:1.
 - Codex 0.147.0's input box remains opaque. Do not add a restart loop, retain
   historical wallpaper tones, wrap Codex, or patch/build Codex.
+- This is an intentional schema break with no compatibility reader. The live
+  one-line generation is invalid after merge; do not start Neovim or run the
+  production checker between merging and the immediate Noctalia re-render in
+  Task 6.
+- Noctalia's installed nvim template resolves through `~/.config/nvim` to the
+  main checkout, so a worktree render cannot migrate production. Worktree
+  verification must use `NOCTALIA_GLASS_DIR` with an isolated promoted fixture.
 - Behavior changes are test-first: run the focused test red for the stated
   reason, make the minimum implementation, then run it green.
 - Do not touch unrelated worktree changes.
@@ -136,21 +143,21 @@ git commit -m "feat(noctalia): add codex diff backgrounds"
 
 ---
 
-### Task 2: Add the selection foreground to the palette artifact
+### Task 2: Add the selection foreground glass role
 
 **Files:**
 - Modify: `nvim/tests/noctalia/palette_test.lua:10-18`
 - Modify: `nvim/tests/noctalia/template_test.lua:20-30`
 - Modify: `nvim/tests/noctalia/glass_sync_test.sh:95-110`
-- Modify: `nvim/lua/user/noctalia/palette-template.json:1-7`
-- Modify: `nvim/lua/user/noctalia/palette.lua:9-17`
-- Modify: `nvim/lua/user/noctalia/default_palette.lua:6-14`
-- Modify: `nvim/tests/noctalia/fixtures/raw_palette.json:1-8`
-- Modify: `bin/noctalia-glass-sync:35-42`
+- Modify: `nvim/lua/user/noctalia/palette-template.json:18-29`
+- Modify: `nvim/lua/user/noctalia/palette.lua:44-56`
+- Modify: `nvim/lua/user/noctalia/default_palette.lua:23-34`
+- Modify: `nvim/tests/noctalia/fixtures/raw_palette.json:18-29`
+- Modify: `bin/noctalia-glass-sync:94-105`
 
 **Interfaces:**
-- Produces: required top-level artifact field
-  `on_primary_container: "#rrggbb"`, sourced from Noctalia's
+- Produces: required non-registered glass role
+  `glass.selection_fg: "#rrggbb"`, sourced from Noctalia's
   `colors.on_primary_container.default.hex`.
 - Consumed by: Task 3's generated `selection_foreground`.
 
@@ -159,9 +166,9 @@ git commit -m "feat(noctalia): add codex diff backgrounds"
 After the existing missing-`primary` case in `palette_test.lua`, add:
 
 ```lua
-bad = read_json(fixture); bad.on_primary_container = nil
+bad = read_json(fixture); bad.glass.selection_fg = nil
 ok, err = p.validate(bad)
-assert(not ok and err:match('on_primary_container'),
+assert(not ok and err:match('selection_fg'),
   'missing selection foreground detected')
 ```
 
@@ -170,7 +177,7 @@ After the rendered-template validation in `template_test.lua`, add:
 ```lua
 assert(tokens.on_primary_container,
   'template must request on_primary_container')
-assert(raw.on_primary_container == tokens.on_primary_container,
+assert(raw.glass.selection_fg == tokens.on_primary_container,
   'selection foreground must use on_primary_container')
 ```
 
@@ -184,7 +191,7 @@ python3 - "$CANDIDATE" <<'EOF'
 import json, sys
 p = sys.argv[1]
 d = json.load(open(p))
-d.pop('on_primary_container', None)
+d['glass'].pop('selection_fg', None)
 json.dump(d, open(p, 'w'))
 EOF
 expect_reject "missing selection foreground"
@@ -198,36 +205,42 @@ nvim --clean -l nvim/tests/noctalia/template_test.lua
 nvim/tests/noctalia/glass_sync_test.sh
 ```
 
-Expected: the Lua tests fail on missing `on_primary_container`; the sync test
+Expected: the Lua tests fail on missing `glass.selection_fg`; the sync test
 reports `accepted missing selection foreground`.
 
 - [ ] **Step 3: Extend every mirrored artifact definition**
 
-Add this top-level template field immediately after `on_primary`:
+Add this field immediately before `glass.selection` in the template:
 
 ```json
-  "on_primary_container": "{{colors.on_primary_container.default.hex}}",
+    "selection_fg": "{{colors.on_primary_container.default.hex}}",
 ```
 
-Add `'on_primary_container'` after `'on_primary'` in both required-key lists:
+Validate the role beside the existing non-registered `glass.float` check in
+`palette.lua`:
 
 ```lua
-  'primary', 'primary_fixed_dim', 'on_primary', 'on_primary_container',
+  if not is_hex(raw.glass.selection_fg) then
+    return nil, 'glass.selection_fg missing/invalid'
+  end
 ```
+
+Add the matching validation beside `glass.float` in `noctalia-glass-sync`:
 
 ```python
-    'primary', 'primary_fixed_dim', 'on_primary', 'on_primary_container',
+    if not is_hex(glass.get('selection_fg')):
+        fail('glass.selection_fg missing/invalid')
 ```
 
-Add the fallback value immediately after `on_primary` in both
+Add the fallback role immediately before `glass.selection` in both
 `raw_palette.json` and `default_palette.lua`:
 
 ```json
-  "on_primary_container": "#c8d3f5",
+    "selection_fg": "#c8d3f5",
 ```
 
 ```lua
-  on_primary_container = '#c8d3f5',
+    selection_fg = '#c8d3f5',
 ```
 
 - [ ] **Step 4: Run the focused tests and confirm GREEN**
@@ -252,7 +265,7 @@ git add nvim/lua/user/noctalia/palette-template.json \
   nvim/tests/noctalia/glass_sync_test.sh \
   bin/noctalia-glass-sync
 git diff --cached --check
-git commit -m "feat(noctalia): add selection foreground artifact"
+git commit -m "feat(noctalia): add selection foreground glass role"
 ```
 
 ---
@@ -267,7 +280,7 @@ git commit -m "feat(noctalia): add selection foreground artifact"
 - Modify: `nvim/tests/noctalia/mood_swatches_test.sh:12`
 
 **Interfaces:**
-- Consumes: validated `raw['on_primary_container']` and
+- Consumes: validated `raw['glass']['selection_fg']` and
   `raw['glass']['selection']` from the candidate JSON.
 - Produces: a three-line `kitty-glass.conf`; the checker accepts only those
   three directives and requires both selection colors to equal the promoted
@@ -349,7 +362,7 @@ Replace the `kitty-glass.conf` write in `noctalia-glass-sync` with:
 ```python
         (vdir / 'kitty-glass.conf').write_text(
             'transparent_background_colors ' + ' '.join(tones) + '\n'
-            f"selection_foreground {raw['on_primary_container'].lower()}\n"
+            f"selection_foreground {raw['glass']['selection_fg'].lower()}\n"
             f"selection_background {raw['glass']['selection'].lower()}\n")
 ```
 
@@ -370,10 +383,10 @@ Replace the checker block beginning with `m = re.fullmatch(...)` with:
     kitty_tones = m.group(1).split()
     if kitty_tones != palette_tones:
         fail(f'tones desynced: kitty={kitty_tones} palette={palette_tones}')
-    selection_foreground = data.get('on_primary_container')
+    selection_foreground = glass.get('selection_fg')
     if (not isinstance(selection_foreground, str)
             or not HEX.fullmatch(selection_foreground)):
-        fail(f'{palette_file} on_primary_container missing/malformed')
+        fail(f'{palette_file} glass.selection_fg missing/malformed')
     expected_foreground = f'selection_foreground {selection_foreground.lower()}'
     if lines[1] != expected_foreground:
         fail(f'selection foreground desynced: kitty={lines[1]!r} palette={expected_foreground!r}')
@@ -443,8 +456,8 @@ Add after the existing fallback-tone loop in `palette_test.lua`:
 
 ```lua
 local selection_foreground = conf:match('\nselection_foreground ([^\n]+)')
-assert(selection_foreground == default.on_primary_container,
-  'kitty selection foreground fallback must equal default on_primary_container')
+assert(selection_foreground == default.glass.selection_fg,
+  'kitty selection foreground fallback must equal default glass.selection_fg')
 local selection_background = conf:match('\nselection_background ([^\n]+)')
 assert(selection_background == default.glass.selection,
   'kitty selection fallback must equal default glass.selection')
@@ -476,7 +489,7 @@ nvim --clean -l nvim/tests/noctalia/palette_test.lua
 ```
 
 Expected: failure with `kitty selection foreground fallback must equal default
-on_primary_container`.
+glass.selection_fg`.
 
 - [ ] **Step 3: Add the fallback and move the generated include**
 
@@ -527,10 +540,10 @@ exist when Claude started, restart once after the first render. Codex applies
 its syntax theme in new sessions. Kitty gives Claude and Codex red/green diff
 backgrounds 72% opacity. The registered `primary_container` gives Claude's
 painted selection 55% opacity. Kitty's own terminal selection uses the paired
-live `on_primary_container` foreground and `primary_container` background but
-remains opaque because Kitty forces selected cells to alpha 1. Codex's input
-box remains opaque because Codex owns and caches that background and exposes no
-theme role for it.
+live `glass.selection_fg` (`on_primary_container`) foreground and
+`glass.selection` (`primary_container`) background but remains opaque because
+Kitty forces selected cells to alpha 1. Codex's input box remains opaque
+because Codex owns and caches that background and exposes no theme role for it.
 ```
 
 - [ ] **Step 6: Run the complete automated verification**
@@ -539,17 +552,25 @@ Run from the worktree root:
 
 ```bash
 env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache nvim/tests/noctalia/run.sh
-env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
 env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache \
   python3 -m py_compile bin/noctalia-glass-sync bin/noctalia-glass-check \
   tests/noctalia_agent_themes_test.py
+verify_glass_dir=$(mktemp -d)
+trap 'rm -rf "$verify_glass_dir"' EXIT
+cp nvim/tests/noctalia/fixtures/raw_palette.json \
+  "$verify_glass_dir/nvim-palette.candidate.json"
+NOCTALIA_GLASS_DIR="$verify_glass_dir" \
+  bin/noctalia-glass-sync --no-signal
+NOCTALIA_GLASS_DIR="$verify_glass_dir" \
+  env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
 git diff --check
 test ! -e nvim.log
 ```
 
 Expected: all commands exit 0; the Noctalia runner ends with `OK noctalia
-suite`, `dotfiles-check` ends with `dotfiles checks passed`, and no `nvim.log`
-exists.
+suite`, isolated `dotfiles-check` ends with `dotfiles checks passed`, and no
+`nvim.log` exists. Do not run production `bin/noctalia-glass-check` here: its
+one-line live generation is intentionally old until Task 6 runs after merge.
 
 - [ ] **Step 7: Commit**
 
@@ -603,8 +624,9 @@ sentence with:
 
 ```markdown
   - Emits a JSON object of raw material colors — the 4 accents (+ fixed_dim
-    variants), `on_primary_container`, surfaces, outline, on_surface tones —
-    plus a `glass` table of role → hex.
+    variants), surfaces, outline, on_surface tones — plus a `glass` table of
+    role → hex. `glass.selection_fg` maps `on_primary_container` beside the
+    existing `glass.selection` → `primary_container` mapping.
 ```
 
 In sync step 3, replace the one-line `kitty-glass.conf` parenthetical with:
@@ -635,11 +657,12 @@ Codex's custom `.tmTheme` has a narrower but useful UI contract. Its
 diff backgrounds, so the Noctalia theme sets them to the same fixed green and
 red already registered for Claude. Kitty owns terminal text selection; the
 generated `selection_foreground`/`selection_background` pair uses
-`on_primary_container`/the registered `primary_container` tone and therefore
-updates live on wallpaper changes. Kitty 0.48.2 forces selected cells to alpha
-1 before substituting those colors, so its own selection remains opaque. The
-registered background still makes Claude's SGR-painted selection translucent
-at 55% opacity.
+`glass.selection_fg`/`glass.selection` (Noctalia
+`on_primary_container`/`primary_container`) and therefore updates live on
+wallpaper changes. Kitty 0.48.2 forces selected cells to alpha 1 before
+substituting those colors, so its own selection remains opaque. The registered
+background still makes Claude's SGR-painted selection translucent at 55%
+opacity.
 
 Acceptance: in a newly started Codex session, added/deleted diff backgrounds
 are colored and translucent; terminal text selection is Noctalia-colored,
@@ -667,7 +690,7 @@ Replace the scripted checker bullet with:
   on partial state (symlink present but a file missing), when Kitty's seven
   color/opacity tokens differ from the palette's glass tones in role order, or
   when either generated selection directive differs from the promoted
-  `on_primary_container`/`glass.selection` pair.
+  `glass.selection_fg`/`glass.selection` pair.
 ```
 
 - [ ] **Step 3: Verify and commit the spec**
@@ -681,20 +704,25 @@ git commit -m "docs: record codex glass refinement"
 
 ---
 
-### Task 6: Activate and visually verify
+### Task 6: Migrate production after merge and visually verify
 
 **Files:** None.
 
 **Interfaces:**
-- Consumes: rendered Codex theme and promoted Kitty generation from Tasks 1-4.
-- Produces: confirmation of the spec's visual acceptance criteria; no recurring
-  process restart or new configuration.
+- Consumes: Tasks 1-5 integrated into the main checkout.
+- Produces: the first three-line production generation and confirmation of the
+  spec's visual acceptance criteria; no compatibility layer, recurring process
+  restart, or new configuration.
 
-- [ ] **Step 1: Trigger one Noctalia render**
+- [ ] **Step 1: Merge, then immediately trigger one Noctalia render**
 
-Re-apply the current Noctalia color scheme once, or wait for the next wallpaper
-change. The existing template hook must generate a fresh `current` version and
-signal Kitty; do not manually kill Kitty terminals.
+Run this task only after the implementation branch is integrated into main via
+`superpowers:finishing-a-development-branch`. Before starting Neovim or running
+production `dotfiles-check`, re-apply the current Noctalia color scheme once.
+Do not wait for the next wallpaper rotation: the existing one-line production
+generation is present-but-invalid under the merged schema. The template hook
+must generate a fresh `current` version and signal Kitty; do not manually kill
+Kitty terminals.
 
 - [ ] **Step 2: Verify the promoted and rendered artifacts**
 
@@ -704,11 +732,15 @@ Run:
 bin/noctalia-glass-check
 rg -n '^selection_(foreground|background) ' \
   ~/.cache/noctalia/nvim-glass/current/kitty-glass.conf
+nvim --headless \
+  -c 'lua assert(require("user.noctalia.palette").load().glass.selection_fg)' \
+  -c qa
 python3 -c 'import plistlib,pathlib; p=plistlib.loads(pathlib.Path.home().joinpath(".codex/themes/noctalia.tmTheme").read_bytes()); s={e.get("scope"):e.get("settings",{}) for e in p["settings"]}; assert s["markup.inserted"]["background"]=="#022800"; assert s["markup.deleted"]["background"]=="#3d0100"'
 ```
 
 Expected: the checker exits 0, both selection lines contain the promoted
-`on_primary_container`/`glass.selection` pair, and the plist assertion exits 0.
+`glass.selection_fg`/`glass.selection` pair, Neovim loads the migrated palette,
+and the plist assertion exits 0.
 
 - [ ] **Step 3: Start one new Codex session and inspect all four areas**
 
