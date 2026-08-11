@@ -108,44 +108,55 @@ json.dump(d, open(p, 'w'))
 EOF
 expect_reject "missing accent key"
 
-# 7. colliding registered glass tones
+# 7. Missing selection foreground is a complete-artifact failure.
+good_candidate
+python3 - "$CANDIDATE" <<'EOF'
+import json, sys
+p = sys.argv[1]
+d = json.load(open(p))
+d['glass'].pop('selection_fg', None)
+json.dump(d, open(p, 'w'))
+EOF
+expect_reject "missing selection foreground"
+
+# 8. colliding registered glass tones
 good_candidate
 sed -i 's/"cursorline": "#2f334d"/"cursorline": "#1e2030"/' "$CANDIDATE"
 expect_reject "glass collision"
 
-# 8. UI aliases must remain explicit
+# 9. UI aliases must remain explicit
 good_candidate
 sed -i 's/"tab_on": "#1e2030"/"tab_on": "#222436"/' "$CANDIDATE"
 expect_reject "tab_on alias mismatch"
 
-# 9. Claude native diff cell colors are a fixed Kitty interoperability contract
+# 10. Claude native diff cell colors are a fixed Kitty interoperability contract
 good_candidate
 sed -i 's/"diff_added": "#022800"/"diff_added": "#012345"/' "$CANDIDATE"
 expect_reject "changed native diff color"
 
-# 10. float equal to a registered tone
+# 11. float equal to a registered tone
 good_candidate
 sed -i 's/"float": "#16161e"/"float": "#3b4261"/' "$CANDIDATE"
 expect_reject "registered float"
 
-# 11. float equal to surface
+# 12. float equal to surface
 good_candidate
 sed -i 's/"float": "#16161e"/"float": "#222436"/' "$CANDIDATE"
 expect_reject "float==surface"
 
-# 12. candidate I/O error uses the clean failure path, not a traceback
+# 13. candidate I/O error uses the clean failure path, not a traceback
 rm -f "$CANDIDATE"
 mkdir "$CANDIDATE"
 expect_reject "unreadable candidate"
 rm -r "$CANDIDATE"
 
-# 13. staging failure removes this run's temporary version and preserves prior state
+# 14. staging failure removes this run's temporary version and preserves prior state
 good_candidate
 chmod u-w "$TMP/nvim-glass"
 expect_reject "unstageable version directory"
 chmod u+w "$TMP/nvim-glass"
 
-# 14. signal failure is post-commit: promotion remains visible and candidate is consumed
+# 15. signal failure is post-commit: promotion remains visible and candidate is consumed
 good_candidate
 cp "$CANDIDATE" "$TMP/expected-post-commit.json"
 before=$(readlink "$CUR")

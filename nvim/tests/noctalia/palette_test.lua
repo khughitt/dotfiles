@@ -17,6 +17,12 @@ local bad = read_json(fixture); bad.primary = nil
 local ok, err = p.validate(bad)
 assert(not ok and err:match('primary'), 'missing key detected')
 
+-- validate: missing selection foreground
+bad = read_json(fixture); bad.glass.selection_fg = nil
+ok, err = p.validate(bad)
+assert(not ok and err:match('selection_fg'),
+  'missing selection foreground detected')
+
 -- validate: glass collision
 bad = read_json(fixture); bad.glass.cursorline = bad.glass.chrome
 ok, err = p.validate(bad)

@@ -24,6 +24,7 @@
     "raised": "#3b4261",
     "diff_added": "#022800",
     "diff_removed": "#3d0100",
+    "selection_fg": "#c8d3f5",
     "selection": "#003dbe",
     "float": "#16161e"
   }

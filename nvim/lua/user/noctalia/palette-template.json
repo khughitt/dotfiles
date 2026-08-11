@@ -24,6 +24,7 @@
     "raised": "{{colors.outline_variant.default.hex}}",
     "diff_added": "#022800",
     "diff_removed": "#3d0100",
+    "selection_fg": "{{colors.on_primary_container.default.hex}}",
     "selection": "{{colors.primary_container.default.hex}}",
     "float": "{{colors.surface_container_lowest.default.hex}}"
   }

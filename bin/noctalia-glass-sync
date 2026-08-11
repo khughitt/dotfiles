@@ -97,6 +97,8 @@ def validate(raw: object) -> dict:
             fail(f'glass.{alias} missing/invalid')
         if v.lower() != glass[target].lower():
             fail(f'glass.{alias} must equal glass.{target}')
+    if not is_hex(glass.get('selection_fg')):
+        fail('glass.selection_fg missing/invalid')
     if not is_hex(glass.get('float')):
         fail('glass.float missing/invalid')
     if glass['float'].lower() in seen:

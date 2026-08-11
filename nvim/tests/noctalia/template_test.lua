@@ -23,5 +23,9 @@ assert(ok, 'rendered template must be valid JSON: ' .. tostring(raw))
 assert(p.validate(raw), 'rendered template must satisfy palette.validate')
 assert(raw.glass.selection == tokens.primary_container,
   'selection must use primary_container')
+assert(tokens.on_primary_container,
+  'template must request on_primary_container')
+assert(raw.glass.selection_fg == tokens.on_primary_container,
+  'selection foreground must use on_primary_container')
 
 print('OK template')

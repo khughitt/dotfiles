@@ -1,8 +1,8 @@
 -- Loads the noctalia-generated raw palette (JSON), validating shape and the
--- glass invariants (seven distinct registered tones; float solid and
--- unregistered). bin/noctalia-glass-sync enforces the same invariants before
--- promoting, so a hard error here means the promoted file was hand-edited or
--- corrupted. Only a MISSING file falls back (fresh machine).
+-- glass invariants (seven distinct registered tones; selection foreground and
+-- float solid and unregistered). bin/noctalia-glass-sync enforces the same
+-- invariants before promoting, so a hard error here means the promoted file
+-- was hand-edited or corrupted. Only a MISSING file falls back (fresh machine).
 
 local M = {}
 
@@ -49,6 +49,7 @@ function M.validate(raw)
       return nil, ('glass.%s must equal glass.%s'):format(alias, target)
     end
   end
+  if not is_hex(raw.glass.selection_fg) then return nil, 'glass.selection_fg missing/invalid' end
   if not is_hex(raw.glass.float) then return nil, 'glass.float missing/invalid' end
   if raw.glass.float:lower() == raw.surface:lower() then
     return nil, 'glass.float equals surface (floats would go translucent)'
