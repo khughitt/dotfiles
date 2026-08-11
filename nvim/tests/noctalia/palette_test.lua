@@ -116,26 +116,35 @@ assert(#tones == #expected, 'kitty fallback must list exactly seven tones')
 for i, token in ipairs(expected) do
   assert(tones[i] == token, ('kitty fallback tone %d mismatch'):format(i))
 end
-local fallback_include = 'include noctalia-selection-fallback.conf'
 local fallback_file = assert(io.open('kitty/noctalia-selection-fallback.conf')):read('*a')
-local selection_foreground = fallback_file:match('\nselection_foreground ([^\n]+)')
-assert(selection_foreground == default.glass.selection_fg,
+local fallback_directives = {}
+for fallback_line in fallback_file:gmatch('[^\r\n]+') do
+  if not fallback_line:match('^%s*$') and not fallback_line:match('^%s*#') then
+    fallback_directives[#fallback_directives + 1] = fallback_line
+  end
+end
+assert(#fallback_directives == 2,
+  'kitty selection fallback must contain exactly two active directives')
+assert(fallback_directives[1] == 'selection_foreground ' .. default.glass.selection_fg,
   'kitty selection foreground fallback must equal default glass.selection_fg')
-local selection_background = fallback_file:match('\nselection_background ([^\n]+)')
-assert(selection_background == default.glass.selection,
+assert(fallback_directives[2] == 'selection_background ' .. default.glass.selection,
   'kitty selection fallback must equal default glass.selection')
 local os_include = assert(conf:find('include os-local.conf', 1, true),
   'os-local include missing')
+local fallback_include = '\ninclude noctalia-selection-fallback.conf\n'
 local fallback_position = assert(conf:find(fallback_include, 1, true),
   'kitty selection fallback include missing')
-local glass_include = assert(conf:find(
-  'include ${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf', 1, true),
+local glass_include_line =
+  '\ninclude ${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf\n'
+local glass_include = assert(conf:find(glass_include_line, 1, true),
   'generated glass include missing')
 assert(not conf:find('\nselection_foreground ', 1, true) and
   not conf:find('\nselection_background ', 1, true),
   'kitty.conf must delegate the selection fallback pair')
 assert(os_include < fallback_position and fallback_position < glass_include,
   'selection fallback must follow static includes and precede generated glass')
+assert(conf:find('\ninclude ', fallback_position + #fallback_include, true) == glass_include,
+  'no include may intervene between selection fallback and generated glass')
 assert(not conf:find('\ninclude ', glass_include + 1, true),
   'generated glass include must be the final include')
 

@@ -491,8 +491,8 @@ Run:
 nvim --clean -l nvim/tests/noctalia/palette_test.lua
 ```
 
-Expected: failure with `kitty selection foreground fallback must equal default
-glass.selection_fg`.
+Expected: failure opening
+`kitty/noctalia-selection-fallback.conf: No such file or directory`.
 
 - [ ] **Step 3: Add the fallback and move the generated include**
 
