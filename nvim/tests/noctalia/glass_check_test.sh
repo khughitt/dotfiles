@@ -16,27 +16,47 @@ cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.js
 "$SYNC" --no-signal
 "$CHECK" || { echo "FAIL: healthy state must pass"; exit 1; }
 
-# 3. partial state (palette missing): FAIL — this is the case the old
+# 3. generated selection foreground must equal the promoted palette: FAIL
+sed -i 's/^selection_foreground .*/selection_foreground #111111/' \
+  "$TMP/nvim-glass/current/kitty-glass.conf"
+if out=$("$CHECK" 2>&1); then echo "FAIL: selection foreground desync must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
+
+cp nvim/tests/noctalia/fixtures/raw_palette.json \
+  "$TMP/nvim-palette.candidate.json"
+"$SYNC" --no-signal
+
+# 4. generated selection background must equal the promoted palette: FAIL
+sed -i 's/^selection_background .*/selection_background #111111/' \
+  "$TMP/nvim-glass/current/kitty-glass.conf"
+if out=$("$CHECK" 2>&1); then echo "FAIL: selection background desync must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
+
+cp nvim/tests/noctalia/fixtures/raw_palette.json \
+  "$TMP/nvim-palette.candidate.json"
+"$SYNC" --no-signal
+
+# 5. partial state (palette missing): FAIL — this is the case the old
 #    dotfiles-check guard silently skipped
 rm "$TMP/nvim-glass/current/nvim-palette.json"
 if out=$("$CHECK" 2>&1); then echo "FAIL: partial state must fail"; exit 1; fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
-# 4. desynced tones: FAIL
+# 6. desynced tones: FAIL
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 sed -i 's/#1e2030/#111111/' "$TMP/nvim-glass/current/kitty-glass.conf"
 if out=$("$CHECK" 2>&1); then echo "FAIL: desync must fail"; exit 1; fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
-# 5. kitty applies the final directive, so duplicates must fail
+# 7. kitty applies the final directive, so duplicates must fail
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 echo 'transparent_background_colors #111111' >> "$TMP/nvim-glass/current/kitty-glass.conf"
 if out=$("$CHECK" 2>&1); then echo "FAIL: duplicate directive must fail"; exit 1; fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
-# 6. current must be the syncer's sibling v-* symlink, not a directory
+# 8. current must be the syncer's sibling v-* symlink, not a directory
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 target=$(readlink "$TMP/nvim-glass/current")
@@ -48,7 +68,7 @@ if out=$("$CHECK" 2>&1); then echo "FAIL: directory current must fail"; exit 1; 
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 rm -r "$TMP/nvim-glass/current"
 
-# 7. absolute and escaping targets are not sibling version directories
+# 9. absolute and escaping targets are not sibling version directories
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 target=$(readlink "$TMP/nvim-glass/current")
@@ -61,14 +81,14 @@ ln -s "../nvim-glass/$target" "$TMP/nvim-glass/current"
 if out=$("$CHECK" 2>&1); then echo "FAIL: escaping current target must fail"; exit 1; fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
-# 8. malformed palette shape: a clean FAIL: line, never a traceback
+# 10. malformed palette shape: a clean FAIL: line, never a traceback
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 echo '{"glass": []}' > "$TMP/nvim-glass/current/nvim-palette.json"
 if out=$("$CHECK" 2>&1); then echo "FAIL: malformed shape must fail"; exit 1; fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
-# 9. aliases that would consume an eighth kitty slot must fail
+# 11. aliases that would consume an eighth kitty slot must fail
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 sed -i 's/"tab_on": "#1e2030"/"tab_on": "#222436"/' \
@@ -76,7 +96,7 @@ sed -i 's/"tab_on": "#1e2030"/"tab_on": "#222436"/' \
 if out=$("$CHECK" 2>&1); then echo "FAIL: alias drift must fail"; exit 1; fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
-# 10. matching palette/kitty edits still cannot change Claude's native colors
+# 12. matching palette/kitty edits still cannot change Claude's native colors
 cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
 "$SYNC" --no-signal
 sed -i 's/#022800/#012345/g' "$TMP/nvim-glass/current/nvim-palette.json" \

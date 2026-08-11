@@ -10,3 +10,5 @@ output=$(bin/noctalia-mood-swatches)
   printf 'stdout contains sanitized escape\n' >&2
   exit 1
 }
+
+echo "OK mood_swatches"

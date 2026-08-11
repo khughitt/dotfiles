@@ -94,12 +94,25 @@ def main() -> None:
         kitty_text = kitty_file.read_text()
     except (OSError, UnicodeError) as exc:
         fail(f'{kitty_file} unreadable: {exc}')
-    m = re.fullmatch(r'transparent_background_colors (.+)', kitty_text.strip())
+    lines = kitty_text.splitlines()
+    if len(lines) != 3:
+        fail(f'{kitty_file} must contain exactly three directives')
+    m = re.fullmatch(r'transparent_background_colors (.+)', lines[0])
     if not m:
         fail(f'{kitty_file} has no transparent_background_colors line')
     kitty_tones = m.group(1).split()
     if kitty_tones != palette_tones:
         fail(f'tones desynced: kitty={kitty_tones} palette={palette_tones}')
+    selection_foreground = glass.get('selection_fg')
+    if (not isinstance(selection_foreground, str)
+            or not HEX.fullmatch(selection_foreground)):
+        fail(f'{palette_file} glass.selection_fg missing/malformed')
+    expected_foreground = f'selection_foreground {selection_foreground.lower()}'
+    if lines[1] != expected_foreground:
+        fail(f'selection foreground desynced: kitty={lines[1]!r} palette={expected_foreground!r}')
+    expected_background = f"selection_background {glass['selection'].lower()}"
+    if lines[2] != expected_background:
+        fail(f'selection background desynced: kitty={lines[2]!r} palette={expected_background!r}')
 
 
 if __name__ == '__main__':

@@ -66,9 +66,23 @@ target=$(readlink "$CUR")
 [[ -f "$CUR/nvim-palette.json" && -f "$CUR/kitty-glass.conf" ]] || { echo "FAIL: staged files missing"; exit 1; }
 cmp nvim/tests/noctalia/fixtures/raw_palette.json "$CUR/nvim-palette.json" || { echo "FAIL: palette bytes changed"; exit 1; }
 [[ ! -e "$CANDIDATE" ]] || { echo "FAIL: candidate left behind"; exit 1; }
-[[ "$(wc -l < "$CUR/kitty-glass.conf")" == 1 ]] || { echo "FAIL: kitty conf has extra lines"; exit 1; }
+[[ "$(wc -l < "$CUR/kitty-glass.conf")" == 3 ]] || {
+  echo "FAIL: kitty conf must have three lines"
+  cat "$CUR/kitty-glass.conf"
+  exit 1
+}
 grep -qx 'transparent_background_colors #1e2030 #2f334d #272a3f #3b4261 #022800@0.72 #3d0100@0.72 #003dbe@0.55' \
-  "$CUR/kitty-glass.conf" || { echo "FAIL: kitty conf wrong"; cat "$CUR/kitty-glass.conf"; exit 1; }
+  "$CUR/kitty-glass.conf" || { echo "FAIL: kitty transparent list wrong"; cat "$CUR/kitty-glass.conf"; exit 1; }
+grep -qx 'selection_foreground #c8d3f5' "$CUR/kitty-glass.conf" || {
+  echo "FAIL: kitty selection foreground wrong"
+  cat "$CUR/kitty-glass.conf"
+  exit 1
+}
+grep -qx 'selection_background #003dbe' "$CUR/kitty-glass.conf" || {
+  echo "FAIL: kitty selection background wrong"
+  cat "$CUR/kitty-glass.conf"
+  exit 1
+}
 [[ ! -e "$PKILL_LOG" ]] || { echo "FAIL: --no-signal invoked pkill"; exit 1; }
 
 # 2. second success: symlink flips, only v-* versions prune, other directories persist

@@ -132,7 +132,9 @@ def main() -> None:
         os.chmod(vdir, 0o755)  # mkdtemp defaults to 0700
         (vdir / 'nvim-palette.json').write_bytes(data)
         (vdir / 'kitty-glass.conf').write_text(
-            'transparent_background_colors ' + ' '.join(tones) + '\n')
+            'transparent_background_colors ' + ' '.join(tones) + '\n'
+            f"selection_foreground {raw['glass']['selection_fg'].lower()}\n"
+            f"selection_background {raw['glass']['selection'].lower()}\n")
 
         # Single atomic switch: rename a prepared symlink over `current`.
         tmplink = GLASS_DIR / f'.current-tmp-{os.getpid()}'
