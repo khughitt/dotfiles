@@ -1,6 +1,7 @@
 # Noctalia → Neovim theming (glass-preserving)
 
-**Status:** Implemented (753305e..0485858).
+**Status:** Implemented (753305e..0485858); Codex diff/selection refinement
+approved, pending implementation.
 
 ## Goal
 
@@ -14,7 +15,7 @@ switchable mood variant for syntax hues.
 - kitty makes a cell translucent only when its background is the default
   background or one of at most 7 colors listed in `transparent_background_colors`
   (`kitty/kitty.conf`). All seven are now used: four neutral nvim chrome tones
-  plus colored Claude Code add/remove/selection tones, mirrored in
+  plus shared coding-agent add/remove/selection tones, mirrored in
   `nvim/lua/user/glass.lua`.
 - If nvim chrome colors become dynamic, kitty's transparent list must change in
   lockstep or the statusline/tabs punch opaque rectangles through the glass.
@@ -73,8 +74,9 @@ read the render target directly — only the promoted path:
      exit non-zero.
   3. Stage BOTH outputs into a fresh version directory
      `~/.cache/noctalia/nvim-glass/v-*/` — `nvim-palette.json` (candidate
-     verbatim) and `kitty-glass.conf` (one `transparent_background_colors`
-     line, tones in role order) — then atomically rename a prepared symlink
+     verbatim) and `kitty-glass.conf` (`transparent_background_colors` in
+     role order plus `selection_background` using the same registered
+     selection tone) — then atomically rename a prepared symlink
      over `~/.cache/noctalia/nvim-glass/current`. One rename switches both
      files; there is no interleaving in which kitty and nvim can read
      different generations. Superseded version dirs are pruned after the
@@ -92,12 +94,12 @@ read the render target directly — only the promoted path:
   state of running processes: any fresh read of both files through
   `current` sees a single consistent generation.
 
-- `kitty.conf` keeps its hardcoded `transparent_background_colors` line as
-  the fallback and gains, after it,
-  `include ${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf`
-  (env-var expansion in include paths is already used for `${HOSTNAME}.conf`;
-  kitty is last-value-wins, so the include overrides when present and a
-  missing file is only a startup warning).
+- `kitty.conf` keeps hardcoded `transparent_background_colors` and semantic
+  `selection_background` fallbacks. After `current-theme.conf`, it includes
+  `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf` (env-var
+  expansion in include paths is already used for `${HOSTNAME}.conf`; Kitty is
+  last-value-wins, so this final include overrides both the built-in theme and
+  fallbacks when present, while a missing file is only a startup warning).
 
 **Path contract:** production paths are pinned to literal `~/.cache/noctalia/`
 everywhere — kitty's `include` line and noctalia's `user-templates.toml`
@@ -109,9 +111,10 @@ override used only by tests.
 nvim reads, validated before either program is signalled. Four neutral slots
 come from `surface_container_low` (`chrome`, also `tab_on`), `surface_bright`
 (`cursorline`), `surface_container_high` (`tab_off`, also `tab_fill`), and
-`outline_variant` (`raised`). The three semantic slots are Claude Code's native
-diff green `#022800` and diff red `#3d0100`, each at opacity `0.72`, plus the
-current Noctalia `primary_container` selection color at opacity `0.55`.
+`outline_variant` (`raised`). The three semantic slots are the shared
+coding-agent diff green `#022800` and diff red `#3d0100`, each at opacity
+`0.72`, plus the current Noctalia `primary_container` selection color at
+opacity `0.55`.
 `float = surface_container_lowest` — the only material token darker than
 `surface` — and must stay solid and unregistered. The aliases intentionally
 merge the two closest neutral pairs to fit all seven Kitty slots. The mapping
@@ -123,6 +126,23 @@ Kitty therefore supplies the transparency; the custom Claude theme uses the
 same values for its fallback diff renderer and uses `primary_container` for
 selection. This preserves syntax highlighting instead of disabling the native
 renderer.
+
+Codex's custom `.tmTheme` has a narrower but useful UI contract. Its
+`markup.inserted` and `markup.deleted` scope backgrounds override the native
+diff backgrounds, so the Noctalia theme sets them to the same fixed green and
+red already registered for Claude. Terminal text selection is owned by Kitty,
+not Codex; the generated `selection_background` points it at the registered
+`primary_container` tone and therefore updates live on wallpaper changes.
+
+The Codex input box is intentionally unchanged. Codex 0.147.0 derives that
+background by blending white at 12% over the terminal background and caches
+the result at process startup. Its theme and config expose no input-background
+role, and Kitty transparency matches exact cell colors. Registering the
+derived tone would therefore go stale at the next 15-minute wallpaper switch;
+keeping every historical tone would exceed Kitty's seven-color limit. Fixed
+partially transparent colors become viable only if Codex exposes an input-box
+theme role (or is replaced by a maintained custom build), neither of which is
+part of this dotfiles change.
 Noctalia's built-in kitty template writing `themes/noctalia.conf` into the
 synced tree is a pre-existing noctalia behavior, out of scope here.
 
@@ -221,6 +241,9 @@ ColorScheme autocmd → glass recompute → lualine refresh.
 
 - Manual: switch wallpapers; kitty + nvim recolor live; statusline, tabs and
   cursorline stay translucent (no opaque rectangles); floats stay solid.
+  In a newly started Codex session, added/deleted diff backgrounds and terminal
+  text selection are colored and translucent before and after later wallpaper
+  switches; the input box remains Codex-owned and opaque.
 - Structural: kitty's transparent list and nvim's palette live in one version
   directory switched by a single atomic symlink rename — a desync requires
   the validation itself to be wrong, not a race or a partial promote.
