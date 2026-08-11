@@ -41,8 +41,14 @@ REQUIRED = (
     'surface', 'on_surface', 'on_surface_variant', 'on_background',
     'outline', 'outline_variant', 'surface_variant',
 )
-# Order matters: the order tones appear on kitty's line.
-REGISTERED_ROLES = ('chrome', 'cursorline', 'tab_on', 'tab_off', 'tab_fill', 'raised')
+# Order matters: the order tones appear on kitty's seven-slot line.
+REGISTERED_ROLES = (
+    'chrome', 'cursorline', 'tab_off', 'raised',
+    'diff_added', 'diff_removed', 'selection',
+)
+ALIASES = {'tab_on': 'chrome', 'tab_fill': 'tab_off'}
+FIXED = {'diff_added': '#022800', 'diff_removed': '#3d0100'}
+OPACITY = {'diff_added': '0.72', 'diff_removed': '0.72', 'selection': '0.55'}
 
 
 def is_hex(v: object) -> bool:
@@ -82,7 +88,15 @@ def validate(raw: object) -> dict:
         v = v.lower()
         if v in seen:
             fail(f'glass tones collide on {v}')
+        if role in FIXED and v != FIXED[role]:
+            fail(f'glass.{role} must equal {FIXED[role]}')
         seen.add(v)
+    for alias, target in ALIASES.items():
+        v = glass.get(alias)
+        if not is_hex(v):
+            fail(f'glass.{alias} missing/invalid')
+        if v.lower() != glass[target].lower():
+            fail(f'glass.{alias} must equal glass.{target}')
     if not is_hex(glass.get('float')):
         fail('glass.float missing/invalid')
     if glass['float'].lower() in seen:
@@ -102,7 +116,10 @@ def main() -> None:
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         fail(f'candidate is not valid JSON: {exc}')
     validate(raw)
-    tones = [raw['glass'][role].lower() for role in REGISTERED_ROLES]
+    tones = [
+        raw['glass'][role].lower() + (f'@{OPACITY[role]}' if role in OPACITY else '')
+        for role in REGISTERED_ROLES
+    ]
 
     vdir = None
     tmplink = None

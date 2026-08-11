@@ -18,7 +18,14 @@ from pathlib import Path
 
 BASE = Path(os.environ.get('NOCTALIA_GLASS_DIR', str(Path.home() / '.cache' / 'noctalia')))
 CURRENT = BASE / 'nvim-glass' / 'current'
-REGISTERED_ROLES = ('chrome', 'cursorline', 'tab_on', 'tab_off', 'tab_fill', 'raised')
+REGISTERED_ROLES = (
+    'chrome', 'cursorline', 'tab_off', 'raised',
+    'diff_added', 'diff_removed', 'selection',
+)
+ALIASES = {'tab_on': 'chrome', 'tab_fill': 'tab_off'}
+FIXED = {'diff_added': '#022800', 'diff_removed': '#3d0100'}
+OPACITY = {'diff_added': '0.72', 'diff_removed': '0.72', 'selection': '0.55'}
+HEX = re.compile(r'#[0-9a-fA-F]{6}')
 
 
 def fail(msg: str) -> None:
@@ -57,11 +64,32 @@ def main() -> None:
     if not isinstance(glass, dict):
         fail(f'{palette_file} has no glass object')
     palette_tones = []
+    registered = set()
     for role in REGISTERED_ROLES:
         tone = glass.get(role)
-        if not isinstance(tone, str):
+        if not isinstance(tone, str) or not HEX.fullmatch(tone):
             fail(f'{palette_file} glass.{role} missing/malformed')
-        palette_tones.append(tone.lower())
+        if tone.lower() in registered:
+            fail(f'{palette_file} glass tones collide on {tone.lower()}')
+        if role in FIXED and tone.lower() != FIXED[role]:
+            fail(f'{palette_file} glass.{role} must equal {FIXED[role]}')
+        registered.add(tone.lower())
+        palette_tones.append(
+            tone.lower() + (f'@{OPACITY[role]}' if role in OPACITY else ''))
+    for alias, target_role in ALIASES.items():
+        tone = glass.get(alias)
+        if not isinstance(tone, str) or not HEX.fullmatch(tone):
+            fail(f'{palette_file} glass.{alias} missing/malformed')
+        if tone.lower() != glass[target_role].lower():
+            fail(f'{palette_file} glass.{alias} must equal glass.{target_role}')
+    float_tone = glass.get('float')
+    if not isinstance(float_tone, str) or not HEX.fullmatch(float_tone):
+        fail(f'{palette_file} glass.float missing/malformed')
+    surface = data.get('surface')
+    if not isinstance(surface, str) or not HEX.fullmatch(surface):
+        fail(f'{palette_file} surface missing/malformed')
+    if float_tone.lower() in registered or float_tone.lower() == surface.lower():
+        fail(f'{palette_file} glass.float is not solid')
     try:
         kitty_text = kitty_file.read_text()
     except (OSError, UnicodeError) as exc:

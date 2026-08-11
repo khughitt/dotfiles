@@ -1,6 +1,9 @@
 # Noctalia → Neovim Theming Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Historical execution record:** The implementation is complete. Do not
+> rerun the task snippets below; the current contract lives in the design spec,
+> source, and tests. The semantic seven-slot refinement is summarized in the
+> self-review notes.
 
 **Goal:** Neovim follows noctalia's wallpaper-derived palette (syntax + chrome) with live reload, mood variants, and the kitty glass translucency preserved.
 
@@ -22,7 +25,7 @@
 - Lua tests run headless from the repo root: `nvim -l nvim/tests/noctalia/<name>_test.lua` — they must print `OK <name>` and exit 0. `nvim -l` may load config and cached modules here; tests for existing config modules must prepend the worktree's `nvim` directory to `runtimepath` and clear the relevant `package.loaded` entries before requiring them.
 - Every task is red-first: write the test, watch it fail for the expected reason, then implement.
 - The glass-role → material-token mapping lives ONLY in the template (Task 4). Every other component consumes the artifact's `glass` table verbatim.
-- The committed fallback palette's `glass` table MUST stay byte-identical to the hardcoded `transparent_background_colors` line in `kitty/kitty.conf` (fresh-machine invariant; enforced by a test in Task 3).
+- The committed fallback palette's registered glass colors and opacity suffixes MUST match the hardcoded `transparent_background_colors` line in `kitty/kitty.conf` (fresh-machine invariant; enforced by a test in Task 3).
 - The required-key list exists twice — `palette.lua` (Lua) and `bin/noctalia-glass-sync` (Python). Both carry a comment pointing at the other; change them together.
 
 ## Artifact contract (used by Tasks 3–7)
@@ -55,16 +58,23 @@ The artifact is JSON — chosen so the hook can syntax-validate the whole file w
   "glass": {
     "chrome": "#1e2030",
     "cursorline": "#2f334d",
-    "tab_on": "#222436",
+    "tab_on": "#1e2030",
     "tab_off": "#272a3f",
-    "tab_fill": "#2c3048",
+    "tab_fill": "#272a3f",
     "raised": "#3b4261",
+    "diff_added": "#022800",
+    "diff_removed": "#3d0100",
+    "selection": "#003dbe",
     "float": "#16161e"
   }
 }
 ```
 
-Semantics: the six glass tones `chrome/cursorline/tab_on/tab_off/tab_fill/raised` become kitty's `transparent_background_colors` (translucent chrome), in that order; `float` is the solid popup background and must NOT be one of the six nor equal `surface`.
+Semantics after the post-implementation refinement: Kitty registers four
+distinct neutral tones (`chrome`, `cursorline`, `tab_off`, `raised`), with
+`tab_on = chrome` and `tab_fill = tab_off`; Claude's native diff green/red at
+opacity `0.72`; and Noctalia `primary_container` selection at opacity `0.55`.
+`float` is solid and must not equal any registered tone or `surface`.
 
 ---
 
@@ -1964,8 +1974,15 @@ git commit -m "docs: mark noctalia nvim theming implemented"
 
 ## Self-review notes (already applied)
 
+- Post-implementation refinement: Kitty's seven slots are now four neutral
+  chrome tones plus Claude Code's red/green diff and Noctalia selection tones.
+  `tab_on` aliases `chrome`, `tab_fill` aliases `tab_off`, diffs use opacity
+  `0.72`, and selection uses `primary_container` at `0.55`. The implemented
+  contract in the design spec supersedes the original six-tone task snippets
+  above.
+
 - Review round 2 fixes: `on_colors` updates `tokyonight.util.bg/fg` with an integration test using a non-moon surface (T6); the hook validates the COMPLETE artifact and JSON syntax via `json.loads` (T5); promotion is a version-dir + symlink flip — single atomic rename, tested for reject-leaves-current-untouched and flip-then-prune (T5); path contract pinned to `~/.cache/noctalia` with `NOCTALIA_GLASS_DIR` as a tests-only override (Global Constraints, T5, T10); corrupt mood state hard-errors, only a missing file defaults (T6); Task 4 is red-first; `dotfiles-check` delegates to `bin/noctalia-glass-check`, which fails on partial state (T10); mood transforms have exact behavioral tests (T2); the fallback/kitty equality is a committed test, not a manual step (T3); `reload()` and Task 8 use `vim.cmd.colorscheme('tokyonight')` matching `nvim/init.lua:345`.
-- Type consistency: `palette.path` / `noctalia.state_file` reassignability used by tests in T3/T6/T7; glass roles are the same seven strings everywhere (artifact contract, `REGISTERED_ROLES` in Lua and Python, `GLASS_ORDER`); the fixture doubles as the hook-test candidate (T5) and equals `default_palette.lua` (asserted in T3).
+- Type consistency: `palette.path` / `noctalia.state_file` reassignability used by tests in T3/T6/T7; the seven registered roles and two aliases match across the artifact and Lua/Python validators; the fixture doubles as the hook-test candidate (T5) and equals `default_palette.lua` (asserted in T3).
 - Spec sync: the spec was updated alongside this revision (JSON artifact, symlink promotion, full hook validation, mood error semantics, pinned cache path).
 - Review round 3 fixes: palette/mood loaders distinguish ENOENT (fallback) from other I/O failures (hard error), with unreadable-present-file tests (T3/T6); the spec's glass mapping matches the template (float = `surface_container_lowest`, sixth slot = `outline_variant`); the transaction guarantee names the symlink rename as the commit point with signalling as post-commit reconciliation (T5 + spec); `noctalia-glass-check` routes shape/read errors through `fail()` with a traceback-regression test (T10).
 - Review round 4 fixes: T5's interface scopes the untouched-`current` guarantee to pre-commit failures and describes post-rename failures as leaving the generation committed; the spec's commit-point paragraph limits its claim to fresh reads through `current`; T3's permission test locks a VALID palette copy and asserts `vim.uv.fs_chmod` succeeded, so it can only pass by exercising EACCES; T4's mapping note drops the stale reference to the spec's superseded candidate list.

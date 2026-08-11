@@ -9,6 +9,8 @@ palette.path = 'nvim/tests/noctalia/fixtures/raw_palette.json'
 glass.apply()
 assert(glass.palette.chrome == '#1e2030', 'chrome from artifact')
 assert(glass.registered['#3b4261'], 'raised registered')
+assert(glass.registered['#022800'] and glass.registered['#3d0100']
+  and glass.registered['#003dbe'], 'semantic glass slots registered')
 assert(not glass.registered['#16161e'], 'float NOT registered')
 assert(vim.api.nvim_get_hl(0, { name = 'NormalFloat' }).bg == tonumber('16161e', 16),
   'NormalFloat painted with glass.float')

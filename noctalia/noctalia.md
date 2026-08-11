@@ -53,7 +53,9 @@ theme = "noctalia"
 Claude Code reloads theme-file changes live. If its themes directory did not
 exist when Claude started, restart once after the first render. Codex applies
 its syntax theme in new sessions; the rest of its interface continues to use
-the terminal palette.
+the terminal palette. Kitty's generated glass include gives Claude's native
+red/green diff backgrounds 72% opacity and its Noctalia `primary_container`
+selection background 55% opacity.
 
 ## Persistent memory-pressure alerts
 

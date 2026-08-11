@@ -67,7 +67,7 @@ target=$(readlink "$CUR")
 cmp nvim/tests/noctalia/fixtures/raw_palette.json "$CUR/nvim-palette.json" || { echo "FAIL: palette bytes changed"; exit 1; }
 [[ ! -e "$CANDIDATE" ]] || { echo "FAIL: candidate left behind"; exit 1; }
 [[ "$(wc -l < "$CUR/kitty-glass.conf")" == 1 ]] || { echo "FAIL: kitty conf has extra lines"; exit 1; }
-grep -qx 'transparent_background_colors #1e2030 #2f334d #222436 #272a3f #2c3048 #3b4261' \
+grep -qx 'transparent_background_colors #1e2030 #2f334d #272a3f #3b4261 #022800@0.72 #3d0100@0.72 #003dbe@0.55' \
   "$CUR/kitty-glass.conf" || { echo "FAIL: kitty conf wrong"; cat "$CUR/kitty-glass.conf"; exit 1; }
 [[ ! -e "$PKILL_LOG" ]] || { echo "FAIL: --no-signal invoked pkill"; exit 1; }
 
@@ -108,34 +108,44 @@ json.dump(d, open(p, 'w'))
 EOF
 expect_reject "missing accent key"
 
-# 7. colliding glass tones
+# 7. colliding registered glass tones
 good_candidate
-sed -i 's/"tab_on": "#222436"/"tab_on": "#1e2030"/' "$CANDIDATE"
+sed -i 's/"cursorline": "#2f334d"/"cursorline": "#1e2030"/' "$CANDIDATE"
 expect_reject "glass collision"
 
-# 8. float equal to a registered tone
+# 8. UI aliases must remain explicit
+good_candidate
+sed -i 's/"tab_on": "#1e2030"/"tab_on": "#222436"/' "$CANDIDATE"
+expect_reject "tab_on alias mismatch"
+
+# 9. Claude native diff cell colors are a fixed Kitty interoperability contract
+good_candidate
+sed -i 's/"diff_added": "#022800"/"diff_added": "#012345"/' "$CANDIDATE"
+expect_reject "changed native diff color"
+
+# 10. float equal to a registered tone
 good_candidate
 sed -i 's/"float": "#16161e"/"float": "#3b4261"/' "$CANDIDATE"
 expect_reject "registered float"
 
-# 9. float equal to surface
+# 11. float equal to surface
 good_candidate
 sed -i 's/"float": "#16161e"/"float": "#222436"/' "$CANDIDATE"
 expect_reject "float==surface"
 
-# 10. candidate I/O error uses the clean failure path, not a traceback
+# 12. candidate I/O error uses the clean failure path, not a traceback
 rm -f "$CANDIDATE"
 mkdir "$CANDIDATE"
 expect_reject "unreadable candidate"
 rm -r "$CANDIDATE"
 
-# 11. staging failure removes this run's temporary version and preserves prior state
+# 13. staging failure removes this run's temporary version and preserves prior state
 good_candidate
 chmod u-w "$TMP/nvim-glass"
 expect_reject "unstageable version directory"
 chmod u+w "$TMP/nvim-glass"
 
-# 12. signal failure is post-commit: promotion remains visible and candidate is consumed
+# 14. signal failure is post-commit: promotion remains visible and candidate is consumed
 good_candidate
 cp "$CANDIDATE" "$TMP/expected-post-commit.json"
 before=$(readlink "$CUR")

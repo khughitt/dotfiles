@@ -68,4 +68,20 @@ echo '{"glass": []}' > "$TMP/nvim-glass/current/nvim-palette.json"
 if out=$("$CHECK" 2>&1); then echo "FAIL: malformed shape must fail"; exit 1; fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 
+# 9. aliases that would consume an eighth kitty slot must fail
+cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
+"$SYNC" --no-signal
+sed -i 's/"tab_on": "#1e2030"/"tab_on": "#222436"/' \
+  "$TMP/nvim-glass/current/nvim-palette.json"
+if out=$("$CHECK" 2>&1); then echo "FAIL: alias drift must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
+
+# 10. matching palette/kitty edits still cannot change Claude's native colors
+cp nvim/tests/noctalia/fixtures/raw_palette.json "$TMP/nvim-palette.candidate.json"
+"$SYNC" --no-signal
+sed -i 's/#022800/#012345/g' "$TMP/nvim-glass/current/nvim-palette.json" \
+  "$TMP/nvim-glass/current/kitty-glass.conf"
+if out=$("$CHECK" 2>&1); then echo "FAIL: changed native diff color must fail"; exit 1; fi
+[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
+
 echo "OK glass_check"

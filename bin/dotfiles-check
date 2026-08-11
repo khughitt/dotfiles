@@ -67,9 +67,9 @@ fi
 
 python3 tests/noctalia_agent_themes_test.py
 
-# noctalia glass invariant: kitty's generated transparent list must equal the
-# six chrome tones in the promoted nvim palette. Fails on partial/desynced
-# state; passes on fresh machines. See bin/noctalia-glass-check.
+# noctalia glass invariant: kitty's generated seven-slot transparent list must
+# match the promoted nvim palette. Fails on partial/desynced state; passes on
+# fresh machines. See bin/noctalia-glass-check.
 bin/noctalia-glass-check
 
 echo "dotfiles checks passed"

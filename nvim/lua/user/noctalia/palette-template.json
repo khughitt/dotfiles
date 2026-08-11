@@ -18,10 +18,13 @@
   "glass": {
     "chrome": "{{colors.surface_container_low.default.hex}}",
     "cursorline": "{{colors.surface_bright.default.hex}}",
-    "tab_on": "{{colors.surface_container.default.hex}}",
+    "tab_on": "{{colors.surface_container_low.default.hex}}",
     "tab_off": "{{colors.surface_container_high.default.hex}}",
-    "tab_fill": "{{colors.surface_container_highest.default.hex}}",
+    "tab_fill": "{{colors.surface_container_high.default.hex}}",
     "raised": "{{colors.outline_variant.default.hex}}",
+    "diff_added": "#022800",
+    "diff_removed": "#3d0100",
+    "selection": "{{colors.primary_container.default.hex}}",
     "float": "{{colors.surface_container_lowest.default.hex}}"
   }
 }

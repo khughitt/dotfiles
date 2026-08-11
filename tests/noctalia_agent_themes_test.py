@@ -39,7 +39,17 @@ def render(path: Path) -> bytes:
     return text.encode()
 
 
-claude = json.loads(render(ROOT / "noctalia/templates/claude.json"))
+claude_path = ROOT / "noctalia/templates/claude.json"
+claude_source = json.loads(claude_path.read_text())
+assert claude_source["overrides"]["diffAdded"] == "#022800"
+assert claude_source["overrides"]["diffAddedDimmed"] == "#022800"
+assert claude_source["overrides"]["diffRemoved"] == "#3d0100"
+assert claude_source["overrides"]["diffRemovedDimmed"] == "#3d0100"
+assert claude_source["overrides"]["selectionBg"] == (
+    "{{colors.primary_container.default.hex}}"
+)
+
+claude = json.loads(render(claude_path))
 assert claude["name"] == "Noctalia"
 assert claude["base"] == "dark"
 assert {

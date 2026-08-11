@@ -18,9 +18,24 @@ local ok, err = p.validate(bad)
 assert(not ok and err:match('primary'), 'missing key detected')
 
 -- validate: glass collision
-bad = read_json(fixture); bad.glass.tab_on = bad.glass.chrome
+bad = read_json(fixture); bad.glass.cursorline = bad.glass.chrome
 ok, err = p.validate(bad)
 assert(not ok and err:match('collide'), 'glass collision detected')
+
+-- validate: intentional aliases cannot drift and consume extra kitty slots
+bad = read_json(fixture); bad.glass.tab_on = '#222436'
+ok, err = p.validate(bad)
+assert(not ok and err:match('tab_on'), 'tab_on alias mismatch detected')
+
+-- validate: semantic slots must remain distinct from neutral glass
+bad = read_json(fixture); bad.glass.selection = bad.glass.chrome
+ok, err = p.validate(bad)
+assert(not ok and err:match('collide'), 'semantic glass collision detected')
+
+-- validate: Claude's native diff cells use fixed colors
+bad = read_json(fixture); bad.glass.diff_added = '#012345'
+ok, err = p.validate(bad)
+assert(not ok and err:match('diff_added'), 'changed native diff color detected')
 
 -- validate: float registered
 bad = read_json(fixture); bad.glass.float = bad.glass.raised
@@ -76,17 +91,24 @@ assert(p.validate(default), 'default must validate')
 assert(vim.deep_equal(default, read_json(fixture)), 'default must equal fixture values')
 
 -- fresh-machine invariant: kitty.conf's hardcoded fallback line carries the
--- default glass six, in registered-role order
+-- default seven registered slots, including semantic opacity overrides
 local conf = assert(io.open('kitty/kitty.conf')):read('*a')
 local line = conf:match('\ntransparent_background_colors ([^\n]+)')
 assert(line, 'kitty.conf fallback line missing')
 local tones = {}
-for hex in line:gmatch('#%x%x%x%x%x%x') do tones[#tones + 1] = hex end
-local order = { 'chrome', 'cursorline', 'tab_on', 'tab_off', 'tab_fill', 'raised' }
-assert(#tones == #order, 'kitty fallback must list exactly six tones')
-for i, role in ipairs(order) do
-  assert(tones[i] == default.glass[role],
-    ('kitty fallback tone %d != default glass.%s'):format(i, role))
+for token in line:gmatch('%S+') do tones[#tones + 1] = token end
+local expected = {
+  default.glass.chrome,
+  default.glass.cursorline,
+  default.glass.tab_off,
+  default.glass.raised,
+  default.glass.diff_added .. '@0.72',
+  default.glass.diff_removed .. '@0.72',
+  default.glass.selection .. '@0.55',
+}
+assert(#tones == #expected, 'kitty fallback must list exactly seven tones')
+for i, token in ipairs(expected) do
+  assert(tones[i] == token, ('kitty fallback tone %d mismatch'):format(i))
 end
 
 print('OK palette')

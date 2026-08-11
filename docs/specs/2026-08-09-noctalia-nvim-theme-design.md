@@ -13,8 +13,9 @@ switchable mood variant for syntax hues.
 
 - kitty makes a cell translucent only when its background is the default
   background or one of at most 7 colors listed in `transparent_background_colors`
-  (`kitty/kitty.conf`). Six are in use, hardcoded to tokyonight-moon chrome
-  colors, mirrored in `nvim/lua/user/glass.lua`.
+  (`kitty/kitty.conf`). All seven are now used: four neutral nvim chrome tones
+  plus colored Claude Code add/remove/selection tones, mirrored in
+  `nvim/lua/user/glass.lua`.
 - If nvim chrome colors become dynamic, kitty's transparent list must change in
   lockstep or the statusline/tabs punch opaque rectangles through the glass.
 - `~/.config/nvim` and `~/.config/kitty` are symlinks into this Dropbox-synced
@@ -65,8 +66,9 @@ read the render target directly — only the promoted path:
      failure).
   2. Validate the COMPLETE artifact: every required key present and
      well-formed hex (mirror of palette.lua's list — a missing accent must
-     never reach nvim), six glass tones pairwise distinct (glass.lua's
-     badge/separator constraint), `float` not among the six and ≠ `surface`.
+     never reach nvim), seven registered glass tones pairwise distinct,
+     `tab_on = chrome`, `tab_fill = tab_off`, and `float` not among the seven
+     and ≠ `surface`.
      On failure: `notify-send` warning, nothing written, signal nothing,
      exit non-zero.
   3. Stage BOTH outputs into a fresh version directory
@@ -104,16 +106,23 @@ cannot express an XDG fallback, so nothing in this pipeline honors
 override used only by tests.
 
 **Invariant:** kitty's transparent list is *generated from* the same artifact
-nvim reads, validated before either program is signalled. Mapping for the six
-registered tones: `surface_container_low`, `surface_bright`,
-`surface_container`, `surface_container_high`,
-`surface_container_highest`, `outline_variant`; `float` =
-`surface_container_lowest` — the only material token darker than `surface`,
-and `float` must be darker-than-bg, solid, and unregistered, so it cannot sit
-among the six. `surface_bright` is used for `cursorline` because the prior
-`surface_variant` mapping collided with `surface_container` in the real active
-predefined Tokyo Night expansion (the `tab_on` token). The mapping lives
-solely in the template; the Task 9 swatch comparison accepted this remap.
+nvim reads, validated before either program is signalled. Four neutral slots
+come from `surface_container_low` (`chrome`, also `tab_on`), `surface_bright`
+(`cursorline`), `surface_container_high` (`tab_off`, also `tab_fill`), and
+`outline_variant` (`raised`). The three semantic slots are Claude Code's native
+diff green `#022800` and diff red `#3d0100`, each at opacity `0.72`, plus the
+current Noctalia `primary_container` selection color at opacity `0.55`.
+`float = surface_container_lowest` — the only material token darker than
+`surface` — and must stay solid and unregistered. The aliases intentionally
+merge the two closest neutral pairs to fit all seven Kitty slots. The mapping
+lives solely in the template.
+
+Claude Code's native syntax-highlighted diff renderer does not honor custom
+theme background tokens. Registering its native red and green cell colors in
+Kitty therefore supplies the transparency; the custom Claude theme uses the
+same values for its fallback diff renderer and uses `primary_container` for
+selection. This preserves syntax highlighting instead of disabling the native
+renderer.
 Noctalia's built-in kitty template writing `themes/noctalia.conf` into the
 synced tree is a pre-existing noctalia behavior, out of scope here.
 
@@ -148,7 +157,8 @@ synced tree is a pre-existing noctalia behavior, out of scope here.
   `float_bg`, and the `recolor` map are **recomputed inside `apply()`** from
   the current palette, not captured at module load; today they are one-time
   snapshots (`glass.lua:22-49`), which would reapply stale colors on reload.
-  `float_bg` is palette-derived and must NOT be one of the six chrome tones.
+  `float_bg` is palette-derived and must NOT be one of the seven registered
+  tones.
 
 ### Moods
 
@@ -216,8 +226,8 @@ ColorScheme autocmd → glass recompute → lualine refresh.
   the validation itself to be wrong, not a race or a partial promote.
 - Scripted: `bin/noctalia-glass-check` (run manually and from
   `dotfiles-check`) — passes on fresh machines (no `current` symlink), FAILS
-  on partial state (symlink present but a file missing) or when kitty's six
-  tones differ from the palette's glass tones in role order.
+  on partial state (symlink present but a file missing) or when Kitty's seven
+  color/opacity tokens differ from the palette's glass tones in role order.
 
 ## Out of scope
 

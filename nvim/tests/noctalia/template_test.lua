@@ -21,5 +21,7 @@ assert(not rendered:find('{{', 1, true), 'unsubstituted placeholder left')
 local ok, raw = pcall(vim.json.decode, rendered)
 assert(ok, 'rendered template must be valid JSON: ' .. tostring(raw))
 assert(p.validate(raw), 'rendered template must satisfy palette.validate')
+assert(raw.glass.selection == tokens.primary_container,
+  'selection must use primary_container')
 
 print('OK template')

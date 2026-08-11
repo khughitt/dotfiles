@@ -1,8 +1,8 @@
 -- Fallback raw palette for machines where noctalia has not generated
 -- ~/.cache/noctalia/nvim-glass/current/nvim-palette.json yet.
--- Tokyonight-moon flavored. The glass table MUST stay identical to the
--- hardcoded transparent_background_colors fallback line in kitty/kitty.conf
--- (asserted by nvim/tests/noctalia/palette_test.lua).
+-- Tokyonight-moon flavored. Its registered glass colors and opacity suffixes
+-- MUST match the hardcoded transparent_background_colors fallback line in
+-- kitty/kitty.conf (asserted by nvim/tests/noctalia/palette_test.lua).
 return {
   primary = '#82aaff',
   primary_fixed_dim = '#65bcff',
@@ -23,10 +23,13 @@ return {
   glass = {
     chrome = '#1e2030',
     cursorline = '#2f334d',
-    tab_on = '#222436',
+    tab_on = '#1e2030',
     tab_off = '#272a3f',
-    tab_fill = '#2c3048',
+    tab_fill = '#272a3f',
     raised = '#3b4261',
+    diff_added = '#022800',
+    diff_removed = '#3d0100',
+    selection = '#003dbe',
     float = '#16161e',
   },
 }

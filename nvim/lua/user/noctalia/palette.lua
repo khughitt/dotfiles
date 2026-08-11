@@ -1,5 +1,5 @@
 -- Loads the noctalia-generated raw palette (JSON), validating shape and the
--- glass invariants (six distinct registered tones; float solid and
+-- glass invariants (seven distinct registered tones; float solid and
 -- unregistered). bin/noctalia-glass-sync enforces the same invariants before
 -- promoting, so a hard error here means the promoted file was hand-edited or
 -- corrupted. Only a MISSING file falls back (fresh machine).
@@ -15,7 +15,12 @@ local REQUIRED = {
   'surface', 'on_surface', 'on_surface_variant', 'on_background',
   'outline', 'outline_variant', 'surface_variant',
 }
-local REGISTERED_ROLES = { 'chrome', 'cursorline', 'tab_on', 'tab_off', 'tab_fill', 'raised' }
+local REGISTERED_ROLES = {
+  'chrome', 'cursorline', 'tab_off', 'raised',
+  'diff_added', 'diff_removed', 'selection',
+}
+local ALIASES = { { 'tab_on', 'chrome' }, { 'tab_fill', 'tab_off' } }
+local FIXED = { diff_added = '#022800', diff_removed = '#3d0100' }
 
 local function is_hex(v) return type(v) == 'string' and v:match('^#%x%x%x%x%x%x$') ~= nil end
 
@@ -31,7 +36,18 @@ function M.validate(raw)
     if not is_hex(v) then return nil, ('glass.%s missing/invalid'):format(role) end
     v = v:lower()
     if seen[v] then return nil, ('glass tones collide on %s'):format(v) end
+    if FIXED[role] and v ~= FIXED[role] then
+      return nil, ('glass.%s must equal %s'):format(role, FIXED[role])
+    end
     seen[v] = true
+  end
+  for _, pair in ipairs(ALIASES) do
+    local alias, target = pair[1], pair[2]
+    local v = raw.glass[alias]
+    if not is_hex(v) then return nil, ('glass.%s missing/invalid'):format(alias) end
+    if v:lower() ~= raw.glass[target]:lower() then
+      return nil, ('glass.%s must equal glass.%s'):format(alias, target)
+    end
   end
   if not is_hex(raw.glass.float) then return nil, 'glass.float missing/invalid' end
   if raw.glass.float:lower() == raw.surface:lower() then
