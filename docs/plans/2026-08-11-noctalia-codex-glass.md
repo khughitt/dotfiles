@@ -555,8 +555,7 @@ env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache nvim/tests/noctalia/run.sh
 env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache \
   python3 -m py_compile bin/noctalia-glass-sync bin/noctalia-glass-check \
   tests/noctalia_agent_themes_test.py
-(
-  set -e
+bash -euo pipefail -c '
   verify_glass_dir=$(mktemp -d)
   cp nvim/tests/noctalia/fixtures/raw_palette.json \
     "$verify_glass_dir/nvim-palette.candidate.json"
@@ -569,7 +568,7 @@ env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache \
   NOCTALIA_GLASS_DIR="$verify_glass_dir" \
     env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
   rm -rf "$verify_glass_dir"
-)
+'
 git diff --check
 test ! -e nvim.log
 ```
