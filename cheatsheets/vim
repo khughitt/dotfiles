@@ -1,6 +1,12 @@
 # yank a single character
 vy
 
+# system clipboard (CLIPBOARD / PRIMARY)
+"+y
+"*y
+"+p
+"*p
+
 # delete up to next word
 dw
 ldw

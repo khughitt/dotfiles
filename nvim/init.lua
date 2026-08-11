@@ -34,7 +34,7 @@ vim.opt.showmode = false              -- hide <INSERT>; lualine shows the mode
 
 -- reduce keycode mapping timeout delay
 vim.opt.ttimeoutlen = 5
-vim.opt.timeoutlen = 500
+vim.opt.timeoutlen = 300
 
 -- Fast save/quit
 vim.keymap.set('n', '<leader>w', '<cmd>update<cr>',  { desc = 'save' })
@@ -90,7 +90,6 @@ vim.opt.guicursor = { 'n-v-c:block-Cursor/lCursor-blinkon0',
 -- Visual Cues
 -- ---------------------------------------------------------------------------
 vim.opt.colorcolumn = { 100 }  -- show right margin
-vim.opt.showmatch = true       -- show matching braces when being added
 
 -- ---------------------------------------------------------------------------
 -- Navigation
@@ -238,11 +237,9 @@ vim.keymap.set('x', 'zz', 'ygvgc`.jP',    { remap = true, desc = 'duplicate sele
 -- ---------------------------------------------------------------------------
 --  Copy and Paste
 --
---  unnamed     -> CLIPBOARD (ctrl-shift-v)
---  unnamedplus -> PRIMARY   (middle mouse)
+-- Use "+ and "* explicitly for CLIPBOARD and PRIMARY. Keeping 'clipboard'
+-- unset prevents ordinary yanks, deletes, and changes from spawning providers.
 -- ---------------------------------------------------------------------------
-vim.opt.clipboard:prepend({ 'unnamed', 'unnamedplus' })
-
 -- Neovim auto-detects a clipboard provider, but pin wl-clipboard explicitly on
 -- Wayland so PRIMARY (*) is wired up as well as CLIPBOARD (+). Left unset
 -- elsewhere on purpose: over ssh/tmux with no clipboard tool available,
