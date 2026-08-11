@@ -74,9 +74,8 @@ read the render target directly — only the promoted path:
      exit non-zero.
   3. Stage BOTH outputs into a fresh version directory
      `~/.cache/noctalia/nvim-glass/v-*/` — `nvim-palette.json` (candidate
-     verbatim) and `kitty-glass.conf` (`transparent_background_colors` in
-     role order plus `selection_background` using the same registered
-     selection tone) — then atomically rename a prepared symlink
+     verbatim) and `kitty-glass.conf` (one `transparent_background_colors`
+     line, tones in role order) — then atomically rename a prepared symlink
      over `~/.cache/noctalia/nvim-glass/current`. One rename switches both
      files; there is no interleaving in which kitty and nvim can read
      different generations. Superseded version dirs are pruned after the
@@ -94,12 +93,13 @@ read the render target directly — only the promoted path:
   state of running processes: any fresh read of both files through
   `current` sees a single consistent generation.
 
-- `kitty.conf` keeps hardcoded `transparent_background_colors` and semantic
-  `selection_background` fallbacks. After `current-theme.conf`, it includes
-  `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf` (env-var
-  expansion in include paths is already used for `${HOSTNAME}.conf`; Kitty is
-  last-value-wins, so this final include overrides both the built-in theme and
-  fallbacks when present, while a missing file is only a startup warning).
+- `kitty.conf` keeps its hardcoded `transparent_background_colors` fallback
+  and includes
+  `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf`. The pending
+  Codex refinement below adds the semantic `selection_background` fallback,
+  extends the generated include with that setting, and moves the include below
+  `current-theme.conf`; Kitty is last-value-wins, so the generated selection
+  must come after Noctalia's built-in theme selection.
 
 **Path contract:** production paths are pinned to literal `~/.cache/noctalia/`
 everywhere — kitty's `include` line and noctalia's `user-templates.toml`
@@ -117,8 +117,10 @@ coding-agent diff green `#022800` and diff red `#3d0100`, each at opacity
 opacity `0.55`.
 `float = surface_container_lowest` — the only material token darker than
 `surface` — and must stay solid and unregistered. The aliases intentionally
-merge the two closest neutral pairs to fit all seven Kitty slots. The mapping
-lives solely in the template.
+merge the two closest neutral pairs to fit all seven Kitty slots. The material
+token-to-role mapping lives in the template. The fixed semantic hexes are
+deliberately mirrored by validators, fallbacks, agent themes, and fixtures so
+drift fails tests instead of silently losing transparency.
 
 Claude Code's native syntax-highlighted diff renderer does not honor custom
 theme background tokens. Registering its native red and green cell colors in
@@ -127,12 +129,16 @@ same values for its fallback diff renderer and uses `primary_container` for
 selection. This preserves syntax highlighting instead of disabling the native
 renderer.
 
+#### Pending Codex refinement
+
 Codex's custom `.tmTheme` has a narrower but useful UI contract. Its
 `markup.inserted` and `markup.deleted` scope backgrounds override the native
-diff backgrounds, so the Noctalia theme sets them to the same fixed green and
-red already registered for Claude. Terminal text selection is owned by Kitty,
-not Codex; the generated `selection_background` points it at the registered
-`primary_container` tone and therefore updates live on wallpaper changes.
+diff backgrounds, so the Noctalia theme will set them to the same fixed green
+and red already registered for Claude. Terminal text selection is owned by
+Kitty, not Codex; the generated `selection_background` will point it at the
+registered `primary_container` tone and therefore update live on wallpaper
+changes. `kitty-glass.conf` will contain both settings, and its include will
+move below `current-theme.conf` so the generated selection wins.
 
 The Codex input box is intentionally unchanged. Codex 0.147.0 derives that
 background by blending white at 12% over the terminal background and caches
@@ -173,10 +179,8 @@ synced tree is a pre-existing noctalia behavior, out of scope here.
   `require('tokyonight.util').bg` and `.fg`: tokyonight caches them before
   invoking the callback and its highlight groups blend against them
   afterwards — without the update, every blend stays moon-based.
-- **`glass.lua`** (existing, modified) — `M.palette`, `M.registered`,
-  `float_bg`, and the `recolor` map are **recomputed inside `apply()`** from
-  the current palette, not captured at module load; today they are one-time
-  snapshots (`glass.lua:22-49`), which would reapply stale colors on reload.
+- **`glass.lua`** — `refresh()` recomputes `M.palette` and `M.registered` from
+  the current palette before `apply()` or `lualine_theme()` uses them.
   `float_bg` is palette-derived and must NOT be one of the seven registered
   tones.
 
@@ -189,9 +193,8 @@ synced tree is a pre-existing noctalia behavior, out of scope here.
 | `warm`     | Spectrum biased toward amber/red, chroma nudged up |
 | `pastel`   | Spectrum with lightness raised, chroma dropped |
 
-Candidates are rendered as truecolor swatch blocks in the terminal during
-implementation for side-by-side comparison against the live wallpaper; the set
-may be tuned or culled there.
+`bin/noctalia-mood-swatches` renders all four retained moods as truecolor
+swatch blocks for comparison against the live wallpaper.
 
 - `:NoctaliaMood <name>` (with completion) re-derives and re-applies live.
 - Choice persists to `~/.local/state/nvim/noctalia-mood` (one line), read at
@@ -203,15 +206,16 @@ may be tuned or culled there.
 
 - tokyonight opts: `transparent = true` (unchanged) plus `on_colors` replacing
   its palette per the contract above.
-- lualine: `options.theme` is passed as a **function** (`ui.lua` currently
-  calls `glass.lualine_theme()` once at setup, freezing the colors), and the
-  reload path re-invokes lualine so the theme function re-evaluates.
+- lualine: `options.theme` is a function that calls
+  `require('user.glass').lualine_theme()`, so lualine re-evaluates the current
+  palette when setup runs after a `ColorScheme` event.
 - SIGUSR1 handler (pattern from noctalia docs): re-read the palette,
   re-derive with current mood, re-run `vim.cmd.colorscheme('tokyonight')`
-  (the call at `nvim/init.lua:345`; the moon style comes from tokyonight's
-  default `style`). lualine re-runs its setup on every `ColorScheme` event
-  and re-evaluates function themes; the `ColorScheme` autocmd re-applies
-  glass (which now recomputes from the fresh palette).
+  (the moon style comes from tokyonight's default `style`). Startup separately
+  calls `vim.cmd.colorscheme('tokyonight-moon')` at `nvim/init.lua:349`.
+  lualine re-runs its setup on every `ColorScheme` event and re-evaluates
+  function themes; the `ColorScheme` autocmd re-applies glass from the fresh
+  palette.
 
 ### Data flow
 
@@ -224,11 +228,12 @@ ColorScheme autocmd → glass recompute → lualine refresh.
 ## Error handling
 
 - Palette file missing (fresh machine) → nvim falls back to its committed
-  tokyonight-moon default palette + single `vim.notify`; kitty's hardcoded
-  fallback line carries the *matching* tokyonight-moon chrome tones, so glass
-  works before noctalia has ever run. The missing include is only a kitty
-  startup warning. Fresh-install doc gains a one-line "apply a noctalia
-  scheme once" step.
+  tokyonight-moon default palette + single `vim.notify`; Kitty's hardcoded
+  fallback line carries the four matching tokyonight-moon chrome tones plus
+  fixed agent diff colors and a frozen Noctalia `primary_container` selection
+  tone, so glass works before Noctalia has ever run. The missing include is
+  only a Kitty startup warning. Fresh-install docs tell the user to apply a
+  Noctalia scheme once.
 - Candidate malformed (bad JSON, missing key, glass violation) → glass-sync
   leaves the `current` symlink untouched and signals nothing; running and
   newly started programs keep the last promoted generation. If the promoted
