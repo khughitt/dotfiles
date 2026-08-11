@@ -142,6 +142,8 @@
       <string>markup.inserted</string>
       <key>settings</key>
       <dict>
+        <key>background</key>
+        <string>#022800</string>
         <key>foreground</key>
         <string>{{colors.secondary_fixed_dim.default.hex}}</string>
       </dict>
@@ -153,6 +155,8 @@
       <string>markup.deleted</string>
       <key>settings</key>
       <dict>
+        <key>background</key>
+        <string>#3d0100</string>
         <key>foreground</key>
         <string>{{colors.error.default.hex}}</string>
       </dict>

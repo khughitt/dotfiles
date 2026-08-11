@@ -72,5 +72,12 @@ assert codex["settings"][0]["settings"]["background"].startswith("#")
 assert any("comment" in entry.get("scope", "") for entry in codex["settings"])
 assert any("keyword" in entry.get("scope", "") for entry in codex["settings"])
 assert any("string" in entry.get("scope", "") for entry in codex["settings"])
+codex_scopes = {
+    entry["scope"]: entry["settings"]
+    for entry in codex["settings"]
+    if "scope" in entry
+}
+assert codex_scopes["markup.inserted"]["background"] == "#022800"
+assert codex_scopes["markup.deleted"]["background"] == "#3d0100"
 
 print("OK noctalia agent themes")
