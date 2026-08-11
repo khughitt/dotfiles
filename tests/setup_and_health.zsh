@@ -94,7 +94,7 @@ test_bash_config_is_native_and_minimal() {
 
         [[ "$PATH" == "$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:/usr/bin:/bin" ]]
         [[ "$EDITOR" == nvim ]]
-        [[ "$PAGER" == less ]]
+        [[ "$PAGER" == "less -R" ]]
         [[ "$HISTCONTROL" == ignoreboth:erasedups ]]
         [[ "$HISTSIZE" == 10000 ]]
         [[ "$HISTFILESIZE" == 100000 ]]
@@ -123,6 +123,24 @@ test_bash_config_is_native_and_minimal() {
   fi
 
   rm -rf "$tmp"
+}
+
+test_glow_theme_renders_color() {
+  local output
+
+  output=$(print -- '# Heading' | env -u NO_COLOR CLICOLOR_FORCE=1 \
+    glow --config /dev/null --style "${repo_root}/glow/noctalia.json" - 2>&1) || \
+    fail "Glow should load the Noctalia stylesheet: ${output}"
+  [[ "$output" == *$'\e['* ]] || fail "Noctalia stylesheet should render ANSI color"
+}
+
+test_zsh_pager_is_ansi_aware() {
+  env -i \
+    HOME=/tmp \
+    HOSTNAME=dotfiles-test \
+    PATH=/usr/bin:/bin \
+    zsh -f -c 'source "$1"; [[ "$PAGER" == "less -R" ]]' \
+    zsh "${repo_root}/zshenv" || fail "zsh should configure an ANSI-aware pager"
 }
 
 test_setup_dry_run_link_only_does_not_write_home() {
@@ -173,7 +191,7 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "$(readlink "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf")" == \
       "${repo_root}/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
     fail "expected niri stop-timeout override to point into the repository"
-  for unit in codex-ssh-agent.service familiar-reap.service familiar-reap.timer mindful-docker.service; do
+  for unit in familiar-reap.service familiar-reap.timer mindful-docker.service; do
     [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
       fail "expected linked ${unit}"
     [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
@@ -490,6 +508,8 @@ test_dotfiles_health_fails_wrong_memory_alert_link() {
 test_tmp_cleanup_runs_only_at_process_exit
 test_tmp_cleanup_is_centralized
 test_bash_config_is_native_and_minimal
+test_glow_theme_renders_color
+test_zsh_pager_is_ansi_aware
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
 test_setup_dry_run_can_enable_user_timers

@@ -55,13 +55,11 @@ Enable the host-specific units only after their referenced projects and tools
 exist:
 
 ```sh
-systemctl --user enable --now codex-ssh-agent.service
 systemctl --user enable --now familiar-reap.timer
 systemctl --user enable --now mindful-docker.service
 ```
 
-The Codex SSH configuration expects `%t/codex-ssh-agent.sock`. The Familiar
-timer expects `%h/d/familiar`, while the Mindful service expects
+The Familiar timer expects `%h/d/familiar`, while the Mindful service expects
 `%h/d/mindful/v3` and a running system Docker service.
 
 ## Kernel parameters

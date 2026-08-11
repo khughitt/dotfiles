@@ -4,7 +4,7 @@
 
 export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
 export EDITOR=nvim
-export PAGER=less
+export PAGER='less -R'
 
 HISTCONTROL=ignoreboth:erasedups
 HISTSIZE=10000

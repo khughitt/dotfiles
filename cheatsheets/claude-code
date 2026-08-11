@@ -9,7 +9,12 @@
 #
 # keyboard shortcuts
 #
-ctrl+s                    # stash prompt
+ctrl+s        # stash prompt
+
+#
+# session manager
+#
+ctrl+x        # delete session
 
 #
 # cli args
