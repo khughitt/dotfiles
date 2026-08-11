@@ -48,6 +48,7 @@ zeit/
 claude/commands
 hypr/host.conf
 kitty/os-local.conf
+kitty/kitty.conf.bak
 docs/
 !/docs/
 /docs/*
