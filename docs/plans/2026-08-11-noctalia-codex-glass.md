@@ -555,22 +555,30 @@ env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache nvim/tests/noctalia/run.sh
 env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache \
   python3 -m py_compile bin/noctalia-glass-sync bin/noctalia-glass-check \
   tests/noctalia_agent_themes_test.py
-verify_glass_dir=$(mktemp -d)
-trap 'rm -rf "$verify_glass_dir"' EXIT
-cp nvim/tests/noctalia/fixtures/raw_palette.json \
-  "$verify_glass_dir/nvim-palette.candidate.json"
-NOCTALIA_GLASS_DIR="$verify_glass_dir" \
-  bin/noctalia-glass-sync --no-signal
-NOCTALIA_GLASS_DIR="$verify_glass_dir" \
-  env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
+(
+  set -e
+  verify_glass_dir=$(mktemp -d)
+  cp nvim/tests/noctalia/fixtures/raw_palette.json \
+    "$verify_glass_dir/nvim-palette.candidate.json"
+  NOCTALIA_GLASS_DIR="$verify_glass_dir" \
+    bin/noctalia-glass-sync --no-signal
+  test -L "$verify_glass_dir/nvim-glass/current" || {
+    echo "isolated promote missing"
+    exit 1
+  }
+  NOCTALIA_GLASS_DIR="$verify_glass_dir" \
+    env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
+  rm -rf "$verify_glass_dir"
+)
 git diff --check
 test ! -e nvim.log
 ```
 
 Expected: all commands exit 0; the Noctalia runner ends with `OK noctalia
-suite`, isolated `dotfiles-check` ends with `dotfiles checks passed`, and no
-`nvim.log` exists. Do not run production `bin/noctalia-glass-check` here: its
-one-line live generation is intentionally old until Task 6 runs after merge.
+suite`, the isolated promotion assertion succeeds, isolated `dotfiles-check`
+ends with `dotfiles checks passed`, and no `nvim.log` exists. Do not run
+production `bin/noctalia-glass-check` here: its one-line live generation is
+intentionally old until Task 6 runs after merge.
 
 - [ ] **Step 7: Commit**
 
