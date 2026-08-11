@@ -1,7 +1,7 @@
 # Noctalia → Neovim theming (glass-preserving)
 
 **Status:** Implemented (753305e..0485858); Codex diff/selection refinement
-approved, pending implementation.
+implemented (c8b7e7f..593806b).
 
 ## Goal
 
@@ -58,9 +58,8 @@ read the render target directly — only the promoted path:
     as cwd, so the path must not be repo-relative)
   - Emits a JSON object of raw material colors — the 4 accents (+ fixed_dim
     variants), surfaces, outline, on_surface tones — plus a `glass` table of
-    role → hex. JSON so the hook syntax-validates the whole file with
-    `json.loads` and nvim reads it with `vim.json.decode`; no hand-rolled
-    parsing anywhere.
+    role → hex. `glass.selection_fg` maps `on_primary_container` beside the
+    existing `glass.selection` → `primary_container` mapping.
 
 - **`bin/noctalia-glass-sync`** (committed, executable) does, in order:
   1. Parse the candidate with `json.loads` (a syntax error is a validation
@@ -74,8 +73,8 @@ read the render target directly — only the promoted path:
      exit non-zero.
   3. Stage BOTH outputs into a fresh version directory
      `~/.cache/noctalia/nvim-glass/v-*/` — `nvim-palette.json` (candidate
-     verbatim) and `kitty-glass.conf` (one `transparent_background_colors`
-     line, tones in role order) — then atomically rename a prepared symlink
+     verbatim) and `kitty-glass.conf` (three lines: `transparent_background_colors`, paired
+     `selection_foreground`, and `selection_background`) — then atomically rename a prepared symlink
      over `~/.cache/noctalia/nvim-glass/current`. One rename switches both
      files; there is no interleaving in which kitty and nvim can read
      different generations. Superseded version dirs are pruned after the
@@ -93,16 +92,12 @@ read the render target directly — only the promoted path:
   state of running processes: any fresh read of both files through
   `current` sees a single consistent generation.
 
-- `kitty.conf` keeps its hardcoded `transparent_background_colors` fallback
-  and includes
-  `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf`. The pending
-  Codex refinement below adds required non-registered `glass.selection_fg`
-  (mapped from `on_primary_container`), adds paired
+- `kitty.conf` keeps hardcoded `transparent_background_colors` and paired
   `selection_foreground`/`selection_background` fallbacks after all static
-  includes, extends the generated include with the same pair, and makes it the
-  final include. Kitty is last-value-wins: the fixed pair must beat Noctalia's
-  built-in theme when generation is absent, and the generated pair must beat
-  every static include when it exists.
+  includes, then includes
+  `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf` last. Kitty is
+  last-value-wins, so the fixed pair wins when no generation exists and the
+  generated pair wins when it does.
 
 **Path contract:** production paths are pinned to literal `~/.cache/noctalia/`
 everywhere — kitty's `include` line and noctalia's `user-templates.toml`
@@ -120,7 +115,7 @@ coding-agent diff green `#022800` and diff red `#3d0100`, each at opacity
 opacity `0.55`. That selection opacity applies to ordinary cells painted by
 Claude via SGR. Kitty 0.48.2 forces its own selected cells to alpha `1.0`
 before substituting `selection_background`, so Kitty selection can share the
-live background but cannot be translucent. The pending refinement pairs it
+live background but cannot be translucent. The refinement pairs it
 with `glass.selection_fg`, mapped from Noctalia's matching
 `on_primary_container`, so both halves live in the same artifact object and
 update path; the committed fallback pair is `#c8d3f5` on `#003dbe`
@@ -141,20 +136,19 @@ same values for its fallback diff renderer and uses `primary_container` for
 selection. This preserves syntax highlighting instead of disabling the native
 renderer.
 
-#### Pending Codex refinement
+#### Codex refinement
 
 Codex's custom `.tmTheme` has a narrower but useful UI contract. Its
 `markup.inserted` and `markup.deleted` scope backgrounds override the native
-diff backgrounds, so the Noctalia theme will set them to the same fixed green
-and red already registered for Claude. Terminal text selection is owned by
-Kitty, not Codex; the generated `selection_foreground` and
-`selection_background` will use `glass.selection_fg` and the registered
-`glass.selection` tone (`on_primary_container`/`primary_container`), so the
-complete pair updates live on wallpaper changes. Kitty forces selected cells
-fully opaque, so this supplies live color, not translucency.
-`kitty-glass.conf` will contain the transparency directive plus both selection
-settings, and its include will become Kitty's final include so the generated
-pair wins.
+diff backgrounds, so the Noctalia theme sets them to the same fixed green and
+red already registered for Claude. Kitty owns terminal text selection; the
+generated `selection_foreground`/`selection_background` pair uses
+`glass.selection_fg`/`glass.selection` (Noctalia
+`on_primary_container`/`primary_container`) and therefore updates live on
+wallpaper changes. Kitty 0.48.2 forces selected cells to alpha 1 before
+substituting those colors, so its own selection remains opaque. The registered
+background still makes Claude's SGR-painted selection translucent at 55%
+opacity.
 
 Acceptance: in a newly started Codex session, added/deleted diff backgrounds
 are colored and translucent; terminal text selection is Noctalia-colored,
@@ -250,9 +244,10 @@ ColorScheme autocmd → glass recompute → lualine refresh.
 
 - Palette file missing (fresh machine) → nvim falls back to its committed
   tokyonight-moon default palette + single `vim.notify`; Kitty's hardcoded
-  fallback line carries the four matching tokyonight-moon chrome tones plus
-  fixed agent diff colors and a frozen Noctalia `primary_container` selection
-  tone, so glass works before Noctalia has ever run. The missing include is
+  fallback carries the four matching tokyonight-moon chrome tones, fixed agent
+  diff colors, and the paired selection foreground/background
+  `#c8d3f5`/`#003dbe`, so glass and readable selection work before Noctalia has
+  ever run. The missing include is
   only a Kitty startup warning. Fresh-install docs tell the user to apply a
   Noctalia scheme once.
 - Candidate malformed (bad JSON, missing key, glass violation) → glass-sync
@@ -279,8 +274,10 @@ ColorScheme autocmd → glass recompute → lualine refresh.
   the validation itself to be wrong, not a race or a partial promote.
 - Scripted: `bin/noctalia-glass-check` (run manually and from
   `dotfiles-check`) — passes on fresh machines (no `current` symlink), FAILS
-  on partial state (symlink present but a file missing) or when Kitty's seven
-  color/opacity tokens differ from the palette's glass tones in role order.
+  on partial state (symlink present but a file missing), when Kitty's seven
+  color/opacity tokens differ from the palette's glass tones in role order, or
+  when either generated selection directive differs from the promoted
+  `glass.selection_fg`/`glass.selection` pair.
 
 ## Out of scope
 
