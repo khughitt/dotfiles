@@ -96,10 +96,12 @@ read the render target directly — only the promoted path:
 - `kitty.conf` keeps its hardcoded `transparent_background_colors` fallback
   and includes
   `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf`. The pending
-  Codex refinement below adds the semantic `selection_background` fallback,
-  extends the generated include with that setting, and moves the include below
-  `current-theme.conf`; Kitty is last-value-wins, so the generated selection
-  must come after Noctalia's built-in theme selection.
+  Codex refinement below adds the semantic `selection_background` fallback
+  after all static includes, extends the generated include with that setting,
+  and makes the generated include the final include. Kitty is last-value-wins:
+  the fixed selection must beat Noctalia's built-in theme when generation is
+  absent, and the generated selection must beat every static include when it
+  exists.
 
 **Path contract:** production paths are pinned to literal `~/.cache/noctalia/`
 everywhere — kitty's `include` line and noctalia's `user-templates.toml`
@@ -114,7 +116,10 @@ come from `surface_container_low` (`chrome`, also `tab_on`), `surface_bright`
 `outline_variant` (`raised`). The three semantic slots are the shared
 coding-agent diff green `#022800` and diff red `#3d0100`, each at opacity
 `0.72`, plus the current Noctalia `primary_container` selection color at
-opacity `0.55`.
+opacity `0.55`. That selection opacity applies to ordinary cells painted by
+Claude via SGR. Kitty 0.48.2 forces its own selected cells to alpha `1.0`
+before substituting `selection_background`, so Kitty selection can share the
+live color but cannot be translucent.
 `float = surface_container_lowest` — the only material token darker than
 `surface` — and must stay solid and unregistered. The aliases intentionally
 merge the two closest neutral pairs to fit all seven Kitty slots. The material
@@ -137,12 +142,14 @@ diff backgrounds, so the Noctalia theme will set them to the same fixed green
 and red already registered for Claude. Terminal text selection is owned by
 Kitty, not Codex; the generated `selection_background` will point it at the
 registered `primary_container` tone and therefore update live on wallpaper
-changes. `kitty-glass.conf` will contain both settings, and its include will
-move below `current-theme.conf` so the generated selection wins.
+changes. Kitty forces selected cells fully opaque, so this supplies live color,
+not translucency. `kitty-glass.conf` will contain both settings, and its
+include will become Kitty's final include so the generated selection wins.
 
 Acceptance: in a newly started Codex session, added/deleted diff backgrounds
-and terminal text selection are colored and translucent before and after later
-wallpaper switches; the input box remains Codex-owned and opaque.
+are colored and translucent; terminal text selection is Noctalia-colored,
+opaque, and follows later wallpaper switches; the input box remains Codex-owned
+and opaque.
 
 The Codex input box is intentionally unchanged. Codex 0.147.0 derives that
 background by blending white at 12% over the terminal background and caches

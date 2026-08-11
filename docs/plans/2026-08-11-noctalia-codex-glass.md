@@ -5,15 +5,15 @@
 > `superpowers:executing-plans` to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give Codex translucent red/green diff backgrounds and a live
-Noctalia-colored terminal selection while leaving its unsupported input box
+**Goal:** Give Codex translucent red/green diff backgrounds and a live-colored,
+necessarily opaque Kitty selection while leaving its unsupported input box
 unchanged.
 
 **Architecture:** Codex's existing `.tmTheme` supplies the fixed diff cell
 backgrounds already registered in Kitty. The atomic Noctalia promotion writes
 the current `primary_container` as `selection_background` beside Kitty's
 seven-slot transparency directive, and Kitty includes that generated file
-after `current-theme.conf` so last-value-wins applies the live selection.
+last so last-value-wins applies the live selection.
 
 **Tech Stack:** XML plist (`.tmTheme`), Python 3 stdlib, Bash tests, Lua/Neovim
 tests, Kitty configuration.
@@ -33,6 +33,9 @@ tests, Kitty configuration.
 - Kitty keeps exactly seven registered transparency colors: four neutral
   chrome tones, `#022800@0.72`, `#3d0100@0.72`, and the current
   `glass.selection@0.55`.
+- `glass.selection@0.55` makes Claude's SGR-painted selection translucent.
+  Kitty 0.48.2 forces its own selected cells to alpha `1.0`, so
+  `selection_background` supplies live color only and remains opaque.
 - The Codex diff backgrounds are exactly `#022800` and `#3d0100`; they must
   match the fixed Kitty registrations and Claude theme.
 - `kitty-glass.conf` contains exactly two directives, in this order:
@@ -176,6 +179,15 @@ if out=$("$CHECK" 2>&1); then echo "FAIL: selection desync must fail"; exit 1; f
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL: line, got: $out"; exit 1; }
 ```
 
+Before the old partial-state case removes `nvim-palette.json`, reset the
+generation so that case begins from healthy state like every other mutation:
+
+```bash
+cp nvim/tests/noctalia/fixtures/raw_palette.json \
+  "$TMP/nvim-palette.candidate.json"
+"$SYNC" --no-signal
+```
+
 - [ ] **Step 3: Run both focused tests and confirm RED**
 
 Run:
@@ -269,12 +281,11 @@ git commit -m "feat(noctalia): generate kitty selection color"
 - Modify: `nvim/tests/noctalia/palette_test.lua:93-112`
 - Modify: `kitty/kitty.conf:80-123`
 - Modify: `noctalia/noctalia.md:30-58`
-- Modify: `docs/specs/2026-08-09-noctalia-nvim-theme-design.md`
 
 **Interfaces:**
 - Consumes: the two-line generated include from Task 2.
 - Produces: a fresh-machine `selection_background #003dbe` fallback and
-  generated include precedence over `current-theme.conf`.
+  generated include precedence over every static include.
 
 - [ ] **Step 1: Extend the fresh-machine invariant test**
 
@@ -284,13 +295,18 @@ Add after the existing fallback-tone loop in `palette_test.lua`:
 local selection = conf:match('\nselection_background ([^\n]+)')
 assert(selection == default.glass.selection,
   'kitty selection fallback must equal default glass.selection')
-local theme_include = assert(conf:find('include current-theme.conf', 1, true),
-  'current-theme include missing')
+local os_include = assert(conf:find('include os-local.conf', 1, true),
+  'os-local include missing')
+local fallback_selection = assert(conf:find(
+  '\nselection_background #003dbe', 1, true),
+  'selection fallback missing')
 local glass_include = assert(conf:find(
   'include ${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf', 1, true),
   'generated glass include missing')
-assert(theme_include < glass_include,
-  'generated glass include must follow current-theme.conf')
+assert(os_include < fallback_selection and fallback_selection < glass_include,
+  'selection fallback must follow other includes and precede generated glass')
+assert(not conf:find('\ninclude ', glass_include + 1, true),
+  'generated glass include must be the final include')
 ```
 
 - [ ] **Step 2: Run the focused test and confirm RED**
@@ -306,20 +322,20 @@ glass.selection`.
 
 - [ ] **Step 3: Add the fallback and move the generated include**
 
-Immediately after the hardcoded seven-slot line in `kitty/kitty.conf`, add:
-
-```conf
-selection_background #003dbe
-```
-
 Delete the generated include from its current position above the tmux settings.
-Immediately after the `# END_KITTY_THEME` line, add:
+After `include os-local.conf`, make these the final settings in the file:
 
 ```conf
-# Generated Noctalia transparency and selection override. This must follow
-# current-theme.conf because Kitty applies the last value for each setting.
+# Fixed selection fallback applies when no promoted generation exists.
+selection_background #003dbe
+# Generated Noctalia transparency and selection override. This must be the
+# final include because Kitty applies the last value for each setting.
 include ${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf
 ```
+
+This placement makes the fallback win over `themes/noctalia.conf` and
+`current-theme.conf` when the generated include is missing, while a present
+generated include wins over every static include.
 
 Update the nearby slot comment from Claude-only wording to shared Claude/Codex
 diff and selection semantics. Do not edit the generated/gitignored
@@ -343,53 +359,14 @@ Replace the final Agent themes paragraph in `noctalia/noctalia.md` with:
 Claude Code reloads theme-file changes live. If its themes directory did not
 exist when Claude started, restart once after the first render. Codex applies
 its syntax theme in new sessions. Kitty gives Claude and Codex red/green diff
-backgrounds 72% opacity and the current Noctalia `primary_container` terminal
-selection 55% opacity; the selection updates on wallpaper changes. Codex's
-input box remains opaque because Codex owns and caches that background and
-exposes no theme role for it.
+backgrounds 72% opacity. The registered `primary_container` gives Claude's
+painted selection 55% opacity; Kitty's own terminal selection uses the same
+live-updating color but remains opaque because Kitty forces selected cells to
+alpha 1. Codex's input box remains opaque because Codex owns and caches that
+background and exposes no theme role for it.
 ```
 
-- [ ] **Step 6: Mark the approved spec behavior implemented**
-
-Change the status line to:
-
-```markdown
-**Status:** Implemented; original pipeline commits `753305e..0485858`, Codex
-diff/selection refinement completed 2026-08-11.
-```
-
-Replace the pending Kitty architecture bullet with:
-
-```markdown
-- `kitty.conf` keeps hardcoded `transparent_background_colors` and semantic
-  `selection_background` fallbacks, then includes
-  `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf` after
-  `current-theme.conf`. Kitty is last-value-wins, so the generated selection
-  overrides Noctalia's built-in theme selection.
-```
-
-Replace the pending Codex subsection through its acceptance paragraph with:
-
-```markdown
-#### Codex refinement
-
-Codex's custom `.tmTheme` has a narrower but useful UI contract. Its
-`markup.inserted` and `markup.deleted` scope backgrounds override the native
-diff backgrounds, so the Noctalia theme sets them to the same fixed green and
-red already registered for Claude. Terminal text selection is owned by Kitty,
-not Codex; the generated `selection_background` points it at the registered
-`primary_container` tone and therefore updates live on wallpaper changes.
-`kitty-glass.conf` contains both settings, and its include follows
-`current-theme.conf` so the generated selection wins.
-
-Acceptance: in a newly started Codex session, added/deleted diff backgrounds
-and terminal text selection are colored and translucent before and after later
-wallpaper switches; the input box remains Codex-owned and opaque.
-```
-
-Retain the following input-box rationale unchanged.
-
-- [ ] **Step 7: Run the complete automated verification**
+- [ ] **Step 6: Run the complete automated verification**
 
 Run from the worktree root:
 
@@ -407,19 +384,94 @@ Expected: all commands exit 0; the Noctalia runner ends with `OK noctalia
 suite`, `dotfiles-check` ends with `dotfiles checks passed`, and no `nvim.log`
 exists.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add kitty/kitty.conf nvim/tests/noctalia/palette_test.lua \
   noctalia/noctalia.md
-git add -f docs/specs/2026-08-09-noctalia-nvim-theme-design.md
 git diff --cached --check
 git commit -m "feat(noctalia): activate codex glass refinement"
 ```
 
 ---
 
-### Task 4: Activate and visually verify
+### Task 4: Record the implemented commit range in the spec
+
+**Files:**
+- Modify: `docs/specs/2026-08-09-noctalia-nvim-theme-design.md`
+
+**Interfaces:**
+- Consumes: the actual Task 1 and Task 3 commit IDs.
+- Produces: an ancestor-checkable implemented status and present-tense design.
+
+- [ ] **Step 1: Resolve and verify the implementation range**
+
+Run:
+
+```bash
+codex_first=$(git log --format=%h \
+  --grep='^feat(noctalia): add codex diff backgrounds$' -1)
+codex_last=$(git log --format=%h \
+  --grep='^feat(noctalia): activate codex glass refinement$' -1)
+test -n "$codex_first" && test -n "$codex_last"
+git merge-base --is-ancestor "$codex_first" "$codex_last"
+printf '%s..%s\n' "$codex_first" "$codex_last"
+```
+
+Expected: one short-hash range and exit 0. Use those exact printed hashes in
+Step 2; do not write shell variable names or placeholder text into the spec.
+
+- [ ] **Step 2: Mark the approved behavior implemented**
+
+Use `apply_patch` to replace the status's pending clause with
+`Codex diff/selection refinement implemented (` followed by the exact range
+from Step 1 and `).`
+
+Replace the pending Kitty architecture bullet with:
+
+```markdown
+- `kitty.conf` keeps hardcoded `transparent_background_colors` and semantic
+  `selection_background` fallbacks after all static includes, then includes
+  `${HOME}/.cache/noctalia/nvim-glass/current/kitty-glass.conf` last. Kitty is
+  last-value-wins, so the fixed selection wins when no generation exists and
+  the generated selection wins when it does.
+```
+
+Replace the pending Codex subsection through its acceptance paragraph with:
+
+```markdown
+#### Codex refinement
+
+Codex's custom `.tmTheme` has a narrower but useful UI contract. Its
+`markup.inserted` and `markup.deleted` scope backgrounds override the native
+diff backgrounds, so the Noctalia theme sets them to the same fixed green and
+red already registered for Claude. Kitty owns terminal text selection; the
+generated `selection_background` points it at the registered
+`primary_container` tone and therefore updates live on wallpaper changes.
+Kitty 0.48.2 forces selected cells to alpha 1 before substituting that color,
+so its own selection remains opaque. The same registered tone still makes
+Claude's SGR-painted selection translucent at 55% opacity.
+
+Acceptance: in a newly started Codex session, added/deleted diff backgrounds
+are colored and translucent; terminal text selection is Noctalia-colored,
+opaque, and follows later wallpaper switches; the input box remains
+Codex-owned and opaque.
+```
+
+Retain the following input-box rationale unchanged.
+
+- [ ] **Step 3: Verify and commit the spec**
+
+```bash
+git diff --check
+git add -f docs/specs/2026-08-09-noctalia-nvim-theme-design.md
+git diff --cached --check
+git commit -m "docs: record codex glass refinement"
+```
+
+---
+
+### Task 5: Activate and visually verify
 
 **Files:** None.
 
@@ -454,7 +506,7 @@ Confirm:
 
 - Added diff cells are green and translucent.
 - Removed diff cells are red and translucent.
-- Terminal text selection is Noctalia-colored and translucent, including after
+- Terminal text selection is Noctalia-colored, opaque, and changes color after
   a later wallpaper switch.
 - The input box remains Codex-owned and opaque, as explicitly deferred.
 
