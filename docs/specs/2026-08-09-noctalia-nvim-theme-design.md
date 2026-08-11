@@ -140,6 +140,10 @@ registered `primary_container` tone and therefore update live on wallpaper
 changes. `kitty-glass.conf` will contain both settings, and its include will
 move below `current-theme.conf` so the generated selection wins.
 
+Acceptance: in a newly started Codex session, added/deleted diff backgrounds
+and terminal text selection are colored and translucent before and after later
+wallpaper switches; the input box remains Codex-owned and opaque.
+
 The Codex input box is intentionally unchanged. Codex 0.147.0 derives that
 background by blending white at 12% over the terminal background and caches
 the result at process startup. Its theme and config expose no input-background
@@ -181,8 +185,8 @@ synced tree is a pre-existing noctalia behavior, out of scope here.
   afterwards — without the update, every blend stays moon-based.
 - **`glass.lua`** — `refresh()` recomputes `M.palette` and `M.registered` from
   the current palette before `apply()` or `lualine_theme()` uses them.
-  `float_bg` is palette-derived and must NOT be one of the seven registered
-  tones.
+  `M.palette.float` comes from `glass.float` and must NOT be one of the seven
+  registered tones.
 
 ### Moods
 
@@ -246,9 +250,6 @@ ColorScheme autocmd → glass recompute → lualine refresh.
 
 - Manual: switch wallpapers; kitty + nvim recolor live; statusline, tabs and
   cursorline stay translucent (no opaque rectangles); floats stay solid.
-  In a newly started Codex session, added/deleted diff backgrounds and terminal
-  text selection are colored and translucent before and after later wallpaper
-  switches; the input box remains Codex-owned and opaque.
 - Structural: kitty's transparent list and nvim's palette live in one version
   directory switched by a single atomic symlink rename — a desync requires
   the validation itself to be wrong, not a race or a partial promote.
