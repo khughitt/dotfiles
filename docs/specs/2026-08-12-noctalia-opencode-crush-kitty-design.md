@@ -183,13 +183,13 @@ target and signals any running signal-aware OpenCode TUI or `run` process.
 
 That fallback is an OpenCode 1.18.16 behavior, not an assumption: its glob skips
 the dangling link in an isolated installed-binary probe, leaving `noctalia`
-undiscovered. Separately, `syncCustomThemes()` catches a rejected discovery
-promise and selects the built-in `opencode` theme. Discovery has no per-file
-error isolation, so an unreadable or malformed discovered theme makes all
-custom themes unavailable for that refresh, but the TUI remains alive on the
-built-in theme. Atomic generation promotion prevents readers from observing a
-partially written generated JSON file; automated verification exercises both
-fallback paths.
+undiscovered. Separately, the upstream source function `syncCustomThemes()`
+(minified in the shipped bundle) catches a rejected discovery promise and
+selects the built-in `opencode` theme. Discovery has no per-file error isolation,
+so an unreadable or malformed discovered theme makes all custom themes
+unavailable for that refresh, but the TUI remains alive on the built-in theme.
+Atomic generation promotion prevents readers from observing a partially written
+generated JSON file; automated verification exercises both fallback paths.
 
 ### Color mapping
 
