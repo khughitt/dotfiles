@@ -64,10 +64,11 @@ Kitty artifacts. The same `current` symlink will publish all three consumers'
 data at once.
 
 Do not create a second OpenCode-specific Noctalia template. Independent
-templates can render and signal in either order, creating a window where
-OpenCode paints colors that Kitty has not registered yet. Building the theme
-inside the existing sync hook is smaller and preserves the established
-transaction boundary.
+templates could publish different generations. Building the theme inside the
+existing sync hook is smaller and preserves one committed data boundary. The
+post-commit signals are still asynchronous, so running processes can show a
+brief repaint mismatch; signal ordering minimizes but cannot remove that
+transient.
 
 For Crush, add only the supported `option ui transparent true` setting and
 document the remaining opaque application surfaces. Do not fork Crush or
@@ -91,19 +92,22 @@ The existing Noctalia Nvim template remains the single render entry point:
    - `opencode-theme.json`
 5. Renaming a prepared symlink over
    `~/.cache/noctalia/nvim-glass/current` remains the commit point.
-6. After the commit, the hook signals Kitty and Nvim with `SIGUSR1`. For
-   OpenCode, it enumerates exact-name, current-user `opencode` processes and
-   reads each Linux `/proc/<pid>/status` `SigCgt` mask. It sends `SIGUSR2` only
-   when that process currently catches the signal. A missing process is
-   success; any other signal error is reported as a post-commit reconciliation
-   failure.
+6. After the commit, the hook signals Kitty first and Nvim second with
+   `SIGUSR1`, then handles OpenCode last. It enumerates exact-name, current-user
+   `opencode` processes and reads each Linux `/proc/<pid>/status` `SigCgt` mask.
+   It sends `SIGUSR2` only when that process currently catches the signal. A
+   missing process is success; any other signal error is reported as a
+   post-commit reconciliation failure.
 
 OpenCode 1.18.16 installs that handler in the interactive TUI and `run`
 footer, but not in modes such as `serve`. A broad
 `pkill -SIGUSR2 -x opencode` is forbidden: the default action for an
 uncaught `SIGUSR2` terminates the process. Checking the kernel's caught-signal
 mask targets the capability directly instead of duplicating OpenCode's CLI
-mode parsing.
+mode parsing. This still has an unavoidable read-then-signal race: a process
+can disappear, exec and clear its handler, or have its PID reused after
+`SigCgt` is read. A vanished PID is ignored; the narrower exec/PID-reuse race is
+accepted for this local hook.
 
 Pre-commit failure leaves the previous generation untouched and signals
 nothing. A failure after the symlink rename leaves the new generation
@@ -115,6 +119,10 @@ The new checker requires all three files and verifies the OpenCode theme's
 shape and exact background mappings. A current generation created by the old
 format is present-but-incomplete, not a fresh-machine state, and must fail the
 checker until Noctalia renders once with the new hook.
+
+Kitty is signalled before OpenCode so its registered RGB opacity rules normally
+arrive before OpenCode repaints those RGB values. This ordering is best effort,
+not part of the atomic-read guarantee.
 
 ### OpenCode configuration layout
 
@@ -133,14 +141,17 @@ runtime files stay machine-local in `~/.config/opencode/`. Existing ignored
 runtime files under the repo's `opencode/` directory are migrated with this
 rerunnable contract:
 
-1. The config path must be missing or an exact symlink to either the current
-   repo directory or `~/.config/opencode.local`; any other type or target is a
-   conflict. The local backing directory is always the migration destination.
+1. The config path must be missing or a symlink whose resolved target is either
+   the current repo directory or `~/.config/opencode.local`; any other type or
+   target is a conflict. Both the link and expected target are canonicalized
+   before comparison, so `~/d/dotfiles` and its physical Dropbox path compare
+   equal. The local backing directory is always the migration destination.
 2. Before unlinking, creating, copying, or deleting anything, setup inventories
    the complete runtime source and destination. The three managed paths are
-   checked separately: a missing path or the exact intended symlink is valid;
-   any other destination entry is a conflict. The obsolete source theme is not
-   runtime data and is discarded only after the managed theme link is active.
+   checked separately: a missing path or a symlink whose resolved target is the
+   canonical intended target is valid; any other destination entry is a
+   conflict. The obsolete source theme is not runtime data and is discarded
+   only after the managed theme link is active.
 3. Source-only entries are eligible to copy; destination-only entries are
    preserved; directories are compared recursively. Files with identical bytes
    and symlinks with identical targets are redundant source copies. Any type
@@ -170,6 +181,16 @@ rendered, the theme symlink is dangling; OpenCode does not discover `noctalia`
 and falls back to its built-in theme. The first successful render creates the
 target and signals any running signal-aware OpenCode TUI or `run` process.
 
+That fallback is an OpenCode 1.18.16 behavior, not an assumption: its glob skips
+the dangling link in an isolated installed-binary probe, leaving `noctalia`
+undiscovered. Separately, `syncCustomThemes()` catches a rejected discovery
+promise and selects the built-in `opencode` theme. Discovery has no per-file
+error isolation, so an unreadable or malformed discovered theme makes all
+custom themes unavailable for that refresh, but the TUI remains alive on the
+built-in theme. Atomic generation promotion prevents readers from observing a
+partially written generated JSON file; automated verification exercises both
+fallback paths.
+
 ### Color mapping
 
 OpenCode and OpenTUI accept eight-digit hex colors internally, but terminals do
@@ -191,6 +212,19 @@ The major surfaces reuse existing registered glass roles:
 | `diffRemovedLineNumberBg` | `diff_removed` | `0.72` |
 | `diffContextBg` | `chrome` | window background opacity |
 
+Borders are paired explicitly rather than inferred from the surface mapping:
+
+| OpenCode border role | Noctalia role | Required pairing |
+|---|---|---|
+| `border` | `outline` | visible on `backgroundMenu` / `raised` |
+| `borderSubtle` | `outline_variant` | low-emphasis borders on darker surfaces |
+| `borderActive` | `primary` | active controls on every structural surface |
+
+`glass.raised` is derived from `outline_variant`, so mapping the ordinary
+`border` to `outline_variant` would erase autocomplete/menu borders. The theme
+test requires `border != backgroundMenu` in addition to checking the exact role
+mapping.
+
 The root deliberately uses `glass.chrome` instead of `"none"`. This keeps the
 whole UI translucent through Kitty while avoiding OpenCode issue #30056:
 OpenCode uses `theme.background` as the foreground of attachment badges, so an
@@ -203,7 +237,7 @@ Noctalia palette:
   fixed-dim variants;
 - ordinary text: `on_surface`; muted text and comments:
   `on_surface_variant`/`outline`;
-- borders: `outline_variant`, `outline`, and `primary`;
+- borders: `outline`, `outline_variant`, and `primary` as paired above;
 - diff foregrounds: `secondary_fixed_dim` for additions and `error` for
   removals;
 - selected-list text: `on_primary`, paired with OpenCode's `primary` selected
@@ -236,8 +270,11 @@ them translucent. No matching upstream issue or pull request was found; issue
 This is an explicit trade-off: all theme-controlled structural surfaces and all
 diff backgrounds are Noctalia-colored glass, while a few small semantic
 controls preserve readable accent colors and modal dimmers remain
-upstream-owned. Tests enumerate the structural background contract so a newly
-added major theme role cannot silently become opaque.
+upstream-owned. The seven-slot budget also makes each diff line-number gutter
+share its add/remove background with the corresponding diff body, unlike the
+current fixed theme's subtly different gutter shades. Tests enumerate the
+structural background contract so a newly added major theme role cannot
+silently become opaque.
 
 ## Crush architecture
 
@@ -247,8 +284,13 @@ Add this supported shell-config line to `crush/crushrc`:
 option ui transparent true
 ```
 
-It makes the existing transparent base reproducible and is the only Crush
-rendering change in scope. It does not affect the hard-coded block backgrounds.
+It makes the transparent base the tracked default on a machine with no saved
+preference and is the only Crush rendering change in scope. It does not affect
+the hard-coded block backgrounds. Crush loads its machine-owned global and
+workspace JSON state after `crushrc`, so a user toggle persisted there
+deliberately overrides this default. The existing `compact_mode: false` state
+overriding `option ui compact true` demonstrates that precedence on this
+machine.
 
 Crush issue #1334 requests theme selection. Open PR #2731 adds palette-backed
 themes, configuration, a picker/editor, and runtime cache refresh. Once a
@@ -267,13 +309,16 @@ seven-slot invariant.
 - Missing `current` on a fresh machine: Nvim and Kitty use their existing
   fallbacks; OpenCode uses its built-in theme until the first Noctalia render.
 - Present `current` without `opencode-theme.json`: fail
-  `bin/noctalia-glass-check` as a partial/old generation.
+  `bin/noctalia-glass-check` as a partial/old generation. The `FAIL:` message
+  must say that the format changed and instruct the user to re-render the
+  current Noctalia wallpaper palette.
 - Invalid generated OpenCode JSON or a background that does not match the
   registered role: fail the checker with a `FAIL:` line, never a traceback.
 - An exact-name OpenCode process whose `SigCgt` mask does not include
   `SIGUSR2`: leave it untouched. A PID disappearing during discovery or
-  signalling is equivalent to no running process. Other `/proc` or signal
-  errors are failures, but occur after the generation is already committed.
+  signalling is equivalent to no running process. Exec and PID reuse after the
+  mask read are accepted residual races. Other `/proc` or signal errors are
+  failures, but occur after the generation is already committed.
 - A divergent runtime migration collision: report every conflicting path and
   fail before changing the source, destination, or current config symlink.
 
@@ -284,7 +329,8 @@ seven-slot invariant.
 - Extend the existing glass-sync test to assert that one promotion produces all
   three artifacts and that a rejected candidate changes none of them.
 - Parse `opencode-theme.json`; require OpenCode's complete theme-key set and the
-  exact surface/diff mapping above.
+  exact surface/diff/border mapping above, including
+  `border != backgroundMenu`.
 - Extend the checker test with missing, malformed, and background-drift cases.
 - Test signal discovery with exact-name `opencode` process fixtures for TUI,
   `run`, and `serve`: only fixtures whose `SigCgt` mask contains `SIGUSR2` are
@@ -295,7 +341,14 @@ seven-slot invariant.
   its three managed links. The migration test must prove that identical
   leftovers are cleaned only after activation and that one divergent collision
   makes preflight fail with both trees and the current symlink byte-for-byte
-  unchanged.
+  unchanged. Include a repo symlink spelled through `~/d/` and prove its
+  canonical target is accepted.
+- Start OpenCode 1.18.16 against an isolated config containing a dangling
+  `themes/noctalia.json` symlink and require the TUI to stay alive on the
+  built-in theme because `noctalia` is undiscovered; repeat with malformed JSON
+  and require the all-custom-themes fallback rather than a crash.
+- Add an agent-config assertion for the exact Crush line
+  `option ui transparent true`.
 - Keep `bin/dotfiles-check` as the aggregate gate.
 
 ### Manual
@@ -311,9 +364,12 @@ seven-slot invariant.
    noting that these small semantic backgrounds are intentionally opaque.
 6. Open a modal and confirm its upstream-owned backdrop remains opaque as
    documented rather than mistaking it for a generated-theme regression.
-7. Start Crush from a clean config and verify that wallpaper is visible between
-   its blocks; confirm that its application-painted blocks remain opaque as the
-   documented upstream limitation.
+7. Start Crush from a directory with no project config while keeping the tracked
+   global `crushrc`, but isolate both writable state layers:
+   `CRUSH_GLOBAL_DATA=$(mktemp -d) crush --data-dir $(mktemp -d)`. Verify that
+   wallpaper is visible between its blocks, then toggle transparency off and
+   verify the persisted preference overrides the tracked default on restart.
+   Confirm that application-painted blocks remain opaque as documented.
 
 ## Upstream tracking
 
@@ -341,12 +397,17 @@ this guard beside any GitHub-writing step.
 - OpenCode `run` footer `SIGUSR2` handler:
   <https://github.com/anomalyco/opencode/blob/v1.18.16/packages/opencode/src/cli/cmd/run/footer.ts#L294-L299>
 
+All upstream references above were read and status-checked on 2026-08-12.
+
 ## Out of scope
 
 - Ghostty behavior for Claude Code, Codex, Crush, or OpenCode.
 - Changing Niri opacity, blur, saturation, or noise tuning.
 - Expanding Kitty beyond its seven supported transparent background colors.
 - Forking or patching Crush.
+- Migrating Crush's ignored `crush/.crush/` runtime state out of the
+  Dropbox-synced config tree; it is the same pollution shape as OpenCode but is
+  unrelated to the one supported Crush rendering toggle in this pass.
 - Making every small OpenCode semantic control translucent at the cost of
   foreground readability.
 - Light-mode agent themes.
