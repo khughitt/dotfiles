@@ -29,8 +29,9 @@ Code and Codex themes are outside this change.
 - `~/.config/opencode` is one symlink to the repo's `opencode/` directory, so a
   generated wallpaper-specific theme under `~/.config/opencode/themes/` lands
   in the Dropbox-synced tree.
-- OpenCode discovers user themes from `~/.config/opencode/themes/*.json` and
-  refreshes them on `SIGUSR2`.
+- OpenCode discovers user themes from `~/.config/opencode/themes/*.json`. Its
+  interactive TUI and `run` mode refresh them on `SIGUSR2`; modes such as
+  `serve` do not install that handler.
 
 ### Crush 0.88.0
 
@@ -90,9 +91,19 @@ The existing Noctalia Nvim template remains the single render entry point:
    - `opencode-theme.json`
 5. Renaming a prepared symlink over
    `~/.cache/noctalia/nvim-glass/current` remains the commit point.
-6. After the commit, the hook signals Kitty and Nvim with `SIGUSR1` and
-   OpenCode with `SIGUSR2`. A missing process is success; any other signal
-   error is reported as a post-commit reconciliation failure.
+6. After the commit, the hook signals Kitty and Nvim with `SIGUSR1`. For
+   OpenCode, it enumerates exact-name, current-user `opencode` processes and
+   reads each Linux `/proc/<pid>/status` `SigCgt` mask. It sends `SIGUSR2` only
+   when that process currently catches the signal. A missing process is
+   success; any other signal error is reported as a post-commit reconciliation
+   failure.
+
+OpenCode 1.18.16 installs that handler in the interactive TUI and `run`
+footer, but not in modes such as `serve`. A broad
+`pkill -SIGUSR2 -x opencode` is forbidden: the default action for an
+uncaught `SIGUSR2` terminates the process. Checking the kernel's caught-signal
+mask targets the capability directly instead of duplicating OpenCode's CLI
+mode parsing.
 
 Pre-commit failure leaves the previous generation untouched and signals
 nothing. A failure after the symlink rename leaves the new generation
@@ -107,8 +118,10 @@ checker until Noctalia renders once with the new hook.
 
 ### OpenCode configuration layout
 
-Generated state must not live below the Dropbox-synced repo. Setup will replace
-the whole-directory `~/.config/opencode` symlink with a machine-local directory:
+Generated state must not live below the Dropbox-synced repo. OpenCode already
+works through a symlinked config directory, so setup will atomically retarget
+`~/.config/opencode` from the repo to the machine-local backing directory
+`~/.config/opencode.local`. Inside that backing directory:
 
 - `~/.config/opencode/opencode.json` → tracked `~/d/dotfiles/opencode/opencode.json`
 - `~/.config/opencode/tui.json` → tracked `~/d/dotfiles/opencode/tui.json`
@@ -117,18 +130,45 @@ the whole-directory `~/.config/opencode` symlink with a machine-local directory:
 
 OpenCode-owned package metadata, installed plugin dependencies, and other
 runtime files stay machine-local in `~/.config/opencode/`. Existing ignored
-runtime files under the repo's `opencode/` directory are migrated without
-overwriting destination files; the obsolete fixed
+runtime files under the repo's `opencode/` directory are migrated with this
+rerunnable contract:
+
+1. The config path must be missing or an exact symlink to either the current
+   repo directory or `~/.config/opencode.local`; any other type or target is a
+   conflict. The local backing directory is always the migration destination.
+2. Before unlinking, creating, copying, or deleting anything, setup inventories
+   the complete runtime source and destination. The three managed paths are
+   checked separately: a missing path or the exact intended symlink is valid;
+   any other destination entry is a conflict. The obsolete source theme is not
+   runtime data and is discarded only after the managed theme link is active.
+3. Source-only entries are eligible to copy; destination-only entries are
+   preserved; directories are compared recursively. Files with identical bytes
+   and symlinks with identical targets are redundant source copies. Any type
+   mismatch, differing file contents, or differing symlink target is a conflict.
+4. If any conflict exists, setup lists every conflicting relative path and
+   fails before mutation. It never chooses a copy or silently discards one.
+5. With a clean preflight, setup copies source-only runtime entries into the
+   destination, creates the managed links, and validates the complete layout.
+   It prepares a new symlink to the local backing directory and renames it over
+   `~/.config/opencode`; that atomic rename is the migration commit point. Only
+   after the new target is active may setup remove identical or successfully
+   copied source entries from the synced repo.
+
+Because source data remains intact through the commit point, an interrupted
+initial migration can be rerun: copied entries compare identical and missing
+entries are copied on the next attempt. A rerun after activation applies the
+same full preflight; identical leftovers can be removed safely, while divergent
+leftovers stop the run untouched. The obsolete
 `opencode/themes/noctalia.json` is discarded rather than migrated. Setup and
 health checks treat this as a special config layout rather than using the
-generic whole-directory link.
+generic repo-directory link.
 
 `opencode/tui.json` gains the top-level `"theme": "noctalia"` setting.
 The ignored legacy theme file and the ignored nested `tui` setting in
 `opencode/opencode.json` are removed. On a fresh machine before Noctalia has
 rendered, the theme symlink is dangling; OpenCode does not discover `noctalia`
 and falls back to its built-in theme. The first successful render creates the
-target and signals any running OpenCode process.
+target and signals any running signal-aware OpenCode TUI or `run` process.
 
 ### Color mapping
 
@@ -230,9 +270,12 @@ seven-slot invariant.
   `bin/noctalia-glass-check` as a partial/old generation.
 - Invalid generated OpenCode JSON or a background that does not match the
   registered role: fail the checker with a `FAIL:` line, never a traceback.
-- No running OpenCode process during reconciliation: accept `pkill` exit 1.
-  Other signal errors are failures, but occur after the generation is already
-  committed.
+- An exact-name OpenCode process whose `SigCgt` mask does not include
+  `SIGUSR2`: leave it untouched. A PID disappearing during discovery or
+  signalling is equivalent to no running process. Other `/proc` or signal
+  errors are failures, but occur after the generation is already committed.
+- A divergent runtime migration collision: report every conflicting path and
+  fail before changing the source, destination, or current config symlink.
 
 ## Verification
 
@@ -243,11 +286,16 @@ seven-slot invariant.
 - Parse `opencode-theme.json`; require OpenCode's complete theme-key set and the
   exact surface/diff mapping above.
 - Extend the checker test with missing, malformed, and background-drift cases.
-- Mock signalling and assert `SIGUSR2` targets `opencode` only after promotion.
+- Test signal discovery with exact-name `opencode` process fixtures for TUI,
+  `run`, and `serve`: only fixtures whose `SigCgt` mask contains `SIGUSR2` are
+  signalled, `serve` is left alive, and no signal is sent before promotion.
 - Extend the existing agent-theme/config test to require top-level
   `tui.json.theme = "noctalia"` and reject the legacy `opencode.json.tui` key.
 - Extend setup and health tests for the machine-local OpenCode directory and
-  its three managed links.
+  its three managed links. The migration test must prove that identical
+  leftovers are cleaned only after activation and that one divergent collision
+  makes preflight fail with both trees and the current symlink byte-for-byte
+  unchanged.
 - Keep `bin/dotfiles-check` as the aggregate gate.
 
 ### Manual
@@ -269,6 +317,14 @@ seven-slot invariant.
 
 ## Upstream tracking
 
+No GitHub write is part of this implementation. If a later follow-up uses `gh`
+to create or modify a comment, issue, or pull request, it must first verify that
+the effective account reported by `gh api user --jq .login` is `khughitt`, not
+the default work account `keith-cainex`. If it temporarily runs
+`gh auth switch --user khughitt`, it must record the previously active account
+and restore it on both success and failure. The implementation plan must repeat
+this guard beside any GitHub-writing step.
+
 - Crush theme selection: <https://github.com/charmbracelet/crush/issues/1334>
 - Crush theme/palette implementation:
   <https://github.com/charmbracelet/crush/pull/2731>
@@ -280,6 +336,10 @@ seven-slot invariant.
   <https://github.com/anomalyco/opencode/issues/30056>
 - OpenCode selection-token request, closed as not planned:
   <https://github.com/anomalyco/opencode/issues/28351>
+- OpenCode TUI `SIGUSR2` handler:
+  <https://github.com/anomalyco/opencode/blob/v1.18.16/packages/opencode/src/cli/cmd/tui.ts#L216-L225>
+- OpenCode `run` footer `SIGUSR2` handler:
+  <https://github.com/anomalyco/opencode/blob/v1.18.16/packages/opencode/src/cli/cmd/run/footer.ts#L294-L299>
 
 ## Out of scope
 
