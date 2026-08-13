@@ -1,8 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "tui": {
-    "theme": "noctalia"
-  },
   "formatter": true,
   "lsp": {},
   "plugin": [

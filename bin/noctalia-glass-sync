@@ -1,26 +1,29 @@
 #!/usr/bin/env python3
-"""Promote the noctalia nvim palette and its kitty glass include, atomically.
+"""Promote the noctalia nvim palette, kitty glass include, and OpenCode theme atomically.
 
 Noctalia renders the nvim palette template to nvim-palette.candidate.json and
 then runs this hook. We validate the COMPLETE candidate (JSON syntax, every
-required key, glass invariants), stage the promoted palette and kitty's
-transparent_background_colors include into a fresh version directory, and
-flip the `current` symlink over both with a single atomic rename.
+required key, glass invariants), stage the promoted palette, kitty's
+transparent_background_colors include, and OpenCode theme into a fresh version
+directory, and flip the `current` symlink over all three with a single atomic
+rename.
 
 The rename is the COMMIT POINT. Before it, any failure or kill leaves the
 previous generation fully intact -- readers (kitty include, nvim load) go
-through `current` and never see a half-promoted state. The SIGUSR1 signals
-after it are post-commit reconciliation, not part of the transaction: a kill
-between commit and signalling leaves already-running processes on the old
-generation until the next successful run signals them (new processes always
-read the committed generation).
+through `current` and never see a half-promoted state. Kitty/Nvim SIGUSR1 and
+OpenCode SIGUSR2 signals after it are post-commit reconciliation, not part of
+the transaction: a kill between commit and signalling leaves already-running
+processes on the old generation until the next successful run signals them
+(new processes always read the committed generation).
 
-Spec: docs/specs/2026-08-09-noctalia-nvim-theme-design.md
+Specs: docs/specs/2026-08-09-noctalia-nvim-theme-design.md and
+docs/specs/2026-08-12-noctalia-opencode-crush-kitty-design.md
 """
 from __future__ import annotations
 
 import json
 import os
+import signal
 import shutil
 import subprocess
 import sys
@@ -49,6 +52,60 @@ REGISTERED_ROLES = (
 ALIASES = {'tab_on': 'chrome', 'tab_fill': 'tab_off'}
 FIXED = {'diff_added': '#022800', 'diff_removed': '#3d0100'}
 OPACITY = {'diff_added': '0.72', 'diff_removed': '0.72', 'selection': '0.55'}
+OPENCODE_MAP = {
+    'primary': ('primary',),
+    'secondary': ('secondary',),
+    'accent': ('tertiary',),
+    'error': ('error',),
+    'warning': ('tertiary_fixed_dim',),
+    'success': ('secondary_fixed_dim',),
+    'info': ('primary_fixed_dim',),
+    'text': ('on_surface',),
+    'textMuted': ('on_surface_variant',),
+    'selectedListItemText': ('on_primary',),
+    'background': ('glass', 'chrome'),
+    'backgroundPanel': ('glass', 'tab_off'),
+    'backgroundElement': ('glass', 'cursorline'),
+    'backgroundMenu': ('glass', 'raised'),
+    'border': ('outline',),
+    'borderActive': ('primary',),
+    'borderSubtle': ('outline_variant',),
+    'diffAdded': ('secondary_fixed_dim',),
+    'diffRemoved': ('error',),
+    'diffContext': ('on_surface_variant',),
+    'diffHunkHeader': ('tertiary',),
+    'diffHighlightAdded': ('secondary',),
+    'diffHighlightRemoved': ('error',),
+    'diffAddedBg': ('glass', 'diff_added'),
+    'diffRemovedBg': ('glass', 'diff_removed'),
+    'diffContextBg': ('glass', 'chrome'),
+    'diffLineNumber': ('outline',),
+    'diffAddedLineNumberBg': ('glass', 'diff_added'),
+    'diffRemovedLineNumberBg': ('glass', 'diff_removed'),
+    'markdownText': ('on_surface',),
+    'markdownHeading': ('tertiary',),
+    'markdownLink': ('primary',),
+    'markdownLinkText': ('secondary',),
+    'markdownCode': ('secondary_fixed_dim',),
+    'markdownBlockQuote': ('outline',),
+    'markdownEmph': ('tertiary_fixed_dim',),
+    'markdownStrong': ('primary_fixed_dim',),
+    'markdownHorizontalRule': ('outline_variant',),
+    'markdownListItem': ('primary',),
+    'markdownListEnumeration': ('secondary',),
+    'markdownImage': ('tertiary',),
+    'markdownImageText': ('on_surface',),
+    'markdownCodeBlock': ('on_surface',),
+    'syntaxComment': ('outline',),
+    'syntaxKeyword': ('tertiary',),
+    'syntaxFunction': ('primary',),
+    'syntaxVariable': ('error',),
+    'syntaxString': ('secondary_fixed_dim',),
+    'syntaxNumber': ('primary_fixed_dim',),
+    'syntaxType': ('secondary',),
+    'syntaxOperator': ('tertiary_fixed_dim',),
+    'syntaxPunctuation': ('on_surface_variant',),
+}
 
 
 def is_hex(v: object) -> bool:
@@ -105,11 +162,56 @@ def validate(raw: object) -> dict:
         fail('glass.float is a registered tone')
     if glass['float'].lower() == raw['surface'].lower():
         fail('glass.float equals surface (floats would go translucent)')
+    if glass['raised'].lower() == raw['outline'].lower():
+        fail('OpenCode border collides with backgroundMenu')
     return raw
 
 
+def build_opencode_theme(raw: dict) -> dict:
+    colors = {}
+    for key, path in OPENCODE_MAP.items():
+        value = raw
+        for part in path:
+            value = value[part]
+        colors[key] = value.lower()
+    return {'$schema': 'https://opencode.ai/theme.json', 'theme': colors}
+
+
+def signal_opencode(proc_root: Path = Path('/proc')) -> None:
+    caught_bit = 1 << (signal.SIGUSR2 - 1)
+    for process in sorted(proc_root.glob('[0-9]*'), key=lambda p: int(p.name)):
+        try:
+            fields = {}
+            for line in (process / 'status').read_text().splitlines():
+                key, separator, value = line.partition(':')
+                if separator:
+                    fields[key] = value.strip()
+            if fields['Name'] != 'opencode':
+                continue
+            if int(fields['Uid'].split()[0]) != os.getuid():
+                continue
+            if not int(fields['SigCgt'], 16) & caught_bit:
+                continue
+            os.kill(int(process.name), signal.SIGUSR2)
+        except FileNotFoundError:
+            continue
+        except ProcessLookupError:
+            continue
+        except (KeyError, IndexError, ValueError) as exc:
+            raise OSError(f'invalid status for PID {process.name}') from exc
+
+
+def signal_programs() -> None:
+    for process in ('kitty', 'nvim'):
+        result = subprocess.run(
+            ['pkill', '-SIGUSR1', '-x', process], check=False)
+        if result.returncode not in (0, 1):
+            fail(f'pkill {process} failed with exit {result.returncode}')
+    signal_opencode()
+
+
 def main() -> None:
-    signal = '--no-signal' not in sys.argv[1:]
+    should_signal = '--no-signal' not in sys.argv[1:]
     if not CANDIDATE.exists():
         fail(f'candidate missing: {CANDIDATE}')
     data = CANDIDATE.read_bytes()
@@ -118,6 +220,7 @@ def main() -> None:
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         fail(f'candidate is not valid JSON: {exc}')
     validate(raw)
+    opencode_theme = build_opencode_theme(raw)
     tones = [
         raw['glass'][role].lower() + (f'@{OPACITY[role]}' if role in OPACITY else '')
         for role in REGISTERED_ROLES
@@ -135,6 +238,8 @@ def main() -> None:
             'transparent_background_colors ' + ' '.join(tones) + '\n'
             f"selection_foreground {raw['glass']['selection_fg'].lower()}\n"
             f"selection_background {raw['glass']['selection'].lower()}\n")
+        (vdir / 'opencode-theme.json').write_text(
+            json.dumps(opencode_theme, indent=2) + '\n')
 
         # Single atomic switch: rename a prepared symlink over `current`.
         tmplink = GLASS_DIR / f'.current-tmp-{os.getpid()}'
@@ -165,12 +270,8 @@ def main() -> None:
         if entry.is_dir() and not entry.is_symlink() and entry.name.startswith('v-') and entry.name != target:
             shutil.rmtree(entry)
 
-    if signal:
-        # pkill exits 1 when no process matched; that is fine (nothing running).
-        for process in ('kitty', 'nvim'):
-            result = subprocess.run(['pkill', '-SIGUSR1', '-x', process], check=False)
-            if result.returncode not in (0, 1):
-                fail(f'pkill {process} failed with exit {result.returncode}')
+    if should_signal:
+        signal_programs()
 
 
 if __name__ == '__main__':

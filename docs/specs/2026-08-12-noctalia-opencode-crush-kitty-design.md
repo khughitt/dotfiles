@@ -1,6 +1,6 @@
 # Noctalia agent themes: OpenCode glass and Crush transparency (Kitty)
 
-**Status:** Proposed.
+**Status:** Implemented (`eb1e61d^..7fb1ddc`).
 
 ## Goal
 
@@ -14,13 +14,13 @@ Code and Codex themes are outside this change.
 
 ## Current state
 
-### OpenCode 1.18.16
+### OpenCode 1.18.18
 
 - `opencode/themes/noctalia.json` is an untracked, fixed palette. Its root,
   panel, element, menu, and diff backgrounds are opaque and do not follow
   wallpaper changes.
 - `opencode/opencode.json` still contains the legacy nested
-  `"tui": {"theme": "noctalia"}` setting. OpenCode 1.18.16 removes that key
+  `"tui": {"theme": "noctalia"}` setting. OpenCode 1.18.18 removes that key
   while loading server config. Its automatic migration skips the file because
   `opencode/tui.json` already exists.
 - The theme nevertheless appears selected on this machine because OpenCode's
@@ -101,7 +101,7 @@ The existing Noctalia Nvim template remains the single render entry point:
    missing process is success; any other signal error is reported as a
    post-commit reconciliation failure.
 
-OpenCode 1.18.16 installs that handler in the interactive TUI and `run`
+OpenCode 1.18.18 installs that handler in the interactive TUI and `run`
 footer, but not in modes such as `serve`. A broad
 `pkill -SIGUSR2 -x opencode` is forbidden: the default action for an
 uncaught `SIGUSR2` terminates the process. Checking the kernel's caught-signal
@@ -148,15 +148,15 @@ rerunnable contract:
    target is a conflict. Both the link and expected target are canonicalized
    before comparison, so `~/d/dotfiles` and its physical Dropbox path compare
    equal. The local backing directory is always the migration destination.
-2. Before unlinking, creating, copying, or deleting anything, setup inventories
+2. Before creating or copying anything, setup inventories
    the complete runtime source and destination. The three managed paths are
    checked separately: a missing path or a symlink whose resolved target is the
    canonical intended target is valid; any other destination entry is a
-   conflict. The obsolete source theme is not runtime data and is discarded
-   only after the managed theme link is active.
+   conflict. The obsolete source theme remains an ignored, inactive source
+   copy after the managed theme link is active.
 3. Source-only entries are eligible to copy; destination-only entries are
    preserved; directories are compared recursively. Files with identical bytes
-   and symlinks with identical targets are redundant source copies. Any type
+   and symlinks with identical targets are compatible source copies. Any type
    mismatch, differing file contents, or differing symlink target is a conflict.
 4. If any conflict exists, setup lists every conflicting relative path and
    fails before mutation. It never chooses a copy or silently discards one.
@@ -164,26 +164,28 @@ rerunnable contract:
    destination and creates the managed links.
    It prepares a new symlink to the local backing directory and renames it over
    `~/.config/opencode`; that atomic rename is the migration commit point. Only
-   after the new target is active may setup remove identical or successfully
-   copied source entries from the synced repo.
+   Source entries are never deleted automatically: a writer can change them
+   between any validation and deletion, so automatic cleanup cannot guarantee
+   that newer bytes are preserved.
 
-Because source data remains intact through the commit point, an interrupted
+Because source data remains intact before and after the commit point, an interrupted
 initial migration can be rerun: copied entries compare identical and missing
 entries are copied on the next attempt. A rerun after activation applies the
-same full preflight; identical leftovers can be removed safely, while divergent
-leftovers stop the run untouched. The obsolete
-`opencode/themes/noctalia.json` is discarded rather than migrated. Setup and
+same full preflight; divergent leftovers stop the run untouched. Identical
+inactive leftovers remain ignored until a user explicitly removes them after
+stopping OpenCode. The obsolete `opencode/themes/noctalia.json` is retained as
+an ignored inactive source rather than migrated. Setup and
 health checks treat this as a special config layout rather than using the
 generic repo-directory link.
 
 `opencode/tui.json` gains the top-level `"theme": "noctalia"` setting.
-The ignored legacy theme file and the ignored nested `tui` setting in
-`opencode/opencode.json` are removed. On a fresh machine before Noctalia has
+The ignored legacy theme file remains an inactive source copy; the nested `tui`
+setting in `opencode/opencode.json` is removed. On a fresh machine before Noctalia has
 rendered, the theme symlink is dangling; OpenCode does not discover `noctalia`
 and falls back to its built-in theme. The first successful render creates the
 target and signals any running signal-aware OpenCode TUI or `run` process.
 
-That fallback is an OpenCode 1.18.16 behavior, not an assumption: its glob skips
+That fallback is an OpenCode 1.18.18 behavior, not an assumption: its glob skips
 the dangling link in an isolated installed-binary probe, leaving `noctalia`
 undiscovered. Separately, the upstream source function `syncCustomThemes()`
 (minified in the shipped bundle) catches a rejected discovery promise and
@@ -262,7 +264,7 @@ make foreground links, borders, and status text less legible throughout the
 application. OpenCode has no separate selected-background or badge-background
 theme tokens; request #28351 for selection tokens was closed as not planned.
 
-OpenCode 1.18.16 also hard-codes partially alpha black modal backdrops outside
+OpenCode 1.18.18 also hard-codes partially alpha black modal backdrops outside
 the theme (`RGBA.fromInts(0, 0, 0, 150)` and a similar message overlay). OpenTUI
 flattens those overlays against its internal backdrop and emits an opaque RGB
 cell, so neither the custom theme nor Kitty's seven registered colors can make
@@ -341,16 +343,16 @@ seven-slot invariant.
   `tui.json.theme = "noctalia"` and reject the legacy `opencode.json.tui` key.
 - Extend setup and health tests for the machine-local OpenCode directory and
   its three managed links. The migration test must prove that identical
-  leftovers are cleaned only after activation and that one divergent collision
-  makes preflight fail with both trees and the current symlink byte-for-byte
-  unchanged. Include a repo symlink spelled through `~/d/` and prove its
+  source copies remain unchanged after activation and that one divergent
+  collision makes preflight fail with both trees and the current symlink
+  byte-for-byte unchanged. Include a repo symlink spelled through `~/d/` and prove its
   canonical target is accepted.
-- Start OpenCode 1.18.16 against an isolated config containing a dangling
+- Start OpenCode 1.18.18 against an isolated config containing a dangling
   `themes/noctalia.json` symlink and require the TUI to stay alive on the
   built-in theme because `noctalia` is undiscovered; repeat with malformed JSON
   and require the all-custom-themes fallback rather than a crash. Skip this
   installed-binary probe explicitly when OpenCode or tmux is absent, but fail
-  if OpenCode is installed at a version other than 1.18.16.
+  if OpenCode is installed at a version other than 1.18.18.
 - Add an agent-config assertion for the exact Crush line
   `option ui transparent true`.
 - Keep `bin/dotfiles-check` as the aggregate gate.
@@ -397,11 +399,11 @@ this guard beside any GitHub-writing step.
 - OpenCode selection-token request, closed as not planned:
   <https://github.com/anomalyco/opencode/issues/28351>
 - OpenCode TUI `SIGUSR2` handler:
-  <https://github.com/anomalyco/opencode/blob/v1.18.16/packages/opencode/src/cli/cmd/tui.ts#L216-L225>
+  <https://github.com/anomalyco/opencode/blob/v1.18.18/packages/opencode/src/cli/cmd/tui.ts#L204-L212>
 - OpenCode `run` footer `SIGUSR2` handler:
-  <https://github.com/anomalyco/opencode/blob/v1.18.16/packages/opencode/src/cli/cmd/run/footer.ts#L294-L299>
+  <https://github.com/anomalyco/opencode/blob/v1.18.18/packages/opencode/src/cli/cmd/run/footer.ts#L282-L290>
 
-All upstream references above were read and status-checked on 2026-08-12.
+All upstream references above were read and status-checked on 2026-08-13.
 
 ## Out of scope
 

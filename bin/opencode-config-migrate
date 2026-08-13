@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import filecmp
+import os
+import shutil
+import sys
+from pathlib import Path, PurePath
+
+MANAGED = {
+    PurePath('opencode.json'),
+    PurePath('tui.json'),
+    PurePath('themes/noctalia.json'),
+}
+MANAGED_KEYS = {PurePath(*(part.casefold() for part in path.parts)) for path in MANAGED}
+
+
+def lexists(path: Path) -> bool:
+    return os.path.lexists(path)
+
+
+def canonical(path: Path) -> Path:
+    return Path(os.path.realpath(path))
+
+
+def kind(path: Path) -> str:
+    if path.is_symlink():
+        return 'link'
+    if path.is_dir():
+        return 'dir'
+    if path.is_file():
+        return 'file'
+    return 'other'
+
+
+def inventory(root: Path) -> tuple[dict[PurePath, Path], list[Path]]:
+    if not root.is_dir():
+        return {}, []
+    entries = {}
+    collisions = []
+    for path in sorted(root.rglob('*')):
+        relative = PurePath(path.relative_to(root))
+        if relative in MANAGED:
+            continue
+        key = PurePath(*(part.casefold() for part in relative.parts))
+        if key in entries:
+            collisions.extend((entries[key], path))
+        else:
+            entries[key] = path
+    return entries, collisions
+
+
+def same(left: Path, right: Path) -> bool:
+    left_kind = kind(left)
+    if left_kind != kind(right):
+        return False
+    if left_kind == 'dir':
+        return True
+    if left_kind == 'link':
+        return os.readlink(left) == os.readlink(right)
+    if left_kind == 'file':
+        return filecmp.cmp(left, right, shallow=False)
+    return False
+
+
+def copy_node(source: Path, destination: Path) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if source.is_symlink():
+        destination.symlink_to(os.readlink(source), target_is_directory=source.is_dir())
+    elif source.is_dir():
+        destination.mkdir(exist_ok=True)
+    else:
+        shutil.copy2(source, destination)
+
+
+def install_link(destination: Path, target: Path) -> None:
+    if destination.is_symlink() and canonical(destination) == canonical(target):
+        return
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.symlink_to(target, target_is_directory=target.is_dir())
+
+
+def main() -> None:
+    if len(sys.argv) != 6:
+        raise SystemExit(
+            'usage: opencode-config-migrate TRACKED_SOURCE RUNTIME_SOURCE '
+            'CONFIG_LINK LOCAL_DIR THEME_TARGET')
+    tracked, runtime, config, local, theme = map(Path, sys.argv[1:])
+    tracked = canonical(tracked)
+    runtime = canonical(runtime)
+    local = Path(os.path.abspath(local))
+    config = Path(os.path.abspath(config))
+    theme = Path(os.path.abspath(theme))
+    conflicts = []
+
+    local_root = canonical(local)
+    if (runtime == local_root or runtime in local_root.parents
+            or local_root in runtime.parents):
+        conflicts.append(f'{runtime} overlaps {local}')
+    if lexists(config):
+        if not config.is_symlink() or canonical(config) not in {
+                tracked, canonical(local)}:
+            conflicts.append(str(config))
+    if lexists(local) and (not local.is_dir() or local.is_symlink()):
+        conflicts.append(str(local))
+
+    links = {
+        local / 'opencode.json': tracked / 'opencode.json',
+        local / 'tui.json': tracked / 'tui.json',
+        local / 'themes/noctalia.json': theme,
+    }
+    for tracked_file in (tracked / 'opencode.json', tracked / 'tui.json'):
+        if not tracked_file.is_file():
+            conflicts.append(str(tracked_file))
+    for destination, target in links.items():
+        ancestor = destination.parent
+        while ancestor != local:
+            if lexists(ancestor) and (ancestor.is_symlink() or not ancestor.is_dir()):
+                conflicts.append(str(ancestor))
+            ancestor = ancestor.parent
+        if lexists(destination) and (
+                not destination.is_symlink()
+                or canonical(destination) != canonical(target)):
+            conflicts.append(str(destination))
+
+    source_entries, source_collisions = inventory(runtime)
+    destination_entries, destination_collisions = inventory(local)
+    conflicts.extend(str(path.relative_to(runtime)) for path in source_collisions)
+    conflicts.extend(str(path.relative_to(local)) for path in destination_collisions)
+    conflicts.extend(
+        str(path.relative_to(runtime))
+        for key, path in source_entries.items() if key in MANAGED_KEYS)
+    conflicts.extend(
+        str(path.relative_to(local))
+        for key, path in destination_entries.items() if key in MANAGED_KEYS)
+    for relative in sorted(source_entries.keys() & destination_entries.keys()):
+        source_path = source_entries[relative]
+        destination_path = destination_entries[relative]
+        if (source_path.relative_to(runtime) != destination_path.relative_to(local)
+                or not same(source_path, destination_path)):
+            conflicts.extend((
+                str(source_path.relative_to(runtime)),
+                str(destination_path.relative_to(local)),
+            ))
+
+    if conflicts:
+        print('opencode-config-migrate: conflicts:', file=sys.stderr)
+        for conflict in sorted(set(conflicts)):
+            print(f'  {conflict}', file=sys.stderr)
+        raise SystemExit(1)
+
+    local.mkdir(parents=True, exist_ok=True)
+    missing = set(source_entries) - set(destination_entries)
+    for key in sorted(missing, key=lambda p: len(p.parts)):
+        source = source_entries[key]
+        copy_node(source, local / source.relative_to(runtime))
+    for destination, target in links.items():
+        install_link(destination, target)
+
+    temporary = config.with_name(f'.{config.name}.tmp-{os.getpid()}')
+    temporary.symlink_to(local, target_is_directory=True)
+    os.replace(temporary, config)  # migration commit point
+    # ponytail: retain inactive source copies; automatic deletion races writers.
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except OSError as exc:
+        print(f'opencode-config-migrate: {exc}', file=sys.stderr)
+        raise SystemExit(1)

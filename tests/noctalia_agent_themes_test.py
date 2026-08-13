@@ -80,4 +80,15 @@ codex_scopes = {
 assert codex_scopes["markup.inserted"]["background"] == "#022800"
 assert codex_scopes["markup.deleted"]["background"] == "#3d0100"
 
+opencode_server = json.loads((ROOT / "opencode/opencode.json").read_text())
+opencode_tui = json.loads((ROOT / "opencode/tui.json").read_text())
+assert "tui" not in opencode_server
+assert opencode_tui["theme"] == "noctalia"
+
+crush_lines = (ROOT / "crush/crushrc").read_text().splitlines()
+assert crush_lines.count("option ui transparent true") == 1
+
+root_ignore = (ROOT / ".gitignore").read_text().splitlines()
+assert root_ignore.count("opencode/themes/noctalia.json") == 1
+
 print("OK noctalia agent themes")

@@ -63,7 +63,81 @@ good_candidate
 [[ -L "$CUR" ]] || { echo "FAIL: current symlink missing"; exit 1; }
 target=$(readlink "$CUR")
 [[ "$target" == v-* && "$target" != */* ]] || { echo "FAIL: current target is not a sibling v-* dir"; exit 1; }
-[[ -f "$CUR/nvim-palette.json" && -f "$CUR/kitty-glass.conf" ]] || { echo "FAIL: staged files missing"; exit 1; }
+[[ -f "$CUR/nvim-palette.json" && -f "$CUR/kitty-glass.conf" && \
+   -f "$CUR/opencode-theme.json" ]] || {
+  echo "FAIL: staged files missing"
+  exit 1
+}
+python3 - "$CUR/nvim-palette.json" "$CUR/opencode-theme.json" <<'PY'
+import json, sys
+
+palette = json.load(open(sys.argv[1]))
+theme = json.load(open(sys.argv[2]))
+mapping = {
+    "primary": ("primary",),
+    "secondary": ("secondary",),
+    "accent": ("tertiary",),
+    "error": ("error",),
+    "warning": ("tertiary_fixed_dim",),
+    "success": ("secondary_fixed_dim",),
+    "info": ("primary_fixed_dim",),
+    "text": ("on_surface",),
+    "textMuted": ("on_surface_variant",),
+    "selectedListItemText": ("on_primary",),
+    "background": ("glass", "chrome"),
+    "backgroundPanel": ("glass", "tab_off"),
+    "backgroundElement": ("glass", "cursorline"),
+    "backgroundMenu": ("glass", "raised"),
+    "border": ("outline",),
+    "borderActive": ("primary",),
+    "borderSubtle": ("outline_variant",),
+    "diffAdded": ("secondary_fixed_dim",),
+    "diffRemoved": ("error",),
+    "diffContext": ("on_surface_variant",),
+    "diffHunkHeader": ("tertiary",),
+    "diffHighlightAdded": ("secondary",),
+    "diffHighlightRemoved": ("error",),
+    "diffAddedBg": ("glass", "diff_added"),
+    "diffRemovedBg": ("glass", "diff_removed"),
+    "diffContextBg": ("glass", "chrome"),
+    "diffLineNumber": ("outline",),
+    "diffAddedLineNumberBg": ("glass", "diff_added"),
+    "diffRemovedLineNumberBg": ("glass", "diff_removed"),
+    "markdownText": ("on_surface",),
+    "markdownHeading": ("tertiary",),
+    "markdownLink": ("primary",),
+    "markdownLinkText": ("secondary",),
+    "markdownCode": ("secondary_fixed_dim",),
+    "markdownBlockQuote": ("outline",),
+    "markdownEmph": ("tertiary_fixed_dim",),
+    "markdownStrong": ("primary_fixed_dim",),
+    "markdownHorizontalRule": ("outline_variant",),
+    "markdownListItem": ("primary",),
+    "markdownListEnumeration": ("secondary",),
+    "markdownImage": ("tertiary",),
+    "markdownImageText": ("on_surface",),
+    "markdownCodeBlock": ("on_surface",),
+    "syntaxComment": ("outline",),
+    "syntaxKeyword": ("tertiary",),
+    "syntaxFunction": ("primary",),
+    "syntaxVariable": ("error",),
+    "syntaxString": ("secondary_fixed_dim",),
+    "syntaxNumber": ("primary_fixed_dim",),
+    "syntaxType": ("secondary",),
+    "syntaxOperator": ("tertiary_fixed_dim",),
+    "syntaxPunctuation": ("on_surface_variant",),
+}
+
+assert set(theme) == {"$schema", "theme"}
+assert theme["$schema"] == "https://opencode.ai/theme.json"
+assert set(theme["theme"]) == set(mapping)
+for key, path in mapping.items():
+    value = palette
+    for part in path:
+        value = value[part]
+    assert theme["theme"][key] == value.lower(), (key, theme["theme"][key], value)
+assert theme["theme"]["border"] != theme["theme"]["backgroundMenu"]
+PY
 cmp nvim/tests/noctalia/fixtures/raw_palette.json "$CUR/nvim-palette.json" || { echo "FAIL: palette bytes changed"; exit 1; }
 [[ ! -e "$CANDIDATE" ]] || { echo "FAIL: candidate left behind"; exit 1; }
 [[ "$(wc -l < "$CUR/kitty-glass.conf")" == 3 ]] || {
@@ -99,6 +173,22 @@ target=$(readlink "$CUR")
 cmp "$TMP/expected-palette.json" "$CUR/nvim-palette.json" || { echo "FAIL: new palette bytes changed"; exit 1; }
 [[ "$(snapshot_versions | wc -l)" == 1 ]] || { echo "FAIL: expected one v-* dir"; exit 1; }
 [[ -f "$TMP/nvim-glass/keep/marker" ]] || { echo "FAIL: non-v-* directory was pruned"; exit 1; }
+
+cp "$CUR/opencode-theme.json" "$TMP/opencode-before-reject.json"
+good_candidate
+sed -i 's/"primary": "#82aaff"/"primary": "broken"/' "$CANDIDATE"
+expect_reject "invalid primary before OpenCode construction"
+cmp "$TMP/opencode-before-reject.json" "$CUR/opencode-theme.json" || {
+  echo "FAIL: rejected candidate changed OpenCode theme"
+  exit 1
+}
+
+good_candidate
+sed -i 's/"outline": "#636da6"/"outline": "#3b4261"/' "$CANDIDATE"
+expect_reject "OpenCode border collision"
+
+# Restore the pre-existing missing-candidate case's actual precondition.
+rm -f "$CANDIDATE"
 
 # 3. missing candidate
 expect_reject "missing candidate"

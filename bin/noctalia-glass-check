@@ -2,7 +2,7 @@
 """Check the promoted noctalia glass state for consistency.
 
 Fresh machines (no `current` symlink) pass: the committed fallbacks apply.
-Anything else must be fully consistent: both promoted files present and
+Anything else must be fully consistent: all three promoted files present and
 kitty's transparent tones equal to the palette's glass tones in role order.
 Partial or desynced state fails loudly -- it means a generated file was
 hand-edited or a promotion was interrupted, which bin/noctalia-glass-sync
@@ -26,6 +26,62 @@ ALIASES = {'tab_on': 'chrome', 'tab_fill': 'tab_off'}
 FIXED = {'diff_added': '#022800', 'diff_removed': '#3d0100'}
 OPACITY = {'diff_added': '0.72', 'diff_removed': '0.72', 'selection': '0.55'}
 HEX = re.compile(r'#[0-9a-fA-F]{6}')
+# These two copies are intentionally mirrored producer/validator contracts;
+# keep this in sync with bin/noctalia-glass-sync's OPENCODE_MAP.
+OPENCODE_MAP = {
+    'primary': ('primary',),
+    'secondary': ('secondary',),
+    'accent': ('tertiary',),
+    'error': ('error',),
+    'warning': ('tertiary_fixed_dim',),
+    'success': ('secondary_fixed_dim',),
+    'info': ('primary_fixed_dim',),
+    'text': ('on_surface',),
+    'textMuted': ('on_surface_variant',),
+    'selectedListItemText': ('on_primary',),
+    'background': ('glass', 'chrome'),
+    'backgroundPanel': ('glass', 'tab_off'),
+    'backgroundElement': ('glass', 'cursorline'),
+    'backgroundMenu': ('glass', 'raised'),
+    'border': ('outline',),
+    'borderActive': ('primary',),
+    'borderSubtle': ('outline_variant',),
+    'diffAdded': ('secondary_fixed_dim',),
+    'diffRemoved': ('error',),
+    'diffContext': ('on_surface_variant',),
+    'diffHunkHeader': ('tertiary',),
+    'diffHighlightAdded': ('secondary',),
+    'diffHighlightRemoved': ('error',),
+    'diffAddedBg': ('glass', 'diff_added'),
+    'diffRemovedBg': ('glass', 'diff_removed'),
+    'diffContextBg': ('glass', 'chrome'),
+    'diffLineNumber': ('outline',),
+    'diffAddedLineNumberBg': ('glass', 'diff_added'),
+    'diffRemovedLineNumberBg': ('glass', 'diff_removed'),
+    'markdownText': ('on_surface',),
+    'markdownHeading': ('tertiary',),
+    'markdownLink': ('primary',),
+    'markdownLinkText': ('secondary',),
+    'markdownCode': ('secondary_fixed_dim',),
+    'markdownBlockQuote': ('outline',),
+    'markdownEmph': ('tertiary_fixed_dim',),
+    'markdownStrong': ('primary_fixed_dim',),
+    'markdownHorizontalRule': ('outline_variant',),
+    'markdownListItem': ('primary',),
+    'markdownListEnumeration': ('secondary',),
+    'markdownImage': ('tertiary',),
+    'markdownImageText': ('on_surface',),
+    'markdownCodeBlock': ('on_surface',),
+    'syntaxComment': ('outline',),
+    'syntaxKeyword': ('tertiary',),
+    'syntaxFunction': ('primary',),
+    'syntaxVariable': ('error',),
+    'syntaxString': ('secondary_fixed_dim',),
+    'syntaxNumber': ('primary_fixed_dim',),
+    'syntaxType': ('secondary',),
+    'syntaxOperator': ('tertiary_fixed_dim',),
+    'syntaxPunctuation': ('on_surface_variant',),
+}
 
 
 def fail(msg: str) -> None:
@@ -50,10 +106,15 @@ def main() -> None:
         fail(f'{CURRENT} target {target!r} is not a version directory')
     palette_file = CURRENT / 'nvim-palette.json'
     kitty_file = CURRENT / 'kitty-glass.conf'
+    opencode_file = CURRENT / 'opencode-theme.json'
     if not palette_file.is_file():
         fail(f'{palette_file} missing (partial promote?)')
     if not kitty_file.is_file():
         fail(f'{kitty_file} missing (partial promote?)')
+    if not opencode_file.is_file():
+        fail(
+            f'{opencode_file} missing: the generation format changed; '
+            're-render the current Noctalia wallpaper palette')
     # Every failure mode must come out as a FAIL: line, never a traceback --
     # dotfiles-check consumers grep for FAIL.
     try:
@@ -113,6 +174,32 @@ def main() -> None:
     expected_background = f"selection_background {glass['selection'].lower()}"
     if lines[2] != expected_background:
         fail(f'selection background desynced: kitty={lines[2]!r} palette={expected_background!r}')
+
+    try:
+        opencode = json.loads(opencode_file.read_text())
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        fail(f'{opencode_file} unreadable: {exc}')
+    if not isinstance(opencode, dict) or set(opencode) != {'$schema', 'theme'}:
+        fail(f'{opencode_file} has the wrong top-level shape')
+    if opencode['$schema'] != 'https://opencode.ai/theme.json':
+        fail(f'{opencode_file} has the wrong schema')
+    theme = opencode.get('theme')
+    if not isinstance(theme, dict) or set(theme) != set(OPENCODE_MAP):
+        fail(f'{opencode_file} has an incomplete theme key set')
+    if theme['border'] == theme['backgroundMenu']:
+        fail(f'{opencode_file} border is invisible on backgroundMenu')
+    for key, path in OPENCODE_MAP.items():
+        expected = data
+        for part in path:
+            if not isinstance(expected, dict) or part not in expected:
+                fail(f'{palette_file} mapped path {".".join(path)} missing/malformed')
+            expected = expected[part]
+        if not isinstance(expected, str) or not HEX.fullmatch(expected):
+            fail(f'{palette_file} mapped path {".".join(path)} missing/malformed')
+        if theme.get(key) != expected.lower():
+            fail(
+                f'{opencode_file} {key} desynced: '
+                f'{theme.get(key)!r} != {expected.lower()!r}')
 
 
 if __name__ == '__main__':

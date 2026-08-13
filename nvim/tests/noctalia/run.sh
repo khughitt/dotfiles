@@ -17,6 +17,10 @@ for test in nvim/tests/noctalia/*_test.lua; do
   nvim --clean -l "$test"
 done
 
+for test in nvim/tests/noctalia/*_test.py; do
+  python3 "$test"
+done
+
 for test in nvim/tests/noctalia/*_test.sh; do
   "$test"
 done
