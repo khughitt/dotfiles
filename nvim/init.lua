@@ -237,9 +237,12 @@ vim.keymap.set('x', 'zz', 'ygvgc`.jP',    { remap = true, desc = 'duplicate sele
 -- ---------------------------------------------------------------------------
 --  Copy and Paste
 --
--- Use "+ and "* explicitly for CLIPBOARD and PRIMARY. Keeping 'clipboard'
--- unset prevents ordinary yanks, deletes, and changes from spawning providers.
+-- Keep ordinary yanks, deletes, and changes synced with CLIPBOARD and PRIMARY.
+-- Normal-mode x stays local because spawning both providers made it lag.
 -- ---------------------------------------------------------------------------
+vim.opt.clipboard:prepend({ 'unnamed', 'unnamedplus' })
+vim.keymap.set('n', 'x', '"-x', { desc = 'delete character without clipboard' })
+
 -- Neovim auto-detects a clipboard provider, but pin wl-clipboard explicitly on
 -- Wayland so PRIMARY (*) is wired up as well as CLIPBOARD (+). Left unset
 -- elsewhere on purpose: over ssh/tmux with no clipboard tool available,

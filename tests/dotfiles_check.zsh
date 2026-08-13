@@ -51,6 +51,9 @@ for file in "${modeline_files[@]}"; do
     fail "Neovim did not load ${file} cleanly as zsh: ${output}"
 done
 
+nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
+  "+lua dofile('${repo_root}/nvim/tests/clipboard_test.lua')" '+qa!'
+
 zsh -fc '
   source "$1/shell/aliases"
   source "$1/shell/functions"

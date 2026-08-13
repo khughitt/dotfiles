@@ -1,7 +1,12 @@
 # yank a single character
 vy
 
-# system clipboard (CLIPBOARD / PRIMARY)
+# yanks, deletes, and changes sync with CLIPBOARD (+) and PRIMARY (*)
+# x is the exception: it deletes to the small-delete register without syncing
+x
+"-p
+
+# use a specific system clipboard explicitly
 "+y
 "*y
 "+p
