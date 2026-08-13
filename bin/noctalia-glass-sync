@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import shutil
 import subprocess
 import sys
@@ -176,8 +177,39 @@ def build_opencode_theme(raw: dict) -> dict:
     return {'$schema': 'https://opencode.ai/theme.json', 'theme': colors}
 
 
+def signal_opencode(proc_root: Path = Path('/proc')) -> None:
+    caught_bit = 1 << (signal.SIGUSR2 - 1)
+    for process in sorted(proc_root.glob('[0-9]*'), key=lambda p: int(p.name)):
+        try:
+            fields = {}
+            for line in (process / 'status').read_text().splitlines():
+                key, separator, value = line.partition(':')
+                if separator:
+                    fields[key] = value.strip()
+            if fields.get('Name') != 'opencode':
+                continue
+            if int(fields['Uid'].split()[0]) != os.getuid():
+                continue
+            if not int(fields['SigCgt'], 16) & caught_bit:
+                continue
+            os.kill(int(process.name), signal.SIGUSR2)
+        except FileNotFoundError:
+            continue
+        except ProcessLookupError:
+            continue
+
+
+def signal_programs() -> None:
+    for process in ('kitty', 'nvim'):
+        result = subprocess.run(
+            ['pkill', '-SIGUSR1', '-x', process], check=False)
+        if result.returncode not in (0, 1):
+            fail(f'pkill {process} failed with exit {result.returncode}')
+    signal_opencode()
+
+
 def main() -> None:
-    signal = '--no-signal' not in sys.argv[1:]
+    should_signal = '--no-signal' not in sys.argv[1:]
     if not CANDIDATE.exists():
         fail(f'candidate missing: {CANDIDATE}')
     data = CANDIDATE.read_bytes()
@@ -236,12 +268,8 @@ def main() -> None:
         if entry.is_dir() and not entry.is_symlink() and entry.name.startswith('v-') and entry.name != target:
             shutil.rmtree(entry)
 
-    if signal:
-        # pkill exits 1 when no process matched; that is fine (nothing running).
-        for process in ('kitty', 'nvim'):
-            result = subprocess.run(['pkill', '-SIGUSR1', '-x', process], check=False)
-            if result.returncode not in (0, 1):
-                fail(f'pkill {process} failed with exit {result.returncode}')
+    if should_signal:
+        signal_programs()
 
 
 if __name__ == '__main__':
