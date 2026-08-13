@@ -45,9 +45,11 @@ OpenCode 1.18.16, Crush 0.88.0, Noctalia.
 - OpenCode process discovery is Linux-only and capability-based: exact process
   name, current real UID, and the `SIGUSR2` bit present in `/proc/<pid>/status`
   `SigCgt`. A vanished PID is ignored; other errors fail post-commit.
-- OpenCode theme JSON is dark-only and complete. It contains every supported
-  color key used in OpenCode 1.18.16, including explicit
-  `selectedListItemText` and `backgroundMenu`; it does not use alpha colors.
+- OpenCode theme JSON is dark-only and contains all 52 supported color keys
+  used in OpenCode 1.18.16, including explicit `selectedListItemText` and
+  `backgroundMenu`; it does not use alpha colors. The optional numeric
+  `thinkingOpacity` setting is deliberately omitted so OpenCode keeps its 0.6
+  default.
 - `backgroundMenu` is `glass.raised`, ordinary `border` is `outline`, and the
   checker must require `border != backgroundMenu`.
 - OpenCode's selected semantic controls and hard-coded modal dimmers remain
@@ -82,8 +84,9 @@ OpenCode 1.18.16, Crush 0.88.0, Noctalia.
 - Consumes: the already validated palette object accepted by `validate(raw)`.
 - Produces: `build_opencode_theme(raw: dict) -> dict` and staged
   `opencode-theme.json` beside `nvim-palette.json` and `kitty-glass.conf`.
-- Contract: the mapping below is the complete OpenCode 1.18.16 dark color
-  contract; the JSON top level is exactly `$schema` plus `theme`.
+- Contract: the mapping below is the complete 52-key OpenCode 1.18.16 dark
+  color contract; the JSON top level is exactly `$schema` plus `theme`.
+  `thinkingOpacity` is not a color and remains at OpenCode's 0.6 default.
 
 - [ ] **Step 1: Extend the success and rejection tests first**
 
@@ -184,6 +187,9 @@ cmp "$TMP/opencode-before-reject.json" "$CUR/opencode-theme.json" || {
 good_candidate
 sed -i 's/"outline": "#636da6"/"outline": "#3b4261"/' "$CANDIDATE"
 expect_reject "OpenCode border collision"
+
+# Restore the pre-existing missing-candidate case's actual precondition.
+rm -f "$CANDIDATE"
 ```
 
 - [ ] **Step 2: Run the focused test and confirm RED**
@@ -372,6 +378,24 @@ if out=$("$CHECK" 2>&1); then
 fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL line: $out"; exit 1; }
 
+# A missing mapped non-glass palette key must cleanly FAIL, never traceback.
+promote
+python3 - "$TMP/nvim-glass/current/nvim-palette.json" <<'PY'
+import json, sys
+p = sys.argv[1]
+d = json.load(open(p))
+del d['primary']
+json.dump(d, open(p, 'w'))
+PY
+if out=$("$CHECK" 2>&1); then
+  echo "FAIL: missing mapped palette key must fail"
+  exit 1
+fi
+[[ "$out" == FAIL:* && "$out" != *Traceback* ]] || {
+  echo "FAIL: mapped-key failure was not clean: $out"
+  exit 1
+}
+
 promote
 python3 - "$TMP/nvim-glass/current/opencode-theme.json" <<'PY'
 import json, sys
@@ -450,7 +474,11 @@ After validating `kitty-glass.conf`, parse and validate the OpenCode theme:
     for key, path in OPENCODE_MAP.items():
         expected = data
         for part in path:
+            if not isinstance(expected, dict) or part not in expected:
+                fail(f'{palette_file} mapped path {".".join(path)} missing/malformed')
             expected = expected[part]
+        if not isinstance(expected, str) or not HEX.fullmatch(expected):
+            fail(f'{palette_file} mapped path {".".join(path)} missing/malformed')
         if theme.get(key) != expected.lower():
             fail(
                 f'{opencode_file} {key} desynced: '
@@ -484,7 +512,6 @@ git commit -m "test(noctalia): validate opencode glass artifact"
 **Files:**
 - Create: `nvim/tests/noctalia/glass_signal_test.py`
 - Modify: `nvim/tests/noctalia/run.sh:16-22`
-- Modify: `nvim/tests/noctalia/glass_sync_test.sh:171-197`
 - Modify: `bin/noctalia-glass-sync:22-27,168-173`
 
 **Interfaces:**
@@ -503,15 +530,19 @@ Create `glass_signal_test.py`:
 ```python
 #!/usr/bin/env python3
 import importlib.machinery
+import importlib.util
 import os
 import signal
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-sync = importlib.machinery.SourceFileLoader(
-    "noctalia_glass_sync", str(ROOT / "bin/noctalia-glass-sync")
-).load_module()
+loader = importlib.machinery.SourceFileLoader(
+    "noctalia_glass_sync", str(ROOT / "bin/noctalia-glass-sync"))
+spec = importlib.util.spec_from_loader(loader.name, loader)
+assert spec is not None
+sync = importlib.util.module_from_spec(spec)
+loader.exec_module(sync)
 
 
 def status(root, pid, name="opencode", uid=None, caught=0):
@@ -628,10 +659,17 @@ def signal_programs() -> None:
     signal_opencode()
 ```
 
-Replace the inline post-commit `for process in ('kitty', 'nvim')` block with:
+Rename `main()`'s existing local boolean:
 
 ```python
-    if signal:
+    should_signal = '--no-signal' not in sys.argv[1:]
+```
+
+Then replace the inline post-commit `for process in ('kitty', 'nvim')` block
+with:
+
+```python
+    if should_signal:
         signal_programs()
 ```
 
@@ -672,7 +710,6 @@ Expected: `OK glass_signal`, `OK glass_sync`, and `OK noctalia suite`.
 ```bash
 git add bin/noctalia-glass-sync \
   nvim/tests/noctalia/glass_signal_test.py \
-  nvim/tests/noctalia/glass_sync_test.sh \
   nvim/tests/noctalia/run.sh
 git diff --cached --check
 git commit -m "feat(noctalia): refresh signal-aware opencode processes"
@@ -777,7 +814,6 @@ git commit -m "feat(agents): track opencode and crush theme defaults"
 **Files:**
 - Create: `bin/opencode-config-migrate`
 - Create: `tests/opencode_config_migrate_test.py`
-- Modify: `.gitignore:11-19`
 - Modify: `lib/dotfiles-setup-data.bash:5`
 - Modify: `setup.sh:398-405`
 - Modify: `bin/dotfiles-health:73-101,134-145`
@@ -794,6 +830,7 @@ git commit -m "feat(agents): track opencode and crush theme defaults"
   managed targets. In production `RUNTIME_SOURCE == TRACKED_SOURCE`; tests use
   a separate temporary runtime source. `RUNTIME_SOURCE/themes/noctalia.json`
   is obsolete generated state and is discarded only after activation.
+- Every other ignored runtime entry is migrated, including `opencode/.gitignore`.
 - Health treats OpenCode as a special layout instead of a common repo-directory
   link.
 
@@ -850,6 +887,7 @@ with tempfile.TemporaryDirectory() as tmp:
     write(source / "opencode.json", "{}\n")
     write(source / "tui.json", "{}\n")
     write(source / "package.json", "same\n")
+    write(source / ".gitignore", "runtime ignore\n")
     write(source / "node_modules/pkg/index.js", "runtime\n")
     write(source / "themes/noctalia.json", "obsolete\n")
     write(local / "package.json", "same\n")
@@ -862,8 +900,10 @@ with tempfile.TemporaryDirectory() as tmp:
     assert (local / "tui.json").resolve() == (source / "tui.json").resolve()
     assert os.readlink(local / "themes/noctalia.json") == str(theme)
     assert (local / "node_modules/pkg/index.js").read_text() == "runtime\n"
+    assert (local / ".gitignore").read_text() == "runtime ignore\n"
     assert (local / "destination-only").read_text() == "keep\n"
     assert not (source / "package.json").exists()
+    assert not (source / ".gitignore").exists()
     assert not (source / "node_modules").exists()
     assert not (source / "themes/noctalia.json").exists()
     assert (source / "opencode.json").is_file()
@@ -900,12 +940,6 @@ with tempfile.TemporaryDirectory() as tmp:
     assert snapshot(config) == before_config
 
 print("OK opencode config migration")
-```
-
-Add the executable to the root ignore allowlist:
-
-```text
-!bin/opencode-config-migrate
 ```
 
 - [ ] **Step 2: Run the focused test and confirm RED**
@@ -1161,13 +1195,13 @@ In `test_setup_link_only_creates_expected_links_without_external_clones`, add:
 
 ```zsh
   local opencode_local="${tmp}/config/opencode.local"
-  [[ "${tmp}/config/opencode":A == "${opencode_local}":A ]] || \
+  [[ "${tmp}/config/opencode" -ef "$opencode_local" ]] || \
     fail "expected OpenCode config to use machine-local backing"
-  [[ "${opencode_local}/opencode.json":A == \
-      "${repo_root}/opencode/opencode.json":A ]] || \
+  [[ "${opencode_local}/opencode.json" -ef \
+      "${repo_root}/opencode/opencode.json" ]] || \
     fail "expected tracked OpenCode server config link"
-  [[ "${opencode_local}/tui.json":A == \
-      "${repo_root}/opencode/tui.json":A ]] || \
+  [[ "${opencode_local}/tui.json" -ef \
+      "${repo_root}/opencode/tui.json" ]] || \
     fail "expected tracked OpenCode TUI config link"
   [[ -L "${opencode_local}/themes/noctalia.json" ]] || \
     fail "expected dangling-safe OpenCode theme link"
@@ -1218,7 +1252,16 @@ Run:
 ```bash
 python3 tests/opencode_config_migrate_test.py
 zsh tests/setup_and_health.zsh
-env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
+bash -euo pipefail -c '
+d=$(mktemp -d)
+cp nvim/tests/noctalia/fixtures/raw_palette.json \
+  "$d/nvim-palette.candidate.json"
+NOCTALIA_GLASS_DIR="$d" bin/noctalia-glass-sync --no-signal
+test -L "$d/nvim-glass/current"
+NOCTALIA_GLASS_DIR="$d" \
+  PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
+rm -rf "$d"
+'
 ```
 
 Expected: `OK opencode config migration`, `setup and health tests passed`, and
@@ -1227,7 +1270,8 @@ Expected: `OK opencode config migration`, `setup and health tests passed`, and
 - [ ] **Step 9: Commit**
 
 ```bash
-git add .gitignore bin/opencode-config-migrate bin/dotfiles-check \
+git add -f bin/opencode-config-migrate
+git add bin/dotfiles-check \
   bin/dotfiles-health lib/dotfiles-setup-data.bash setup.sh \
   tests/opencode_config_migrate_test.py tests/setup_and_health.zsh
 git diff --cached --check
@@ -1243,11 +1287,13 @@ git commit -m "feat(opencode): move runtime config out of dotfiles"
 - Modify: `bin/dotfiles-check:65-75`
 
 **Interfaces:**
-- Consumes: installed `opencode` exactly version `1.18.16`, installed `tmux`,
-  and isolated XDG directories.
+- Consumes: isolated XDG directories and, when available, installed `opencode`
+  exactly version `1.18.16` plus `tmux`.
 - Produces: a bounded end-to-end test that starts the real TUI with either a
   dangling or malformed `noctalia.json` and requires the built-in home screen
   to render instead of the process exiting.
+- A machine without OpenCode or tmux prints one explicit `SKIP` line and passes;
+  an installed OpenCode at any version other than 1.18.16 fails loudly.
 - Uses a unique tmux server because tmux answers OpenCode's terminal capability
   queries; a raw EOF-only PTY liveness check is insufficient.
 
@@ -1267,13 +1313,18 @@ import uuid
 from pathlib import Path
 
 binary = shutil.which("opencode")
-assert binary, "opencode is not installed"
+if not binary:
+    print("SKIP opencode theme fallback: opencode is not installed")
+    raise SystemExit(0)
 version = subprocess.run(
     [binary, "--version"], check=True, text=True,
     stdout=subprocess.PIPE).stdout.strip()
 assert version == "1.18.16", f"expected OpenCode 1.18.16, got {version}"
 
-assert shutil.which("tmux"), "tmux is required for the OpenCode TUI probe"
+tmux = shutil.which("tmux")
+if not tmux:
+    print("SKIP opencode theme fallback: tmux is not installed")
+    raise SystemExit(0)
 
 
 def probe(malformed):
@@ -1305,7 +1356,7 @@ def probe(malformed):
             ["env", *(f"{key}={value}" for key, value in isolated.items()),
              binary, "--pure", str(project)])
         subprocess.run(
-            ["tmux", "-L", socket, "new-session", "-d", "-x", "100",
+            [tmux, "-L", socket, "new-session", "-d", "-x", "100",
              "-y", "30", command], check=True, timeout=3,
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         try:
@@ -1313,7 +1364,7 @@ def probe(malformed):
             capture = ""
             while time.monotonic() < deadline:
                 result = subprocess.run(
-                    ["tmux", "-L", socket, "capture-pane", "-p", "-e"],
+                    [tmux, "-L", socket, "capture-pane", "-p", "-e"],
                     text=True, timeout=2, stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE)
                 capture = result.stdout
@@ -1327,7 +1378,7 @@ def probe(malformed):
                 f"{'malformed' if malformed else 'dangling'} theme: {capture!r}")
         finally:
             subprocess.run(
-                ["tmux", "-L", socket, "kill-server"], check=False, timeout=2,
+                [tmux, "-L", socket, "kill-server"], check=False, timeout=2,
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
@@ -1359,7 +1410,16 @@ python3 tests/opencode_theme_fallback_test.py
 
 ```bash
 python3 tests/opencode_theme_fallback_test.py
-env PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
+bash -euo pipefail -c '
+d=$(mktemp -d)
+cp nvim/tests/noctalia/fixtures/raw_palette.json \
+  "$d/nvim-palette.candidate.json"
+NOCTALIA_GLASS_DIR="$d" bin/noctalia-glass-sync --no-signal
+test -L "$d/nvim-glass/current"
+NOCTALIA_GLASS_DIR="$d" \
+  PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
+rm -rf "$d"
+'
 ```
 
 Expected: `OK opencode theme fallback` and `dotfiles checks passed`. If the

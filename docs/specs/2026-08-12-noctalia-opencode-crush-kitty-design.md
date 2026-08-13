@@ -84,7 +84,9 @@ The existing Noctalia Nvim template remains the single render entry point:
 1. Noctalia writes `~/.cache/noctalia/nvim-palette.candidate.json`.
 2. `bin/noctalia-glass-sync` parses and validates the complete candidate.
 3. A pure theme-construction function maps the validated palette to a complete
-   OpenCode theme object. It does not read another file or query live state.
+   OpenCode color-theme object. It includes all 52 color keys, leaves the
+   optional numeric `thinkingOpacity` setting at OpenCode's 0.6 default, and
+   does not read another file or query live state.
 4. The hook stages three files in a fresh
    `~/.cache/noctalia/nvim-glass/v-*/` directory:
    - `nvim-palette.json`
@@ -159,7 +161,7 @@ rerunnable contract:
 4. If any conflict exists, setup lists every conflicting relative path and
    fails before mutation. It never chooses a copy or silently discards one.
 5. With a clean preflight, setup copies source-only runtime entries into the
-   destination, creates the managed links, and validates the complete layout.
+   destination and creates the managed links.
    It prepares a new symlink to the local backing directory and renames it over
    `~/.config/opencode`; that atomic rename is the migration commit point. Only
    after the new target is active may setup remove identical or successfully
@@ -346,7 +348,9 @@ seven-slot invariant.
 - Start OpenCode 1.18.16 against an isolated config containing a dangling
   `themes/noctalia.json` symlink and require the TUI to stay alive on the
   built-in theme because `noctalia` is undiscovered; repeat with malformed JSON
-  and require the all-custom-themes fallback rather than a crash.
+  and require the all-custom-themes fallback rather than a crash. Skip this
+  installed-binary probe explicitly when OpenCode or tmux is absent, but fail
+  if OpenCode is installed at a version other than 1.18.16.
 - Add an agent-config assertion for the exact Crush line
   `option ui transparent true`.
 - Keep `bin/dotfiles-check` as the aggregate gate.
