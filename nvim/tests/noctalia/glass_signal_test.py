@@ -46,7 +46,6 @@ with tempfile.TemporaryDirectory() as tmp:
 events = []
 original_run = sync.subprocess.run
 original_signal = sync.signal_opencode
-sync.subprocess.run = lambda argv, check=False: type("R", (), {"returncode": 0})()
 sync.signal_opencode = lambda: events.append("opencode")
 try:
     def record_run(argv, check=False):
@@ -81,5 +80,17 @@ with tempfile.TemporaryDirectory() as tmp:
         sync.signal_opencode(proc)  # vanished is success
     finally:
         sync.os.kill = original_kill
+
+with tempfile.TemporaryDirectory() as tmp:
+    proc = Path(tmp)
+    status(proc, 301, caught=1 << (signal.SIGUSR2 - 1))
+    (proc / "301" / "status").write_text(
+        f"Name:\topencode\nSigCgt:\t{1 << (signal.SIGUSR2 - 1):016x}\n")
+    try:
+        sync.signal_opencode(proc)
+    except OSError as exc:
+        assert str(exc) == "invalid status for PID 301", exc
+    else:
+        raise AssertionError("malformed OpenCode status did not fail cleanly")
 
 print("OK glass_signal")

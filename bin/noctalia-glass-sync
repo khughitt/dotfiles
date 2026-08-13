@@ -186,7 +186,7 @@ def signal_opencode(proc_root: Path = Path('/proc')) -> None:
                 key, separator, value = line.partition(':')
                 if separator:
                     fields[key] = value.strip()
-            if fields.get('Name') != 'opencode':
+            if fields['Name'] != 'opencode':
                 continue
             if int(fields['Uid'].split()[0]) != os.getuid():
                 continue
@@ -197,6 +197,8 @@ def signal_opencode(proc_root: Path = Path('/proc')) -> None:
             continue
         except ProcessLookupError:
             continue
+        except (KeyError, IndexError, ValueError) as exc:
+            raise OSError(f'invalid status for PID {process.name}') from exc
 
 
 def signal_programs() -> None:
