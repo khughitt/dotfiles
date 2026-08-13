@@ -401,6 +401,12 @@ function setup_common_config_links() {
     for path in "${COMMON_CONFIGS[@]}"; do
         ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
     done
+    run "${DOTS_HOME}/bin/opencode-config-migrate" \
+        "${DOTS_HOME}/opencode" \
+        "${DOTFILES_OPENCODE_RUNTIME_SOURCE:-${DOTS_HOME}/opencode}" \
+        "${XDG_CONFIG_HOME}/opencode" \
+        "${XDG_CONFIG_HOME}/opencode.local" \
+        "${HOME}/.cache/noctalia/nvim-glass/current/opencode-theme.json"
 }
 
 function setup_systemd_user_units() {

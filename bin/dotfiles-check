@@ -65,6 +65,7 @@ if rg -n 'vi:syntax=(bash|zsh)' shell --glob '!private/**' --glob '!local/**'; t
     exit 1
 fi
 
+python3 tests/opencode_config_migrate_test.py
 python3 tests/noctalia_agent_themes_test.py
 
 # noctalia glass invariant: kitty's generated seven-slot transparent list must

@@ -75,6 +75,7 @@ run_setup() {
   HOME="${tmp}/home" \
     XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" \
+    DOTFILES_OPENCODE_RUNTIME_SOURCE="${tmp}/opencode-runtime-source" \
     bash "${repo_root}/setup.sh" "$@"
 }
 
@@ -173,6 +174,18 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
+
+  local opencode_local="${tmp}/config/opencode.local"
+  [[ "${tmp}/config/opencode" -ef "$opencode_local" ]] || \
+    fail "expected OpenCode config to use machine-local backing"
+  [[ "${opencode_local}/opencode.json" -ef \
+      "${repo_root}/opencode/opencode.json" ]] || \
+    fail "expected tracked OpenCode server config link"
+  [[ "${opencode_local}/tui.json" -ef \
+      "${repo_root}/opencode/tui.json" ]] || \
+    fail "expected tracked OpenCode TUI config link"
+  [[ -L "${opencode_local}/themes/noctalia.json" ]] || \
+    fail "expected dangling-safe OpenCode theme link"
 
   [[ -L "${tmp}/home/.bashrc" ]] || fail "expected ~/.bashrc symlink"
   [[ "$(readlink "${tmp}/home/.bashrc")" == "${repo_root}/bashrc" ]] || \
@@ -505,6 +518,27 @@ test_dotfiles_health_fails_wrong_memory_alert_link() {
   rm -rf "$tmp"
 }
 
+test_dotfiles_health_fails_wrong_opencode_theme_link() {
+  local tmp output exit_status theme_link
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  run_setup "$tmp" --link-only --headless >/dev/null
+  theme_link="${tmp}/config/opencode.local/themes/noctalia.json"
+  rm "$theme_link"
+  ln -s "${tmp}/wrong-theme.json" "$theme_link"
+  set +e
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" \
+    "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted wrong OpenCode theme link"
+  [[ "$output" == *"wrong link target"* ]] || \
+    fail "health did not explain wrong OpenCode theme link"
+  rm -rf "$tmp"
+}
+
 test_tmp_cleanup_runs_only_at_process_exit
 test_tmp_cleanup_is_centralized
 test_bash_config_is_native_and_minimal
@@ -525,5 +559,6 @@ test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_checks_enabled_user_timer
 test_setup_graphical_app_config_links_memory_alert
 test_dotfiles_health_fails_wrong_memory_alert_link
+test_dotfiles_health_fails_wrong_opencode_theme_link
 
 print -- "setup and health tests passed"

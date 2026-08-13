@@ -89,6 +89,18 @@ check_link() {
     fi
 }
 
+check_link_target() {
+    local dest="$1"
+    local expected="$2"
+    if [[ ! -L "$dest" ]]; then
+        fail "not a symlink: $dest"
+    elif [[ "$(realpath -m "$dest")" == "$(realpath -m "$expected")" ]]; then
+        pass "link target: $dest -> $(readlink "$dest")"
+    else
+        fail "wrong link target: $dest -> $(readlink "$dest"), expected $expected"
+    fi
+}
+
 check_config_link() {
     local name="$1"
     check_link "${XDG_CONFIG_HOME}/${name}" "${DOTS_HOME}/${name}"
@@ -142,6 +154,15 @@ for config_name in "${managed_config_links[@]}"; do
     check_config_link "$config_name"
 done
 unset config_name managed_config_links
+
+opencode_local="${XDG_CONFIG_HOME}/opencode.local"
+check_link "${XDG_CONFIG_HOME}/opencode" "$opencode_local"
+check_link "$opencode_local/opencode.json" "${DOTS_HOME}/opencode/opencode.json"
+check_link "$opencode_local/tui.json" "${DOTS_HOME}/opencode/tui.json"
+check_link_target \
+    "$opencode_local/themes/noctalia.json" \
+    "${HOME}/.cache/noctalia/nvim-glass/current/opencode-theme.json"
+unset opencode_local
 
 if [[ -d "${XDG_CONFIG_HOME}/noctalia" ]]; then
     check_link \
