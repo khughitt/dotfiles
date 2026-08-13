@@ -167,6 +167,11 @@ done
 unset config_name managed_config_links
 
 opencode_local="${XDG_CONFIG_HOME}/opencode.local"
+if [[ -d "$opencode_local" && ! -L "$opencode_local" ]]; then
+    pass "real directory: $opencode_local"
+else
+    fail "not a real directory: $opencode_local"
+fi
 check_link "${XDG_CONFIG_HOME}/opencode" "$opencode_local"
 check_link "$opencode_local/opencode.json" "${DOTS_HOME}/opencode/opencode.json"
 check_link "$opencode_local/tui.json" "${DOTS_HOME}/opencode/tui.json"

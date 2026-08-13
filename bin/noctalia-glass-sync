@@ -10,11 +10,11 @@ rename.
 
 The rename is the COMMIT POINT. Before it, any failure or kill leaves the
 previous generation fully intact -- readers (kitty include, nvim load) go
-through `current` and never see a half-promoted state. The SIGUSR1 signals
-after it are post-commit reconciliation, not part of the transaction: a kill
-between commit and signalling leaves already-running processes on the old
-generation until the next successful run signals them (new processes always
-read the committed generation).
+through `current` and never see a half-promoted state. Kitty/Nvim SIGUSR1 and
+OpenCode SIGUSR2 signals after it are post-commit reconciliation, not part of
+the transaction: a kill between commit and signalling leaves already-running
+processes on the old generation until the next successful run signals them
+(new processes always read the committed generation).
 
 Specs: docs/specs/2026-08-09-noctalia-nvim-theme-design.md and
 docs/specs/2026-08-12-noctalia-opencode-crush-kitty-design.md

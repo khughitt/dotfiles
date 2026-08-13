@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import filecmp
+import hashlib
 import os
 import shutil
 import sys
@@ -61,6 +62,15 @@ def same(left: Path, right: Path) -> bool:
     if left_kind == 'file':
         return filecmp.cmp(left, right, shallow=False)
     return False
+
+
+def state(path: Path) -> tuple[str, bytes | str] | tuple[str]:
+    path_kind = kind(path)
+    if path_kind == 'file':
+        return path_kind, hashlib.sha256(path.read_bytes()).digest()
+    if path_kind == 'link':
+        return path_kind, os.readlink(path)
+    return path_kind,
 
 
 def copy_node(source: Path, destination: Path) -> None:
@@ -145,10 +155,13 @@ def main() -> None:
         str(path.relative_to(local))
         for key, path in destination_entries.items() if key in MANAGED_KEYS)
     for relative in sorted(source_entries.keys() & destination_entries.keys()):
-        if not same(source_entries[relative], destination_entries[relative]):
+        source_path = source_entries[relative]
+        destination_path = destination_entries[relative]
+        if (source_path.relative_to(runtime) != destination_path.relative_to(local)
+                or not same(source_path, destination_path)):
             conflicts.extend((
-                str(source_entries[relative].relative_to(runtime)),
-                str(destination_entries[relative].relative_to(local)),
+                str(source_path.relative_to(runtime)),
+                str(destination_path.relative_to(local)),
             ))
 
     if conflicts:
@@ -156,6 +169,13 @@ def main() -> None:
         for conflict in sorted(set(conflicts)):
             print(f'  {conflict}', file=sys.stderr)
         raise SystemExit(1)
+
+    source_state = {
+        key: (PurePath(path.relative_to(runtime)), state(path))
+        for key, path in source_entries.items()
+    }
+    obsolete_theme = runtime / 'themes/noctalia.json'
+    obsolete_state = state(obsolete_theme) if lexists(obsolete_theme) else None
 
     local.mkdir(parents=True, exist_ok=True)
     missing = set(source_entries) - set(destination_entries)
@@ -169,9 +189,30 @@ def main() -> None:
     temporary.symlink_to(local, target_is_directory=True)
     os.replace(temporary, config)  # migration commit point
 
+    current_entries, current_collisions = inventory(runtime)
+    current_state = {
+        key: (PurePath(path.relative_to(runtime)), state(path))
+        for key, path in current_entries.items()
+    }
+    changed = {str(path.relative_to(runtime)) for path in current_collisions}
+    for key in source_state.keys() | current_state.keys():
+        if source_state.get(key) != current_state.get(key):
+            if key in source_entries:
+                changed.add(str(source_entries[key].relative_to(runtime)))
+            if key in current_entries:
+                changed.add(str(current_entries[key].relative_to(runtime)))
+    current_obsolete_state = state(obsolete_theme) if lexists(obsolete_theme) else None
+    if obsolete_state != current_obsolete_state:
+        changed.add(str(obsolete_theme.relative_to(runtime)))
+    if changed:
+        print('opencode-config-migrate: source changed during migration:',
+              file=sys.stderr)
+        for path in sorted(changed):
+            print(f'  {path}', file=sys.stderr)
+        raise SystemExit(1)
+
     remove_runtime(source_entries)
-    obsolete_theme = runtime / 'themes/noctalia.json'
-    if lexists(obsolete_theme):
+    if obsolete_state is not None:
         remove_runtime({PurePath('themes/noctalia.json'): obsolete_theme})
     try:
         (runtime / 'themes').rmdir()

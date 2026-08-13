@@ -543,6 +543,25 @@ test_dotfiles_health_fails_wrong_opencode_theme_link() {
   rm -rf "$tmp"
 }
 
+test_dotfiles_health_rejects_symlinked_opencode_local() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  run_setup "$tmp" --link-only --headless >/dev/null
+  mv "${tmp}/config/opencode.local" "${tmp}/opencode-local-target"
+  ln -s "${tmp}/opencode-local-target" "${tmp}/config/opencode.local"
+  set +e
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" \
+    "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted symlinked opencode.local"
+  [[ "$output" == *"not a real directory"* ]] || \
+    fail "health did not explain symlinked opencode.local"
+}
+
 test_tmp_cleanup_runs_only_at_process_exit
 test_tmp_cleanup_is_centralized
 test_bash_config_is_native_and_minimal
@@ -564,5 +583,6 @@ test_dotfiles_health_checks_enabled_user_timer
 test_setup_graphical_app_config_links_memory_alert
 test_dotfiles_health_fails_wrong_memory_alert_link
 test_dotfiles_health_fails_wrong_opencode_theme_link
+test_dotfiles_health_rejects_symlinked_opencode_local
 
 print -- "setup and health tests passed"

@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 import hashlib
+import io
 import os
+import runpy
 import subprocess
+import sys
 import tempfile
+from contextlib import redirect_stderr
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -97,6 +101,94 @@ with tempfile.TemporaryDirectory() as tmp:
     assert snapshot(source) == before_source
     assert snapshot(local) == before_local
     assert snapshot(config) == before_config
+
+case_spelling_errors = []
+for source_path, destination_path in (
+        ("Same", "same"),
+        ("Tree/source-only", "tree/destination-only"),
+):
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        tracked = base / "repo/opencode"
+        runtime = base / "runtime"
+        local = base / "home/.config/opencode.local"
+        config = base / "home/.config/opencode"
+        theme = base / "theme.json"
+        write(tracked / "opencode.json", "{}\n")
+        write(tracked / "tui.json", "{}\n")
+        write(runtime / source_path, "same\n")
+        write(local / destination_path, "same\n")
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.symlink_to(tracked, target_is_directory=True)
+        before_runtime = snapshot(runtime)
+        before_local = snapshot(local)
+        before_config = snapshot(config)
+        result = subprocess.run(
+            [MIGRATE, tracked, runtime, config, local, theme], text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        source_root = source_path.split("/", 1)[0]
+        destination_root = destination_path.split("/", 1)[0]
+        if result.returncode == 0:
+            case_spelling_errors.append(
+                f"case-equivalent {source_root}/{destination_root} paths were accepted")
+        if source_root not in result.stdout or destination_root not in result.stdout:
+            case_spelling_errors.append(
+                f"case spellings were not both reported: {result.stdout!r}")
+        if snapshot(runtime) != before_runtime:
+            case_spelling_errors.append(f"{source_root} runtime state was mutated")
+        if snapshot(local) != before_local:
+            case_spelling_errors.append(f"{destination_root} local state was mutated")
+        if snapshot(config) != before_config:
+            case_spelling_errors.append("config link was mutated")
+assert not case_spelling_errors, "\n".join(case_spelling_errors)
+
+with tempfile.TemporaryDirectory() as tmp:
+    base = Path(tmp)
+    tracked = base / "repo/opencode"
+    runtime = base / "runtime"
+    local = base / "home/.config/opencode.local"
+    config = base / "home/.config/opencode"
+    theme = base / "theme.json"
+    write(tracked / "opencode.json", "{}\n")
+    write(tracked / "tui.json", "{}\n")
+    write(runtime / "changing", "before\n")
+    config.parent.mkdir(parents=True, exist_ok=True)
+    config.symlink_to(tracked, target_is_directory=True)
+
+    migrate = runpy.run_path(str(MIGRATE))
+    original_replace = os.replace
+    original_argv = sys.argv
+    mutated_source = None
+
+    def replace_then_mutate(source, destination):
+        global mutated_source
+        original_replace(source, destination)
+        write(runtime / "changing", "after\n")
+        write(runtime / "new", "new\n")
+        mutated_source = snapshot(runtime)
+
+    stderr = io.StringIO()
+    exit_status = 0
+    try:
+        migrate["os"].replace = replace_then_mutate
+        sys.argv = [str(MIGRATE), *(str(path) for path in (
+            tracked, runtime, config, local, theme))]
+        with redirect_stderr(stderr):
+            try:
+                migrate["main"]()
+            except SystemExit as exc:
+                exit_status = exc.code
+    finally:
+        migrate["os"].replace = original_replace
+        sys.argv = original_argv
+
+    assert exit_status != 0, "concurrent source mutation was accepted"
+    assert config.is_symlink() and config.resolve() == local.resolve(), \
+        "post-commit source mutation rolled back the config link"
+    assert (local / "changing").read_text() == "before\n"
+    assert snapshot(runtime) == mutated_source, "concurrent source data was discarded"
+    assert "changing" in stderr.getvalue() and "new" in stderr.getvalue(), \
+        stderr.getvalue()
 
 ancestor_errors = []
 for ancestor_kind in ("file", "symlink"):
