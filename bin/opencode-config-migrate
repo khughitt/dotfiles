@@ -12,6 +12,7 @@ MANAGED = {
     PurePath('tui.json'),
     PurePath('themes/noctalia.json'),
 }
+MANAGED_KEYS = {PurePath(*(part.casefold() for part in path.parts)) for path in MANAGED}
 
 
 def lexists(path: Path) -> bool:
@@ -32,14 +33,21 @@ def kind(path: Path) -> str:
     return 'other'
 
 
-def inventory(root: Path) -> dict[PurePath, Path]:
+def inventory(root: Path) -> tuple[dict[PurePath, Path], list[Path]]:
     if not root.is_dir():
-        return {}
-    return {
-        PurePath(path.relative_to(root)): path
-        for path in sorted(root.rglob('*'))
-        if PurePath(path.relative_to(root)) not in MANAGED
-    }
+        return {}, []
+    entries = {}
+    collisions = []
+    for path in sorted(root.rglob('*')):
+        relative = PurePath(path.relative_to(root))
+        if relative in MANAGED:
+            continue
+        key = PurePath(*(part.casefold() for part in relative.parts))
+        if key in entries:
+            collisions.extend((entries[key], path))
+        else:
+            entries[key] = path
+    return entries, collisions
 
 
 def same(left: Path, right: Path) -> bool:
@@ -96,6 +104,10 @@ def main() -> None:
     theme = Path(os.path.abspath(theme))
     conflicts = []
 
+    local_root = canonical(local)
+    if (runtime == local_root or runtime in local_root.parents
+            or local_root in runtime.parents):
+        conflicts.append(f'{runtime} overlaps {local}')
     if lexists(config):
         if not config.is_symlink() or canonical(config) not in {
                 tracked, canonical(local)}:
@@ -112,16 +124,32 @@ def main() -> None:
         if not tracked_file.is_file():
             conflicts.append(str(tracked_file))
     for destination, target in links.items():
+        ancestor = destination.parent
+        while ancestor != local:
+            if lexists(ancestor) and (ancestor.is_symlink() or not ancestor.is_dir()):
+                conflicts.append(str(ancestor))
+            ancestor = ancestor.parent
         if lexists(destination) and (
                 not destination.is_symlink()
                 or canonical(destination) != canonical(target)):
             conflicts.append(str(destination))
 
-    source_entries = inventory(runtime)
-    destination_entries = inventory(local)
+    source_entries, source_collisions = inventory(runtime)
+    destination_entries, destination_collisions = inventory(local)
+    conflicts.extend(str(path.relative_to(runtime)) for path in source_collisions)
+    conflicts.extend(str(path.relative_to(local)) for path in destination_collisions)
+    conflicts.extend(
+        str(path.relative_to(runtime))
+        for key, path in source_entries.items() if key in MANAGED_KEYS)
+    conflicts.extend(
+        str(path.relative_to(local))
+        for key, path in destination_entries.items() if key in MANAGED_KEYS)
     for relative in sorted(source_entries.keys() & destination_entries.keys()):
         if not same(source_entries[relative], destination_entries[relative]):
-            conflicts.append(str(relative))
+            conflicts.extend((
+                str(source_entries[relative].relative_to(runtime)),
+                str(destination_entries[relative].relative_to(local)),
+            ))
 
     if conflicts:
         print('opencode-config-migrate: conflicts:', file=sys.stderr)
@@ -131,8 +159,9 @@ def main() -> None:
 
     local.mkdir(parents=True, exist_ok=True)
     missing = set(source_entries) - set(destination_entries)
-    for relative in sorted(missing, key=lambda p: len(p.parts)):
-        copy_node(runtime / relative, local / relative)
+    for key in sorted(missing, key=lambda p: len(p.parts)):
+        source = source_entries[key]
+        copy_node(source, local / source.relative_to(runtime))
     for destination, target in links.items():
         install_link(destination, target)
 

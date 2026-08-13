@@ -94,10 +94,21 @@ check_link_target() {
     local expected="$2"
     if [[ ! -L "$dest" ]]; then
         fail "not a symlink: $dest"
-    elif [[ "$(realpath -m "$dest")" == "$(realpath -m "$expected")" ]]; then
+        return
+    fi
+
+    local actual target
+    actual="$(readlink "$dest")"
+    if [[ "$actual" == /* ]]; then
+        target="$actual"
+    else
+        target="$(dirname "$dest")/$actual"
+    fi
+    if python3 -c 'import os, sys; raise SystemExit(os.path.realpath(sys.argv[1]) != os.path.realpath(sys.argv[2]))' \
+            "$target" "$expected"; then
         pass "link target: $dest -> $(readlink "$dest")"
     else
-        fail "wrong link target: $dest -> $(readlink "$dest"), expected $expected"
+        fail "wrong link target: $dest -> $actual, expected $expected"
     fi
 }
 

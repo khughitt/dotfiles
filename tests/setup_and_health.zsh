@@ -519,17 +519,21 @@ test_dotfiles_health_fails_wrong_memory_alert_link() {
 }
 
 test_dotfiles_health_fails_wrong_opencode_theme_link() {
-  local tmp output exit_status theme_link
+  local tmp output exit_status theme_link mockbin
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  mockbin="${tmp}/bin"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "$mockbin"
   run_setup "$tmp" --link-only --headless >/dev/null
   theme_link="${tmp}/config/opencode.local/themes/noctalia.json"
   rm "$theme_link"
   ln -s "${tmp}/wrong-theme.json" "$theme_link"
+  printf '#!/usr/bin/env bash\nexit 99\n' > "${mockbin}/realpath"
+  chmod +x "${mockbin}/realpath"
   set +e
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" \
+    PATH="${mockbin}:$PATH" \
     "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1)
   exit_status=$?
   set -e
