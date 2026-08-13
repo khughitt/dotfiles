@@ -89,6 +89,6 @@ crush_lines = (ROOT / "crush/crushrc").read_text().splitlines()
 assert crush_lines.count("option ui transparent true") == 1
 
 root_ignore = (ROOT / ".gitignore").read_text().splitlines()
-assert "opencode/themes/noctalia.json" not in root_ignore
+assert root_ignore.count("opencode/themes/noctalia.json") == 1
 
 print("OK noctalia agent themes")

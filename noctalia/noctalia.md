@@ -78,6 +78,11 @@ TUI or `run` footer after a wallpaper switch; non-TUI modes such as `serve` are
 not signalled. Before the first render, the dangling theme link is ignored and
 OpenCode uses its built-in theme.
 
+Setup copies existing ignored OpenCode runtime files into the machine-local
+directory and atomically activates it. Inactive source copies remain ignored in
+the repo because deleting them safely would require stopping every possible
+writer; remove them manually only after confirming OpenCode is stopped.
+
 OpenCode's root, panel, element, menu, context, and diff backgrounds reuse
 Kitty's registered Noctalia glass colors. Small selected semantic controls and
 hard-coded modal dimmers remain opaque because OpenCode exposes no independent

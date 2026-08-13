@@ -55,8 +55,8 @@ OpenCode 1.18.18, Crush 0.88.0, Noctalia.
 - OpenCode's selected semantic controls and hard-coded modal dimmers remain
   opaque. Do not patch OpenCode, fork Crush, or alter Niri.
 - OpenCode runtime migration must inventory both complete trees and report all
-  conflicts before mutation. Identical files/symlinks may be cleaned only after
-  the config-link commit point; divergent data is never chosen or discarded.
+  conflicts before mutation. Source entries are copied but never deleted
+  automatically; divergent data is never chosen or discarded.
 - Setup tests set `DOTFILES_OPENCODE_RUNTIME_SOURCE` to a temporary directory so
   they cannot migrate ignored runtime files from the real checkout. Production
   leaves it unset, making the runtime source the tracked `opencode/` directory.
@@ -735,9 +735,8 @@ git commit -m "feat(noctalia): refresh signal-aware opencode processes"
 - Produces: top-level `opencode/tui.json.theme = "noctalia"`, no legacy
   `opencode/opencode.json.tui`, and exact Crush default
   `option ui transparent true`.
-- Removes: the obsolete repo-level ignore for
-  `opencode/themes/noctalia.json`; Task 5 removes the actual ignored legacy
-  file after migration activation.
+- Retains: the repo-level ignore for the inactive legacy
+  `opencode/themes/noctalia.json` source copy.
 
 - [ ] **Step 1: Write the failing tracked-config assertions**
 
@@ -753,7 +752,7 @@ crush_lines = (ROOT / "crush/crushrc").read_text().splitlines()
 assert crush_lines.count("option ui transparent true") == 1
 
 root_ignore = (ROOT / ".gitignore").read_text().splitlines()
-assert "opencode/themes/noctalia.json" not in root_ignore
+assert root_ignore.count("opencode/themes/noctalia.json") == 1
 ```
 
 - [ ] **Step 2: Run the focused test and confirm RED**
@@ -764,7 +763,7 @@ python3 tests/noctalia_agent_themes_test.py
 
 Expected: failure at `assert "tui" not in opencode_server`.
 
-- [ ] **Step 3: Move the theme key, add the Crush default, and retire the ignore**
+- [ ] **Step 3: Move the theme key and add the Crush default**
 
 Delete this object from `opencode/opencode.json`:
 
@@ -789,11 +788,8 @@ Add to `crush/crushrc` immediately before `option ui compact true`:
 option ui transparent true
 ```
 
-Delete only this line from the root `.gitignore`:
-
-```text
-opencode/themes/noctalia.json
-```
+Keep the root `.gitignore` entry for `opencode/themes/noctalia.json`; the
+inactive source copy is not deleted automatically.
 
 - [ ] **Step 4: Run the focused test and confirm GREEN**
 
@@ -829,12 +825,12 @@ git commit -m "feat(agents): track opencode and crush theme defaults"
 - `bin/opencode-config-migrate TRACKED_SOURCE RUNTIME_SOURCE CONFIG_LINK LOCAL_DIR THEME_TARGET`
   performs one preflight, lists every conflict, exits nonzero without mutation
   on any conflict, otherwise copies source-only runtime entries, installs the
-  three managed links, atomically commits `CONFIG_LINK -> LOCAL_DIR`, then
-  removes copied/identical runtime entries from `RUNTIME_SOURCE`.
+  three managed links, then atomically commits `CONFIG_LINK -> LOCAL_DIR`.
+  `RUNTIME_SOURCE` is never deleted automatically.
 - `TRACKED_SOURCE/opencode.json` and `TRACKED_SOURCE/tui.json` are immutable
   managed targets. In production `RUNTIME_SOURCE == TRACKED_SOURCE`; tests use
   a separate temporary runtime source. `RUNTIME_SOURCE/themes/noctalia.json`
-  is obsolete generated state and is discarded only after activation.
+  is obsolete generated state and remains an ignored inactive source copy.
 - Every other ignored runtime entry is migrated, including `opencode/.gitignore`.
 - Health treats OpenCode as a special layout instead of a common repo-directory
   link.
@@ -907,10 +903,10 @@ with tempfile.TemporaryDirectory() as tmp:
     assert (local / "node_modules/pkg/index.js").read_text() == "runtime\n"
     assert (local / ".gitignore").read_text() == "runtime ignore\n"
     assert (local / "destination-only").read_text() == "keep\n"
-    assert not (source / "package.json").exists()
-    assert not (source / ".gitignore").exists()
-    assert not (source / "node_modules").exists()
-    assert not (source / "themes/noctalia.json").exists()
+    assert (source / "package.json").read_text() == "same\n"
+    assert (source / ".gitignore").read_text() == "runtime ignore\n"
+    assert (source / "node_modules/pkg/index.js").read_text() == "runtime\n"
+    assert (source / "themes/noctalia.json").read_text() == "obsolete\n"
     assert (source / "opencode.json").is_file()
     assert (source / "tui.json").is_file()
 
@@ -1027,17 +1023,6 @@ def copy_node(source: Path, destination: Path) -> None:
         shutil.copy2(source, destination)
 
 
-def remove_runtime(entries: dict[PurePath, Path]) -> None:
-    for path in sorted(entries.values(), key=lambda p: len(p.parts), reverse=True):
-        if path.is_symlink() or path.is_file():
-            path.unlink()
-        elif path.is_dir():
-            try:
-                path.rmdir()
-            except OSError:
-                pass
-
-
 def install_link(destination: Path, target: Path) -> None:
     if destination.is_symlink() and canonical(destination) == canonical(target):
         return
@@ -1101,15 +1086,7 @@ def main() -> None:
     temporary = config.with_name(f'.{config.name}.tmp-{os.getpid()}')
     temporary.symlink_to(local, target_is_directory=True)
     os.replace(temporary, config)  # migration commit point
-
-    remove_runtime(source_entries)
-    obsolete_theme = runtime / 'themes/noctalia.json'
-    if lexists(obsolete_theme):
-        remove_runtime({PurePath('themes/noctalia.json'): obsolete_theme})
-    try:
-        (runtime / 'themes').rmdir()
-    except OSError:
-        pass
+    # ponytail: retain inactive source copies; automatic deletion races writers.
 
 
 if __name__ == '__main__':

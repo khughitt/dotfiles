@@ -65,10 +65,10 @@ with tempfile.TemporaryDirectory() as tmp:
     assert (local / "node_modules/pkg/index.js").read_text() == "runtime\n"
     assert (local / ".gitignore").read_text() == "runtime ignore\n"
     assert (local / "destination-only").read_text() == "keep\n"
-    assert not (source / "package.json").exists()
-    assert not (source / ".gitignore").exists()
-    assert not (source / "node_modules").exists()
-    assert not (source / "themes/noctalia.json").exists()
+    assert (source / "package.json").read_text() == "same\n"
+    assert (source / ".gitignore").read_text() == "runtime ignore\n"
+    assert (source / "node_modules/pkg/index.js").read_text() == "runtime\n"
+    assert (source / "themes/noctalia.json").read_text() == "obsolete\n"
     assert (source / "opencode.json").is_file()
     assert (source / "tui.json").is_file()
 
@@ -182,13 +182,12 @@ with tempfile.TemporaryDirectory() as tmp:
         migrate["os"].replace = original_replace
         sys.argv = original_argv
 
-    assert exit_status != 0, "concurrent source mutation was accepted"
+    assert exit_status == 0, "concurrent source mutation blocked activation"
     assert config.is_symlink() and config.resolve() == local.resolve(), \
         "post-commit source mutation rolled back the config link"
     assert (local / "changing").read_text() == "before\n"
     assert snapshot(runtime) == mutated_source, "concurrent source data was discarded"
-    assert "changing" in stderr.getvalue() and "new" in stderr.getvalue(), \
-        stderr.getvalue()
+    assert not stderr.getvalue(), stderr.getvalue()
 
 ancestor_errors = []
 for ancestor_kind in ("file", "symlink"):
