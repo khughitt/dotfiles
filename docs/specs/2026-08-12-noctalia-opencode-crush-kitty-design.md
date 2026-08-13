@@ -1,6 +1,6 @@
 # Noctalia agent themes: OpenCode glass and Crush transparency (Kitty)
 
-**Status:** Proposed.
+**Status:** Implemented (`eb1e61d^..6cdbdb3`).
 
 ## Goal
 

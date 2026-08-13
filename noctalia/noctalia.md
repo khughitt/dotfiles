@@ -13,9 +13,9 @@ The plugin expects `~/bin/walictl` to exist, which is provided by the existing t
 ## Neovim theming
 
 Noctalia renders a palette template to candidate JSON; `~/bin/noctalia-glass-sync`
-validates it, writes both generated files to a version directory, flips the
-`~/.cache/noctalia/nvim-glass/current/` symlink, then signals kitty and nvim.
-Register the template in `~/.config/noctalia/user-templates.toml`:
+validates and atomically writes Nvim, Kitty, and OpenCode artifacts before
+signalling Kitty, Nvim, then signal-aware OpenCode processes. Register the
+template in `~/.config/noctalia/user-templates.toml`:
 
 ```toml
 [templates.nvim]
@@ -59,6 +59,34 @@ live `glass.selection_fg` (`on_primary_container`) foreground and
 `glass.selection` (`primary_container`) background but remains opaque because
 Kitty forces selected cells to alpha 1. Codex's input box remains opaque
 because Codex owns and caches that background and exposes no theme role for it.
+
+### OpenCode and Crush
+
+`setup.sh` keeps OpenCode's tracked configuration and generated theme separate:
+
+```text
+~/.config/opencode -> ~/.config/opencode.local
+~/.config/opencode/opencode.json -> ~/d/dotfiles/opencode/opencode.json
+~/.config/opencode/tui.json -> ~/d/dotfiles/opencode/tui.json
+~/.config/opencode/themes/noctalia.json
+  -> ~/.cache/noctalia/nvim-glass/current/opencode-theme.json
+```
+
+The Noctalia Nvim template hook generates the OpenCode theme in the same atomic
+generation as Nvim and Kitty. OpenCode 1.18.16 reloads a running interactive
+TUI or `run` footer after a wallpaper switch; non-TUI modes such as `serve` are
+not signalled. Before the first render, the dangling theme link is ignored and
+OpenCode uses its built-in theme.
+
+OpenCode's root, panel, element, menu, context, and diff backgrounds reuse
+Kitty's registered Noctalia glass colors. Small selected semantic controls and
+hard-coded modal dimmers remain opaque because OpenCode exposes no independent
+theme roles that Kitty can make translucent without sacrificing foreground
+readability.
+
+`crush/crushrc` sets `option ui transparent true` as the reproducible default.
+Crush's saved global or workspace preference may override it. Crush 0.88.0 has
+no custom-theme interface, so its application-painted blocks remain opaque.
 
 ## Persistent memory-pressure alerts
 
