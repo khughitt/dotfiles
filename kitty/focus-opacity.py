@@ -20,8 +20,8 @@ from kitty.fast_data_types import get_options
 # --- knobs -----------------------------------------------------------------
 # ACTIVE should match background_opacity in kitty.conf so a window starts out
 # at the right value before its first focus event.
-ACTIVE_BACKGROUND_OPACITY = 0.85
-INACTIVE_BACKGROUND_OPACITY = 0.40
+ACTIVE_BACKGROUND_OPACITY = 0.95
+INACTIVE_BACKGROUND_OPACITY = 0.65
 # ---------------------------------------------------------------------------
 
 

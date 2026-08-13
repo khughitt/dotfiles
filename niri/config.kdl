@@ -160,8 +160,8 @@ window-rule {
 blur {
     passes 2
     offset 2
-    noise 0.12
-    saturation 0.6
+    noise 0.08
+    //saturation 0.1
 }
 
 layer-rule {
@@ -202,23 +202,23 @@ layer-rule {
 window-rule {
     match app-id="kitty" is-active=true
     match app-id="ghostty" is-active=true
-    opacity 1.0
+    opacity 0.98
     background-effect {
         blur true
         xray false
-        saturation 0.3
-        noise 0.12
+        saturation 0.8
+        noise 0.06
     }
 }
 
 window-rule {
     match app-id="kitty" is-active=false
     match app-id="ghostty" is-active=false
-    opacity 1.0
+    opacity 0.95
     background-effect {
         blur true
         xray false
-        saturation 0.9
+        saturation 0.5
         noise 0.12
     }
 }
@@ -228,7 +228,7 @@ window-rule {
 // ghostty's text too, unlike kitty's.
 window-rule {
     match app-id="ghostty" is-active=false
-    opacity 0.7
+    opacity 0.95
 }
 
 // Lift the active window off the backdrop: bigger, darker shadow than the
@@ -317,9 +317,12 @@ binds {
     Super+Shift+H { move-column-left; }
     Super+Shift+L { move-column-right; }
     Super+Shift+Left { move-column-left; }
+    Super+Shift+Right { move-column-right; }
+
     Super+Shift+Down { move-window-down; }
     Super+Shift+Up { move-window-up; }
-    Super+Shift+Right { move-column-right; }
+    Super+Shift+J { move-window-down; }
+    Super+Shift+K { move-window-up; }
 
     Super+Home { focus-column-first; }
     Super+End { focus-column-last; }
@@ -334,8 +337,6 @@ binds {
     Alt+Page_Up { focus-workspace-up; }
     Super+Shift+Page_Down { move-column-to-workspace-down; }
     Super+Shift+Page_Up { move-column-to-workspace-up; }
-    Super+Shift+J { move-workspace-down; }
-    Super+Shift+K { move-workspace-up; }
     Alt+Shift+J { move-workspace-down; }
     Alt+Shift+K { move-workspace-up; }
     Alt+Shift+Page_Down { move-workspace-down; }
