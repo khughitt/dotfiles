@@ -73,7 +73,7 @@ because Codex owns and caches that background and exposes no theme role for it.
 ```
 
 The Noctalia Nvim template hook generates the OpenCode theme in the same atomic
-generation as Nvim and Kitty. OpenCode 1.18.16 reloads a running interactive
+generation as Nvim and Kitty. OpenCode 1.18.18 reloads a running interactive
 TUI or `run` footer after a wallpaper switch; non-TUI modes such as `serve` are
 not signalled. Before the first render, the dangling theme link is ignored and
 OpenCode uses its built-in theme.

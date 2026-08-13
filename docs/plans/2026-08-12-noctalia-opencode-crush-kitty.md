@@ -5,7 +5,7 @@
 > `superpowers:executing-plans` to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Generate a wallpaper-derived OpenCode 1.18.16 theme in the existing
+**Goal:** Generate a wallpaper-derived OpenCode 1.18.18 theme in the existing
 atomic Noctalia glass generation, safely refresh only signal-aware OpenCode
 processes, move OpenCode runtime state out of the synced repo, and make Crush's
 supported transparent base reproducible.
@@ -19,7 +19,7 @@ native tracked transparency default because version 0.88.0 has no custom-theme
 interface.
 
 **Tech Stack:** Python 3 standard library, Bash/Zsh, JSON, Linux `/proc`, Kitty,
-OpenCode 1.18.16, Crush 0.88.0, Noctalia.
+OpenCode 1.18.18, Crush 0.88.0, Noctalia.
 
 **Spec:** `docs/specs/2026-08-12-noctalia-opencode-crush-kitty-design.md`
 
@@ -46,7 +46,7 @@ OpenCode 1.18.16, Crush 0.88.0, Noctalia.
   name, current real UID, and the `SIGUSR2` bit present in `/proc/<pid>/status`
   `SigCgt`. A vanished PID is ignored; other errors fail post-commit.
 - OpenCode theme JSON is dark-only and contains all 52 supported color keys
-  used in OpenCode 1.18.16, including explicit `selectedListItemText` and
+  used in OpenCode 1.18.18, including explicit `selectedListItemText` and
   `backgroundMenu`; it does not use alpha colors. The optional numeric
   `thinkingOpacity` setting is deliberately omitted so OpenCode keeps its 0.6
   default.
@@ -84,7 +84,7 @@ OpenCode 1.18.16, Crush 0.88.0, Noctalia.
 - Consumes: the already validated palette object accepted by `validate(raw)`.
 - Produces: `build_opencode_theme(raw: dict) -> dict` and staged
   `opencode-theme.json` beside `nvim-palette.json` and `kitty-glass.conf`.
-- Contract: the mapping below is the complete 52-key OpenCode 1.18.16 dark
+- Contract: the mapping below is the complete 52-key OpenCode 1.18.18 dark
   color contract; the JSON top level is exactly `$schema` plus `theme`.
   `thinkingOpacity` is not a color and remains at OpenCode's 0.6 default.
 
@@ -1294,12 +1294,12 @@ git commit -m "feat(opencode): move runtime config out of dotfiles"
 
 **Interfaces:**
 - Consumes: isolated XDG directories and, when available, installed `opencode`
-  exactly version `1.18.16` plus `tmux`.
+  exactly version `1.18.18` plus `tmux`.
 - Produces: a bounded end-to-end test that starts the real TUI with either a
   dangling or malformed `noctalia.json` and requires the built-in home screen
   to render instead of the process exiting.
 - A machine without OpenCode or tmux prints one explicit `SKIP` line and passes;
-  an installed OpenCode at any version other than 1.18.16 fails loudly.
+  an installed OpenCode at any version other than 1.18.18 fails loudly.
 - Uses a unique tmux server because tmux answers OpenCode's terminal capability
   queries; a raw EOF-only PTY liveness check is insufficient.
 
@@ -1324,7 +1324,7 @@ if not binary:
 version = subprocess.run(
     [binary, "--version"], check=True, text=True,
     stdout=subprocess.PIPE).stdout.strip()
-assert version == "1.18.16", f"expected OpenCode 1.18.16, got {version}"
+assert version == "1.18.18", f"expected OpenCode 1.18.18, got {version}"
 
 tmux = shutil.which("tmux")
 if not tmux:
@@ -1392,7 +1392,7 @@ probe(malformed=True)
 print("OK opencode theme fallback")
 ```
 
-- [ ] **Step 2: Run the focused test and confirm GREEN against 1.18.16**
+- [ ] **Step 2: Run the focused test and confirm GREEN against 1.18.18**
 
 ```bash
 python3 tests/opencode_theme_fallback_test.py
@@ -1475,7 +1475,7 @@ Append this OpenCode/Crush subsection to `## Agent themes`:
 ```
 
 The Noctalia Nvim template hook generates the OpenCode theme in the same atomic
-generation as Nvim and Kitty. OpenCode 1.18.16 reloads a running interactive
+generation as Nvim and Kitty. OpenCode 1.18.18 reloads a running interactive
 TUI or `run` footer after a wallpaper switch; non-TUI modes such as `serve` are
 not signalled. Before the first render, the dangling theme link is ignored and
 OpenCode uses its built-in theme.

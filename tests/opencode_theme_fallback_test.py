@@ -14,7 +14,7 @@ if not binary:
 version = subprocess.run(
     [binary, "--version"], check=True, text=True,
     stdout=subprocess.PIPE).stdout.strip()
-assert version == "1.18.16", f"expected OpenCode 1.18.16, got {version}"
+assert version == "1.18.18", f"expected OpenCode 1.18.18, got {version}"
 
 tmux = shutil.which("tmux")
 if not tmux:
