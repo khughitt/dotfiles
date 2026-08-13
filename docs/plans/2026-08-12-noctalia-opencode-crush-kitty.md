@@ -411,6 +411,8 @@ fi
 [[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL line: $out"; exit 1; }
 
 promote
+sed -i 's/"outline": "#636da6"/"outline": "#3b4261"/' \
+  "$TMP/nvim-glass/current/nvim-palette.json"
 python3 - "$TMP/nvim-glass/current/opencode-theme.json" <<'PY'
 import json, sys
 p = sys.argv[1]
@@ -422,7 +424,10 @@ if out=$("$CHECK" 2>&1); then
   echo "FAIL: invisible OpenCode menu border must fail"
   exit 1
 fi
-[[ "$out" == FAIL:* ]] || { echo "FAIL: expected FAIL line: $out"; exit 1; }
+[[ "$out" == FAIL:*"border is invisible on backgroundMenu"* ]] || {
+  echo "FAIL: wrong invisible-border failure: $out"
+  exit 1
+}
 ```
 
 Replace repeated two-line candidate/sync resets in the remainder of the test
@@ -1258,6 +1263,7 @@ cp nvim/tests/noctalia/fixtures/raw_palette.json \
   "$d/nvim-palette.candidate.json"
 NOCTALIA_GLASS_DIR="$d" bin/noctalia-glass-sync --no-signal
 test -L "$d/nvim-glass/current"
+test -f "$d/nvim-glass/current/opencode-theme.json"
 NOCTALIA_GLASS_DIR="$d" \
   PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
 rm -rf "$d"
@@ -1303,7 +1309,6 @@ Create `tests/opencode_theme_fallback_test.py`:
 
 ```python
 #!/usr/bin/env python3
-import os
 import shlex
 import shutil
 import subprocess
@@ -1416,6 +1421,7 @@ cp nvim/tests/noctalia/fixtures/raw_palette.json \
   "$d/nvim-palette.candidate.json"
 NOCTALIA_GLASS_DIR="$d" bin/noctalia-glass-sync --no-signal
 test -L "$d/nvim-glass/current"
+test -f "$d/nvim-glass/current/opencode-theme.json"
 NOCTALIA_GLASS_DIR="$d" \
   PYTHONPYCACHEPREFIX=/tmp/noctalia-glass-pycache bin/dotfiles-check
 rm -rf "$d"
