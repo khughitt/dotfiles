@@ -3,7 +3,7 @@
 # host-specific settings for Niri
 #
 HOSTNAME=$(hostname)
-NIRI_DIR="$HOME/.config/niri"
+NIRI_DIR="${NIRI_DIR:-$HOME/.config/niri}"
 
 if [ "$HOSTNAME" = "europa" ]; then
     ln -sf "host-europa.kdl" "$NIRI_DIR/host.kdl"

@@ -379,28 +379,48 @@ function setup_graphical_config_links() {
 
     phase "Graphical config links"
     local path
+    local niri_generated="${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/prism.kdl"
+    local niri_generated_before=""
     for path in "${GRAPHICAL_CONFIGS[@]}"; do
-        if [[ "$path" == "niri" && -e "${XDG_CONFIG_HOME}/${path}" && ! -L "${XDG_CONFIG_HOME}/${path}" ]]; then
-            if [ -e "${XDG_CONFIG_HOME}/${path}.bak" ]; then
-                echo "Refusing to overwrite existing ${XDG_CONFIG_HOME}/${path}.bak"
-                exit 1
-            fi
-            run mv "${XDG_CONFIG_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}.bak"
-        fi
+        [[ "$path" == "niri" ]] && continue
         ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
     done
 
     ln_s "${DOTS_HOME}/prism/$(hostname)" "${XDG_CONFIG_HOME}/prism"
     run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/niri-glass.json" "${DOTS_HOME}/niri/niri-glass.json"
     run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/kitty.conf" "${DOTS_HOME}/kitty/prism-generated.conf"
-    run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/prism.kdl" "${DOTS_HOME}/niri/prism.kdl"
+    run ln -sfT "$niri_generated" "${DOTS_HOME}/niri/prism.kdl"
+    run env NIRI_DIR="${DOTS_HOME}/niri" "${DOTS_HOME}/niri/host_specific.sh"
 
-    if [[ "$DRY_RUN" != "true" && -x "${XDG_CONFIG_HOME}/niri/host_specific.sh" ]]; then
-        "${XDG_CONFIG_HOME}/niri/host_specific.sh"
+    if [[ "$DRY_RUN" != "true" ]]; then
+        niri_generated_before="$(stat -Lc '%d:%i' "$niri_generated" 2>/dev/null || true)"
+    fi
+    if ! run "${DOTS_HOME}/bin/prism" apply niri; then
+        local niri_generated_after
+        niri_generated_after="$(stat -Lc '%d:%i' "$niri_generated" 2>/dev/null || true)"
+        if [[ -n "${NIRI_SOCKET:-}" || ! -s "$niri_generated" ||
+              -z "$niri_generated_after" || "$niri_generated_after" == "$niri_generated_before" ]]; then
+            return 1
+        fi
+        echo "Niri is not running; prism.kdl was generated and reload is deferred."
     fi
 
-    run "${DOTS_HOME}/bin/prism" apply niri
-    run niri validate
+    run niri validate -c "${DOTS_HOME}/niri/config.kdl"
+
+    if [[ -e "${XDG_CONFIG_HOME}/niri" && ! -L "${XDG_CONFIG_HOME}/niri" ]]; then
+        if [[ -e "${XDG_CONFIG_HOME}/niri.bak" ]]; then
+            echo "Refusing to overwrite existing ${XDG_CONFIG_HOME}/niri.bak"
+            exit 1
+        fi
+        run mv "${XDG_CONFIG_HOME}/niri" "${XDG_CONFIG_HOME}/niri.bak"
+    fi
+    ln_s "${DOTS_HOME}/niri" "${XDG_CONFIG_HOME}/niri"
+
+    if [[ -n "${NIRI_SOCKET:-}" ]]; then
+        run niri msg action load-config-file
+    else
+        echo "Niri is not running; the validated config will load on first start."
+    fi
 }
 
 function setup_common_config_links() {
