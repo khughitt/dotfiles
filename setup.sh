@@ -391,6 +391,7 @@ function setup_graphical_config_links() {
     run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/kitty.conf" "${DOTS_HOME}/kitty/prism-generated.conf"
     run ln -sfT "$niri_generated" "${DOTS_HOME}/niri/prism.kdl"
     run env NIRI_DIR="${DOTS_HOME}/niri" "${DOTS_HOME}/niri/host_specific.sh"
+    run touch "${DOTS_HOME}/niri/noctalia.kdl"
 
     if [[ "$DRY_RUN" != "true" ]]; then
         niri_generated_before="$(stat -Lc '%d:%i' "$niri_generated" 2>/dev/null || true)"
@@ -405,7 +406,6 @@ function setup_graphical_config_links() {
         echo "Niri is not running; prism.kdl was generated and reload is deferred."
     fi
 
-    run touch "${DOTS_HOME}/niri/noctalia.kdl"
     run niri validate -c "${DOTS_HOME}/niri/config.kdl"
 
     if [[ -e "${XDG_CONFIG_HOME}/niri" && ! -L "${XDG_CONFIG_HOME}/niri" ]]; then
