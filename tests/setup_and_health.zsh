@@ -78,6 +78,9 @@ run_setup() {
 set -euo pipefail
 
 [[ "$*" == doctor ]] || exit 64
+if [[ -n "${PRISM_DOCTOR_LOG:-}" ]]; then
+  printf '%s\n' "$*" >> "$PRISM_DOCTOR_LOG"
+fi
 if [[ "${PRISM_DOCTOR_STATUS:-0}" -ne 0 ]]; then
   printf '%s\n' "doctor: niri: generated file missing: prism.kdl" >&2
   exit "$PRISM_DOCTOR_STATUS"
@@ -356,22 +359,69 @@ test_dotfiles_health_skips_prism_when_unconfigured() {
   rm -rf "$tmp"
 }
 
-test_dotfiles_health_fails_wrong_prism_link_before_successful_doctor() {
-  local tmp output exit_status
+test_dotfiles_health_fails_wrong_prism_link_without_running_doctor() {
+  local tmp output exit_status doctor_log
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
+  doctor_log="${tmp}/doctor.log"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
   ln -s "${repo_root}/prism/europa" "${tmp}/config/prism"
 
   set +e
-  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
+  output=$(PRISM_TEST_HOSTNAME=titan PRISM_DOCTOR_LOG="$doctor_log" \
+    run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
   set -e
 
   [[ "$exit_status" -ne 0 ]] || fail "health accepted the wrong Prism config link"
   [[ "$output" == *"wrong link target"* ]] || fail "health did not explain wrong Prism config link"
+  [[ ! -e "$doctor_log" ]] || fail "health ran doctor after rejecting the Prism config link"
+
+  rm -rf "$tmp"
+}
+
+test_dotfiles_health_fails_unknown_host_dangling_prism_marker_without_doctor() {
+  local tmp output exit_status doctor_log
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  doctor_log="${tmp}/doctor.log"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+  ln -s "${tmp}/missing-prism-config" "${tmp}/config/prism"
+
+  set +e
+  output=$(PRISM_DOCTOR_LOG="$doctor_log" run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted a dangling Prism marker on an unknown host"
+  [[ "$output" == *"broken link"* ]] || fail "health did not explain dangling Prism marker"
+  [[ ! -e "$doctor_log" ]] || fail "health ran doctor after rejecting a dangling Prism marker"
+
+  rm -rf "$tmp"
+}
+
+test_dotfiles_health_fails_unknown_host_wrong_prism_marker_without_doctor() {
+  local tmp output exit_status doctor_log
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  doctor_log="${tmp}/doctor.log"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+  ln -s "${repo_root}/prism/europa" "${tmp}/config/prism"
+
+  set +e
+  output=$(PRISM_DOCTOR_LOG="$doctor_log" run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted a wrong Prism marker on an unknown host"
+  [[ "$output" == *"wrong link target"* ]] || fail "health did not explain wrong Prism marker"
+  [[ ! -e "$doctor_log" ]] || fail "health ran doctor after rejecting a wrong Prism marker"
 
   rm -rf "$tmp"
 }
@@ -551,7 +601,7 @@ test_dotfiles_health_fails_when_prism_doctor_fails() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
-  ln -s "${tmp}/missing-prism-config" "${tmp}/config/prism"
+  ln -s "${repo_root}/prism/titan" "${tmp}/config/prism"
 
   set +e
   output=$(PRISM_TEST_HOSTNAME=titan PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd 2>&1)
@@ -642,7 +692,9 @@ test_setup_only_rejects_unknown_phase
 test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_skips_prism_when_unconfigured
 test_prism_launcher_link_survives_relocated_sibling_repos
-test_dotfiles_health_fails_wrong_prism_link_before_successful_doctor
+test_dotfiles_health_fails_unknown_host_wrong_prism_marker_without_doctor
+test_dotfiles_health_fails_unknown_host_dangling_prism_marker_without_doctor
+test_dotfiles_health_fails_wrong_prism_link_without_running_doctor
 test_dotfiles_health_fails_stale_removed_config_links
 test_dotfiles_health_ignores_brave_runtime_symlinks
 test_dotfiles_health_ignores_unmanaged_config_symlinks
