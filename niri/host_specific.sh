@@ -2,6 +2,8 @@
 #
 # host-specific settings for Niri
 #
+set -euo pipefail
+
 HOSTNAME=$(hostname)
 NIRI_DIR="${NIRI_DIR:-$HOME/.config/niri}"
 

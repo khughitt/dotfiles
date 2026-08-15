@@ -405,6 +405,7 @@ function setup_graphical_config_links() {
         echo "Niri is not running; prism.kdl was generated and reload is deferred."
     fi
 
+    run touch "${DOTS_HOME}/niri/noctalia.kdl"
     run niri validate -c "${DOTS_HOME}/niri/config.kdl"
 
     if [[ -e "${XDG_CONFIG_HOME}/niri" && ! -L "${XDG_CONFIG_HOME}/niri" ]]; then
@@ -419,7 +420,7 @@ function setup_graphical_config_links() {
     if [[ -n "${NIRI_SOCKET:-}" ]]; then
         run niri msg action load-config-file
     else
-        echo "Niri is not running; the validated config will load on first start."
+        echo "Niri is not running; the validated config will load on first start. Run 'prism apply niri' after Niri starts to reload and clear the failed sink status."
     fi
 }
 
