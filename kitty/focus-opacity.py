@@ -14,15 +14,31 @@
 # Wired up via `watcher focus-opacity.py` in kitty.conf; note that reloading
 # the kitty config only attaches watchers to windows created after the reload.
 
+import json
+import os
+
 from kitty.colors import patch_colors
 from kitty.fast_data_types import get_options
 
 # --- knobs -----------------------------------------------------------------
-# ACTIVE should match background_opacity in kitty.conf so a window starts out
-# at the right value before its first focus event.
+# Fallbacks for a machine where prism has never run.
 ACTIVE_BACKGROUND_OPACITY = 0.95
 INACTIVE_BACKGROUND_OPACITY = 0.65
+PRISM_RESOLVED = os.path.expanduser("~/.local/state/prism/resolved.json")
 # ---------------------------------------------------------------------------
+
+
+def _opacities():
+    try:
+        f = open(PRISM_RESOLVED)
+    except FileNotFoundError:
+        return (ACTIVE_BACKGROUND_OPACITY, INACTIVE_BACKGROUND_OPACITY)
+    with f:
+        params = json.load(f)["params"]
+    return (
+        params["terminal.background.opacity.active"],
+        params["terminal.background.opacity.inactive"],
+    )
 
 
 def _windows_of(boss, os_window_id):
@@ -57,8 +73,7 @@ def _rescale_transparent_colors(boss, os_window_id, target):
 
 
 def on_focus_change(boss, window, data):
-    target = (
-        ACTIVE_BACKGROUND_OPACITY if data["focused"] else INACTIVE_BACKGROUND_OPACITY
-    )
+    active, inactive = _opacities()
+    target = active if data["focused"] else inactive
     boss._set_os_window_background_opacity(window.os_window_id, target)
     _rescale_transparent_colors(boss, window.os_window_id, target)

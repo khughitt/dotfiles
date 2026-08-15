@@ -392,6 +392,7 @@ function setup_graphical_config_links() {
 
     ln_s "${DOTS_HOME}/prism/$(hostname)" "${XDG_CONFIG_HOME}/prism"
     run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/niri-glass.json" "${DOTS_HOME}/niri/niri-glass.json"
+    run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/kitty.conf" "${DOTS_HOME}/kitty/prism-generated.conf"
 
     if [[ "$DRY_RUN" != "true" && -x "${XDG_CONFIG_HOME}/niri/host_specific.sh" ]]; then
         "${XDG_CONFIG_HOME}/niri/host_specific.sh"
