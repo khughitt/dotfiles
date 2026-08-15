@@ -338,7 +338,7 @@ test_setup_and_health_share_managed_link_metadata() {
     fail "dotfiles-health should not hardcode managed config links"
 }
 
-test_dotfiles_health_passes_after_link_only_setup() {
+test_dotfiles_health_skips_prism_when_unconfigured() {
   local tmp
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
@@ -346,7 +346,7 @@ test_dotfiles_health_passes_after_link_only_setup() {
 
   run_setup "$tmp" --link-only --headless >/dev/null
 
-  run_health "$tmp" --skip-systemd >/dev/null
+  PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd >/dev/null
 
   rm -rf "$tmp"
 }
@@ -512,6 +512,7 @@ test_dotfiles_health_fails_when_prism_doctor_fails() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
+  ln -s "${tmp}/missing-prism-config" "${tmp}/config/prism"
 
   set +e
   output=$(PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd 2>&1)
@@ -600,7 +601,7 @@ test_setup_only_runs_selected_phase
 test_setup_only_accepts_multiple_phases
 test_setup_only_rejects_unknown_phase
 test_setup_and_health_share_managed_link_metadata
-test_dotfiles_health_passes_after_link_only_setup
+test_dotfiles_health_skips_prism_when_unconfigured
 test_dotfiles_health_fails_stale_removed_config_links
 test_dotfiles_health_ignores_brave_runtime_symlinks
 test_dotfiles_health_ignores_unmanaged_config_symlinks

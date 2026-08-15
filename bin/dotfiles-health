@@ -222,10 +222,12 @@ if [[ "$(uname)" != "Darwin" ]]; then
     fi
 fi
 
-if prism doctor; then
-    pass "prism doctor"
-else
-    fail "prism doctor failed"
+if [[ -e "${XDG_CONFIG_HOME}/prism" || -L "${XDG_CONFIG_HOME}/prism" ]]; then
+    if prism doctor; then
+        pass "prism doctor"
+    else
+        fail "prism doctor failed"
+    fi
 fi
 
 if [[ "$failures" -gt 0 ]]; then
