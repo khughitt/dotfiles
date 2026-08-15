@@ -24,6 +24,7 @@ bin/*
 !bin/dotfiles-health
 !bin/dotfiles-secrets-check
 !bin/gpu-fan-curve
+!bin/prism
 bookmarks
 dojo/
 mime/x-wine-extension-*
@@ -63,6 +64,7 @@ gtk-3.0/gtk.css
 hypr/noctalia/noctalia-colors.conf
 kitty/themes/noctalia.conf
 niri/noctalia.kdl
+niri/niri-glass.json
 opencode/themes/noctalia.json
 yazi/flavors/noctalia.yazi/flavor.toml
 zathura/noctaliarc
