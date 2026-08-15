@@ -25,6 +25,22 @@ True    -- Bool
 -- type cast
 show 5 -- any -> str
 
+-- declare type
+data ..
+
+-- type alias
+type ..
+
+-- type rename
+newtype ..
+
+-- record (struct)
+data Dog = Dog { name :: String, age :: Int }
+
+dog :: Dog
+dog = Dog{ name = "Fido", age = 4 }
+
+
 -- let / where
 -- https://wiki.haskell.org/Let_vs._Where
 let x = 5

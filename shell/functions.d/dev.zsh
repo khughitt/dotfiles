@@ -39,6 +39,7 @@ function C {
     --exclude "tpm" --exclude "tmp" --exclude "tmux-*" --exclude "Extracted" \
     --exclude "*.xml" --exclude "*.png" --exclude "*.svg" --exclude "*.desktop" \
     --exclude "**/i18n/*.json" \
+    --exclude "**/tests/**" \
     --exclude "zhuyin_data" \
     --exclude "dbus" \
     --exclude "node_modules" \

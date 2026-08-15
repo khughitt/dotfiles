@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""Make a new niri column fill useful space left on its workspace."""
+
+from __future__ import annotations
+
+import json
+import os
+import socket
+import subprocess
+import sys
+from typing import Any, Iterable
+
+
+GAP = 24.0
+MIN_WIDTH = 1 / 3
+ROUNDING_TOLERANCE = 2.0
+
+
+def target_width(
+    tile_widths: Iterable[float],
+    output_width: float,
+    gap: float = GAP,
+) -> float | None:
+    """Return the remaining output proportion, or None when it is too small."""
+    proportional_width = output_width - gap
+    remaining = proportional_width - sum(width + gap for width in tile_widths)
+    if remaining + ROUNDING_TOLERANCE < proportional_width * MIN_WIDTH:
+        return None
+    return remaining / proportional_width
+
+
+def tiled_column_widths(
+    windows: dict[int, dict[str, Any]],
+    workspace_id: int,
+) -> list[float]:
+    columns: dict[int, float] = {}
+    for window in windows.values():
+        if window.get("workspace_id") != workspace_id or window.get("is_floating"):
+            continue
+        layout = window.get("layout") or {}
+        position = layout.get("pos_in_scrolling_layout")
+        if position is not None:
+            columns.setdefault(int(position[0]), float(layout["tile_size"][0]))
+    return list(columns.values())
+
+
+def query_output_width(output_name: str) -> float:
+    outputs = json.loads(
+        subprocess.run(
+            ["niri", "msg", "-j", "outputs"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout,
+    )
+    return float(outputs[output_name]["logical"]["width"])
+
+
+def focus_window_message(window_id: int) -> dict[str, Any]:
+    return {"Action": {"FocusWindow": {"id": window_id}}}
+
+
+def set_column_width_message(proportion: float) -> dict[str, Any]:
+    return {
+        "Action": {
+            "SetColumnWidth": {
+                "change": {"SetProportion": proportion * 100},
+            },
+        },
+    }
+
+
+class NiriSocket:
+    def __init__(self, raw_socket: socket.socket) -> None:
+        self.raw_socket = raw_socket
+        self.pending: list[bytes] = []
+        self.partial = b""
+
+    @classmethod
+    def connect(cls, path: str) -> NiriSocket:
+        raw_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        raw_socket.connect(path)
+        return cls(raw_socket)
+
+    def send(self, message: str | dict[str, Any]) -> None:
+        data = json.dumps(message, separators=(",", ":")).encode() + b"\n"
+        self.raw_socket.sendall(data)
+
+    def read(self) -> dict[str, Any]:
+        while not self.pending:
+            chunk = self.raw_socket.recv(4096)
+            if not chunk:
+                raise EOFError("niri IPC socket closed")
+            pieces = (self.partial + chunk).split(b"\n")
+            self.partial = pieces.pop()
+            self.pending.extend(piece for piece in pieces if piece)
+        return json.loads(self.pending.pop(0))
+
+    def request(self, message: str | dict[str, Any]) -> dict[str, Any]:
+        self.send(message)
+        response = self.read()
+        if "Err" in response:
+            raise RuntimeError(response["Err"])
+        return response
+
+    def close(self) -> None:
+        self.raw_socket.close()
+
+
+class State:
+    def __init__(self) -> None:
+        self.workspaces: dict[int, dict[str, Any]] = {}
+        self.windows: dict[int, dict[str, Any]] = {}
+
+    def focused_tiled_window_id(self) -> int | None:
+        for window in self.windows.values():
+            layout = window.get("layout") or {}
+            if (
+                window.get("is_focused")
+                and not window.get("is_floating")
+                and layout.get("pos_in_scrolling_layout") is not None
+            ):
+                return int(window["id"])
+        return None
+
+    def apply(self, name: str, data: dict[str, Any]) -> None:
+        if name == "WorkspacesChanged":
+            self.workspaces = {int(item["id"]): item for item in data["workspaces"]}
+        elif name == "WindowsChanged":
+            self.windows = {int(item["id"]): item for item in data["windows"]}
+        elif name == "WindowOpenedOrChanged":
+            window = data["window"]
+            if window.get("is_focused"):
+                for current in self.windows.values():
+                    current["is_focused"] = False
+            self.windows[int(window["id"])] = window
+        elif name == "WindowClosed":
+            self.windows.pop(int(data["id"]), None)
+        elif name == "WindowLayoutsChanged":
+            for window_id, layout in data["changes"]:
+                if int(window_id) in self.windows:
+                    self.windows[int(window_id)]["layout"] = layout
+        elif name == "WindowFocusChanged":
+            for window in self.windows.values():
+                window["is_focused"] = window["id"] == data.get("id")
+
+
+def event_name_and_data(event: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    if len(event) != 1:
+        raise ValueError(f"expected one event variant, got {event!r}")
+    return next(iter(event.items()))
+
+
+def resize_new_window(
+    state: State,
+    window: dict[str, Any],
+    action_socket: NiriSocket,
+) -> None:
+    workspace_id = window.get("workspace_id")
+    if workspace_id is None or window.get("is_floating"):
+        return
+
+    workspace_id = int(workspace_id)
+    output_name = state.workspaces[workspace_id]["output"]
+    width = target_width(
+        tiled_column_widths(state.windows, workspace_id),
+        query_output_width(output_name),
+    )
+    if width is None:
+        return
+
+    restore_id = None if window.get("is_focused") else state.focused_tiled_window_id()
+    action_socket.request(focus_window_message(int(window["id"])))
+    try:
+        action_socket.request(set_column_width_message(width))
+    finally:
+        if restore_id is not None:
+            action_socket.request(focus_window_message(restore_id))
+
+
+def run(event_socket: NiriSocket, action_socket: NiriSocket) -> None:
+    event_socket.request("EventStream")
+    state = State()
+    initialized = False
+
+    while True:
+        name, data = event_name_and_data(event_socket.read())
+        if name == "WindowOpenedOrChanged":
+            window = data["window"]
+            if initialized and int(window["id"]) not in state.windows:
+                resize_new_window(state, window, action_socket)
+        state.apply(name, data)
+        if name == "WindowsChanged":
+            initialized = True
+
+
+def main() -> int:
+    socket_path = os.environ.get("NIRI_SOCKET")
+    if not socket_path:
+        print("NIRI_SOCKET is not set", file=sys.stderr)
+        return 1
+
+    event_socket = action_socket = None
+    try:
+        event_socket = NiriSocket.connect(socket_path)
+        action_socket = NiriSocket.connect(socket_path)
+        run(event_socket, action_socket)
+    except (EOFError, OSError, RuntimeError, subprocess.SubprocessError) as error:
+        print(f"fill-new-window: {error}", file=sys.stderr)
+        return 1
+    finally:
+        if event_socket is not None:
+            event_socket.close()
+        if action_socket is not None:
+            action_socket.close()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

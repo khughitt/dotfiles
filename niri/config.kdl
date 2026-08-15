@@ -66,8 +66,8 @@ layout {
     }
 
     focus-ring {
-        width 5
-        active-gradient from="#ffaa33" to="#ffd090" angle=45 relative-to="workspace-view"
+        width 3
+        active-gradient from="#77aa3355" to="#55f09099" angle=45 relative-to="workspace-view"
     }
 
     border {
@@ -76,9 +76,9 @@ layout {
 
     shadow {
         on
-        softness 15
-        spread 5
-        offset x=2 y=5
+        softness 12
+        spread 6
+        offset x=-5 y=5
         color "#00000070"
     }
     tab-indicator {
@@ -118,6 +118,7 @@ screenshot-path "~/d/pics/screenshots/%Y-%m-%d_%H-%M-%S.png"
 
 spawn-at-startup "qs" "-c" "noctalia-shell"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
+spawn-at-startup "~/.config/niri/scripts/fill-new-window"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
 spawn-sh-at-startup "qs -p ~/d/niri-glass/shell.qml"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
@@ -158,9 +159,11 @@ window-rule {
 //     saturation 0.6
 // }
 blur {
+    //passes 2
     passes 2
-    offset 2
-    noise 0.08
+    offset 0.75
+    noise 0.0
+    //noise 0.08
     //saturation 0.1
 }
 
@@ -206,8 +209,10 @@ window-rule {
     background-effect {
         blur true
         xray false
-        saturation 0.8
-        noise 0.06
+        saturation 1.0
+        //saturation 0.8
+        //noise 0.06
+        noise 0.1
     }
 }
 
@@ -218,8 +223,10 @@ window-rule {
     background-effect {
         blur true
         xray false
-        saturation 0.5
-        noise 0.12
+        //saturation 1.0
+        saturation 0.85
+        //noise 0.12
+        noise 0.01
     }
 }
 

@@ -1,25 +1,10 @@
 -- ---------------------------------------------------------------------------
--- Markdown
---
--- Ported from markdown.vim (Aug 2026). Every mapping here used to be global,
--- so opening one markdown file rebound <leader>s/o/r/f and <c-g> for every
--- other buffer for the rest of the session; they are buffer-local now.
--- Link-paste also moved from <leader>f to <localleader>f, out of the way of
--- telescope's <leader>f* pickers.
---
--- Also dropped in that port:
---   - `au BufNewFile,BufRead *.md set conceallevel=2`, a *global* autocmd
---     declared inside an ftplugin, so it was re-registered every time a
---     markdown buffer was opened. It is a setlocal below.
---   - g:vim_markdown_* options -- plasticboy/vim-markdown is not installed
---     (vim-markdown-toc is a different plugin).
---   - UUIDgen(), which was never mapped and shells out to `python -c "import
---     shortuuid"`; neither the python2-era name nor the module is present.
+-- markdown.lua
 -- ---------------------------------------------------------------------------
 
 local buf = vim.api.nvim_get_current_buf()
 
-vim.opt_local.conceallevel = 2
+vim.opt_local.conceallevel = 0
 
 local function map(mode, lhs, rhs, desc)
   vim.keymap.set(mode, lhs, rhs, { buffer = buf, silent = true, desc = 'md: ' .. desc })
