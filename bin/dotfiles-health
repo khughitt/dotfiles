@@ -222,13 +222,16 @@ if [[ "$(uname)" != "Darwin" ]]; then
     fi
 fi
 
-if [[ -e "${XDG_CONFIG_HOME}/prism" || -L "${XDG_CONFIG_HOME}/prism" ]]; then
+prism_config="${DOTS_HOME}/prism/$(hostname)"
+if [[ -f "${prism_config}/values.yaml" ]]; then
+    check_link "${XDG_CONFIG_HOME}/prism" "$prism_config"
     if prism doctor; then
         pass "prism doctor"
     else
         fail "prism doctor failed"
     fi
 fi
+unset prism_config
 
 if [[ "$failures" -gt 0 ]]; then
     echo "Health check failed: $failures failure(s), $warnings warning(s)" >&2

@@ -85,6 +85,11 @@ fi
 printf '%s\n' "doctor: ok"
 EOF
   chmod +x "${tmp}/bin/prism"
+  cat > "${tmp}/bin/hostname" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "${PRISM_TEST_HOSTNAME:-dotfiles-test-unconfigured}"
+EOF
+  chmod +x "${tmp}/bin/hostname"
 
   HOME="${tmp}/home" \
     XDG_CONFIG_HOME="${tmp}/config" \
@@ -351,6 +356,40 @@ test_dotfiles_health_skips_prism_when_unconfigured() {
   rm -rf "$tmp"
 }
 
+test_dotfiles_health_fails_wrong_prism_link_before_successful_doctor() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+  ln -s "${repo_root}/prism/europa" "${tmp}/config/prism"
+
+  set +e
+  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted the wrong Prism config link"
+  [[ "$output" == *"wrong link target"* ]] || fail "health did not explain wrong Prism config link"
+
+  rm -rf "$tmp"
+}
+
+test_prism_launcher_link_survives_relocated_sibling_repos() {
+  local tmp
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/repos/dotfiles/bin" "${tmp}/repos/prism/bin"
+  cp -P "${repo_root}/bin/prism" "${tmp}/repos/dotfiles/bin/prism"
+  touch "${tmp}/repos/prism/bin/prism"
+
+  [[ "${tmp}/repos/dotfiles/bin/prism" -ef "${tmp}/repos/prism/bin/prism" ]] || \
+    fail "Prism launcher link should resolve in relocated sibling repositories"
+
+  rm -rf "$tmp"
+}
+
 test_dotfiles_health_fails_stale_removed_config_links() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
@@ -515,7 +554,7 @@ test_dotfiles_health_fails_when_prism_doctor_fails() {
   ln -s "${tmp}/missing-prism-config" "${tmp}/config/prism"
 
   set +e
-  output=$(PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd 2>&1)
+  output=$(PRISM_TEST_HOSTNAME=titan PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
   set -e
 
@@ -602,6 +641,8 @@ test_setup_only_accepts_multiple_phases
 test_setup_only_rejects_unknown_phase
 test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_skips_prism_when_unconfigured
+test_prism_launcher_link_survives_relocated_sibling_repos
+test_dotfiles_health_fails_wrong_prism_link_before_successful_doctor
 test_dotfiles_health_fails_stale_removed_config_links
 test_dotfiles_health_ignores_brave_runtime_symlinks
 test_dotfiles_health_ignores_unmanaged_config_symlinks

@@ -4,6 +4,7 @@ import pathlib
 import sys
 import tempfile
 import types
+from unittest import mock
 
 # focus-opacity.py imports kitty-internal modules that only exist inside kitty.
 # These stubs provide the exact imported attributes before exec_module runs:
@@ -18,12 +19,31 @@ sys.modules.setdefault("kitty", kitty_pkg)
 sys.modules.setdefault("kitty.colors", kitty_colors)
 sys.modules.setdefault("kitty.fast_data_types", kitty_fdt)
 
-spec = importlib.util.spec_from_file_location(
-    "focus_opacity",
-    pathlib.Path(__file__).parents[2] / "kitty" / "focus-opacity.py",
-)
-mod = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(mod)
+def load_module():
+    spec = importlib.util.spec_from_file_location(
+        "focus_opacity",
+        pathlib.Path(__file__).parents[2] / "kitty" / "focus-opacity.py",
+    )
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded
+
+
+mod = load_module()
+
+
+def test_prism_state_dir_override():
+    with mock.patch.dict("os.environ", {"PRISM_STATE_DIR": "/tmp/prism-state"}, clear=True):
+        loaded = load_module()
+    assert loaded.PRISM_RESOLVED == "/tmp/prism-state/resolved.json"
+
+
+def test_xdg_state_home_override():
+    with mock.patch.dict(
+        "os.environ", {"HOME": "/tmp/home", "XDG_STATE_HOME": "/tmp/xdg-state"}, clear=True
+    ):
+        loaded = load_module()
+    assert loaded.PRISM_RESOLVED == "/tmp/xdg-state/prism/resolved.json"
 
 
 def test_reads_prism_values():
@@ -78,6 +98,8 @@ def test_missing_opacity_fails_loudly():
 
 
 if __name__ == "__main__":
+    test_prism_state_dir_override()
+    test_xdg_state_home_override()
     test_reads_prism_values()
     test_missing_file_falls_back_to_shipped_defaults()
     test_malformed_state_fails_loudly()

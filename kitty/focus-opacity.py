@@ -25,7 +25,14 @@ from kitty.fast_data_types import get_options
 # Fallbacks for a machine where prism has never run.
 ACTIVE_BACKGROUND_OPACITY = 0.95
 INACTIVE_BACKGROUND_OPACITY = 0.65
-PRISM_RESOLVED = os.path.expanduser("~/.local/state/prism/resolved.json")
+state_dir = os.environ.get("PRISM_STATE_DIR")
+if state_dir is None:
+    state_home = os.environ.get("XDG_STATE_HOME")
+    state_dir = os.path.join(
+        state_home if state_home is not None else os.path.expanduser("~/.local/state"),
+        "prism",
+    )
+PRISM_RESOLVED = os.path.join(state_dir, "resolved.json")
 # ---------------------------------------------------------------------------
 
 
