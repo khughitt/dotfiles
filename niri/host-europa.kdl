@@ -2,10 +2,6 @@
 
 spawn-at-startup "~/.config/niri/scripts/monitor-handler.sh"
 
-layout {
-    gaps 6
-}
-
 switch-events {
     lid-close { spawn "swaylock"; }
     lid-open { spawn "niri" "msg" "action" "power-on-monitors"; }

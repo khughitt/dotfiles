@@ -4,6 +4,7 @@
 // shell widgets, and generated colors; Niri owns compositor behavior.
 
 include "./noctalia.kdl"
+include "./prism.kdl"
 include "./host.kdl"
 
 
@@ -52,9 +53,6 @@ input {
 }
 
 layout {
-    // 24 leaves clear wallpaper between adjacent glass lips; niri-glass.json (this
-    // dir)'s layoutGaps must match — change both together.
-    gaps 24
     center-focused-column "never" // "on-overflow"
     default-column-width { proportion 0.5; }
 
@@ -172,70 +170,6 @@ layer-rule {
     background-effect {
         xray false
     }
-}
-
-// ===========================================================================
-// TERMINAL GLASS — active/inactive knobs
-//
-//                          active   inactive   owned by
-//   background opacity      0.85      0.40     kitty  (focus-opacity.py)
-//   text opacity            1.00      0.90     kitty  (inactive_text_alpha)
-//   blur                     on        on      niri   (below)
-//   backdrop saturation     0.30      0.90     niri   (below)
-//   backdrop noise          0.12      0.12     niri   (below)
-//
-// Why the split across two configs: niri's `opacity` is a whole-window alpha
-// multiplier — it scales text, kitty graphics and background together, so it
-// cannot dim only the background. kitty can: its transparency is keyed on a
-// cell's background *color* (default bg, plus transparent_background_colors),
-// so glyphs and images stay opaque no matter how low the background goes.
-// Terminals therefore stay at niri opacity 1.0 and kitty owns both opacity
-// knobs.
-//
-// Why saturation/noise live here and passes/offset don't: `passes` and
-// `offset` drive one screen-wide downsample chain shared by every window, so
-// they are global-only (the `blur` block above). Only `noise` and `saturation`
-// resolve per-window at composite time, so only those two can vary per rule.
-//
-// Terminal-only allowlist — content apps (browsers, bitwig, vlc, ...) stay
-// opaque when inactive, so no PiP exclusion is needed.
-// Spec: docs/superpowers/specs/2026-08-05-niri-inactive-dim-design.md
-// Glass fusion: ~/d/niri-glass/docs/2026-08-05-glass-panes-design.md
-// ===========================================================================
-window-rule {
-    match app-id="kitty" is-active=true
-    match app-id="ghostty" is-active=true
-    opacity 0.98
-    background-effect {
-        blur true
-        xray false
-        saturation 1.0
-        //saturation 0.8
-        //noise 0.06
-        noise 0.1
-    }
-}
-
-window-rule {
-    match app-id="kitty" is-active=false
-    match app-id="ghostty" is-active=false
-    opacity 0.95
-    background-effect {
-        blur true
-        xray false
-        //saturation 1.0
-        saturation 0.85
-        //noise 0.12
-        noise 0.01
-    }
-}
-
-// ghostty has no focus-change hook, so it cannot do kitty's background/text
-// split. Approximate the inactive dim with a whole-window fade — this dims
-// ghostty's text too, unlike kitty's.
-window-rule {
-    match app-id="ghostty" is-active=false
-    opacity 0.95
 }
 
 // Lift the active window off the backdrop: bigger, darker shadow than the

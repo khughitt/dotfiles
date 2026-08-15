@@ -6,8 +6,6 @@ environment {
 }
 
 layout {
-    gaps 10
-
     shadow {
         on
         softness 35
