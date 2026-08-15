@@ -222,6 +222,12 @@ if [[ "$(uname)" != "Darwin" ]]; then
     fi
 fi
 
+if prism doctor; then
+    pass "prism doctor"
+else
+    fail "prism doctor failed"
+fi
+
 if [[ "$failures" -gt 0 ]]; then
     echo "Health check failed: $failures failure(s), $warnings warning(s)" >&2
     exit 1

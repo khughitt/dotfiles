@@ -72,11 +72,36 @@ run_setup() {
   local tmp="$1"
   shift
 
+  mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin" "${tmp}/bin"
+  cat > "${tmp}/bin/prism" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "$*" == doctor ]] || exit 64
+if [[ "${PRISM_DOCTOR_STATUS:-0}" -ne 0 ]]; then
+  printf '%s\n' "doctor: niri: generated file missing: prism.kdl" >&2
+  exit "$PRISM_DOCTOR_STATUS"
+fi
+printf '%s\n' "doctor: ok"
+EOF
+  chmod +x "${tmp}/bin/prism"
+
   HOME="${tmp}/home" \
     XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" \
     DOTFILES_OPENCODE_RUNTIME_SOURCE="${tmp}/opencode-runtime-source" \
     bash "${repo_root}/setup.sh" "$@"
+}
+
+run_health() {
+  local tmp="$1"
+  shift
+
+  HOME="${tmp}/home" \
+    XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" \
+    PATH="${tmp}/bin:$PATH" \
+    "${repo_root}/bin/dotfiles-health" "$@"
 }
 
 test_bash_config_is_native_and_minimal() {
@@ -321,10 +346,7 @@ test_dotfiles_health_passes_after_link_only_setup() {
 
   run_setup "$tmp" --link-only --headless >/dev/null
 
-  HOME="${tmp}/home" \
-    XDG_CONFIG_HOME="${tmp}/config" \
-    XDG_DATA_HOME="${tmp}/data" \
-    "${repo_root}/bin/dotfiles-health" --skip-systemd >/dev/null
+  run_health "$tmp" --skip-systemd >/dev/null
 
   rm -rf "$tmp"
 }
@@ -339,12 +361,7 @@ test_dotfiles_health_fails_stale_removed_config_links() {
   ln -s "${repo_root}/snakemake" "${tmp}/config/snakemake"
 
   set +e
-  output=$(
-    HOME="${tmp}/home" \
-      XDG_CONFIG_HOME="${tmp}/config" \
-      XDG_DATA_HOME="${tmp}/data" \
-      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
-  )
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
   set -e
 
@@ -365,12 +382,7 @@ test_dotfiles_health_ignores_brave_runtime_symlinks() {
   ln -s "${tmp}/missing-SingletonLock" "${tmp}/config/BraveSoftware/Brave-Browser/SingletonLock"
   ln -s "${tmp}/missing-SingletonCookie" "${tmp}/config/BraveSoftware/Brave-Browser/SingletonCookie"
 
-  output=$(
-    HOME="${tmp}/home" \
-      XDG_CONFIG_HOME="${tmp}/config" \
-      XDG_DATA_HOME="${tmp}/data" \
-      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
-  )
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
 
   [[ "$output" != *"SingletonLock"* ]] || fail "health should ignore Brave SingletonLock"
   [[ "$output" != *"SingletonCookie"* ]] || fail "health should ignore Brave SingletonCookie"
@@ -388,12 +400,7 @@ test_dotfiles_health_ignores_unmanaged_config_symlinks() {
   run_setup "$tmp" --link-only --headless >/dev/null
   ln -s "${tmp}/missing-runtime-link" "${tmp}/config/unmanaged-app/runtime-link"
 
-  output=$(
-    HOME="${tmp}/home" \
-      XDG_CONFIG_HOME="${tmp}/config" \
-      XDG_DATA_HOME="${tmp}/data" \
-      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
-  )
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
 
   [[ "$output" != *"unmanaged-app"* ]] || fail "health should ignore unmanaged config symlinks"
   [[ "$output" != *"[WARN] broken symlinks under"* ]] || fail "health should not scan all config symlinks"
@@ -412,12 +419,7 @@ test_dotfiles_health_fails_broken_managed_config_link() {
   ln -s "${tmp}/missing-kitty" "${tmp}/config/kitty"
 
   set +e
-  output=$(
-    HOME="${tmp}/home" \
-      XDG_CONFIG_HOME="${tmp}/config" \
-      XDG_DATA_HOME="${tmp}/data" \
-      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
-  )
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
   set -e
 
@@ -457,12 +459,9 @@ exit 64
 EOF
   chmod +x "${mockbin}/systemctl"
 
-  HOME="${tmp}/home" \
-    XDG_CONFIG_HOME="${tmp}/config" \
-    XDG_DATA_HOME="${tmp}/data" \
-    SYSTEMCTL_LOG="$systemctl_log" \
+  SYSTEMCTL_LOG="$systemctl_log" \
     PATH="${mockbin}:$PATH" \
-    "${repo_root}/bin/dotfiles-health" >/dev/null
+    run_health "$tmp" >/dev/null
 
   rg -q -- '--user is-enabled dropbox-ignore-flux.timer' "$systemctl_log" || \
     fail "expected health to query timer enabled state"
@@ -489,6 +488,43 @@ test_setup_graphical_app_config_links_memory_alert() {
   rm -rf "$tmp"
 }
 
+test_setup_graphical_app_config_links_prism() {
+  local tmp
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --only app-config >/dev/null
+
+  local plugin_link="${tmp}/config/noctalia/plugins/prism"
+  [[ -L "$plugin_link" ]] || fail "expected linked Prism plugin"
+  [[ "$(readlink "$plugin_link")" == \
+      "${tmp}/home/d/prism/integrations/noctalia-plugin" ]] || \
+    fail "expected Prism plugin to point into the Prism repository"
+
+  rm -rf "$tmp"
+}
+
+test_dotfiles_health_fails_when_prism_doctor_fails() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+
+  set +e
+  output=$(PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "health should fail when prism doctor fails"
+  [[ "$output" == *"generated file missing: prism.kdl"* ]] || \
+    fail "expected prism doctor failure details"
+
+  rm -rf "$tmp"
+}
+
 test_dotfiles_health_fails_wrong_memory_alert_link() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
@@ -502,12 +538,7 @@ test_dotfiles_health_fails_wrong_memory_alert_link() {
     "${tmp}/config/noctalia/plugins/memory-pressure-alert"
 
   set +e
-  output=$(
-    HOME="${tmp}/home" \
-      XDG_CONFIG_HOME="${tmp}/config" \
-      XDG_DATA_HOME="${tmp}/data" \
-      "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1
-  )
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
   set -e
 
@@ -531,10 +562,7 @@ test_dotfiles_health_fails_wrong_opencode_theme_link() {
   printf '#!/usr/bin/env bash\nexit 99\n' > "${mockbin}/realpath"
   chmod +x "${mockbin}/realpath"
   set +e
-  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
-    XDG_DATA_HOME="${tmp}/data" \
-    PATH="${mockbin}:$PATH" \
-    "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1)
+  output=$(PATH="${mockbin}:$PATH" run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
   set -e
   [[ "$exit_status" -ne 0 ]] || fail "health accepted wrong OpenCode theme link"
@@ -552,9 +580,7 @@ test_dotfiles_health_rejects_symlinked_opencode_local() {
   mv "${tmp}/config/opencode.local" "${tmp}/opencode-local-target"
   ln -s "${tmp}/opencode-local-target" "${tmp}/config/opencode.local"
   set +e
-  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
-    XDG_DATA_HOME="${tmp}/data" \
-    "${repo_root}/bin/dotfiles-health" --skip-systemd 2>&1)
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
   set -e
   [[ "$exit_status" -ne 0 ]] || fail "health accepted symlinked opencode.local"
@@ -581,6 +607,8 @@ test_dotfiles_health_ignores_unmanaged_config_symlinks
 test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_checks_enabled_user_timer
 test_setup_graphical_app_config_links_memory_alert
+test_setup_graphical_app_config_links_prism
+test_dotfiles_health_fails_when_prism_doctor_fails
 test_dotfiles_health_fails_wrong_memory_alert_link
 test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
