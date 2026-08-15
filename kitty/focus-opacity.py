@@ -11,8 +11,9 @@
 # separate knob -- inactive_text_alpha in kitty.conf.
 #
 # Requires dynamic_background_opacity yes in kitty.conf (already set).
-# Wired up via `watcher focus-opacity.py` in kitty.conf; note that reloading
-# the kitty config only attaches watchers to windows created after the reload.
+# Wired up via `watcher focus-opacity.py` in kitty.conf. Kitty caches watcher
+# Python for the process lifetime, so config reloads do not pick up changes to
+# this file; start a new Kitty process or restart an existing one.
 
 import json
 import os
