@@ -388,6 +388,13 @@ function setup_graphical_config_links() {
 
     ln_s "${DOTS_HOME}/prism/$(hostname)" "${XDG_CONFIG_HOME}/prism"
     run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/niri-glass.json" "${DOTS_HOME}/niri/niri-glass.json"
+    ensure_dir "${XDG_CONFIG_HOME}/quickshell"
+    if [[ -e "${XDG_CONFIG_HOME}/quickshell/shell.qml" || \
+          -L "${XDG_CONFIG_HOME}/quickshell/shell.qml" ]]; then
+        echo "Refusing niri-glass named config: ${XDG_CONFIG_HOME}/quickshell/shell.qml disables named Quickshell configs"
+        return 1
+    fi
+    ln_s "${HOME}/d/niri-glass" "${XDG_CONFIG_HOME}/quickshell/niri-glass"
     run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/kitty.conf" "${DOTS_HOME}/kitty/prism-generated.conf"
     run ln -sfT "$niri_generated" "${DOTS_HOME}/niri/prism.kdl"
     run env NIRI_DIR="${DOTS_HOME}/niri" "${DOTS_HOME}/niri/host_specific.sh"

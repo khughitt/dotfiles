@@ -72,7 +72,9 @@ run_setup() {
   local tmp="$1"
   shift
 
-  mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin" "${tmp}/bin"
+  mkdir -p "${tmp}/home/d/niri-glass" \
+    "${tmp}/home/d/prism/integrations/noctalia-plugin" "${tmp}/bin"
+  touch "${tmp}/home/d/niri-glass/shell.qml"
   cat > "${tmp}/bin/prism" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -97,7 +99,9 @@ EOF
   HOME="${tmp}/home" \
     XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" \
+    XDG_STATE_HOME="${tmp}/home/.local/state" \
     DOTFILES_OPENCODE_RUNTIME_SOURCE="${tmp}/opencode-runtime-source" \
+    PATH="${tmp}/bin:$PATH" \
     bash "${repo_root}/setup.sh" "$@"
 }
 
@@ -108,6 +112,7 @@ run_health() {
   HOME="${tmp}/home" \
     XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" \
+    XDG_STATE_HOME="${tmp}/home/.local/state" \
     PATH="${tmp}/bin:$PATH" \
     "${repo_root}/bin/dotfiles-health" "$@"
 }
@@ -594,6 +599,107 @@ test_setup_graphical_app_config_links_prism() {
   rm -rf "$tmp"
 }
 
+test_setup_graphical_config_plans_niri_glass() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  output=$(PRISM_TEST_HOSTNAME=titan \
+    run_setup "$tmp" --dry-run --link-only --only graphical-config)
+
+  [[ "$output" == *"${tmp}/home/d/niri-glass"* ]] || \
+    fail "graphical setup did not plan the niri-glass source"
+  [[ "$output" == *"${tmp}/config/quickshell/niri-glass"* ]] || \
+    fail "graphical setup did not plan the named Quickshell config"
+  [[ "$output" == *"niri-glass.json"* ]] || \
+    fail "graphical setup did not plan the generated config consumer"
+  rg -q -F 'spawn-at-startup "qs" "-c" "niri-glass"' \
+    "${repo_root}/niri/config.kdl" || \
+    fail "niri does not launch the named niri-glass config"
+}
+
+configure_prism_glass_runtime() {
+  local tmp="$1"
+  mkdir -p "${tmp}/config/quickshell" "${tmp}/config/niri" \
+    "${tmp}/home/d/niri-glass" "${tmp}/home/.local/state/prism/generated"
+  touch "${tmp}/home/d/niri-glass/shell.qml"
+  print -- '{}' > "${tmp}/home/.local/state/prism/generated/niri-glass.json"
+  ln -s "${repo_root}/prism/titan" "${tmp}/config/prism"
+  ln -s "${tmp}/home/d/niri-glass" "${tmp}/config/quickshell/niri-glass"
+  ln -s "${tmp}/home/.local/state/prism/generated/niri-glass.json" \
+    "${tmp}/config/niri/niri-glass.json"
+}
+
+test_dotfiles_health_accepts_prism_glass_runtime() {
+  local tmp
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  run_setup "$tmp" --link-only --headless >/dev/null
+  configure_prism_glass_runtime "$tmp"
+
+  PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd >/dev/null
+}
+
+test_dotfiles_health_fails_wrong_niri_glass_consumer() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  run_setup "$tmp" --link-only --headless >/dev/null
+  configure_prism_glass_runtime "$tmp"
+  print -- '{}' > "${tmp}/wrong.json"
+  rm "${tmp}/config/niri/niri-glass.json"
+  ln -s "${tmp}/wrong.json" "${tmp}/config/niri/niri-glass.json"
+
+  set +e
+  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted wrong niri-glass consumer"
+  [[ "$output" == *"wrong link target"* ]] || \
+    fail "health did not explain wrong niri-glass consumer"
+}
+
+test_dotfiles_health_fails_wrong_named_niri_glass_config() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  run_setup "$tmp" --link-only --headless >/dev/null
+  configure_prism_glass_runtime "$tmp"
+  mkdir "${tmp}/wrong-niri-glass"
+  rm "${tmp}/config/quickshell/niri-glass"
+  ln -s "${tmp}/wrong-niri-glass" "${tmp}/config/quickshell/niri-glass"
+
+  set +e
+  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted wrong named niri-glass config"
+  [[ "$output" == *"wrong link target"* ]] || \
+    fail "health did not explain wrong named niri-glass config"
+}
+
+test_dotfiles_health_rejects_root_quickshell_config() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  run_setup "$tmp" --link-only --headless >/dev/null
+  configure_prism_glass_runtime "$tmp"
+  touch "${tmp}/config/quickshell/shell.qml"
+
+  set +e
+  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted a root Quickshell config"
+  [[ "$output" == *"disables named Quickshell configs"* ]] || \
+    fail "health did not explain the named-config shadow"
+}
+
 test_dotfiles_health_fails_when_prism_doctor_fails() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
@@ -601,7 +707,7 @@ test_dotfiles_health_fails_when_prism_doctor_fails() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
-  ln -s "${repo_root}/prism/titan" "${tmp}/config/prism"
+  configure_prism_glass_runtime "$tmp"
 
   set +e
   output=$(PRISM_TEST_HOSTNAME=titan PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd 2>&1)
@@ -702,6 +808,11 @@ test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_checks_enabled_user_timer
 test_setup_graphical_app_config_links_memory_alert
 test_setup_graphical_app_config_links_prism
+test_setup_graphical_config_plans_niri_glass
+test_dotfiles_health_accepts_prism_glass_runtime
+test_dotfiles_health_fails_wrong_niri_glass_consumer
+test_dotfiles_health_fails_wrong_named_niri_glass_config
+test_dotfiles_health_rejects_root_quickshell_config
 test_dotfiles_health_fails_when_prism_doctor_fails
 test_dotfiles_health_fails_wrong_memory_alert_link
 test_dotfiles_health_fails_wrong_opencode_theme_link
