@@ -41,7 +41,7 @@ function _dropbox_ignore_flux_candidates {
   while IFS= read -r -d $'\0' candidate; do
     candidate="${candidate%/}"
     [[ -n "${name_set[${candidate:t}]-}" ]] && candidates+=("$candidate")
-  done < <(fd -Luu -0 -t d --prune "$pattern" "$root")
+  done < <(fd -uu -0 -t d --prune "$pattern" "$root")
 
   # Sort by byte value, not locale collation. UTF-8 locales ignore leading
   # punctuation when collating, so under en_US.UTF-8 "$root/.venv" collates as
@@ -159,7 +159,7 @@ EOF
       [[ "$quiet" == "true" ]] || print -- "Ignored: $candidate"
     else
       failed=$((failed + 1))
-      print -u2 -- "Failed to ignore: $candidate"
+      print -u2 -- "Failed to ignore: $candidate ($(stat -c 'owner=%U:%G, uid=%u, gid=%g, mode=%a' -- "$candidate"))"
     fi
   done
 

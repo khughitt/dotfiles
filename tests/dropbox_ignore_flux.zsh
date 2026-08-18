@@ -45,6 +45,23 @@ ${tmp}/project/src/__pycache__"
   rm -rf "$tmp"
 }
 
+test_candidates_do_not_follow_symlinks() {
+  local tmp root outside actual
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  root="${tmp}/dropbox"
+  outside="${tmp}/outside"
+
+  mkdir -p "${outside}/node_modules"
+  mkdir -p "$root"
+  ln -s "$outside" "${root}/linked-outside"
+
+  actual=$(_dropbox_ignore_flux_candidates "$root" node_modules)
+  [[ -z "$actual" ]] || fail "candidate scan should not follow symlinks: ${(qqq)actual}"
+
+  rm -rf "$tmp"
+}
+
 test_dropbox_ignore_flux_sets_only_missing_attrs_without_sudo() {
   local tmp mockbin attr_log sudo_log
   tmp=$(make_tmpdir)
@@ -109,6 +126,41 @@ EOF
   rm -rf "$tmp"
 }
 
+test_dropbox_ignore_flux_reports_failed_candidate_ownership() {
+  local tmp mockbin output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mockbin="${tmp}/bin"
+
+  mkdir -p "$mockbin" "${tmp}/project/__pycache__"
+  chmod 750 "${tmp}/project/__pycache__"
+
+  cat > "${mockbin}/attr" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "$1" == "-q" && "$2" == "-g" ]]; then
+  exit 1
+fi
+
+printf 'attr_set: Permission denied\n' >&2
+exit 1
+EOF
+  chmod +x "${mockbin}/attr"
+
+  if output=$(PATH="${mockbin}:$PATH" dropbox_ignore_flux --root "$tmp" --quiet 2>&1); then
+    fail "dropbox_ignore_flux should fail when attr cannot set the ignored attribute"
+  else
+    exit_status=$?
+  fi
+
+  [[ "$exit_status" -eq 1 ]] || fail "expected status 1, got $exit_status"
+  [[ "$output" == *"Failed to ignore: ${tmp}/project/__pycache__ (owner=$(id -un):$(id -gn), uid=$(id -u), gid=$(id -g), mode=750)"* ]] || \
+    fail "failure should report candidate ownership and mode: ${(qqq)output}"
+
+  rm -rf "$tmp"
+}
+
 test_fu_finds_functions_d_modules() {
   local tmp
   tmp=$(make_tmpdir)
@@ -121,7 +173,9 @@ test_fu_finds_functions_d_modules() {
 }
 
 test_candidates_keep_only_top_level_matches
+test_candidates_do_not_follow_symlinks
 test_dropbox_ignore_flux_sets_only_missing_attrs_without_sudo
+test_dropbox_ignore_flux_reports_failed_candidate_ownership
 test_fu_finds_functions_d_modules
 
 print -- "dropbox_ignore_flux tests passed"
