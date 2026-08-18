@@ -1,0 +1,7 @@
+[Unit]
+Description=Age files out of the TMPDIR on /mnt/ssd3
+ConditionPathIsDirectory=/mnt/ssd3
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemd-tmpfiles --create --clean %h/d/dotfiles/systemd/user/ssd3-tmp-clean.tmpfiles.conf

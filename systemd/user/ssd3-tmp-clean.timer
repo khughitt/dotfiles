@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily aging of the TMPDIR on /mnt/ssd3
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=1d
+AccuracySec=1h
+Persistent=true
+Unit=ssd3-tmp-clean.service
+
+[Install]
+WantedBy=timers.target
