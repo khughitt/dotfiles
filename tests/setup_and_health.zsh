@@ -165,12 +165,20 @@ test_bash_config_is_native_and_minimal() {
 }
 
 test_glow_theme_renders_color() {
-  local output
+  local tmp theme output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  theme="${tmp}/glow.json"
 
+  noctalia theme --theme-json "${repo_root}/noctalia/palettes/Glow.json" --dark \
+    -r "${repo_root}/noctalia/templates/glow.json:${theme}" >/dev/null 2>&1 || \
+    fail "Noctalia should render the Glow stylesheet"
   output=$(print -- '# Heading' | env -u NO_COLOR CLICOLOR_FORCE=1 \
-    glow --config /dev/null --style "${repo_root}/glow/noctalia.json" - 2>&1) || \
+    glow --config /dev/null --style "$theme" - 2>&1) || \
     fail "Glow should load the Noctalia stylesheet: ${output}"
   [[ "$output" == *$'\e['* ]] || fail "Noctalia stylesheet should render ANSI color"
+
+  rm -rf "$tmp"
 }
 
 test_zsh_pager_is_ansi_aware() {
@@ -582,6 +590,30 @@ test_setup_graphical_app_config_links_memory_alert() {
   rm -rf "$tmp"
 }
 
+test_noctalia_glow_template_is_installed_and_rendered() {
+  local tmp templates
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/cache" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --only app-config >/dev/null
+
+  [[ -L "${tmp}/config/noctalia/templates" ]] || \
+    fail "expected linked Noctalia templates"
+  [[ -L "${tmp}/config/noctalia/templates.toml" ]] || \
+    fail "expected linked Noctalia template config"
+
+  templates=$(HOME="${tmp}/home" \
+    XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_CACHE_HOME="${tmp}/cache" \
+    noctalia theme --list-templates 2>/dev/null) || \
+    fail "Noctalia should load the installed template config"
+  [[ "$templates" == *$'glow  user      glow'* ]] || \
+    fail "Noctalia should register the Glow user template"
+
+  rm -rf "$tmp"
+}
+
 test_setup_graphical_app_config_links_prism() {
   local tmp
   tmp=$(make_tmpdir)
@@ -807,6 +839,7 @@ test_dotfiles_health_ignores_unmanaged_config_symlinks
 test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_checks_enabled_user_timer
 test_setup_graphical_app_config_links_memory_alert
+test_noctalia_glow_template_is_installed_and_rendered
 test_setup_graphical_app_config_links_prism
 test_setup_graphical_config_plans_niri_glass
 test_dotfiles_health_accepts_prism_glass_runtime
