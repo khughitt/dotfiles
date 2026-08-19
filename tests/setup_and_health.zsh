@@ -252,6 +252,53 @@ test_noctalia_template_hook_markers_are_reproducible() {
     fail "generated v5 Hyprland theme must be ignored"
 }
 
+test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
+  local tmp config targets before after
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  config="${tmp}/home/.config"
+  targets="${tmp}/targets"
+  mkdir -p "$config" "$targets/niri" "$targets/hypr" \
+    "$targets/ghostty" "$targets/gtk-3.0" "$targets/gtk-4.0" "${tmp}/bin"
+  cp "${repo_root}/niri/config.kdl" "$targets/niri/config.kdl"
+  cp "${repo_root}/hypr/hyprland.conf" "$targets/hypr/hyprland.conf"
+  cp "${repo_root}/ghostty/config.ghostty" "$targets/ghostty/config.ghostty"
+  cp "${repo_root}/gtk-3.0/gtk.css" "$targets/gtk-3.0/gtk.css"
+  cp "${repo_root}/gtk-4.0/gtk.css" "$targets/gtk-4.0/gtk.css"
+
+  ln -s "$targets/niri" "$config/niri"
+  ln -s "$targets/hypr" "$config/hypr"
+  mkdir -p "$config/ghostty" "$config/gtk-3.0" "$config/gtk-4.0"
+  ln -s "$targets/ghostty/config.ghostty" "$config/ghostty/config.ghostty"
+  ln -s "$targets/gtk-3.0/gtk.css" "$config/gtk-3.0/gtk.css"
+  ln -s "$targets/gtk-4.0/gtk.css" "$config/gtk-4.0/gtk.css"
+  touch "$config/gtk-3.0/noctalia.css" "$config/gtk-4.0/noctalia.css"
+
+  for command in hyprctl gsettings dconf pgrep pkill; do
+    printf '#!/usr/bin/env bash\nexit 1\n' > "${tmp}/bin/${command}"
+    chmod +x "${tmp}/bin/${command}"
+  done
+
+  before=$(find "$targets" -type f -print0 | sort -z | xargs -0 sha256sum)
+  HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
+    bash /usr/share/noctalia/assets/templates/niri/apply.sh apply
+  HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
+    bash /usr/share/noctalia/assets/templates/hyprland/apply.sh apply
+  HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
+    bash /usr/share/noctalia/assets/templates/ghostty/apply.sh
+  HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
+    bash /usr/share/noctalia/assets/templates/gtk/apply.sh dark
+  after=$(find "$targets" -type f -print0 | sort -z | xargs -0 sha256sum)
+
+  [[ "$after" == "$before" ]] || fail "a built-in hook edited a disposable target"
+  [[ -L "$config/niri" && -L "$config/hypr" ]] || \
+    fail "a compositor directory link was replaced"
+  for managed_path in ghostty/config.ghostty gtk-3.0/gtk.css gtk-4.0/gtk.css; do
+    [[ -L "$config/$managed_path" ]] || \
+      fail "a managed file link was replaced: $managed_path"
+  done
+}
+
 test_zsh_pager_is_ansi_aware() {
   env -i \
     HOME=/tmp \
@@ -894,6 +941,7 @@ test_bash_config_is_native_and_minimal
 test_glow_theme_renders_color
 test_noctalia_v5_config_contract
 test_noctalia_template_hook_markers_are_reproducible
+test_noctalia_builtin_hooks_leave_managed_configs_unchanged
 test_zsh_pager_is_ansi_aware
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
