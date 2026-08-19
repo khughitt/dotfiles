@@ -518,6 +518,8 @@ function setup_application_config_links() {
         local memory_alert_plugin="${noctalia_plugin_dir}/memory-pressure-alert"
         local prism_plugin="${noctalia_plugin_dir}/prism"
         local glow_palette="${noctalia_palette_dir}/Glow.json"
+        local noctalia_templates="${XDG_CONFIG_HOME}/noctalia/templates"
+        local noctalia_templates_config="${XDG_CONFIG_HOME}/noctalia/templates.toml"
 
         ensure_dir "$noctalia_plugin_dir"
         ensure_dir "$noctalia_palette_dir"
@@ -530,6 +532,8 @@ function setup_application_config_links() {
         ln_s "${DOTS_HOME}/noctalia/plugins/memory-pressure-alert" "$memory_alert_plugin"
         ln_s "${HOME}/d/prism/integrations/noctalia-plugin" "$prism_plugin"
         ln_s "${DOTS_HOME}/noctalia/palettes/Glow.json" "$glow_palette"
+        ln_s "${DOTS_HOME}/noctalia/templates" "$noctalia_templates"
+        ln_s "${DOTS_HOME}/noctalia/templates.toml" "$noctalia_templates_config"
     fi
 
     ln_s "${DOTS_HOME}/git/ignore" "${HOME}/.gitignore_global"

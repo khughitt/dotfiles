@@ -1,0 +1,3 @@
+[theme.templates.user.glow]
+input_path = "$XDG_CONFIG_HOME/noctalia/templates/glow.json"
+output_path = "$XDG_CACHE_HOME/noctalia/glow.json"

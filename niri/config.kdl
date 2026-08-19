@@ -64,8 +64,8 @@ layout {
     }
 
     focus-ring {
-        width 3
-        active-gradient from="#77aa3355" to="#55f09099" angle=45 relative-to="workspace-view"
+        width 4
+        active-gradient from="#33563355" to="#99f09066" angle=45 relative-to="workspace-view"
     }
 
     border {
@@ -74,8 +74,8 @@ layout {
 
     shadow {
         on
-        softness 12
-        spread 6
+        softness 5
+        spread 1
         offset x=-5 y=5
         color "#00000070"
     }

@@ -93,6 +93,13 @@ readability.
 Crush's saved global or workspace preference may override it. Crush 0.88.0 has
 no custom-theme interface, so its application-painted blocks remain opaque.
 
+## Glow theming
+
+`setup.sh` links `noctalia/templates/` and the Noctalia v5
+`noctalia/templates.toml` overlay into `~/.config/noctalia/`. Noctalia renders
+the Glow stylesheet to `$XDG_CACHE_HOME/noctalia/glow.json` whenever the palette
+changes, and Glow reads that generated file on each invocation.
+
 ## Persistent memory-pressure alerts
 
 The memory-pressure-alert plugin is installed through this managed link:

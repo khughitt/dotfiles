@@ -40,6 +40,11 @@ export OPENCODE_DISABLE_AUTOUPDATE=1
 # go
 export GOPATH="$HOME/go"
 
+# haskell / ghcup
+if [[ -f "$HOME/.ghcup/env" ]]; then
+  source "$HOME/.ghcup/env"
+fi
+
 # use system colors for ls
 export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 
@@ -124,3 +129,7 @@ export SUDO_ASKPASS=/usr/bin/ksshaskpass
 #     ln -sf $SSH_AUTH_SOCK $SOCK
 #     export SSH_AUTH_SOCK=$SOCK
 # fi
+
+# familiar-forge post-split configuration (Phase 3 repository split)
+export FAMILIAR_FORGE_THEME_DIR="$HOME/d/familiar-cats"
+export FAMILIAR_FORGE_CATS_GRAPH_DIR="$HOME/.local/share/familiar-forge/graphs/cats"
