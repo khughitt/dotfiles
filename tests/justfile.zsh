@@ -58,5 +58,7 @@ assert_contains "$test_dry_run" "zsh tests/dotfiles_check.zsh" \
   "expected test recipe to include dotfiles check tests"
 assert_contains "$test_dry_run" "zsh tests/wali.zsh" \
   "expected test recipe to include wali tests"
+assert_contains "$test_dry_run" "uv run --frozen pytest -q" \
+  "expected test recipe to include Python tests"
 
 print -- "justfile tests passed"

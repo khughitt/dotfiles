@@ -44,7 +44,7 @@ def test_current_returns_source_metadata(tmp_path: Path, monkeypatch: pytest.Mon
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
@@ -83,7 +83,7 @@ def test_current_fails_when_wallpaper_query_is_empty(
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
@@ -99,15 +99,15 @@ def test_current_fails_when_wallpaper_query_is_empty(
     assert stderr == "could not determine current wallpaper\n"
 
 
-def test_current_fails_when_qs_command_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_current_fails_when_noctalia_command_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
-        raise FileNotFoundError("qs")
+        raise FileNotFoundError("noctalia")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
 
@@ -115,14 +115,14 @@ def test_current_fails_when_qs_command_is_missing(monkeypatch: pytest.MonkeyPatc
 
     assert exit_code == 1
     assert stdout == ""
-    assert stderr == "qs command not found\n"
+    assert stderr == "noctalia command not found\n"
 
 
-def test_current_fails_when_wallpaper_query_command_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_current_fails_when_noctalia_ipc_command_fails(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
@@ -134,7 +134,7 @@ def test_current_fails_when_wallpaper_query_command_fails(monkeypatch: pytest.Mo
 
     assert exit_code == 1
     assert stdout == ""
-    assert stderr == "wallpaper query failed\n"
+    assert stderr == "Noctalia IPC command failed\n"
 
 
 def test_current_returns_null_metadata_for_unparseable_filename(
@@ -145,7 +145,7 @@ def test_current_returns_null_metadata_for_unparseable_filename(
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
@@ -173,7 +173,7 @@ def test_current_returns_null_metadata_for_noncanonical_filename(
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
@@ -202,7 +202,7 @@ def test_current_fails_when_source_wallpaper_path_cannot_be_derived(
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
@@ -226,7 +226,7 @@ def test_current_reports_derivation_error_before_missing_archive_env(
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
@@ -251,7 +251,7 @@ def test_current_fails_when_source_wallpaper_is_missing(
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
@@ -275,7 +275,7 @@ def test_current_fails_when_background_img_dir_is_missing(
     def fake_run(
         args: list[str], *, check: bool, capture_output: bool, text: bool
     ) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert check is True
         assert capture_output is True
         assert text is True
@@ -305,7 +305,7 @@ def test_save_current_appends_source_path(tmp_path: Path, monkeypatch: pytest.Mo
     current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
 
     def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert kwargs == {"check": True, "capture_output": True, "text": True}
         return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
 
@@ -333,7 +333,7 @@ def test_save_current_fails_when_wali_favorites_directory_is_missing(
     current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
 
     def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert kwargs == {"check": True, "capture_output": True, "text": True}
         return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
 
@@ -361,7 +361,7 @@ def test_save_current_translates_favorites_write_error(
     current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
 
     def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        assert args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]
+        assert args == ["noctalia", "msg", "wallpaper-get"]
         assert kwargs == {"check": True, "capture_output": True, "text": True}
         return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
 
@@ -395,7 +395,7 @@ def test_edit_current_launches_gimp(tmp_path: Path, monkeypatch: pytest.MonkeyPa
 
     def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         calls.append((args, kwargs))
-        if args == ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"]:
+        if args == ["noctalia", "msg", "wallpaper-get"]:
             assert kwargs == {"check": True, "capture_output": True, "text": True}
             return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
 
@@ -412,6 +412,50 @@ def test_edit_current_launches_gimp(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     assert stderr == ""
     assert stdout == f"opened {source_path}\n"
     assert calls == [
-        (["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"], {"check": True, "capture_output": True, "text": True}),
+        (["noctalia", "msg", "wallpaper-get"], {"check": True, "capture_output": True, "text": True}),
         (["gimp", str(source_path)], {"check": True}),
     ]
+
+
+@pytest.mark.parametrize(
+    ("command", "expected_name"),
+    [("forward", "c.jpg"), ("backward", "a.jpg")],
+)
+def test_navigation_uses_v5_wallpaper_set(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command: str, expected_name: str
+) -> None:
+    first = tmp_path / "a.jpg"
+    current = tmp_path / "b.jpg"
+    last = tmp_path / "c.jpg"
+    for path in (first, current, last):
+        path.touch()
+    calls: list[list[str]] = []
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        stdout = f"{current}\n" if args[-1] == "wallpaper-get" else ""
+        return subprocess.CompletedProcess(args, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    code, stdout, stderr = run_walictl([command], monkeypatch)
+
+    assert (code, stderr) == (0, "")
+    expected = tmp_path / expected_name
+    assert calls == [
+        ["noctalia", "msg", "wallpaper-get"],
+        ["noctalia", "msg", "wallpaper-set", str(expected)],
+    ]
+
+
+def test_random_uses_v5_wallpaper_random(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    code, stdout, stderr = run_walictl(["random"], monkeypatch)
+
+    assert (code, stdout, stderr) == (0, "randomized wallpaper\n", "")
+    assert calls == [["noctalia", "msg", "wallpaper-random"]]

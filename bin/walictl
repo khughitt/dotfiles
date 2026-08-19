@@ -41,20 +41,25 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def get_current_wallpaper_path() -> Path:
+def run_noctalia_msg(*args: str) -> str:
     try:
         result = subprocess.run(
-            ["qs", "-c", "noctalia-shell", "ipc", "call", "wallpaper", "get", "all"],
+            ["noctalia", "msg", *args],
             check=True,
             capture_output=True,
             text=True,
         )
     except FileNotFoundError as exc:
-        raise WallpaperQueryError("qs command not found") from exc
+        raise WalictlError("noctalia command not found") from exc
     except subprocess.CalledProcessError as exc:
-        raise WallpaperQueryError("wallpaper query failed") from exc
+        raise WalictlError("Noctalia IPC command failed") from exc
+    return result.stdout
 
-    wallpaper_path = next((line.strip() for line in result.stdout.splitlines() if line.strip()), "")
+
+def get_current_wallpaper_path() -> Path:
+    wallpaper_path = next(
+        (line.strip() for line in run_noctalia_msg("wallpaper-get").splitlines() if line.strip()), ""
+    )
     if not wallpaper_path:
         raise WallpaperQueryError("could not determine current wallpaper")
     return Path(wallpaper_path).expanduser().resolve()
@@ -148,28 +153,6 @@ def save_current_source() -> Path:
 WALLPAPER_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
-def ipc_call_noctalia(target: str, *args: str) -> None:
-    try:
-        subprocess.run(
-            ["qs", "-c", "noctalia-shell", "ipc", "call", target, *args],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError as exc:
-        raise WalictlError("qs command not found") from exc
-    except subprocess.CalledProcessError as exc:
-        raise WalictlError("wallpaper IPC call failed") from exc
-
-
-def ipc_call_wallpaper(*args: str) -> None:
-    ipc_call_noctalia("wallpaper", *args)
-
-
-def ipc_call_wali_panel(*args: str) -> None:
-    ipc_call_noctalia("plugin:wali-panel", *args)
-
-
 def get_wallpaper_siblings(current_path: Path) -> list[Path]:
     parent = current_path.parent
     return sorted(p for p in parent.iterdir() if p.suffix.lower() in WALLPAPER_EXTENSIONS)
@@ -186,12 +169,12 @@ def navigate_wallpaper(direction: int) -> Path:
         raise WalictlError("current wallpaper not found in directory listing")
     new_idx = (idx + direction) % len(siblings)
     new_path = siblings[new_idx]
-    ipc_call_wallpaper("set", str(new_path), "all")
+    run_noctalia_msg("wallpaper-set", str(new_path))
     return new_path
 
 
 def random_wallpaper() -> None:
-    ipc_call_wali_panel("random", "all")
+    run_noctalia_msg("wallpaper-random")
 
 
 def edit_current_source() -> Path:

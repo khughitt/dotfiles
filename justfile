@@ -23,6 +23,7 @@ secrets:
     bin/dotfiles-secrets-check
 
 test:
+    uv run --frozen pytest -q
     zsh tests/dropbox_ignore_flux.zsh
     zsh tests/history.zsh
     zsh tests/secrets_check.zsh
