@@ -88,7 +88,7 @@ Common maintenance commands are wrapped in `just`:
 
 ```
 just check          # run shell syntax, shellcheck, and modeline checks
-just test           # run focused zsh tests
+just test           # run Python and Zsh/shell tests
 just health         # check links and local setup without querying systemd state
 just health-systemd # include systemd user timer state
 just setup-dry-run  # preview headless link-only setup

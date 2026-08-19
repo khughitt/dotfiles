@@ -399,6 +399,7 @@ function setup_graphical_config_links() {
     run ln -sfT "$niri_generated" "${DOTS_HOME}/niri/prism.kdl"
     run env NIRI_DIR="${DOTS_HOME}/niri" "${DOTS_HOME}/niri/host_specific.sh"
     run touch "${DOTS_HOME}/niri/noctalia.kdl"
+    run touch "${DOTS_HOME}/hypr/noctalia.conf"
 
     if [[ "$DRY_RUN" != "true" ]]; then
         niri_generated_before="$(stat -Lc '%d:%i' "$niri_generated" 2>/dev/null || true)"

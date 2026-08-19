@@ -181,34 +181,36 @@ check_link_target \
     "${HOME}/.cache/noctalia/nvim-glass/current/opencode-theme.json"
 unset opencode_local
 
-noctalia_config_dir="${XDG_CONFIG_HOME}/noctalia"
-check_link "$noctalia_config_dir/config.toml" "${DOTS_HOME}/noctalia/config.toml"
-check_link "$noctalia_config_dir/templates.toml" "${DOTS_HOME}/noctalia/templates.toml"
-check_link "$noctalia_config_dir/templates" "${DOTS_HOME}/noctalia/templates"
-check_link "$noctalia_config_dir/palettes/Glow.json" "${DOTS_HOME}/noctalia/palettes/Glow.json"
+if [[ "$(uname)" != "Darwin" ]]; then
+    noctalia_config_dir="${XDG_CONFIG_HOME}/noctalia"
+    check_link "$noctalia_config_dir/config.toml" "${DOTS_HOME}/noctalia/config.toml"
+    check_link "$noctalia_config_dir/templates.toml" "${DOTS_HOME}/noctalia/templates.toml"
+    check_link "$noctalia_config_dir/templates" "${DOTS_HOME}/noctalia/templates"
+    check_link "$noctalia_config_dir/palettes/Glow.json" "${DOTS_HOME}/noctalia/palettes/Glow.json"
 
-if output=$(noctalia config validate "$noctalia_config_dir" 2>&1); then
-    if grep -Eq '(^|[[:space:]])(WARN|ERROR)([[:space:]]|$)' <<<"$output"; then
-        fail "Noctalia config warning or error: $output"
-    else
-        pass "Noctalia config validates without warnings"
-    fi
-else
-    fail "Noctalia config validation failed: $output"
-fi
-
-if templates=$(noctalia theme --list-templates 2>&1); then
-    for template_id in glow nvim claude codex ohai; do
-        if printf '%s\n' "$templates" | rg -q "^[[:space:]]+${template_id}[[:space:]]+user([[:space:]]|$)"; then
-            pass "Noctalia user template: $template_id"
+    if output=$(noctalia config validate "$noctalia_config_dir" 2>&1); then
+        if grep -Eq '(^|[[:space:]])(WARN|ERROR)([[:space:]]|$)' <<<"$output"; then
+            fail "Noctalia config warning or error: $output"
         else
-            fail "missing Noctalia user template: $template_id"
+            pass "Noctalia config validates without warnings"
         fi
-    done
-else
-    fail "Noctalia template listing failed: $templates"
+    else
+        fail "Noctalia config validation failed: $output"
+    fi
+
+    if templates=$(noctalia theme --list-templates 2>&1); then
+        for template_id in glow nvim claude codex ohai; do
+            if printf '%s\n' "$templates" | rg -q "^[[:space:]]+${template_id}[[:space:]]+user([[:space:]]|$)"; then
+                pass "Noctalia user template: $template_id"
+            else
+                fail "missing Noctalia user template: $template_id"
+            fi
+        done
+    else
+        fail "Noctalia template listing failed: $templates"
+    fi
+    unset noctalia_config_dir output templates template_id
 fi
-unset noctalia_config_dir output templates template_id
 
 check_absent_stale_config_link "snakemake"
 check_absent_stale_config_link "tealdeer"

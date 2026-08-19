@@ -311,7 +311,7 @@ test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error() {
 }
 
 test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
-  local tmp config targets before after
+  local tmp config targets before after output hook_output=""
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   config="${tmp}/home/.config"
@@ -338,22 +338,31 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
   done
 
   before=$(find "$targets" -type f -print0 | sort -z | xargs -0 sha256sum)
-  HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
-    bash /usr/share/noctalia/assets/templates/niri/apply.sh apply
-  HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
-    bash /usr/share/noctalia/assets/templates/hyprland/apply.sh apply
-  HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
-    bash /usr/share/noctalia/assets/templates/ghostty/apply.sh
-  HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
-    bash /usr/share/noctalia/assets/templates/gtk/apply.sh dark
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
+    bash /usr/share/noctalia/assets/templates/niri/apply.sh apply 2>&1) || \
+    fail "Niri hook failed: ${output}"
+  hook_output+="Niri: ${output}"$'\n'
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
+    bash /usr/share/noctalia/assets/templates/hyprland/apply.sh apply 2>&1) || \
+    fail "Hyprland hook failed: ${output}"
+  hook_output+="Hyprland: ${output}"$'\n'
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
+    bash /usr/share/noctalia/assets/templates/ghostty/apply.sh 2>&1) || \
+    fail "Ghostty hook failed: ${output}"
+  hook_output+="Ghostty: ${output}"$'\n'
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
+    bash /usr/share/noctalia/assets/templates/gtk/apply.sh dark 2>&1) || \
+    fail "GTK hook failed: ${output}"
+  hook_output+="GTK: ${output}"$'\n'
   after=$(find "$targets" -type f -print0 | sort -z | xargs -0 sha256sum)
 
-  [[ "$after" == "$before" ]] || fail "a built-in hook edited a disposable target"
+  [[ "$after" == "$before" ]] || \
+    fail "a built-in hook edited a disposable target: ${hook_output}"
   [[ -L "$config/niri" && -L "$config/hypr" ]] || \
-    fail "a compositor directory link was replaced"
+    fail "a compositor directory link was replaced: ${hook_output}"
   for managed_path in ghostty/config.ghostty gtk-3.0/gtk.css gtk-4.0/gtk.css; do
     [[ -L "$config/$managed_path" ]] || \
-      fail "a managed file link was replaced: $managed_path"
+      fail "a managed file link was replaced: ${managed_path}: ${hook_output}"
   done
 }
 
@@ -565,6 +574,30 @@ test_dotfiles_health_fails_missing_noctalia_config() {
   (( exit_status != 0 )) || fail "health accepted missing Noctalia config"
   [[ "$output" == *"${tmp}/config/noctalia/config.toml"* ]] || \
     fail "health did not report the missing Noctalia config: ${output}"
+}
+
+test_dotfiles_health_skips_noctalia_on_macos() {
+  local tmp output exit_status noctalia_log
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  noctalia_log="${tmp}/noctalia.log"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --macos \
+    --only shell,common-config,home,app-config >/dev/null
+  printf '#!/usr/bin/env bash\nprintf "called\\n" >> "$NOCTALIA_LOG"\nexit 99\n' \
+    > "${tmp}/bin/noctalia"
+  printf '#!/usr/bin/env bash\nprintf "Darwin\\n"\n' > "${tmp}/bin/uname"
+  chmod +x "${tmp}/bin/noctalia" "${tmp}/bin/uname"
+
+  set +e
+  output=$(NOCTALIA_LOG="$noctalia_log" run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status == 0 )) || \
+    fail "health rejected a supported macOS headless setup: ${output}"
+  [[ ! -e "$noctalia_log" ]] || fail "health ran Noctalia on macOS"
 }
 
 test_dotfiles_health_fails_wrong_prism_link_without_running_doctor() {
@@ -832,6 +865,33 @@ test_setup_graphical_config_plans_niri_glass() {
     fail "niri does not launch the named niri-glass config"
 }
 
+test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
+  local tmp fixture
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/feh" "$fixture/hypr" "$fixture/niri" \
+    "$fixture/zathura" "$fixture/prism/titan" "$fixture/kitty" \
+    "${tmp}/home/d/niri-glass" "${tmp}/config" "${tmp}/bin"
+  cp "${repo_root}/setup.sh" "$fixture/setup.sh"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+  cp "${repo_root}/niri/host_specific.sh" "$fixture/niri/"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$fixture/bin/prism"
+  printf '#!/usr/bin/env bash\nprintf "titan\\n"\n' > "${tmp}/bin/hostname"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/bin/niri"
+  chmod +x "$fixture/setup.sh" "$fixture/bin/prism" \
+    "$fixture/niri/host_specific.sh" "${tmp}/bin/hostname" "${tmp}/bin/niri"
+
+  HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_STATE_HOME="${tmp}/state" PATH="${tmp}/bin:$PATH" \
+    bash "$fixture/setup.sh" --link-only --only graphical-config >/dev/null
+
+  [[ -f "$fixture/hypr/noctalia.conf" ]] || \
+    fail "clean graphical setup did not create the Hyprland theme stub"
+  [[ ! -s "$fixture/hypr/noctalia.conf" ]] || \
+    fail "clean graphical setup should leave the Hyprland theme stub empty"
+}
+
 configure_prism_glass_runtime() {
   local tmp="$1"
   mkdir -p "${tmp}/config/quickshell" "${tmp}/config/niri" \
@@ -1013,6 +1073,7 @@ test_setup_only_rejects_unknown_phase
 test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_skips_prism_when_unconfigured
 test_dotfiles_health_fails_missing_noctalia_config
+test_dotfiles_health_skips_noctalia_on_macos
 test_prism_launcher_link_survives_relocated_sibling_repos
 test_dotfiles_health_fails_unknown_host_wrong_prism_marker_without_doctor
 test_dotfiles_health_fails_unknown_host_dangling_prism_marker_without_doctor
@@ -1024,6 +1085,7 @@ test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_checks_enabled_user_timer
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_plans_niri_glass
+test_clean_graphical_setup_creates_empty_hyprland_theme_stub
 test_dotfiles_health_accepts_prism_glass_runtime
 test_dotfiles_health_fails_wrong_niri_glass_consumer
 test_dotfiles_health_fails_wrong_named_niri_glass_config
