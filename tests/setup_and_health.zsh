@@ -252,6 +252,20 @@ test_noctalia_template_hook_markers_are_reproducible() {
     fail "generated v5 Hyprland theme must be ignored"
 }
 
+test_compositors_use_noctalia_v5() {
+  local niri="${repo_root}/niri/config.kdl"
+  local hypr="${repo_root}/hypr/hyprland.conf"
+  rg -q -F 'spawn-at-startup "noctalia"' "$niri" || fail "Niri does not start v5"
+  rg -q -F 'spawn "noctalia" "msg" "panel-toggle" "launcher"' "$niri" || \
+    fail "Niri launcher bind is not v5"
+  rg -q -F 'match app-id="dev.noctalia.Noctalia"' "$niri" || \
+    fail "Niri settings window is not floating"
+  rg -q -F 'exec-once = noctalia' "$hypr" || fail "Hyprland does not start v5"
+  rg -q -F '$ipc = noctalia msg' "$hypr" || fail "Hyprland IPC is not v5"
+  ! rg -q 'noctalia-shell|qs.*noctalia' "$niri" "$hypr" || \
+    fail "active compositor config still calls Noctalia v4"
+}
+
 test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
   local tmp config targets before after
   tmp=$(make_tmpdir)
@@ -941,6 +955,7 @@ test_bash_config_is_native_and_minimal
 test_glow_theme_renders_color
 test_noctalia_v5_config_contract
 test_noctalia_template_hook_markers_are_reproducible
+test_compositors_use_noctalia_v5
 test_noctalia_builtin_hooks_leave_managed_configs_unchanged
 test_zsh_pager_is_ansi_aware
 test_setup_dry_run_link_only_does_not_write_home
