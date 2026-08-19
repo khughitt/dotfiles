@@ -705,61 +705,43 @@ EOF
   rm -rf "$tmp"
 }
 
-test_setup_graphical_app_config_links_memory_alert() {
-  local tmp
+test_noctalia_v5_config_is_installed_and_validated() {
+  local tmp output templates
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/cache" "${tmp}/data" "${tmp}/state"
 
   run_setup "$tmp" --link-only --only app-config >/dev/null
 
-  local plugin_link="${tmp}/config/noctalia/plugins/memory-pressure-alert"
-  [[ -L "$plugin_link" ]] || fail "expected linked memory pressure alert plugin"
-  [[ "$(readlink "$plugin_link")" == \
-      "${repo_root}/noctalia/plugins/memory-pressure-alert" ]] || \
-    fail "expected memory alert plugin to point into the repository"
-
-  rm -rf "$tmp"
-}
-
-test_noctalia_glow_template_is_installed_and_rendered() {
-  local tmp templates
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/cache" "${tmp}/data"
-
-  run_setup "$tmp" --link-only --only app-config >/dev/null
-
+  [[ -L "${tmp}/config/noctalia/config.toml" ]] || \
+    fail "expected linked Noctalia config"
   [[ -L "${tmp}/config/noctalia/templates" ]] || \
     fail "expected linked Noctalia templates"
   [[ -L "${tmp}/config/noctalia/templates.toml" ]] || \
     fail "expected linked Noctalia template config"
+  [[ -L "${tmp}/config/noctalia/palettes/Glow.json" ]] || \
+    fail "expected linked Noctalia Glow palette"
+  [[ ! -e "${tmp}/config/noctalia/plugins" ]] || \
+    fail "setup should not create Noctalia v4 plugin links"
+
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_CACHE_HOME="${tmp}/cache" XDG_STATE_HOME="${tmp}/state" \
+    noctalia config validate "${tmp}/config/noctalia" 2>&1) || \
+    fail "installed Noctalia v5 config should validate: ${output}"
+  [[ "$output" != *WARN* && "$output" != *ERROR* ]] || \
+    fail "installed Noctalia config emitted a warning or error: ${output}"
 
   templates=$(HOME="${tmp}/home" \
     XDG_CONFIG_HOME="${tmp}/config" \
     XDG_CACHE_HOME="${tmp}/cache" \
+    XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should load the installed template config"
-  print -r -- "$templates" | \
-    rg -q '^[[:space:]]+glow[[:space:]]+user[[:space:]]+glow[[:space:]]*$' || \
-    fail "Noctalia should register the Glow user template"
-
-  rm -rf "$tmp"
-}
-
-test_setup_graphical_app_config_links_prism() {
-  local tmp
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-
-  run_setup "$tmp" --link-only --only app-config >/dev/null
-
-  local plugin_link="${tmp}/config/noctalia/plugins/prism"
-  [[ -L "$plugin_link" ]] || fail "expected linked Prism plugin"
-  [[ "$(readlink "$plugin_link")" == \
-      "${tmp}/home/d/prism/integrations/noctalia-plugin" ]] || \
-    fail "expected Prism plugin to point into the Prism repository"
+  for id in glow nvim claude codex ohai; do
+    print -r -- "$templates" | \
+      rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
+      fail "Noctalia should register the ${id} user template"
+  done
 
   rm -rf "$tmp"
 }
@@ -886,7 +868,7 @@ test_dotfiles_health_fails_when_prism_doctor_fails() {
   rm -rf "$tmp"
 }
 
-test_dotfiles_health_fails_wrong_memory_alert_link() {
+test_dotfiles_health_rejects_noctalia_config_warning() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
@@ -894,20 +876,15 @@ test_dotfiles_health_fails_wrong_memory_alert_link() {
 
   run_setup "$tmp" --link-only --headless >/dev/null
   run_setup "$tmp" --link-only --only app-config >/dev/null
-  rm "${tmp}/config/noctalia/plugins/memory-pressure-alert"
-  ln -s "${repo_root}/noctalia/plugins/wali-panel" \
-    "${tmp}/config/noctalia/plugins/memory-pressure-alert"
-
+  print -r -- '[config]' > "${tmp}/config/noctalia/obsolete.toml"
   set +e
   output=$(run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
   set -e
 
-  [[ "$exit_status" -ne 0 ]] || fail "health should reject the wrong memory alert link"
-  [[ "$output" == *"wrong link target"* ]] || \
-    fail "expected wrong memory alert link failure"
-
-  rm -rf "$tmp"
+  (( exit_status != 0 )) || fail "health accepted a Noctalia config warning"
+  [[ "$output" == *"Noctalia config warning or error"* ]] || \
+    fail "health did not explain the validator warning: ${output}"
 }
 
 test_dotfiles_health_fails_wrong_opencode_theme_link() {
@@ -975,16 +952,14 @@ test_dotfiles_health_ignores_brave_runtime_symlinks
 test_dotfiles_health_ignores_unmanaged_config_symlinks
 test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_checks_enabled_user_timer
-test_setup_graphical_app_config_links_memory_alert
-test_noctalia_glow_template_is_installed_and_rendered
-test_setup_graphical_app_config_links_prism
+test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_plans_niri_glass
 test_dotfiles_health_accepts_prism_glass_runtime
 test_dotfiles_health_fails_wrong_niri_glass_consumer
 test_dotfiles_health_fails_wrong_named_niri_glass_config
 test_dotfiles_health_rejects_root_quickshell_config
 test_dotfiles_health_fails_when_prism_doctor_fails
-test_dotfiles_health_fails_wrong_memory_alert_link
+test_dotfiles_health_rejects_noctalia_config_warning
 test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
 
