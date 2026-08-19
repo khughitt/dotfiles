@@ -498,10 +498,29 @@ test_dotfiles_health_skips_prism_when_unconfigured() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
+  run_setup "$tmp" --link-only --only app-config >/dev/null
 
   PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd >/dev/null
 
   rm -rf "$tmp"
+}
+
+test_dotfiles_health_fails_missing_noctalia_config() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted missing Noctalia config"
+  [[ "$output" == *"${tmp}/config/noctalia/config.toml"* ]] || \
+    fail "health did not report the missing Noctalia config: ${output}"
 }
 
 test_dotfiles_health_fails_wrong_prism_link_without_running_doctor() {
@@ -613,6 +632,7 @@ test_dotfiles_health_ignores_brave_runtime_symlinks() {
   mkdir -p "${tmp}/home" "${tmp}/config/BraveSoftware/Brave-Browser" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
+  run_setup "$tmp" --link-only --only app-config >/dev/null
   ln -s "${tmp}/missing-SingletonLock" "${tmp}/config/BraveSoftware/Brave-Browser/SingletonLock"
   ln -s "${tmp}/missing-SingletonCookie" "${tmp}/config/BraveSoftware/Brave-Browser/SingletonCookie"
 
@@ -632,6 +652,7 @@ test_dotfiles_health_ignores_unmanaged_config_symlinks() {
   mkdir -p "${tmp}/home" "${tmp}/config/unmanaged-app" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
+  run_setup "$tmp" --link-only --only app-config >/dev/null
   ln -s "${tmp}/missing-runtime-link" "${tmp}/config/unmanaged-app/runtime-link"
 
   output=$(run_health "$tmp" --skip-systemd 2>&1)
@@ -673,6 +694,7 @@ test_dotfiles_health_checks_enabled_user_timer() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "$mockbin"
 
   run_setup "$tmp" --link-only --headless >/dev/null
+  run_setup "$tmp" --link-only --only app-config >/dev/null
 
   cat > "${mockbin}/systemctl" <<'EOF'
 #!/usr/bin/env bash
@@ -784,6 +806,7 @@ test_dotfiles_health_accepts_prism_glass_runtime() {
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
   run_setup "$tmp" --link-only --headless >/dev/null
+  run_setup "$tmp" --link-only --only app-config >/dev/null
   configure_prism_glass_runtime "$tmp"
 
   PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd >/dev/null
@@ -943,6 +966,7 @@ test_setup_only_accepts_multiple_phases
 test_setup_only_rejects_unknown_phase
 test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_skips_prism_when_unconfigured
+test_dotfiles_health_fails_missing_noctalia_config
 test_prism_launcher_link_survives_relocated_sibling_repos
 test_dotfiles_health_fails_unknown_host_wrong_prism_marker_without_doctor
 test_dotfiles_health_fails_unknown_host_dangling_prism_marker_without_doctor
