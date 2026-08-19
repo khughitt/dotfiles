@@ -75,4 +75,36 @@ set -e
 (( exit_status != 0 )) || fail 'unsupported rotation should fail'
 [[ ! -e "$MAGICK_ARGS_FILE" ]] || fail 'invalid rotation should not invoke magick'
 
+mkdir -p "${tmp}/home" "${tmp}/current" "${tmp}/archive/2024/05"
+export NOCTALIA_LOG="${tmp}/noctalia.log"
+export NOCTALIA_WALLPAPER="${tmp}/current/PXL_20240520_023703962.jpg"
+export BACKGROUND_IMG_DIR="${tmp}/archive"
+touch "$NOCTALIA_WALLPAPER" \
+  "${BACKGROUND_IMG_DIR}/2024/05/PXL_20240520_023703962.jpg"
+
+cat > "${tmp}/bin/noctalia" <<'EOF'
+#!/usr/bin/env zsh
+print -r -- "$*" >> "$NOCTALIA_LOG"
+if [[ "$*" == "msg wallpaper-get" ]]; then
+  print -r -- "$NOCTALIA_WALLPAPER"
+fi
+EOF
+chmod +x "${tmp}/bin/noctalia"
+
+HOME="${tmp}/home" WAYLAND_DISPLAY=wayland-1 \
+  PATH="${tmp}/bin:$PATH" zsh -f -c '
+    source "$1/shell/wali"
+    [[ "$WALI_BACKEND" == noctalia ]]
+    [[ "$(_wali_current_wallpaper)" == "$NOCTALIA_WALLPAPER" ]]
+    [[ "$(wali_print)" == \
+      "$BACKGROUND_IMG_DIR/2024/05/PXL_20240520_023703962.jpg" ]]
+    wali_rotate r >/dev/null
+  ' zsh "$repo_root"
+
+rg -q -x 'msg wallpaper-get' "$NOCTALIA_LOG" || \
+  fail 'wali did not query the v5 wallpaper'
+rg -q -F "msg wallpaper-set ${NOCTALIA_WALLPAPER}" "$NOCTALIA_LOG" || \
+  fail 'wali rotate did not reset the v5 wallpaper'
+! rg -q -F qs "$NOCTALIA_LOG" || fail 'wali called Quickshell IPC'
+
 print -- 'wali tests passed'

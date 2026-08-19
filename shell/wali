@@ -1,7 +1,7 @@
 #
 # wallpaper switcher
 # wraps pywal + chooses a random image from a specified dir
-# supports X11 (feh), Wayland (swww), and noctalia-shell
+# supports X11 (feh), Wayland (swww), and Noctalia
 # https://github.com/khughitt/wali
 #
 
@@ -15,7 +15,7 @@ fi
 
 # detect display server / wallpaper backend
 # priority: noctalia > swww > feh
-if [ -n "$WAYLAND_DISPLAY" ] && pgrep -f "noctalia-shell" > /dev/null 2>&1; then
+if [ -n "$WAYLAND_DISPLAY" ] && command -v noctalia > /dev/null 2>&1; then
   WALI_BACKEND="noctalia"
 elif [ -n "$WAYLAND_DISPLAY" ] && command -v swww > /dev/null 2>&1; then
   WALI_BACKEND="swww"
@@ -38,7 +38,7 @@ KITTY_PREVIEW_CMD='kitten icat \
 
 # wallpaper switcher
 if [ "$WALI_BACKEND" = "noctalia" ]; then
-  alias wali="qs -c noctalia-shell ipc call wallpaper random all"
+  alias wali="noctalia msg wallpaper-random"
 elif [ "$WALI_BACKEND" = "swww" ]; then
   alias wali="cd ~/d/wali/ && uv run wali --image-dir=\"\$WALI_DIR/3440\" --wallpaper-backend swww change"
 else
@@ -55,7 +55,7 @@ function wali_set {
   fi
 
   if [ "$WALI_BACKEND" = "noctalia" ]; then
-    qs -c noctalia-shell ipc call wallpaper set "$img" all
+    noctalia msg wallpaper-set "$img"
   elif [ "$WALI_BACKEND" = "swww" ]; then
     wal -i "$img" -n
     swww img "$img" \
@@ -68,17 +68,26 @@ function wali_set {
   fi
 }
 
+function _wali_current_wallpaper {
+  case "$WALI_BACKEND" in
+    noctalia)
+      noctalia msg wallpaper-get
+      ;;
+    swww)
+      swww query | grep --color=never -oP 'image: \K.*' | head -n1
+      ;;
+    feh)
+      /bin/cat ~/.fehbg | \
+        /bin/grep --color=never -Eo "[\/a-z0-9]+PXL.*\.(jpg|png)"
+      ;;
+  esac
+}
+
 # print path to original source image for current wallpaper
 function wali_print {
   local file
 
-  # get current wallpaper path
-  if [ "$WALI_BACKEND" = "swww" ]; then
-    file=$(swww query | grep --color=never -oP 'image: \K.*' | head -n1)
-  else
-    # noctalia and feh both use ~/.fehbg
-    file=$(/bin/cat ~/.fehbg | /bin/grep --color=never -Eo "[\/a-z0-9]+PXL.*\.(jpg|png)")
-  fi
+  file=$(_wali_current_wallpaper)
 
   if [ -z "$file" ]; then
     echo "Error: could not determine current wallpaper" >&2
@@ -322,14 +331,8 @@ function wali_rotate {
     *) echo "Usage: wali_rotate [l|r|f]"; return 1 ;;
   esac
 
-  # get current processed wallpaper path
   local current
-  if [ "$WALI_BACKEND" = "swww" ]; then
-    current=$(swww query | grep --color=never -oP 'image: \K.*' | head -n1)
-  else
-    # noctalia and feh both use ~/.fehbg
-    current=$(/bin/cat ~/.fehbg | /bin/grep --color=never -Eo "[\/a-z0-9]+PXL.*\.(jpg|png)")
-  fi
+  current=$(_wali_current_wallpaper)
 
   if [ -z "$current" ]; then
     echo "Could not determine current wallpaper"
