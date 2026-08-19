@@ -1,5 +1,5 @@
 # style name or JSON path (default "auto")
-style: "/home/keith/.config/glow/noctalia.json"
+style: "/home/keith/.cache/noctalia/glow.json"
 # mouse support (TUI-mode only)
 mouse: true
 # use pager to display markdown
