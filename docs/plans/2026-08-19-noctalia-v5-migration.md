@@ -1023,7 +1023,8 @@ live session. With the user present:
 
    ```bash
    git status --short -- niri/config.kdl hypr/hyprland.conf \
-     ghostty/config.ghostty gtk-3.0/gtk.css gtk-4.0/gtk.css
+     ghostty/config.ghostty gtk-3.0/gtk.css gtk-4.0/gtk.css \
+     kitty/kitty.conf kitty/current-theme.conf
    ```
 
 10. Reload Niri and complete one fresh login.
