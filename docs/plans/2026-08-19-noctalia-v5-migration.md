@@ -47,6 +47,9 @@ Hyprland hyprlang, Noctalia v5 CLI.
   reads GUI-managed state.
 - Never point a mutation-safety test at the worktree. Reproduce symlink topology
   with disposable copies.
+- Do not run live setup from the worktree. Merge the completed branch into main
+  first, then run setup from the main checkout so live links never target
+  a removable worktree.
 
 ## File Map
 
@@ -145,6 +148,10 @@ PY
 
 Call it immediately after `test_glow_theme_renders_color` at the bottom of the
 test file.
+
+The validator checks config structure and enum values, but does not resolve bar
+widget IDs. The `tomllib` assertions pin the intended IDs; the live bar check at
+cutover proves that Noctalia recognizes them.
 
 - [ ] **Step 2: Run the focused suite and confirm RED**
 
@@ -737,7 +744,7 @@ Expected: both compositors still start `qs -c noctalia-shell`.
 ```kdl
 layer-rule {
     match namespace=r#"^noctalia-(bar-[^"]+|notification|dock|panel|attached-panel|osd)$"#
-    background-effect { xray false }
+    background-effect { xray false; }
 }
 
 layer-rule {
@@ -786,7 +793,13 @@ layerrule {
 
 ```bash
 zsh tests/setup_and_health.zsh
-niri validate -c niri/config.kdl
+niri_tmp=$(mktemp -d)
+cp -a niri/. "$niri_tmp/"
+touch "$niri_tmp/noctalia.kdl" "$niri_tmp/prism.kdl"
+niri validate -c "$niri_tmp/config.kdl"
+niri_result=$?
+rm -rf -- "$niri_tmp"
+test "$niri_result" -eq 0
 git add niri/config.kdl hypr/hyprland.conf tests/setup_and_health.zsh
 git diff --cached --check
 git commit -m "feat(noctalia): switch compositor integration to v5"
@@ -995,18 +1008,27 @@ git commit -m "docs(noctalia): document v5 cutover"
 After all implementation commits pass `just test`, stop before mutating the
 live session. With the user present:
 
-1. Confirm `noctalia-shell`, v4 JSON config, and v4 plugin directories remain.
-2. Rename `~/.config/noctalia/user-templates.toml` to
+1. Finish the feature branch and merge it into `main`.
+2. In the main checkout, rerun `just test` and confirm the checkout path does
+   not contain `/.worktrees/`. Run every remaining step from that checkout.
+3. Confirm `noctalia-shell`, v4 JSON config, and v4 plugin directories remain.
+4. Rename `~/.config/noctalia/user-templates.toml` to
    `~/.config/noctalia/user-templates.toml.v4-disabled`.
-3. Run `bash setup.sh --link-only --only gtk,app-config`.
-4. Run `noctalia config validate`; require no warnings or errors.
-5. Stop v4, start `noctalia`, and exercise every compositor keybinding.
-6. Exercise `walictl current --json`, forward, backward, and random.
-7. Change wallpaper; confirm Glow, Nvim, Kitty, OpenCode, Claude Code, Codex,
-   Ohai, and selected built-ins update while `git status --short` stays empty.
-8. Reload Niri and complete one fresh login.
-9. Ask separately before uninstalling `noctalia-shell` or archiving v4 state.
+5. Run `bash setup.sh --link-only --only gtk,app-config`.
+6. Run `noctalia config validate`; require no warnings or errors.
+7. Stop v4, start `noctalia`, and exercise every compositor keybinding.
+8. Exercise `walictl current --json`, forward, backward, and random.
+9. Change wallpaper; confirm Glow, Nvim, Kitty, OpenCode, Claude Code, Codex,
+   Ohai, and selected built-ins update while this path-scoped check stays empty:
 
-Rollback before step 9: stop v5, restore the original template registry name,
+   ```bash
+   git status --short -- niri/config.kdl hypr/hyprland.conf \
+     ghostty/config.ghostty gtk-3.0/gtk.css gtk-4.0/gtk.css
+   ```
+
+10. Reload Niri and complete one fresh login.
+11. Ask separately before uninstalling `noctalia-shell` or archiving v4 state.
+
+Rollback before step 11: stop v5, restore the original template registry name,
 launch v4, and revert the cohesive migration commit if compositor autostart
 must return to v4.
