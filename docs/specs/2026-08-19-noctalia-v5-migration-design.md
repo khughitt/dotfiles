@@ -1,6 +1,6 @@
 # Noctalia v5 migration
 
-**Status:** Approved design; implementation pending.
+**Status:** Revised after review; approval pending.
 
 ## Goal
 
@@ -58,8 +58,9 @@ Perform a curated, declarative core cutover.
 
 This is smaller and more reproducible than exporting the full effective v5
 configuration, which would pin hundreds of upstream defaults. It is safer than
-changing only startup commands, which would leave this machine's stale v5 state
-in charge of desktop behavior.
+changing only startup commands, which would leave desired behavior unspecified
+and therefore controlled by upstream defaults. The existing v5 state contains
+only lock-screen widget placement, so it presents little cutover risk.
 
 ## Configuration ownership
 
@@ -69,6 +70,7 @@ in charge of desktop behavior.
 | App-theme registry | `noctalia/templates.toml` | `~/.config/noctalia/templates.toml` |
 | Template sources | `noctalia/templates/` | `~/.config/noctalia/templates/` |
 | Custom palette files | `noctalia/palettes/*.json` | `~/.config/noctalia/palettes/*.json` |
+| Generated compositor themes | Not tracked | `~/.config/{hypr,niri}/noctalia.*` |
 | Transient or private state | Not tracked | `~/.local/state/noctalia/` |
 
 Noctalia loads tracked config first and GUI-managed `settings.toml` last. A GUI
@@ -92,13 +94,16 @@ Track these v5 settings:
 - wallpaper palette source with `m3-tonal-spot` generation;
 - wallpaper directory `~/d/linux/backgrounds/3440`;
 - alphabetical automation every 900 seconds;
-- recursive discovery, matching the v5 automation contract;
-- a 1500 ms fade transition with the current edge smoothing;
+- a fade-only transition with edge smoothing `0.05`, preserving the current
+  behavior rather than v5's `0.3` default;
 - startup transition enabled;
 - Niri stationary-wallpaper mode with Noctalia backdrop disabled.
 
 The current wallpaper path is runtime state. Automation chooses and persists
-the active image without committing it to dotfiles.
+the active image without committing it to dotfiles. Pure upstream defaults,
+including the 1500 ms transition duration and recursive discovery, are omitted.
+Dark mode and a disabled backdrop remain explicit because they are stable
+desktop invariants even though they currently match v5 defaults.
 
 ### Bar and shell UI
 
@@ -124,8 +129,10 @@ Track the current idle policy using native v5 actions:
 - lock and suspend after 86400 seconds.
 
 Retain Familiar's theme-mode synchronization as a v5
-`theme_mode_changed` hook. Remove the v4 wallpaper hook that writes `~/.fehbg`;
-all active consumers query v5 wallpaper state directly.
+`theme_mode_changed` hook. Remove the v4 wallpaper hook that writes `~/.fehbg`.
+Update the shared current-wallpaper lookup used by `wali_print` and
+`wali_rotate`: the Noctalia backend uses `noctalia msg wallpaper-get`, swww
+continues to query swww, and only the feh backend reads `~/.fehbg`.
 
 ## Template pipeline
 
@@ -134,12 +141,23 @@ enables:
 
 - user templates: Glow, Nvim/glass synchronization, Claude Code, Codex, and
   Ohai;
-- built-ins: Kitty, Hyprland, GTK 3, GTK 4, Qt, Niri, Ghostty, and Btop;
+- built-ins: Hyprland, GTK 3, GTK 4, Qt, Niri, Ghostty, and Btop;
 - community template: Zathura.
 
 Template paths use `~` or XDG variables rather than machine-specific physical
-paths. The existing Nvim post-hook remains the atomic generation boundary for
-Nvim, Kitty glass, and OpenCode.
+paths. In particular, Ohai's input is
+`~/d/software/ohai/ohai/templates/noctalia/ohai-config.toml`. The existing Nvim
+post-hook remains the sole atomic generation boundary for Nvim, Kitty glass,
+and OpenCode. The built-in Kitty template is not enabled because its post-hook
+rewrites tracked Kitty configuration and would create a second owner for the
+same colors.
+
+Built-in templates are not assumed to be render-only. Niri and Hyprland may
+write their generated theme files and run their include post-hooks; repository
+tests require those hooks to leave the tracked compositor configs byte-for-byte
+unchanged. Btop, Ghostty, and GTK own their app-local theme selection or import
+files. Generated `hypr/noctalia.conf` is ignored alongside the existing
+generated `niri/noctalia.kdl`.
 
 The resulting data flow is:
 
@@ -175,6 +193,10 @@ The relevant v5 surface and keybinding contracts are documented at
 - Launch `noctalia` at startup.
 - Set `$ipc = noctalia msg` and translate the existing bindings one for one.
 - Replace the v4 layer namespace expression with the documented v5 expression.
+- Replace the obsolete
+  `source = ~/.config/hypr/noctalia/noctalia-colors.conf` with
+  `source = ~/.config/hypr/noctalia.conf` before enabling the built-in
+  Hyprland template.
 
 The active Hyprland configuration remains in its current format; adopting the
 new Lua configuration system is unrelated to this migration. The v5 surface
@@ -198,8 +220,9 @@ contract is documented at
 On Wayland, `shell/wali` selects Noctalia when the v5 executable is installed,
 not only while its process happens to be running. A stopped shell therefore
 produces an IPC failure instead of silently switching wallpaper backends. The
-v4 plugin IPC call used only to repair an alphabetical-automation baseline is
-deleted because v5 owns wallpaper randomization and automation together.
+user-facing `walictl random` command is preserved by replacing its
+`plugin:wali-panel random all` call with `noctalia msg wallpaper-random`. The
+v4 plugin IPC helper is removed only after its callers have migrated.
 
 ## Plugin boundary
 
@@ -222,7 +245,8 @@ or delete v4 state.
 Health and test checks require:
 
 - each managed v5 link to resolve to the tracked source;
-- `noctalia config validate` to produce neither errors nor warnings;
+- `noctalia config validate "$XDG_CONFIG_HOME/noctalia"` in an isolated setup
+  to produce neither errors nor warnings, without reading live GUI state;
 - the expected user templates to appear in
   `noctalia theme --list-templates`;
 - active executable code and compositor configuration to contain no
@@ -230,7 +254,13 @@ Health and test checks require:
 
 Warnings are failures for dotfiles even though the v5 validator exits zero for
 warning-only configuration. This prevents obsolete or misspelled settings from
-being silently ignored.
+being silently ignored. The live cutover separately runs bare
+`noctalia config validate` so the merged active config and GUI-managed state are
+also warning-free.
+
+The cohesive implementation updates `noctalia/noctalia.md` and
+`noctalia/noctalia-wallpaper-switcher.md` after the v5 behavior lands; until
+then, those files continue to describe the active v4 system.
 
 ## Cutover and rollback
 
@@ -241,13 +271,13 @@ The live cutover is an explicit operator sequence:
 2. Rename `~/.config/noctalia/user-templates.toml` to a suffix v5 will not
    autoload.
 3. Run graphical setup to install the tracked v5 links.
-4. Validate both the tracked file and the merged active configuration without
-   warnings.
+4. Validate both the isolated tracked configuration and the merged active
+   configuration without warnings.
 5. Stop v4 and start v5 manually.
 6. Exercise launcher, control center, settings, volume, brightness, wallpaper
    get/set/random, and the built-in wallpaper panel.
 7. Change the wallpaper and verify the palette and every generated theme
-   consumer update.
+   consumer update, then confirm the repository remains clean.
 8. Reload Niri and complete one fresh login with v5 autostart.
 9. After successful validation, request explicit confirmation before removing
    `noctalia-shell` or archiving v4 state.
@@ -275,12 +305,19 @@ rerun setup. No dual-version runtime wrapper is maintained.
 
 - Update `tests/bin/test_walictl.py` to assert exact v5 argument arrays and
   errors for a missing command, a failed IPC call, and empty wallpaper output.
+- Cover both `wali_print` and `wali_rotate` on the Noctalia backend and prove
+  neither depends on `~/.fehbg`.
 - Update setup and health tests for `config.toml`, `templates.toml`, template
   sources, palettes, and the removal of v4 plugin-link requirements.
-- Require config validation output to contain no warning or error markers.
+- Validate an isolated XDG config installed from the repository and require its
+  output to contain no warning or error markers.
 - Require the complete user-template set in the template listing.
 - Keep direct rendering checks for Glow, Claude Code, Codex, and the existing
   Nvim/glass pipeline.
+- Apply the built-in Niri and Hyprland include hooks to isolated copies of the
+  tracked compositor configs and require no byte changes. Require the
+  Hyprland copy to source only `~/.config/hypr/noctalia.conf`, and require its
+  generated output path to be ignored.
 - Scan active configuration and executable code for v4 startup or IPC calls.
 - Run the complete `just test` gate.
 
@@ -295,7 +332,9 @@ rerun setup. No dual-version runtime wrapper is maintained.
 6. Compare modification times and visible colors for Glow, Nvim, Kitty,
    OpenCode, Claude Code, Codex, Ohai, and selected built-in templates after a
    wallpaper change.
-7. Complete one fresh login before approving v4 removal.
+7. Confirm a theme apply neither edits tracked Hyprland, Niri, or Kitty config
+   nor leaves untracked generated files.
+8. Complete one fresh login before approving v4 removal.
 
 ## Out of scope
 
