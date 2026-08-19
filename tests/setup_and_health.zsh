@@ -181,6 +181,62 @@ test_glow_theme_renders_color() {
   rm -rf "$tmp"
 }
 
+test_noctalia_v5_config_contract() {
+  local tmp output templates
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config/noctalia" \
+    "${tmp}/cache" "${tmp}/state"
+  ln -s "${repo_root}/noctalia/config.toml" \
+    "${tmp}/config/noctalia/config.toml"
+  ln -s "${repo_root}/noctalia/templates.toml" \
+    "${tmp}/config/noctalia/templates.toml"
+  ln -s "${repo_root}/noctalia/templates" \
+    "${tmp}/config/noctalia/templates"
+
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_CACHE_HOME="${tmp}/cache" XDG_STATE_HOME="${tmp}/state" \
+    noctalia config validate "${tmp}/config/noctalia" 2>&1) || \
+    fail "tracked Noctalia v5 config should validate: ${output}"
+  [[ "$output" != *WARN* && "$output" != *ERROR* ]] || \
+    fail "tracked Noctalia config emitted a warning or error: ${output}"
+
+  templates=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_CACHE_HOME="${tmp}/cache" XDG_STATE_HOME="${tmp}/state" \
+    noctalia theme --list-templates 2>/dev/null) || \
+    fail "Noctalia should list the tracked template registry"
+  for id in glow nvim claude codex ohai; do
+    print -r -- "$templates" | \
+      rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
+      fail "missing user template: ${id}"
+  done
+
+  python3 - "${repo_root}/noctalia/config.toml" \
+    "${repo_root}/noctalia/templates.toml" <<'PY'
+import sys, tomllib
+
+config = tomllib.load(open(sys.argv[1], "rb"))
+templates = tomllib.load(open(sys.argv[2], "rb"))["theme"]["templates"]
+assert config["theme"] == {
+    "mode": "dark", "source": "wallpaper", "wallpaper_scheme": "m3-tonal-spot"
+}
+assert config["wallpaper"]["automation"] == {
+    "enabled": True, "interval_seconds": 900, "order": "alphabetical"
+}
+assert config["bar"]["default"]["start"] == ["workspaces", "cpu", "ram"]
+assert config["bar"]["default"]["center"] == ["active_window"]
+assert config["bar"]["default"]["end"] == [
+    "tray", "battery", "notifications", "output_volume", "wallpaper", "clock"
+]
+assert templates["builtin_ids"] == [
+    "hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "btop"
+]
+assert templates["community_ids"] == ["zathura"]
+assert set(templates["user"]) == {"glow", "nvim", "claude", "codex", "ohai"}
+assert "kitty" not in templates["builtin_ids"]
+PY
+}
+
 test_zsh_pager_is_ansi_aware() {
   env -i \
     HOME=/tmp \
@@ -608,7 +664,8 @@ test_noctalia_glow_template_is_installed_and_rendered() {
     XDG_CACHE_HOME="${tmp}/cache" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should load the installed template config"
-  [[ "$templates" == *$'glow  user      glow'* ]] || \
+  print -r -- "$templates" | \
+    rg -q '^[[:space:]]+glow[[:space:]]+user[[:space:]]+glow[[:space:]]*$' || \
     fail "Noctalia should register the Glow user template"
 
   rm -rf "$tmp"
@@ -820,6 +877,7 @@ test_tmp_cleanup_runs_only_at_process_exit
 test_tmp_cleanup_is_centralized
 test_bash_config_is_native_and_minimal
 test_glow_theme_renders_color
+test_noctalia_v5_config_contract
 test_zsh_pager_is_ansi_aware
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones

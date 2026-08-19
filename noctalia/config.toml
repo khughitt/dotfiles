@@ -1,0 +1,67 @@
+[theme]
+mode = "dark"
+source = "wallpaper"
+wallpaper_scheme = "m3-tonal-spot"
+
+[wallpaper]
+directory = "~/d/linux/backgrounds/3440"
+edge_smoothness = 0.05
+transition = ["fade"]
+transition_on_startup = true
+
+[wallpaper.automation]
+enabled = true
+interval_seconds = 900
+order = "alphabetical"
+
+[backdrop]
+enabled = false
+
+[bar]
+order = ["default"]
+
+[bar.default]
+background_opacity = 0.93
+center = ["active_window"]
+end = ["tray", "battery", "notifications", "output_volume", "wallpaper", "clock"]
+start = ["workspaces", "cpu", "ram"]
+
+[desktop_widgets]
+enabled = false
+
+[dock]
+enabled = false
+
+[notification]
+position = "top_right"
+
+[osd]
+position = "top_right"
+position_vertical = "top_right"
+
+[shell]
+ui_scale = 1.05
+
+[shell.panel]
+transparency_mode = "glass"
+
+[hooks]
+theme_mode_changed = ["~/d/familiar/bin/familiar-noctalia scheme-sync"]
+
+[idle]
+behavior_order = ["screen-off", "lock", "lock-and-suspend"]
+
+[idle.behavior.screen-off]
+action = "screen_off"
+enabled = true
+timeout = 600
+
+[idle.behavior.lock]
+action = "lock"
+enabled = true
+timeout = 3600
+
+[idle.behavior.lock-and-suspend]
+action = "lock_and_suspend"
+enabled = true
+timeout = 86400

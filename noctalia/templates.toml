@@ -1,3 +1,24 @@
+[theme.templates]
+builtin_ids = ["hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "btop"]
+community_ids = ["zathura"]
+
 [theme.templates.user.glow]
 input_path = "$XDG_CONFIG_HOME/noctalia/templates/glow.json"
 output_path = "$XDG_CACHE_HOME/noctalia/glow.json"
+
+[theme.templates.user.nvim]
+input_path = "$XDG_CONFIG_HOME/nvim/lua/user/noctalia/palette-template.json"
+output_path = "$XDG_CACHE_HOME/noctalia/nvim-palette.candidate.json"
+post_hook = "~/bin/noctalia-glass-sync"
+
+[theme.templates.user.claude]
+input_path = "$XDG_CONFIG_HOME/noctalia/templates/claude.json"
+output_path = "~/.claude/themes/noctalia.json"
+
+[theme.templates.user.codex]
+input_path = "$XDG_CONFIG_HOME/noctalia/templates/codex.tmTheme"
+output_path = "~/.codex/themes/noctalia.tmTheme"
+
+[theme.templates.user.ohai]
+input_path = "~/d/software/ohai/ohai/templates/noctalia/ohai-config.toml"
+output_path = "$XDG_CONFIG_HOME/ohai/config.toml"
