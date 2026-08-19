@@ -267,7 +267,7 @@ test_compositors_use_noctalia_v5() {
 }
 
 test_active_noctalia_code_has_no_v4_ipc() {
-  local files=(
+  local output exit_status files=(
     "${repo_root}/bin/walictl"
     "${repo_root}/shell/wali"
     "${repo_root}/niri/config.kdl"
@@ -275,8 +275,39 @@ test_active_noctalia_code_has_no_v4_ipc() {
     "${repo_root}/setup.sh"
     "${repo_root}/bin/dotfiles-health"
   )
-  ! rg -n 'noctalia-shell|qs.*ipc.*(wallpaper|launcher|controlCenter|settings|volume|brightness)' \
-    "${files[@]}" || fail "active code still contains Noctalia v4 IPC"
+
+  set +e
+  output=$(rg -n 'noctalia-shell|qs.*ipc.*(wallpaper|launcher|controlCenter|settings|volume|brightness)' \
+    "${files[@]}" 2>&1)
+  exit_status=$?
+  set -e
+
+  case "$exit_status" in
+    0) fail "active code still contains Noctalia v4 IPC: ${output}" ;;
+    1) ;;
+    *) fail "active Noctalia v4 scan failed: ${output}" ;;
+  esac
+}
+
+test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "$tmp/repo/bin" "$tmp/repo/shell" "$tmp/repo/niri" "$tmp/repo/hypr"
+  cp "${repo_root}/bin/walictl" "$tmp/repo/bin/walictl"
+  cp "${repo_root}/shell/wali" "$tmp/repo/shell/wali"
+  cp "${repo_root}/niri/config.kdl" "$tmp/repo/niri/config.kdl"
+  cp "${repo_root}/hypr/hyprland.conf" "$tmp/repo/hypr/hyprland.conf"
+  cp "${repo_root}/setup.sh" "$tmp/repo/setup.sh"
+
+  set +e
+  output=$(repo_root="$tmp/repo" test_active_noctalia_code_has_no_v4_ipc 2>&1)
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "active Noctalia v4 scan should fail on a missing input"
+  [[ "$output" == *"active Noctalia v4 scan failed"* ]] || \
+    fail "active Noctalia v4 scan should report its scan error: ${output}"
 }
 
 test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
@@ -970,6 +1001,7 @@ test_noctalia_v5_config_contract
 test_noctalia_template_hook_markers_are_reproducible
 test_compositors_use_noctalia_v5
 test_active_noctalia_code_has_no_v4_ipc
+test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error
 test_noctalia_builtin_hooks_leave_managed_configs_unchanged
 test_zsh_pager_is_ansi_aware
 test_setup_dry_run_link_only_does_not_write_home
