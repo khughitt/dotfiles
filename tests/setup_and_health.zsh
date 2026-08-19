@@ -237,6 +237,21 @@ assert "kitty" not in templates["builtin_ids"]
 PY
 }
 
+test_noctalia_template_hook_markers_are_reproducible() {
+  [[ -f "${repo_root}/gtk-3.0/gtk.css" ]] || \
+    fail "GTK 3 import stub must exist for clean setup"
+  ! git -C "$repo_root" check-ignore -q --no-index gtk-3.0/gtk.css || \
+    fail "GTK 3 import stub must not be ignored"
+  rg -q -F '@import url("noctalia.css");' \
+    "${repo_root}/gtk-3.0/gtk.css" || fail "missing GTK 3 Noctalia import"
+  rg -q -F 'source = ~/.config/hypr/noctalia.conf' \
+    "${repo_root}/hypr/hyprland.conf" || fail "missing v5 Hyprland source"
+  ! rg -q -F 'source = ~/.config/hypr/noctalia/noctalia-colors.conf' \
+    "${repo_root}/hypr/hyprland.conf" || fail "active Hyprland still sources v4 colors"
+  git -C "$repo_root" check-ignore -q --no-index hypr/noctalia.conf || \
+    fail "generated v5 Hyprland theme must be ignored"
+}
+
 test_zsh_pager_is_ansi_aware() {
   env -i \
     HOME=/tmp \
@@ -878,6 +893,7 @@ test_tmp_cleanup_is_centralized
 test_bash_config_is_native_and_minimal
 test_glow_theme_renders_color
 test_noctalia_v5_config_contract
+test_noctalia_template_hook_markers_are_reproducible
 test_zsh_pager_is_ansi_aware
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones

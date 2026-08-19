@@ -1,0 +1,2 @@
+/* Keep the built-in Noctalia import stable; its post-hook probes this marker. */
+@import url("noctalia.css");
