@@ -154,18 +154,22 @@ same colors.
 
 Built-in templates are not assumed to be render-only. Their post-hooks edit
 whichever config file the app reads, and for Niri, Hyprland, Ghostty, and GTK
-that file resolves into this repository. Each hook is a no-op today only
-because the tracked file already carries the exact marker the hook looks for:
+that file resolves into this repository. Each hook is a no-op on this machine
+only because its repository-backed target carries the exact marker the hook
+looks for:
 `include "./noctalia.kdl"` in `niri/config.kdl`, `theme = noctalia` in
 `ghostty/config.ghostty`, and `@import url("noctalia.css");` in both
 `gtk-3.0/gtk.css` and `gtk-4.0/gtk.css`. Those markers are load-bearing, not
 incidental: removing one turns every theme apply into a repository write, and
 the GTK hook deletes the symlink outright when it cannot write through it.
-Repository tests therefore require every enabled hook to leave its tracked
-target byte-for-byte unchanged and to leave the symlink intact. Only Btop is
-genuinely app-local, writing `~/.config/btop/btop.conf`, which this repository
-does not track. Generated `hypr/noctalia.conf` is ignored alongside the
-existing generated `niri/noctalia.kdl`.
+The GTK 3 target is currently an ignored runtime artifact, so a clean checkout
+lacks the source that `setup.sh` requires before creating its link. The
+migration removes that ignore and tracks the import stub, making the marker a
+reproducible invariant like GTK 4. Repository tests require every enabled hook
+to leave its target byte-for-byte unchanged and its symlink intact. Only Btop
+is genuinely app-local, writing `~/.config/btop/btop.conf`, which this
+repository does not track. Generated `hypr/noctalia.conf` is ignored alongside
+the existing generated `niri/noctalia.kdl`.
 
 The resulting data flow is:
 
@@ -323,8 +327,10 @@ rerun setup. No dual-version runtime wrapper is maintained.
 - Keep direct rendering checks for Glow, Claude Code, Codex, and the existing
   Nvim/glass pipeline.
 - Apply the built-in Niri, Hyprland, Ghostty, and GTK 3/4 post-hooks to an
-  isolated XDG tree whose entries symlink to the tracked configs, and require
-  no byte changes to those tracked files and no replaced symlinks. Require the
+  isolated XDG tree that reproduces the live link topology without targeting
+  the worktree: Niri and Hyprland directories link to disposable config-tree
+  copies, while Ghostty and GTK config files link to disposable file copies.
+  Require no byte changes to those copies and no replaced symlinks. Require the
   Hyprland copy to source only `~/.config/hypr/noctalia.conf`, and require its
   generated output path to be ignored.
 - Scan active configuration and executable code for v4 startup or IPC calls.
