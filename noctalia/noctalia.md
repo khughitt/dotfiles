@@ -1,46 +1,33 @@
 # Noctalia
 
-## Local plugins
+Noctalia v5 owns stable shell behavior and the app-theme registry so wallpaper
+changes have one tracked, reproducible source of truth. `noctalia/config.toml`
+and `noctalia/templates.toml` are the tracked inputs; `setup.sh` links them,
+the template sources, and the custom palette files into Noctalia's config.
 
-Running `setup.sh` in graphical mode installs the local `wali-panel` plugin by symlinking:
+## Templates
 
-`noctalia/plugins/wali-panel` -> `~/.config/noctalia/plugins/wali-panel`
+`noctalia/templates.toml` is the only registry. It selects five user
+templates: Glow, Nvim/glass synchronization, Claude Code, Codex, and Ohai. It
+also selects seven built-ins: Hyprland, GTK 3, GTK 4, Qt, Niri, Ghostty, and
+Btop, and selects the Zathura community template.
 
-Noctalia will discover the plugin from disk on startup or plugin refresh. If the widget does not appear yet, open Plugins settings in Noctalia and enable `wali-panel`.
+The Nvim template invokes `noctalia-glass-sync`, which remains the sole owner
+of generated Nvim, Kitty, and OpenCode artifacts. The built-in Kitty template
+is deliberately not selected: `noctalia-glass-sync` is the sole Kitty owner,
+so its tracked configuration is not rewritten by a second hook.
 
-The plugin expects `~/bin/walictl` to exist, which is provided by the existing top-level `bin` symlink created by `setup.sh`.
+Validate the linked configuration and inspect the active registry with:
 
-## Neovim theming
-
-Noctalia renders a palette template to candidate JSON; `~/bin/noctalia-glass-sync`
-validates and atomically writes Nvim, Kitty, and OpenCode artifacts before
-signalling Kitty, Nvim, then signal-aware OpenCode processes. Register the
-template in `~/.config/noctalia/user-templates.toml`:
-
-```toml
-[templates.nvim]
-input_path = "~/.config/nvim/lua/user/noctalia/palette-template.json"
-output_path = "~/.cache/noctalia/nvim-palette.candidate.json"
-post_hook = "~/bin/noctalia-glass-sync"
+```bash
+noctalia config validate
+noctalia theme --list-templates
 ```
 
-Use `:NoctaliaMood <name>` to switch syntax mood variants. See
-`docs/specs/2026-08-09-noctalia-nvim-theme-design.md` for the full pipeline.
+## Application themes
 
-## Agent themes
-
-Noctalia directly renders the Claude Code semantic theme and Codex syntax
-theme. Register both templates in `~/.config/noctalia/user-templates.toml`:
-
-```toml
-[templates.claude]
-input_path = "~/d/dotfiles/noctalia/templates/claude.json"
-output_path = "~/.claude/themes/noctalia.json"
-
-[templates.codex]
-input_path = "~/d/dotfiles/noctalia/templates/codex.tmTheme"
-output_path = "~/.codex/themes/noctalia.tmTheme"
-```
+Noctalia renders the Claude Code semantic theme and Codex syntax theme from
+the tracked registry.
 
 Select `Noctalia` in Claude Code's `/theme` picker. Set Codex's syntax theme in
 `~/.codex/config.toml`:
@@ -100,24 +87,8 @@ no custom-theme interface, so its application-painted blocks remain opaque.
 the Glow stylesheet to `$XDG_CACHE_HOME/noctalia/glow.json` whenever the palette
 changes, and Glow reads that generated file on each invocation.
 
-## Persistent memory-pressure alerts
+## Deferred v4 plugins
 
-The memory-pressure-alert plugin is installed through this managed link:
-
-```text
-~/.config/noctalia/plugins/memory-pressure-alert
-  -> ~/d/dotfiles/noctalia/plugins/memory-pressure-alert
-```
-
-Enable it from Noctalia's Plugins settings. It is headless and does not add a
-bar widget.
-
-The plugin inherits the existing System Monitor memory thresholds. Installation
-keeps the current/default 80% warning and 90% critical values, so it does not
-silently retune the bar gauge. For earlier notification, explicitly choose 70%
-warning and 85% critical in Settings → System Monitor → Thresholds; the gauge
-and persistent banner will then change together.
-
-Warning recovery is plugin-specific and defaults to 65%. Alerts are replicated
-on every screen. Polling pauses on Noctalia's lock screen and refreshes after
-unlock. Open btop launches ghostty -e btop.
+Wali Panel, Memory Pressure Alert, and Prism v4 plugin ports are deferred.
+Their retained source is not active v5 code and v5 does not install their QML
+plugins.

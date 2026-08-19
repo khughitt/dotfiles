@@ -266,6 +266,19 @@ test_compositors_use_noctalia_v5() {
     fail "active compositor config still calls Noctalia v4"
 }
 
+test_active_noctalia_code_has_no_v4_ipc() {
+  local files=(
+    "${repo_root}/bin/walictl"
+    "${repo_root}/shell/wali"
+    "${repo_root}/niri/config.kdl"
+    "${repo_root}/hypr/hyprland.conf"
+    "${repo_root}/setup.sh"
+    "${repo_root}/bin/dotfiles-health"
+  )
+  ! rg -n 'noctalia-shell|qs.*ipc.*(wallpaper|launcher|controlCenter|settings|volume|brightness)' \
+    "${files[@]}" || fail "active code still contains Noctalia v4 IPC"
+}
+
 test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
   local tmp config targets before after
   tmp=$(make_tmpdir)
@@ -956,6 +969,7 @@ test_glow_theme_renders_color
 test_noctalia_v5_config_contract
 test_noctalia_template_hook_markers_are_reproducible
 test_compositors_use_noctalia_v5
+test_active_noctalia_code_has_no_v4_ipc
 test_noctalia_builtin_hooks_leave_managed_configs_unchanged
 test_zsh_pager_is_ansi_aware
 test_setup_dry_run_link_only_does_not_write_home

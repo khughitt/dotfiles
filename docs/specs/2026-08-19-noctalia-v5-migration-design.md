@@ -1,6 +1,6 @@
 # Noctalia v5 migration
 
-**Status:** Approved; implementation pending.
+**Status:** Implemented; live cutover validation pending.
 
 ## Goal
 
@@ -14,7 +14,7 @@ runtime.
 The migration must leave a warning-free v5 configuration, keep private and
 transient state out of the repository, and preserve a one-login rollback path.
 
-## Current state
+## State before implementation
 
 - Both `noctalia-git` v5 and `noctalia-shell` v4 are installed, but Niri and
   Hyprland still launch v4 with `qs -c noctalia-shell`.
@@ -271,8 +271,7 @@ being silently ignored. The live cutover separately runs bare
 also warning-free.
 
 The cohesive implementation updates `noctalia/noctalia.md` and
-`noctalia/noctalia-wallpaper-switcher.md` after the v5 behavior lands; until
-then, those files continue to describe the active v4 system.
+`noctalia/noctalia-wallpaper-switcher.md` to describe the active v5 system.
 
 ## Cutover and rollback
 
