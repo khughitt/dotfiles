@@ -1,6 +1,6 @@
 # Noctalia v5 migration
 
-**Status:** Revised after review; approval pending.
+**Status:** Approved; implementation pending.
 
 ## Goal
 
