@@ -152,12 +152,20 @@ and OpenCode. The built-in Kitty template is not enabled because its post-hook
 rewrites tracked Kitty configuration and would create a second owner for the
 same colors.
 
-Built-in templates are not assumed to be render-only. Niri and Hyprland may
-write their generated theme files and run their include post-hooks; repository
-tests require those hooks to leave the tracked compositor configs byte-for-byte
-unchanged. Btop, Ghostty, and GTK own their app-local theme selection or import
-files. Generated `hypr/noctalia.conf` is ignored alongside the existing
-generated `niri/noctalia.kdl`.
+Built-in templates are not assumed to be render-only. Their post-hooks edit
+whichever config file the app reads, and for Niri, Hyprland, Ghostty, and GTK
+that file resolves into this repository. Each hook is a no-op today only
+because the tracked file already carries the exact marker the hook looks for:
+`include "./noctalia.kdl"` in `niri/config.kdl`, `theme = noctalia` in
+`ghostty/config.ghostty`, and `@import url("noctalia.css");` in both
+`gtk-3.0/gtk.css` and `gtk-4.0/gtk.css`. Those markers are load-bearing, not
+incidental: removing one turns every theme apply into a repository write, and
+the GTK hook deletes the symlink outright when it cannot write through it.
+Repository tests therefore require every enabled hook to leave its tracked
+target byte-for-byte unchanged and to leave the symlink intact. Only Btop is
+genuinely app-local, writing `~/.config/btop/btop.conf`, which this repository
+does not track. Generated `hypr/noctalia.conf` is ignored alongside the
+existing generated `niri/noctalia.kdl`.
 
 The resulting data flow is:
 
@@ -314,8 +322,9 @@ rerun setup. No dual-version runtime wrapper is maintained.
 - Require the complete user-template set in the template listing.
 - Keep direct rendering checks for Glow, Claude Code, Codex, and the existing
   Nvim/glass pipeline.
-- Apply the built-in Niri and Hyprland include hooks to isolated copies of the
-  tracked compositor configs and require no byte changes. Require the
+- Apply the built-in Niri, Hyprland, Ghostty, and GTK 3/4 post-hooks to an
+  isolated XDG tree whose entries symlink to the tracked configs, and require
+  no byte changes to those tracked files and no replaced symlinks. Require the
   Hyprland copy to source only `~/.config/hypr/noctalia.conf`, and require its
   generated output path to be ignored.
 - Scan active configuration and executable code for v4 startup or IPC calls.
@@ -332,8 +341,8 @@ rerun setup. No dual-version runtime wrapper is maintained.
 6. Compare modification times and visible colors for Glow, Nvim, Kitty,
    OpenCode, Claude Code, Codex, Ohai, and selected built-in templates after a
    wallpaper change.
-7. Confirm a theme apply neither edits tracked Hyprland, Niri, or Kitty config
-   nor leaves untracked generated files.
+7. Confirm a theme apply neither edits tracked Hyprland, Niri, Ghostty, GTK, or
+   Kitty config nor leaves untracked generated files.
 8. Complete one fresh login before approving v4 removal.
 
 ## Out of scope
