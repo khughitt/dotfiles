@@ -1,3 +1,6 @@
+# show changes in most recent commit
+git diff HEAD~1
+
 # show files that differ between two commits
 git diff --name-only 629feca
 git diff --name-status 629feca
