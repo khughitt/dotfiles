@@ -30,6 +30,7 @@ VALID_PHASES=(
     kitty
     home
     app-config
+    noctalia-plugins
     mime
     tmux
     packages
@@ -117,6 +118,7 @@ while [[ $# -gt 0 ]]; do
             echo "                    Enable linked systemd user timers on Linux"
             echo "  --only PHASES     Run only comma-separated setup phases"
             print_valid_phases
+            echo "                    noctalia-plugins is a post-shell phase requiring a running Noctalia v5 instance"
             echo "  --help            Show this help message"
             exit 0
             ;;
@@ -542,6 +544,19 @@ function setup_application_config_links() {
     ln_s "${DOTS_HOME}/bin" "${HOME}/bin"
 }
 
+function setup_noctalia_plugins() {
+    [[ "$HEADLESS" == "false" ]] || return 0
+
+    phase "Noctalia local plugins"
+    local plugin_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/noctalia/plugins"
+
+    ensure_dir "$plugin_dir"
+    ln_s "${DOTS_HOME}/noctalia/plugins/wali-panel" "${plugin_dir}/wali-panel"
+    ln_s "${HOME}/d/prism/integrations/noctalia-plugin" "${plugin_dir}/prism"
+    run noctalia msg plugins enable khughitt/wali-panel
+    run noctalia msg plugins enable khughitt/prism
+}
+
 function setup_mime_links() {
     [[ "$MACOS" != "true" ]] || return 0
 
@@ -585,6 +600,9 @@ run_phase systemd setup_systemd_user_units
 run_phase kitty setup_kitty_overrides
 run_phase home setup_home_dotfile_links
 run_phase app-config setup_application_config_links
+if [[ "${#ONLY_PHASES[@]}" -gt 0 ]]; then
+    run_phase noctalia-plugins setup_noctalia_plugins
+fi
 run_phase mime setup_mime_links
 run_phase tmux setup_tmux_plugin_manager
 run_phase packages setup_package_installation

@@ -68,14 +68,42 @@ test_tmp_cleanup_runs_only_at_process_exit() {
   [[ -z "$output" ]] || fail "cleanup subprocess wrote unexpected output: ${output}"
 }
 
-run_setup() {
+install_test_stubs() {
   local tmp="$1"
-  shift
+  mkdir -p "${tmp}/bin"
 
-  mkdir -p "${tmp}/home/d/niri-glass" \
-    "${tmp}/home/d/prism/integrations/noctalia-plugin" "${tmp}/bin"
-  touch "${tmp}/home/d/niri-glass/shell.qml"
-  cat > "${tmp}/bin/prism" <<'EOF'
+  if [[ ! -e "${tmp}/bin/noctalia" ]]; then
+    cat > "${tmp}/bin/noctalia" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -eq 4 && "$1" == msg && "$2" == plugins && "$3" == enable ]]; then
+  if [[ -n "${NOCTALIA_TEST_LOG:-}" ]]; then
+    printf '%s\n' "$*" >> "$NOCTALIA_TEST_LOG"
+  fi
+  exit "${NOCTALIA_ENABLE_STATUS:-0}"
+fi
+if [[ $# -eq 3 && "$1" == msg && "$2" == plugins && "$3" == list ]]; then
+  printf '%s\n' "${NOCTALIA_PLUGIN_LIST:-khughitt/wali-panel [local] 1.0.0 enabled
+khughitt/prism [local] 1.0.0 enabled}"
+  exit 0
+fi
+if [[ $# -ge 2 && "$1" == config && "$2" == validate ]]; then
+  exec /usr/bin/noctalia "$@"
+fi
+if [[ $# -eq 2 && "$1" == theme && "$2" == --list-templates ]]; then
+  exec /usr/bin/noctalia "$@"
+fi
+printf 'unexpected Noctalia test command:' >&2
+printf ' %q' "$@" >&2
+printf '\n' >&2
+exit 64
+EOF
+    chmod +x "${tmp}/bin/noctalia"
+  fi
+
+  if [[ ! -e "${tmp}/bin/prism" ]]; then
+    cat > "${tmp}/bin/prism" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -89,7 +117,20 @@ if [[ "${PRISM_DOCTOR_STATUS:-0}" -ne 0 ]]; then
 fi
 printf '%s\n' "doctor: ok"
 EOF
-  chmod +x "${tmp}/bin/prism"
+    chmod +x "${tmp}/bin/prism"
+  fi
+}
+
+run_setup() {
+  local tmp="$1"
+  shift
+
+  mkdir -p "${tmp}/home/d/niri-glass" "${tmp}/bin"
+  if [[ "${PRISM_PLUGIN_SOURCE_PRESENT:-true}" == true ]]; then
+    mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin"
+  fi
+  touch "${tmp}/home/d/niri-glass/shell.qml"
+  install_test_stubs "$tmp"
   cat > "${tmp}/bin/hostname" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "${PRISM_TEST_HOSTNAME:-dotfiles-test-unconfigured}"
@@ -109,12 +150,40 @@ run_health() {
   local tmp="$1"
   shift
 
+  install_test_stubs "$tmp"
+
   HOME="${tmp}/home" \
     XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" \
     XDG_STATE_HOME="${tmp}/home/.local/state" \
     PATH="${tmp}/bin:$PATH" \
     "${repo_root}/bin/dotfiles-health" "$@"
+}
+
+test_setup_and_health_install_safe_noctalia_stubs() {
+  local setup_tmp health_tmp log exit_status
+  setup_tmp=$(make_tmpdir)
+  health_tmp=$(make_tmpdir)
+  register_tmp_cleanup "$setup_tmp"
+  register_tmp_cleanup "$health_tmp"
+  log="${setup_tmp}/noctalia.log"
+
+  NOCTALIA_TEST_LOG="$log" run_setup "$setup_tmp" --help >/dev/null
+  NOCTALIA_TEST_LOG="$log" PATH="${setup_tmp}/bin:$PATH" \
+    noctalia msg plugins enable test/never-live
+  [[ "$(<"$log")" == "msg plugins enable test/never-live" ]] || \
+    fail "Noctalia enable stub did not capture the exact IPC call"
+
+  if PATH="${setup_tmp}/bin:$PATH" noctalia msg plugins disable test/never-live; then
+    exit_status=0
+  else
+    exit_status=$?
+  fi
+  (( exit_status == 64 )) || fail "Noctalia test stub forwarded an unknown mutating command"
+
+  run_health "$health_tmp" --help >/dev/null
+  [[ -x "${health_tmp}/bin/noctalia" ]] || \
+    fail "run_health did not install its own Noctalia stub"
 }
 
 test_bash_config_is_native_and_minimal() {
@@ -514,6 +583,63 @@ test_setup_only_rejects_unknown_phase() {
   [[ "$output" == *"Unknown setup phase: missing"* ]] || fail "expected unknown phase message"
 
   rm -rf "$tmp"
+}
+
+test_noctalia_plugin_phase_links_and_enables_exact_ids() {
+  local tmp log
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  log="${tmp}/noctalia.log"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  NOCTALIA_TEST_LOG="$log" run_setup "$tmp" --link-only \
+    --only noctalia-plugins >/dev/null
+
+  [[ -L "${tmp}/data/noctalia/plugins/wali-panel" ]]
+  [[ -L "${tmp}/data/noctalia/plugins/prism" ]]
+  [[ "$(<"$log")" == $'msg plugins enable khughitt/wali-panel\nmsg plugins enable khughitt/prism' ]] || \
+    fail "plugin phase did not issue the two exact enable calls"
+}
+
+test_default_setup_does_not_require_live_noctalia() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  set +e
+  output=$(NOCTALIA_ENABLE_STATUS=69 \
+    run_setup "$tmp" --link-only --headless 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status == 0 )) || fail "default setup required live Noctalia: ${output}"
+}
+
+test_noctalia_plugin_phase_fails_when_ipc_is_unavailable() {
+  local tmp exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  set +e
+  NOCTALIA_ENABLE_STATUS=69 run_setup "$tmp" --link-only \
+    --only noctalia-plugins >/dev/null 2>&1
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "plugin setup accepted unavailable Noctalia IPC"
+}
+
+test_noctalia_plugin_phase_requires_prism_source() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  set +e
+  output=$(PRISM_PLUGIN_SOURCE_PRESENT=false run_setup "$tmp" --link-only \
+    --only noctalia-plugins 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "plugin setup accepted a missing Prism plugin source"
+  [[ "$output" == *"Link source does not exist"* ]] || \
+    fail "plugin setup did not explain the missing Prism plugin source"
 }
 
 test_setup_and_health_share_managed_link_metadata() {
@@ -1057,6 +1183,7 @@ test_dotfiles_health_rejects_symlinked_opencode_local() {
 
 test_tmp_cleanup_runs_only_at_process_exit
 test_tmp_cleanup_is_centralized
+test_setup_and_health_install_safe_noctalia_stubs
 test_bash_config_is_native_and_minimal
 test_glow_theme_renders_color
 test_noctalia_v5_config_contract
@@ -1072,6 +1199,10 @@ test_setup_dry_run_can_enable_user_timers
 test_setup_only_runs_selected_phase
 test_setup_only_accepts_multiple_phases
 test_setup_only_rejects_unknown_phase
+test_noctalia_plugin_phase_links_and_enables_exact_ids
+test_default_setup_does_not_require_live_noctalia
+test_noctalia_plugin_phase_fails_when_ipc_is_unavailable
+test_noctalia_plugin_phase_requires_prism_source
 test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_skips_prism_when_unconfigured
 test_dotfiles_health_fails_missing_noctalia_config
