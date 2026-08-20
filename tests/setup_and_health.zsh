@@ -123,6 +123,7 @@ EOF
 
 run_setup() {
   local tmp="$1"
+  local setup_root="${SETUP_ROOT:-$repo_root}"
   shift
 
   mkdir -p "${tmp}/home/d/niri-glass" "${tmp}/bin"
@@ -143,7 +144,7 @@ EOF
     XDG_STATE_HOME="${tmp}/home/.local/state" \
     DOTFILES_OPENCODE_RUNTIME_SOURCE="${tmp}/opencode-runtime-source" \
     PATH="${tmp}/bin:$PATH" \
-    bash "${repo_root}/setup.sh" "$@"
+    bash "${setup_root}/setup.sh" "$@"
 }
 
 run_health() {
@@ -602,13 +603,32 @@ test_noctalia_plugin_phase_links_and_enables_exact_ids() {
 }
 
 test_default_setup_does_not_require_live_noctalia() {
-  local tmp output exit_status
+  local tmp fixture output exit_status
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  fixture="${tmp}/repo"
+  cp -a "$repo_root" "$fixture"
+  rm "${fixture}/bin/prism"
+  cat > "${fixture}/bin/prism" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "$*" == "apply niri" ]] || exit 64
+exit 0
+EOF
+  chmod +x "${fixture}/bin/prism"
+  mkdir -p "${tmp}/bin"
+  cat > "${tmp}/bin/niri" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "$1" == validate ]] || exit 64
+EOF
+  chmod +x "${tmp}/bin/niri"
   set +e
-  output=$(NOCTALIA_ENABLE_STATUS=69 \
-    run_setup "$tmp" --link-only --headless 2>&1)
+  output=$(NIRI_SOCKET= PRISM_TEST_HOSTNAME=titan NOCTALIA_ENABLE_STATUS=69 SETUP_ROOT="$fixture" \
+    run_setup "$tmp" --link-only 2>&1)
   exit_status=$?
   set -e
   (( exit_status == 0 )) || fail "default setup required live Noctalia: ${output}"
