@@ -86,7 +86,7 @@ fi
 if [[ $# -eq 3 && "$1" == msg && "$2" == plugins && "$3" == list ]]; then
   printf '%s\n' "${NOCTALIA_PLUGIN_LIST:-khughitt/wali-panel [local] 1.0.0 enabled
 khughitt/prism [local] 1.0.0 enabled}"
-  exit 0
+  exit "${NOCTALIA_PLUGIN_LIST_STATUS:-0}"
 fi
 if [[ $# -ge 2 && "$1" == config && "$2" == validate ]]; then
   exec /usr/bin/noctalia "$@"
@@ -129,6 +129,7 @@ run_setup() {
   mkdir -p "${tmp}/home/d/niri-glass" "${tmp}/bin"
   if [[ "${PRISM_PLUGIN_SOURCE_PRESENT:-true}" == true ]]; then
     mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin"
+    touch "${tmp}/home/d/prism/integrations/noctalia-plugin/plugin.toml"
   fi
   touch "${tmp}/home/d/niri-glass/shell.qml"
   install_test_stubs "$tmp"
@@ -159,6 +160,14 @@ run_health() {
     XDG_STATE_HOME="${tmp}/home/.local/state" \
     PATH="${tmp}/bin:$PATH" \
     "${repo_root}/bin/dotfiles-health" "$@"
+}
+
+prepare_health_fixture() {
+  local tmp="$1"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+  run_setup "$tmp" --link-only --only app-config >/dev/null
+  run_setup "$tmp" --link-only --only noctalia-plugins >/dev/null
 }
 
 test_setup_and_health_install_safe_noctalia_stubs() {
@@ -300,8 +309,11 @@ assert config["wallpaper"]["automation"] == {
 assert config["bar"]["default"]["start"] == ["workspaces", "cpu", "ram"]
 assert config["bar"]["default"]["center"] == ["active_window"]
 assert config["bar"]["default"]["end"] == [
-    "tray", "battery", "notifications", "output_volume", "wallpaper", "clock"
+    "tray", "battery", "notifications", "output_volume",
+    "khughitt/prism:widget", "khughitt/wali-panel:widget", "clock",
 ]
+assert "plugins" not in config
+assert not any(name.startswith("khughitt/") for name in config.get("widget", {}))
 assert templates["builtin_ids"] == [
     "hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "btop"
 ]
@@ -610,6 +622,10 @@ test_noctalia_plugin_phase_links_and_enables_exact_ids() {
 
   [[ -L "${tmp}/data/noctalia/plugins/wali-panel" ]]
   [[ -L "${tmp}/data/noctalia/plugins/prism" ]]
+  [[ -f "${tmp}/data/noctalia/plugins/wali-panel/plugin.toml" ]]
+  [[ -f "${tmp}/data/noctalia/plugins/prism/plugin.toml" ]]
+  [[ ! -e "${tmp}/data/noctalia/plugins/wali-panel/manifest.json" ]]
+  [[ ! -e "${tmp}/data/noctalia/plugins/prism/manifest.json" ]]
   [[ "$(<"$log")" == $'msg plugins enable khughitt/wali-panel\nmsg plugins enable khughitt/prism' ]] || \
     fail "plugin phase did not issue the two exact enable calls"
 }
@@ -710,8 +726,7 @@ test_dotfiles_health_skips_prism_when_unconfigured() {
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
-  run_setup "$tmp" --link-only --only app-config >/dev/null
+  prepare_health_fixture "$tmp"
 
   PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd >/dev/null
 
@@ -725,6 +740,7 @@ test_dotfiles_health_fails_missing_noctalia_config() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --headless >/dev/null
+  run_setup "$tmp" --link-only --only noctalia-plugins >/dev/null
 
   set +e
   output=$(run_health "$tmp" --skip-systemd 2>&1)
@@ -734,6 +750,131 @@ test_dotfiles_health_fails_missing_noctalia_config() {
   (( exit_status != 0 )) || fail "health accepted missing Noctalia config"
   [[ "$output" == *"${tmp}/config/noctalia/config.toml"* ]] || \
     fail "health did not report the missing Noctalia config: ${output}"
+}
+
+test_dotfiles_health_fails_wrong_noctalia_plugin_link() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/wrong-wali"
+  touch "${tmp}/wrong-wali/plugin.toml"
+  prepare_health_fixture "$tmp"
+  rm "${tmp}/data/noctalia/plugins/wali-panel"
+  ln -s "${tmp}/wrong-wali" "${tmp}/data/noctalia/plugins/wali-panel"
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted the wrong Wali plugin link"
+  [[ "$output" == *"wrong link target"* && "$output" == *"wali-panel"* ]] || \
+    fail "health did not identify the wrong Wali plugin link: ${output}"
+}
+
+test_dotfiles_health_fails_stale_noctalia_plugin_manifest() {
+  local tmp output exit_status prism_source
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  prepare_health_fixture "$tmp"
+  prism_source="${tmp}/home/d/prism/integrations/noctalia-plugin"
+  rm "${prism_source}/plugin.toml"
+  touch "${prism_source}/manifest.json"
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted a stale Prism v4 manifest"
+  [[ "$output" == *"prism"* ]] || \
+    fail "health did not identify the stale Prism manifest: ${output}"
+}
+
+test_dotfiles_health_fails_when_wali_plugin_is_not_enabled() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  prepare_health_fixture "$tmp"
+
+  set +e
+  output=$(NOCTALIA_PLUGIN_LIST='khughitt/prism [local] 1.0.0 enabled' \
+    run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted disabled Wali plugin state"
+  [[ "$output" == *"wali-panel"* ]] || \
+    fail "health did not identify the disabled Wali plugin: ${output}"
+}
+
+test_dotfiles_health_fails_when_prism_plugin_is_not_enabled() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  prepare_health_fixture "$tmp"
+
+  set +e
+  output=$(NOCTALIA_PLUGIN_LIST='khughitt/wali-panel [local] 1.0.0 enabled' \
+    run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted disabled Prism plugin state"
+  [[ "$output" == *"prism"* ]] || \
+    fail "health did not identify the disabled Prism plugin: ${output}"
+}
+
+test_dotfiles_health_fails_when_plugin_list_is_unavailable() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  prepare_health_fixture "$tmp"
+
+  set +e
+  output=$(NOCTALIA_PLUGIN_LIST_STATUS=69 run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted unavailable Noctalia plugin IPC"
+  [[ "$output" == *"Noctalia"* && "$output" == *"plugin"* ]] || \
+    fail "health did not identify unavailable Noctalia plugin IPC: ${output}"
+}
+
+test_dotfiles_health_offline_flag_skips_only_plugin_ipc() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/wrong-wali"
+  touch "${tmp}/wrong-wali/plugin.toml"
+  prepare_health_fixture "$tmp"
+
+  set +e
+  output=$(NOCTALIA_PLUGIN_LIST='other/plugin [local] 1.0.0 disabled' \
+    run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "live health accepted disabled plugin state"
+
+  output=$(NOCTALIA_PLUGIN_LIST='other/plugin [local] 1.0.0 disabled' \
+    run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1) || \
+    fail "offline health rejected valid static plugin topology: ${output}"
+  [[ "$output" == *"[OK]"* && "$output" == *"live Noctalia plugin check"* ]] || \
+    fail "offline health did not report the explicit plugin IPC skip: ${output}"
+
+  rm "${tmp}/data/noctalia/plugins/wali-panel"
+  ln -s "${tmp}/wrong-wali" "${tmp}/data/noctalia/plugins/wali-panel"
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "offline health skipped the wrong Wali plugin link"
+  [[ "$output" == *"wrong link target"* && "$output" == *"wali-panel"* ]] || \
+    fail "offline health did not identify the wrong Wali plugin link: ${output}"
 }
 
 test_dotfiles_health_skips_noctalia_on_macos() {
@@ -767,7 +908,7 @@ test_dotfiles_health_fails_wrong_prism_link_without_running_doctor() {
   doctor_log="${tmp}/doctor.log"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   ln -s "${repo_root}/prism/europa" "${tmp}/config/prism"
 
   set +e
@@ -790,7 +931,7 @@ test_dotfiles_health_fails_unknown_host_dangling_prism_marker_without_doctor() {
   doctor_log="${tmp}/doctor.log"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   ln -s "${tmp}/missing-prism-config" "${tmp}/config/prism"
 
   set +e
@@ -812,7 +953,7 @@ test_dotfiles_health_fails_unknown_host_wrong_prism_marker_without_doctor() {
   doctor_log="${tmp}/doctor.log"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   ln -s "${repo_root}/prism/europa" "${tmp}/config/prism"
 
   set +e
@@ -847,7 +988,7 @@ test_dotfiles_health_fails_stale_removed_config_links() {
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   ln -s "${repo_root}/snakemake" "${tmp}/config/snakemake"
 
   set +e
@@ -868,8 +1009,7 @@ test_dotfiles_health_ignores_brave_runtime_symlinks() {
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config/BraveSoftware/Brave-Browser" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
-  run_setup "$tmp" --link-only --only app-config >/dev/null
+  prepare_health_fixture "$tmp"
   ln -s "${tmp}/missing-SingletonLock" "${tmp}/config/BraveSoftware/Brave-Browser/SingletonLock"
   ln -s "${tmp}/missing-SingletonCookie" "${tmp}/config/BraveSoftware/Brave-Browser/SingletonCookie"
 
@@ -888,8 +1028,7 @@ test_dotfiles_health_ignores_unmanaged_config_symlinks() {
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config/unmanaged-app" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
-  run_setup "$tmp" --link-only --only app-config >/dev/null
+  prepare_health_fixture "$tmp"
   ln -s "${tmp}/missing-runtime-link" "${tmp}/config/unmanaged-app/runtime-link"
 
   output=$(run_health "$tmp" --skip-systemd 2>&1)
@@ -906,7 +1045,7 @@ test_dotfiles_health_fails_broken_managed_config_link() {
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   rm "${tmp}/config/kitty"
   ln -s "${tmp}/missing-kitty" "${tmp}/config/kitty"
 
@@ -930,8 +1069,7 @@ test_dotfiles_health_checks_enabled_user_timer() {
   systemctl_log="${tmp}/systemctl.log"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "$mockbin"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
-  run_setup "$tmp" --link-only --only app-config >/dev/null
+  prepare_health_fixture "$tmp"
 
   cat > "${mockbin}/systemctl" <<'EOF'
 #!/usr/bin/env bash
@@ -1069,8 +1207,7 @@ test_dotfiles_health_accepts_prism_glass_runtime() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  run_setup "$tmp" --link-only --headless >/dev/null
-  run_setup "$tmp" --link-only --only app-config >/dev/null
+  prepare_health_fixture "$tmp"
   configure_prism_glass_runtime "$tmp"
 
   PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd >/dev/null
@@ -1081,7 +1218,7 @@ test_dotfiles_health_fails_wrong_niri_glass_consumer() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   configure_prism_glass_runtime "$tmp"
   print -- '{}' > "${tmp}/wrong.json"
   rm "${tmp}/config/niri/niri-glass.json"
@@ -1101,7 +1238,7 @@ test_dotfiles_health_fails_wrong_named_niri_glass_config() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   configure_prism_glass_runtime "$tmp"
   mkdir "${tmp}/wrong-niri-glass"
   rm "${tmp}/config/quickshell/niri-glass"
@@ -1121,7 +1258,7 @@ test_dotfiles_health_rejects_root_quickshell_config() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   configure_prism_glass_runtime "$tmp"
   touch "${tmp}/config/quickshell/shell.qml"
 
@@ -1140,7 +1277,7 @@ test_dotfiles_health_fails_when_prism_doctor_fails() {
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   configure_prism_glass_runtime "$tmp"
 
   set +e
@@ -1161,8 +1298,7 @@ test_dotfiles_health_rejects_noctalia_config_warning() {
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
-  run_setup "$tmp" --link-only --headless >/dev/null
-  run_setup "$tmp" --link-only --only app-config >/dev/null
+  prepare_health_fixture "$tmp"
   print -r -- '[templates]' > "${tmp}/config/noctalia/obsolete.toml"
   set +e
   output=$(run_health "$tmp" --skip-systemd 2>&1)
@@ -1180,7 +1316,7 @@ test_dotfiles_health_fails_wrong_opencode_theme_link() {
   register_tmp_cleanup "$tmp"
   mockbin="${tmp}/bin"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "$mockbin"
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   theme_link="${tmp}/config/opencode.local/themes/noctalia.json"
   rm "$theme_link"
   ln -s "${tmp}/wrong-theme.json" "$theme_link"
@@ -1201,7 +1337,7 @@ test_dotfiles_health_rejects_symlinked_opencode_local() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  run_setup "$tmp" --link-only --headless >/dev/null
+  prepare_health_fixture "$tmp"
   mv "${tmp}/config/opencode.local" "${tmp}/opencode-local-target"
   ln -s "${tmp}/opencode-local-target" "${tmp}/config/opencode.local"
   set +e
@@ -1238,6 +1374,12 @@ test_noctalia_plugin_phase_requires_prism_source
 test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_skips_prism_when_unconfigured
 test_dotfiles_health_fails_missing_noctalia_config
+test_dotfiles_health_fails_wrong_noctalia_plugin_link
+test_dotfiles_health_fails_stale_noctalia_plugin_manifest
+test_dotfiles_health_fails_when_wali_plugin_is_not_enabled
+test_dotfiles_health_fails_when_prism_plugin_is_not_enabled
+test_dotfiles_health_fails_when_plugin_list_is_unavailable
+test_dotfiles_health_offline_flag_skips_only_plugin_ipc
 test_dotfiles_health_skips_noctalia_on_macos
 test_prism_launcher_link_survives_relocated_sibling_repos
 test_dotfiles_health_fails_unknown_host_wrong_prism_marker_without_doctor

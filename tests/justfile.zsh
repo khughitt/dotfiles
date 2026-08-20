@@ -16,9 +16,17 @@ assert_contains() {
   [[ "$haystack" == *"$needle"* ]] || fail "$label"
 }
 
+assert_equals() {
+  local actual="$1"
+  local expected="$2"
+  local label="$3"
+
+  [[ "$actual" == "$expected" ]] || fail "${label}: ${actual}"
+}
+
 list_output=$(just --justfile "${repo_root}/justfile" --list)
 
-for recipe in check health secrets setup-dry-run setup-only test; do
+for recipe in check health health-live health-systemd secrets setup-dry-run setup-only test; do
   assert_contains "$list_output" "$recipe" "expected just recipe: $recipe"
 done
 
@@ -29,9 +37,15 @@ assert_contains "$(just --justfile "${repo_root}/justfile" --dry-run check 2>&1)
   "just --fmt --check --justfile justfile" \
   "expected check recipe to validate justfile formatting"
 
-assert_contains "$(just --justfile "${repo_root}/justfile" --dry-run health 2>&1)" \
+assert_equals "$(just --justfile "${repo_root}/justfile" --dry-run health 2>&1)" \
+  "bin/dotfiles-health --skip-systemd --skip-noctalia-ipc" \
+  "expected health recipe to run offline-safe health check"
+assert_equals "$(just --justfile "${repo_root}/justfile" --dry-run health-live 2>&1)" \
   "bin/dotfiles-health --skip-systemd" \
-  "expected health recipe to run non-systemd health check"
+  "expected health-live recipe to run live plugin checks"
+assert_equals "$(just --justfile "${repo_root}/justfile" --dry-run health-systemd 2>&1)" \
+  "bin/dotfiles-health" \
+  "expected health-systemd recipe to run all runtime checks"
 
 assert_contains "$(just --justfile "${repo_root}/justfile" --dry-run setup-dry-run 2>&1)" \
   "bash setup.sh --dry-run --link-only --headless" \

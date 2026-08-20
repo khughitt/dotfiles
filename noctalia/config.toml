@@ -26,7 +26,7 @@ order = ["default"]
 [bar.default]
 background_opacity = 0.93
 center = ["active_window"]
-end = ["tray", "battery", "notifications", "output_volume", "wallpaper", "clock"]
+end = ["tray", "battery", "notifications", "output_volume", "khughitt/prism:widget", "khughitt/wali-panel:widget", "clock"]
 start = ["workspaces", "cpu", "ram"]
 
 [desktop_widgets]

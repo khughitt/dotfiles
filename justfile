@@ -8,6 +8,9 @@ check:
     bin/dotfiles-check
 
 health:
+    bin/dotfiles-health --skip-systemd --skip-noctalia-ipc
+
+health-live:
     bin/dotfiles-health --skip-systemd
 
 health-systemd:

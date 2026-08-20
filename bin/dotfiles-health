@@ -3,8 +3,10 @@ set -euo pipefail
 
 DOTS_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-${HOME}/.local/state}"
 SKIP_SYSTEMD=false
+SKIP_NOCTALIA_IPC=false
 
 # shellcheck source=lib/dotfiles-setup-data.bash
 source "${DOTS_HOME}/lib/dotfiles-setup-data.bash"
@@ -15,11 +17,16 @@ while [[ $# -gt 0 ]]; do
             SKIP_SYSTEMD=true
             shift
             ;;
+        --skip-noctalia-ipc)
+            SKIP_NOCTALIA_IPC=true
+            shift
+            ;;
         --help)
             cat <<'EOF'
-Usage: dotfiles-health [--skip-systemd]
+Usage: dotfiles-health [--skip-systemd] [--skip-noctalia-ipc]
 
 Check key dotfiles symlinks, required commands, shell sourceability, and user timers.
+--skip-noctalia-ipc skips live Noctalia plugin enablement only.
 EOF
             exit 0
             ;;
@@ -188,6 +195,38 @@ if [[ "$(uname)" != "Darwin" ]]; then
     check_link "$noctalia_config_dir/templates" "${DOTS_HOME}/noctalia/templates"
     check_link "$noctalia_config_dir/palettes/Glow.json" "${DOTS_HOME}/noctalia/palettes/Glow.json"
 
+    noctalia_plugin_dir="${XDG_DATA_HOME}/noctalia/plugins"
+    check_link "${noctalia_plugin_dir}/wali-panel" \
+        "${DOTS_HOME}/noctalia/plugins/wali-panel"
+    check_link "${noctalia_plugin_dir}/prism" \
+        "${HOME}/d/prism/integrations/noctalia-plugin"
+
+    for plugin_name in wali-panel prism; do
+        if [[ -f "${noctalia_plugin_dir}/${plugin_name}/plugin.toml" && \
+              ! -e "${noctalia_plugin_dir}/${plugin_name}/manifest.json" ]]; then
+            pass "Noctalia v5 plugin manifest: ${plugin_name}"
+        else
+            fail "missing or stale Noctalia plugin manifest: ${plugin_name}"
+        fi
+    done
+
+    if [[ "$SKIP_NOCTALIA_IPC" == "true" ]]; then
+        pass "live Noctalia plugin check explicitly skipped"
+    elif plugins=$(noctalia msg plugins list 2>&1); then
+        if printf '%s\n' "$plugins" | rg -q '^khughitt/wali-panel .* enabled$'; then
+            pass "Noctalia plugin enabled: khughitt/wali-panel"
+        else
+            fail "Noctalia plugin not enabled: khughitt/wali-panel"
+        fi
+        if printf '%s\n' "$plugins" | rg -q '^khughitt/prism .* enabled$'; then
+            pass "Noctalia plugin enabled: khughitt/prism"
+        else
+            fail "Noctalia plugin not enabled: khughitt/prism"
+        fi
+    else
+        fail "Noctalia plugin listing failed: $plugins"
+    fi
+
     if output=$(noctalia config validate "$noctalia_config_dir" 2>&1); then
         if grep -Eq '(^|[[:space:]])(WARN|ERROR)([[:space:]]|$)' <<<"$output"; then
             fail "Noctalia config warning or error: $output"
@@ -209,7 +248,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
     else
         fail "Noctalia template listing failed: $templates"
     fi
-    unset noctalia_config_dir output templates template_id
+    unset noctalia_config_dir noctalia_plugin_dir output plugins templates template_id plugin_name
 fi
 
 check_absent_stale_config_link "snakemake"
