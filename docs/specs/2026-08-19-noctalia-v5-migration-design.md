@@ -38,9 +38,9 @@ Noctalia documents v5 as a fresh install rather than an automatic v4 upgrade.
 Its v5 configuration and IPC are intentionally separate from the Quickshell
 line:
 
-- <https://docs.noctalia.dev/v5/getting-started/faq/>
-- <https://docs.noctalia.dev/v5/configuration/>
-- <https://docs.noctalia.dev/v5/ipc/>
+- <https://docs.noctalia.dev/noctalia/getting-started/faq/>
+- <https://docs.noctalia.dev/noctalia/configuration/>
+- <https://docs.noctalia.dev/noctalia/ipc/>
 
 ## Decision
 
@@ -184,7 +184,7 @@ wallpaper automation
 Noctalia v5 requires built-in and community template IDs to be selected
 explicitly:
 
-<https://docs.noctalia.dev/v5/theming/app-theming/>
+<https://docs.noctalia.dev/noctalia/theming/app-theming/>
 
 ## Compositor and CLI integration
 
@@ -198,7 +198,7 @@ explicitly:
 - Add a floating window rule for app id `dev.noctalia.Noctalia`.
 
 The relevant v5 surface and keybinding contracts are documented at
-<https://docs.noctalia.dev/v5/compositor-settings/niri/>.
+<https://docs.noctalia.dev/noctalia/compositor-settings/niri/>.
 
 ### Hyprland
 
@@ -213,7 +213,7 @@ The relevant v5 surface and keybinding contracts are documented at
 The active Hyprland configuration remains in its current format; adopting the
 new Lua configuration system is unrelated to this migration. The v5 surface
 contract is documented at
-<https://docs.noctalia.dev/v5/compositor-settings/hyprland/>.
+<https://docs.noctalia.dev/noctalia/compositor-settings/hyprland/>.
 
 ### IPC mapping
 
@@ -246,7 +246,7 @@ Later ports must be separate designs because v5 plugins are not translations
 of QML files: they require new manifests, Luau entry scripts, and possibly
 different UI capabilities. The v5 plugin API is still documented as beta:
 
-<https://docs.noctalia.dev/v5/plugins/>
+<https://docs.noctalia.dev/noctalia/plugins/>
 
 ## Setup and health behavior
 

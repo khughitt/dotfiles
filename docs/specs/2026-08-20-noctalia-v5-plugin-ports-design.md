@@ -34,6 +34,9 @@ delete-and-enable cleanup, not a port.
   callbacks.
 - The v5 widget API exposes the widget's output but not its global screen
   coordinate or bar section.
+- Noctalia loads state `settings.toml` after tracked config files. A state
+  `[plugins] enabled` value replaces the tracked value rather than merging it,
+  and plugin enablement has no offline CLI.
 - `noctalia/config.toml` currently places `ui_scale` under `[shell]`, which the
   installed validator now reports as an unknown setting. The current schema
   places it under `[accessibility]`.
@@ -63,7 +66,7 @@ References:
 - <https://docs.noctalia.dev/noctalia/plugins/development/runtime-api/>
 - <https://docs.noctalia.dev/noctalia/plugins/development/plugin-api/>
 - <https://docs.noctalia.dev/noctalia/plugins/development/workflow/>
-- <https://docs.noctalia.dev/v5/bar/widgets/>
+- <https://docs.noctalia.dev/noctalia/bar/widgets/>
 
 ## Decision
 
@@ -107,15 +110,19 @@ entry = "widget.luau"
 [[panel]]
 id = "panel"
 entry = "panel.luau"
-width = 560
-height = 760
+width = 588
+height = 798
 placement = "attached"
 position = "auto"
 ```
 
-These dimensions preserve both v4 panels' existing 560 by 760 preferred
-geometry. Attached placement preserves the current bar-panel behavior. Wali
-sets `dependencies = ["walictl"]`; Prism sets `dependencies = ["prism",
+Both v4 panels declare a 560 by 760 preferred size multiplied by the tracked
+1.05 UI scale, while v5 manifest extents are raw logical pixels. The 588 by 798
+manifest geometry therefore preserves this machine's current footprint.
+Attached placement and the installed host's valid `auto` position preserve the
+current bar-panel behavior. Live acceptance still checks the resulting
+footprint and attachment for clipping or scale drift.
+Wali sets `dependencies = ["walictl"]`; Prism sets `dependencies = ["prism",
 "qs"]`. Neither plugin declares root `[[setting]]`, `[[widget.setting]]`, or
 `[[panel.setting]]` tables because the ports have no user-configurable plugin
 settings.
@@ -130,8 +137,8 @@ $XDG_DATA_HOME/noctalia/plugins/prism
   -> ~/d/prism/integrations/noctalia-plugin
 ```
 
-The tracked Noctalia config enables both canonical IDs and places their fully
-qualified entry IDs directly in the default bar:
+The tracked Noctalia config places both fully qualified entry IDs directly in
+the default bar:
 
 ```toml
 [bar.default]
@@ -154,8 +161,16 @@ community sources, so no extra plugin source is required.
 Setup fails early if either source is missing. This deliberately makes
 graphical dotfiles setup depend on the adjacent `~/d/prism` checkout, matching
 the existing niri-glass integration; headless setup remains independent.
-Health checks verify the two links, their v5 manifests, and the configured
-enabled IDs.
+
+Tracked `[plugins] enabled` is deliberately omitted: state settings override
+that array wholesale, so tracked enablement silently loses after any GUI or IPC
+plugin toggle. After linking both sources, graphical setup instead runs
+`noctalia msg plugins enable khughitt/wali-panel` and `noctalia msg plugins
+enable khughitt/prism`. A running v5 shell is therefore an explicit precondition
+for graphical plugin setup; an unavailable IPC endpoint fails early instead of
+leaving invisible bar entries. Health checks verify the two links, their v5
+manifests, and exact `enabled` lines for both IDs in `noctalia msg plugins
+list`.
 
 ## Wali Panel
 
@@ -317,7 +332,9 @@ Automated checks cover:
 - `noctalia plugins lint` for each source directory;
 - warning-free `noctalia config validate` against the tracked config root;
 - isolated setup topology with disposable Wali and Prism sources, plus an
-  expected early failure when the Prism source is absent;
+  expected early failure when the Prism source or Noctalia IPC is absent;
+- graphical setup's two exact plugin-enable IPC calls and health rejection
+  when either installed plugin is not enabled;
 - health-check rejection of missing, wrong, or v4 plugin links;
 - the two fully qualified widget entry IDs directly in the default bar end
   list, no `[widget.*]` aliases for them, and removal of `wallpaper`;
@@ -341,24 +358,28 @@ execute their tests without a new dependency. Those modules therefore use no
 Luau type annotations, `continue`, or other Luau-only syntax; the direct Lua
 test run enforces that constraint.
 
-Live acceptance is also required:
+Live acceptance begins with an enablement preflight. `noctalia config export
+merged` must show both IDs in `[plugins] enabled`, `noctalia msg plugins list`
+must report both exact IDs as enabled, and the log must report `loaded plugin
+'<id>' (2 entries)` for each. A disabled or missing plugin stops acceptance.
+
+Then:
 
 0. Open Prism, queue a command, close the panel before completion, and confirm
    both the command and queued preview-hide finish. Stop if the runtime does
    not survive close as expected.
-1. Both local plugins appear enabled in `noctalia msg plugins list`, and the
-   log reports `loaded plugin '<id>' (2 entries)` for each exact ID.
-2. Both bar widgets render and open their panels.
-3. Noctalia logs contain no Luau compile, timeout, or runtime errors.
-4. Wali current metadata, navigation, random, copy, save, and edit behavior is
+1. Both bar widgets render and open their panels attached to the originating
+   bar. Their 588 by 798 footprints match the scaled v4 panels without clipping.
+2. Noctalia logs contain no Luau compile, timeout, or runtime errors.
+3. Wali current metadata, navigation, random, copy, save, and edit behavior is
    exercised, including an unavailable-source error.
-5. Prism renders every visible parameter from `prism describe --json`.
-6. One toggle, slider, select, and color value is changed and reconciled.
-7. Individual and group reset restore authoritative values.
-8. Live and release-only sliders exhibit their distinct write timing.
-9. Preview targets the originating output, uses the left side, switches its
+4. Prism renders every visible parameter from `prism describe --json`.
+5. One toggle, slider, select, and color value is changed and reconciled.
+6. Individual and group reset restore authoritative values.
+7. Live and release-only sliders exhibit their distinct write timing.
+8. Preview targets the originating output, uses the left side, switches its
    diagnostic background, and hides when the panel closes.
-10. The live config directory contains no stale `user-templates.toml` (or
+9. The live config directory contains no stale `user-templates.toml` (or
     other v4 file still matched by the v5 `*.toml` loader), and live config
     validation is warning-free.
 
