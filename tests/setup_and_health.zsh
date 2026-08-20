@@ -282,11 +282,13 @@ test_noctalia_v5_config_contract() {
   done
 
   python3 - "${repo_root}/noctalia/config.toml" \
-    "${repo_root}/noctalia/templates.toml" <<'PY'
+    "${repo_root}/noctalia/templates.toml" \
+    "${repo_root}/noctalia/plugins/wali-panel/plugin.toml" <<'PY'
 import sys, tomllib
 
 config = tomllib.load(open(sys.argv[1], "rb"))
 templates = tomllib.load(open(sys.argv[2], "rb"))["theme"]["templates"]
+wali = tomllib.load(open(sys.argv[3], "rb"))
 assert config["accessibility"]["ui_scale"] == 1.05
 assert "ui_scale" not in config["shell"]
 assert config["theme"] == {
@@ -306,6 +308,16 @@ assert templates["builtin_ids"] == [
 assert templates["community_ids"] == ["zathura"]
 assert set(templates["user"]) == {"glow", "nvim", "claude", "codex", "ohai"}
 assert "kitty" not in templates["builtin_ids"]
+assert wali["id"] == "khughitt/wali-panel"
+assert wali["plugin_api"] == 9
+assert wali["plugin_api"] <= 23
+assert wali["dependencies"] == ["walictl"]
+assert wali["widget"] == [{"id": "widget", "entry": "widget.luau"}]
+assert wali["panel"] == [{
+    "id": "panel", "entry": "panel.luau", "width": 588, "height": 798,
+    "placement": "attached", "position": "auto",
+}]
+assert "setting" not in wali
 PY
 }
 

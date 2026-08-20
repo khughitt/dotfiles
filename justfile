@@ -31,5 +31,7 @@ test:
     zsh tests/dotfiles_check.zsh
     zsh tests/wali.zsh
     zsh tests/justfile.zsh
+    @command -v lua >/dev/null || { echo 'lua is required for the Noctalia plugin tests' >&2; exit 127; }
+    lua noctalia/plugins/wali-panel/plugin_test.lua
 
 verify: check test health

@@ -1,0 +1,24 @@
+# Wali Panel
+
+A native Noctalia v5 plugin for previewing and managing Wali's current wallpaper.
+
+## Entries
+
+- Plugin API: `9`
+- Widget: `khughitt/wali-panel:widget`
+- Panel: `khughitt/wali-panel:panel`
+
+Add the widget to a Noctalia bar and click its wallpaper glyph, or open the panel with:
+
+```sh
+noctalia msg panel-toggle khughitt/wali-panel:panel
+```
+
+## Requirements
+
+- `walictl` must be available on `PATH`.
+- `BACKGROUND_IMG_DIR` must name the directory used for active wallpapers.
+- `WALI_DIR` must name Wali's source wallpaper directory.
+- GIMP is required by `walictl edit-current`.
+
+The panel has no plugin settings. Wali and `walictl` own wallpaper discovery, navigation, saving, and editing.

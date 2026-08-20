@@ -1,0 +1,19 @@
+id = "khughitt/wali-panel"
+name = "Wali Panel"
+description = "Browse and manage the current Noctalia wallpaper"
+version = "1.0.0"
+author = "Keith Hughitt"
+plugin_api = 9
+dependencies = ["walictl"]
+
+[[widget]]
+id = "widget"
+entry = "widget.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 588
+height = 798
+placement = "attached"
+position = "auto"

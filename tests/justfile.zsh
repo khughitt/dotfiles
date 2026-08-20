@@ -60,5 +60,16 @@ assert_contains "$test_dry_run" "zsh tests/wali.zsh" \
   "expected test recipe to include wali tests"
 assert_contains "$test_dry_run" "uv run --frozen pytest -q" \
   "expected test recipe to include Python tests"
+assert_contains "$test_dry_run" "command -v lua" \
+  "expected test recipe to require Lua"
+assert_contains "$test_dry_run" "lua noctalia/plugins/wali-panel/plugin_test.lua" \
+  "expected test recipe to include Wali plugin tests"
+
+test_lines=("${(@f)test_dry_run}")
+existing_tests_at=${test_lines[(i)*zsh tests/justfile.zsh*]}
+lua_guard_at=${test_lines[(i)*command -v lua*]}
+lua_test_at=${test_lines[(i)*lua noctalia/plugins/wali-panel/plugin_test.lua*]}
+(( existing_tests_at < lua_guard_at && lua_guard_at < lua_test_at )) || \
+  fail "Wali Lua test must run after the existing dotfiles suite"
 
 print -- "justfile tests passed"
