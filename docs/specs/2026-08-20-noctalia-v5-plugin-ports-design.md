@@ -32,10 +32,6 @@ delete-and-enable cleanup, not a port.
 - Declarative panels provide the controls needed by both ports: images,
   buttons, toggles, sliders, selects, scrolling, and native color-picker
   callbacks.
-- A panel runtime starts lazily on first open and persists across later closes
-  and reopens. This host lifecycle is independent of the optional manifest
-  `persistent` panel setting, which neither plugin needs to declare. The
-  runtime can therefore own Prism's serialized command queue.
 - The v5 widget API exposes the widget's output but not its global screen
   coordinate or bar section.
 - `noctalia/config.toml` currently places `ui_scale` under `[shell]`, which the
@@ -55,7 +51,8 @@ The installed API level at which each required capability is available is:
 Wali therefore targets API 9 and Prism targets API 22. Both are within the
 installed 3–23 range. Prism enables frame ticks only during a live drag. The
 default outside-click dismissal is sufficient, and neither plugin opts into
-the unrelated `persistent` panel setting.
+the unrelated `persistent` panel setting. Runtime survival across panel close
+remains an acceptance-time hypothesis, not a confirmed constraint.
 
 References:
 
@@ -66,6 +63,7 @@ References:
 - <https://docs.noctalia.dev/noctalia/plugins/development/runtime-api/>
 - <https://docs.noctalia.dev/noctalia/plugins/development/plugin-api/>
 - <https://docs.noctalia.dev/noctalia/plugins/development/workflow/>
+- <https://docs.noctalia.dev/v5/bar/widgets/>
 
 ## Decision
 
@@ -98,6 +96,30 @@ Their bar entries and panels use stable full IDs such as
 `khughitt/wali-panel:widget`, `khughitt/wali-panel:panel`,
 `khughitt/prism:widget`, and `khughitt/prism:panel`.
 
+Each `plugin.toml` uses the v5 array-table entry schema, not the v4-style
+generic entry list:
+
+```toml
+[[widget]]
+id = "widget"
+entry = "widget.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 560
+height = 760
+placement = "attached"
+position = "auto"
+```
+
+These dimensions preserve both v4 panels' existing 560 by 760 preferred
+geometry. Attached placement preserves the current bar-panel behavior. Wali
+sets `dependencies = ["walictl"]`; Prism sets `dependencies = ["prism",
+"qs"]`. Neither plugin declares root `[[setting]]`, `[[widget.setting]]`, or
+`[[panel.setting]]` tables because the ports have no user-configurable plugin
+settings.
+
 Dotfiles links the source directories into the v5 local-plugin directory:
 
 ```text
@@ -108,22 +130,26 @@ $XDG_DATA_HOME/noctalia/plugins/prism
   -> ~/d/prism/integrations/noctalia-plugin
 ```
 
-The tracked Noctalia config enables both canonical IDs and declares the exact
-widget instances supported by v5:
+The tracked Noctalia config enables both canonical IDs and places their fully
+qualified entry IDs directly in the default bar:
 
 ```toml
-[widget.prism]
-type = "khughitt/prism:widget"
-
-[widget.wali]
-type = "khughitt/wali-panel:widget"
+[bar.default]
+end = [
+  "tray", "battery", "notifications", "output_volume",
+  "khughitt/prism:widget", "khughitt/wali-panel:widget", "clock",
+]
 ```
 
-The default bar's end list becomes `tray`, `battery`, `notifications`,
-`output_volume`, `prism`, `wali`, `clock`. The temporary built-in `wallpaper`
-stand-in is removed so two wallpaper controls are not shipped side by side.
-Local drop-ins have higher precedence than configured official and community
-sources, so no extra plugin source is required.
+When a bar-list value has no matching `[widget.<name>]` table, v5 treats that
+value itself as the widget type; its plugin registry resolves the fully
+qualified ID. Named widget tables are unnecessary because these plugins have
+no instance settings. They also trigger false `unrecognized widget type`
+warnings in the installed standalone validator, so the design avoids them
+instead of weakening health with an allowlist. The temporary built-in
+`wallpaper` stand-in is removed so two wallpaper controls are not shipped side
+by side. Local drop-ins have higher precedence than configured official and
+community sources, so no extra plugin source is required.
 
 Setup fails early if either source is missing. This deliberately makes
 graphical dotfiles setup depend on the adjacent `~/d/prism` checkout, matching
@@ -165,9 +191,9 @@ command, rejected launch, timeout, non-zero exit, invalid JSON document, or
 invalid payload becomes a visible panel error. A new open or explicit action
 may retry; there is no fallback to stale v4 state.
 
-The manifest declares `walictl` as its external command dependency. The README
-also records the existing `BACKGROUND_IMG_DIR`, `WALI_DIR`, and GIMP
-requirements for the actions that need them.
+The manifest records the command metadata with `dependencies = ["walictl"]`.
+The README also records the existing `BACKGROUND_IMG_DIR`, `WALI_DIR`, and
+GIMP requirements for the actions that need them.
 
 ## Prism panel
 
@@ -239,9 +265,11 @@ started before or during a new drag is marked stale, discarded, and replayed
 after release. This preserves local slider identity and prevents an
 authoritative refresh from replacing a pressed control.
 
-Closing the panel queues preview hide. The host keeps the panel runtime alive
-across closes, so cleanup and in-flight writes are not abandoned; this does
-not require the manifest's `persistent` panel option.
+Closing the panel queues preview hide. The design expects the host to keep the
+panel runtime alive long enough for cleanup and in-flight writes to finish,
+without the manifest's `persistent` panel option. Live acceptance tests this
+assumption before the rest of Prism parity; failure stops the cutover and
+requires revisiting queue ownership.
 
 ### API-23 subprocess safety
 
@@ -291,8 +319,8 @@ Automated checks cover:
 - isolated setup topology with disposable Wali and Prism sources, plus an
   expected early failure when the Prism source is absent;
 - health-check rejection of missing, wrong, or v4 plugin links;
-- exact top-level `[widget.prism]` and `[widget.wali]` declarations and their
-  names in the default bar end list, including removal of `wallpaper`;
+- the two fully qualified widget entry IDs directly in the default bar end
+  list, no `[widget.*]` aliases for them, and removal of `wallpaper`;
 - existing `walictl` behavior;
 - Prism's describe model and rewritten static plugin contract;
 - direct Lua execution of the production, standard-Lua-compatible Prism
@@ -302,14 +330,22 @@ Automated checks cover:
 
 The installed Noctalia linter does not enforce the supported API range, reject
 unknown manifest keys, verify that entry types are host-recognized, or compile
-Luau. `noctalia config validate` likewise does not validate widget names in a
+Luau. With no declared settings, its settings cross-check is also nearly a
+no-op. `noctalia config validate` likewise does not validate widget names in a
 bar section list. The explicit static assertions above are therefore separate
-gates, not duplicates of those tools. The production presentation and queue
-modules stay within the Lua-compatible Luau subset so the already-installed
-Lua interpreter can execute their tests without a new dependency.
+gates, not duplicates of those tools.
+
+The production presentation and queue modules stay within the standard
+Lua-compatible Luau subset so the already-installed Lua interpreter can
+execute their tests without a new dependency. Those modules therefore use no
+Luau type annotations, `continue`, or other Luau-only syntax; the direct Lua
+test run enforces that constraint.
 
 Live acceptance is also required:
 
+0. Open Prism, queue a command, close the panel before completion, and confirm
+   both the command and queued preview-hide finish. Stop if the runtime does
+   not survive close as expected.
 1. Both local plugins appear enabled in `noctalia msg plugins list`, and the
    log reports `loaded plugin '<id>' (2 entries)` for each exact ID.
 2. Both bar widgets render and open their panels.
