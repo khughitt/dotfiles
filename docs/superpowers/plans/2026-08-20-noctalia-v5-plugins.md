@@ -781,11 +781,25 @@ Render the best available image (`currentPath`, then `sourcePath`), source path,
 
 - [ ] **Step 5: Remove v4 sources and document runtime requirements**
 
-Delete the four v4 files. In `README.md`, document API 9, canonical entries, the `walictl` dependency, `BACKGROUND_IMG_DIR`, `WALI_DIR`, and the GIMP requirement for `edit-current`. Add this first line to the `just test` recipe so the production Lua helpers stay in the standard suite:
+Delete the four v4 files. In `README.md`, document API 9, canonical entries, the `walictl` dependency, `BACKGROUND_IMG_DIR`, `WALI_DIR`, and the GIMP requirement for `edit-current`. Append the prerequisite check and production contract after the existing Python and Zsh lines in the `just test` recipe:
 
 ```just
+@command -v lua >/dev/null || { echo 'lua is required for the Noctalia plugin tests' >&2; exit 127; }
 lua noctalia/plugins/wali-panel/plugin_test.lua
 ```
+
+Extend `tests/justfile.zsh` to assert both lines occur after `zsh tests/justfile.zsh` in the dry-run output:
+
+```zsh
+test_lines=("${(@f)test_dry_run}")
+existing_tests_at=${test_lines[(i)*zsh tests/justfile.zsh*]}
+lua_guard_at=${test_lines[(i)*command -v lua*]}
+lua_test_at=${test_lines[(i)*lua noctalia/plugins/wali-panel/plugin_test.lua*]}
+(( existing_tests_at < lua_guard_at && lua_guard_at < lua_test_at )) || \
+  fail "Wali Lua test must run after the existing dotfiles suite"
+```
+
+This preserves the existing suite's diagnostics on machines without Lua and then fails with the same explicit prerequisite used by Prism.
 
 - [ ] **Step 6: Run Wali's focused gates**
 
@@ -893,7 +907,7 @@ health-systemd:
     bin/dotfiles-health
 ```
 
-`verify: check test health` remains unchanged and therefore uses the offline-safe recipe. `tests/justfile.zsh` must assert all three command lines.
+`verify: check test health` remains unchanged and therefore uses the offline-safe recipe. Add `health-live` and `health-systemd` to the recipe-list assertion in `tests/justfile.zsh`, and assert all three command lines exactly rather than by substring.
 
 - [ ] **Step 6: Implement the static and live health checks**
 

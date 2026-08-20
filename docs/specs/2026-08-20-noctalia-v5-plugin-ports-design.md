@@ -367,7 +367,9 @@ execute their tests without adding a project package dependency. Those modules
 therefore use no Luau type annotations, `continue`, or other Luau-only syntax;
 the direct Lua test run enforces that constraint. Prism exposes that check as
 `npm run test:plugin-lua`, runs its existing Node suite first, and documents the
-`lua` executable as a development prerequisite.
+`lua` executable as a development prerequisite. Dotfiles likewise runs its
+existing Python and Zsh suites before an explicit Lua prerequisite check and
+the Wali production-module test.
 
 Live acceptance begins with an enablement preflight. `noctalia config export
 merged` must show both IDs in `[plugins] enabled`, `noctalia msg plugins list`
