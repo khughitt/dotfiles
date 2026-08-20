@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - The installed Noctalia version is `5.0.0_beta.8` and accepts plugin API levels 3 through 23.
-- Wali targets `plugin_api = 9`; Prism targets `plugin_api = 22`; static tests must also assert both values are at most 23 because `noctalia plugins lint` does not.
+- Wali and Prism target `plugin_api = 22`; static tests must also assert both values are at most 23 because `noctalia plugins lint` does not.
 - Each manifest has exactly one `[[widget]]` and one `[[panel]]`; neither declares any setting table.
 - Both panels use `width = 588`, `height = 798`, `placement = "attached"`, and `position = "auto"`. Prism's manifest records that 588 by 798 preserves the v4 560 by 760 footprint at the tracked 1.05 UI scale.
 - API 24 argv-table subprocesses are unavailable. Every subprocess command is built from an argument array by one POSIX single-quote helper; no dynamic value is interpolated into a command string.
@@ -314,7 +314,7 @@ git commit -m "feat(setup): add Noctalia plugin phase"
 - Modify: `~/d/prism/.worktrees/noctalia-v5-plugin/package.json`
 
 **Interfaces:**
-- `presentation.luau` produces `stepPrecision`, `snapValue`, `sliderFrom`, `sliderTo`, `sliderStep`, `toSliderValue`, `canonicalFromSlider`, `stepCanonicalValue`, `formatValue`, `titleParam`, `groupParams`, and `modifiedCount`.
+- `presentation.luau` produces `stepPrecision`, `snapValue`, `sliderFrom`, `sliderTo`, `sliderStep`, `toSliderValue`, `canonicalFromSlider`, `stepCanonicalValue`, `canonicalFromSliderStep`, `formatValue`, `titleParam`, `groupParams`, and `modifiedCount`.
 - `queue.luau` produces `new`, `enqueue`, `finish`, `isSample`, `affectsParams`, `shouldRefresh`, and `argvFor`.
 - Queue items are `{verb="set", key=string, value=scalar, sample=boolean}`, `{verb="unset", key=string}`, `{verb="preview-show", output=string, side="left", diagnosticBackground=boolean}`, or `{verb="preview-hide"}`.
 - `shell.luau` produces `quote(value) -> string` and `command(argv) -> string`.
@@ -572,6 +572,12 @@ Build one scrollable declarative tree from `Presentation.titleParam(model.params
 | `ui.control = "slider"`, `effectiveDrag = "release"` | slider | local update on change, one non-sample write on drag end |
 | `ui.control = "color"` | color button | `openColorPicker`, then non-sample `prism set` |
 
+Each slider row renders `Presentation.formatValue(param.value, param)` beside
+the native control. For normalized and logarithmic sliders, preserve the zero
+presentation step and recognize Noctalia's exact 5%-of-range discrete delta at
+release; route that direction through `Presentation.stepCanonicalValue` before
+the final write. Other slider values retain the pointer mapping.
+
 Title is the sole header toggle. Quick renders first and always expanded. Other groups persist expansion in `state.expandedGroups`, show modified counts, and enqueue one `unset` per modified parameter on group reset. Each modified row has its own `unset`. Controls with `effectiveDrag == nil` remain visible but disabled.
 
 When preview is active, controls without `ui.affectsPreview == true` remain usable at reduced opacity with `Not in preview`. Diagnostics contains Preview and Diagnostic background toggles. Preview show argv is exactly:
@@ -684,7 +690,7 @@ Extend the embedded Python contract in `tests/setup_and_health.zsh` to parse `pl
 ```python
 wali = tomllib.load(open(wali_manifest, "rb"))
 assert wali["id"] == "khughitt/wali-panel"
-assert wali["plugin_api"] == 9
+assert wali["plugin_api"] == 22
 assert wali["plugin_api"] <= 23
 assert wali["dependencies"] == ["walictl"]
 assert wali["widget"] == [{"id": "widget", "entry": "widget.luau"}]
@@ -723,7 +729,7 @@ name = "Wali Panel"
 description = "Browse and manage the current Noctalia wallpaper"
 version = "1.0.0"
 author = "Keith Hughitt"
-plugin_api = 9
+plugin_api = 22
 dependencies = ["walictl"]
 
 [[widget]]
@@ -781,7 +787,7 @@ Render the best available image (`currentPath`, then `sourcePath`), source path,
 
 - [ ] **Step 5: Remove v4 sources and document runtime requirements**
 
-Delete the four v4 files. In `README.md`, document API 9, canonical entries, the `walictl` dependency, `BACKGROUND_IMG_DIR`, `WALI_DIR`, and the GIMP requirement for `edit-current`. Append the prerequisite check and production contract after the existing Python and Zsh lines in the `just test` recipe:
+Delete the four v4 files. In `README.md`, document API 22, canonical entries, the `walictl` dependency, `BACKGROUND_IMG_DIR`, `WALI_DIR`, and the GIMP requirement for `edit-current`. Append the prerequisite check and production contract after the existing Python and Zsh lines in the `just test` recipe:
 
 ```just
 @command -v lua >/dev/null || { echo 'lua is required for the Noctalia plugin tests' >&2; exit 127; }

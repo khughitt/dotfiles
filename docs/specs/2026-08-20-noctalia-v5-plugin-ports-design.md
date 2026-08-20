@@ -49,10 +49,10 @@ The installed API level at which each required capability is available is:
 | UI callback closures | 9 | Wali actions and Prism controls |
 | Monotonic `nowMs` | 12 | Prism drag sampling |
 | `setNeedsFrameTick` and `onFrameTick` | 18 | Prism 100 ms live-drag cadence |
-| Luau modules via `require` | 22 | Prism presentation and queue modules |
+| Luau modules via relative `require` | 22 | Both plugins' repository-local modules |
 
-Wali therefore targets API 9 and Prism targets API 22. Both are within the
-installed 3–23 range. Prism enables frame ticks only during a live drag. The
+Wali and Prism therefore target API 22. Both are within the installed 3–23
+range. Prism enables frame ticks only during a live drag. The
 default outside-click dismissal is sufficient, and neither plugin opts into
 the unrelated `persistent` panel setting. Runtime survival across panel close
 remains an acceptance-time hypothesis, not a confirmed constraint.
@@ -244,6 +244,7 @@ The v5 panel preserves the current behavioral contract:
 - toggle, select, slider, and color controls map from `ui.control`;
 - raw, percent, normalized, and logarithmic slider presentation remains
   canonical and snapped to the model's range and step;
+- every slider renders its formatted local value beside the native control;
 - unavailable controls remain visibly unavailable;
 - parameters outside preview scope remain usable but are dimmed and labelled
   while preview is active;
@@ -278,7 +279,14 @@ For live-drag parameters:
 
 For release-only parameters, changes update the local display but only the
 drag-end callback writes. Wheel and keyboard changes receive the same final
-commit boundary from the native v5 slider.
+commit boundary from the native v5 slider. API 22 exposes only `step`,
+`onChange`, and `onDragEnd` for declarative sliders, with no interaction-source
+callback. Normalized and logarithmic controls therefore keep a zero
+presentation step for pointer mapping; at release, the panel recognizes the
+host's exact 5%-of-range discrete delta and converts its direction through one
+canonical grid step. Every other value retains the pointer path. A pointer
+release after exactly the same 5% movement is indistinguishable until the host
+adds an interaction source.
 
 The panel refreshes from `prism describe --json` after a drained parameter
 batch unless its last write is only an active drag sample. A describe result
@@ -334,7 +342,7 @@ correct it in the same change.
 Automated checks cover:
 
 - the Wali and Prism `plugin.toml` manifests, exact entry paths, expected two
-  entries apiece, and explicit `plugin_api` values 9 and 22 (both at most 23);
+  entries apiece, and explicit `plugin_api = 22` values (both at most 23);
 - `noctalia plugins lint` for each source directory;
 - warning-free `noctalia config validate` against the tracked config root;
 - isolated setup topology with disposable Wali and Prism sources, plus an
@@ -350,8 +358,8 @@ Automated checks cover:
 - existing `walictl` behavior;
 - Prism's describe model and rewritten static plugin contract;
 - direct Lua execution of the production, standard-Lua-compatible Prism
-  presentation and queue modules, including golden mapping and coalescing
-  cases;
+  presentation and queue modules, including fixed-point formatting, shipped
+  slider-step vectors, golden mapping, and coalescing cases;
 - the full dotfiles and Prism test suites.
 
 The installed Noctalia linter does not enforce the supported API range, reject

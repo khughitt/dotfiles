@@ -3,7 +3,7 @@ name = "Wali Panel"
 description = "Browse and manage the current Noctalia wallpaper"
 version = "1.0.0"
 author = "Keith Hughitt"
-plugin_api = 9
+plugin_api = 22
 dependencies = ["walictl"]
 
 [[widget]]

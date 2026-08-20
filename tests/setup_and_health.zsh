@@ -321,7 +321,7 @@ assert templates["community_ids"] == ["zathura"]
 assert set(templates["user"]) == {"glow", "nvim", "claude", "codex", "ohai"}
 assert "kitty" not in templates["builtin_ids"]
 assert wali["id"] == "khughitt/wali-panel"
-assert wali["plugin_api"] == 9
+assert wali["plugin_api"] == 22
 assert wali["plugin_api"] <= 23
 assert wali["dependencies"] == ["walictl"]
 assert wali["widget"] == [{"id": "widget", "entry": "widget.luau"}]
