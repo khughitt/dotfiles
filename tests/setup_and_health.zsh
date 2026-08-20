@@ -91,6 +91,9 @@ fi
 if [[ $# -ge 2 && "$1" == config && "$2" == validate ]]; then
   exec /usr/bin/noctalia "$@"
 fi
+if [[ $# -eq 3 && "$1" == config && "$2" == export && "$3" == merged ]]; then
+  exec /usr/bin/noctalia "$@"
+fi
 if [[ $# -eq 2 && "$1" == theme && "$2" == --list-templates ]]; then
   exec /usr/bin/noctalia "$@"
 fi
@@ -260,6 +263,23 @@ test_glow_theme_renders_color() {
   rm -rf "$tmp"
 }
 
+test_noctalia_kitty_theme_renders_palette() {
+  local tmp theme
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  theme="${tmp}/kitty.conf"
+
+  noctalia theme --theme-json "${repo_root}/noctalia/palettes/Glow.json" --dark \
+    -r "${repo_root}/noctalia/templates/kitty.conf:${theme}" >/dev/null 2>&1 || \
+    fail "Noctalia should render the Kitty palette"
+  rg -q '^background[[:space:]]+#333333$' "$theme" || \
+    fail "Kitty palette should contain the rendered terminal background"
+  rg -q '^foreground[[:space:]]+#acf2eb$' "$theme" || \
+    fail "Kitty palette should contain the rendered terminal foreground"
+
+  rm -rf "$tmp"
+}
+
 test_noctalia_v5_config_contract() {
   local tmp output templates
   tmp=$(make_tmpdir)
@@ -284,7 +304,7 @@ test_noctalia_v5_config_contract() {
     XDG_CACHE_HOME="${tmp}/cache" XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should list the tracked template registry"
-  for id in glow nvim claude codex ohai; do
+  for id in glow kitty nvim claude codex ohai; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "missing user template: ${id}"
@@ -318,8 +338,12 @@ assert templates["builtin_ids"] == [
     "hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "btop"
 ]
 assert templates["community_ids"] == ["zathura"]
-assert set(templates["user"]) == {"glow", "nvim", "claude", "codex", "ohai"}
+assert set(templates["user"]) == {"glow", "kitty", "nvim", "claude", "codex", "ohai"}
 assert "kitty" not in templates["builtin_ids"]
+assert templates["user"]["kitty"] == {
+    "input_path": "$XDG_CONFIG_HOME/noctalia/templates/kitty.conf",
+    "output_path": "$XDG_CONFIG_HOME/kitty/themes/noctalia.conf",
+}
 assert wali["id"] == "khughitt/wali-panel"
 assert wali["plugin_api"] == 22
 assert wali["plugin_api"] <= 23
@@ -1134,7 +1158,7 @@ test_noctalia_v5_config_is_installed_and_validated() {
     XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should load the installed template config"
-  for id in glow nvim claude codex ohai; do
+  for id in glow kitty nvim claude codex ohai; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "Noctalia should register the ${id} user template"
@@ -1310,6 +1334,29 @@ test_dotfiles_health_rejects_noctalia_config_warning() {
     fail "health did not explain the validator warning: ${output}"
 }
 
+test_dotfiles_health_rejects_noctalia_template_state_override() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  prepare_health_fixture "$tmp"
+  mkdir -p "${tmp}/home/.local/state/noctalia"
+  cat > "${tmp}/home/.local/state/noctalia/settings.toml" <<'EOF'
+[theme.templates]
+builtin_ids = ["btop", "kitty"]
+community_ids = ["opencode", "zathura"]
+EOF
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted a state-overridden template selection"
+  [[ "$output" == *"merged Noctalia template selection differs"* ]] || \
+    fail "health did not explain the template state override: ${output}"
+}
+
 test_dotfiles_health_fails_wrong_opencode_theme_link() {
   local tmp output exit_status theme_link mockbin
   tmp=$(make_tmpdir)
@@ -1354,6 +1401,7 @@ test_tmp_cleanup_is_centralized
 test_setup_and_health_install_safe_noctalia_stubs
 test_bash_config_is_native_and_minimal
 test_glow_theme_renders_color
+test_noctalia_kitty_theme_renders_palette
 test_noctalia_v5_config_contract
 test_noctalia_template_hook_markers_are_reproducible
 test_compositors_use_noctalia_v5
@@ -1399,6 +1447,7 @@ test_dotfiles_health_fails_wrong_named_niri_glass_config
 test_dotfiles_health_rejects_root_quickshell_config
 test_dotfiles_health_fails_when_prism_doctor_fails
 test_dotfiles_health_rejects_noctalia_config_warning
+test_dotfiles_health_rejects_noctalia_template_state_override
 test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
 

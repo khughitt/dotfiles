@@ -142,7 +142,7 @@ echo "Dotfiles root: $DOTS_HOME"
 echo "Home: $HOME"
 echo "XDG config: $XDG_CONFIG_HOME"
 
-for cmd in zsh git rg fd; do
+for cmd in zsh git rg fd python3; do
     check_command "$cmd"
 done
 
@@ -237,8 +237,26 @@ if [[ "$(uname)" != "Darwin" ]]; then
         fail "Noctalia config validation failed: $output"
     fi
 
+    if merged=$(noctalia config export merged); then
+        if python3 -c '
+import sys, tomllib
+expected = tomllib.load(open(sys.argv[1], "rb"))["theme"]["templates"]
+actual = tomllib.loads(sys.stdin.read())["theme"]["templates"]
+raise SystemExit(any(
+    set(actual[key]) != set(expected[key])
+    for key in ("builtin_ids", "community_ids")
+))
+' "${DOTS_HOME}/noctalia/templates.toml" <<<"$merged" 2>/dev/null; then
+            pass "merged Noctalia template selection matches tracked registry"
+        else
+            fail "merged Noctalia template selection differs from tracked registry"
+        fi
+    else
+        fail "Noctalia merged config export failed"
+    fi
+
     if templates=$(noctalia theme --list-templates 2>&1); then
-        for template_id in glow nvim claude codex ohai; do
+        for template_id in glow kitty nvim claude codex ohai; do
             if printf '%s\n' "$templates" | rg -q "^[[:space:]]+${template_id}[[:space:]]+user([[:space:]]|$)"; then
                 pass "Noctalia user template: $template_id"
             else
@@ -248,7 +266,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
     else
         fail "Noctalia template listing failed: $templates"
     fi
-    unset noctalia_config_dir noctalia_plugin_dir output plugins templates template_id plugin_name
+    unset noctalia_config_dir noctalia_plugin_dir output plugins merged templates template_id plugin_name
 fi
 
 check_absent_stale_config_link "snakemake"

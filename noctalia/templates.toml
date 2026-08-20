@@ -6,6 +6,10 @@ community_ids = ["zathura"]
 input_path = "$XDG_CONFIG_HOME/noctalia/templates/glow.json"
 output_path = "$XDG_CACHE_HOME/noctalia/glow.json"
 
+[theme.templates.user.kitty]
+input_path = "$XDG_CONFIG_HOME/noctalia/templates/kitty.conf"
+output_path = "$XDG_CONFIG_HOME/kitty/themes/noctalia.conf"
+
 [theme.templates.user.nvim]
 input_path = "$XDG_CONFIG_HOME/nvim/lua/user/noctalia/palette-template.json"
 output_path = "$XDG_CACHE_HOME/noctalia/nvim-palette.candidate.json"
