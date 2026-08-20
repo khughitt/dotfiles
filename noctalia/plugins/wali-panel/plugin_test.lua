@@ -71,29 +71,101 @@ assert(not Logic.canStart(true))
 assert(Logic.canCopy("/wall/source.jpg"))
 assert(not Logic.canCopy(nil))
 
-local function read(name)
-  local file = assert(io.open(here .. name, "rb"))
-  local text = file:read("a")
-  file:close()
-  return text
+local rendered
+local runs = {}
+local clipboardCalls = {}
+local toggledPanel
+local widgetGlyph
+
+noctalia = {
+  copyToClipboard = function(text, mimeType)
+    clipboardCalls[#clipboardCalls + 1] = { text, mimeType }
+    return true
+  end,
+  json = {
+    decode = function(text)
+      if text == "with source" then return payload end
+      if text == "without source" then
+        return { ok = true, current_wallpaper_path = "/wall/next.jpg" }
+      end
+      return nil, "invalid JSON"
+    end,
+  },
+  notify = function() end,
+  runAsync = function(command, callback, timeout)
+    runs[#runs + 1] = { command = command, callback = callback, timeout = timeout }
+    return true
+  end,
+  togglePanel = function(id) toggledPanel = id end,
+}
+
+barWidget = {
+  setGlyph = function(glyph) widgetGlyph = glyph end,
+  setTooltip = function() end,
+}
+dofile(here .. "widget.luau")
+equal(widgetGlyph, "wallpaper")
+onClick()
+equal(toggledPanel, "khughitt/wali-panel:panel")
+
+panel = { render = function(tree) rendered = tree end }
+ui = {}
+for _, name in ipairs({ "box", "button", "column", "glyph", "image", "label", "row" }) do
+  local nodeType = name
+  ui[nodeType] = function(props, children)
+    return { type = nodeType, props = props or {}, children = children or {} }
+  end
 end
 
-local function contains(text, literal, message)
-  assert(text:find(literal, 1, true), message or ("missing source contract: " .. literal))
+local realRequire = require
+require = function(path)
+  if path == "./logic.luau" then return dofile(here .. "logic.luau") end
+  if path == "./shell.luau" then return dofile(here .. "shell.luau") end
+  return realRequire(path)
+end
+dofile(here .. "panel.luau")
+require = realRequire
+
+local function button(node, text)
+  if node.type == "button" and node.props.text == text then return node end
+  for _, child in ipairs(node.children) do
+    local found = button(child, text)
+    if found then return found end
+  end
+  return nil
 end
 
-local widget = read("widget.luau")
-contains(widget, 'barWidget.setGlyph("wallpaper")')
-contains(widget, 'noctalia.togglePanel("khughitt/wali-panel:panel")')
-
-local panelSource = read("panel.luau")
-contains(panelSource, "noctalia.runAsync(Shell.command(argv), callback, 10000)")
-contains(panelSource, 'noctalia.copyToClipboard(state.sourcePath, "text/plain")')
-contains(panelSource, "if Logic.refreshAfter(action) then refresh() end")
-contains(panelSource, "state.currentPath or state.sourcePath")
-contains(panelSource, "function onOpen")
-for _, label in ipairs({ "Refresh", "Previous", "Next", "Random", "Save", "Edit", "Copy" }) do
-  contains(panelSource, 'text = "' .. label .. '"', "missing " .. label .. " control")
+local function success(stdout)
+  return { exitCode = 0, stdout = stdout or "", stderr = "", timedOut = false }
 end
+
+onOpen({})
+equal(#runs, 1)
+equal(runs[1].command, Shell.command(commands.current))
+equal(runs[1].timeout, 10000)
+runs[1].callback(success("with source"))
+
+local copy = assert(button(rendered, "Copy"))
+assert(copy.props.enabled)
+copy.props.onClick()
+equal(clipboardCalls, { { "/wall/source.jpg", "text/plain" } })
+
+assert(button(rendered, "Previous")).props.onClick()
+equal(#runs, 2)
+equal(runs[2].command, Shell.command(commands.backward))
+local nextWhileBusy = assert(button(rendered, "Next"))
+assert(not nextWhileBusy.props.enabled)
+nextWhileBusy.props.onClick()
+equal(#runs, 2, "a second action started while the first was busy")
+
+runs[2].callback(success())
+equal(#runs, 3, "successful navigation did not refresh current metadata")
+equal(runs[3].command, Shell.command(commands.current))
+runs[3].callback(success("without source"))
+
+local copyWithoutSource = assert(button(rendered, "Copy"))
+assert(not copyWithoutSource.props.enabled)
+copyWithoutSource.props.onClick()
+equal(clipboardCalls, { { "/wall/source.jpg", "text/plain" } }, "copy ran without a source path")
 
 print("Wali plugin tests passed")
