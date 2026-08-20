@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily familiar-forge CAS mirror
+
+[Timer]
+OnBootSec=20min
+OnUnitActiveSec=1d
+AccuracySec=1h
+Persistent=true
+Unit=forge-cas-mirror.service
+
+[Install]
+WantedBy=timers.target

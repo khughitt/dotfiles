@@ -1,0 +1,7 @@
+[Unit]
+Description=Mirror the familiar-forge CAS into the Dropbox tree
+
+[Service]
+Type=oneshot
+EnvironmentFile=%h/.config/familiar-forge/cas-mirror.env
+ExecStart=%h/d/dotfiles/bin/forge-cas-mirror

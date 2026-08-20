@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Append-only mirror of the familiar-forge CAS into the Dropbox tree.
+set -euo pipefail
+
+src="${FAMILIAR_FORGE_DATA_DIR:-$HOME/.local/share/familiar-forge}/blobs"
+: "${FORGE_CAS_MIRROR:?FORGE_CAS_MIRROR must name the configured mirror root}"
+dest="$FORGE_CAS_MIRROR/blobs"
+
+[ -d "$src" ] || { echo "no CAS at $src"; exit 1; }
+mkdir -p "$dest"
+rsync -a --ignore-existing "$src/" "$dest/"
+
+bad=0
+total=0
+while IFS= read -r -d '' blob; do
+  total=$((total + 1))
+  digest=$(sha256sum "$blob" | cut -d' ' -f1)
+  name=$(basename "$blob")
+  if [ "$digest" != "$name" ]; then
+    echo "CORRUPT: $blob hashes to $digest"
+    bad=$((bad + 1))
+  fi
+done < <(find "$dest" -type f -print0)
+
+src_count=$(find "$src" -type f | wc -l)
+echo "mirror: $total blobs at $dest (source has $src_count); corrupt: $bad"
+[ "$bad" -eq 0 ] || exit 1
+[ "$total" -ge "$src_count" ] || { echo "mirror is missing blobs"; exit 1; }
