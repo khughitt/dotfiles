@@ -172,7 +172,11 @@ msg plugins enable khughitt/prism`. A running v5 shell is therefore an explicit
 precondition for the phase; an unavailable IPC endpoint fails early instead of
 leaving invisible bar entries. Health checks verify the two links, their v5
 manifests, and exact `enabled` lines for both IDs in `noctalia msg plugins
-list`.
+list`. Linux hosts without a running shell pass the explicit
+`dotfiles-health --skip-noctalia-ipc` flag; it skips only the enabled-state
+query, not static plugin, config, or template checks. The default `just health`
+and `just verify` recipes use that offline-safe flag; `just health-live` and
+`just health-systemd` retain the runtime enabled-state gate.
 
 ## Wali Panel
 
@@ -335,6 +339,9 @@ Automated checks cover:
 - warning-free `noctalia config validate` against the tracked config root;
 - isolated setup topology with disposable Wali and Prism sources, plus an
   expected early failure when the Prism source or Noctalia IPC is absent;
+- a shared test stub used by setup and health that forwards only read-only
+  config validation and template listing, intercepts plugin enable/list IPC,
+  and rejects every other Noctalia command;
 - the explicit setup phase's two exact plugin-enable IPC calls and health rejection
   when either installed plugin is not enabled;
 - health-check rejection of missing, wrong, or v4 plugin links;
@@ -356,14 +363,17 @@ gates, not duplicates of those tools.
 
 The production presentation and queue modules stay within the standard
 Lua-compatible Luau subset so the already-installed Lua interpreter can
-execute their tests without a new dependency. Those modules therefore use no
-Luau type annotations, `continue`, or other Luau-only syntax; the direct Lua
-test run enforces that constraint.
+execute their tests without adding a project package dependency. Those modules
+therefore use no Luau type annotations, `continue`, or other Luau-only syntax;
+the direct Lua test run enforces that constraint. Prism exposes that check as
+`npm run test:plugin-lua`, runs its existing Node suite first, and documents the
+`lua` executable as a development prerequisite.
 
 Live acceptance begins with an enablement preflight. `noctalia config export
 merged` must show both IDs in `[plugins] enabled`, `noctalia msg plugins list`
-must report both exact IDs as enabled, and the log must report `loaded plugin
-'<id>' (2 entries)` for each. A disabled or missing plugin stops acceptance.
+must report both exact IDs as enabled, and
+`~/.cache/noctalia/noctalia.log` must report `loaded plugin '<id>' (2 entries)`
+for each. A disabled or missing plugin stops acceptance.
 
 Then:
 
@@ -372,7 +382,8 @@ Then:
    not survive close as expected.
 1. Both bar widgets render and open their panels attached to the originating
    bar. Their 588 by 798 footprints match the scaled v4 panels without clipping.
-2. Noctalia logs contain no Luau compile, timeout, or runtime errors.
+2. `~/.cache/noctalia/noctalia.log` contains no Luau compile, timeout, or
+   runtime errors for either plugin.
 3. Wali current metadata, navigation, random, copy, save, and edit behavior is
    exercised, including an unavailable-source error.
 4. Prism renders every visible parameter from `prism describe --json`.

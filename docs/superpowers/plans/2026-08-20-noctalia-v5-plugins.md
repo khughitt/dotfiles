@@ -21,7 +21,8 @@
 - Do not add dependencies, a v4 compatibility layer, API-version branches, a standalone Quickshell wrapper, or duplicated wallpaper/Prism domain logic.
 - Tracked Noctalia config must not declare `[plugins] enabled`; the state layer replaces it. Setup enables both plugins through IPC after linking them.
 - The plugin activation phase is explicit and opt-in. A fresh machine runs ordinary setup, starts Noctalia, then runs `./setup.sh --only noctalia-plugins`; unavailable IPC fails that phase loudly.
-- Automated setup tests must intercept every `noctalia msg plugins enable` call and must never change the developer's live Noctalia state.
+- Automated tests must intercept every Noctalia plugin IPC call. The stub may forward only `config validate` and `theme --list-templates`; every other unrecognized command fails with exit 64.
+- Linux health checks require a live Noctalia instance unless the caller passes the explicit `--skip-noctalia-ipc` flag; static plugin link and manifest checks always run.
 - Use `~/d/prism` in documentation and commands; do not add machine-specific physical paths.
 - Use conventional commits without attribution trailers.
 
@@ -32,8 +33,9 @@
 ### Dotfiles repository
 
 - Modify `setup.sh`: add the explicit `noctalia-plugins` phase, link both source directories under `$XDG_DATA_HOME/noctalia/plugins`, then issue the two exact enable calls.
-- Modify `tests/setup_and_health.zsh`: install the Noctalia test stub first; cover phase selection, exact IPC, source failures, manifests, bar configuration, links, and health failures.
-- Modify `bin/dotfiles-health`: validate both local plugin links, reject v4 manifests, and require both IDs to be reported enabled.
+- Modify `tests/setup_and_health.zsh`: install shared deny-by-default test commands for both setup and health; cover phase selection, exact IPC, source failures, manifests, bar configuration, links, and health failures.
+- Modify `justfile`: include Wali's direct Lua contract in the normal dotfiles test suite.
+- Modify `bin/dotfiles-health`: validate both local plugin links, reject v4 manifests, and require both IDs to be reported enabled unless `--skip-noctalia-ipc` is set.
 - Modify `noctalia/config.toml`: replace the built-in `wallpaper` widget with the two fully qualified plugin widget IDs and omit widget aliases and tracked enablement.
 - Replace `noctalia/plugins/wali-panel/{manifest.json,Main.qml,BarWidget.qml,Panel.qml}` with `plugin.toml`, `shell.luau`, `logic.luau`, `widget.luau`, `panel.luau`, `plugin_test.lua`, and `README.md`.
 - Modify `noctalia/noctalia.md` and `noctalia/noctalia-wallpaper-switcher.md`: document the restored plugins and activation flow.
@@ -46,7 +48,8 @@
 - Modify `test/plugin-presentation.test.js`: keep shipped-definition coverage; move production presentation calculations to the Lua test.
 - Remove `test/plugin-queue.test.js`: its cases move unchanged to the test that loads production `queue.luau`.
 - Rewrite `test/plugin-client.test.js`: assert the v5 lifecycle, frame-tick, preview, and error contract instead of QML syntax.
-- Modify `package.json`: execute `plugin_test.lua` before the existing Node suite.
+- Modify `package.json`: expose the Lua contract as `test:plugin-lua` and run it after the existing Node suite.
+- Modify `README.md`: list `lua` as a development prerequisite for the Noctalia plugin test.
 - Rewrite `docs/notes/noctalia-plugin-contract.md`: describe v5 Luau entries and remove v4 QML loader claims.
 
 ---
@@ -101,54 +104,93 @@ Expected: both suites pass before the first RED test.
 **Interfaces:**
 - Consumes: existing `run`, `ln_s`, `run_phase`, `ONLY_PHASES`, `XDG_DATA_HOME`, and `HEADLESS` behavior.
 - Produces: `setup_noctalia_plugins()` and an opt-in `noctalia-plugins` phase that links both plugin directories and enables `khughitt/wali-panel` followed by `khughitt/prism`.
-- Produces for later tests: `NOCTALIA_TEST_LOG`, `NOCTALIA_ENABLE_STATUS`, and `NOCTALIA_PLUGIN_LIST` controls in the isolated command stub.
+- Produces for later tests: `install_test_stubs(tmp)`, called by both `run_setup` and `run_health`, plus `NOCTALIA_TEST_LOG`, `NOCTALIA_ENABLE_STATUS`, and `NOCTALIA_PLUGIN_LIST` controls.
 
-- [ ] **Step 1: Install the Noctalia stub before writing any production IPC call**
+- [ ] **Step 1: Install shared deny-by-default stubs before writing any production IPC call**
 
-Add `${tmp}/bin/noctalia` inside `run_setup`, next to the existing Prism stub:
+Move the existing Prism stub and the new Noctalia stub into `install_test_stubs()`. The helper creates a command only when the test has not supplied its own override, then both `run_setup` and `run_health` call it before invoking repository code:
 
 ```bash
-cat > "${tmp}/bin/noctalia" <<'EOF'
+install_test_stubs() {
+  local tmp="$1"
+  mkdir -p "${tmp}/bin"
+
+  if [[ ! -e "${tmp}/bin/noctalia" ]]; then
+    cat > "${tmp}/bin/noctalia" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-case "$*" in
-    "msg plugins enable "*)
-        [[ -n "${NOCTALIA_TEST_LOG:-}" ]] && printf '%s\n' "$*" >> "$NOCTALIA_TEST_LOG"
-        exit "${NOCTALIA_ENABLE_STATUS:-0}"
-        ;;
-    "msg plugins list")
-        printf '%s\n' "${NOCTALIA_PLUGIN_LIST:-khughitt/wali-panel [local] 1.0.0 enabled
+if [[ $# -eq 4 && "$1" == msg && "$2" == plugins && "$3" == enable ]]; then
+  [[ -n "${NOCTALIA_TEST_LOG:-}" ]] && printf '%s\n' "$*" >> "$NOCTALIA_TEST_LOG"
+  exit "${NOCTALIA_ENABLE_STATUS:-0}"
+fi
+if [[ $# -eq 3 && "$1" == msg && "$2" == plugins && "$3" == list ]]; then
+  printf '%s\n' "${NOCTALIA_PLUGIN_LIST:-khughitt/wali-panel [local] 1.0.0 enabled
 khughitt/prism [local] 1.0.0 enabled}"
-        ;;
-    *)
-        exec /usr/bin/noctalia "$@"
-        ;;
-esac
+  exit 0
+fi
+if [[ $# -ge 2 && "$1" == config && "$2" == validate ]]; then
+  exec /usr/bin/noctalia "$@"
+fi
+if [[ $# -eq 2 && "$1" == theme && "$2" == --list-templates ]]; then
+  exec /usr/bin/noctalia "$@"
+fi
+printf 'unexpected Noctalia test command:' >&2
+printf ' %q' "$@" >&2
+printf '\n' >&2
+exit 64
 EOF
-chmod +x "${tmp}/bin/noctalia"
+    chmod +x "${tmp}/bin/noctalia"
+  fi
+
+  if [[ ! -e "${tmp}/bin/prism" ]]; then
+    cat > "${tmp}/bin/prism" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "$*" == doctor ]] || exit 64
+[[ -n "${PRISM_DOCTOR_LOG:-}" ]] && printf '%s\n' "$*" >> "$PRISM_DOCTOR_LOG"
+if [[ "${PRISM_DOCTOR_STATUS:-0}" -ne 0 ]]; then
+  printf '%s\n' "doctor: niri: generated file missing: prism.kdl" >&2
+  exit "$PRISM_DOCTOR_STATUS"
+fi
+printf '%s\n' "doctor: ok"
+EOF
+    chmod +x "${tmp}/bin/prism"
+  fi
+}
 ```
 
-The enable branch must precede the `/usr/bin/noctalia` fallback. The fallback is only for read-only validation and template listing already exercised by this harness.
+The only pass-through commands are the two existing read-only probes. `msg plugins disable`, unknown plugin verbs, malformed enable/list calls, and every other command exit 64 without reaching `/usr/bin/noctalia`. Keep the custom-stub guard because the existing macOS health test deliberately installs a sentinel Noctalia executable.
 
-- [ ] **Step 2: Prove the stub captures enablement without reaching the live binary**
+- [ ] **Step 2: Prove both wrappers install the stub and unknown IPC cannot escape**
 
-Add a test that invokes the stub through `run_setup`'s PATH and asserts the log contains only the requested fake ID. Do not invoke `setup.sh` yet:
+Use separate temporary trees so `run_health` cannot inherit a stub installed by `run_setup`:
 
 ```zsh
-test_run_setup_stubs_noctalia_plugin_enable() {
-  local tmp log
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  log="${tmp}/noctalia.log"
+test_setup_and_health_install_safe_noctalia_stubs() {
+  local setup_tmp health_tmp log status
+  setup_tmp=$(make_tmpdir)
+  health_tmp=$(make_tmpdir)
+  register_tmp_cleanup "$setup_tmp"
+  register_tmp_cleanup "$health_tmp"
+  log="${setup_tmp}/noctalia.log"
 
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  NOCTALIA_TEST_LOG="$log" run_setup "$tmp" --help >/dev/null
-  NOCTALIA_TEST_LOG="$log" PATH="${tmp}/bin:$PATH" \
+  NOCTALIA_TEST_LOG="$log" run_setup "$setup_tmp" --help >/dev/null
+  NOCTALIA_TEST_LOG="$log" PATH="${setup_tmp}/bin:$PATH" \
     noctalia msg plugins enable test/never-live
-
   [[ "$(<"$log")" == "msg plugins enable test/never-live" ]] || \
     fail "Noctalia enable stub did not capture the exact IPC call"
+
+  set +e
+  PATH="${setup_tmp}/bin:$PATH" noctalia msg plugins disable test/never-live
+  status=$?
+  set -e
+  (( status == 64 )) || fail "Noctalia test stub forwarded an unknown mutating command"
+
+  run_health "$health_tmp" --help >/dev/null
+  [[ -x "${health_tmp}/bin/noctalia" ]] || \
+    fail "run_health did not install its own Noctalia stub"
 }
 ```
 
@@ -212,7 +254,7 @@ Then add a disposable-topology test that runs the explicit phase with `PRISM_PLU
 zsh tests/setup_and_health.zsh
 ```
 
-Expected: failure because `noctalia-plugins` is not a valid phase. Verify the logged fake enable call did not alter `noctalia msg plugins list` on the live desktop.
+Expected: failure because `noctalia-plugins` is not a valid phase. The deny-by-default stub makes a live mutation impossible during this RED run.
 
 - [ ] **Step 5: Implement the opt-in phase**
 
@@ -301,12 +343,13 @@ assert(Shell.command({"prism", "set", "name with space", "a'b"}) ==
 
 Port every queue case: immediate launch, same-key sample coalescing, cross-key FIFO, final-write ordering, preview ordering, exact argv arrays, parameter-affecting classification, and drain refresh decisions. Assert preview-show always emits side `left`; delete the old `oppositeSide` case.
 
-- [ ] **Step 2: Make `npm test` run the direct Lua test and confirm RED**
+- [ ] **Step 2: Add a named Lua test gate after the Node suite and confirm RED**
 
-Change the script to:
+Change the scripts to:
 
 ```json
-"test": "lua integrations/noctalia-plugin/plugin_test.lua && node --test test/*.test.js integrations/noctalia-plugin/contract.test.mjs"
+"test": "node --test test/*.test.js integrations/noctalia-plugin/contract.test.mjs && npm run test:plugin-lua",
+"test:plugin-lua": "command -v lua >/dev/null || { echo 'lua is required for the Noctalia plugin tests' >&2; exit 127; }; lua integrations/noctalia-plugin/plugin_test.lua"
 ```
 
 Run:
@@ -315,7 +358,7 @@ Run:
 npm test
 ```
 
-Expected: failure because the `.luau` modules do not exist.
+Expected: the existing Node tests run first, then `test:plugin-lua` fails because the `.luau` modules do not exist. On a machine without Lua, the named subtest prints the explicit prerequisite instead of hiding why the suite stopped.
 
 - [ ] **Step 3: Translate the existing modules without changing their algorithms**
 
@@ -549,7 +592,6 @@ Preview hide argv is exactly:
 ```bash
 cd ~/d/prism/.worktrees/noctalia-v5-plugin
 noctalia plugins lint integrations/noctalia-plugin
-lua integrations/noctalia-plugin/plugin_test.lua
 npm test
 ```
 
@@ -567,6 +609,7 @@ git commit -m "feat(noctalia): port Prism plugin to v5"
 ### Task 4: Document and Verify the Prism Contract
 
 **Files:**
+- Modify: `~/d/prism/.worktrees/noctalia-v5-plugin/README.md`
 - Modify: `~/d/prism/.worktrees/noctalia-v5-plugin/docs/notes/noctalia-plugin-contract.md`
 
 **Interfaces:**
@@ -584,10 +627,12 @@ panel entry: khughitt/prism:panel
 plugin API: 22
 backends: prism, qs -c niri-glass
 preview side: left
-production core tests: lua integrations/noctalia-plugin/plugin_test.lua
+production core tests: npm run test:plugin-lua
 ```
 
 State that panel-runtime survival after close is verified live before cutover, not promised by lint or manifest metadata.
+
+Add `lua` to Prism's development prerequisites in `README.md` and name `npm run test:plugin-lua` as the direct Noctalia plugin contract check. Do not add a package dependency; the production plugin still runs inside Noctalia.
 
 - [ ] **Step 2: Scan Prism docs for stale v4 claims**
 
@@ -602,7 +647,7 @@ Expected: no user-facing stale claim. References in git history do not count.
 
 ```bash
 npm test
-git add docs/notes/noctalia-plugin-contract.md
+git add README.md docs/notes/noctalia-plugin-contract.md
 git commit -m "docs(noctalia): document Prism v5 plugin"
 ```
 
@@ -623,6 +668,7 @@ git commit -m "docs(noctalia): document Prism v5 plugin"
 - Delete: `noctalia/plugins/wali-panel/BarWidget.qml`
 - Delete: `noctalia/plugins/wali-panel/Panel.qml`
 - Modify: `tests/setup_and_health.zsh`
+- Modify: `justfile`
 
 **Interfaces:**
 - Widget toggles `khughitt/wali-panel:panel`.
@@ -735,15 +781,17 @@ Render the best available image (`currentPath`, then `sourcePath`), source path,
 
 - [ ] **Step 5: Remove v4 sources and document runtime requirements**
 
-Delete the four v4 files. In `README.md`, document API 9, canonical entries, the `walictl` dependency, `BACKGROUND_IMG_DIR`, `WALI_DIR`, and the GIMP requirement for `edit-current`.
+Delete the four v4 files. In `README.md`, document API 9, canonical entries, the `walictl` dependency, `BACKGROUND_IMG_DIR`, `WALI_DIR`, and the GIMP requirement for `edit-current`. Add this first line to the `just test` recipe so the production Lua helpers stay in the standard suite:
+
+```just
+lua noctalia/plugins/wali-panel/plugin_test.lua
+```
 
 - [ ] **Step 6: Run Wali's focused gates**
 
 ```bash
-lua noctalia/plugins/wali-panel/plugin_test.lua
 noctalia plugins lint noctalia/plugins/wali-panel
-pytest -q tests/bin/test_walictl.py
-zsh tests/setup_and_health.zsh
+just test
 ```
 
 Expected: direct Lua test, manifest contract, linter, existing walictl backend suite, and setup suite all pass.
@@ -751,7 +799,7 @@ Expected: direct Lua test, manifest contract, linter, existing walictl backend s
 - [ ] **Step 7: Commit Wali v5**
 
 ```bash
-git add noctalia/plugins/wali-panel tests/setup_and_health.zsh
+git add noctalia/plugins/wali-panel tests/setup_and_health.zsh justfile
 git commit -m "feat(noctalia): port Wali panel to v5"
 ```
 
@@ -762,12 +810,16 @@ git commit -m "feat(noctalia): port Wali panel to v5"
 **Files:**
 - Modify: `noctalia/config.toml:22-29`
 - Modify: `tests/setup_and_health.zsh:184-238,807-850,998-1020`
-- Modify: `bin/dotfiles-health:185-215`
+- Modify: `tests/justfile.zsh`
+- Modify: `justfile`
+- Modify: `bin/dotfiles-health:1-30,185-230`
 
 **Interfaces:**
 - Consumes: local source directories and setup links from Tasks 1, 3, and 5.
 - Produces: exact default bar order and health failure for missing/wrong/v4 links or either plugin not enabled.
 - Health recognizes only lines matching `^khughitt/wali-panel .* enabled$` and `^khughitt/prism .* enabled$` from `noctalia msg plugins list`.
+- `dotfiles-health --skip-noctalia-ipc` skips only the live enabled-state query; link, manifest, config-validation, and template checks still run.
+- `just health` and `just verify` remain safe without a running shell; `just health-live` and `just health-systemd` retain runtime checks.
 
 - [ ] **Step 1: Tighten the tracked configuration contract and confirm RED**
 
@@ -801,7 +853,7 @@ Extend the setup test to assert:
 [[ ! -e "${tmp}/data/noctalia/plugins/prism/manifest.json" ]]
 ```
 
-For health, add separate tests that replace one symlink with a wrong target, substitute a fixture containing only `manifest.json`, omit Wali's enabled line, and omit Prism's enabled line. Each must return non-zero and name the failing plugin.
+For health, add separate tests that replace one symlink with a wrong target, substitute a fixture containing only `manifest.json`, omit Wali's enabled line, and omit Prism's enabled line. Each must return non-zero and name the failing plugin. Add one offline test where `NOCTALIA_PLUGIN_LIST='other/plugin [local] 1.0.0 disabled'` fails normally but the same static fixture passes with `--skip-noctalia-ipc`; repeat the wrong-link case with the flag to prove it skips no static check.
 
 - [ ] **Step 4: Run the focused tests and confirm RED**
 
@@ -811,7 +863,39 @@ zsh tests/setup_and_health.zsh
 
 Expected: failures because health does not inspect the data directory or enabled list.
 
-- [ ] **Step 5: Implement the health checks**
+- [ ] **Step 5: Add the explicit offline-health option**
+
+Initialize and parse the flag beside `SKIP_SYSTEMD`:
+
+```bash
+SKIP_NOCTALIA_IPC=false
+
+case "$1" in
+    --skip-noctalia-ipc)
+        SKIP_NOCTALIA_IPC=true
+        shift
+        ;;
+esac
+```
+
+Update usage to `dotfiles-health [--skip-systemd] [--skip-noctalia-ipc]` and describe it as skipping live Noctalia plugin enablement only. Do not infer this state from SSH, TTY, `DISPLAY`, or `WAYLAND_DISPLAY`.
+
+Update and test the recipes explicitly:
+
+```just
+health:
+    bin/dotfiles-health --skip-systemd --skip-noctalia-ipc
+
+health-live:
+    bin/dotfiles-health --skip-systemd
+
+health-systemd:
+    bin/dotfiles-health
+```
+
+`verify: check test health` remains unchanged and therefore uses the offline-safe recipe. `tests/justfile.zsh` must assert all three command lines.
+
+- [ ] **Step 6: Implement the static and live health checks**
 
 Add `XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"` near existing XDG defaults. In the Linux Noctalia block:
 
@@ -832,16 +916,16 @@ for plugin_name in wali-panel prism; do
 done
 ```
 
-Run `noctalia msg plugins list` once. Require:
+Unless `SKIP_NOCTALIA_IPC` is true, run `noctalia msg plugins list` once. Require:
 
 ```bash
 printf '%s\n' "$plugins" | rg -q '^khughitt/wali-panel .* enabled$'
 printf '%s\n' "$plugins" | rg -q '^khughitt/prism .* enabled$'
 ```
 
-Report a distinct failure for each missing enabled line. A command failure is a health failure, not a warning.
+Report a distinct failure for each missing enabled line. A command failure is a health failure, not a warning. With the flag, print one `[OK]` line stating that the live plugin check was explicitly skipped.
 
-- [ ] **Step 6: Run all dotfiles automated gates**
+- [ ] **Step 7: Run all dotfiles automated gates**
 
 ```bash
 noctalia config validate noctalia
@@ -852,10 +936,11 @@ just test
 
 Expected: config validation contains no `WARN`/`ERROR`, plugin lint is clean, and the full suite passes. Remember that config validation does not validate the bar widget IDs; the Python assertions do.
 
-- [ ] **Step 7: Commit integration**
+- [ ] **Step 8: Commit integration**
 
 ```bash
-git add noctalia/config.toml bin/dotfiles-health tests/setup_and_health.zsh
+git add noctalia/config.toml bin/dotfiles-health justfile \
+  tests/setup_and_health.zsh tests/justfile.zsh
 git commit -m "feat(noctalia): install local v5 plugins"
 ```
 
@@ -938,13 +1023,11 @@ Use `superpowers:verification-before-completion`:
 
 ```bash
 cd ~/d/prism/.worktrees/noctalia-v5-plugin
-lua integrations/noctalia-plugin/plugin_test.lua
 noctalia plugins lint integrations/noctalia-plugin
 npm test
 git status --short
 
 cd ~/d/dotfiles/.worktrees/noctalia-v5-plugins
-lua noctalia/plugins/wali-panel/plugin_test.lua
 noctalia plugins lint noctalia/plugins/wali-panel
 noctalia config validate noctalia
 just test
@@ -1001,8 +1084,12 @@ Expected: both local links point into main checkouts and both enable calls succe
 
 ```bash
 noctalia config export merged | sed -n '/\[plugins\]/,/^\[/p'
-noctalia msg plugins list | rg '^khughitt/(wali-panel|prism) .* enabled$'
-qs log -c noctalia-shell | rg "loaded plugin '(khughitt/wali-panel|khughitt/prism)' \(2 entries\)"
+plugins=$(noctalia msg plugins list)
+for id in khughitt/wali-panel khughitt/prism; do
+  printf '%s\n' "$plugins" | rg -q "^${id} .* enabled$" || exit 1
+  rg -q "loaded plugin '${id}' \(2 entries\)" \
+    ~/.cache/noctalia/noctalia.log || exit 1
+done
 dotfiles-health
 ```
 
@@ -1017,7 +1104,7 @@ Open Prism, start a deliberately observable queued write, close the panel before
 Verify:
 
 1. Both widgets render and open attached 588 by 798 panels without clipping or double-scaling.
-2. No Noctalia log contains Luau compile, timeout, or runtime errors.
+2. `~/.cache/noctalia/noctalia.log` contains no Luau compile, timeout, or runtime errors for either plugin.
 3. Wali refresh, previous, next, random, copy, save, edit, and unavailable-source error all work.
 4. Prism renders all visible `prism describe --json` parameters.
 5. Toggle, slider, select, and color writes reconcile to authoritative values.
