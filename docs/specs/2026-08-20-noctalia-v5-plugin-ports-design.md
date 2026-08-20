@@ -1,6 +1,6 @@
 # Noctalia v5 Wali and Prism plugin ports
 
-**Status:** Approved; implementation pending.
+**Status:** Revised after review; approval pending.
 
 ## Goal
 
@@ -17,6 +17,9 @@ This work spans two repositories:
   `~/d/prism/integrations/noctalia-plugin/`.
 
 Memory Pressure Alert and the other deferred v4 plugins remain out of scope.
+The vendored Pomodoro plugin matches the available
+`thepunkoff/pomodoro 1.2.0` community plugin; replacing it is a separate
+delete-and-enable cleanup, not a port.
 
 ## Constraints confirmed before design
 
@@ -30,12 +33,29 @@ Memory Pressure Alert and the other deferred v4 plugins remain out of scope.
   buttons, toggles, sliders, selects, scrolling, and native color-picker
   callbacks.
 - A panel runtime starts lazily on first open and persists across later closes
-  and reopens. Its state can therefore own Prism's serialized command queue.
+  and reopens. This host lifecycle is independent of the optional manifest
+  `persistent` panel setting, which neither plugin needs to declare. The
+  runtime can therefore own Prism's serialized command queue.
 - The v5 widget API exposes the widget's output but not its global screen
   coordinate or bar section.
 - `noctalia/config.toml` currently places `ui_scale` under `[shell]`, which the
   installed validator now reports as an unknown setting. The current schema
   places it under `[accessibility]`.
+
+The installed API level at which each required capability is available is:
+
+| Capability | API | Use |
+| --- | ---: | --- |
+| String-form `runAsync`, JSON, notifications, shared-state read/write, focused output, clipboard, color picker, panel toggle, and basic UI callbacks | 3 | Both plugins |
+| UI callback closures | 9 | Wali actions and Prism controls |
+| Monotonic `nowMs` | 12 | Prism drag sampling |
+| `setNeedsFrameTick` and `onFrameTick` | 18 | Prism 100 ms live-drag cadence |
+| Luau modules via `require` | 22 | Prism presentation and queue modules |
+
+Wali therefore targets API 9 and Prism targets API 22. Both are within the
+installed 3–23 range. Prism enables frame ticks only during a live drag. The
+default outside-click dismissal is sufficient, and neither plugin opts into
+the unrelated `persistent` panel setting.
 
 References:
 
@@ -88,13 +108,28 @@ $XDG_DATA_HOME/noctalia/plugins/prism
   -> ~/d/prism/integrations/noctalia-plugin
 ```
 
-The tracked Noctalia config enables both canonical IDs, declares named widget
-instances, and adds them to the end section of the default bar. Local drop-ins
-have higher precedence than configured official and community sources, so no
-extra plugin source is required.
+The tracked Noctalia config enables both canonical IDs and declares the exact
+widget instances supported by v5:
 
-Setup fails early if either source is missing. Health checks verify the two
-links, their v5 manifests, and the configured enabled IDs.
+```toml
+[widget.prism]
+type = "khughitt/prism:widget"
+
+[widget.wali]
+type = "khughitt/wali-panel:widget"
+```
+
+The default bar's end list becomes `tray`, `battery`, `notifications`,
+`output_volume`, `prism`, `wali`, `clock`. The temporary built-in `wallpaper`
+stand-in is removed so two wallpaper controls are not shipped side by side.
+Local drop-ins have higher precedence than configured official and community
+sources, so no extra plugin source is required.
+
+Setup fails early if either source is missing. This deliberately makes
+graphical dotfiles setup depend on the adjacent `~/d/prism` checkout, matching
+the existing niri-glass integration; headless setup remains independent.
+Health checks verify the two links, their v5 manifests, and the configured
+enabled IDs.
 
 ## Wali Panel
 
@@ -117,8 +152,8 @@ The v5 plugin contains one bar widget and one panel:
   navigation;
 - the panel displays the best available current/source image, source path,
   and parsed date;
-- previous, next, random, save, and edit actions call the corresponding
-  `walictl` subcommands;
+- previous, next, random, save, and edit actions call `walictl backward`,
+  `forward`, `random`, `save-current`, and `edit-current`, respectively;
 - copy uses `noctalia.copyToClipboard` rather than spawning `wl-copy`.
 
 Only one action runs at a time. Navigation reloads the current metadata after
@@ -180,7 +215,7 @@ The v5 API does not expose the widget's global coordinate, so it cannot compute
 the generic opposite side used by the QML implementation. Dotfiles owns the
 replacement invariant: Prism remains in the right/end bar section and the
 preview opens on the left. Moving the widget requires updating that placement
-decision.
+decision. The old `presentation.oppositeSide()` helper is deleted.
 
 ### Serialized commands and dragging
 
@@ -204,8 +239,9 @@ started before or during a new drag is marked stale, discarded, and replayed
 after release. This preserves local slider identity and prevents an
 authoritative refresh from replacing a pressed control.
 
-Closing the panel queues preview hide. The persistent panel runtime owns the
-queue across closes, so cleanup and in-flight writes are not abandoned.
+Closing the panel queues preview hide. The host keeps the panel runtime alive
+across closes, so cleanup and in-flight writes are not abandoned; this does
+not require the manifest's `persistent` panel option.
 
 ### API-23 subprocess safety
 
@@ -228,8 +264,10 @@ without reopening the panel.
 
 ## Configuration and documentation
 
-Before enabling plugins, move `ui_scale = 1.05` from `[shell]` to
-`[accessibility]` so the tracked baseline validates without warnings.
+Before plugin implementation begins, land the independent fix that moves
+`ui_scale = 1.05` from `[shell]` to `[accessibility]`. It is a current
+configuration-health regression, not a plugin prerequisite to bundle into
+either plugin change.
 
 Update:
 
@@ -246,21 +284,34 @@ correct it in the same change.
 
 Automated checks cover:
 
-- the Wali and Prism `plugin.toml` manifests and entry paths;
+- the Wali and Prism `plugin.toml` manifests, exact entry paths, expected two
+  entries apiece, and explicit `plugin_api` values 9 and 22 (both at most 23);
 - `noctalia plugins lint` for each source directory;
 - warning-free `noctalia config validate` against the tracked config root;
-- isolated setup topology with disposable Wali and Prism sources;
+- isolated setup topology with disposable Wali and Prism sources, plus an
+  expected early failure when the Prism source is absent;
 - health-check rejection of missing, wrong, or v4 plugin links;
-- tracked enabled IDs, widget declarations, and bar placement;
+- exact top-level `[widget.prism]` and `[widget.wali]` declarations and their
+  names in the default bar end list, including removal of `wallpaper`;
 - existing `walictl` behavior;
-- Prism's describe model and static plugin contract;
+- Prism's describe model and rewritten static plugin contract;
+- direct Lua execution of the production, standard-Lua-compatible Prism
+  presentation and queue modules, including golden mapping and coalescing
+  cases;
 - the full dotfiles and Prism test suites.
 
-The installed Noctalia linter cross-checks manifests, settings, and entry
-files, but does not compile Luau. Live acceptance is therefore a required
-runtime gate:
+The installed Noctalia linter does not enforce the supported API range, reject
+unknown manifest keys, verify that entry types are host-recognized, or compile
+Luau. `noctalia config validate` likewise does not validate widget names in a
+bar section list. The explicit static assertions above are therefore separate
+gates, not duplicates of those tools. The production presentation and queue
+modules stay within the Lua-compatible Luau subset so the already-installed
+Lua interpreter can execute their tests without a new dependency.
 
-1. Both local plugins appear enabled in `noctalia msg plugins list`.
+Live acceptance is also required:
+
+1. Both local plugins appear enabled in `noctalia msg plugins list`, and the
+   log reports `loaded plugin '<id>' (2 entries)` for each exact ID.
 2. Both bar widgets render and open their panels.
 3. Noctalia logs contain no Luau compile, timeout, or runtime errors.
 4. Wali current metadata, navigation, random, copy, save, and edit behavior is
@@ -271,15 +322,21 @@ runtime gate:
 8. Live and release-only sliders exhibit their distinct write timing.
 9. Preview targets the originating output, uses the left side, switches its
    diagnostic background, and hides when the panel closes.
+10. The live config directory contains no stale `user-templates.toml` (or
+    other v4 file still matched by the v5 `*.toml` loader), and live config
+    validation is warning-free.
 
 ## Landing order
 
-1. Implement and commit the Prism v5 plugin in a fresh Prism worktree.
-2. Implement Wali, configuration, installation, health checks, and docs in the
+1. Land the independent Noctalia `ui_scale` schema fix.
+2. Implement and commit the Prism v5 plugin in a fresh Prism worktree.
+3. Implement Wali, configuration, installation, health checks, and docs in the
    dotfiles worktree.
-3. Run both repositories' automated suites.
-4. Merge Prism first, then dotfiles.
-5. Run setup from the dotfiles main checkout, reload Noctalia, and perform live
+4. Run both repositories' automated suites.
+5. Merge Prism first, then dotfiles.
+6. Remove or rename the stale live `user-templates.toml` outside the v5
+   `*.toml` load pattern.
+7. Run setup from the dotfiles main checkout, reload Noctalia, and perform live
    acceptance.
 
 This order prevents tracked dotfiles from enabling a Prism plugin that its
