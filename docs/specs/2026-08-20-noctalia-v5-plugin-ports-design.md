@@ -1,6 +1,6 @@
 # Noctalia v5 Wali and Prism plugin ports
 
-**Status:** Revised after review; approval pending.
+**Status:** Approved; implementation pending.
 
 ## Goal
 
@@ -158,16 +158,18 @@ instead of weakening health with an allowlist. The temporary built-in
 by side. Local drop-ins have higher precedence than configured official and
 community sources, so no extra plugin source is required.
 
-Setup fails early if either source is missing. This deliberately makes
-graphical dotfiles setup depend on the adjacent `~/d/prism` checkout, matching
-the existing niri-glass integration; headless setup remains independent.
+The explicit `noctalia-plugins` setup phase fails early if either source is
+missing. This deliberately makes plugin activation depend on the adjacent
+`~/d/prism` checkout, matching the existing niri-glass integration; ordinary
+and headless setup remain independent.
 
 Tracked `[plugins] enabled` is deliberately omitted: state settings override
 that array wholesale, so tracked enablement silently loses after any GUI or IPC
-plugin toggle. After linking both sources, graphical setup instead runs
-`noctalia msg plugins enable khughitt/wali-panel` and `noctalia msg plugins
-enable khughitt/prism`. A running v5 shell is therefore an explicit precondition
-for graphical plugin setup; an unavailable IPC endpoint fails early instead of
+plugin toggle. A fresh machine runs ordinary setup, starts Noctalia, then runs
+`./setup.sh --only noctalia-plugins`. That named phase links both sources and
+runs `noctalia msg plugins enable khughitt/wali-panel` followed by `noctalia
+msg plugins enable khughitt/prism`. A running v5 shell is therefore an explicit
+precondition for the phase; an unavailable IPC endpoint fails early instead of
 leaving invisible bar entries. Health checks verify the two links, their v5
 manifests, and exact `enabled` lines for both IDs in `noctalia msg plugins
 list`.
@@ -333,7 +335,7 @@ Automated checks cover:
 - warning-free `noctalia config validate` against the tracked config root;
 - isolated setup topology with disposable Wali and Prism sources, plus an
   expected early failure when the Prism source or Noctalia IPC is absent;
-- graphical setup's two exact plugin-enable IPC calls and health rejection
+- the explicit setup phase's two exact plugin-enable IPC calls and health rejection
   when either installed plugin is not enabled;
 - health-check rejection of missing, wrong, or v4 plugin links;
 - the two fully qualified widget entry IDs directly in the default bar end
@@ -393,7 +395,8 @@ Then:
 5. Merge Prism first, then dotfiles.
 6. Remove or rename the stale live `user-templates.toml` outside the v5
    `*.toml` load pattern.
-7. Run setup from the dotfiles main checkout, reload Noctalia, and perform live
+7. Run ordinary setup from the dotfiles main checkout, start or reload
+   Noctalia, run `./setup.sh --only noctalia-plugins`, and perform live
    acceptance.
 
 This order prevents tracked dotfiles from enabling a Prism plugin that its
