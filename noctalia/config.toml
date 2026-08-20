@@ -17,6 +17,9 @@ order = "alphabetical"
 [backdrop]
 enabled = false
 
+[accessibility]
+ui_scale = 1.05
+
 [bar]
 order = ["default"]
 
@@ -38,9 +41,6 @@ position = "top_right"
 [osd]
 position = "top_right"
 position_vertical = "top_right"
-
-[shell]
-ui_scale = 1.05
 
 [shell.panel]
 transparency_mode = "glass"

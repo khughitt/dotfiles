@@ -217,6 +217,8 @@ import sys, tomllib
 
 config = tomllib.load(open(sys.argv[1], "rb"))
 templates = tomllib.load(open(sys.argv[2], "rb"))["theme"]["templates"]
+assert config["accessibility"]["ui_scale"] == 1.05
+assert "ui_scale" not in config["shell"]
 assert config["theme"] == {
     "mode": "dark", "source": "wallpaper", "wallpaper_scheme": "m3-tonal-spot"
 }
@@ -1003,7 +1005,7 @@ test_dotfiles_health_rejects_noctalia_config_warning() {
 
   run_setup "$tmp" --link-only --headless >/dev/null
   run_setup "$tmp" --link-only --only app-config >/dev/null
-  print -r -- '[config]' > "${tmp}/config/noctalia/obsolete.toml"
+  print -r -- '[templates]' > "${tmp}/config/noctalia/obsolete.toml"
   set +e
   output=$(run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
