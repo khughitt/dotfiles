@@ -84,8 +84,8 @@ if [[ $# -eq 4 && "$1" == msg && "$2" == plugins && "$3" == enable ]]; then
   exit "${NOCTALIA_ENABLE_STATUS:-0}"
 fi
 if [[ $# -eq 3 && "$1" == msg && "$2" == plugins && "$3" == list ]]; then
-  printf '%s\n' "${NOCTALIA_PLUGIN_LIST:-khughitt/wali-panel [local] 1.0.0 enabled
-khughitt/prism [local] 1.0.0 enabled}"
+  printf '%s\n' "${NOCTALIA_PLUGIN_LIST:-khughitt/wali-panel [local] 1.0.0 enabled requires walictl
+khughitt/prism [local] 1.0.0 enabled requires prism, qs}"
   exit "${NOCTALIA_PLUGIN_LIST_STATUS:-0}"
 fi
 if [[ $# -ge 2 && "$1" == config && "$2" == validate ]]; then

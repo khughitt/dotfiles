@@ -213,12 +213,12 @@ if [[ "$(uname)" != "Darwin" ]]; then
     if [[ "$SKIP_NOCTALIA_IPC" == "true" ]]; then
         pass "live Noctalia plugin check explicitly skipped"
     elif plugins=$(noctalia msg plugins list 2>&1); then
-        if printf '%s\n' "$plugins" | rg -q '^khughitt/wali-panel .* enabled$'; then
+        if printf '%s\n' "$plugins" | rg -q '^khughitt/wali-panel .* enabled( |$)'; then
             pass "Noctalia plugin enabled: khughitt/wali-panel"
         else
             fail "Noctalia plugin not enabled: khughitt/wali-panel"
         fi
-        if printf '%s\n' "$plugins" | rg -q '^khughitt/prism .* enabled$'; then
+        if printf '%s\n' "$plugins" | rg -q '^khughitt/prism .* enabled( |$)'; then
             pass "Noctalia plugin enabled: khughitt/prism"
         else
             fail "Noctalia plugin not enabled: khughitt/prism"
