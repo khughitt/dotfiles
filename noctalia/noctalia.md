@@ -87,8 +87,24 @@ no custom-theme interface, so its application-painted blocks remain opaque.
 the Glow stylesheet to `$XDG_CACHE_HOME/noctalia/glow.json` whenever the palette
 changes, and Glow reads that generated file on each invocation.
 
-## Deferred v4 plugins
+## Local v5 plugins
 
-Wali Panel, Memory Pressure Alert, and Prism v4 plugin ports are deferred.
-Their retained source is not active v5 code and v5 does not install their QML
-plugins.
+Wali Panel and Prism are local Noctalia v5 plugins. Memory Pressure Alert
+remains deferred.
+
+Bootstrap them in two stages:
+
+```bash
+./setup.sh
+# Start or reload Noctalia v5, then:
+./setup.sh --only noctalia-plugins
+```
+
+Ordinary setup remains usable before the shell starts. The explicit plugin
+phase links Wali from dotfiles and Prism from `~/d/prism`, then enables both
+through Noctalia IPC. It requires the `~/d/prism` checkout and fails if the
+Noctalia IPC endpoint is unavailable.
+
+Dotfiles owns Wali, the Noctalia configuration, and installation; Prism owns
+its plugin source. Wali depends on `walictl`; Prism depends on `prism` and
+`qs`.

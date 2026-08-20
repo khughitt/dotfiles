@@ -4,8 +4,9 @@ A CLI helper for source-photo wallpaper actions alongside Noctalia v5.
 
 ## How It Works
 
-The built-in Noctalia wallpaper widget is the core picker. `bin/walictl` keeps
-the source-photo actions: it reads the current path with
+The local Wali Panel v5 plugin provides the wallpaper UI: the bar entry
+`khughitt/wali-panel:widget` opens `khughitt/wali-panel:panel`. `bin/walictl`
+remains the backend for source-photo actions: it reads the current path with
 `noctalia msg wallpaper-get`, derives photo metadata, saves favorites, and
 opens source images for editing.
 
@@ -32,7 +33,7 @@ walictl random             # random wallpaper via noctalia msg wallpaper-random
 
 `walictl random` uses `noctalia msg wallpaper-random`; `walictl forward` and
 `walictl backward` use `noctalia msg wallpaper-set` with the selected sibling
-path. There is no Wali Panel UI or plugin installation in v5.
+path. The Wali Panel does not duplicate this behavior; it invokes `walictl`.
 
 ## Environment Variables
 

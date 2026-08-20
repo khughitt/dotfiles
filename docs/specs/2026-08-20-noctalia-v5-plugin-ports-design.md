@@ -1,6 +1,6 @@
 # Noctalia v5 Wali and Prism plugin ports
 
-**Status:** Approved; implementation pending.
+**Status:** Implemented; automated verification complete, live acceptance pending.
 
 ## Goal
 
