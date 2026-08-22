@@ -99,6 +99,14 @@ x = (1, 'a')
 fst x   -- get first item from a two-element tuple
 snd x   -- get second item from a two-element tuple
 
+-- type signatures (in ghci, wrap as multiline)
+x :: String
+y :: Num
+add1 :: Num -> Num
+
+->  -- function type
+=>  -- type constraint
+
 -- conditionals
 if ..
 then ..

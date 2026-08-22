@@ -47,6 +47,10 @@ compaudit | xargs chmod g-w
 zinit update --all
 zinit cclear
 
+# zsh-autosuggestions
+right        # accept
+alt-right    # partial accept
+
 # expand symlink
 readlink -f ..
 
