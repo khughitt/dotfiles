@@ -34,7 +34,6 @@ zsh_files=(
     shell/tmux
     shell/ubuntu
     shell/vconsole
-    shell/vi
     shell/wali
     shell/zoxide
     tests/dropbox_ignore_flux.zsh

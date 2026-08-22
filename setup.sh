@@ -204,6 +204,19 @@ function ensure_dir() {
     run mkdir -p "$dir"
 }
 
+function generate_zsh_completion() {
+    local command_name="$1"
+    local output="$2"
+    shift 2
+
+    command -v "$command_name" >/dev/null || return 0
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo "[DRY-RUN] $command_name $(describe_cmd "$@")> $output"
+    else
+        "$command_name" "$@" > "$output"
+    fi
+}
+
 function phase() {
     echo "==> $1"
 }
@@ -361,6 +374,12 @@ function setup_shell_links() {
     ln_s "${DOTS_HOME}/zshrc" "${HOME}/.zshrc"
     ln_s "${DOTS_HOME}/zshenv" "${HOME}/.zshenv"
     ln_s "${DOTS_HOME}/shell" "${HOME}/.shell"
+
+    local completion_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/zsh/site-functions"
+    ensure_dir "$completion_dir"
+    generate_zsh_completion xan "${completion_dir}/_xan" completions zsh
+    generate_zsh_completion crush "${completion_dir}/_crush" completion zsh
+    generate_zsh_completion codex "${completion_dir}/_codex" completion zsh
 }
 
 function setup_gtk_links() {

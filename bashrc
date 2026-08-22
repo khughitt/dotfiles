@@ -17,6 +17,9 @@ bind '"\eOA": history-search-backward'
 bind '"\e[B": history-search-forward'
 bind '"\eOB": history-search-forward'
 
+# ctrl-g -> edit command
+bind '"\C-g": edit-and-execute-command'
+
 [[ -t 0 ]] && stty -ixon
 
 PS1='\[\e[36m\]\w\[\e[33m\]\$\[\e[0m\] '

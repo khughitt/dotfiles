@@ -141,6 +141,14 @@ run_setup() {
 printf '%s\n' "${PRISM_TEST_HOSTNAME:-dotfiles-test-unconfigured}"
 EOF
   chmod +x "${tmp}/bin/hostname"
+  for command in xan crush codex; do
+    [[ -x "${tmp}/bin/${command}" ]] && continue
+    cat > "${tmp}/bin/${command}" <<'EOF'
+#!/usr/bin/env bash
+printf '#compdef %s\n' "$(basename "$0")"
+EOF
+    chmod +x "${tmp}/bin/${command}"
+  done
 
   HOME="${tmp}/home" \
     XDG_CONFIG_HOME="${tmp}/config" \
@@ -564,6 +572,23 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   done
   [[ ! -e "${tmp}/data/zinit" ]] || fail "link-only should not clone zinit"
   [[ ! -e "${tmp}/home/.tmux/plugins/tpm" ]] || fail "link-only should not clone tpm"
+
+  rm -rf "$tmp"
+}
+
+test_setup_shell_generates_static_zsh_completions() {
+  local tmp command completion_dir
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  run_setup "$tmp" --link-only --headless --only shell >/dev/null
+
+  completion_dir="${tmp}/data/zsh/site-functions"
+  for command in xan crush codex; do
+    [[ "$(<"${completion_dir}/_${command}")" == "#compdef ${command}" ]] || \
+      fail "shell setup should generate static ${command} completion"
+  done
 
   rm -rf "$tmp"
 }
@@ -1411,6 +1436,7 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged
 test_zsh_pager_is_ansi_aware
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
+test_setup_shell_generates_static_zsh_completions
 test_setup_dry_run_can_enable_user_timers
 test_setup_only_runs_selected_phase
 test_setup_only_accepts_multiple_phases

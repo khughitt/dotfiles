@@ -8,7 +8,6 @@ set font "inconsolata 14"
 
 # Keyboard mappings
 map ` mark_evaluate
-map <c-l> nohlsearch
 
 #set recolor                     "true"
 #set recolor-reverse-video       "false"

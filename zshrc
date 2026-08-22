@@ -4,12 +4,6 @@
 # start profiling zshrc
 # zmodload zsh/zprof
 
-# dotfiles home
-export DOTFILES=${${(%):-%x}:A:h}
-
-# stop here in non-interactive mode
-[ -z "$PS1" ] && return
-
 #
 # Bootstrap
 #
@@ -39,11 +33,8 @@ source "${DOTFILES}/shell/history"
 
 unsetopt correct_all          # disable auto correction
 setopt extended_glob          # extended globstring support
-setopt autocd                 # enter directories by name only
 setopt interactivecomments    # recognize comments
-
-zstyle ':completion:*' menu select=4
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|=*' 'l:|=* r:|=*'
+REPORTTIME=5
 
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
@@ -59,27 +50,6 @@ export LESS_TERMCAP_us=$'\E[01;32m'
 [[ -t 0 ]] && stty -ixon
 
 #
-# Keybindings
-#
-
-bindkey '^P' up-history
-bindkey '^N' down-history
-bindkey '^?' backward-delete-char
-bindkey '^h' backward-delete-char
-bindkey '^w' backward-kill-word
-bindkey '^r' history-incremental-search-backward
-
-bindkey "^[[H" beginning-of-line
-bindkey "^A"   beginning-of-line
-bindkey "^[[F" end-of-line
-bindkey "^E"   end-of-line
-bindkey "^[[1;3D" backward-word
-bindkey "^[[1;5D" backward-word
-bindkey "^[[1;3C" forward-word
-bindkey "^[[1;5C" forward-word
-bindkey "^[^?" backward-kill-word
-
-#
 # Zinit plugins
 #
 
@@ -92,12 +62,17 @@ zinit snippet OMZ::lib/git.zsh
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit snippet OMZ::plugins/pip
 
-[[ "$(uname)" != "Darwin" ]] && zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
-
-# vi mode improvement
-# zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
+[[ "$OSTYPE" != darwin* ]] && zinit snippet OMZ::plugins/systemd/systemd.plugin.zsh
 
 zinit snippet OMZ::lib/key-bindings.zsh
+
+#
+# Keybindings
+#
+#
+bindkey '^G' edit-command-line
+bindkey '^[[1;3D' backward-word  # Alt-Left
+bindkey '^[[1;3C' forward-word   # Alt-Right
 
 zinit ice pick"async.zsh" src"pure.zsh"
 zinit light sindresorhus/pure
@@ -108,16 +83,16 @@ zinit light "mdumitru/fancy-ctrl-z"
 zinit ice blockf
 zinit light zsh-users/zsh-completions
 
-fpath=("${HOME}/.local/share/zsh/site-functions" $fpath)
+fpath=("${XDG_DATA_HOME:-${HOME}/.local/share}/zsh/site-functions" $fpath)
 
 autoload -Uz compinit && compinit
-autoload -Uz bashcompinit && bashcompinit
 zinit cdreplay -q
 
+zinit wait lucid for \
+    Aloxaf/fzf-tab
+    #zsh-users/zsh-autosuggestions
+
 compdef _gnu_generic snakemake
-(( $+commands[xan] )) && eval "$(xan completions zsh)"
-(( $+commands[crush] )) && eval "$(crush completion zsh)"
-(( $+commands[codex] )) && eval "$(codex completion zsh)"
 
 if [[ -r "${DOTFILES}/shell/local/${HOST}.zsh" ]]; then
     source "${DOTFILES}/shell/local/${HOST}.zsh"
@@ -129,12 +104,6 @@ zinit wait lucid for \
 
 [[ -f /usr/bin/aws_zsh_completer.sh ]] && sched +0 source /usr/bin/aws_zsh_completer.sh
 
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
-
 #
 # Environment managers
 #
@@ -143,12 +112,8 @@ export MAMBA_EXE="$HOME/.local/bin/micromamba"
 export MAMBA_ROOT_PREFIX="$HOME/micromamba"
 
 if [[ -x "$MAMBA_EXE" ]]; then
-    __mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
-    if [ $? -eq 0 ]; then
-        eval "$__mamba_setup"
-    else
-        alias micromamba="$MAMBA_EXE"
-    fi
+    __mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX")" || return 1
+    eval "$__mamba_setup"
     unset __mamba_setup
 fi
 

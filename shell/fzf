@@ -24,4 +24,5 @@ _fzf_compgen_dir() {
 
 if [[ -o interactive && -t 0 && -t 1 ]] && (( $+commands[fzf] )); then
   source <(fzf --zsh)
+  bindkey '^I' expand-or-complete
 fi
