@@ -19,7 +19,8 @@ export PATH=$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.gem/ruby/3.4.0/bi
 
 export BROWSER=firefox
 export EDITOR=nvim
-export FONTCONFIG_PATH=/etc/fonts
+# /etc/fonts is Linux-only; leave unset on macOS so fontconfig finds its own config
+[[ "$(uname)" != "Darwin" ]] && export FONTCONFIG_PATH=/etc/fonts
 export PAGER='less -R'
 export PDFVIEWER=zathura
 export SYSTEMD_EDITOR=nvim
