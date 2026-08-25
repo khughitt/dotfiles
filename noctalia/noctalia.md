@@ -7,8 +7,9 @@ the template sources, and the custom palette files into Noctalia's config.
 
 ## Templates
 
-`noctalia/templates.toml` is the only registry. It selects six user
-templates: Glow, Kitty, Nvim/glass synchronization, Claude Code, Codex, and Ohai. It
+`noctalia/templates.toml` is the only registry. It selects seven user
+templates: Glow, Kitty, Nvim/glass synchronization, Claude Code, Codex, LSD,
+and Ohai. It
 also selects seven built-ins: Hyprland, GTK 3, GTK 4, Qt, Niri, Ghostty, and
 Btop, and selects the Zathura community template.
 
@@ -29,6 +30,12 @@ noctalia theme --list-templates
 
 Noctalia renders the Claude Code semantic theme and Codex syntax theme from
 the tracked registry.
+
+Noctalia also renders LSD's native metadata, permission, date, size, tree, and
+Git-status colors to `$XDG_CONFIG_HOME/lsd/colors.yaml`. LSD filename colors
+remain owned by `LS_COLORS`. The LSD config directory is writable so Noctalia
+can replace the generated theme, while its tracked `config.yaml` remains
+linked from this repository.
 
 Select `Noctalia` in Claude Code's `/theme` picker. Set Codex's syntax theme in
 `~/.codex/config.toml`:

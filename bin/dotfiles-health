@@ -174,6 +174,15 @@ for config_name in "${managed_config_links[@]}"; do
 done
 unset config_name managed_config_links
 
+lsd_config_dir="${XDG_CONFIG_HOME}/lsd"
+if [[ -d "$lsd_config_dir" && ! -L "$lsd_config_dir" ]]; then
+    pass "real directory: $lsd_config_dir"
+else
+    fail "not a real directory: $lsd_config_dir"
+fi
+check_link "$lsd_config_dir/config.yaml" "${DOTS_HOME}/lsd/config.yaml"
+unset lsd_config_dir
+
 opencode_local="${XDG_CONFIG_HOME}/opencode.local"
 if [[ -d "$opencode_local" && ! -L "$opencode_local" ]]; then
     pass "real directory: $opencode_local"
@@ -256,7 +265,7 @@ raise SystemExit(any(
     fi
 
     if templates=$(noctalia theme --list-templates 2>&1); then
-        for template_id in glow kitty nvim claude codex ohai; do
+        for template_id in glow kitty nvim claude codex lsd ohai; do
             if printf '%s\n' "$templates" | rg -q "^[[:space:]]+${template_id}[[:space:]]+user([[:space:]]|$)"; then
                 pass "Noctalia user template: $template_id"
             else

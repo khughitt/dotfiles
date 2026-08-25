@@ -1,0 +1,43 @@
+user: "{{colors.primary.default.hex}}"
+group: "{{colors.secondary.default.hex}}"
+permission:
+  read: "{{colors.secondary.default.hex}}"
+  write: "{{colors.tertiary.default.hex}}"
+  exec: "{{colors.primary.default.hex}}"
+  exec-sticky: "{{colors.error.default.hex}}"
+  no-access: "{{colors.outline.default.hex}}"
+  octal: "{{colors.secondary.default.hex}}"
+  acl: "{{colors.tertiary.default.hex}}"
+  context: "{{colors.tertiary.default.hex}}"
+attributes:
+  archive: "{{colors.tertiary.default.hex}}"
+  read: "{{colors.secondary.default.hex}}"
+  hidden: "{{colors.outline.default.hex}}"
+  system: "{{colors.error.default.hex}}"
+date:
+  hour-old: "{{colors.primary.default.hex}}"
+  day-old: "{{colors.secondary.default.hex}}"
+  older: "{{colors.outline.default.hex}}"
+size:
+  none: "{{colors.outline.default.hex}}"
+  small: "{{colors.on_surface.default.hex}}"
+  medium: "{{colors.secondary.default.hex}}"
+  large: "{{colors.tertiary.default.hex}}"
+inode:
+  valid: "{{colors.primary.default.hex}}"
+  invalid: "{{colors.error.default.hex}}"
+links:
+  valid: "{{colors.secondary.default.hex}}"
+  invalid: "{{colors.error.default.hex}}"
+tree-edge: "{{colors.outline_variant.default.hex}}"
+git-status:
+  default: "{{colors.on_surface_variant.default.hex}}"
+  unmodified: "{{colors.outline.default.hex}}"
+  ignored: "{{colors.outline_variant.default.hex}}"
+  new-in-index: "{{colors.secondary.default.hex}}"
+  new-in-workdir: "{{colors.primary.default.hex}}"
+  typechange: "{{colors.tertiary.default.hex}}"
+  deleted: "{{colors.error.default.hex}}"
+  renamed: "{{colors.secondary.default.hex}}"
+  modified: "{{colors.tertiary.default.hex}}"
+  conflicted: "{{colors.error.default.hex}}"

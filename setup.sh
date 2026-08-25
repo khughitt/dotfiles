@@ -455,10 +455,18 @@ function setup_graphical_config_links() {
 
 function setup_common_config_links() {
     phase "Common config links"
-    local path
+    local path lsd_config_dir
     for path in "${COMMON_CONFIGS[@]}"; do
         ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
     done
+
+    lsd_config_dir="${XDG_CONFIG_HOME}/lsd"
+    if [[ -L "$lsd_config_dir" ]]; then
+        run rm "$lsd_config_dir"
+    fi
+    ensure_dir "$lsd_config_dir"
+    ln_s "${DOTS_HOME}/lsd/config.yaml" "$lsd_config_dir/config.yaml"
+
     run "${DOTS_HOME}/bin/opencode-config-migrate" \
         "${DOTS_HOME}/opencode" \
         "${DOTFILES_OPENCODE_RUNTIME_SOURCE:-${DOTS_HOME}/opencode}" \

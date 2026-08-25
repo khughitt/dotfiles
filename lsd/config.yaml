@@ -1,5 +1,6 @@
 color:
   when: auto
+  theme: custom
 indicators: false
 
 blocks:

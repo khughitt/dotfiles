@@ -23,6 +23,10 @@ output_path = "~/.claude/themes/noctalia.json"
 input_path = "$XDG_CONFIG_HOME/noctalia/templates/codex.tmTheme"
 output_path = "~/.codex/themes/noctalia.tmTheme"
 
+[theme.templates.user.lsd]
+input_path = "$XDG_CONFIG_HOME/noctalia/templates/lsd.yaml"
+output_path = "$XDG_CONFIG_HOME/lsd/colors.yaml"
+
 [theme.templates.user.ohai]
 input_path = "~/d/software/ohai/ohai/templates/noctalia/ohai-config.toml"
 output_path = "$XDG_CONFIG_HOME/ohai/config.toml"

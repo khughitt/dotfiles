@@ -288,6 +288,28 @@ test_noctalia_kitty_theme_renders_palette() {
   rm -rf "$tmp"
 }
 
+test_noctalia_lsd_theme_is_consumed() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/config/lsd"
+
+  noctalia theme --theme-json "${repo_root}/noctalia/palettes/Glow.json" --dark \
+    -r "${repo_root}/noctalia/templates/lsd.yaml:${tmp}/config/lsd/colors.yaml" \
+    >/dev/null 2>&1 || fail "Noctalia should render the LSD theme"
+
+  output=$(env -u NO_COLOR HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    LS_COLORS= TERM=xterm-256color \
+    lsd --config-file "${repo_root}/lsd/config.yaml" --color always --long \
+    "${tmp}/config/lsd/colors.yaml" 2>&1) || \
+    fail "LSD should load the rendered Noctalia theme: ${output}"
+  [[ "$output" != *Warning* ]] || fail "LSD emitted a theme warning: ${output}"
+  [[ "$output" == *$'\e[38;2;21;230;207m'* ]] || \
+    fail "LSD did not use the rendered primary color"
+
+  rm -rf "$tmp"
+}
+
 test_noctalia_v5_config_contract() {
   local tmp output templates
   tmp=$(make_tmpdir)
@@ -312,7 +334,7 @@ test_noctalia_v5_config_contract() {
     XDG_CACHE_HOME="${tmp}/cache" XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should list the tracked template registry"
-  for id in glow kitty nvim claude codex ohai; do
+  for id in glow kitty nvim claude codex lsd ohai; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "missing user template: ${id}"
@@ -346,11 +368,15 @@ assert templates["builtin_ids"] == [
     "hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "btop"
 ]
 assert templates["community_ids"] == ["zathura"]
-assert set(templates["user"]) == {"glow", "kitty", "nvim", "claude", "codex", "ohai"}
+assert set(templates["user"]) == {"glow", "kitty", "nvim", "claude", "codex", "lsd", "ohai"}
 assert "kitty" not in templates["builtin_ids"]
 assert templates["user"]["kitty"] == {
     "input_path": "$XDG_CONFIG_HOME/noctalia/templates/kitty.conf",
     "output_path": "$XDG_CONFIG_HOME/kitty/themes/noctalia.conf",
+}
+assert templates["user"]["lsd"] == {
+    "input_path": "$XDG_CONFIG_HOME/noctalia/templates/lsd.yaml",
+    "output_path": "$XDG_CONFIG_HOME/lsd/colors.yaml",
 }
 assert wali["id"] == "khughitt/wali-panel"
 assert wali["plugin_api"] == 22
@@ -556,6 +582,10 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "$(readlink "${tmp}/home/.zshrc")" == "${repo_root}/zshrc" ]] || \
     fail "expected ~/.zshrc to point at repo zshrc"
   [[ -L "${tmp}/home/.shell" ]] || fail "expected ~/.shell symlink"
+  [[ -d "${tmp}/config/lsd" && ! -L "${tmp}/config/lsd" ]] || \
+    fail "expected a writable LSD config directory"
+  [[ "${tmp}/config/lsd/config.yaml" -ef "${repo_root}/lsd/config.yaml" ]] || \
+    fail "expected tracked LSD config link"
   [[ -L "${tmp}/config/systemd/user/dropbox-ignore-flux.timer" ]] || \
     fail "expected linked Dropbox ignore timer"
   [[ -L "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
@@ -572,6 +602,23 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   done
   [[ ! -e "${tmp}/data/zinit" ]] || fail "link-only should not clone zinit"
   [[ ! -e "${tmp}/home/.tmux/plugins/tpm" ]] || fail "link-only should not clone tpm"
+
+  rm -rf "$tmp"
+}
+
+test_setup_migrates_legacy_lsd_directory_link() {
+  local tmp
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  ln -s "${repo_root}/lsd" "${tmp}/config/lsd"
+
+  run_setup "$tmp" --link-only --headless --only common-config >/dev/null
+
+  [[ -d "${tmp}/config/lsd" && ! -L "${tmp}/config/lsd" ]] || \
+    fail "setup should replace the legacy LSD directory link"
+  [[ "${tmp}/config/lsd/config.yaml" -ef "${repo_root}/lsd/config.yaml" ]] || \
+    fail "setup should preserve the tracked LSD config"
 
   rm -rf "$tmp"
 }
@@ -1110,6 +1157,28 @@ test_dotfiles_health_fails_broken_managed_config_link() {
   rm -rf "$tmp"
 }
 
+test_dotfiles_health_rejects_legacy_lsd_directory_link() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  prepare_health_fixture "$tmp"
+  rm -rf "${tmp}/config/lsd"
+  ln -s "${repo_root}/lsd" "${tmp}/config/lsd"
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted the legacy LSD directory link"
+  [[ "$output" == *"not a real directory"* ]] || \
+    fail "health did not explain the legacy LSD layout: ${output}"
+
+  rm -rf "$tmp"
+}
+
 test_dotfiles_health_checks_enabled_user_timer() {
   local tmp mockbin systemctl_log
   tmp=$(make_tmpdir)
@@ -1183,7 +1252,7 @@ test_noctalia_v5_config_is_installed_and_validated() {
     XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should load the installed template config"
-  for id in glow kitty nvim claude codex ohai; do
+  for id in glow kitty nvim claude codex lsd ohai; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "Noctalia should register the ${id} user template"
@@ -1427,6 +1496,7 @@ test_setup_and_health_install_safe_noctalia_stubs
 test_bash_config_is_native_and_minimal
 test_glow_theme_renders_color
 test_noctalia_kitty_theme_renders_palette
+test_noctalia_lsd_theme_is_consumed
 test_noctalia_v5_config_contract
 test_noctalia_template_hook_markers_are_reproducible
 test_compositors_use_noctalia_v5
@@ -1436,6 +1506,7 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged
 test_zsh_pager_is_ansi_aware
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
+test_setup_migrates_legacy_lsd_directory_link
 test_setup_shell_generates_static_zsh_completions
 test_setup_dry_run_can_enable_user_timers
 test_setup_only_runs_selected_phase
@@ -1463,6 +1534,7 @@ test_dotfiles_health_fails_stale_removed_config_links
 test_dotfiles_health_ignores_brave_runtime_symlinks
 test_dotfiles_health_ignores_unmanaged_config_symlinks
 test_dotfiles_health_fails_broken_managed_config_link
+test_dotfiles_health_rejects_legacy_lsd_directory_link
 test_dotfiles_health_checks_enabled_user_timer
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_plans_niri_glass
