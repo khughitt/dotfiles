@@ -22,12 +22,6 @@ assert_not_ignored() {
 
 "${repo_root}/bin/dotfiles-check"
 
-zdotdir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-zdotdir.XXXXXX")
-register_tmp_cleanup "$zdotdir"
-ln -s "${repo_root}/zshrc" "${zdotdir}/.zshrc"
-export DOTFILES="$repo_root"
-export ZDOTDIR="$zdotdir"
-
 modeline_files=(
   zshrc
   shell/aliases
@@ -77,6 +71,20 @@ zsh -fc '
   type csvpeek >/dev/null
   type vite_proj >/dev/null
 ' zsh "$repo_root"
+
+zinit_data_home="${XDG_DATA_HOME:-${HOME}/.local/share}"
+zdotdir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-zdotdir.XXXXXX")
+register_tmp_cleanup "$zdotdir"
+mkdir -p "${zdotdir}/cache" "${zdotdir}/config" "${zdotdir}/state"
+ln -s "${repo_root}/zshrc" "${zdotdir}/.zshrc"
+ln -s "${repo_root}/shell" "${zdotdir}/.shell"
+export DOTFILES="$repo_root"
+export HOME="$zdotdir"
+export XDG_CACHE_HOME="${zdotdir}/cache"
+export XDG_CONFIG_HOME="${zdotdir}/config"
+export XDG_DATA_HOME="$zinit_data_home"
+export XDG_STATE_HOME="${zdotdir}/state"
+export ZDOTDIR="$zdotdir"
 
 zsh -ic '
   @zinit-scheduler burst

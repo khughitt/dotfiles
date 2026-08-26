@@ -455,7 +455,7 @@ function setup_graphical_config_links() {
 
 function setup_common_config_links() {
     phase "Common config links"
-    local path lsd_config_dir yazi_config_dir
+    local path fzf_theme lsd_config_dir yazi_config_dir
     for path in "${COMMON_CONFIGS[@]}"; do
         ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
     done
@@ -473,6 +473,10 @@ function setup_common_config_links() {
     fi
     ensure_dir "$yazi_config_dir"
     ln_s "${DOTS_HOME}/yazi/yazi.toml" "$yazi_config_dir/yazi.toml"
+
+    fzf_theme="${XDG_CACHE_HOME:-${HOME}/.cache}/noctalia/fzf.conf"
+    ensure_dir "${fzf_theme%/*}"
+    [[ -e "$fzf_theme" ]] || run touch "$fzf_theme"
 
     run "${DOTS_HOME}/bin/opencode-config-migrate" \
         "${DOTS_HOME}/opencode" \

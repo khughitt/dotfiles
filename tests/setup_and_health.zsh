@@ -151,6 +151,7 @@ EOF
   done
 
   HOME="${tmp}/home" \
+    XDG_CACHE_HOME="${tmp}/cache" \
     XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" \
     XDG_STATE_HOME="${tmp}/home/.local/state" \
@@ -166,6 +167,7 @@ run_health() {
   install_test_stubs "$tmp"
 
   HOME="${tmp}/home" \
+    XDG_CACHE_HOME="${tmp}/cache" \
     XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" \
     XDG_STATE_HOME="${tmp}/home/.local/state" \

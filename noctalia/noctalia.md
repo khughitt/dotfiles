@@ -45,11 +45,11 @@ community templates; their generated themes and selector files live in real
 application config directories rather than in this repository. Yazi's tracked
 `yazi.toml` remains linked into that writable directory.
 
-`LS_COLORS`, Bash and R prompt colors, VisiData, and the man-page colors use
-terminal ANSI slots. Kitty and Ghostty already replace those slots from the
-wallpaper palette, so these consumers follow Noctalia without another rendered
-file or a shell restart. Semantic assignments such as "directory uses blue"
-remain tracked while Noctalia owns what blue actually is.
+`LS_COLORS`, Bash, Julia, and R prompt and syntax colors, VisiData, and the
+man-page colors use terminal ANSI slots. Kitty and Ghostty already replace
+those slots from the wallpaper palette, so these consumers follow Noctalia
+without another rendered file or a shell restart. Semantic assignments such as
+"directory uses blue" remain tracked while Noctalia owns what blue actually is.
 
 Select `Noctalia` in Claude Code's `/theme` picker. Set Codex's syntax theme in
 `~/.codex/config.toml`:

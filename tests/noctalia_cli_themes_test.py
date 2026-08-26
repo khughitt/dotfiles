@@ -82,6 +82,7 @@ def test_setup_keeps_yazi_generated_flavor_outside_repo(tmp_path: Path) -> None:
     config = tmp_path / "config"
     env = os.environ | {
         "HOME": str(home),
+        "XDG_CACHE_HOME": str(tmp_path / "cache"),
         "XDG_CONFIG_HOME": str(config),
         "XDG_DATA_HOME": str(tmp_path / "data"),
         "XDG_STATE_HOME": str(tmp_path / "state"),
@@ -106,6 +107,7 @@ def test_setup_keeps_yazi_generated_flavor_outside_repo(tmp_path: Path) -> None:
     yazi = config / "yazi"
     assert yazi.is_dir() and not yazi.is_symlink()
     assert (yazi / "yazi.toml").samefile(ROOT / "yazi/yazi.toml")
+    assert (tmp_path / "cache/noctalia/fzf.conf").is_file()
 
 
 def test_noctalia_registry_selects_safe_cli_templates() -> None:
@@ -123,3 +125,10 @@ def test_generated_compositor_colors_override_tracked_defaults() -> None:
     assert hypr.rindex("source = ~/.config/hypr/noctalia.conf") > hypr.rindex(
         "col.active_border ="
     )
+
+
+def test_julia_uses_wallpaper_controlled_terminal_slots() -> None:
+    startup = (ROOT / "julia/startup.jl").read_text()
+    assert "38;2" not in startup
+    assert "foreground = (" not in startup
+    assert 'prompt_prefix = "\\e[32m"' in startup
