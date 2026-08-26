@@ -455,7 +455,7 @@ function setup_graphical_config_links() {
 
 function setup_common_config_links() {
     phase "Common config links"
-    local path fzf_theme lsd_config_dir yazi_config_dir
+    local path fzf_theme legacy_yazi_dir lsd_config_dir yazi_config_dir
     for path in "${COMMON_CONFIGS[@]}"; do
         ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
     done
@@ -469,9 +469,16 @@ function setup_common_config_links() {
 
     yazi_config_dir="${XDG_CONFIG_HOME}/yazi"
     if [[ -L "$yazi_config_dir" ]]; then
+        legacy_yazi_dir="$(cd "$yazi_config_dir" && pwd -P)"
         run rm "$yazi_config_dir"
     fi
     ensure_dir "$yazi_config_dir"
+    if [[ -n "${legacy_yazi_dir:-}" ]]; then
+        for path in theme.toml flavors; do
+            [[ -e "${legacy_yazi_dir}/${path}" ]] && \
+                run mv "${legacy_yazi_dir}/${path}" "${yazi_config_dir}/${path}"
+        done
+    fi
     ln_s "${DOTS_HOME}/yazi/yazi.toml" "$yazi_config_dir/yazi.toml"
 
     fzf_theme="${XDG_CACHE_HOME:-${HOME}/.cache}/noctalia/fzf.conf"

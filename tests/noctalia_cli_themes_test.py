@@ -80,6 +80,12 @@ def test_fastfetch_loads_generated_noctalia_config(tmp_path: Path) -> None:
 def test_setup_keeps_yazi_generated_flavor_outside_repo(tmp_path: Path) -> None:
     home = tmp_path / "home"
     config = tmp_path / "config"
+    legacy_yazi = tmp_path / "legacy-yazi"
+    (legacy_yazi / "flavors/noctalia.yazi").mkdir(parents=True)
+    (legacy_yazi / "theme.toml").write_text('[flavor]\ndark = "noctalia"\n')
+    (legacy_yazi / "flavors/noctalia.yazi/flavor.toml").write_text("generated\n")
+    config.mkdir()
+    (config / "yazi").symlink_to(legacy_yazi, target_is_directory=True)
     env = os.environ | {
         "HOME": str(home),
         "XDG_CACHE_HOME": str(tmp_path / "cache"),
@@ -107,6 +113,10 @@ def test_setup_keeps_yazi_generated_flavor_outside_repo(tmp_path: Path) -> None:
     yazi = config / "yazi"
     assert yazi.is_dir() and not yazi.is_symlink()
     assert (yazi / "yazi.toml").samefile(ROOT / "yazi/yazi.toml")
+    assert (yazi / "theme.toml").is_file()
+    assert (yazi / "flavors/noctalia.yazi/flavor.toml").is_file()
+    assert not (legacy_yazi / "theme.toml").exists()
+    assert not (legacy_yazi / "flavors").exists()
     assert (tmp_path / "cache/noctalia/fzf.conf").is_file()
 
 
