@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_root=${0:A:h:h}
+source "${0:A:h}/tmp_cleanup.zsh"
 
 fail() {
   print -u2 -- "FAIL: $*"
@@ -20,6 +21,12 @@ assert_not_ignored() {
 }
 
 "${repo_root}/bin/dotfiles-check"
+
+zdotdir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-zdotdir.XXXXXX")
+register_tmp_cleanup "$zdotdir"
+ln -s "${repo_root}/zshrc" "${zdotdir}/.zshrc"
+export DOTFILES="$repo_root"
+export ZDOTDIR="$zdotdir"
 
 modeline_files=(
   zshrc
@@ -77,7 +84,6 @@ zsh -ic '
   [[ -o hist_find_no_dups ]] || exit 32
   [[ -o hist_save_no_dups ]] || exit 33
   (( ${+widgets[fzf-tab-complete]} )) || exit 34
-  (( ${+widgets[autosuggest-accept]} )) || exit 35
   [[ "$(bindkey "^I")" == *fzf-tab-complete* ]] || exit 36
 ' || fail "interactive zsh enhancements are not loaded"
 

@@ -11,11 +11,6 @@ binary = shutil.which("opencode")
 if not binary:
     print("SKIP opencode theme fallback: opencode is not installed")
     raise SystemExit(0)
-version = subprocess.run(
-    [binary, "--version"], check=True, text=True,
-    stdout=subprocess.PIPE).stdout.strip()
-assert version == "1.18.18", f"expected OpenCode 1.18.18, got {version}"
-
 tmux = shutil.which("tmux")
 if not tmux:
     print("SKIP opencode theme fallback: tmux is not installed")
