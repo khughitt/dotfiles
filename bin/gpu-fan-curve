@@ -21,6 +21,11 @@ DESKTOP_UID=${DESKTOP_UID:-1000}
 POLL=${POLL:-4}            # seconds between samples
 HYST=${HYST:-3}            # only re-issue when the target moves this much
 MAXTEMP=${MAXTEMP:-88}     # above this, hand control back to the card
+VERIFY=${VERIFY:-60}       # seconds between re-asserting control and speed
+
+# Overridable so the test suite can point at a throwaway runtime dir instead of
+# needing a live desktop session.
+RUNTIME_ROOT=${RUNTIME_ROOT:-/run/user/${DESKTOP_UID}}
 
 # Curve as ascending "tempC:fanPct" points; linear interpolation between them.
 CURVE=(0:45 55:45 65:55 75:70 85:100)
@@ -31,7 +36,7 @@ log() { printf '%s %s\n' "$(date -Is)" "$*"; }
 # The wayland socket name is not stable across sessions (wayland-0/1/2...), so
 # discover it rather than hardcoding.
 find_session() {
-    local rt="/run/user/${DESKTOP_UID}" sock
+    local rt="$RUNTIME_ROOT" sock
     [ -d "$rt" ] || return 1
     for sock in "$rt"/wayland-[0-9]*; do
         [ -S "$sock" ] || continue
@@ -83,6 +88,10 @@ revert() {
     fi
 }
 
+# Sourcing this file (the test suite does, to exercise curve_pct) must not
+# start the daemon.
+(return 0 2>/dev/null) && return 0
+
 if [ "${1:-}" = "--revert" ]; then
     revert
     exit 0
@@ -90,17 +99,19 @@ fi
 
 trap 'revert; exit 0' EXIT INT TERM
 
-log "starting: floor=${CURVE[0]##*:}% poll=${POLL}s curve=${CURVE[*]}"
+log "starting: floor=${CURVE[0]##*:}% poll=${POLL}s verify=${VERIFY}s curve=${CURVE[*]}"
 
 last_set=-100
 have_control=0
 waiting_logged=0
+last_verify=0
+force_reissue=0
 
 while :; do
     if ! find_session; then
         (( have_control )) && { have_control=0; last_set=-100; }
         # Log this once per wait episode, not every 15s forever.
-        (( waiting_logged )) || log "waiting for a Wayland session on /run/user/${DESKTOP_UID}"
+        (( waiting_logged )) || log "waiting for a Wayland session on ${RUNTIME_ROOT}"
         waiting_logged=1
         sleep 15
         continue
@@ -122,6 +133,25 @@ while :; do
         continue
     fi
 
+    # Nothing notifies us when the card is reset to automatic control -- a
+    # driver reinit, an external nvidia-settings, or a GPU reset after a fault
+    # all do it silently. Since the target percentage does not move at a steady
+    # idle temperature, a daemon that only commands on change would never
+    # notice and the fans would sit on the card's zero-RPM curve for days. So
+    # ask the card periodically rather than trusting our own bookkeeping.
+    if (( have_control && SECONDS - last_verify >= VERIFY )); then
+        last_verify=$SECONDS
+        if [ "$(ns -q '[gpu:0]/GPUFanControlState' -t)" != "1" ]; then
+            log "fan control was reset externally; re-engaging"
+            have_control=0
+            last_set=-100
+        else
+            # Control is intact, but the speed itself could have been reset
+            # without us. Re-issuing it is cheap insurance.
+            force_reissue=1
+        fi
+    fi
+
     if (( ! have_control )); then
         set_manual
         if [ "$(ns -q '[gpu:0]/GPUFanControlState' -t)" != "1" ]; then
@@ -130,15 +160,19 @@ while :; do
             continue
         fi
         have_control=1
+        last_verify=$SECONDS
         log "manual control engaged"
     fi
 
     want=$(curve_pct "$temp")
     diff=$(( want > last_set ? want - last_set : last_set - want ))
-    if (( diff >= HYST )); then
+    if (( diff >= HYST || force_reissue )); then
         set_speed "$want"
-        log "temp ${temp}C -> fan ${want}%"
+        # Only log a real change; the periodic refresh would otherwise fill the
+        # journal with identical lines forever.
+        (( diff >= HYST )) && log "temp ${temp}C -> fan ${want}%"
         last_set=$want
+        force_reissue=0
     fi
 
     sleep "$POLL"
