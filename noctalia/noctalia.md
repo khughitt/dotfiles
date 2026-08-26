@@ -7,11 +7,11 @@ the template sources, and the custom palette files into Noctalia's config.
 
 ## Templates
 
-`noctalia/templates.toml` is the only registry. It selects seven user
+`noctalia/templates.toml` is the only registry. It selects nine user
 templates: Glow, Kitty, Nvim/glass synchronization, Claude Code, Codex, LSD,
-and Ohai. It
+Fzf, Fastfetch, and Ohai. It
 also selects seven built-ins: Hyprland, GTK 3, GTK 4, Qt, Niri, Ghostty, and
-Btop, and selects the Zathura community template.
+Btop, and selects the Zathura, Bat, and Yazi community templates.
 
 The Kitty user template renders the wallpaper palette without the built-in
 template's mutating post-hook. The following Nvim template invokes
@@ -36,6 +36,20 @@ Git-status colors to `$XDG_CONFIG_HOME/lsd/colors.yaml`. LSD filename colors
 remain owned by `LS_COLORS`. The LSD config directory is writable so Noctalia
 can replace the generated theme, while its tracked `config.yaml` remains
 linked from this repository.
+
+Fzf reads `$XDG_CACHE_HOME/noctalia/fzf.conf` on every invocation through
+`FZF_DEFAULT_OPTS_FILE`, so an existing shell sees later wallpaper updates.
+Fastfetch reads its complete generated config from
+`$XDG_CONFIG_HOME/fastfetch/config.jsonc`. Bat and Yazi use Noctalia's
+community templates; their generated themes and selector files live in real
+application config directories rather than in this repository. Yazi's tracked
+`yazi.toml` remains linked into that writable directory.
+
+`LS_COLORS`, Bash, Julia, and R prompt and syntax colors, VisiData, and the
+man-page colors use terminal ANSI slots. Kitty and Ghostty already replace
+those slots from the wallpaper palette, so these consumers follow Noctalia
+without another rendered file or a shell restart. Semantic assignments such as
+"directory uses blue" remain tracked while Noctalia owns what blue actually is.
 
 Select `Noctalia` in Claude Code's `/theme` picker. Set Codex's syntax theme in
 `~/.codex/config.toml`:

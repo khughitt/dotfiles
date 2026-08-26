@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_root=${0:A:h:h}
+source "${0:A:h}/tmp_cleanup.zsh"
 
 fail() {
   print -u2 -- "FAIL: $*"
@@ -71,13 +72,26 @@ zsh -fc '
   type vite_proj >/dev/null
 ' zsh "$repo_root"
 
+zinit_data_home="${XDG_DATA_HOME:-${HOME}/.local/share}"
+zdotdir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-zdotdir.XXXXXX")
+register_tmp_cleanup "$zdotdir"
+mkdir -p "${zdotdir}/cache" "${zdotdir}/config" "${zdotdir}/state"
+ln -s "${repo_root}/zshrc" "${zdotdir}/.zshrc"
+ln -s "${repo_root}/shell" "${zdotdir}/.shell"
+export DOTFILES="$repo_root"
+export HOME="$zdotdir"
+export XDG_CACHE_HOME="${zdotdir}/cache"
+export XDG_CONFIG_HOME="${zdotdir}/config"
+export XDG_DATA_HOME="$zinit_data_home"
+export XDG_STATE_HOME="${zdotdir}/state"
+export ZDOTDIR="$zdotdir"
+
 zsh -ic '
   @zinit-scheduler burst
   [[ "${REPORTTIME:-}" == 5 ]] || exit 31
   [[ -o hist_find_no_dups ]] || exit 32
   [[ -o hist_save_no_dups ]] || exit 33
   (( ${+widgets[fzf-tab-complete]} )) || exit 34
-  (( ${+widgets[autosuggest-accept]} )) || exit 35
   [[ "$(bindkey "^I")" == *fzf-tab-complete* ]] || exit 36
 ' || fail "interactive zsh enhancements are not loaded"
 

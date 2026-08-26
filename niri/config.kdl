@@ -3,7 +3,6 @@
 // Keep Hyprland-specific settings out of this file. Noctalia owns wallpaper,
 // shell widgets, and generated colors; Niri owns compositor behavior.
 
-include "./noctalia.kdl"
 include "./prism.kdl"
 include "./host.kdl"
 
@@ -358,3 +357,6 @@ binds {
     Super+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
     Super+Shift+P { power-off-monitors; }
 }
+
+// Keep generated palette values after tracked layout defaults so they win.
+include "./noctalia.kdl"

@@ -4,8 +4,8 @@
     "type": "auto",
     "source": "",
     "color": {
-      "1": "",
-      "2": "",
+      "1": "{{colors.primary.default.hex}}",
+      "2": "{{colors.tertiary.default.hex}}",
       "3": "",
       "4": "",
       "5": "",
@@ -38,10 +38,10 @@
     "hideCursor": false,
     "separator": ": ",
     "color": {
-      "keys": "",
-      "title": "",
-      "output": "",
-      "separator": ""
+      "keys": "{{colors.primary.default.hex}}",
+      "title": "{{colors.secondary.default.hex}}",
+      "output": "{{colors.on_surface.default.hex}}",
+      "separator": "{{colors.outline.default.hex}}"
     },
     "brightColor": true,
     "duration": {
@@ -58,9 +58,9 @@
       "unit": "D",
       "ndigits": 1,
       "color": {
-        "green": "32",
-        "yellow": "93",
-        "red": "91"
+        "green": "{{colors.secondary.default.hex}}",
+        "yellow": "{{colors.tertiary.default.hex}}",
+        "red": "{{colors.error.default.hex}}"
       },
       "spaceBeforeUnit": "default"
     },
@@ -71,9 +71,9 @@
       ],
       "ndigits": 0,
       "color": {
-        "green": "32",
-        "yellow": "93",
-        "red": "91"
+        "green": "{{colors.secondary.default.hex}}",
+        "yellow": "{{colors.tertiary.default.hex}}",
+        "red": "{{colors.error.default.hex}}"
       },
       "spaceBeforeUnit": "default",
       "width": 0
@@ -90,9 +90,9 @@
         "rightElapsed": ""
       },
       "color": {
-        "elapsed": "auto",
-        "total": "97",
-        "border": "97"
+        "elapsed": "{{colors.primary.default.hex}}",
+        "total": "{{colors.surface_variant.default.hex}}",
+        "border": "{{colors.outline.default.hex}}"
       },
       "width": 10
     },
@@ -125,15 +125,15 @@
       "keyIcon": "",
       "fqdn": false,
       "color": {
-        "user": "",
-        "at": "",
-        "host": ""
+        "user": "{{colors.primary.default.hex}}",
+        "at": "{{colors.outline.default.hex}}",
+        "host": "{{colors.secondary.default.hex}}"
       }
     },
     {
       "type": "separator",
       "string": "-",
-      "outputColor": "",
+      "outputColor": "{{colors.outline.default.hex}}",
       "times": 0
     },
     {
