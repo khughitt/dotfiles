@@ -1,6 +1,14 @@
 [theme.templates]
 builtin_ids = ["hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "btop"]
-community_ids = ["zathura"]
+community_ids = ["zathura", "bat", "yazi"]
+
+[theme.templates.user.fzf]
+input_path = "$XDG_CONFIG_HOME/noctalia/templates/fzf.conf"
+output_path = "$XDG_CACHE_HOME/noctalia/fzf.conf"
+
+[theme.templates.user.fastfetch]
+input_path = "$XDG_CONFIG_HOME/noctalia/templates/fastfetch.jsonc"
+output_path = "$XDG_CONFIG_HOME/fastfetch/config.jsonc"
 
 [theme.templates.user.glow]
 input_path = "$XDG_CONFIG_HOME/noctalia/templates/glow.json"

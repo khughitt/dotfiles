@@ -334,7 +334,7 @@ test_noctalia_v5_config_contract() {
     XDG_CACHE_HOME="${tmp}/cache" XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should list the tracked template registry"
-  for id in glow kitty nvim claude codex lsd ohai; do
+  for id in glow kitty nvim claude codex lsd fzf fastfetch ohai; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "missing user template: ${id}"
@@ -367,8 +367,10 @@ assert not any(name.startswith("khughitt/") for name in config.get("widget", {})
 assert templates["builtin_ids"] == [
     "hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "btop"
 ]
-assert templates["community_ids"] == ["zathura"]
-assert set(templates["user"]) == {"glow", "kitty", "nvim", "claude", "codex", "lsd", "ohai"}
+assert templates["community_ids"] == ["zathura", "bat", "yazi"]
+assert set(templates["user"]) == {
+    "glow", "kitty", "nvim", "claude", "codex", "lsd", "fzf", "fastfetch", "ohai"
+}
 assert "kitty" not in templates["builtin_ids"]
 assert templates["user"]["kitty"] == {
     "input_path": "$XDG_CONFIG_HOME/noctalia/templates/kitty.conf",
@@ -377,6 +379,14 @@ assert templates["user"]["kitty"] == {
 assert templates["user"]["lsd"] == {
     "input_path": "$XDG_CONFIG_HOME/noctalia/templates/lsd.yaml",
     "output_path": "$XDG_CONFIG_HOME/lsd/colors.yaml",
+}
+assert templates["user"]["fzf"] == {
+    "input_path": "$XDG_CONFIG_HOME/noctalia/templates/fzf.conf",
+    "output_path": "$XDG_CACHE_HOME/noctalia/fzf.conf",
+}
+assert templates["user"]["fastfetch"] == {
+    "input_path": "$XDG_CONFIG_HOME/noctalia/templates/fastfetch.jsonc",
+    "output_path": "$XDG_CONFIG_HOME/fastfetch/config.jsonc",
 }
 assert wali["id"] == "khughitt/wali-panel"
 assert wali["plugin_api"] == 22
@@ -586,6 +596,10 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
     fail "expected a writable LSD config directory"
   [[ "${tmp}/config/lsd/config.yaml" -ef "${repo_root}/lsd/config.yaml" ]] || \
     fail "expected tracked LSD config link"
+  [[ -d "${tmp}/config/yazi" && ! -L "${tmp}/config/yazi" ]] || \
+    fail "expected a writable Yazi config directory"
+  [[ "${tmp}/config/yazi/yazi.toml" -ef "${repo_root}/yazi/yazi.toml" ]] || \
+    fail "expected tracked Yazi config link"
   [[ -L "${tmp}/config/systemd/user/dropbox-ignore-flux.timer" ]] || \
     fail "expected linked Dropbox ignore timer"
   [[ -L "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
@@ -1179,6 +1193,28 @@ test_dotfiles_health_rejects_legacy_lsd_directory_link() {
   rm -rf "$tmp"
 }
 
+test_dotfiles_health_rejects_legacy_yazi_directory_link() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  prepare_health_fixture "$tmp"
+  rm -rf "${tmp}/config/yazi"
+  ln -s "${repo_root}/yazi" "${tmp}/config/yazi"
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted the legacy Yazi directory link"
+  [[ "$output" == *"not a real directory"* ]] || \
+    fail "health did not explain the legacy Yazi layout: ${output}"
+
+  rm -rf "$tmp"
+}
+
 test_dotfiles_health_checks_enabled_user_timer() {
   local tmp mockbin systemctl_log
   tmp=$(make_tmpdir)
@@ -1252,7 +1288,7 @@ test_noctalia_v5_config_is_installed_and_validated() {
     XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should load the installed template config"
-  for id in glow kitty nvim claude codex lsd ohai; do
+  for id in glow kitty nvim claude codex lsd fzf fastfetch ohai; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "Noctalia should register the ${id} user template"
@@ -1535,6 +1571,7 @@ test_dotfiles_health_ignores_brave_runtime_symlinks
 test_dotfiles_health_ignores_unmanaged_config_symlinks
 test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_rejects_legacy_lsd_directory_link
+test_dotfiles_health_rejects_legacy_yazi_directory_link
 test_dotfiles_health_checks_enabled_user_timer
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_plans_niri_glass

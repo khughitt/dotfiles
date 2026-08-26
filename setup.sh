@@ -455,7 +455,7 @@ function setup_graphical_config_links() {
 
 function setup_common_config_links() {
     phase "Common config links"
-    local path lsd_config_dir
+    local path lsd_config_dir yazi_config_dir
     for path in "${COMMON_CONFIGS[@]}"; do
         ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
     done
@@ -466,6 +466,13 @@ function setup_common_config_links() {
     fi
     ensure_dir "$lsd_config_dir"
     ln_s "${DOTS_HOME}/lsd/config.yaml" "$lsd_config_dir/config.yaml"
+
+    yazi_config_dir="${XDG_CONFIG_HOME}/yazi"
+    if [[ -L "$yazi_config_dir" ]]; then
+        run rm "$yazi_config_dir"
+    fi
+    ensure_dir "$yazi_config_dir"
+    ln_s "${DOTS_HOME}/yazi/yazi.toml" "$yazi_config_dir/yazi.toml"
 
     run "${DOTS_HOME}/bin/opencode-config-migrate" \
         "${DOTS_HOME}/opencode" \
