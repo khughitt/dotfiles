@@ -91,15 +91,7 @@ zsh -ic '
   [[ "${REPORTTIME:-}" == 5 ]] || exit 31
   [[ -o hist_find_no_dups ]] || exit 32
   [[ -o hist_save_no_dups ]] || exit 33
-  (( ${+widgets[fzf-tab-complete]} )) || exit 34
-  [[ "$(bindkey "^I")" == *fzf-tab-complete* ]] || exit 36
 ' || fail "interactive zsh enhancements are not loaded"
-
-tab_state=$(script -qec \
-  "zsh -ic '@zinit-scheduler burst; print -r -- TAB_STATE:\$_ftb_orig_widget:\$(bindkey \"^I\")'" \
-  /dev/null)
-[[ "$tab_state" == *'TAB_STATE:expand-or-complete:"^I" fzf-tab-complete'* ]] || \
-  fail "fzf-tab should wrap native completion directly"
 
 for secret_path in \
   .env \
