@@ -16,7 +16,6 @@ Tools
 * [bat](https://github.com/sharkdp/bat)
 * [btop](https://github.com/aristocratos/btop)
 * [dust](https://github.com/bootandy/dust)
-* [fasd](https://github.com/clvv/fasd)
 * [fd](https://github.com/sharkdp/fd)
 * [feh](https://feh.finalrewind.org/)
 * [fzf](https://github.com/junegunn/fzf)
@@ -32,6 +31,7 @@ Tools
 * [visidata](https://www.visidata.org/)
 * [zathura](https://pwmt.org/projects/zathura/)
 * [zinit](https://github.com/zdharma/zinit)
+* [zoxide](https://github.com/ajeetdsouza/zoxide)
 
 Installation
 ------------
@@ -106,7 +106,7 @@ Aliases / Functions
 Not a complete list, but some useful ones..
 
 ```
-j       # jump (fasd)
+j       # jump (zoxide)
 l       # ls -l
 lr      # ls -latr
 y       # yay

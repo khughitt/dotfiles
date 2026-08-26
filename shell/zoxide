@@ -8,4 +8,7 @@ alias j='z'
 alias jk='zi'
 alias v='nvim $(fd -t f | fzf -1 --exact)'
 
+alias d='zoxide query'                  # best match
+alias di='zoxide query --interactive'   # interactive
+
 # vi:filetype=zsh

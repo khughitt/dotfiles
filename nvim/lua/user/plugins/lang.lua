@@ -130,4 +130,7 @@ return {
       vim.opt.rtp:append(plugin.dir .. '/misc/vim')
     end,
   },
+  {
+    'tidalcycles/vim-tidal'
+  }
 }

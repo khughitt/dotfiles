@@ -1,9 +1,14 @@
+-- general
 :h         -- help
 it         -- variable with result of last expr
 :type x    -- show type of variable "x"
 :info x    -- show variable info
 :set +t    -- show variable types
 :unset +t  -- stop showing variable types
+
+-- load file in repl
+:l file.hs   -- :load
+:r           -- :reload last
 
 -- function info
 :i func

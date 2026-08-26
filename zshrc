@@ -88,9 +88,9 @@ fpath=("${XDG_DATA_HOME:-${HOME}/.local/share}/zsh/site-functions" $fpath)
 autoload -Uz compinit && compinit
 zinit cdreplay -q
 
-zinit wait lucid for \
-    Aloxaf/fzf-tab
-    #zsh-users/zsh-autosuggestions
+# zinit wait lucid for \
+#     Aloxaf/fzf-tab
+#     zsh-users/zsh-autosuggestions
 
 compdef _gnu_generic snakemake
 
