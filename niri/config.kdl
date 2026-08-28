@@ -4,6 +4,7 @@
 // shell widgets, and generated colors; Niri owns compositor behavior.
 
 include "./prism.kdl"
+include "./materials.kdl"
 include "./host.kdl"
 
 
@@ -118,7 +119,6 @@ spawn-at-startup "noctalia"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-at-startup "~/.config/niri/scripts/fill-new-window"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
-spawn-at-startup "qs" "-c" "niri-glass"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
 
 // Replaces `ohai-status reset`, whose binary is deleted — familiar owns agent state now.

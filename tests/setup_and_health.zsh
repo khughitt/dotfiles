@@ -1285,8 +1285,8 @@ test_noctalia_v5_config_is_installed_and_validated() {
   rm -rf "$tmp"
 }
 
-test_setup_graphical_config_plans_niri_glass() {
-  local tmp output
+test_setup_graphical_config_retains_glass_evidence_without_autostart() {
+  local tmp output config materials
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
@@ -1295,14 +1295,25 @@ test_setup_graphical_config_plans_niri_glass() {
     run_setup "$tmp" --dry-run --link-only --only graphical-config)
 
   [[ "$output" == *"${tmp}/home/d/niri-glass"* ]] || \
-    fail "graphical setup did not plan the niri-glass source"
+    fail "graphical setup did not retain the niri-glass evidence source"
   [[ "$output" == *"${tmp}/config/quickshell/niri-glass"* ]] || \
-    fail "graphical setup did not plan the named Quickshell config"
+    fail "graphical setup did not retain the named Quickshell evidence config"
   [[ "$output" == *"niri-glass.json"* ]] || \
-    fail "graphical setup did not plan the generated config consumer"
-  rg -q -F 'spawn-at-startup "qs" "-c" "niri-glass"' \
-    "${repo_root}/niri/config.kdl" || \
-    fail "niri does not launch the named niri-glass config"
+    fail "graphical setup did not retain the generated evidence config"
+
+  config="${repo_root}/niri/config.kdl"
+  materials="${repo_root}/niri/materials.kdl"
+  ! rg -q -F 'spawn-at-startup "qs" "-c" "niri-glass"' "$config" || \
+    fail "niri still autostarts the legacy glass runtime"
+  rg -q -F 'include "./prism.kdl"' "$config" || fail "missing Prism include"
+  rg -q -F 'include "./materials.kdl"' "$config" || fail "missing material include"
+  rg -q -F 'material "terminal-glass"' "$materials" || fail "missing terminal material"
+  rg -q -F 'match app-id=r#"^(kitty|com\.mitchellh\.ghostty)$"#' "$materials" || \
+    fail "terminal material does not use the exact live app IDs"
+  rg -q -F 'blur false' "$materials" || fail "material rule leaves Prism blur active"
+  rg -q -F 'noise 0' "$materials" || fail "material rule leaves Prism noise active"
+  rg -q -F 'saturation 1' "$materials" || \
+    fail "material rule leaves Prism saturation active"
 }
 
 test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
@@ -1561,7 +1572,7 @@ test_dotfiles_health_rejects_legacy_lsd_directory_link
 test_dotfiles_health_rejects_legacy_yazi_directory_link
 test_dotfiles_health_checks_enabled_user_timer
 test_noctalia_v5_config_is_installed_and_validated
-test_setup_graphical_config_plans_niri_glass
+test_setup_graphical_config_retains_glass_evidence_without_autostart
 test_clean_graphical_setup_creates_empty_hyprland_theme_stub
 test_dotfiles_health_accepts_prism_glass_runtime
 test_dotfiles_health_fails_wrong_niri_glass_consumer
