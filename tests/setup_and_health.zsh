@@ -273,23 +273,6 @@ test_glow_theme_renders_color() {
   rm -rf "$tmp"
 }
 
-test_noctalia_kitty_theme_renders_palette() {
-  local tmp theme
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  theme="${tmp}/kitty.conf"
-
-  noctalia theme --theme-json "${repo_root}/noctalia/palettes/Glow.json" --dark \
-    -r "${repo_root}/noctalia/templates/kitty.conf:${theme}" >/dev/null 2>&1 || \
-    fail "Noctalia should render the Kitty palette"
-  rg -q '^background[[:space:]]+#333333$' "$theme" || \
-    fail "Kitty palette should contain the rendered terminal background"
-  rg -q '^foreground[[:space:]]+#acf2eb$' "$theme" || \
-    fail "Kitty palette should contain the rendered terminal foreground"
-
-  rm -rf "$tmp"
-}
-
 test_noctalia_lsd_theme_is_consumed() {
   local tmp output
   tmp=$(make_tmpdir)
@@ -336,7 +319,7 @@ test_noctalia_v5_config_contract() {
     XDG_CACHE_HOME="${tmp}/cache" XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should list the tracked template registry"
-  for id in glow kitty nvim claude codex lsd fzf fastfetch ohai; do
+  for id in glow nvim claude codex lsd fzf fastfetch ohai; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "missing user template: ${id}"
@@ -367,16 +350,11 @@ assert config["bar"]["default"]["end"] == [
 assert "plugins" not in config
 assert not any(name.startswith("khughitt/") for name in config.get("widget", {}))
 assert templates["builtin_ids"] == [
-    "hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "btop"
+    "hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "kitty", "btop"
 ]
 assert templates["community_ids"] == ["zathura", "bat", "yazi"]
 assert set(templates["user"]) == {
-    "glow", "kitty", "nvim", "claude", "codex", "lsd", "fzf", "fastfetch", "ohai"
-}
-assert "kitty" not in templates["builtin_ids"]
-assert templates["user"]["kitty"] == {
-    "input_path": "$XDG_CONFIG_HOME/noctalia/templates/kitty.conf",
-    "output_path": "$XDG_CONFIG_HOME/kitty/themes/noctalia.conf",
+    "glow", "nvim", "claude", "codex", "lsd", "fzf", "fastfetch", "ohai"
 }
 assert templates["user"]["lsd"] == {
     "input_path": "$XDG_CONFIG_HOME/noctalia/templates/lsd.yaml",
@@ -483,20 +461,24 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
   config="${tmp}/home/.config"
   targets="${tmp}/targets"
   mkdir -p "$config" "$targets/niri" "$targets/hypr" \
-    "$targets/ghostty" "$targets/gtk-3.0" "$targets/gtk-4.0" "${tmp}/bin"
+    "$targets/ghostty" "$targets/kitty/themes" "$targets/gtk-3.0" \
+    "$targets/gtk-4.0" "${tmp}/bin"
   cp "${repo_root}/niri/config.kdl" "$targets/niri/config.kdl"
   cp "${repo_root}/hypr/hyprland.conf" "$targets/hypr/hyprland.conf"
   cp "${repo_root}/ghostty/config.ghostty" "$targets/ghostty/config.ghostty"
+  cp "${repo_root}/kitty/kitty.conf" "$targets/kitty/kitty.conf"
   cp "${repo_root}/gtk-3.0/gtk.css" "$targets/gtk-3.0/gtk.css"
   cp "${repo_root}/gtk-4.0/gtk.css" "$targets/gtk-4.0/gtk.css"
 
   ln -s "$targets/niri" "$config/niri"
   ln -s "$targets/hypr" "$config/hypr"
+  ln -s "$targets/kitty" "$config/kitty"
   mkdir -p "$config/ghostty" "$config/gtk-3.0" "$config/gtk-4.0"
   ln -s "$targets/ghostty/config.ghostty" "$config/ghostty/config.ghostty"
   ln -s "$targets/gtk-3.0/gtk.css" "$config/gtk-3.0/gtk.css"
   ln -s "$targets/gtk-4.0/gtk.css" "$config/gtk-4.0/gtk.css"
   touch "$config/gtk-3.0/noctalia.css" "$config/gtk-4.0/noctalia.css"
+  touch "$config/kitty/themes/noctalia.conf"
 
   for command in hyprctl gsettings dconf pgrep pkill; do
     printf '#!/usr/bin/env bash\nexit 1\n' > "${tmp}/bin/${command}"
@@ -517,6 +499,10 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
     fail "Ghostty hook failed: ${output}"
   hook_output+="Ghostty: ${output}"$'\n'
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
+    bash /usr/share/noctalia/assets/templates/kitty/apply.sh 2>&1) || \
+    fail "Kitty hook failed: ${output}"
+  hook_output+="Kitty: ${output}"$'\n'
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
     bash /usr/share/noctalia/assets/templates/gtk/apply.sh dark 2>&1) || \
     fail "GTK hook failed: ${output}"
   hook_output+="GTK: ${output}"$'\n'
@@ -524,8 +510,8 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
 
   [[ "$after" == "$before" ]] || \
     fail "a built-in hook edited a disposable target: ${hook_output}"
-  [[ -L "$config/niri" && -L "$config/hypr" ]] || \
-    fail "a compositor directory link was replaced: ${hook_output}"
+  [[ -L "$config/niri" && -L "$config/hypr" && -L "$config/kitty" ]] || \
+    fail "a managed directory link was replaced: ${hook_output}"
   for managed_path in ghostty/config.ghostty gtk-3.0/gtk.css gtk-4.0/gtk.css; do
     [[ -L "$config/$managed_path" ]] || \
       fail "a managed file link was replaced: ${managed_path}: ${hook_output}"
@@ -1290,7 +1276,7 @@ test_noctalia_v5_config_is_installed_and_validated() {
     XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should load the installed template config"
-  for id in glow kitty nvim claude codex lsd fzf fastfetch ohai; do
+  for id in glow nvim claude codex lsd fzf fastfetch ohai; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "Noctalia should register the ${id} user template"
@@ -1533,7 +1519,6 @@ test_tmp_cleanup_is_centralized
 test_setup_and_health_install_safe_noctalia_stubs
 test_bash_config_is_native_and_minimal
 test_glow_theme_renders_color
-test_noctalia_kitty_theme_renders_palette
 test_noctalia_lsd_theme_is_consumed
 test_noctalia_v5_config_contract
 test_noctalia_template_hook_markers_are_reproducible

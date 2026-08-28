@@ -274,7 +274,7 @@ raise SystemExit(any(
     fi
 
     if templates=$(noctalia theme --list-templates 2>&1); then
-        for template_id in glow kitty nvim claude codex lsd fzf fastfetch ohai; do
+        for template_id in glow nvim claude codex lsd fzf fastfetch ohai; do
             if printf '%s\n' "$templates" | rg -q "^[[:space:]]+${template_id}[[:space:]]+user([[:space:]]|$)"; then
                 pass "Noctalia user template: $template_id"
             else

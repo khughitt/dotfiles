@@ -7,17 +7,18 @@ the template sources, and the custom palette files into Noctalia's config.
 
 ## Templates
 
-`noctalia/templates.toml` is the only registry. It selects nine user
-templates: Glow, Kitty, Nvim/glass synchronization, Claude Code, Codex, LSD,
-Fzf, Fastfetch, and Ohai. It
-also selects seven built-ins: Hyprland, GTK 3, GTK 4, Qt, Niri, Ghostty, and
-Btop, and selects the Zathura, Bat, and Yazi community templates.
+`noctalia/templates.toml` is the only registry. It selects eight user
+templates: Glow, Nvim/glass synchronization, Claude Code, Codex, LSD, Fzf,
+Fastfetch, and Ohai. It also selects eight built-ins: Hyprland, GTK 3, GTK 4,
+Qt, Niri, Ghostty, Kitty, and Btop, and selects the Zathura, Bat, and Yazi
+community templates.
 
-The Kitty user template renders the wallpaper palette without the built-in
-template's mutating post-hook. The following Nvim template invokes
-`noctalia-glass-sync`, which promotes Nvim, Kitty glass, and OpenCode artifacts
-and reloads Kitty after both Kitty files are ready. The built-in Kitty template
-remains deliberately unselected so it cannot rewrite tracked configuration.
+The built-in Kitty template renders the wallpaper palette and keeps its theme
+include in `kitty.conf`. Keeping the built-in selected prevents Noctalia's
+startup reconciliation from invoking its undo hook against the tracked Kitty
+configuration. The following Nvim template invokes `noctalia-glass-sync`, which
+promotes Nvim, Kitty glass, and OpenCode artifacts and reloads Kitty after both
+Kitty files are ready.
 
 Validate the linked configuration and inspect the active registry with:
 
