@@ -1,27 +1,20 @@
 compositor.gaps: 54
-glass.probeExposure: 0
-terminal.noise.inactive: 0.05
-terminal.background.opacity.inactive: 0.74
-glass.samples: 3
-glass.distortionScale: 0.1
-glass.thickness: 35.8
-glass.attenuationColor: "#bbc7db"
-terminal.saturation.inactive: 1
-glass.paneShiftY: 4
+terminal.apps:
+  - kitty
+  - com.mitchellh.ghostty
 terminal.background.opacity.active: 0.91
-glass.attenuationDistance: 9063
-terminal.window.opacity.inactive: 0.76
+terminal.background.opacity.inactive: 0.52
 terminal.window.opacity.active: 0.93
-glass.gridOverlay: false
-glass.chromaticAberration: 0.62
-glass.ior: 1.2
-glass.distortion: 0.48
-glass.anisotropicBlur: 0.33
-glass.jellyFlex: 0.0148
+terminal.window.opacity.inactive: 0.76
+glass.ior: 1.38
+glass.thickness: 32
+glass.attenuationColor: "#bbc7db"
+glass.attenuationDistance: 178
+glass.chromaticAberration: 0.68
+glass.distortion: 0.32
+glass.distortionScale: 0.05
+glass.jellyFlex: 0.0038
 glass.jellyRipple: 0.15
 glass.paneLip: 5
 glass.paneShiftX: 4
-glass.springStiffness: 6500
-glass.springDampingRatio: 6.25
-glass.springEpsilon: 0.001091
-terminal.noise.active: 0.07
+glass.paneShiftY: 4
