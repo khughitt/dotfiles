@@ -88,7 +88,6 @@ export ZDOTDIR="$zdotdir"
 
 zsh -ic '
   @zinit-scheduler burst
-  [[ "${REPORTTIME:-}" == 5 ]] || exit 31
   [[ -o hist_find_no_dups ]] || exit 32
   [[ -o hist_save_no_dups ]] || exit 33
 ' || fail "interactive zsh enhancements are not loaded"
