@@ -115,6 +115,7 @@ hotkey-overlay {
 screenshot-path "~/d/pics/screenshots/%Y-%m-%d_%H-%M-%S.png"
 
 spawn-at-startup "noctalia"
+spawn-at-startup "~/.config/niri/scripts/prism-debug-backdrop-startup"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-at-startup "~/.config/niri/scripts/fill-new-window"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"

@@ -739,7 +739,7 @@ test_default_setup_does_not_require_live_noctalia() {
 #!/usr/bin/env bash
 set -euo pipefail
 
-[[ "$*" == "apply niri" ]] || exit 64
+[[ "$*" == "apply niri" || "$*" == "apply debug-backdrop" ]] || exit 64
 exit 0
 EOF
   chmod +x "${fixture}/bin/prism"
@@ -1301,11 +1301,15 @@ test_setup_graphical_config_hands_material_ownership_to_prism() {
     fail "pre-link Prism apply does not name the tracked niri config"
   [[ "$output" == *"prism.kdl"* ]] || \
     fail "graphical setup no longer links the generated Prism config"
+  [[ "$output" == *"apply debug-backdrop"* ]] || \
+    fail "graphical setup does not apply the debug backdrop sink"
 
   config="${repo_root}/niri/config.kdl"
   ! rg -q -F 'spawn-at-startup "qs" "-c" "niri-glass"' "$config" || \
     fail "niri still autostarts the legacy glass runtime"
   rg -q -F 'include "./prism.kdl"' "$config" || fail "missing Prism include"
+  rg -q -F 'spawn-at-startup "~/.config/niri/scripts/prism-debug-backdrop-startup"' "$config" || \
+    fail "niri does not restore the persisted debug backdrop"
   ! rg -q -F 'include "./materials.kdl"' "$config" || \
     fail "niri still includes the static material Prism now generates"
   [[ ! -e "${repo_root}/niri/materials.kdl" ]] || \

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+value=$(prism get debug.backdrop)
+if [[ "$value" == "false" ]]; then
+  exec prism apply debug-backdrop
+fi
+if [[ "$value" != "true" ]]; then
+  printf 'prism-debug-backdrop-startup: invalid value: %s\n' "$value" >&2
+  exit 1
+fi
+
+enabled=$(niri msg -j outputs | jq -c '[to_entries[] | select(.value.logical != null) | .key] | sort')
+missing=$enabled
+for ((attempt = 0; attempt < 30; attempt++)); do
+  layers=$(niri msg -j layers)
+  missing=$(jq -cn --argjson enabled "$enabled" --argjson layers "$layers" '
+    $enabled - ([$layers[]
+      | select(.namespace == "noctalia-wallpaper" and .layer == "Background")
+      | .output] | unique)
+  ')
+  if [[ "$missing" == "[]" ]]; then
+    exec prism apply debug-backdrop
+  fi
+  sleep 1
+done
+
+printf 'prism-debug-backdrop-startup: timed out waiting for wallpaper surfaces on: %s\n' \
+  "$(jq -r 'join(", ")' <<<"$missing")" >&2
+exit 1

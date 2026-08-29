@@ -428,6 +428,7 @@ function setup_graphical_config_links() {
         fi
         echo "Niri is not running; prism.kdl was generated and reload is deferred."
     fi
+    run "${DOTS_HOME}/bin/prism" apply debug-backdrop
 
     run niri validate -c "${DOTS_HOME}/niri/config.kdl"
 
