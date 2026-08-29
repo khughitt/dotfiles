@@ -1,0 +1,7 @@
+cabal update
+cabal init
+cabal build
+cabal run foo
+cabal repl foo
+
+-- vi:syntax=haskell

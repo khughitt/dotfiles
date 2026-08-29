@@ -7,6 +7,9 @@ jq --monochrome-output
 # pretty print
 jq . x.json
 
+# raw output (for strings, prints the string contents instead of JSON-encoding them)
+jq -r
+
 # print top-levels keys in a dict
 jq 'keys[]' dict.json
 
@@ -38,3 +41,7 @@ jq '.[keys_unsorted[0]]' x.json
 # given a dict of arrays, return dict with same structure, but only the first element from each
 # top-level array
 jq 'map_values(.[0])' x.json
+
+# for a nested dict with a parent "summaries" mapping to items each with a "summary" field, get the
+# first N summaries as strings
+jq -r '.summaries | to_entries[:3][] | .value.summary' x.json

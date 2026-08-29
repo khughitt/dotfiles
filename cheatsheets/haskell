@@ -164,4 +164,7 @@ mod 5 3
 -- effects
 <-   -- sequences an effectful action and _binds_ its result (e.g. IO String -> String)
 
+main = do
+  name <- getLine
+
 -- vi:syntax=haskell
