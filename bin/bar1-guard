@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# Gate a new GPU client on free BAR1 aperture.
+#
+# Why this exists: this box's RTX 3070 is windowed through a fixed 256 MiB
+# BAR1. X399 predates Resizable BAR, so the aperture cannot be enlarged -- the
+# only lever is not filling it. When it runs out, the NVIDIA driver's failure
+# path can issue a mapping that runs past the end of BAR1 into the neighbouring
+# BAR:
+#
+#   NVRM: dmaAllocMapping_GM107: can't alloc VA space for mapping.
+#   resource sanity check: requesting [mem 0xcff20000-0xd01affff], which spans
+#     more than 0000:09:00.0 [mem 0xc0000000-0xcfffffff 64bit pref]
+#   caller __nv_drm_gem_nvkms_map+0xc3/0x130 [nvidia_drm] mapping multiple BARs
+#
+# That wedges the GPU MMU and hard-freezes the machine. Exhaustion by itself is
+# survivable -- one boot absorbed 173 allocation failures and shut down cleanly
+# two days later -- so the goal is headroom, not zero usage.
+#
+# Usage:
+#   bar1-guard                      # wait for headroom, then exit 0
+#   bar1-guard --check              # test once, exit 0/1, never wait
+#   bar1-guard --print              # print free MiB
+#   bar1-guard --min 128 --timeout 600 --interval 20
+#
+# Intended as a preflight before adding a GL client, e.g.
+#   bar1-guard --min 96 && systemd-run --user weston --backend=headless ...
+#
+# Deliberately fails loudly when it cannot measure. A guard that passes when
+# the GPU is unreadable would disable itself exactly when something is wrong.
+
+set -uo pipefail
+
+MIN=${MIN:-96}             # MiB of free BAR1 required to proceed
+TIMEOUT=${TIMEOUT:-300}    # seconds to wait before giving up
+INTERVAL=${INTERVAL:-15}   # seconds between polls
+NVIDIA_SMI=${NVIDIA_SMI:-nvidia-smi}
+
+mode=wait
+
+die() { printf 'bar1-guard: %s\n' "$*" >&2; exit 2; }
+
+usage() {
+    sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+    exit 0
+}
+
+while (( $# )); do
+    case "$1" in
+        --check)    mode=check; shift ;;
+        --print)    mode=print; shift ;;
+        --min)      MIN=${2:?--min needs a value}; shift 2 ;;
+        --timeout)  TIMEOUT=${2:?--timeout needs a value}; shift 2 ;;
+        --interval) INTERVAL=${2:?--interval needs a value}; shift 2 ;;
+        -h|--help)  usage ;;
+        *)          die "unknown argument: $1" ;;
+    esac
+done
+
+for v in MIN TIMEOUT INTERVAL; do
+    [[ ${!v} =~ ^[0-9]+$ ]] || die "$v must be a non-negative integer, got '${!v}'"
+done
+(( INTERVAL > 0 )) || die "INTERVAL must be greater than zero"
+
+command -v "$NVIDIA_SMI" >/dev/null 2>&1 \
+    || die "nvidia-smi not found (looked for '$NVIDIA_SMI'); refusing to guess at BAR1 headroom"
+
+# Free BAR1 in MiB. FB Memory Usage also carries a Free field and is printed
+# first, so anchor on the BAR1 section header and take the first Free after it.
+bar1_free() {
+    local out free
+    out=$("$NVIDIA_SMI" -q 2>/dev/null) \
+        || die "nvidia-smi failed; refusing to guess at BAR1 headroom"
+    free=$(printf '%s\n' "$out" \
+        | awk '/BAR1 Memory Usage/{f=1; next} f && /Free/{print $3; exit}')
+    [[ $free =~ ^[0-9]+$ ]] \
+        || die "could not parse BAR1 free memory from nvidia-smi output"
+    printf '%s' "$free"
+}
+
+case "$mode" in
+    print)
+        bar1_free; printf '\n'
+        exit 0
+        ;;
+    check)
+        free=$(bar1_free) || exit $?
+        if (( free >= MIN )); then
+            exit 0
+        fi
+        printf 'bar1-guard: only %s MiB free, need %s MiB\n' "$free" "$MIN" >&2
+        exit 1
+        ;;
+esac
+
+# Wait mode.
+deadline=$(( SECONDS + TIMEOUT ))
+warned=0
+while :; do
+    free=$(bar1_free) || exit $?
+    if (( free >= MIN )); then
+        (( warned )) && printf 'bar1-guard: %s MiB free, proceeding\n' "$free" >&2
+        exit 0
+    fi
+    if (( SECONDS >= deadline )); then
+        printf 'bar1-guard: timed out after %ss with %s MiB free, need %s MiB\n' \
+            "$TIMEOUT" "$free" "$MIN" >&2
+        exit 1
+    fi
+    if (( ! warned )); then
+        printf 'bar1-guard: %s MiB free, need %s MiB; waiting up to %ss\n' \
+            "$free" "$MIN" "$TIMEOUT" >&2
+        warned=1
+    fi
+    sleep "$INTERVAL"
+done
