@@ -46,3 +46,4 @@ application/postscript=org.gnome.Evince.desktop;
 application/zip=localc-usercreated-1.desktop;
 audio/flac=vlc.desktop;
 application/pdf=org.pwmt.zathura-pdf-mupdf.desktop;
+application/x-extension-html=firefox-usercreated-1.desktop;

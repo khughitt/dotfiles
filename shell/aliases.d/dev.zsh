@@ -2,10 +2,12 @@
 
 # claude code
 alias cl='claude --dangerously-skip-permissions'
+alias clr='claude --dangerously-skip-permissions --resume'
 alias clp='claude --dangerously-skip-permissions --plugin-dir /mnt/ssd/Dropbox/proto-science'
 
 # codex (linux symlink work-around)
-# alias codex='codex -C `pwd`'
+alias co='codex --dangerously-bypass-approvals-and-sandbox'
+alias cor='codex --dangerously-bypass-approvals-and-sandbox resume'
 
 # conda/mamba
 alias cde='micromamba deactivate'

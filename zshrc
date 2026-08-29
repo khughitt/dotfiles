@@ -34,7 +34,6 @@ source "${DOTFILES}/shell/history"
 unsetopt correct_all          # disable auto correction
 setopt extended_glob          # extended globstring support
 setopt interactivecomments    # recognize comments
-REPORTTIME=5
 
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
