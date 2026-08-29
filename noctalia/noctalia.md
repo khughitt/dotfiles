@@ -129,5 +129,9 @@ through Noctalia IPC. It requires the `~/d/prism` checkout and fails if the
 Noctalia IPC endpoint is unavailable.
 
 Dotfiles owns Wali, the Noctalia configuration, and installation; Prism owns
-its plugin source. Wali depends on `walictl`; Prism depends on `prism` and
-`qs`.
+its plugin source. Wali depends on `walictl`; Prism depends on `prism` alone.
+
+Prism's panel drives niri's native glass material through its `niri` sink,
+which generates `prism.kdl` and reloads the compositor. There is no separate
+preview surface: the open Kitty and Ghostty windows are what the panel
+previews, and material sliders write once on release.

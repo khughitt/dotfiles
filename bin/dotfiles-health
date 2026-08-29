@@ -328,18 +328,6 @@ if [[ -e "${XDG_CONFIG_HOME}/prism" || -L "${XDG_CONFIG_HOME}/prism" || \
       -f "${prism_config}/values.yaml" ]]; then
     prism_failures="$failures"
     check_link "${XDG_CONFIG_HOME}/prism" "$prism_config"
-    check_link_target \
-        "${XDG_CONFIG_HOME}/niri/niri-glass.json" \
-        "${XDG_STATE_HOME}/prism/generated/niri-glass.json"
-    check_link \
-        "${XDG_CONFIG_HOME}/quickshell/niri-glass" \
-        "${HOME}/d/niri-glass"
-    if [[ -e "${XDG_CONFIG_HOME}/quickshell/shell.qml" || \
-          -L "${XDG_CONFIG_HOME}/quickshell/shell.qml" ]]; then
-        fail "${XDG_CONFIG_HOME}/quickshell/shell.qml disables named Quickshell configs"
-    else
-        pass "named Quickshell config discovery is enabled"
-    fi
     if [[ "$failures" -eq "$prism_failures" ]]; then
         if prism doctor; then
             pass "prism doctor"

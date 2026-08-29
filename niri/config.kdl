@@ -4,7 +4,6 @@
 // shell widgets, and generated colors; Niri owns compositor behavior.
 
 include "./prism.kdl"
-include "./materials.kdl"
 include "./host.kdl"
 
 

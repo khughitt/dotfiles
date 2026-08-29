@@ -129,12 +129,11 @@ run_setup() {
   local setup_root="${SETUP_ROOT:-$repo_root}"
   shift
 
-  mkdir -p "${tmp}/home/d/niri-glass" "${tmp}/bin"
+  mkdir -p "${tmp}/bin"
   if [[ "${PRISM_PLUGIN_SOURCE_PRESENT:-true}" == true ]]; then
     mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin"
     touch "${tmp}/home/d/prism/integrations/noctalia-plugin/plugin.toml"
   fi
-  touch "${tmp}/home/d/niri-glass/shell.qml"
   install_test_stubs "$tmp"
   cat > "${tmp}/bin/hostname" <<'EOF'
 #!/usr/bin/env bash
@@ -1285,8 +1284,8 @@ test_noctalia_v5_config_is_installed_and_validated() {
   rm -rf "$tmp"
 }
 
-test_setup_graphical_config_retains_glass_evidence_without_autostart() {
-  local tmp output config materials
+test_setup_graphical_config_hands_material_ownership_to_prism() {
+  local tmp output config
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
@@ -1294,26 +1293,25 @@ test_setup_graphical_config_retains_glass_evidence_without_autostart() {
   output=$(PRISM_TEST_HOSTNAME=titan \
     run_setup "$tmp" --dry-run --link-only --only graphical-config)
 
-  [[ "$output" == *"${tmp}/home/d/niri-glass"* ]] || \
-    fail "graphical setup did not retain the niri-glass evidence source"
-  [[ "$output" == *"${tmp}/config/quickshell/niri-glass"* ]] || \
-    fail "graphical setup did not retain the named Quickshell evidence config"
-  [[ "$output" == *"niri-glass.json"* ]] || \
-    fail "graphical setup did not retain the generated evidence config"
+  [[ "$output" != *"quickshell/niri-glass"* ]] || \
+    fail "graphical setup still plans the named Quickshell consumer"
+  [[ "$output" != *"niri-glass.json"* ]] || \
+    fail "graphical setup still plans the generated JSON consumer"
+  [[ "$output" == *"NIRI_CONFIG=${repo_root}/niri/config.kdl"* ]] || \
+    fail "pre-link Prism apply does not name the tracked niri config"
+  [[ "$output" == *"prism.kdl"* ]] || \
+    fail "graphical setup no longer links the generated Prism config"
 
   config="${repo_root}/niri/config.kdl"
-  materials="${repo_root}/niri/materials.kdl"
   ! rg -q -F 'spawn-at-startup "qs" "-c" "niri-glass"' "$config" || \
     fail "niri still autostarts the legacy glass runtime"
   rg -q -F 'include "./prism.kdl"' "$config" || fail "missing Prism include"
-  rg -q -F 'include "./materials.kdl"' "$config" || fail "missing material include"
-  rg -q -F 'material "terminal-glass"' "$materials" || fail "missing terminal material"
-  rg -q -F 'match app-id=r#"^(kitty|com\.mitchellh\.ghostty)$"#' "$materials" || \
-    fail "terminal material does not use the exact live app IDs"
-  rg -q -F 'blur false' "$materials" || fail "material rule leaves Prism blur active"
-  rg -q -F 'noise 0' "$materials" || fail "material rule leaves Prism noise active"
-  rg -q -F 'saturation 1' "$materials" || \
-    fail "material rule leaves Prism saturation active"
+  ! rg -q -F 'include "./materials.kdl"' "$config" || \
+    fail "niri still includes the static material Prism now generates"
+  [[ ! -e "${repo_root}/niri/materials.kdl" ]] || \
+    fail "the static material file survived the ownership handoff"
+  ! rg -q -F 'niri/niri-glass.json' "${repo_root}/.gitignore" || \
+    fail ".gitignore still names the retired generated consumer"
 }
 
 test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
@@ -1323,7 +1321,7 @@ test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
   fixture="${tmp}/repo"
   mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/feh" "$fixture/hypr" "$fixture/niri" \
     "$fixture/zathura" "$fixture/prism/titan" "$fixture/kitty" \
-    "${tmp}/home/d/niri-glass" "${tmp}/config" "${tmp}/bin"
+    "${tmp}/config" "${tmp}/bin"
   cp "${repo_root}/setup.sh" "$fixture/setup.sh"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
   cp "${repo_root}/niri/host_specific.sh" "$fixture/niri/"
@@ -1343,85 +1341,21 @@ test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
     fail "clean graphical setup should leave the Hyprland theme stub empty"
 }
 
-configure_prism_glass_runtime() {
+configure_prism_runtime() {
   local tmp="$1"
-  mkdir -p "${tmp}/config/quickshell" "${tmp}/config/niri" \
-    "${tmp}/home/d/niri-glass" "${tmp}/home/.local/state/prism/generated"
-  touch "${tmp}/home/d/niri-glass/shell.qml"
-  print -- '{}' > "${tmp}/home/.local/state/prism/generated/niri-glass.json"
+  mkdir -p "${tmp}/config/niri"
   ln -s "${repo_root}/prism/titan" "${tmp}/config/prism"
-  ln -s "${tmp}/home/d/niri-glass" "${tmp}/config/quickshell/niri-glass"
-  ln -s "${tmp}/home/.local/state/prism/generated/niri-glass.json" \
-    "${tmp}/config/niri/niri-glass.json"
 }
 
-test_dotfiles_health_accepts_prism_glass_runtime() {
+test_dotfiles_health_accepts_prism_runtime() {
   local tmp
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
   prepare_health_fixture "$tmp"
-  configure_prism_glass_runtime "$tmp"
+  configure_prism_runtime "$tmp"
 
   PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd >/dev/null
-}
-
-test_dotfiles_health_fails_wrong_niri_glass_consumer() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  prepare_health_fixture "$tmp"
-  configure_prism_glass_runtime "$tmp"
-  print -- '{}' > "${tmp}/wrong.json"
-  rm "${tmp}/config/niri/niri-glass.json"
-  ln -s "${tmp}/wrong.json" "${tmp}/config/niri/niri-glass.json"
-
-  set +e
-  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
-  exit_status=$?
-  set -e
-  [[ "$exit_status" -ne 0 ]] || fail "health accepted wrong niri-glass consumer"
-  [[ "$output" == *"wrong link target"* ]] || \
-    fail "health did not explain wrong niri-glass consumer"
-}
-
-test_dotfiles_health_fails_wrong_named_niri_glass_config() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  prepare_health_fixture "$tmp"
-  configure_prism_glass_runtime "$tmp"
-  mkdir "${tmp}/wrong-niri-glass"
-  rm "${tmp}/config/quickshell/niri-glass"
-  ln -s "${tmp}/wrong-niri-glass" "${tmp}/config/quickshell/niri-glass"
-
-  set +e
-  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
-  exit_status=$?
-  set -e
-  [[ "$exit_status" -ne 0 ]] || fail "health accepted wrong named niri-glass config"
-  [[ "$output" == *"wrong link target"* ]] || \
-    fail "health did not explain wrong named niri-glass config"
-}
-
-test_dotfiles_health_rejects_root_quickshell_config() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  prepare_health_fixture "$tmp"
-  configure_prism_glass_runtime "$tmp"
-  touch "${tmp}/config/quickshell/shell.qml"
-
-  set +e
-  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
-  exit_status=$?
-  set -e
-  [[ "$exit_status" -ne 0 ]] || fail "health accepted a root Quickshell config"
-  [[ "$output" == *"disables named Quickshell configs"* ]] || \
-    fail "health did not explain the named-config shadow"
 }
 
 test_dotfiles_health_fails_when_prism_doctor_fails() {
@@ -1431,7 +1365,7 @@ test_dotfiles_health_fails_when_prism_doctor_fails() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   prepare_health_fixture "$tmp"
-  configure_prism_glass_runtime "$tmp"
+  configure_prism_runtime "$tmp"
 
   set +e
   output=$(PRISM_TEST_HOSTNAME=titan PRISM_DOCTOR_STATUS=1 run_health "$tmp" --skip-systemd 2>&1)
@@ -1572,12 +1506,9 @@ test_dotfiles_health_rejects_legacy_lsd_directory_link
 test_dotfiles_health_rejects_legacy_yazi_directory_link
 test_dotfiles_health_checks_enabled_user_timer
 test_noctalia_v5_config_is_installed_and_validated
-test_setup_graphical_config_retains_glass_evidence_without_autostart
+test_setup_graphical_config_hands_material_ownership_to_prism
 test_clean_graphical_setup_creates_empty_hyprland_theme_stub
-test_dotfiles_health_accepts_prism_glass_runtime
-test_dotfiles_health_fails_wrong_niri_glass_consumer
-test_dotfiles_health_fails_wrong_named_niri_glass_config
-test_dotfiles_health_rejects_root_quickshell_config
+test_dotfiles_health_accepts_prism_runtime
 test_dotfiles_health_fails_when_prism_doctor_fails
 test_dotfiles_health_rejects_noctalia_config_warning
 test_dotfiles_health_rejects_noctalia_template_state_override
