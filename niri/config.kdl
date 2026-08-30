@@ -144,7 +144,7 @@ layer-rule {
 // blur + noise
 window-rule {
     background-effect {
-        // blur true
+        blur true
         xray false
     }
 }
@@ -157,12 +157,10 @@ window-rule {
 //     saturation 0.6
 // }
 blur {
-    //passes 2
     passes 1
-    offset 2.5
-    noise 0.0
-    //noise 0.08
-    //saturation 0.1
+    offset 2.0
+    noise 0.1
+    saturation 1.0
 }
 
 layer-rule {
