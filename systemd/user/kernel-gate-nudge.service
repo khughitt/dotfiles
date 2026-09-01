@@ -1,0 +1,6 @@
+[Unit]
+Description=Report held kernel updates and certification drift
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/kernel-gate nudge

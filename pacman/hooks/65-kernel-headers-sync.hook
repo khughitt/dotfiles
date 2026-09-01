@@ -1,0 +1,16 @@
+# linux and linux-headers must always be at the same version: DKMS modules
+# (nvidia-open-dkms, virtualbox-host-dkms) build against the headers, and a
+# mismatch makes every build fail. IgnorePkg holds both, so normal upgrades
+# cannot split them; this catches an explicit single-package install.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = linux
+Target = linux-headers
+
+[Action]
+Description = Checking linux/linux-headers version sync...
+When = PostTransaction
+Exec = /usr/local/bin/kernel-gate check-sync

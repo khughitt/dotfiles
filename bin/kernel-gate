@@ -1,0 +1,222 @@
+#!/usr/bin/env bash
+# kernel-gate -- hold the host kernel steady between atoms certification windows.
+#
+# Every `linux` package bump invalidates the atoms A8 durability allowlist,
+# which keys on an exact `uname -r`, and costs a full nine-scenario QEMU
+# sweep. Arch ships kernel bumps about weekly, so `linux` and `linux-headers`
+# are held in IgnorePkg and released deliberately, together, via `unlock`.
+#
+# Machine config, not repo content. Companion pieces:
+#   /etc/pacman.conf                                  IgnorePkg holds the pair
+#   /etc/pacman.d/hooks/65-kernel-headers-sync.hook   calls `check-sync`
+#   ~/.config/systemd/user/kernel-gate-nudge.timer    calls `nudge`
+#   ~/.local/bin/atoms-recertify                      runs the sweep post-reboot
+set -euo pipefail
+
+PINNED=(linux linux-headers)
+CONF=${KERNEL_GATE_CONF:-/etc/kernel-gate.conf}
+ATOMS_REPO=""
+if [ -r "$CONF" ]; then
+    # shellcheck source=/dev/null
+    . "$CONF"
+fi
+
+SUDO=(sudo)
+if [ "$(id -u)" -eq 0 ]; then
+    SUDO=()
+fi
+
+die() { printf 'kernel-gate: %s\n' "$*" >&2; exit 1; }
+
+# Both lookups are queries, not assertions: "not installed" and "no update
+# available" are ordinary answers here. pacman signals them by exiting 1, which
+# pipefail would otherwise turn into a fatal error mid-report -- so the empty
+# string is the answer, and `|| true` is what makes it one.
+installed_version() { pacman -Q "$1" 2>/dev/null | awk '{print $2}' || true; }
+
+# New version from the last synced DB, empty when already current. Ignored
+# packages still appear here, with an "[ignored]" suffix that field 4 misses.
+available_version() { pacman -Qu "$1" 2>/dev/null | awk '{print $4}' || true; }
+
+held() { pacman-conf IgnorePkg 2>/dev/null | grep -qxF "$1"; }
+
+db_age_days() {
+    local mtime now
+    if ! mtime=$(stat -c %Y /var/lib/pacman/sync/core.db 2>/dev/null); then
+        printf '?\n'
+        return 0
+    fi
+    now=$(date +%s)
+    printf '%d\n' $(( (now - mtime) / 86400 ))
+}
+
+# The kernel /boot would boot into; differs from `uname -r` when an upgrade
+# has landed but the machine has not been restarted yet.
+boot_kernel() {
+    file -b /boot/vmlinuz-linux 2>/dev/null | grep -oP 'version \K[^ ]+' || true
+}
+
+# Read exactly the way atoms-recertify reads it, so the two cannot disagree.
+certified_kernel() {
+    local f
+    [ -n "$ATOMS_REPO" ] || return 1
+    f="$ATOMS_REPO/python/src/atoms/fs/volume.py"
+    [ -r "$f" ] || return 1
+    grep -oP 'kernel_identifier="\K[^"]+' "$f" | head -1
+}
+
+pending_recert_branch() {
+    [ -n "$ATOMS_REPO" ] || return 1
+    git -C "$ATOMS_REPO" rev-parse --verify -q "chore/recertify-$(uname -r)" >/dev/null 2>&1
+}
+
+cmd_status() {
+    local running boot certified inst avail any=0 p
+
+    running=$(uname -r)
+    boot=$(boot_kernel)
+
+    printf 'Held:       '
+    for p in "${PINNED[@]}"; do
+        if held "$p"; then
+            printf '%s ' "$p"
+            any=1
+        fi
+    done
+    if [ "$any" -eq 1 ]; then
+        printf '(IgnorePkg)\n'
+    else
+        printf 'NOTHING -- the gate is not in place\n'
+    fi
+
+    for p in "${PINNED[@]}"; do
+        inst=$(installed_version "$p")
+        avail=$(available_version "$p")
+        printf '  %-14s %s' "$p" "${inst:-<not installed>}"
+        if [ -n "$avail" ]; then
+            printf ' -> %s available' "$avail"
+        fi
+        printf '\n'
+    done
+
+    printf 'Running:    %s\n' "$running"
+    if [ -n "$boot" ] && [ "$boot" != "$running" ]; then
+        printf 'REBOOT PENDING: /boot holds %s\n' "$boot"
+    fi
+    printf 'Sync DB:    %s days old\n' "$(db_age_days)"
+
+    if certified=$(certified_kernel); then
+        if [ "$certified" = "$running" ]; then
+            printf 'Certified:  %s (matches running kernel)\n' "$certified"
+        else
+            printf 'Certified:  %s -- STALE, running kernel is %s\n' "$certified" "$running"
+            if pending_recert_branch; then
+                printf '            chore/recertify-%s is pushed, awaiting review\n' "$running"
+            else
+                printf '            atoms-recertify.timer will pick this up (every 6h)\n'
+            fi
+        fi
+    else
+        printf 'Certified:  unknown (ATOMS_REPO unset or unreadable via %s)\n' "$CONF"
+    fi
+}
+
+# True when there is something the user actually has to act on.
+actionable() {
+    local p certified gated=1
+
+    # A machine that is not holding anything back has nothing to be nudged
+    # about; without this the nudge would report withheld upgrades on a host
+    # where the upgrades are simply available.
+    for p in "${PINNED[@]}"; do
+        if held "$p"; then
+            gated=0
+            break
+        fi
+    done
+    [ "$gated" -eq 0 ] || return 1
+
+    for p in "${PINNED[@]}"; do
+        if [ -n "$(available_version "$p")" ]; then
+            return 0
+        fi
+    done
+    if certified=$(certified_kernel); then
+        if [ "$certified" != "$(uname -r)" ]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+cmd_unlock() {
+    local dry=0 sync take
+    if [ "${1:-}" = "--dry-run" ]; then
+        dry=1
+    elif [ -n "${1:-}" ]; then
+        die "unknown option: $1"
+    fi
+
+    # A full -Syu first, so pulling the kernel in afterwards is never a partial
+    # upgrade; then an explicit -S, which pacman allows past IgnorePkg after
+    # asking. Both kernel packages in one transaction keeps DKMS buildable.
+    sync=("${SUDO[@]}" pacman -Syu)
+    take=("${SUDO[@]}" pacman -S --needed "${PINNED[@]}")
+
+    if [ "$dry" -eq 1 ]; then
+        printf 'Would run:\n  %s\n  %s\n' "${sync[*]}" "${take[*]}"
+        printf '\nThen reboot. atoms-recertify.timer runs the sweep 5 min after\n'
+        printf 'boot and pushes chore/recertify-<new kernel> for review.\n'
+        return 0
+    fi
+
+    printf '==> %s\n' "${sync[*]}"
+    "${sync[@]}"
+    printf '==> %s\n' "${take[*]}"
+    "${take[@]}"
+
+    printf '\nKernel released. Next:\n'
+    printf '  1. reboot\n'
+    printf '  2. atoms-recertify.timer runs the sweep 5 min after boot\n'
+    printf '  3. review and merge the chore/recertify-<kernel> branch it pushes\n'
+}
+
+# PostTransaction hook: linux and linux-headers must never diverge, or every
+# DKMS build (nvidia-open-dkms, virtualbox-host-dkms) fails until they match.
+cmd_check_sync() {
+    local lv hv
+    lv=$(installed_version linux)
+    hv=$(installed_version linux-headers)
+    if [ -z "$lv" ] || [ -z "$hv" ]; then
+        return 0
+    fi
+    if [ "$lv" = "$hv" ]; then
+        return 0
+    fi
+    cat >&2 <<MSG
+
+  linux ($lv) and linux-headers ($hv) are out of sync.
+
+  DKMS modules build against the headers; while these differ,
+  nvidia-open-dkms and virtualbox-host-dkms will fail to build.
+
+  Fix with:  kernel-gate unlock
+MSG
+    return 1
+}
+
+cmd_nudge() {
+    cmd_status
+    if actionable && command -v notify-send >/dev/null; then
+        notify-send -u normal "kernel-gate" \
+            "Kernel updates are being held. Run 'kernel-gate status' for detail."
+    fi
+}
+
+case "${1:-status}" in
+    status)     cmd_status ;;
+    unlock)     shift; cmd_unlock "${1:-}" ;;
+    check-sync) cmd_check_sync ;;
+    nudge)      cmd_nudge ;;
+    *)          die "usage: kernel-gate {status|unlock [--dry-run]|check-sync|nudge}" ;;
+esac

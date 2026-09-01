@@ -1,8 +1,9 @@
 # Fresh install: storage & system hardening
 
 Changes worth recreating on a clean Arch install. Derived from the 2026-08-06
-session that followed an NVMe drive dropping off the PCIe bus, plus the
-2026-08-08 session that added the Windows dual boot and fixed DKMS rebuild time.
+session that followed an NVMe drive dropping off the PCIe bus, the 2026-08-08
+session that added the Windows dual boot and fixed DKMS rebuild time, and the
+2026-09-01 session that gated kernel updates.
 
 ## Packages
 
@@ -42,7 +43,8 @@ zramctl
 
 ## User services
 
-Link the user units and enable the Dropbox maintenance timer:
+Link the user units and enable the timers that are safe everywhere — Dropbox
+maintenance and the kernel-gate nudge:
 
 ```sh
 ./setup.sh --link-only --headless --only systemd --enable-user-timers
@@ -399,6 +401,81 @@ done
 ```
 
 Anything listed that is not the running kernel is dead weight.
+
+## Gating kernel updates
+
+The section above cuts what a kernel upgrade *costs*. This one cuts how often
+one happens.
+
+`atoms` certifies a filesystem durability tuple against an exact `uname -r`, so
+any change to the running kernel — including a pkgrel-only rebuild such as
+`7.1.8-arch1-2` to `7.1.8-arch1-3` — leaves the tuple uncertified until a full
+nine-scenario QEMU sweep re-establishes it. Arch shipped fifteen `linux` bumps
+in the ten weeks to 2026-09-01. Certification was effectively continuous.
+
+So the kernel does not move on its own. `linux` and `linux-headers` are pinned,
+and released deliberately:
+
+```sh
+install -m 0755 bin/kernel-gate                          /usr/local/bin/kernel-gate
+install -m 0644 pacman/hooks/65-kernel-headers-sync.hook /etc/pacman.d/hooks/
+install -m 0644 pacman/kernel-gate.conf                  /etc/kernel-gate.conf
+```
+
+Then add both packages to `IgnorePkg` in `/etc/pacman.conf`, keeping whatever
+is already there:
+
+```
+IgnorePkg = linux linux-headers
+```
+
+After that, `pacman -Syu` upgrades everything else and leaves the kernel alone;
+`kernel-gate unlock` takes it when you are ready; `kernel-gate status` reports
+what is held and whether the running kernel is still certified.
+
+Five things that are non-obvious:
+
+**The pair is the unit, never one of them.** DKMS builds against the headers,
+so a kernel and headers at different versions break every module build on the
+machine — here `nvidia-open-dkms` and `virtualbox-host-dkms`. Worse, the
+breakage does not surface at the transaction that caused it; it surfaces at the
+next boot, as modules that will not load. `IgnorePkg` covers both, `unlock`
+takes both in one transaction, and the hook refuses to let them diverge.
+
+**The hook is numbered 65 on purpose.** `70-dkms-install.hook` runs the builds
+that a mismatch breaks. A diagnostic numbered above it prints *after* a wall of
+build failures, explaining something the reader has already been buried in.
+
+**`IgnorePkg` is not a lock, and does not need to be.** An explicit
+`pacman -S linux` still installs, after asking. That is the release path, not a
+hole in the gate: `-Syu` is what runs unattended and by habit, and that is what
+the pin stops.
+
+**Release with a full `-Syu` first, then take the kernel.** Never `pacman -Sy
+linux` — that syncs the databases and installs one package against them, which
+is the definition of a partial upgrade. `kernel-gate unlock` does the two steps
+in that order for exactly this reason.
+
+**Root runs its own copy, not the `~/bin` symlink.** `bin/` is symlinked into
+`$HOME`, and a pacman hook executing a user-writable script would hand root to
+anything that can write there. The `install` above makes a root-owned copy;
+re-run it whenever `bin/kernel-gate` changes.
+
+Verify by asking pacman what it will actually do, not by reading the config
+back:
+
+```sh
+pacman -Qu linux linux-headers   # both must say [ignored]
+```
+
+A parsed config proves nothing here — `pacman-conf IgnorePkg` will happily echo
+a package name that a typo elsewhere has left unenforced.
+
+One deliberate gap: the unattended sweep that follows a release
+(`~/.local/bin/atoms-recertify` and its user units) is not tracked here. It
+hardcodes an atoms checkout and a repo-specific review workflow, so it is not
+general host configuration. A fresh machine gets the gate and reports
+`Certified: unknown` until that checkout exists.
 
 ## Auditing systemd changes
 

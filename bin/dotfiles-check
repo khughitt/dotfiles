@@ -11,6 +11,7 @@ bash_files=(
     bin/dotfiles-check
     bin/dotfiles-health
     bin/dotfiles-secrets-check
+    bin/kernel-gate
     lib/dotfiles-setup-data.bash
     hypr/host_specific.sh
     hypr/scripts/monitor-handler.sh

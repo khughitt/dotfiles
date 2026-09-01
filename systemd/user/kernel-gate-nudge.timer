@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodic reminder that kernel updates are being held
+
+[Timer]
+# 1st and 3rd Monday of each month, ~2 weeks apart. A realtime schedule so
+# Persistent= works: a window missed while powered off fires at next boot.
+OnCalendar=Mon *-*-01..07,15..21 10:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

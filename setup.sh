@@ -499,10 +499,13 @@ function setup_systemd_user_units() {
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.service" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.service"
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.timer" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.timer"
     ln_s "${DOTS_HOME}/systemd/user/mindful-docker.service" "${XDG_CONFIG_HOME}/systemd/user/mindful-docker.service"
+    ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.service" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.service"
+    ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.timer" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.timer"
 
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload
         run systemctl --user enable --now dropbox-ignore-flux.timer
+        run systemctl --user enable --now kernel-gate-nudge.timer
     fi
 }
 

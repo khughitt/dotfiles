@@ -24,6 +24,7 @@ bin/*
 !bin/dotfiles-health
 !bin/dotfiles-secrets-check
 !bin/gpu-fan-curve
+!bin/kernel-gate
 !bin/prism
 bookmarks
 dojo/
