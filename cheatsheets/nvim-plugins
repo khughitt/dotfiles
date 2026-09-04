@@ -1,22 +1,25 @@
 # telescope
-;ff   files
-;fg   grep
-;fr   frecency
-;fb   buffers
-;fh   help tags
+;ff   # files
+;fg   # grep
+;fr   # frecency
+;fb   # buffers
+;fh   # help tags
+
+# markdown
+;s    # insert date
 
 # sneak
 s + <first two chars..>
 
 # leap.nvim
-s                 forward search
-S                 backward search
-s{char}<space>    target char at end of line
-s<space><space>   jump to an empty line
-s<enter>          repeat the last search
-s<enter><enter>   traverse matches
-x                 move lhs visual bound
-X                 move rhs visual bound
+s                 # forward search
+S                 # backward search
+s{char}<space>    # target char at end of line
+s<space><space>   # jump to an empty line
+s<enter>          # repeat the last search
+s<enter><enter>   # traverse matches
+x                 # move lhs visual bound
+X                 # move rhs visual bound
 
 # profiling vim plugins
 # https://stackoverflow.com/questions/12213597/how-to-see-which-plugins-are-making-vim-slow

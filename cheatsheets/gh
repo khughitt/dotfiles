@@ -5,5 +5,8 @@ gh pr --draft
 # auto-fill using local commit
 gh pr create --fill
 
+# rename repo
+gh repo rename new-name
+
 # execute commands on inactive accounts
 GH_TOKEN=$(gh auth token --user other-account) ...

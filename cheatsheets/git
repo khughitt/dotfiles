@@ -70,14 +70,15 @@ git show <commit>:api/pyproject.toml
 git show HEAD~2:api/pyproject.toml
 
 # show all changes made to a file
+# also useful to show last changes made
 git log -p -- file
-
-# show all commits made to a file
-git rev-list HEAD --oneline
 
 # show branch history
 git log --oneline --graph
 git log --oneline --graph --all --decorate
+
+# show all commits made to a file
+git rev-list HEAD --oneline
 
 # create & push a tag
 git tag -a v1.0 -m "..."
@@ -120,17 +121,24 @@ git remote -v
 # list all branches
 git branch -a
 
+# delete local branch
+git checkout main
+git branch --delete foo
+
 # fetch all remote branches
 git fetch --all
 
 # update refs and remove deleted remote-tracking branches
 git fetch --prune origin
 
-# see remote branches merged into origin/main
-git branch -r --merged origin/main
+# find still-existing merged branches
+git for-each-ref \
+  --merged=refs/remotes/origin/main \
+  --format='%(refname:short)' \
+  refs/remotes/origin
 
-# clean up old remotes
-git remote prune origin --dry-run
+# delete remote
+git push origin --delete branch-name
 
 # rename local branch
 git branch -m old new
@@ -175,13 +183,6 @@ git fetch origin
 git branch -u origin/main main 
 git remote set-head origin -a
 git remote prune origin
-
-# delete local branch
-git checkout main
-git branch --delete foo
-
-# delete remote branch
-git push origin --delete feature-branch-name
 
 # lfs
 git lfs track "*.png"
