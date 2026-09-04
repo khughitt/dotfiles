@@ -67,6 +67,9 @@ alias s='uv run science --color=always'
 # snakemake
 alias snek="snakemake"
 
+# tasks
+alias ta='TASKS_FORMAT=pretty tasks --color=always'
+
 # tmux
 alias x=xumt
 
