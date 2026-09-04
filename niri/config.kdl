@@ -105,7 +105,7 @@ overview {
     workspace-shadow {
         off
     }
-    zoom 0.25
+    zoom 0.15
 }
 
 hotkey-overlay {
@@ -157,7 +157,7 @@ window-rule {
 //     saturation 0.6
 // }
 blur {
-    passes 1
+    passes 3
     offset 2.0
     noise 0.1
     saturation 1.0
