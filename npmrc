@@ -1,0 +1,5 @@
+; npm user config
+;
+; Default fetch-timeout (5m) is too short for large tarballs (e.g. electron,
+; playwright browsers) on a slow or congested link; bump it to 15m.
+fetch-timeout=900000

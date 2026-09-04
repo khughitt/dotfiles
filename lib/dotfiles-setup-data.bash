@@ -4,7 +4,7 @@
 DOTFILES_GRAPHICAL_CONFIGS=(feh hypr niri zathura)
 DOTFILES_COMMON_CONFIGS=(crush familiar fcitx git glow kitty mimeapps.list nvim termcolors)
 DOTFILES_MACOS_EXCLUDED_COMMON_CONFIGS=(fcitx mimeapps.list)
-DOTFILES_COMMON_DOTFILES=(condarc ctags plotly Rprofile Renviron tmux.conf visidatarc)
+DOTFILES_COMMON_DOTFILES=(condarc ctags npmrc plotly Rprofile Renviron tmux.conf visidatarc)
 
 function dotfiles_select_common_configs() {
     local include_linux_only="${1:-true}"
