@@ -1,0 +1,9 @@
+{
+  "id": "cats",
+  "source": {
+    "kind": "https",
+    "url": "https://github.com/khughitt/familiar-cats",
+    "commit": "6a5fcf75d2183e6baed6762ed976a3328a373710"
+  },
+  "installedAt": "2026-08-19T10:07:48.432Z"
+}

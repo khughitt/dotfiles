@@ -76,3 +76,6 @@ familiar/identities.yaml
 
 # superpowers scratch (plans, brainstorm mockups, sdd ledger)
 .superpowers/
+
+# familiar installed theme art (reinstall with `familiar theme add`, see theme-receipts/)
+familiar/themes/
