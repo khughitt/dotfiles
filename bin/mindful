@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec node "$HOME/d/mindful/v6/packages/mindful/dist/bin.js" "$@"

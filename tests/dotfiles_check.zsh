@@ -22,6 +22,15 @@ assert_not_ignored() {
 
 "${repo_root}/bin/dotfiles-check"
 
+mindful_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-mindful-home.XXXXXX")
+register_tmp_cleanup "$mindful_home"
+mkdir -p "${mindful_home}/d/mindful/v6/packages/mindful/dist"
+print -r -- 'process.stdout.write(JSON.stringify(process.argv.slice(2)))' > \
+  "${mindful_home}/d/mindful/v6/packages/mindful/dist/bin.js"
+mindful_output=$(HOME="$mindful_home" "${repo_root}/bin/mindful" --flag "two words")
+[[ "$mindful_output" == '["--flag","two words"]' ]] || \
+  fail "mindful wrapper did not forward arguments: $mindful_output"
+
 modeline_files=(
   zshrc
   shell/aliases
