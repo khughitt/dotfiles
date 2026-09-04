@@ -54,6 +54,9 @@ done
 nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
   "+lua dofile('${repo_root}/nvim/tests/clipboard_test.lua')" '+qa!'
 
+nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
+  -l "${repo_root}/nvim/tests/theme_test.lua"
+
 zsh -fc '
   source "$1/shell/aliases"
   source "$1/shell/functions"

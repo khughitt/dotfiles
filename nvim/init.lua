@@ -73,6 +73,7 @@ vim.keymap.set('i', '<c-u>', '<c-g>u<c-u>')
 --  UI
 -- ---------------------------------------------------------------------------
 vim.opt.number = true                           -- line numbers
+vim.opt.fillchars:append({ eob = ' ' })         -- hide end-of-buffer markers
 vim.opt.report = 0                              -- tell us about changes
 vim.opt.scrolloff = 5                           -- keep cursor away from top/bottom
 vim.opt.sidescrolloff = 1                       -- ... and from the sides
