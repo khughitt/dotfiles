@@ -133,4 +133,4 @@ export SUDO_ASKPASS=/usr/bin/ksshaskpass
 
 # familiar-forge post-split configuration (Phase 3 repository split)
 export FAMILIAR_FORGE_THEME_DIR="$HOME/d/familiar-cats"
-export FAMILIAR_FORGE_CATS_GRAPH_DIR="$HOME/.local/share/familiar-forge/graphs/cats"
+export FAMILIAR_FORGE_THEME_GRAPH_DIR="$HOME/.local/share/familiar-forge/graphs/cats"
