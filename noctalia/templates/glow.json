@@ -49,6 +49,7 @@
     "italic": true
   },
   "strong": {
+    "color": "{{colors.secondary.default.hex}}",
     "bold": true
   },
   "hr": {
