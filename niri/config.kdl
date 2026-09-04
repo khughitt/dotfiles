@@ -310,6 +310,7 @@ binds {
     Super+Ctrl+F { expand-column-to-available-width; }
     Super+C { center-column; }
     Super+Ctrl+C { center-visible-columns; }
+    Super+Ctrl+Shift+C hotkey-overlay-title="Spread Visible Columns Evenly" { spawn-sh "~/.config/niri/scripts/fill-new-window --spread"; }
     Super+Minus { set-column-width "-10%"; }
     Super+Equal { set-column-width "+10%"; }
     Super+Shift+Minus { set-window-height "-10%"; }
