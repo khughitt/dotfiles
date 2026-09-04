@@ -11,7 +11,6 @@ import sys
 from typing import Any, Iterable
 
 
-GAP = 24.0
 MIN_WIDTH = 1 / 3
 ROUNDING_TOLERANCE = 2.0
 
@@ -19,7 +18,7 @@ ROUNDING_TOLERANCE = 2.0
 def target_width(
     tile_widths: Iterable[float],
     output_width: float,
-    gap: float = GAP,
+    gap: float,
 ) -> float | None:
     """Return the remaining output proportion, or None when it is too small."""
     proportional_width = output_width - gap
@@ -29,31 +28,53 @@ def target_width(
     return remaining / proportional_width
 
 
-def tiled_column_widths(
+def tiled_columns(
     windows: dict[int, dict[str, Any]],
     workspace_id: int,
-) -> list[float]:
-    columns: dict[int, float] = {}
+) -> list[dict[str, Any]]:
+    columns: dict[int, dict[str, Any]] = {}
     for window in windows.values():
         if window.get("workspace_id") != workspace_id or window.get("is_floating"):
             continue
         layout = window.get("layout") or {}
         position = layout.get("pos_in_scrolling_layout")
         if position is not None:
-            columns.setdefault(int(position[0]), float(layout["tile_size"][0]))
-    return list(columns.values())
+            columns.setdefault(int(position[0]), window)
+    return [columns[position] for position in sorted(columns)]
 
 
-def query_output_width(output_name: str) -> float:
-    outputs = json.loads(
+def tiled_column_widths(
+    windows: dict[int, dict[str, Any]],
+    workspace_id: int,
+) -> list[float]:
+    return [float(window["layout"]["tile_size"][0]) for window in tiled_columns(windows, workspace_id)]
+
+
+def query_niri(subject: str) -> Any:
+    return json.loads(
         subprocess.run(
-            ["niri", "msg", "-j", "outputs"],
+            ["niri", "msg", "-j", subject],
             check=True,
             capture_output=True,
             text=True,
         ).stdout,
     )
+
+
+def query_output_width(output_name: str) -> float:
+    outputs = query_niri("outputs")
     return float(outputs[output_name]["logical"]["width"])
+
+
+def query_gap() -> float:
+    return float(
+        subprocess.run(
+            ["prism", "get", "compositor.gaps"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout,
+    )
 
 
 def focus_window_message(window_id: int) -> dict[str, Any]:
@@ -68,6 +89,21 @@ def set_column_width_message(proportion: float) -> dict[str, Any]:
             },
         },
     }
+
+
+def resize_columns(
+    action_socket: NiriSocket,
+    window_ids: list[int],
+    proportion: float,
+    restore_id: int | None,
+) -> None:
+    try:
+        for window_id in window_ids:
+            action_socket.request(focus_window_message(window_id))
+            action_socket.request(set_column_width_message(proportion))
+    finally:
+        if restore_id is not None and restore_id != window_ids[-1]:
+            action_socket.request(focus_window_message(restore_id))
 
 
 class NiriSocket:
@@ -162,20 +198,53 @@ def resize_new_window(
 
     workspace_id = int(workspace_id)
     output_name = state.workspaces[workspace_id]["output"]
-    width = target_width(
-        tiled_column_widths(state.windows, workspace_id),
-        query_output_width(output_name),
-    )
+    columns = tiled_columns(state.windows, workspace_id)
+    if len(columns) == 1:
+        window_ids = [int(columns[0]["id"]), int(window["id"])]
+        width = .5
+    else:
+        window_ids = [int(window["id"])]
+        width = target_width(
+            tiled_column_widths(state.windows, workspace_id),
+            query_output_width(output_name),
+            query_gap(),
+        )
     if width is None:
         return
 
     restore_id = None if window.get("is_focused") else state.focused_tiled_window_id()
-    action_socket.request(focus_window_message(int(window["id"])))
-    try:
-        action_socket.request(set_column_width_message(width))
-    finally:
-        if restore_id is not None:
-            action_socket.request(focus_window_message(restore_id))
+    resize_columns(action_socket, window_ids, width, restore_id)
+
+
+def spread_visible_columns(state: State, action_socket: NiriSocket) -> None:
+    workspace = next(
+        (workspace for workspace in state.workspaces.values() if workspace.get("is_focused")),
+        None,
+    )
+    if workspace is None:
+        return
+
+    gap = query_gap()
+    view_left = float(workspace["scrolling_view_pos"])
+    view_right = view_left + query_output_width(workspace["output"])
+    column_x = 0.0
+    visible_ids = []
+    for window in tiled_columns(state.windows, int(workspace["id"])):
+        width = float(window["layout"]["tile_size"][0])
+        if column_x < view_right and view_left < column_x + width:
+            visible_ids.append(int(window["id"]))
+        column_x += width + gap
+
+    if not visible_ids:
+        return
+
+    resize_columns(
+        action_socket,
+        visible_ids,
+        1 / len(visible_ids),
+        state.focused_tiled_window_id(),
+    )
+    action_socket.request({"Action": {"CenterVisibleColumns": {}}})
 
 
 def run(event_socket: NiriSocket, action_socket: NiriSocket) -> None:
@@ -195,6 +264,11 @@ def run(event_socket: NiriSocket, action_socket: NiriSocket) -> None:
 
 
 def main() -> int:
+    args = sys.argv[1:]
+    if args not in ([], ["--spread"]):
+        print("usage: fill-new-window [--spread]", file=sys.stderr)
+        return 2
+
     socket_path = os.environ.get("NIRI_SOCKET")
     if not socket_path:
         print("NIRI_SOCKET is not set", file=sys.stderr)
@@ -202,9 +276,15 @@ def main() -> int:
 
     event_socket = action_socket = None
     try:
-        event_socket = NiriSocket.connect(socket_path)
         action_socket = NiriSocket.connect(socket_path)
-        run(event_socket, action_socket)
+        if args:
+            state = State()
+            state.apply("WorkspacesChanged", {"workspaces": query_niri("workspaces")})
+            state.apply("WindowsChanged", {"windows": query_niri("windows")})
+            spread_visible_columns(state, action_socket)
+        else:
+            event_socket = NiriSocket.connect(socket_path)
+            run(event_socket, action_socket)
     except (EOFError, OSError, RuntimeError, subprocess.SubprocessError) as error:
         print(f"fill-new-window: {error}", file=sys.stderr)
         return 1
