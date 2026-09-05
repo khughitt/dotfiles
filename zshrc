@@ -93,6 +93,11 @@ zinit cdreplay -q
 
 compdef _gnu_generic snakemake
 
+# tasks: dynamic completion for subcommands, flags, and task ids. The stub calls the
+# binary back on each TAB, so it must come after compinit, and it is regenerated at every
+# shell start -- re-source it (or open a new shell) after upgrading tasks.
+command -v tasks &>/dev/null && source <(TASKS_COMPLETE=zsh tasks)
+
 if [[ -r "${DOTFILES}/shell/local/${HOST}.zsh" ]]; then
     source "${DOTFILES}/shell/local/${HOST}.zsh"
 fi
