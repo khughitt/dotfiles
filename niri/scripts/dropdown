@@ -14,7 +14,7 @@ set -euo pipefail
 WIDTH_FRACTION=0.80
 
 usage() {
-    echo "usage: ${0##*/} [--hidden] <term|ipython>" >&2
+    echo "usage: ${0##*/} [--hidden] <term|ipython|ghci>" >&2
     exit 2
 }
 
@@ -30,6 +30,7 @@ name=$1
 case "$name" in
     term)    lines=30; cmd=() ;;
     ipython) lines=40; cmd=(ipython) ;;
+    ghci)    lines=40; cmd=(ghci-color) ;;  # the interactive-shell alias for ghci
     *) echo "${0##*/}: unknown dropdown '$name'" >&2; usage ;;
 esac
 

@@ -7,6 +7,7 @@ shift+super+return   // terminal in a new workspace below this one
 super+e              // yazi
 alt+return           // toggle dropdown terminal
 alt+p                // toggle dropdown ipython
+alt+g                // toggle dropdown ghci
 ctrl+space           // launcher
 super+s              // control center
 super+alt+comma      // settings

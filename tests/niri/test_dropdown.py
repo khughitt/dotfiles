@@ -65,6 +65,16 @@ def test_ipython_runs_ipython_inside_its_own_group(run):
     assert argv[-1] == "ipython"
 
 
+def test_ghci_runs_the_colour_wrapper_not_the_shell_alias(run):
+    proc, argv = run("ghci")
+
+    assert proc.returncode == 0, proc.stderr
+    assert argv[1] == "--instance-group=dropdown-ghci"
+    assert "app_id=dropdown-ghci" in argv
+    # `ghci` is only an alias in interactive zsh; kitten execs without a shell.
+    assert argv[-1] == "ghci-color"
+
+
 def test_width_is_80_percent_of_the_focused_output(run):
     _, argv = run("term")
 
