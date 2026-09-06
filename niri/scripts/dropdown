@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Toggle a Guake-style dropdown terminal.
+#
+# Each name is one kitty quick-access terminal: a wlr-layer-shell surface, so niri
+# never places it on a workspace. It is unmapped while hidden and re-shown where you
+# are. kitty routes a repeat invocation to the running instance via --instance-group,
+# so the same command both creates and toggles; the group name is pinned here so every
+# caller (startup, keybind, shell) hits the same instance. Options only apply to the
+# invocation that creates the instance; a toggle ignores them.
+set -euo pipefail
+
+# Fraction of the output's width the dropdown covers, centred. A top-edge panel spans
+# the full width unless margins pull it in, so this becomes a margin on each side.
+WIDTH_FRACTION=0.80
+
+usage() {
+    echo "usage: ${0##*/} [--hidden] <term|ipython>" >&2
+    exit 2
+}
+
+hidden=()
+if [[ ${1:-} == --hidden ]]; then
+    # Pre-spawn at login so the first toggle is instant.
+    hidden=(-o start_as_hidden=yes)
+    shift
+fi
+[[ $# -eq 1 ]] || usage
+name=$1
+
+case "$name" in
+    term)    lines=30; cmd=() ;;
+    ipython) lines=40; cmd=(ipython) ;;
+    *) echo "${0##*/}: unknown dropdown '$name'" >&2; usage ;;
+esac
+
+# Sized for the output that is focused when the instance is created. Layer surfaces
+# follow the active monitor on toggle, but the margins do not get recomputed.
+width=$(niri msg -j focused-output | jq '.logical.width')
+margin=$(jq -n "(($width * (1 - $WIDTH_FRACTION)) / 2) | round")
+
+exec kitten quick-access-terminal "--instance-group=dropdown-$name" --detach \
+    -o "app_id=dropdown-$name" \
+    -o "lines=$lines" \
+    -o edge=top \
+    -o "margin_left=$margin" \
+    -o "margin_right=$margin" \
+    -o hide_on_focus_loss=no \
+    "${hidden[@]}" \
+    "${cmd[@]}"

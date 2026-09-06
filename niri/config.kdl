@@ -118,6 +118,9 @@ spawn-at-startup "noctalia"
 spawn-at-startup "~/.config/niri/scripts/prism-debug-backdrop-startup"
 spawn-at-startup "wl-clip-persist" "--clipboard" "regular"
 spawn-at-startup "~/.config/niri/scripts/fill-new-window"
+// Dropdown terminals (layer-shell, never on a workspace); pre-spawned hidden so the first toggle is instant.
+spawn-at-startup "~/.config/niri/scripts/dropdown" "--hidden" "term"
+spawn-at-startup "~/.config/niri/scripts/dropdown" "--hidden" "ipython"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
 
@@ -166,6 +169,12 @@ blur {
 layer-rule {
     match namespace=r#"^noctalia-(bar-[^"]+|notification|dock|panel|attached-panel|osd)$"#
     background-effect { xray false; }
+}
+
+layer-rule {
+    match namespace="^dropdown-"
+    geometry-corner-radius 0 0 12 12
+    shadow { on; }
 }
 
 layer-rule {
@@ -245,6 +254,8 @@ binds {
     // Borrows niri's trailing empty workspace and slides it up to current+1 — see the script.
     Super+Shift+Return hotkey-overlay-title="Open Terminal in a New Workspace Below" { spawn-sh "~/.config/niri/scripts/spawn-in-new-workspace kitty"; }
     Super+E hotkey-overlay-title="Open File Manager" { spawn "kitty" "yazi"; }
+    Alt+Return hotkey-overlay-title="Toggle Dropdown Terminal" repeat=false { spawn "~/.config/niri/scripts/dropdown" "term"; }
+    Alt+P hotkey-overlay-title="Toggle Dropdown IPython" repeat=false { spawn "~/.config/niri/scripts/dropdown" "ipython"; }
     Super+Alt+L hotkey-overlay-title="Lock Screen" { spawn "swaylock"; }
     Super+Q repeat=false { close-window; }
     Alt+F4 repeat=false { close-window; }

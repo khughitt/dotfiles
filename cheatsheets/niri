@@ -5,6 +5,8 @@ shift+super+slash    // show key bindings
 super+return         // terminal
 shift+super+return   // terminal in a new workspace below this one
 super+e              // yazi
+alt+return           // toggle dropdown terminal
+alt+p                // toggle dropdown ipython
 ctrl+space           // launcher
 super+s              // control center
 super+alt+comma      // settings
