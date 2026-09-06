@@ -1,5 +1,5 @@
 ---
-id: dot-88dc34
+id: dots-88dc34
 title: "Noctalia: wire the wallpaper_changed hook to Prism's wallpaper context verb"
 status: todo
 priority: 2
