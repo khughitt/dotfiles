@@ -22,7 +22,8 @@ Wallpaper behaviour is spread over five places with overlapping ownership:
 
 Concrete defects:
 
-- `favorites.txt` is append-only: 685 lines, 35 duplicates, 2 dangling. No
+- `favorites.txt` is append-only: 685 lines, 41 duplicate occurrences, 2
+  dangling. No
   command reads it except an fzf helper, and nothing can show whether the
   current wallpaper is already a favorite.
 - Everything that resolves an original depends on two environment variables
@@ -104,7 +105,7 @@ Data flow on a timer tick:
    nothing.
 
 Data flow on a change made through Noctalia's own panel or IPC: steps 3 and 4
-only. Observe finds that the displayed path differs from the cursor entry and
+only. Observe finds that the default wallpaper path differs from the cursor entry and
 appends an `observed` entry.
 
 ## Photo identity
@@ -171,8 +172,13 @@ Shared across hosts through Dropbox and readable by mind6.
 ```
 
 Keyed by id, so a duplicate is impossible by construction. Writes are atomic
-(write to a sibling temp file, rename). Concurrent favoriting from two hosts at
-the same moment can produce a Dropbox conflict copy; that is accepted.
+(write to a sibling temp file, rename). On one host, `favorite` and
+`import-favorites` hold an `fcntl` lock on
+`$XDG_STATE_HOME/wali/favorites.lock` across the whole read-modify-write, so
+two concurrent additions cannot overwrite each other. The lock file lives in
+state, not next to `favorites.json`, so Dropbox never syncs it. Concurrent
+favoriting from two hosts at the same moment can still produce a Dropbox
+conflict copy; that is accepted.
 
 ### History: `$XDG_STATE_HOME/wali/history.json`
 
@@ -181,7 +187,7 @@ Per host, never synced.
 ```json
 {
   "version": 1,
-  "cursor": 2,
+  "cursor": 0,
   "entries": [
     { "ts": "2026-09-07T15:00:00Z", "id": "PXL_20210608_111152739",
       "path": "/…/3440/PXL_20210608_111152739.jpg", "origin": "next" }
@@ -247,19 +253,33 @@ History behaves like a browser:
 Every mutating command (`next`, `previous`, `random`, `observe`) runs the same
 sequence under the history lock:
 
-1. **Reconcile.** Ask Noctalia for the displayed path with
-   `noctalia msg wallpaper-get` and compare its real path with the entry at
-   the cursor. If history is empty or the paths differ, discard entries after
-   the cursor and append an `observed` entry for the displayed wallpaper. This
+1. **Reconcile.** Ask Noctalia for the configured default wallpaper with a
+   bare `noctalia msg wallpaper-get` and compare its real path with the entry
+   at the cursor. If history is empty or the paths differ, discard entries
+   after the cursor and append an `observed` entry for that wallpaper. This
    is what makes a fresh history usable (the wallpaper already on screen
    becomes the first entry, so `previous` after the first `random` restores
    it) and what records changes made through Noctalia's own panel or IPC.
 2. **Navigate.** For `observe`, stop here. Otherwise pick the target entry or
-   sample a new photo, then call `wallpaper-set`.
-3. **Commit.** Only after `wallpaper-set` succeeds, write the new entry and
-   cursor. A failed set leaves the file exactly as reconcile left it, and the
-   command exits non-zero with Noctalia's error. Nothing is ever recorded that
-   was not displayed.
+   sample a new photo, then call `wallpaper-set` with no connector.
+3. **Commit.** Only after `wallpaper-set` returns ok, write the new entry and
+   cursor. A rejected set leaves the file exactly as reconcile left it, and
+   the command exits non-zero with Noctalia's error.
+
+History records selections Noctalia accepted, not confirmed displays.
+Noctalia's set handler answers ok once the path is validated and applied to
+its configuration; if the image then fails to decode it logs a warning and
+keeps the previous texture, and `wallpaper-get` still reports the new path.
+No IPC exposes what is on screen, so walictl cannot tell those apart and does
+not try.
+
+Only all-monitor wallpapers are supported. Both walictl and the reconcile
+query address the default wallpaper, which is what a connector-less
+`wallpaper-set` writes and what Noctalia's automation and the existing setup
+use. A wallpaper chosen for a single monitor in Noctalia's own panel changes
+that monitor's override, not the default, so reconcile does not see it and
+history does not record it. `NOCTALIA_WALLPAPER_CONNECTOR` is ignored for the
+same reason.
 
 `observe` takes no argument. The hook's `NOCTALIA_WALLPAPER_PATH` is ignored
 on purpose: Noctalia's answer to `wallpaper-get` at the moment observe runs is
@@ -407,7 +427,8 @@ injected so no test calls the shell:
 - id and date parsing for PXL, partial PXL, and non-PXL stems;
 - library scan collapses duplicate stems by extension precedence, for both
   the wallpaper directory and the variants directory;
-- favorites store: round-trip, toggle twice returns to the start, `--add`
+- favorites store: two concurrent additions both land (lock held across the
+  read-modify-write), round-trip, toggle twice returns to the start, `--add`
   twice is one entry, atomic write leaves no temp file;
 - sampler: seeded determinism, zero boosts give uniform, favorite and period
   boosts change the weights as specified, `exclude_recent` zeroes the right
