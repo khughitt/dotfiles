@@ -31,6 +31,24 @@ function down {
   docker compose "${compose_args[@]}" down --remove-orphans
 }
 
+# find + basename -> fzf -> claude / codex
+function _fdab_review {
+  local client="$1" query="${2%.}" fname target
+
+  fname=$(basename -- "$query")
+
+  target=$(fd -Luu -- "$fname" |
+    grep --color=never -- "$query" |
+    fzf -1 --exact) || return
+
+  if [[ -n "$target" ]]; then
+    "$client" "Please review $target"
+  fi
+}
+
+function fdabc  { _fdab_review codex "$@"; }
+function fdabcc { _fdab_review claude "$@"; }
+
 # fzf confs
 function C {
   local target

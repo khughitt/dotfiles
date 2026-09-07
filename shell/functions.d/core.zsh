@@ -24,6 +24,11 @@ function fu {
   done < <(rg --no-line-number --no-filename "^function " "${function_files[@]}")
 }
 
+# find + basename
+function fdab {
+  fd -Luu -- "$(basename -- "${1%.}")"
+}
+
 # recursively count files in subdirs
 function count_files {
   local x num_hidden
