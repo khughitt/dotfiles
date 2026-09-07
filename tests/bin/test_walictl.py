@@ -1,461 +1,159 @@
 from __future__ import annotations
 
-import contextlib
+import importlib.machinery
+import importlib.util
 import io
-import json
-import runpy
 import subprocess
 import sys
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Any, cast
+from types import ModuleType
+from typing import Any
 
 import pytest
 
-
-def walictl_script_path() -> Path:
-    return Path(__file__).resolve().parents[2] / "bin" / "walictl"
+SCRIPT = Path(__file__).resolve().parents[2] / "bin" / "walictl"
 
 
-def run_walictl(argv: list[str], monkeypatch: pytest.MonkeyPatch) -> tuple[int, str, str]:
-    script_path = walictl_script_path()
-    monkeypatch.setattr(sys, "argv", [str(script_path), *argv])
+def load_walictl() -> ModuleType:
+    loader = importlib.machinery.SourceFileLoader("walictl", str(SCRIPT))
+    spec = importlib.util.spec_from_loader("walictl", loader)
+    assert spec is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["walictl"] = module
+    loader.exec_module(module)
+    return module
 
-    stdout = io.StringIO()
-    stderr = io.StringIO()
-    exit_code = 0
 
-    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+@pytest.fixture
+def walictl() -> ModuleType:
+    return load_walictl()
+
+
+@pytest.fixture
+def env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
+    tmp_path = tmp_path.resolve()
+    config_home, state_home = tmp_path / "config", tmp_path / "state"
+    wallpapers, archive, favorites = tmp_path / "3440", tmp_path / "archive", tmp_path / "favorites.json"
+    wallpapers.mkdir()
+    for stem in ("PXL_20210608_111152739", "PXL_20210609_120000000", "PXL_20220402_162957459"):
+        (wallpapers / f"{stem}.jpg").touch()
+    (archive / "2021" / "06").mkdir(parents=True)
+    (archive / "2021" / "06" / "PXL_20210608_111152739.jpg").touch()
+    (config_home / "wali").mkdir(parents=True)
+    (config_home / "wali" / "config.toml").write_text(
+        f'wallpaper_dir = "{wallpapers}"\n'
+        f'favorites_file = "{favorites}"\n'
+        f'archive_root = "{archive}"\n'
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(config_home))
+    monkeypatch.setenv("XDG_STATE_HOME", str(state_home))
+    return {"config_home": config_home, "state_home": state_home, "wallpapers": wallpapers, "archive": archive, "favorites": favorites}
+
+
+class FakeNoctalia:
+    def __init__(self, default: Path | None, *, reject_set: str | None = None) -> None:
+        self.default, self.reject_set = default, reject_set
+        self.calls: list[list[str]] = []
+
+    def run(self, args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        self.calls.append(list(args))
+        assert args[:2] == ["noctalia", "msg"], args
+        if args[2] == "wallpaper-get":
+            return subprocess.CompletedProcess(args, 0, stdout=f"{self.default}\n" if self.default else "\n", stderr="")
+        if args[2] == "wallpaper-set":
+            if self.reject_set:
+                return subprocess.CompletedProcess(args, 1, stdout=f"error: {self.reject_set}\n", stderr="")
+            self.default = Path(args[3])
+            return subprocess.CompletedProcess(args, 0, stdout="ok\n", stderr="")
+        raise AssertionError(f"unexpected IPC call: {args}")
+
+
+@pytest.fixture
+def noctalia(env: dict[str, Path], monkeypatch: pytest.MonkeyPatch) -> FakeNoctalia:
+    fake = FakeNoctalia(env["wallpapers"] / "PXL_20210608_111152739.jpg")
+    monkeypatch.setattr(subprocess, "run", fake.run)
+    return fake
+
+
+def run_cli(walictl: ModuleType, argv: list[str]) -> tuple[int, str, str]:
+    stdout, stderr = io.StringIO(), io.StringIO()
+    with redirect_stdout(stdout), redirect_stderr(stderr):
         try:
-            runpy.run_path(str(script_path), run_name="__main__")
+            code = walictl.main(argv)
         except SystemExit as exc:
-            exit_code = exc.code if isinstance(exc.code, int) else 1
-
-    return exit_code, stdout.getvalue(), stderr.getvalue()
-
-
-def test_current_returns_source_metadata(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    archive_root = tmp_path / "backgrounds"
-    expected_source = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
-    expected_source.parent.mkdir(parents=True)
-    expected_source.touch()
-
-    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
-
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-    payload = json.loads(stdout)
-
-    assert exit_code == 0
-    assert stderr == ""
-    assert payload["ok"] is True
-    assert payload["source_wallpaper_path"] == str(expected_source)
-    assert payload["display_date"] == "May 20, 2024"
-
-
-def test_current_requires_json_flag(monkeypatch: pytest.MonkeyPatch) -> None:
-    def fail_if_called(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
-        pytest.fail(f"subprocess.run should not be called: {args!r} {kwargs!r}")
-
-    monkeypatch.setattr(subprocess, "run", fail_if_called)
-    exit_code, stdout, stderr = run_walictl(["current"], monkeypatch)
-
-    assert exit_code == 2
-    assert stdout == ""
-    assert "required" in stderr
-    assert "--json" in stderr
-
-
-def test_current_fails_when_wallpaper_query_is_empty(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    archive_root = tmp_path / "backgrounds"
-
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout="\n \n", stderr="")
-
-    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-
-    assert exit_code == 1
-    assert stdout == ""
-    assert stderr == "could not determine current wallpaper\n"
-
-
-def test_current_fails_when_noctalia_command_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        raise FileNotFoundError("noctalia")
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-
-    assert exit_code == 1
-    assert stdout == ""
-    assert stderr == "noctalia command not found\n"
-
-
-def test_current_fails_when_noctalia_ipc_command_fails(monkeypatch: pytest.MonkeyPatch) -> None:
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        raise subprocess.CalledProcessError(returncode=1, cmd=args)
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-
-    assert exit_code == 1
-    assert stdout == ""
-    assert stderr == "Noctalia IPC command failed\n"
-
-
-def test_current_returns_null_metadata_for_unparseable_filename(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    current_wallpaper = tmp_path / "current" / "wallpaper.jpg"
-
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    monkeypatch.delenv("BACKGROUND_IMG_DIR", raising=False)
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-    payload = json.loads(stdout)
-
-    assert exit_code == 0
-    assert stderr == ""
-    assert payload["current_wallpaper_path"] == str(current_wallpaper)
-    assert payload["source_wallpaper_path"] is None
-    assert payload["parsed_date"] is None
-    assert payload["display_date"] is None
-
-
-def test_current_returns_null_metadata_for_noncanonical_filename(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    current_wallpaper = tmp_path / "current" / "IMG_PXL_20240520.jpg"
-
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    monkeypatch.delenv("BACKGROUND_IMG_DIR", raising=False)
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-    payload = json.loads(stdout)
-
-    assert exit_code == 0
-    assert stderr == ""
-    assert payload["current_wallpaper_path"] == str(current_wallpaper)
-    assert payload["source_wallpaper_path"] is None
-    assert payload["parsed_date"] is None
-    assert payload["display_date"] is None
-
-
-def test_current_fails_when_source_wallpaper_path_cannot_be_derived(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    archive_root = tmp_path / "backgrounds"
-    current_wallpaper = tmp_path / "current" / "PXL_20240520.jpg"
-
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-
-    assert exit_code == 1
-    assert stdout == ""
-    assert stderr == "could not derive source wallpaper path\n"
-
-
-def test_current_reports_derivation_error_before_missing_archive_env(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    current_wallpaper = tmp_path / "current" / "PXL_20240520.jpg"
-
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    monkeypatch.delenv("BACKGROUND_IMG_DIR", raising=False)
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-
-    assert exit_code == 1
-    assert stdout == ""
-    assert stderr == "could not derive source wallpaper path\n"
-
-
-def test_current_fails_when_source_wallpaper_is_missing(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    archive_root = tmp_path / "backgrounds"
-    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
-
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-
-    assert exit_code == 1
-    assert stdout == ""
-    assert stderr == "source wallpaper not found\n"
-
-
-def test_current_fails_when_background_img_dir_is_missing(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
-
-    def fake_run(
-        args: list[str], *, check: bool, capture_output: bool, text: bool
-    ) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert check is True
-        assert capture_output is True
-        assert text is True
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    monkeypatch.delenv("BACKGROUND_IMG_DIR", raising=False)
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["current", "--json"], monkeypatch)
-
-    assert exit_code == 1
-    assert stdout == ""
-    assert stderr == "BACKGROUND_IMG_DIR is not set\n"
-
-
-def test_save_current_appends_source_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    archive_root = tmp_path / "backgrounds"
-    source_path = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
-    source_path.parent.mkdir(parents=True)
-    source_path.touch()
-
-    wali_dir = tmp_path / "wali"
-    wali_dir.mkdir()
-    favorites_path = wali_dir / "favorites.txt"
-    favorites_path.write_text("existing-entry\n")
-
-    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
-
-    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert kwargs == {"check": True, "capture_output": True, "text": True}
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
-    monkeypatch.setenv("WALI_DIR", str(wali_dir))
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["save-current"], monkeypatch)
-
-    assert exit_code == 0
-    assert stderr == ""
-    assert stdout == f"saved {source_path}\n"
-    assert favorites_path.read_text() == f"existing-entry\n{source_path}\n"
-
-
-def test_save_current_fails_when_wali_favorites_directory_is_missing(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    archive_root = tmp_path / "backgrounds"
-    source_path = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
-    source_path.parent.mkdir(parents=True)
-    source_path.touch()
-
-    missing_wali_dir = tmp_path / "missing-wali"
-    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
-
-    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert kwargs == {"check": True, "capture_output": True, "text": True}
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
-    monkeypatch.setenv("WALI_DIR", str(missing_wali_dir))
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["save-current"], monkeypatch)
-
-    assert exit_code == 1
-    assert stdout == ""
-    assert stderr == "favorites directory not found\n"
-
-
-def test_save_current_translates_favorites_write_error(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    archive_root = tmp_path / "backgrounds"
-    source_path = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
-    source_path.parent.mkdir(parents=True)
-    source_path.touch()
-
-    wali_dir = tmp_path / "wali"
-    wali_dir.mkdir()
-    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
-
-    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        assert args == ["noctalia", "msg", "wallpaper-get"]
-        assert kwargs == {"check": True, "capture_output": True, "text": True}
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-    original_open = Path.open
-
-    def fake_open(self: Path, *args: Any, **kwargs: Any) -> io.TextIOWrapper:
-        if self == wali_dir / "favorites.txt":
-            raise OSError("disk full")
-        return cast(io.TextIOWrapper, original_open(self, *args, **kwargs))
-
-    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
-    monkeypatch.setenv("WALI_DIR", str(wali_dir))
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    monkeypatch.setattr(Path, "open", fake_open)
-
-    exit_code, stdout, stderr = run_walictl(["save-current"], monkeypatch)
-
-    assert exit_code == 1
-    assert stdout == ""
-    assert stderr == "failed to write favorites file: disk full\n"
-
-
-def test_edit_current_launches_gimp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    archive_root = tmp_path / "backgrounds"
-    source_path = archive_root / "2024" / "05" / "PXL_20240520_023703962.jpg"
-    source_path.parent.mkdir(parents=True)
-    source_path.touch()
-
-    current_wallpaper = tmp_path / "current" / "PXL_20240520_023703962.jpg"
-    calls: list[tuple[list[str], dict[str, object]]] = []
-
-    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        calls.append((args, kwargs))
-        if args == ["noctalia", "msg", "wallpaper-get"]:
-            assert kwargs == {"check": True, "capture_output": True, "text": True}
-            return subprocess.CompletedProcess(args=args, returncode=0, stdout=f"{current_wallpaper}\n", stderr="")
-
-        assert args == ["gimp", str(source_path)]
-        assert kwargs == {"check": True}
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
-
-    monkeypatch.setenv("BACKGROUND_IMG_DIR", str(archive_root))
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    exit_code, stdout, stderr = run_walictl(["edit-current"], monkeypatch)
-
-    assert exit_code == 0
-    assert stderr == ""
-    assert stdout == f"opened {source_path}\n"
-    assert calls == [
-        (["noctalia", "msg", "wallpaper-get"], {"check": True, "capture_output": True, "text": True}),
-        (["gimp", str(source_path)], {"check": True}),
-    ]
-
-
-@pytest.mark.parametrize(
-    ("command", "expected_name"),
-    [("forward", "c.jpg"), ("backward", "a.jpg")],
-)
-def test_navigation_uses_v5_wallpaper_set(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command: str, expected_name: str
-) -> None:
-    first = tmp_path / "a.jpg"
-    current = tmp_path / "b.jpg"
-    last = tmp_path / "c.jpg"
-    for path in (first, current, last):
-        path.touch()
-    calls: list[list[str]] = []
-
-    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        calls.append(args)
-        stdout = f"{current}\n" if args[-1] == "wallpaper-get" else ""
-        return subprocess.CompletedProcess(args, 0, stdout=stdout, stderr="")
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    code, stdout, stderr = run_walictl([command], monkeypatch)
-
-    assert (code, stderr) == (0, "")
-    expected = tmp_path / expected_name
-    assert calls == [
-        ["noctalia", "msg", "wallpaper-get"],
-        ["noctalia", "msg", "wallpaper-set", str(expected)],
-    ]
-
-
-def test_random_uses_v5_wallpaper_random(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[list[str]] = []
-
-    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        calls.append(args)
-        return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    code, stdout, stderr = run_walictl(["random"], monkeypatch)
-
-    assert (code, stdout, stderr) == (0, "randomized wallpaper\n", "")
-    assert calls == [["noctalia", "msg", "wallpaper-random"]]
+            code = exc.code if isinstance(exc.code, int) else 1
+    return code, stdout.getvalue(), stderr.getvalue()
+
+
+def test_load_config_reads_required_and_optional_keys(walictl: ModuleType, env: dict[str, Path]) -> None:
+    config = walictl.load_config(walictl.config_path())
+    assert config.wallpaper_dir == env["wallpapers"]
+    assert config.favorites_file == env["favorites"]
+    assert config.archive_root == env["archive"]
+    assert config.variants_dir is None
+    assert config.sampling == walictl.Sampling(exclude_recent=200, favorite_boost=1.0, period_boost=3.0)
+
+
+def test_load_config_expands_tilde_and_reads_sampling(walictl: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path = tmp_path.resolve()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    path = tmp_path / "config.toml"
+    path.write_text('wallpaper_dir = "~/w"\nfavorites_file = "~/f.json"\nvariants_dir = "~/v"\n[sampling]\nexclude_recent = 5\nfavorite_boost = 0.5\nperiod_boost = 0\n')
+    config = walictl.load_config(path)
+    assert config.wallpaper_dir == tmp_path / "w"
+    assert config.variants_dir == tmp_path / "v"
+    assert config.sampling == walictl.Sampling(exclude_recent=5, favorite_boost=0.5, period_boost=0.0)
+
+
+def test_load_config_resolves_symlinked_directories(walictl: ModuleType, tmp_path: Path) -> None:
+    tmp_path = tmp_path.resolve()
+    real = tmp_path / "real"
+    real.mkdir()
+    (tmp_path / "link").symlink_to(real)
+    path = tmp_path / "config.toml"
+    path.write_text(f'wallpaper_dir = "{tmp_path / "link"}"\nfavorites_file = "{tmp_path / "link" / "f.json"}"\n')
+    config = walictl.load_config(path)
+    assert config.wallpaper_dir == real
+    assert config.favorites_file == real / "f.json"
+
+
+@pytest.mark.parametrize("key,value", [("exclude_recent", "0.5"), ("exclude_recent", "-1"), ("exclude_recent", "true"), ("exclude_recent", '"2"'), ("favorite_boost", "-1"), ("favorite_boost", "true"), ("favorite_boost", '"oops"'), ("favorite_boost", "nan"), ("favorite_boost", "inf"), ("favorite_boost", "-inf"), ("period_boost", "-1"), ("period_boost", "false"), ("period_boost", '"oops"'), ("period_boost", "nan"), ("period_boost", "inf")])
+def test_invalid_sampling_values_report_config_error(walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, key: str, value: str) -> None:
+    path = env["config_home"] / "wali" / "config.toml"
+    path.write_text(path.read_text() + f"[sampling]\n{key} = {value}\n")
+    code, stdout, stderr = run_cli(walictl, ["current", "--json"])
+    assert (code, stdout) == (1, "")
+    assert stderr.startswith(f"config key sampling.{key} ")
+    assert len(stderr.splitlines()) == 1
+
+
+def test_load_config_fails_when_file_is_missing(walictl: ModuleType, tmp_path: Path) -> None:
+    with pytest.raises(walictl.WalictlError, match="config not found"):
+        walictl.load_config(tmp_path / "missing.toml")
+
+
+def test_load_config_fails_when_required_key_is_missing(walictl: ModuleType, tmp_path: Path) -> None:
+    path = tmp_path / "config.toml"
+    path.write_text('wallpaper_dir = "/w"\n')
+    with pytest.raises(walictl.WalictlError, match="favorites_file"):
+        walictl.load_config(path)
+
+
+def test_config_and_state_paths_follow_xdg(walictl: ModuleType, env: dict[str, Path]) -> None:
+    assert walictl.config_path() == env["config_home"] / "wali" / "config.toml"
+    assert walictl.state_dir() == env["state_home"] / "wali"
+
+
+def test_every_command_fails_without_config(walictl: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty"))
+    code, stdout, stderr = run_cli(walictl, ["current", "--json"])
+    assert (code, stdout) == (1, "")
+    assert stderr.startswith("config not found:")
+
+
+def test_main_flattens_expected_runtime_error(walictl: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
+    def fail(path: Path) -> Any:
+        raise OSError("bad\nconfig")
+    monkeypatch.setattr(walictl, "load_config", fail)
+    assert run_cli(walictl, ["current", "--json"]) == (1, "", "bad config\n")
