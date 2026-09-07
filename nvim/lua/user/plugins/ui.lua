@@ -4,10 +4,10 @@ return {
   --
   -- transparent = true makes Normal/NormalNC use the terminal's default
   -- background instead of painting their own. That is what lets kitty's
-  -- background_opacity (and the focus-driven dim in kitty/focus-opacity.py)
-  -- reach nvim at all: kitty decides transparency per cell by comparing the
-  -- cell's background *color* against the default bg, so an opaque
-  -- colorscheme background stays opaque no matter what the compositor does.
+  -- background_opacity (0, so only niri's glass shows behind the text) reach
+  -- nvim at all: kitty decides transparency per cell by comparing the cell's
+  -- background *color* against the default bg, so an opaque colorscheme
+  -- background stays opaque no matter what the compositor does.
   -- See lua/user/glass.lua for the chrome that needs recoloring to match.
   -- ---------------------------------------------------------------------
   {

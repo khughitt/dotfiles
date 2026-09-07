@@ -206,15 +206,15 @@ The major surfaces reuse existing registered glass roles:
 
 | OpenCode role | Noctalia glass role | Kitty opacity |
 |---|---|---|
-| `background` | `chrome` | window background opacity |
-| `backgroundPanel` | `tab_off` | window background opacity |
-| `backgroundElement` | `cursorline` | window background opacity |
-| `backgroundMenu` | `raised` | window background opacity |
+| `background` | `chrome` | `0.35` |
+| `backgroundPanel` | `tab_off` | `0.30` |
+| `backgroundElement` | `cursorline` | `0.30` |
+| `backgroundMenu` | `raised` | `0.40` |
 | `diffAddedBg` | `diff_added` | `0.72` |
 | `diffAddedLineNumberBg` | `diff_added` | `0.72` |
 | `diffRemovedBg` | `diff_removed` | `0.72` |
 | `diffRemovedLineNumberBg` | `diff_removed` | `0.72` |
-| `diffContextBg` | `chrome` | window background opacity |
+| `diffContextBg` | `chrome` | `0.35` |
 
 Borders are paired explicitly rather than inferred from the surface mapping:
 

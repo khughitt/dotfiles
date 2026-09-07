@@ -60,6 +60,11 @@ Select `Noctalia` in Claude Code's `/theme` picker. Set Codex's syntax theme in
 theme = "noctalia"
 ```
 
+The window background itself is at opacity 0 (Prism owns `background_opacity`
+and niri's glass material is the surface behind the text), so every registered
+tone carries its own opacity: the four chrome tones sit at 30-40% as a denser
+smoke on the same glass. (Revised 2026-09-06, dots-a00088.)
+
 Claude Code reloads theme-file changes live. If its themes directory did not
 exist when Claude started, restart once after the first render. Codex applies
 its syntax theme in new sessions. Kitty gives Claude and Codex red/green diff

@@ -24,7 +24,13 @@ REGISTERED_ROLES = (
 )
 ALIASES = {'tab_on': 'chrome', 'tab_fill': 'tab_off'}
 FIXED = {'diff_added': '#022800', 'diff_removed': '#3d0100'}
-OPACITY = {'diff_added': '0.72', 'diff_removed': '0.72', 'selection': '0.55'}
+# Every tone carries its own opacity: kitty's window background is 0 (Prism
+# owns background_opacity), and an unsuffixed tone would inherit that 0 and
+# vanish. The chrome tones are a slightly denser smoke on the same glass.
+OPACITY = {
+    'chrome': '0.35', 'cursorline': '0.30', 'tab_off': '0.30', 'raised': '0.40',
+    'diff_added': '0.72', 'diff_removed': '0.72', 'selection': '0.55',
+}
 HEX = re.compile(r'#[0-9a-fA-F]{6}')
 # These two copies are intentionally mirrored producer/validator contracts;
 # keep this in sync with bin/noctalia-glass-sync's OPENCODE_MAP.

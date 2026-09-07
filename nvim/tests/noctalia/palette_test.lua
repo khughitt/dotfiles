@@ -97,17 +97,18 @@ assert(p.validate(default), 'default must validate')
 assert(vim.deep_equal(default, read_json(fixture)), 'default must equal fixture values')
 
 -- fresh-machine invariant: kitty.conf's hardcoded fallback line carries the
--- default seven registered slots, including semantic opacity overrides
+-- default seven registered slots, every one with its own opacity: kitty's
+-- window background is 0, so an unsuffixed tone would vanish into the glass
 local conf = assert(io.open('kitty/kitty.conf')):read('*a')
 local line = conf:match('\ntransparent_background_colors ([^\n]+)')
 assert(line, 'kitty.conf fallback line missing')
 local tones = {}
 for token in line:gmatch('%S+') do tones[#tones + 1] = token end
 local expected = {
-  default.glass.chrome,
-  default.glass.cursorline,
-  default.glass.tab_off,
-  default.glass.raised,
+  default.glass.chrome .. '@0.35',
+  default.glass.cursorline .. '@0.30',
+  default.glass.tab_off .. '@0.30',
+  default.glass.raised .. '@0.40',
   default.glass.diff_added .. '@0.72',
   default.glass.diff_removed .. '@0.72',
   default.glass.selection .. '@0.55',

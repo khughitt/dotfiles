@@ -4,7 +4,10 @@
 -- kitty decides transparency per *cell background color*: only cells painted
 -- in the default background, or in one of the (max 7) colors listed under
 -- transparent_background_colors in kitty.conf, are translucent. Everything
--- else paints a solid rectangle over the wallpaper.
+-- else paints a solid rectangle over the glass. The default background is at
+-- opacity 0 (Prism owns it), so Normal/NormalNC are pure glass and each
+-- registered tone carries its own alpha: chrome, cursorline, and tabs are a
+-- slightly denser smoke on the same glass, never an opaque slab.
 --
 -- Two consequences drive this whole module:
 --   1. Slots are scarce, so UI that paints its own background is

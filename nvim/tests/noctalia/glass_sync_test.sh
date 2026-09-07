@@ -145,7 +145,7 @@ cmp nvim/tests/noctalia/fixtures/raw_palette.json "$CUR/nvim-palette.json" || { 
   cat "$CUR/kitty-glass.conf"
   exit 1
 }
-grep -qx 'transparent_background_colors #1e2030 #2f334d #272a3f #3b4261 #022800@0.72 #3d0100@0.72 #003dbe@0.55' \
+grep -qx 'transparent_background_colors #1e2030@0.35 #2f334d@0.30 #272a3f@0.30 #3b4261@0.40 #022800@0.72 #3d0100@0.72 #003dbe@0.55' \
   "$CUR/kitty-glass.conf" || { echo "FAIL: kitty transparent list wrong"; cat "$CUR/kitty-glass.conf"; exit 1; }
 grep -qx 'selection_foreground #c8d3f5' "$CUR/kitty-glass.conf" || {
   echo "FAIL: kitty selection foreground wrong"
