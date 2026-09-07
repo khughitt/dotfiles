@@ -457,3 +457,67 @@ def test_reconcile_records_external_change_and_discards_forward(walictl: ModuleT
     assert walictl.reconcile(history, Path("/w/z.jpg"), "T") is True
     assert [(e.id, e.origin) for e in history.entries] == [("a", "next"), ("z", "observed")]
     assert history.cursor == 1
+
+
+def favorites_of(walictl: ModuleType, *ids: str) -> Any:
+    store = walictl.Favorites(entries={})
+    for photo in ids:
+        store.add(photo, "T")
+    return store
+
+
+def test_weights_zero_boosts_are_uniform_except_recent(walictl: ModuleType) -> None:
+    ids = ["PXL_20210608_1", "PXL_20210609_1", "IMG_1"]
+    sampling = walictl.Sampling(exclude_recent=1, favorite_boost=0.0, period_boost=0.0)
+    result = walictl.weights(ids, favorites_of(walictl, "PXL_20210608_1"), {"IMG_1"}, sampling)
+    assert result == {"PXL_20210608_1": 1.0, "PXL_20210609_1": 1.0, "IMG_1": 0.0}
+
+
+def test_weights_apply_favorite_and_month_density(walictl: ModuleType) -> None:
+    ids = ["PXL_20210608_1", "PXL_20210609_1", "PXL_20220402_1", "IMG_1"]
+    sampling = walictl.Sampling(exclude_recent=0, favorite_boost=1.0, period_boost=3.0)
+    result = walictl.weights(ids, favorites_of(walictl, "PXL_20210608_1"), set(), sampling)
+    assert result["PXL_20210608_1"] == pytest.approx(2.0 * 2.5)
+    assert result["PXL_20210609_1"] == pytest.approx(2.5)
+    assert result["PXL_20220402_1"] == pytest.approx(1.0)
+    assert result["IMG_1"] == pytest.approx(1.0)
+
+
+def test_sample_is_deterministic_and_honours_zero_weights(walictl: ModuleType) -> None:
+    import random
+
+    weighted = {"a": 0.0, "b": 1.0, "c": 3.0}
+    warnings: list[str] = []
+    picks = {walictl.sample(weighted, random.Random(seed), warnings.append) for seed in range(50)}
+    assert picks == {"b", "c"}
+    assert walictl.sample(weighted, random.Random(7), warnings.append) == walictl.sample(
+        weighted, random.Random(7), warnings.append
+    )
+    assert warnings == []
+
+
+def test_sample_falls_back_to_uniform_when_all_weights_are_zero(walictl: ModuleType) -> None:
+    import random
+
+    warnings: list[str] = []
+    pick = walictl.sample({"a": 0.0, "b": 0.0}, random.Random(1), warnings.append)
+    assert pick in {"a", "b"}
+    assert warnings == ["every photo is excluded as recent; sampling uniformly"]
+
+
+def test_sample_fails_on_empty_library(walictl: ModuleType) -> None:
+    import random
+
+    with pytest.raises(walictl.WalictlError, match="no wallpapers found"):
+        walictl.sample({}, random.Random(1), lambda _: None)
+
+
+def test_sample_rejects_non_finite_total(walictl: ModuleType) -> None:
+    import random
+
+    sampling = walictl.Sampling(favorite_boost=sys.float_info.max, period_boost=sys.float_info.max)
+    weighted = walictl.weights(
+        ["PXL_20210608_1"], favorites_of(walictl, "PXL_20210608_1"), set(), sampling
+    )
+    with pytest.raises(walictl.WalictlError, match="total weight must be finite"):
+        walictl.sample(weighted, random.Random(1), lambda _: None)

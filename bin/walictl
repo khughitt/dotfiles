@@ -6,14 +6,17 @@ import argparse
 import contextlib
 import fcntl
 import json
+import math
 import os
+import random
 import re
 import subprocess
 import sys
 import tempfile
 import time
 import tomllib
-from collections.abc import Iterator
+from collections import Counter
+from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -382,6 +385,44 @@ def reconcile(history: History, displayed: Path, now: str) -> bool:
         return False
     history.push(HistoryEntry(ts=now, id=photo_id(displayed), path=str(displayed), origin="observed"))
     return True
+
+
+# --- sampler ----------------------------------------------------------------
+
+
+def weights(ids: list[str], favorites: Favorites, recent: set[str], sampling: Sampling) -> dict[str, float]:
+    months = {photo: capture_date(photo) for photo in ids}
+    month_of = {photo: (d.year, d.month) for photo, d in months.items() if d is not None}
+    photos_per_month = Counter(month_of.values())
+    favorites_per_month = Counter(month for photo, month in month_of.items() if photo in favorites)
+    result: dict[str, float] = {}
+    for photo in ids:
+        if photo in recent:
+            result[photo] = 0.0
+            continue
+        weight = 1.0
+        if photo in favorites:
+            weight *= 1.0 + sampling.favorite_boost
+        month = month_of.get(photo)
+        if month is not None:
+            density = favorites_per_month[month] / photos_per_month[month]
+            weight *= 1.0 + sampling.period_boost * density
+        result[photo] = weight
+    return result
+
+
+def sample(weighted: dict[str, float], rng: random.Random, warn: Callable[[str], None]) -> str:
+    if not weighted:
+        raise WalictlError("no wallpapers found")
+    ids = list(weighted)
+    values = [weighted[photo] for photo in ids]
+    total = sum(values)
+    if not math.isfinite(total):
+        raise WalictlError("total weight must be finite")
+    if total <= 0:
+        warn("every photo is excluded as recent; sampling uniformly")
+        return rng.choice(ids)
+    return rng.choices(ids, weights=values, k=1)[0]
 
 
 def build_parser() -> argparse.ArgumentParser:
