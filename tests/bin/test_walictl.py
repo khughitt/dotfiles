@@ -6,6 +6,7 @@ import io
 import subprocess
 import sys
 from contextlib import redirect_stderr, redirect_stdout
+from datetime import date
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -157,3 +158,72 @@ def test_main_flattens_expected_runtime_error(walictl: ModuleType, monkeypatch: 
         raise OSError("bad\nconfig")
     monkeypatch.setattr(walictl, "load_config", fail)
     assert run_cli(walictl, ["current", "--json"]) == (1, "", "bad config\n")
+
+
+def test_photo_id_and_capture_date(walictl: ModuleType) -> None:
+    assert walictl.photo_id(Path("/x/PXL_20240520_023703962.jpg")) == "PXL_20240520_023703962"
+    assert walictl.capture_date("PXL_20240520_023703962") == date(2024, 5, 20)
+    assert walictl.capture_date("PXL_20240520") is None
+    assert walictl.capture_date("IMG_20200525_124754") is None
+    assert walictl.capture_date("PXL_20241399_000000000") is None
+    assert walictl.display_date(date(2024, 5, 20)) == "May 20, 2024"
+    assert walictl.display_date(None) is None
+
+
+def test_scan_library_collapses_stems_by_extension_precedence(walictl: ModuleType, tmp_path: Path) -> None:
+    for name in ("b.webp", "b.jpg", "a.png", "a.jpeg", "c.txt", "d.PNG"):
+        (tmp_path / name).touch()
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "e.jpg").touch()
+    library = walictl.scan_library(tmp_path)
+    assert list(library) == ["a", "b", "d"]
+    assert library["a"] == tmp_path / "a.jpeg"
+    assert library["b"] == tmp_path / "b.jpg"
+    assert library["d"] == tmp_path / "d.PNG"
+
+
+def test_scan_library_fails_on_missing_directory(walictl: ModuleType, tmp_path: Path) -> None:
+    with pytest.raises(walictl.WalictlError, match="wallpaper directory not found"):
+        walictl.scan_library(tmp_path / "nope")
+
+
+def test_find_by_stem_matches_literal_bracketed_stem(walictl: ModuleType, tmp_path: Path) -> None:
+    literal = tmp_path / "photo[1].png"
+    literal.touch()
+    (tmp_path / "photo1.jpg").touch()
+    assert walictl.find_by_stem(tmp_path, "photo[1]") == literal
+
+
+def test_resolve_variant_and_source(walictl: ModuleType, env: dict[str, Path], tmp_path: Path) -> None:
+    config = walictl.load_config(walictl.config_path())
+    assert walictl.resolve_variant(config, "PXL_20210608_111152739") is None
+    variants = tmp_path / "edits"
+    variants.mkdir()
+    (variants / "PXL_20210608_111152739.png").touch()
+    (variants / "PXL_20210608_111152739.jpg").touch()
+    with_variants = walictl.Config(
+        config.wallpaper_dir, config.favorites_file, config.archive_root, variants, config.sampling
+    )
+    assert walictl.resolve_variant(with_variants, "PXL_20210608_111152739") == variants / "PXL_20210608_111152739.jpg"
+    assert walictl.resolve_source(config, "PXL_20210608_111152739") == env["archive"] / "2021" / "06" / "PXL_20210608_111152739.jpg"
+    assert walictl.resolve_source(config, "PXL_20210609_120000000") is None
+    assert walictl.resolve_source(config, "IMG_1") is None
+    no_archive = walictl.Config(config.wallpaper_dir, config.favorites_file, None, None, config.sampling)
+    assert walictl.resolve_source(no_archive, "PXL_20210608_111152739") is None
+
+
+def test_display_path_prefers_variant_and_rejects_unknown_id(
+    walictl: ModuleType, env: dict[str, Path], tmp_path: Path
+) -> None:
+    config = walictl.load_config(walictl.config_path())
+    library = walictl.scan_library(config.wallpaper_dir)
+    assert walictl.display_path(config, library, "PXL_20210609_120000000") == env["wallpapers"] / "PXL_20210609_120000000.jpg"
+    variants = tmp_path / "edits"
+    variants.mkdir()
+    (variants / "PXL_20210609_120000000.webp").touch()
+    with_variants = walictl.Config(
+        config.wallpaper_dir, config.favorites_file, config.archive_root, variants, config.sampling
+    )
+    assert walictl.display_path(with_variants, library, "PXL_20210609_120000000") == variants / "PXL_20210609_120000000.webp"
+    with pytest.raises(walictl.WalictlError, match="unknown photo id: nope"):
+        walictl.display_path(config, library, "nope")

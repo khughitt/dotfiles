@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 import tomllib
 from dataclasses import dataclass
+from datetime import date, datetime
 from pathlib import Path
 
 
@@ -81,6 +83,80 @@ def load_config(path: Path) -> Config:
             period_boost=float(period_boost),
         ),
     )
+
+
+# --- photo identity and library --------------------------------------------
+
+WALLPAPER_EXTENSIONS: tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp")
+_PXL_STEM = re.compile(r"PXL_(\d{8})_.+")
+
+
+def photo_id(path: Path) -> str:
+    return path.stem
+
+
+def capture_date(photo_id: str) -> date | None:
+    match = _PXL_STEM.fullmatch(photo_id)
+    if match is None:
+        return None
+    try:
+        return datetime.strptime(match.group(1), "%Y%m%d").date()
+    except ValueError:
+        return None
+
+
+def display_date(value: date | None) -> str | None:
+    return value.strftime("%B %-d, %Y") if value is not None else None
+
+
+def _extension_rank(path: Path) -> int:
+    return WALLPAPER_EXTENSIONS.index(path.suffix.lower())
+
+
+def find_by_stem(directory: Path, photo_id: str) -> Path | None:
+    candidates = [
+        path
+        for path in directory.iterdir()
+        if path.is_file() and path.stem == photo_id and path.suffix.lower() in WALLPAPER_EXTENSIONS
+    ]
+    return min(candidates, key=_extension_rank) if candidates else None
+
+
+def scan_library(directory: Path) -> dict[str, Path]:
+    if not directory.is_dir():
+        raise WalictlError(f"wallpaper directory not found: {directory}")
+    chosen: dict[str, Path] = {}
+    for path in directory.iterdir():
+        if not path.is_file() or path.suffix.lower() not in WALLPAPER_EXTENSIONS:
+            continue
+        stem = photo_id(path)
+        if stem not in chosen or _extension_rank(path) < _extension_rank(chosen[stem]):
+            chosen[stem] = path
+    return dict(sorted(chosen.items()))
+
+
+def resolve_variant(config: Config, photo_id: str) -> Path | None:
+    if config.variants_dir is None or not config.variants_dir.is_dir():
+        return None
+    return find_by_stem(config.variants_dir, photo_id)
+
+
+def resolve_source(config: Config, photo_id: str) -> Path | None:
+    taken = capture_date(photo_id)
+    if config.archive_root is None or taken is None:
+        return None
+    candidate = config.archive_root / taken.strftime("%Y") / taken.strftime("%m") / f"{photo_id}.jpg"
+    return candidate if candidate.is_file() else None
+
+
+def display_path(config: Config, library: dict[str, Path], photo_id: str) -> Path:
+    variant = resolve_variant(config, photo_id)
+    if variant is not None:
+        return variant
+    try:
+        return library[photo_id]
+    except KeyError as exc:
+        raise WalictlError(f"unknown photo id: {photo_id}") from exc
 
 
 def build_parser() -> argparse.ArgumentParser:
