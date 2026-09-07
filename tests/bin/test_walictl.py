@@ -306,3 +306,90 @@ def test_utc_now_format(walictl: ModuleType) -> None:
 
 def test_favorites_lock_lives_in_state_dir(walictl: ModuleType, env: dict[str, Path]) -> None:
     assert walictl.favorites_lock() == env["state_home"] / "wali" / "favorites.lock"
+
+
+def entry(walictl: ModuleType, photo: str, origin: str = "next") -> Any:
+    return walictl.HistoryEntry(ts="2026-09-07T00:00:00Z", id=photo, path=f"/w/{photo}.jpg", origin=origin)
+
+
+def test_history_missing_file_is_empty_state(walictl: ModuleType, tmp_path: Path) -> None:
+    history = walictl.History.load(tmp_path / "missing" / "history.json")
+    assert history.entries == [] and history.cursor == -1
+    assert history.current() is None and history.at_end()
+
+
+def test_history_corrupt_file_is_an_error(walictl: ModuleType, tmp_path: Path) -> None:
+    path = tmp_path / "history.json"
+    path.write_text("[]")
+    with pytest.raises(walictl.WalictlError, match="must be a JSON object"):
+        walictl.History.load(path)
+    path.write_text('{"version": 2, "cursor": 0, "entries": []}')
+    with pytest.raises(walictl.WalictlError, match="unsupported history version"):
+        walictl.History.load(path)
+    path.write_text('{"version": 1, "cursor": 3, "entries": []}')
+    with pytest.raises(walictl.WalictlError, match="cursor out of range"):
+        walictl.History.load(path)
+    path.write_text('{"version": 1, "cursor": 0, "entries": [{"ts": "T", "id": "a", "origin": "next"}]}')
+    with pytest.raises(walictl.WalictlError, match="malformed entry"):
+        walictl.History.load(path)
+    path.write_text('{"version": 1, "cursor": 0, "entries": [{"ts": "T", "id": 1, "path": "/p", "origin": "next"}]}')
+    with pytest.raises(walictl.WalictlError, match="malformed entry"):
+        walictl.History.load(path)
+    assert path.read_text().startswith('{"version": 1')
+
+
+@pytest.mark.parametrize(
+    "payload,error",
+    [
+        ({"version": True, "cursor": -1, "entries": []}, "unsupported history version"),
+        ({"version": 1.0, "cursor": -1, "entries": []}, "unsupported history version"),
+        ({"version": 1, "cursor": True, "entries": []}, "history file is malformed"),
+        ({"version": 1, "cursor": -1, "entries": {}}, "history file is malformed"),
+    ],
+)
+def test_history_rejects_malformed_state(
+    walictl: ModuleType, tmp_path: Path, payload: dict[str, object], error: str
+) -> None:
+    path = tmp_path / "history.json"
+    path.write_text(json.dumps(payload))
+    with pytest.raises(walictl.WalictlError, match=error):
+        walictl.History.load(path)
+
+
+def test_history_push_discards_forward_entries_and_round_trips(walictl: ModuleType, tmp_path: Path) -> None:
+    path = tmp_path / "history.json"
+    history = walictl.History.load(path)
+    history.push(entry(walictl, "a", "observed"))
+    history.push(entry(walictl, "b"))
+    history.push(entry(walictl, "c", "random"))
+    history.cursor = 0
+    history.push(entry(walictl, "d"))
+    assert [e.id for e in history.entries] == ["a", "d"]
+    assert history.cursor == 1 and history.at_end()
+    history.save(path)
+    loaded = walictl.History.load(path)
+    assert loaded == history
+    assert json.loads(path.read_text())["version"] == 1
+
+
+def test_history_cap_drops_oldest_and_shifts_cursor(walictl: ModuleType) -> None:
+    history = walictl.History(entries=[], cursor=-1)
+    for index in range(walictl.HISTORY_CAP + 5):
+        history.push(entry(walictl, f"p{index}"))
+    assert len(history.entries) == walictl.HISTORY_CAP
+    assert history.entries[0].id == "p5"
+    assert history.cursor == walictl.HISTORY_CAP - 1
+
+
+def test_history_recent_ids_counts_back_from_cursor(walictl: ModuleType) -> None:
+    history = walictl.History(entries=[entry(walictl, p) for p in "abcde"], cursor=2)
+    assert history.recent_ids(2) == {"b", "c"}
+    assert history.recent_ids(10) == {"a", "b", "c"}
+    assert history.recent_ids(0) == set()
+    assert history.current() is not None and history.current().id == "c"
+    assert not history.at_end()
+
+
+def test_history_paths_live_in_state_dir(walictl: ModuleType, env: dict[str, Path]) -> None:
+    assert walictl.history_path() == env["state_home"] / "wali" / "history.json"
+    assert walictl.history_lock() == env["state_home"] / "wali" / "history.lock"

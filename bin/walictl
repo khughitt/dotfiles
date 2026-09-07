@@ -13,7 +13,7 @@ import tempfile
 import time
 import tomllib
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -266,6 +266,87 @@ class Favorites:
 
     def remove(self, photo_id: str) -> bool:
         return self.entries.pop(photo_id, None) is not None
+
+
+# --- history ----------------------------------------------------------------
+
+HISTORY_VERSION = 1
+HISTORY_CAP = 1000
+ORIGINS = ("next", "random", "observed")
+
+
+def history_path() -> Path:
+    return state_dir() / "history.json"
+
+
+def history_lock() -> Path:
+    return state_dir() / "history.lock"
+
+
+@dataclass
+class HistoryEntry:
+    ts: str
+    id: str
+    path: str
+    origin: str
+
+
+@dataclass
+class History:
+    entries: list[HistoryEntry] = field(default_factory=list)
+    cursor: int = -1
+
+    @classmethod
+    def load(cls, path: Path) -> History:
+        payload = read_json(path, "history file")
+        if payload is None:
+            return cls()
+        version = payload.get("version")
+        if type(version) is not int or version != HISTORY_VERSION:
+            raise WalictlError(f"unsupported history version in {path}: {version!r}")
+        raw_entries = payload.get("entries")
+        cursor = payload.get("cursor")
+        if not isinstance(raw_entries, list) or type(cursor) is not int:
+            raise WalictlError(f"history file is malformed: {path}")
+        entries: list[HistoryEntry] = []
+        fields = ("ts", "id", "path", "origin")
+        for raw in raw_entries:
+            if (
+                not isinstance(raw, dict)
+                or any(not isinstance(raw.get(name), str) for name in fields)
+                or raw["origin"] not in ORIGINS
+            ):
+                raise WalictlError(f"history file has a malformed entry: {path}")
+            entries.append(HistoryEntry(raw["ts"], raw["id"], raw["path"], raw["origin"]))
+        if not (-1 <= cursor < len(entries)) or (cursor == -1 and entries):
+            raise WalictlError(f"history cursor out of range in {path}: {cursor}")
+        return cls(entries=entries, cursor=cursor)
+
+    def save(self, path: Path) -> None:
+        write_json_atomic(
+            path,
+            {"version": HISTORY_VERSION, "cursor": self.cursor, "entries": [asdict(entry) for entry in self.entries]},
+        )
+
+    def current(self) -> HistoryEntry | None:
+        return self.entries[self.cursor] if self.cursor >= 0 else None
+
+    def at_end(self) -> bool:
+        return self.cursor == len(self.entries) - 1
+
+    def push(self, entry: HistoryEntry) -> None:
+        del self.entries[self.cursor + 1 :]
+        self.entries.append(entry)
+        overflow = len(self.entries) - HISTORY_CAP
+        if overflow > 0:
+            del self.entries[:overflow]
+        self.cursor = len(self.entries) - 1
+
+    def recent_ids(self, count: int) -> set[str]:
+        if count <= 0 or self.cursor < 0:
+            return set()
+        start = max(0, self.cursor + 1 - count)
+        return {entry.id for entry in self.entries[start : self.cursor + 1]}
 
 
 def build_parser() -> argparse.ArgumentParser:
