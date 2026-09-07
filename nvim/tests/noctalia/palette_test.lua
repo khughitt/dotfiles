@@ -109,8 +109,8 @@ local expected = {
   default.glass.cursorline .. '@0.30',
   default.glass.tab_off .. '@0.30',
   default.glass.raised .. '@0.40',
-  default.glass.diff_added .. '@0.72',
-  default.glass.diff_removed .. '@0.72',
+  default.glass.diff_added .. '@0.55',
+  default.glass.diff_removed .. '@0.55',
   default.glass.selection .. '@0.55',
 }
 assert(#tones == #expected, 'kitty fallback must list exactly seven tones')

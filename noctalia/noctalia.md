@@ -68,12 +68,28 @@ smoke on the same glass. (Revised 2026-09-06, dots-a00088.)
 Claude Code reloads theme-file changes live. If its themes directory did not
 exist when Claude started, restart once after the first render. Codex applies
 its syntax theme in new sessions. Kitty gives Claude and Codex red/green diff
-backgrounds 72% opacity. The registered `primary_container` gives Claude's
+backgrounds 55% opacity. The registered `primary_container` gives Claude's
 painted selection 55% opacity. Kitty's own terminal selection uses the paired
 live `glass.selection_fg` (`on_primary_container`) foreground and
 `glass.selection` (`primary_container`) background but remains opaque because
-Kitty forces selected cells to alpha 1. Codex's input box remains opaque
-because Codex owns and caches that background and exposes no theme role for it.
+Kitty forces selected cells to alpha 1. Application-painted colors outside
+the seven registered tones keep their own opacity.
+
+The 2026-09-07 nested screenshot pass (`dots-aa6cc4`) used Titan's glass
+material and current Noctalia palette at terminal opacity 0 over snow
+(`PXL_20221202_213704245.jpg`) and forest (`PXL_20230209_220430246.jpg`)
+wallpapers. Neovim's tabs, cursorline, and status line and OpenCode's root,
+input, and menu remained readable at chrome/cursorline/tab-off/raised alphas
+of **0.35/0.30/0.30/0.40**. Diff backgrounds changed once from **0.72 to 0.55**:
+Claude's red/green preview rows retain their distinction without looking as
+heavy against the clear body. Selection stays at **0.55** to preserve its
+contrast. Producer, checker, Kitty fallback, and pinned tests share these values.
+
+Captures covered Neovim, OpenCode 1.18.29, Crush 0.92.0, Codex 0.153.4, and
+Claude Code 2.1.263. OpenCode's modal dimmer and highlighted menu row and
+Crush's highlighted row remain opaque. Codex's `/diff` pager uses colored
+foregrounds; its inspected empty input follows the terminal background.
+The local evidence is in `.superpowers/evidence/dots-aa6cc4/` (gitignored).
 
 ### OpenCode and Crush
 
@@ -105,8 +121,10 @@ theme roles that Kitty can make translucent without sacrificing foreground
 readability.
 
 `crush/crushrc` sets `option ui transparent true` as the reproducible default.
-Crush's saved global or workspace preference may override it. Crush 0.88.0 has
-no custom-theme interface, so its application-painted blocks remain opaque.
+Crush's saved global or workspace preference may override it. In the inspected
+0.92.0 session its base and command menu are transparent; its purple selected
+row remains opaque. Its dim hints have weaker contrast over bright wallpaper
+details and do not use the seven Noctalia tones, so these alphas cannot fix them.
 
 ## Glow theming
 

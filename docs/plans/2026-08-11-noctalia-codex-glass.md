@@ -1,5 +1,9 @@
 # Noctalia Codex Glass Refinement Implementation Plan
 
+**Status:** Implemented (`c8b7e7f..e03628a`). The steps below record the
+original implementation; `dots-aa6cc4` retuned diff opacity from 0.72 to 0.55
+on 2026-09-07. Current values and app observations live in `noctalia/noctalia.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > `superpowers:subagent-driven-development` (recommended) or
 > `superpowers:executing-plans` to implement this plan task-by-task. Steps use

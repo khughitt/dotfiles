@@ -2,6 +2,8 @@
 
 **Status:** Implemented (753305e..0485858); Codex diff/selection refinement
 implemented (c8b7e7f..e03628a).
+Revised 2026-09-07 by `dots-aa6cc4`: the nested bright/dark wallpaper pass
+retuned diff opacity to 0.55; selection stays at 0.55 and chrome at 0.30–0.40.
 
 ## Goal
 
@@ -113,7 +115,7 @@ come from `surface_container_low` (`chrome`, also `tab_on`), `surface_bright`
 (`cursorline`), `surface_container_high` (`tab_off`, also `tab_fill`), and
 `outline_variant` (`raised`). The three semantic slots are the shared
 coding-agent diff green `#022800` and diff red `#3d0100`, each at opacity
-`0.72`, plus the current Noctalia `primary_container` selection color at
+`0.55`, plus the current Noctalia `primary_container` selection color at
 opacity `0.55`. That selection opacity applies to ordinary cells painted by
 Claude via SGR. Kitty 0.48.2 forces its own selected cells to alpha `1.0`
 before substituting `selection_background`, so Kitty selection can share the

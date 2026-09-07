@@ -1,6 +1,9 @@
 # Noctalia agent themes: OpenCode glass and Crush transparency (Kitty)
 
 **Status:** Implemented (`eb1e61d^..7fb1ddc`).
+Revised 2026-09-07 by `dots-aa6cc4`: nested captures verified the current
+TUI surfaces over pure glass; diff alphas are 0.55. Current app observations
+and the seven chosen alphas are recorded in `noctalia/noctalia.md`.
 
 ## Goal
 
@@ -210,10 +213,10 @@ The major surfaces reuse existing registered glass roles:
 | `backgroundPanel` | `tab_off` | `0.30` |
 | `backgroundElement` | `cursorline` | `0.30` |
 | `backgroundMenu` | `raised` | `0.40` |
-| `diffAddedBg` | `diff_added` | `0.72` |
-| `diffAddedLineNumberBg` | `diff_added` | `0.72` |
-| `diffRemovedBg` | `diff_removed` | `0.72` |
-| `diffRemovedLineNumberBg` | `diff_removed` | `0.72` |
+| `diffAddedBg` | `diff_added` | `0.55` |
+| `diffAddedLineNumberBg` | `diff_added` | `0.55` |
+| `diffRemovedBg` | `diff_removed` | `0.55` |
+| `diffRemovedLineNumberBg` | `diff_removed` | `0.55` |
 | `diffContextBg` | `chrome` | `0.35` |
 
 Borders are paired explicitly rather than inferred from the surface mapping:

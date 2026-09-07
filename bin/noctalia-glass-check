@@ -29,7 +29,7 @@ FIXED = {'diff_added': '#022800', 'diff_removed': '#3d0100'}
 # vanish. The chrome tones are a slightly denser smoke on the same glass.
 OPACITY = {
     'chrome': '0.35', 'cursorline': '0.30', 'tab_off': '0.30', 'raised': '0.40',
-    'diff_added': '0.72', 'diff_removed': '0.72', 'selection': '0.55',
+    'diff_added': '0.55', 'diff_removed': '0.55', 'selection': '0.55',
 }
 HEX = re.compile(r'#[0-9a-fA-F]{6}')
 # These two copies are intentionally mirrored producer/validator contracts;
