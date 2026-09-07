@@ -8,6 +8,7 @@ import fcntl
 import json
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import time
@@ -347,6 +348,40 @@ class History:
             return set()
         start = max(0, self.cursor + 1 - count)
         return {entry.id for entry in self.entries[start : self.cursor + 1]}
+
+
+# --- noctalia ipc -----------------------------------------------------------
+
+
+class Noctalia:
+    def _msg(self, *args: str) -> subprocess.CompletedProcess[str]:
+        try:
+            return subprocess.run(["noctalia", "msg", *args], check=False, capture_output=True, text=True)
+        except FileNotFoundError as exc:
+            raise WalictlError("noctalia command not found") from exc
+
+    def get_default(self) -> Path:
+        result = self._msg("wallpaper-get")
+        if result.returncode != 0:
+            raise WalictlError(f"wallpaper-get failed: {(result.stderr or result.stdout).strip()}")
+        line = next((text.strip() for text in result.stdout.splitlines() if text.strip()), "")
+        if not line or line.startswith("error:"):
+            raise WalictlError("could not determine current wallpaper")
+        return Path(line).expanduser().resolve()
+
+    def set_default(self, path: Path) -> None:
+        result = self._msg("wallpaper-set", str(path))
+        answer = (result.stdout or result.stderr).strip()
+        if result.returncode != 0 or answer != "ok":
+            raise WalictlError(f"wallpaper-set rejected {path}: {answer or 'no answer'}")
+
+
+def reconcile(history: History, displayed: Path, now: str) -> bool:
+    current = history.current()
+    if current is not None and Path(current.path) == displayed:
+        return False
+    history.push(HistoryEntry(ts=now, id=photo_id(displayed), path=str(displayed), origin="observed"))
+    return True
 
 
 def build_parser() -> argparse.ArgumentParser:

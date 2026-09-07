@@ -393,3 +393,67 @@ def test_history_recent_ids_counts_back_from_cursor(walictl: ModuleType) -> None
 def test_history_paths_live_in_state_dir(walictl: ModuleType, env: dict[str, Path]) -> None:
     assert walictl.history_path() == env["state_home"] / "wali" / "history.json"
     assert walictl.history_lock() == env["state_home"] / "wali" / "history.lock"
+
+
+def test_noctalia_get_default_realpaths_the_answer(
+    walictl: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    real = tmp_path / "real.jpg"
+    real.touch()
+    link = tmp_path / "link.jpg"
+    link.symlink_to(real)
+    fake = FakeNoctalia(link)
+    monkeypatch.setattr(subprocess, "run", fake.run)
+    assert walictl.Noctalia().get_default() == real.resolve()
+    assert fake.calls == [["noctalia", "msg", "wallpaper-get"]]
+
+
+def test_noctalia_get_default_fails_on_empty_answer(walictl: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(subprocess, "run", FakeNoctalia(None).run)
+    with pytest.raises(walictl.WalictlError, match="could not determine current wallpaper"):
+        walictl.Noctalia().get_default()
+
+
+def test_noctalia_errors_are_reported(walictl: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
+    def missing(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        raise FileNotFoundError("noctalia")
+
+    monkeypatch.setattr(subprocess, "run", missing)
+    with pytest.raises(walictl.WalictlError, match="noctalia command not found"):
+        walictl.Noctalia().get_default()
+    fake = FakeNoctalia(Path("/w/a.jpg"), reject_set="path does not exist or is not a regular file")
+    monkeypatch.setattr(subprocess, "run", fake.run)
+    with pytest.raises(walictl.WalictlError, match="wallpaper-set rejected /w/b.jpg: error: path does not exist"):
+        walictl.Noctalia().set_default(Path("/w/b.jpg"))
+    assert fake.calls == [["noctalia", "msg", "wallpaper-set", "/w/b.jpg"]]
+
+
+def test_noctalia_set_default_rejects_zero_status_non_ok_answer(
+    walictl: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def non_ok(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args, 0, stdout="okay\n", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", non_ok)
+    with pytest.raises(walictl.WalictlError, match="wallpaper-set rejected /w/b.jpg: okay"):
+        walictl.Noctalia().set_default(Path("/w/b.jpg"))
+
+
+def test_reconcile_seeds_empty_history(walictl: ModuleType) -> None:
+    history = walictl.History()
+    assert walictl.reconcile(history, Path("/w/PXL_1.jpg"), "T") is True
+    assert history.entries == [walictl.HistoryEntry("T", "PXL_1", "/w/PXL_1.jpg", "observed")]
+    assert history.cursor == 0
+
+
+def test_reconcile_is_a_noop_when_display_matches_cursor(walictl: ModuleType) -> None:
+    history = walictl.History(entries=[entry(walictl, "a"), entry(walictl, "b")], cursor=0)
+    assert walictl.reconcile(history, Path("/w/a.jpg"), "T") is False
+    assert [e.id for e in history.entries] == ["a", "b"] and history.cursor == 0
+
+
+def test_reconcile_records_external_change_and_discards_forward(walictl: ModuleType) -> None:
+    history = walictl.History(entries=[entry(walictl, "a"), entry(walictl, "b")], cursor=0)
+    assert walictl.reconcile(history, Path("/w/z.jpg"), "T") is True
+    assert [(e.id, e.origin) for e in history.entries] == [("a", "next"), ("z", "observed")]
+    assert history.cursor == 1
