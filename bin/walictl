@@ -478,7 +478,7 @@ COMMANDS: dict[str, Callable[[Context, argparse.Namespace], int]] = {
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="walictl")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    current = subparsers.add_parser("current")
+    current = subparsers.add_parser("current", help="describe the default wallpaper")
     current.add_argument("--json", action="store_true", required=True)
     return parser
 
