@@ -521,3 +521,64 @@ def test_sample_rejects_non_finite_total(walictl: ModuleType) -> None:
     )
     with pytest.raises(walictl.WalictlError, match="total weight must be finite"):
         walictl.sample(weighted, random.Random(1), lambda _: None)
+
+
+def test_current_json_contract(walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia) -> None:
+    store = walictl.Favorites(entries={})
+    store.add("PXL_20210608_111152739", "2026-09-07T00:00:00Z")
+    store.save(env["favorites"])
+    code, stdout, stderr = run_cli(walictl, ["current", "--json"])
+    assert (code, stderr) == (0, "")
+    payload = json.loads(stdout)
+    assert payload == {
+        "ok": True,
+        "id": "PXL_20210608_111152739",
+        "date": "2021-06-08",
+        "display_date": "June 8, 2021",
+        "path": str(env["wallpapers"] / "PXL_20210608_111152739.jpg"),
+        "source_path": str(env["archive"] / "2021" / "06" / "PXL_20210608_111152739.jpg"),
+        "variant_path": None,
+        "favorite": True,
+        "history": {"cursor": None, "length": 0},
+    }
+
+
+def test_current_json_nulls_for_undated_unfavorited_photo(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    undated = env["wallpapers"] / "IMG_20200525_124754.jpg"
+    undated.touch()
+    noctalia.default = undated
+    code, stdout, _ = run_cli(walictl, ["current", "--json"])
+    payload = json.loads(stdout)
+    assert code == 0
+    assert payload["id"] == "IMG_20200525_124754"
+    assert payload["date"] is None and payload["display_date"] is None
+    assert payload["source_path"] is None and payload["favorite"] is False
+
+
+def test_current_reports_history_position(walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia) -> None:
+    history = walictl.History()
+    history.push(entry(walictl, "x", "observed"))
+    history.push(entry(walictl, "y"))
+    history.cursor = 0
+    history.save(walictl.history_path())
+    payload = json.loads(run_cli(walictl, ["current", "--json"])[1])
+    assert payload["history"] == {"cursor": 0, "length": 2}
+
+
+def test_current_requires_json_flag(walictl: ModuleType, env: dict[str, Path]) -> None:
+    code, stdout, stderr = run_cli(walictl, ["current"])
+    assert (code, stdout) == (2, "")
+    assert "--json" in stderr
+
+
+def test_script_runs_as_a_subprocess() -> None:
+    result = subprocess.run([sys.executable, str(SCRIPT), "current"], capture_output=True, text=True, check=False)
+    assert result.returncode == 2 and "--json" in result.stderr
+
+
+def test_current_reports_ipc_failure(walictl: ModuleType, env: dict[str, Path], monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(subprocess, "run", FakeNoctalia(None).run)
+    code, stdout, stderr = run_cli(walictl, ["current", "--json"])
+    assert (code, stdout, stderr) == (1, "", "could not determine current wallpaper\n")

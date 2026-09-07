@@ -20,6 +20,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import TextIO
 
 
 class WalictlError(RuntimeError):
@@ -425,6 +426,55 @@ def sample(weighted: dict[str, float], rng: random.Random, warn: Callable[[str],
     return rng.choices(ids, weights=values, k=1)[0]
 
 
+# --- commands ---------------------------------------------------------------
+
+
+@dataclass
+class Context:
+    config: Config
+    noctalia: Noctalia
+    out: TextIO
+    err: TextIO
+
+
+def describe(
+    ctx: Context, displayed: Path, library: dict[str, Path], favorites: Favorites, history: History
+) -> dict[str, object]:
+    photo = photo_id(displayed)
+    taken = capture_date(photo)
+    source = resolve_source(ctx.config, photo)
+    variant = resolve_variant(ctx.config, photo)
+    return {
+        "ok": True,
+        "id": photo,
+        "date": taken.isoformat() if taken else None,
+        "display_date": display_date(taken),
+        "path": str(displayed),
+        "source_path": str(source) if source else None,
+        "variant_path": str(variant) if variant else None,
+        "favorite": photo in favorites,
+        "history": {"cursor": history.cursor if history.cursor >= 0 else None, "length": len(history.entries)},
+    }
+
+
+def cmd_current(ctx: Context, args: argparse.Namespace) -> int:
+    displayed = ctx.noctalia.get_default()
+    library = scan_library(ctx.config.wallpaper_dir)
+    favorites = Favorites.load(ctx.config.favorites_file)
+    history = History.load(history_path())
+    json.dump(describe(ctx, displayed, library, favorites, history), ctx.out)
+    ctx.out.write("\n")
+    return 0
+
+
+COMMANDS: dict[str, Callable[[Context, argparse.Namespace], int]] = {
+    "current": cmd_current,
+}
+
+
+# --- parser and main --------------------------------------------------------
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="walictl")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -436,8 +486,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        config = load_config(config_path())
-        raise WalictlError(f"command not implemented: {args.command} ({config.wallpaper_dir})")
+        ctx = Context(config=load_config(config_path()), noctalia=Noctalia(), out=sys.stdout, err=sys.stderr)
+        return COMMANDS[args.command](ctx, args)
     except (WalictlError, OSError, UnicodeError) as exc:
         print(" ".join(str(exc).split()), file=sys.stderr)
         return 1
