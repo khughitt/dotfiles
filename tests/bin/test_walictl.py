@@ -897,3 +897,55 @@ def test_edit_reports_missing_gimp(
 
     monkeypatch.setattr(subprocess, "Popen", missing)
     assert run_cli(walictl, ["edit"]) == (1, "", "gimp command not found\n")
+
+
+def test_import_favorites_dedupes_and_reports(walictl: ModuleType, env: dict[str, Path], tmp_path: Path) -> None:
+    existing = env["archive"] / "2021" / "06" / "PXL_20210608_111152739.jpg"
+    dangling = env["archive"] / "2021" / "06" / "PXL_20210630_000000000.jpg"
+    source = tmp_path / "favorites.txt"
+    source.write_text(f"{existing}\n{existing}\n\n{dangling}\n{env['wallpapers'] / 'PXL_20210609_120000000.jpg'}\n{existing}\n")
+    code, stdout, stderr = run_cli(walictl, ["import-favorites", str(source)])
+    assert (code, stderr) == (0, "")
+    assert stdout == (
+        "lines: 5\nunique: 3\nduplicate occurrences: 2\n"
+        f"dangling paths: 1\n  {dangling}\n"
+        "missing display files: 1\n  PXL_20210630_000000000\n"
+        f"wrote {env['favorites']}\n"
+    )
+    store = walictl.Favorites.load(env["favorites"])
+    assert store.ids() == ["PXL_20210608_111152739", "PXL_20210609_120000000", "PXL_20210630_000000000"]
+    assert all(set(v) == {"added"} for v in store.entries.values())
+
+
+def test_import_favorites_refuses_to_overwrite_without_force(
+    walictl: ModuleType, env: dict[str, Path], tmp_path: Path
+) -> None:
+    env["favorites"].write_text('{"version": 1, "favorites": {}}')
+    source = tmp_path / "favorites.txt"
+    source.write_text("x.jpg\n")
+    code, _, stderr = run_cli(walictl, ["import-favorites", str(source)])
+    assert (code, stderr) == (1, f"favorites file already exists (use --force): {env['favorites']}\n")
+    assert run_cli(walictl, ["import-favorites", "--force", str(source)])[0] == 0
+    assert walictl.Favorites.load(env["favorites"]).ids() == ["x"]
+
+
+def test_import_favorites_refuses_a_store_created_while_waiting_for_the_lock(
+    walictl: ModuleType, env: dict[str, Path], tmp_path: Path
+) -> None:
+    source = tmp_path / "favorites.txt"
+    source.write_text("x.jpg\n")
+    real_locked = walictl.locked
+
+    def locked_then_racer(path: Path, timeout: float = 10.0) -> Any:
+        env["favorites"].write_text('{"version": 1, "favorites": {"other": {"added": "T"}}}')
+        return real_locked(path, timeout=timeout)
+
+    walictl.locked = locked_then_racer  # type: ignore[assignment]
+    code, _, stderr = run_cli(walictl, ["import-favorites", str(source)])
+    assert (code, stderr) == (1, f"favorites file already exists (use --force): {env['favorites']}\n")
+    assert walictl.Favorites.load(env["favorites"]).ids() == ["other"]
+
+
+def test_import_favorites_fails_on_missing_source(walictl: ModuleType, env: dict[str, Path], tmp_path: Path) -> None:
+    code, _, stderr = run_cli(walictl, ["import-favorites", str(tmp_path / "nope.txt")])
+    assert (code, stderr) == (1, f"favorites source not found: {tmp_path / 'nope.txt'}\n")

@@ -589,6 +589,37 @@ def cmd_favorites(ctx: Context, args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_import_favorites(ctx: Context, args: argparse.Namespace) -> int:
+    source = Path(args.source)
+    try:
+        lines = [line.strip() for line in source.read_text(encoding="utf-8").splitlines() if line.strip()]
+    except FileNotFoundError as exc:
+        raise WalictlError(f"favorites source not found: {source}") from exc
+    library = scan_library(ctx.config.wallpaper_dir)
+    ids = [photo_id(Path(line)) for line in lines]
+    unique_ids = sorted(set(ids))
+    dangling = sorted({line for line in lines if not Path(line).expanduser().exists()})
+    missing = [photo for photo in unique_ids if photo not in library]
+    now = utc_now()
+    with locked(favorites_lock()):
+        if ctx.config.favorites_file.exists() and not args.force:
+            raise WalictlError(f"favorites file already exists (use --force): {ctx.config.favorites_file}")
+        store = Favorites(entries={})
+        for photo in unique_ids:
+            store.add(photo, now)
+        store.save(ctx.config.favorites_file)
+    ctx.out.write(f"lines: {len(lines)}\nunique: {len(unique_ids)}\n")
+    ctx.out.write(f"duplicate occurrences: {len(ids) - len(unique_ids)}\n")
+    ctx.out.write(f"dangling paths: {len(dangling)}\n")
+    for line in dangling:
+        ctx.out.write(f"  {line}\n")
+    ctx.out.write(f"missing display files: {len(missing)}\n")
+    for photo in missing:
+        ctx.out.write(f"  {photo}\n")
+    ctx.out.write(f"wrote {ctx.config.favorites_file}\n")
+    return 0
+
+
 def cmd_neighbors(ctx: Context, args: argparse.Namespace) -> int:
     if args.count < 0:
         raise WalictlError("count must be non-negative")
@@ -638,6 +669,7 @@ COMMANDS: dict[str, Callable[[Context, argparse.Namespace], int]] = {
     "edit": cmd_edit,
     "favorite": cmd_favorite,
     "favorites": cmd_favorites,
+    "import-favorites": cmd_import_favorites,
     "neighbors": cmd_neighbors,
     "next": cmd_next,
     "previous": cmd_previous,
@@ -662,6 +694,9 @@ def build_parser() -> argparse.ArgumentParser:
     favorite.add_argument("photo_id", nargs="?", default=None)
     favorites = subparsers.add_parser("favorites", help="list favorites")
     favorites.add_argument("--json", action="store_true", required=True)
+    importer = subparsers.add_parser("import-favorites", help="build favorites.json from the legacy favorites.txt")
+    importer.add_argument("source")
+    importer.add_argument("--force", action="store_true")
     neighbors = subparsers.add_parser("neighbors", help="capture-time neighbours of the current photo")
     neighbors.add_argument("--json", action="store_true", required=True)
     neighbors.add_argument("--count", type=int, default=3)
