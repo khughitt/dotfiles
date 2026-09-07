@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.machinery
 import importlib.util
+import fcntl
 import io
 import json
 import subprocess
@@ -582,3 +583,192 @@ def test_current_reports_ipc_failure(walictl: ModuleType, env: dict[str, Path], 
     monkeypatch.setattr(subprocess, "run", FakeNoctalia(None).run)
     code, stdout, stderr = run_cli(walictl, ["current", "--json"])
     assert (code, stdout, stderr) == (1, "", "could not determine current wallpaper\n")
+
+
+def load_history(walictl: ModuleType) -> Any:
+    return walictl.History.load(walictl.history_path())
+
+
+def test_random_seeds_history_then_samples_and_commits_after_ok(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    code, stdout, stderr = run_cli(walictl, ["random", "--seed", "3"])
+    assert (code, stderr) == (0, "")
+    history = load_history(walictl)
+    assert [e.origin for e in history.entries] == ["observed", "random"]
+    assert history.entries[0].id == "PXL_20210608_111152739"
+    assert history.entries[1].id != "PXL_20210608_111152739"
+    assert stdout == f"random: {history.entries[1].id}\n"
+    assert noctalia.calls[-1] == ["noctalia", "msg", "wallpaper-set", history.entries[1].path]
+    assert noctalia.default == Path(history.entries[1].path)
+
+
+def test_previous_restores_the_seeded_wallpaper_and_next_moves_forward(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    run_cli(walictl, ["random", "--seed", "3"])
+    picked = load_history(walictl).entries[1].id
+    code, stdout, _ = run_cli(walictl, ["previous"])
+    assert (code, stdout) == (0, "previous: PXL_20210608_111152739\n")
+    assert noctalia.default == env["wallpapers"] / "PXL_20210608_111152739.jpg"
+    assert load_history(walictl).cursor == 0
+    code, stdout, _ = run_cli(walictl, ["next"])
+    assert (code, stdout) == (0, f"next: {picked}\n")
+    assert load_history(walictl).cursor == 1
+    assert len(load_history(walictl).entries) == 2
+
+
+def test_previous_at_front_fails(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    code, stdout, stderr = run_cli(walictl, ["previous"])
+    assert (code, stdout, stderr) == (1, "", "already at the oldest wallpaper in history\n")
+    assert load_history(walictl).cursor == 0
+
+
+def test_next_at_end_samples(walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia) -> None:
+    run_cli(walictl, ["next", "--seed", "1"])
+    history = load_history(walictl)
+    assert [e.origin for e in history.entries] == ["observed", "next"]
+    assert history.cursor == 1
+
+
+def test_random_mid_history_discards_forward_entries(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    run_cli(walictl, ["random", "--seed", "3"])
+    run_cli(walictl, ["previous"])
+    run_cli(walictl, ["random", "--seed", "5"])
+    history = load_history(walictl)
+    assert len(history.entries) == 2 and history.cursor == 1
+    assert history.entries[1].origin == "random"
+
+
+def test_rejected_set_leaves_history_as_reconcile_left_it(
+    walictl: ModuleType, env: dict[str, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake = FakeNoctalia(env["wallpapers"] / "PXL_20210608_111152739.jpg", reject_set="boom")
+    monkeypatch.setattr(subprocess, "run", fake.run)
+    code, stdout, stderr = run_cli(walictl, ["random", "--seed", "3"])
+    assert code == 1 and stdout == ""
+    assert stderr.startswith("wallpaper-set rejected ")
+    history = load_history(walictl)
+    assert [e.origin for e in history.entries] == ["observed"] and history.cursor == 0
+
+
+def test_observe_records_external_change_and_repeats_are_noops(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    assert run_cli(walictl, ["observe"])[1] == "recorded PXL_20210608_111152739\n"
+    assert run_cli(walictl, ["observe"])[1] == "unchanged PXL_20210608_111152739\n"
+    noctalia.default = env["wallpapers"] / "PXL_20220402_162957459.jpg"
+    assert run_cli(walictl, ["observe"])[1] == "recorded PXL_20220402_162957459\n"
+    history = load_history(walictl)
+    assert [(e.id, e.origin) for e in history.entries] == [
+        ("PXL_20210608_111152739", "observed"),
+        ("PXL_20220402_162957459", "observed"),
+    ]
+    assert noctalia.calls.count(["noctalia", "msg", "wallpaper-get"]) == 3
+
+
+def test_stale_observe_after_previous_is_a_noop(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    run_cli(walictl, ["random", "--seed", "3"])
+    run_cli(walictl, ["previous"])
+    code, stdout, _ = run_cli(walictl, ["observe"])
+    assert (code, stdout) == (0, "unchanged PXL_20210608_111152739\n")
+    assert len(load_history(walictl).entries) == 2
+
+
+def test_navigation_holds_the_history_lock(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    import threading
+
+    release = threading.Event()
+    taken = threading.Event()
+
+    def holder() -> None:
+        with walictl.locked(walictl.history_lock()):
+            taken.set()
+            release.wait(2)
+
+    thread = threading.Thread(target=holder)
+    thread.start()
+    assert taken.wait(2)
+    try:
+        walictl_fast = load_walictl()
+        normal_lock = walictl_fast.locked
+
+        def short_lock(path: Path, timeout: float = 10.0) -> Any:
+            return normal_lock(path, timeout=0.2)
+
+        walictl_fast.locked = short_lock  # type: ignore[assignment]
+        code, _, stderr = run_cli(walictl_fast, ["observe"])
+        assert code == 1 and stderr.startswith("timed out waiting for")
+    finally:
+        release.set()
+        thread.join(2)
+    assert not thread.is_alive()
+
+
+def test_navigation_keeps_lock_during_wallpaper_set(
+    walictl: ModuleType, env: dict[str, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake = FakeNoctalia(env["wallpapers"] / "PXL_20210608_111152739.jpg")
+
+    def check_lock(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        if args[2] == "wallpaper-set":
+            with walictl.history_lock().open("a", encoding="utf-8") as handle:
+                with pytest.raises(BlockingIOError):
+                    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return fake.run(args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", check_lock)
+    assert run_cli(walictl, ["random", "--seed", "3"])[0] == 0
+
+
+def test_symlinked_wallpaper_dir_does_not_duplicate_history(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    link = env["wallpapers"].parent / "link"
+    link.symlink_to(env["wallpapers"])
+    config = env["config_home"] / "wali" / "config.toml"
+    config.write_text(config.read_text().replace(str(env["wallpapers"]), str(link)))
+    run_cli(walictl, ["random", "--seed", "3"])
+    code, stdout, _ = run_cli(walictl, ["previous"])
+    assert (code, stdout) == (0, "previous: PXL_20210608_111152739\n")
+    history = load_history(walictl)
+    assert [e.id for e in history.entries][0] == "PXL_20210608_111152739" and len(history.entries) == 2
+    assert all(str(env["wallpapers"]) in e.path for e in history.entries)
+
+
+def test_replay_prefers_a_variant_created_later(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, tmp_path: Path
+) -> None:
+    variants = tmp_path / "edits"
+    variants.mkdir()
+    config = env["config_home"] / "wali" / "config.toml"
+    config.write_text(config.read_text() + f'variants_dir = "{variants}"\n')
+    run_cli(walictl, ["random", "--seed", "3"])
+    variant = variants / "PXL_20210608_111152739.png"
+    variant.touch()
+    code, stdout, _ = run_cli(walictl, ["previous"])
+    assert (code, stdout) == (0, "previous: PXL_20210608_111152739\n")
+    assert noctalia.default == variant.resolve()
+    assert load_history(walictl).entries[0].path == str(variant.resolve())
+
+
+def test_sampling_prefers_variant_file(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, tmp_path: Path
+) -> None:
+    variants = tmp_path / "edits"
+    variants.mkdir()
+    for stem in ("PXL_20210609_120000000", "PXL_20220402_162957459"):
+        (variants / f"{stem}.png").touch()
+    config = env["config_home"] / "wali" / "config.toml"
+    config.write_text(config.read_text() + f'variants_dir = "{variants}"\n')
+    run_cli(walictl, ["random", "--seed", "3"])
+    picked = load_history(walictl).entries[1]
+    assert Path(picked.path).parent == variants

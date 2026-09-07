@@ -467,8 +467,91 @@ def cmd_current(ctx: Context, args: argparse.Namespace) -> int:
     return 0
 
 
+def replay_path(config: Config, entry: HistoryEntry) -> Path:
+    """Prefer a variant created since the history entry was recorded."""
+    return resolve_variant(config, entry.id) or Path(entry.path)
+
+
+def navigate(ctx: Context, action: str, rng: random.Random) -> str:
+    """Reconcile, navigate, and commit while holding the history lock."""
+    with locked(history_lock()):
+        path = history_path()
+        history = History.load(path)
+        changed = reconcile(history, ctx.noctalia.get_default(), utc_now())
+        if changed:
+            history.save(path)
+        current = history.current()
+        assert current is not None
+        if action == "observe":
+            ctx.out.write(f"{'recorded' if changed else 'unchanged'} {current.id}\n")
+            return current.id
+
+        delta = (
+            -1
+            if action == "previous" and history.cursor > 0
+            else 1
+            if action == "next" and not history.at_end()
+            else 0
+        )
+        if delta:
+            target = history.entries[history.cursor + delta]
+            displayed = replay_path(ctx.config, target)
+            ctx.noctalia.set_default(displayed)
+            target.path = str(displayed)
+            history.cursor += delta
+        elif action == "previous":
+            raise WalictlError("already at the oldest wallpaper in history")
+        else:
+            library = scan_library(ctx.config.wallpaper_dir)
+            favorites = Favorites.load(ctx.config.favorites_file)
+            weighted = weights(
+                list(library),
+                favorites,
+                history.recent_ids(ctx.config.sampling.exclude_recent),
+                ctx.config.sampling,
+            )
+            picked = sample(weighted, rng, lambda message: print(message, file=ctx.err))
+            displayed = display_path(ctx.config, library, picked)
+            ctx.noctalia.set_default(displayed)
+            history.push(HistoryEntry(ts=utc_now(), id=picked, path=str(displayed), origin=action))
+        history.save(path)
+        selected = history.current()
+        assert selected is not None
+        ctx.out.write(f"{action}: {selected.id}\n")
+        return selected.id
+
+
+def _rng(args: argparse.Namespace) -> random.Random:
+    seed = getattr(args, "seed", None)
+    return random.Random(seed) if seed is not None else random.Random()
+
+
+def cmd_next(ctx: Context, args: argparse.Namespace) -> int:
+    navigate(ctx, "next", _rng(args))
+    return 0
+
+
+def cmd_previous(ctx: Context, args: argparse.Namespace) -> int:
+    navigate(ctx, "previous", _rng(args))
+    return 0
+
+
+def cmd_random(ctx: Context, args: argparse.Namespace) -> int:
+    navigate(ctx, "random", _rng(args))
+    return 0
+
+
+def cmd_observe(ctx: Context, args: argparse.Namespace) -> int:
+    navigate(ctx, "observe", _rng(args))
+    return 0
+
+
 COMMANDS: dict[str, Callable[[Context, argparse.Namespace], int]] = {
     "current": cmd_current,
+    "next": cmd_next,
+    "previous": cmd_previous,
+    "random": cmd_random,
+    "observe": cmd_observe,
 }
 
 
@@ -480,6 +563,14 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     current = subparsers.add_parser("current", help="describe the default wallpaper")
     current.add_argument("--json", action="store_true", required=True)
+    for name, help_text in (
+        ("next", "forward in history, else a weighted sample"),
+        ("random", "a weighted sample, discarding forward history"),
+    ):
+        sub = subparsers.add_parser(name, help=help_text)
+        sub.add_argument("--seed", type=int, default=None, help="seed the sampler (tests)")
+    subparsers.add_parser("previous", help="back one entry in history")
+    subparsers.add_parser("observe", help="record a wallpaper change made outside walictl (hook entry point)")
     return parser
 
 
