@@ -772,3 +772,128 @@ def test_sampling_prefers_variant_file(
     run_cli(walictl, ["random", "--seed", "3"])
     picked = load_history(walictl).entries[1]
     assert Path(picked.path).parent == variants
+
+
+def test_favorite_toggles_current_and_explicit_ids(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    assert run_cli(walictl, ["favorite"])[1] == "favorited PXL_20210608_111152739\n"
+    assert run_cli(walictl, ["favorite"])[1] == "unfavorited PXL_20210608_111152739\n"
+    assert run_cli(walictl, ["favorite", "--add", "PXL_20220402_162957459"])[1] == "favorited PXL_20220402_162957459\n"
+    assert run_cli(walictl, ["favorite", "--add", "PXL_20220402_162957459"])[1] == "favorited PXL_20220402_162957459\n"
+    assert run_cli(walictl, ["favorite", "--remove", "PXL_20220402_162957459"])[1] == "unfavorited PXL_20220402_162957459\n"
+    assert walictl.Favorites.load(env["favorites"]).ids() == []
+    code, _, stderr = run_cli(walictl, ["favorite", "--add", "nope"])
+    assert (code, stderr) == (1, "unknown photo id: nope\n")
+    code, _, stderr = run_cli(walictl, ["favorite", "nope"])
+    assert (code, stderr) == (1, "unknown photo id: nope\n")
+    assert run_cli(walictl, ["favorite", "--add", "--remove", "x"])[0] == 2
+
+
+def test_favorite_can_remove_an_id_whose_file_is_missing(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    store = walictl.Favorites(entries={})
+    store.add("PXL_20210919_170859013", "T")
+    store.save(env["favorites"])
+    assert run_cli(walictl, ["favorite", "--remove", "PXL_20210919_170859013"])[1] == "unfavorited PXL_20210919_170859013\n"
+    store.add("PXL_20210919_170859013", "T")
+    store.save(env["favorites"])
+    assert run_cli(walictl, ["favorite", "PXL_20210919_170859013"])[1] == "unfavorited PXL_20210919_170859013\n"
+    assert walictl.Favorites.load(env["favorites"]).ids() == []
+
+
+def test_favorite_concurrent_additions_both_land(walictl: ModuleType, env: dict[str, Path]) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    config = walictl.load_config(walictl.config_path())
+
+    def add(photo: str) -> None:
+        ctx = walictl.Context(config=config, noctalia=walictl.Noctalia(), out=io.StringIO(), err=io.StringIO())
+        args = walictl.argparse.Namespace(photo_id=photo, add=True, remove=False)
+        assert walictl.cmd_favorite(ctx, args) == 0
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(add, photo) for photo in ("PXL_20210608_111152739", "PXL_20210609_120000000")]
+        for future in futures:
+            future.result()
+    assert walictl.Favorites.load(env["favorites"]).ids() == ["PXL_20210608_111152739", "PXL_20210609_120000000"]
+
+
+def test_favorites_json_lists_paths_and_existence(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, tmp_path: Path
+) -> None:
+    store = walictl.Favorites(entries={})
+    store.add("PXL_20210608_111152739", "T1")
+    store.add("PXL_20210919_170859013", "T2")
+    store.add("PXL_20210609_120000000", "T3")
+    store.save(env["favorites"])
+    variants = tmp_path / "edits"
+    variants.mkdir()
+    (variants / "PXL_20210609_120000000.png").touch()
+    config = env["config_home"] / "wali" / "config.toml"
+    config.write_text(config.read_text() + f'variants_dir = "{variants}"\n')
+    code, stdout, _ = run_cli(walictl, ["favorites", "--json"])
+    assert code == 0
+    assert json.loads(stdout) == {
+        "ok": True,
+        "favorites": [
+            {"id": "PXL_20210608_111152739", "added": "T1", "path": str(env["wallpapers"] / "PXL_20210608_111152739.jpg"), "source_path": str(env["archive"] / "2021" / "06" / "PXL_20210608_111152739.jpg"), "exists": True},
+            {"id": "PXL_20210609_120000000", "added": "T3", "path": str((variants / "PXL_20210609_120000000.png").resolve()), "source_path": None, "exists": True},
+            {"id": "PXL_20210919_170859013", "added": "T2", "path": None, "source_path": None, "exists": False},
+        ],
+    }
+
+
+def test_neighbors_json_orders_by_capture_date(walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia) -> None:
+    (env["wallpapers"] / "PXL_20210531_235959000.jpg").touch()
+    (env["wallpapers"] / "IMG_undated.jpg").touch()
+    noctalia.default = env["wallpapers"] / "PXL_20210609_120000000.jpg"
+    code, stdout, _ = run_cli(walictl, ["neighbors", "--json", "--count", "1"])
+    assert code == 0
+    payload = json.loads(stdout)
+    assert payload["id"] == "PXL_20210609_120000000"
+    assert [n["id"] for n in payload["before"]] == ["PXL_20210608_111152739"]
+    assert [n["id"] for n in payload["after"]] == ["PXL_20220402_162957459"]
+    assert payload["after"][0] == {"id": "PXL_20220402_162957459", "date": "2022-04-02", "path": str(env["wallpapers"] / "PXL_20220402_162957459.jpg")}
+    payload = json.loads(run_cli(walictl, ["neighbors", "--json"])[1])
+    assert [n["id"] for n in payload["before"]] == ["PXL_20210531_235959000", "PXL_20210608_111152739"]
+    payload = json.loads(run_cli(walictl, ["neighbors", "--json", "--count", "0"])[1])
+    assert payload["before"] == [] and payload["after"] == []
+    assert run_cli(walictl, ["neighbors", "--json", "--count", "-1"])[2] == "count must be non-negative\n"
+
+
+def test_neighbors_fails_for_undated_current(walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia) -> None:
+    undated = env["wallpapers"] / "IMG_1.jpg"
+    undated.touch()
+    noctalia.default = undated
+    code, _, stderr = run_cli(walictl, ["neighbors", "--json"])
+    assert (code, stderr) == (1, "current wallpaper has no capture date: IMG_1\n")
+
+
+def test_edit_opens_source_when_present_else_display_file(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    launched: list[tuple[list[str], dict[str, Any]]] = []
+
+    class FakePopen:
+        def __init__(self, args: list[str], **kwargs: Any) -> None:
+            launched.append((list(args), kwargs))
+
+    monkeypatch.setattr(subprocess, "Popen", FakePopen)
+    source = env["archive"] / "2021" / "06" / "PXL_20210608_111152739.jpg"
+    assert run_cli(walictl, ["edit"])[1] == f"opened {source}\n"
+    noctalia.default = env["wallpapers"] / "PXL_20210609_120000000.jpg"
+    assert run_cli(walictl, ["edit"])[1] == f"opened {noctalia.default}\n"
+    assert [args for args, _ in launched] == [["gimp", str(source)], ["gimp", str(noctalia.default)]]
+    assert all(kwargs == {"start_new_session": True} for _, kwargs in launched)
+
+
+def test_edit_reports_missing_gimp(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def missing(*args: Any, **kwargs: Any) -> None:
+        raise FileNotFoundError("gimp")
+
+    monkeypatch.setattr(subprocess, "Popen", missing)
+    assert run_cli(walictl, ["edit"]) == (1, "", "gimp command not found\n")

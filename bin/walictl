@@ -546,8 +546,99 @@ def cmd_observe(ctx: Context, args: argparse.Namespace) -> int:
     return 0
 
 
+def _current_id(ctx: Context) -> str:
+    return photo_id(ctx.noctalia.get_default())
+
+
+def cmd_favorite(ctx: Context, args: argparse.Namespace) -> int:
+    photo = args.photo_id or _current_id(ctx)
+    with locked(favorites_lock()):
+        store = Favorites.load(ctx.config.favorites_file)
+        removing = args.remove or (not args.add and photo in store)
+        if removing:
+            store.remove(photo)
+            state = "unfavorited"
+        else:
+            if photo not in scan_library(ctx.config.wallpaper_dir):
+                raise WalictlError(f"unknown photo id: {photo}")
+            store.add(photo, utc_now())
+            state = "favorited"
+        store.save(ctx.config.favorites_file)
+    ctx.out.write(f"{state} {photo}\n")
+    return 0
+
+
+def cmd_favorites(ctx: Context, args: argparse.Namespace) -> int:
+    library = scan_library(ctx.config.wallpaper_dir)
+    store = Favorites.load(ctx.config.favorites_file)
+    items = []
+    for photo in store.ids():
+        path = resolve_variant(ctx.config, photo) or library.get(photo)
+        source = resolve_source(ctx.config, photo)
+        items.append(
+            {
+                "id": photo,
+                "added": store.entries[photo].get("added"),
+                "path": str(path) if path else None,
+                "source_path": str(source) if source else None,
+                "exists": path is not None,
+            }
+        )
+    json.dump({"ok": True, "favorites": items}, ctx.out)
+    ctx.out.write("\n")
+    return 0
+
+
+def cmd_neighbors(ctx: Context, args: argparse.Namespace) -> int:
+    if args.count < 0:
+        raise WalictlError("count must be non-negative")
+    photo = _current_id(ctx)
+    taken = capture_date(photo)
+    if taken is None:
+        raise WalictlError(f"current wallpaper has no capture date: {photo}")
+    library = scan_library(ctx.config.wallpaper_dir)
+    dated = sorted((taken, candidate) for candidate in library if (taken := capture_date(candidate)) is not None)
+    ordered = [candidate for _, candidate in dated]
+    if photo not in ordered:
+        raise WalictlError(f"current wallpaper is not in the library: {photo}")
+    index = ordered.index(photo)
+
+    def item(candidate: str) -> dict[str, object]:
+        candidate_date = capture_date(candidate)
+        return {
+            "id": candidate,
+            "date": candidate_date.isoformat() if candidate_date else None,
+            "path": str(library[candidate]),
+        }
+
+    payload = {
+        "ok": True,
+        "id": photo,
+        "before": [item(candidate) for candidate in ordered[max(0, index - args.count) : index]],
+        "after": [item(candidate) for candidate in ordered[index + 1 : index + 1 + args.count]],
+    }
+    json.dump(payload, ctx.out)
+    ctx.out.write("\n")
+    return 0
+
+
+def cmd_edit(ctx: Context, args: argparse.Namespace) -> int:
+    displayed = ctx.noctalia.get_default()
+    target = resolve_source(ctx.config, photo_id(displayed)) or displayed
+    try:
+        subprocess.Popen(["gimp", str(target)], start_new_session=True)
+    except FileNotFoundError as exc:
+        raise WalictlError("gimp command not found") from exc
+    ctx.out.write(f"opened {target}\n")
+    return 0
+
+
 COMMANDS: dict[str, Callable[[Context, argparse.Namespace], int]] = {
     "current": cmd_current,
+    "edit": cmd_edit,
+    "favorite": cmd_favorite,
+    "favorites": cmd_favorites,
+    "neighbors": cmd_neighbors,
     "next": cmd_next,
     "previous": cmd_previous,
     "random": cmd_random,
@@ -563,6 +654,17 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     current = subparsers.add_parser("current", help="describe the default wallpaper")
     current.add_argument("--json", action="store_true", required=True)
+    subparsers.add_parser("edit", help="open the original (or the display file) in GIMP")
+    favorite = subparsers.add_parser("favorite", help="toggle (or --add/--remove) a favorite")
+    mode = favorite.add_mutually_exclusive_group()
+    mode.add_argument("--add", action="store_true")
+    mode.add_argument("--remove", action="store_true")
+    favorite.add_argument("photo_id", nargs="?", default=None)
+    favorites = subparsers.add_parser("favorites", help="list favorites")
+    favorites.add_argument("--json", action="store_true", required=True)
+    neighbors = subparsers.add_parser("neighbors", help="capture-time neighbours of the current photo")
+    neighbors.add_argument("--json", action="store_true", required=True)
+    neighbors.add_argument("--count", type=int, default=3)
     for name, help_text in (
         ("next", "forward in history, else a weighted sample"),
         ("random", "a weighted sample, discarding forward history"),
