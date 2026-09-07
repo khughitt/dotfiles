@@ -15,6 +15,7 @@
 - `bin/walictl` stays a single Python file, argparse, standard library only, `requires-python = ">=3.11"`.
 - Photo id is the filename stem. Extension precedence when a stem has several files: `.jpg`, `.jpeg`, `.png`, `.webp`.
 - Config file: `$XDG_CONFIG_HOME/wali/config.toml`; required keys `wallpaper_dir`, `favorites_file`; optional `archive_root`, `variants_dir`; `[sampling]` keys `exclude_recent` (200), `favorite_boost` (1.0), `period_boost` (3.0).
+- Sampling config rejects booleans and strings: `exclude_recent` is a non-negative integer; boosts are non-negative finite numbers representable as floats. Invalid values raise `WalictlError`.
 - State: `$XDG_STATE_HOME/wali/history.json`, `history.lock`, `favorites.lock`. History capped at 1000 entries. Lock wait bounded at 10 seconds.
 - Favorite weight is `1 + favorite_boost`; month weight is `1 + period_boost * density`; recent ids (the `exclude_recent` entries at or before the cursor) weigh 0.
 - Every failure exits non-zero with one line on stderr. Designed fallbacks only: Edit degrading to the display file, and uniform sampling when every weight is 0.
@@ -210,6 +211,34 @@ def test_load_config_resolves_symlinked_directories(walictl: ModuleType, tmp_pat
     assert config.favorites_file == real / "f.json"
 
 
+@pytest.mark.parametrize("key,value", [
+    ("exclude_recent", "0.5"),
+    ("exclude_recent", "-1"),
+    ("exclude_recent", "true"),
+    ("exclude_recent", '"2"'),
+    ("favorite_boost", "-1"),
+    ("favorite_boost", "true"),
+    ("favorite_boost", '"oops"'),
+    ("favorite_boost", "nan"),
+    ("favorite_boost", "inf"),
+    ("favorite_boost", "-inf"),
+    ("period_boost", "-1"),
+    ("period_boost", "false"),
+    ("period_boost", '"oops"'),
+    ("period_boost", "nan"),
+    ("period_boost", "inf"),
+])
+def test_invalid_sampling_values_report_config_error(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, key: str, value: str
+) -> None:
+    path = env["config_home"] / "wali" / "config.toml"
+    path.write_text(path.read_text() + f"[sampling]\n{key} = {value}\n")
+    code, stdout, stderr = run_cli(walictl, ["current", "--json"])
+    assert (code, stdout) == (1, "")
+    assert stderr.startswith(f"config key sampling.{key} ")
+    assert len(stderr.splitlines()) == 1
+
+
 def test_load_config_fails_when_file_is_missing(walictl: ModuleType, tmp_path: Path) -> None:
     with pytest.raises(walictl.WalictlError, match="config not found"):
         walictl.load_config(tmp_path / "missing.toml")
@@ -313,10 +342,18 @@ def load_config(path: Path) -> Config:
     if not isinstance(sampling_raw, dict):
         raise WalictlError("config table [sampling] must be a table")
     defaults = Sampling()
+    exclude_recent = sampling_raw.get("exclude_recent", defaults.exclude_recent)
+    if isinstance(exclude_recent, bool) or not isinstance(exclude_recent, int) or exclude_recent < 0:
+        raise WalictlError("config key sampling.exclude_recent must be a non-negative integer")
+    favorite_boost = sampling_raw.get("favorite_boost", defaults.favorite_boost)
+    period_boost = sampling_raw.get("period_boost", defaults.period_boost)
+    for key, value in (("favorite_boost", favorite_boost), ("period_boost", period_boost)):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= sys.float_info.max:
+            raise WalictlError(f"config key sampling.{key} must be a non-negative finite float or integer")
     sampling = Sampling(
-        exclude_recent=int(sampling_raw.get("exclude_recent", defaults.exclude_recent)),
-        favorite_boost=float(sampling_raw.get("favorite_boost", defaults.favorite_boost)),
-        period_boost=float(sampling_raw.get("period_boost", defaults.period_boost)),
+        exclude_recent=exclude_recent,
+        favorite_boost=float(favorite_boost),
+        period_boost=float(period_boost),
     )
     return Config(
         wallpaper_dir=_expand(raw["wallpaper_dir"], "wallpaper_dir"),
@@ -355,7 +392,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 7 passed.
+Expected: 22 passed.
 
 - [ ] **Step 5: Lint and type-check, then commit**
 
@@ -531,7 +568,7 @@ def display_path(config: Config, library: dict[str, Path], photo_id: str) -> Pat
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 12 passed.
+Expected: 27 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -739,7 +776,7 @@ class Favorites:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 17 passed.
+Expected: 32 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -924,7 +961,7 @@ class History:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 23 passed.
+Expected: 38 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1047,7 +1084,7 @@ def reconcile(history: History, displayed: Path, now: str) -> bool:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 29 passed.
+Expected: 44 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1172,7 +1209,7 @@ def sample(weighted: dict[str, float], rng: random.Random, warn: Callable[[str],
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 34 passed.
+Expected: 49 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1346,7 +1383,7 @@ The `__main__` guard must survive every later edit of this section; the smoke te
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 40 passed.
+Expected: 55 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1649,7 +1686,7 @@ And extend `build_parser()`:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 52 passed.
+Expected: 67 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1920,7 +1957,7 @@ Register in `COMMANDS` (`"favorite": cmd_favorite, "favorites": cmd_favorites, "
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 60 passed.
+Expected: 75 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -2060,7 +2097,7 @@ Register `"import-favorites": cmd_import_favorites` and add to the parser:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 64 passed.
+Expected: 79 passed.
 
 - [ ] **Step 5: Lint, type-check, run the whole suite, commit**
 
@@ -2092,7 +2129,7 @@ Append to `tests/setup_and_health.zsh` before the trailing `print -- "setup and 
 
 ```zsh
 test_setup_graphical_config_links_wali_config_for_known_host() {
-  local tmp output
+  local tmp output prism_fixture
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
@@ -2102,9 +2139,12 @@ test_setup_graphical_config_links_wali_config_for_known_host() {
   [[ "$output" == *"${repo_root}/wali/titan/config.toml"* ]] || \
     fail "graphical setup does not link the titan wali config"
 
-  output=$(PRISM_TEST_HOSTNAME=nowhere \
+  # Dry-run skips Prism directory creation; supply that prerequisite.
+  prism_fixture=$(mktemp -d "${repo_root}/prism/wali-test.XXXXXX")
+  register_tmp_cleanup "$prism_fixture"
+  output=$(PRISM_TEST_HOSTNAME="${prism_fixture:t}" \
     run_setup "$tmp" --dry-run --link-only --only graphical-config)
-  [[ "$output" == *"No wali config for nowhere"* ]] || \
+  [[ "$output" == *"No wali config for ${prism_fixture:t}"* ]] || \
     fail "graphical setup does not explain a missing wali config"
   [[ "$output" != *"Link source does not exist"* ]] || \
     fail "graphical setup aborted on a host without a wali config"
@@ -2133,6 +2173,15 @@ test_dotfiles_health_checks_wali_config_link() {
     fail "health rejected the correct wali config link: $output"
 }
 ```
+
+Update the existing titan health fixtures too. Append these lines to `configure_prism_runtime`, so its success and doctor-failure tests have the newly required Wali link:
+
+```zsh
+  mkdir -p "${tmp}/config/wali"
+  ln -s "${repo_root}/wali/titan/config.toml" "${tmp}/config/wali/config.toml"
+```
+
+Add the same two lines after `prepare_health_fixture "$tmp"` in `test_dotfiles_health_fails_wrong_prism_link_without_running_doctor`, so that test still isolates the wrong Prism link. The new `test_dotfiles_health_checks_wali_config_link` above deliberately manages its own incorrect/correct Wali links.
 
 Read `prepare_health_fixture` (around line 125) first: if the titan fixture path requires a real `${tmp}/config/prism/contexts` directory, create it in the test the same way `test_dotfiles_health_accepts_prism_runtime` does.
 
