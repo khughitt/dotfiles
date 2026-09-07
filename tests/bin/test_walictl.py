@@ -3,10 +3,11 @@ from __future__ import annotations
 import importlib.machinery
 import importlib.util
 import io
+import json
 import subprocess
 import sys
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -227,3 +228,81 @@ def test_display_path_prefers_variant_and_rejects_unknown_id(
     assert walictl.display_path(with_variants, library, "PXL_20210609_120000000") == variants / "PXL_20210609_120000000.webp"
     with pytest.raises(walictl.WalictlError, match="unknown photo id: nope"):
         walictl.display_path(config, library, "nope")
+
+
+def test_favorites_round_trip_and_idempotent_ops(walictl: ModuleType, tmp_path: Path) -> None:
+    path = tmp_path / "favorites.json"
+    store = walictl.Favorites.load(path)
+    assert store.ids() == []
+    assert store.add("b", "2026-09-07T00:00:00Z") is True
+    assert store.add("b", "2026-09-07T00:00:01Z") is False
+    assert store.add("a", "2026-09-07T00:00:02Z") is True
+    store.save(path)
+    loaded = walictl.Favorites.load(path)
+    assert loaded.ids() == ["a", "b"]
+    assert loaded.entries["b"] == {"added": "2026-09-07T00:00:00Z"}
+    assert "b" in loaded and "zzz" not in loaded
+    assert loaded.remove("b") is True
+    assert loaded.remove("b") is False
+    assert json.loads(path.read_text())["version"] == 1
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_favorites_rejects_corrupt_file(walictl: ModuleType, tmp_path: Path) -> None:
+    path = tmp_path / "favorites.json"
+    path.write_text("{not json")
+    with pytest.raises(walictl.WalictlError, match="favorites file is not valid JSON"):
+        walictl.Favorites.load(path)
+    path.write_text('{"version": 9, "favorites": {}}')
+    with pytest.raises(walictl.WalictlError, match="unsupported favorites version"):
+        walictl.Favorites.load(path)
+    path.write_text('{"version": 1, "favorites": {"a": null}}')
+    with pytest.raises(walictl.WalictlError, match="malformed favorite entry: a"):
+        walictl.Favorites.load(path)
+    path.write_text('{"version": 1, "favorites": {"a": {"added": 5}}}')
+    with pytest.raises(walictl.WalictlError, match="malformed favorite entry: a"):
+        walictl.Favorites.load(path)
+
+
+@pytest.mark.parametrize("version", [True, 1.0])
+def test_favorites_rejects_non_integer_version(walictl: ModuleType, tmp_path: Path, version: object) -> None:
+    path = tmp_path / "favorites.json"
+    path.write_text(json.dumps({"version": version, "favorites": {}}))
+    with pytest.raises(walictl.WalictlError, match="unsupported favorites version"):
+        walictl.Favorites.load(path)
+
+
+def test_locked_times_out_while_another_holder_exists(walictl: ModuleType, tmp_path: Path) -> None:
+    import threading
+
+    lock = tmp_path / "x.lock"
+    acquired = threading.Event()
+    release = threading.Event()
+
+    def holder() -> None:
+        with walictl.locked(lock):
+            acquired.set()
+            release.wait()
+
+    thread = threading.Thread(target=holder)
+    thread.start()
+    acquired.wait()
+    try:
+        with pytest.raises(walictl.WalictlError, match="timed out waiting for"):
+            with walictl.locked(lock, timeout=0.2):
+                pass
+    finally:
+        release.set()
+        thread.join()
+    with walictl.locked(lock, timeout=0.2):
+        pass
+
+
+def test_utc_now_format(walictl: ModuleType) -> None:
+    value = walictl.utc_now()
+    assert value.endswith("Z") and len(value) == 20
+    datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+
+
+def test_favorites_lock_lives_in_state_dir(walictl: ModuleType, env: dict[str, Path]) -> None:
+    assert walictl.favorites_lock() == env["state_home"] / "wali" / "favorites.lock"
