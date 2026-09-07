@@ -56,7 +56,7 @@ import json
 import subprocess
 import sys
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -71,6 +71,7 @@ def load_walictl() -> ModuleType:
     spec = importlib.util.spec_from_loader("walictl", loader)
     assert spec is not None
     module = importlib.util.module_from_spec(spec)
+    sys.modules["walictl"] = module  # dataclasses resolve postponed annotations through sys.modules
     loader.exec_module(module)
     return module
 
@@ -184,6 +185,7 @@ def test_load_config_reads_required_and_optional_keys(walictl: ModuleType, env: 
 def test_load_config_expands_tilde_and_reads_sampling(
     walictl: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    tmp_path = tmp_path.resolve()
     monkeypatch.setenv("HOME", str(tmp_path))
     path = tmp_path / "config.toml"
     path.write_text(
@@ -194,6 +196,18 @@ def test_load_config_expands_tilde_and_reads_sampling(
     assert config.wallpaper_dir == tmp_path / "w"
     assert config.variants_dir == tmp_path / "v"
     assert config.sampling == walictl.Sampling(exclude_recent=5, favorite_boost=0.5, period_boost=0.0)
+
+
+def test_load_config_resolves_symlinked_directories(walictl: ModuleType, tmp_path: Path) -> None:
+    tmp_path = tmp_path.resolve()
+    real = tmp_path / "real"
+    real.mkdir()
+    (tmp_path / "link").symlink_to(real)
+    path = tmp_path / "config.toml"
+    path.write_text(f'wallpaper_dir = "{tmp_path / "link"}"\nfavorites_file = "{tmp_path / "link" / "f.json"}"\n')
+    config = walictl.load_config(path)
+    assert config.wallpaper_dir == real
+    assert config.favorites_file == real / "f.json"
 
 
 def test_load_config_fails_when_file_is_missing(walictl: ModuleType, tmp_path: Path) -> None:
@@ -280,7 +294,9 @@ def state_dir() -> Path:
 def _expand(value: object, key: str) -> Path:
     if not isinstance(value, str) or not value:
         raise WalictlError(f"config key {key} must be a non-empty string")
-    return Path(value).expanduser()
+    # Resolved so that stored paths compare equal to what Noctalia reports (it
+    # realpaths too); the wallpaper dir on this host sits behind a symlink.
+    return Path(value).expanduser().resolve()
 
 
 def load_config(path: Path) -> Config:
@@ -339,7 +355,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 6 passed.
+Expected: 7 passed.
 
 - [ ] **Step 5: Lint and type-check, then commit**
 
@@ -515,7 +531,7 @@ def display_path(config: Config, library: dict[str, Path], photo_id: str) -> Pat
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 11 passed.
+Expected: 12 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -565,6 +581,12 @@ def test_favorites_rejects_corrupt_file(walictl: ModuleType, tmp_path: Path) -> 
         walictl.Favorites.load(path)
     path.write_text('{"version": 9, "favorites": {}}')
     with pytest.raises(walictl.WalictlError, match="unsupported favorites version"):
+        walictl.Favorites.load(path)
+    path.write_text('{"version": 1, "favorites": {"a": null}}')
+    with pytest.raises(walictl.WalictlError, match="malformed favorite entry: a"):
+        walictl.Favorites.load(path)
+    path.write_text('{"version": 1, "favorites": {"a": {"added": 5}}}')
+    with pytest.raises(walictl.WalictlError, match="malformed favorite entry: a"):
         walictl.Favorites.load(path)
 
 
@@ -688,7 +710,12 @@ class Favorites:
         entries = payload.get("favorites")
         if not isinstance(entries, dict):
             raise WalictlError(f"favorites file has no favorites object: {path}")
-        return cls(entries={str(key): dict(value) for key, value in entries.items()})
+        checked: dict[str, dict[str, str]] = {}
+        for key, value in entries.items():
+            if not isinstance(value, dict) or not isinstance(value.get("added"), str):
+                raise WalictlError(f"malformed favorite entry: {key} in {path}")
+            checked[str(key)] = {"added": value["added"]}
+        return cls(entries=checked)
 
     def save(self, path: Path) -> None:
         write_json_atomic(path, {"version": FAVORITES_VERSION, "favorites": self.entries})
@@ -712,7 +739,7 @@ class Favorites:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 16 passed.
+Expected: 17 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -757,6 +784,12 @@ def test_history_corrupt_file_is_an_error(walictl: ModuleType, tmp_path: Path) -
         walictl.History.load(path)
     path.write_text('{"version": 1, "cursor": 3, "entries": []}')
     with pytest.raises(walictl.WalictlError, match="cursor out of range"):
+        walictl.History.load(path)
+    path.write_text('{"version": 1, "cursor": 0, "entries": [{"ts": "T", "id": "a", "origin": "next"}]}')
+    with pytest.raises(walictl.WalictlError, match="malformed entry"):
+        walictl.History.load(path)
+    path.write_text('{"version": 1, "cursor": 0, "entries": [{"ts": "T", "id": 1, "path": "/p", "origin": "next"}]}')
+    with pytest.raises(walictl.WalictlError, match="malformed entry"):
         walictl.History.load(path)
     assert path.read_text().startswith('{"version": 1')  # nothing overwrote it
 
@@ -849,9 +882,14 @@ class History:
             raise WalictlError(f"history file is malformed: {path}")
         entries: list[HistoryEntry] = []
         for raw in raw_entries:
-            if not isinstance(raw, dict) or raw.get("origin") not in ORIGINS:
+            fields = ("ts", "id", "path", "origin")
+            if (
+                not isinstance(raw, dict)
+                or any(not isinstance(raw.get(name), str) for name in fields)
+                or raw["origin"] not in ORIGINS
+            ):
                 raise WalictlError(f"history file has a malformed entry: {path}")
-            entries.append(HistoryEntry(str(raw["ts"]), str(raw["id"]), str(raw["path"]), str(raw["origin"])))
+            entries.append(HistoryEntry(raw["ts"], raw["id"], raw["path"], raw["origin"]))
         if not (-1 <= cursor < len(entries)) or (cursor == -1 and entries):
             raise WalictlError(f"history cursor out of range in {path}: {cursor}")
         return cls(entries=entries, cursor=cursor)
@@ -886,7 +924,7 @@ class History:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 22 passed.
+Expected: 23 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -986,7 +1024,7 @@ class Noctalia:
         result = self._msg("wallpaper-get")
         if result.returncode != 0:
             raise WalictlError(f"wallpaper-get failed: {(result.stderr or result.stdout).strip()}")
-        line = next((l.strip() for l in result.stdout.splitlines() if l.strip()), "")
+        line = next((text.strip() for text in result.stdout.splitlines() if text.strip()), "")
         if not line or line.startswith("error:"):
             raise WalictlError("could not determine current wallpaper")
         return Path(line).expanduser().resolve()
@@ -1009,7 +1047,7 @@ def reconcile(history: History, displayed: Path, now: str) -> bool:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 28 passed.
+Expected: 29 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1134,7 +1172,7 @@ def sample(weighted: dict[str, float], rng: random.Random, warn: Callable[[str],
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 33 passed.
+Expected: 34 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1211,6 +1249,11 @@ def test_current_requires_json_flag(walictl: ModuleType, env: dict[str, Path]) -
     assert "--json" in stderr
 
 
+def test_script_runs_as_a_subprocess() -> None:
+    result = subprocess.run([sys.executable, str(SCRIPT), "current"], capture_output=True, text=True, check=False)
+    assert result.returncode == 2 and "--json" in result.stderr
+
+
 def test_current_reports_ipc_failure(walictl: ModuleType, env: dict[str, Path], monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(subprocess, "run", FakeNoctalia(None).run)
     code, stdout, stderr = run_cli(walictl, ["current", "--json"])
@@ -1220,7 +1263,7 @@ def test_current_reports_ipc_failure(walictl: ModuleType, env: dict[str, Path], 
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: five new FAIL (`command not implemented`).
+Expected: six new FAIL (`command not implemented`; the smoke test fails on the stub's error path).
 
 - [ ] **Step 3: Replace the parser/main section with the commands section, parser, and dispatch (add `from typing import TextIO`)**
 
@@ -1290,14 +1333,20 @@ def main(argv: list[str] | None = None) -> int:
     except WalictlError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
 ```
+
+The `__main__` guard must survive every later edit of this section; the smoke test below runs the script as a subprocess to prove it.
 
 `library` is unused by `describe` in this task and is passed so that Task 9's `favorites --json` and Task 8's navigation share the signature; keep the parameter.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 38 passed.
+Expected: 40 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1317,7 +1366,7 @@ git commit -m "feat(walictl): current --json reports id, date, paths, favorite s
 
 **Interfaces:**
 - Consumes: `locked`, `history_lock`, `reconcile`, `weights`, `sample`, `display_path`, `Noctalia`.
-- Produces: `navigate(ctx: Context, action: str, rng: random.Random) -> str` (returns the id now selected; `action` in `next`, `previous`, `random`, `observe`); commands `cmd_next`, `cmd_previous`, `cmd_random`, `cmd_observe`; parser options `--seed INT` on `next` and `random`.
+- Produces: `replay_path(config: Config, entry: HistoryEntry) -> Path` (a variant created since the entry was recorded wins over the stored path); `navigate(ctx: Context, action: str, rng: random.Random) -> str` (returns the id now selected; `action` in `next`, `previous`, `random`, `observe`); commands `cmd_next`, `cmd_previous`, `cmd_random`, `cmd_observe`; parser options `--seed INT` on `next` and `random`.
 
 Output lines: `next: <id>`, `previous: <id>`, `random: <id>`, and for observe either `recorded <id>` or `unchanged <id>`.
 
@@ -1446,6 +1495,38 @@ def test_navigation_holds_the_history_lock(walictl: ModuleType, env: dict[str, P
         thread.join()
 
 
+def test_symlinked_wallpaper_dir_does_not_duplicate_history(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    link = env["wallpapers"].parent / "link"
+    link.symlink_to(env["wallpapers"])
+    config = env["config_home"] / "wali" / "config.toml"
+    config.write_text(config.read_text().replace(str(env["wallpapers"]), str(link)))
+    run_cli(walictl, ["random", "--seed", "3"])
+    code, stdout, _ = run_cli(walictl, ["previous"])
+    assert (code, stdout) == (0, "previous: PXL_20210608_111152739\n")
+    history = load_history(walictl)
+    assert [e.id for e in history.entries][0] == "PXL_20210608_111152739" and len(history.entries) == 2
+    assert all(str(env["wallpapers"]) in e.path for e in history.entries)
+
+
+def test_replay_prefers_a_variant_created_later(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, tmp_path: Path
+) -> None:
+    variants = tmp_path / "edits"
+    variants.mkdir()
+    (env["config_home"] / "wali" / "config.toml").write_text(
+        (env["config_home"] / "wali" / "config.toml").read_text() + f'variants_dir = "{variants}"\n'
+    )
+    run_cli(walictl, ["random", "--seed", "3"])
+    variant = variants / "PXL_20210608_111152739.png"
+    variant.touch()
+    code, stdout, _ = run_cli(walictl, ["previous"])
+    assert (code, stdout) == (0, "previous: PXL_20210608_111152739\n")
+    assert noctalia.default == variant.resolve()
+    assert load_history(walictl).entries[0].path == str(variant.resolve())
+
+
 def test_sampling_prefers_variant_file(walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, tmp_path: Path) -> None:
     variants = tmp_path / "edits"
     variants.mkdir()
@@ -1462,11 +1543,16 @@ def test_sampling_prefers_variant_file(walictl: ModuleType, env: dict[str, Path]
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: ten new FAIL (argparse rejects unknown commands with exit 2, or `KeyError`).
+Expected: twelve new FAIL (argparse rejects unknown commands with exit 2, or `KeyError`).
 
 - [ ] **Step 3: Add navigation to the commands section and register the commands**
 
 ```python
+def replay_path(config: Config, entry: HistoryEntry) -> Path:
+    """Where a history entry should be displayed now: a variant wins over the stored path."""
+    return resolve_variant(config, entry.id) or Path(entry.path)
+
+
 def navigate(ctx: Context, action: str, rng: random.Random) -> str:
     """Reconcile, navigate, commit. Runs entirely under the history lock."""
     with locked(history_lock()):
@@ -1485,11 +1571,15 @@ def navigate(ctx: Context, action: str, rng: random.Random) -> str:
             if history.cursor == 0:
                 raise WalictlError("already at the oldest wallpaper in history")
             target = history.entries[history.cursor - 1]
-            ctx.noctalia.set_default(Path(target.path))
+            path = replay_path(ctx.config, target)
+            ctx.noctalia.set_default(path)
+            target.path = str(path)  # keep reconcile matching what is now displayed
             history.cursor -= 1
         elif action == "next" and not history.at_end():
             target = history.entries[history.cursor + 1]
-            ctx.noctalia.set_default(Path(target.path))
+            path = replay_path(ctx.config, target)
+            ctx.noctalia.set_default(path)
+            target.path = str(path)
             history.cursor += 1
         else:
             library = scan_library(ctx.config.wallpaper_dir)
@@ -1559,7 +1649,7 @@ And extend `build_parser()`:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 48 passed.
+Expected: 52 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1595,7 +1685,22 @@ def test_favorite_toggles_current_and_explicit_ids(
     assert walictl.Favorites.load(env["favorites"]).ids() == []
     code, _, stderr = run_cli(walictl, ["favorite", "--add", "nope"])
     assert (code, stderr) == (1, "unknown photo id: nope\n")
+    code, _, stderr = run_cli(walictl, ["favorite", "nope"])
+    assert (code, stderr) == (1, "unknown photo id: nope\n")
     assert run_cli(walictl, ["favorite", "--add", "--remove", "x"])[0] == 2
+
+
+def test_favorite_can_remove_an_id_whose_file_is_missing(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    store = walictl.Favorites(entries={})
+    store.add("PXL_20210919_170859013", "T")
+    store.save(env["favorites"])
+    assert run_cli(walictl, ["favorite", "--remove", "PXL_20210919_170859013"])[1] == "unfavorited PXL_20210919_170859013\n"
+    store.add("PXL_20210919_170859013", "T")
+    store.save(env["favorites"])
+    assert run_cli(walictl, ["favorite", "PXL_20210919_170859013"])[1] == "unfavorited PXL_20210919_170859013\n"
+    assert walictl.Favorites.load(env["favorites"]).ids() == []
 
 
 def test_favorite_concurrent_additions_both_land(walictl: ModuleType, env: dict[str, Path]) -> None:
@@ -1612,11 +1717,20 @@ def test_favorite_concurrent_additions_both_land(walictl: ModuleType, env: dict[
     assert walictl.Favorites.load(env["favorites"]).ids() == ["PXL_20210608_111152739", "PXL_20210609_120000000"]
 
 
-def test_favorites_json_lists_paths_and_existence(walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia) -> None:
+def test_favorites_json_lists_paths_and_existence(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, tmp_path: Path
+) -> None:
     store = walictl.Favorites(entries={})
     store.add("PXL_20210608_111152739", "T1")
     store.add("PXL_20210919_170859013", "T2")  # no display file
+    store.add("PXL_20210609_120000000", "T3")  # has a variant
     store.save(env["favorites"])
+    variants = tmp_path / "edits"
+    variants.mkdir()
+    (variants / "PXL_20210609_120000000.png").touch()
+    (env["config_home"] / "wali" / "config.toml").write_text(
+        (env["config_home"] / "wali" / "config.toml").read_text() + f'variants_dir = "{variants}"\n'
+    )
     code, stdout, _ = run_cli(walictl, ["favorites", "--json"])
     assert code == 0
     assert json.loads(stdout) == {
@@ -1627,6 +1741,13 @@ def test_favorites_json_lists_paths_and_existence(walictl: ModuleType, env: dict
                 "added": "T1",
                 "path": str(env["wallpapers"] / "PXL_20210608_111152739.jpg"),
                 "source_path": str(env["archive"] / "2021" / "06" / "PXL_20210608_111152739.jpg"),
+                "exists": True,
+            },
+            {
+                "id": "PXL_20210609_120000000",
+                "added": "T3",
+                "path": str((variants / "PXL_20210609_120000000.png").resolve()),
+                "source_path": None,
                 "exists": True,
             },
             {"id": "PXL_20210919_170859013", "added": "T2", "path": None, "source_path": None, "exists": False},
@@ -1690,7 +1811,7 @@ def test_edit_reports_missing_gimp(walictl: ModuleType, env: dict[str, Path], no
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: seven new FAIL.
+Expected: eight new FAIL.
 
 - [ ] **Step 3: Add the commands**
 
@@ -1701,20 +1822,16 @@ def _current_id(ctx: Context) -> str:
 
 def cmd_favorite(ctx: Context, args: argparse.Namespace) -> int:
     photo = args.photo_id or _current_id(ctx)
-    if photo not in scan_library(ctx.config.wallpaper_dir):
-        raise WalictlError(f"unknown photo id: {photo}")
     with locked(favorites_lock()):
         store = Favorites.load(ctx.config.favorites_file)
-        if args.add:
-            store.add(photo, utc_now())
-            state = "favorited"
-        elif args.remove:
-            store.remove(photo)
-            state = "unfavorited"
-        elif photo in store:
+        removing = args.remove or (not args.add and photo in store)
+        if removing:
+            # Removal never needs the file: an imported favorite whose photo is gone must stay removable.
             store.remove(photo)
             state = "unfavorited"
         else:
+            if photo not in scan_library(ctx.config.wallpaper_dir):
+                raise WalictlError(f"unknown photo id: {photo}")
             store.add(photo, utc_now())
             state = "favorited"
         store.save(ctx.config.favorites_file)
@@ -1727,7 +1844,7 @@ def cmd_favorites(ctx: Context, args: argparse.Namespace) -> int:
     store = Favorites.load(ctx.config.favorites_file)
     items = []
     for photo in store.ids():
-        path = library.get(photo)
+        path = resolve_variant(ctx.config, photo) or library.get(photo)
         source = resolve_source(ctx.config, photo)
         items.append({
             "id": photo,
@@ -1803,7 +1920,7 @@ Register in `COMMANDS` (`"favorite": cmd_favorite, "favorites": cmd_favorites, "
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 55 passed.
+Expected: 60 passed.
 
 - [ ] **Step 5: Lint, type-check, commit**
 
@@ -1869,6 +1986,24 @@ def test_import_favorites_refuses_to_overwrite_without_force(
     assert walictl.Favorites.load(env["favorites"]).ids() == ["x"]
 
 
+def test_import_favorites_refuses_a_store_created_while_waiting_for_the_lock(
+    walictl: ModuleType, env: dict[str, Path], tmp_path: Path
+) -> None:
+    source = tmp_path / "favorites.txt"
+    source.write_text("x.jpg\n")
+    real_locked = walictl.locked
+
+    def locked_then_racer(path: Path, timeout: float = 10.0) -> Any:
+        # Another command finished its write just before we acquired the lock.
+        env["favorites"].write_text('{"version": 1, "favorites": {"other": {"added": "T"}}}')
+        return real_locked(path, timeout=timeout)
+
+    walictl.locked = locked_then_racer  # type: ignore[assignment]
+    code, _, stderr = run_cli(walictl, ["import-favorites", str(source)])
+    assert (code, stderr) == (1, f"favorites file already exists (use --force): {env['favorites']}\n")
+    assert walictl.Favorites.load(env["favorites"]).ids() == ["other"]
+
+
 def test_import_favorites_fails_on_missing_source(walictl: ModuleType, env: dict[str, Path], tmp_path: Path) -> None:
     code, _, stderr = run_cli(walictl, ["import-favorites", str(tmp_path / "nope.txt")])
     assert (code, stderr) == (1, f"favorites source not found: {tmp_path / 'nope.txt'}\n")
@@ -1877,7 +2012,7 @@ def test_import_favorites_fails_on_missing_source(walictl: ModuleType, env: dict
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: three new FAIL.
+Expected: four new FAIL.
 
 - [ ] **Step 3: Add the command**
 
@@ -1888,8 +2023,6 @@ def cmd_import_favorites(ctx: Context, args: argparse.Namespace) -> int:
         lines = [line.strip() for line in source.read_text(encoding="utf-8").splitlines() if line.strip()]
     except FileNotFoundError as exc:
         raise WalictlError(f"favorites source not found: {source}") from exc
-    if ctx.config.favorites_file.exists() and not args.force:
-        raise WalictlError(f"favorites file already exists (use --force): {ctx.config.favorites_file}")
     library = scan_library(ctx.config.wallpaper_dir)
     ids = [photo_id(Path(line)) for line in lines]
     unique_ids = sorted(set(ids))
@@ -1897,6 +2030,9 @@ def cmd_import_favorites(ctx: Context, args: argparse.Namespace) -> int:
     missing = [photo for photo in unique_ids if photo not in library]
     now = utc_now()
     with locked(favorites_lock()):
+        # Checked under the lock: a favorite written while we waited must not be replaced.
+        if ctx.config.favorites_file.exists() and not args.force:
+            raise WalictlError(f"favorites file already exists (use --force): {ctx.config.favorites_file}")
         store = Favorites(entries={})
         for photo in unique_ids:
             store.add(photo, now)
@@ -1924,7 +2060,7 @@ Register `"import-favorites": cmd_import_favorites` and add to the parser:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --frozen pytest -q tests/bin/test_walictl.py`
-Expected: 58 passed.
+Expected: 64 passed.
 
 - [ ] **Step 5: Lint, type-check, run the whole suite, commit**
 
@@ -2583,6 +2719,8 @@ HOME="${tmp}/home" WAYLAND_DISPLAY=wayland-1 \
 
 rg -q -x 'current --json' "$NOCTALIA_LOG" || \
   fail 'wali_rotate did not read the wallpaper from walictl'
+(( $(rg -c -x 'current --json' "$NOCTALIA_LOG") == 1 )) || \
+  fail 'wali_rotate must read one payload, not one per field'
 rg -q -F "msg wallpaper-set ${NOCTALIA_WALLPAPER}" "$NOCTALIA_LOG" || \
   fail 'wali rotate did not reset the v5 wallpaper'
 ! rg -q -F qs "$NOCTALIA_LOG" || fail 'wali called Quickshell IPC'
@@ -2616,9 +2754,12 @@ function wali_search {
 In `wali_rotate`, replace the block from `local current` through `echo "Source: $source"` with:
 
 ```zsh
-  local current source
-  current=$(walictl current --json | jq -r '.path') || return 1
-  source=$(walictl current --json | jq -r '.source_path // empty')
+  # one payload: two separate calls could straddle a rotation and pair one
+  # photo's destination with another photo's original
+  local payload current source
+  payload=$(walictl current --json) || return 1
+  current=$(jq -r '.path' <<< "$payload")
+  source=$(jq -r '.source_path // empty' <<< "$payload")
 
   if [ -z "$source" ]; then
     echo "No source image for the current wallpaper; nothing to rotate" >&2
