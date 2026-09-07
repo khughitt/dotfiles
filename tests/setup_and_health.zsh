@@ -1343,6 +1343,11 @@ test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
     fail "clean graphical setup did not create the Hyprland theme stub"
   [[ ! -s "$fixture/hypr/noctalia.conf" ]] || \
     fail "clean graphical setup should leave the Hyprland theme stub empty"
+  [[ -d "$fixture/prism/titan/contexts" ]] || \
+    fail "clean graphical setup did not create the host contexts directory"
+  printf 'glass.ior: 1.3\n' > "${tmp}/config/prism/contexts/pinned-write.yaml"
+  [[ -f "$fixture/prism/titan/contexts/pinned-write.yaml" ]] || \
+    fail "context writes do not reach the host directory"
 }
 
 configure_prism_runtime() {
@@ -1360,6 +1365,33 @@ test_dotfiles_health_accepts_prism_runtime() {
   configure_prism_runtime "$tmp"
 
   PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd >/dev/null
+}
+
+test_dotfiles_health_rejects_missing_or_external_prism_contexts() {
+  local tmp fixture output exit_status context_state
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  prepare_health_fixture "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/prism/titan" "${tmp}/external"
+  cp "${repo_root}/bin/dotfiles-health" "$fixture/bin/"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+  ln -s "$fixture/prism/titan" "${tmp}/config/prism"
+  local repo_root="$fixture"
+
+  for context_state in missing external; do
+    if [[ "$context_state" == external ]]; then
+      ln -s "${tmp}/external" "$fixture/prism/titan/contexts"
+    fi
+    set +e
+    output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
+    exit_status=$?
+    set -e
+    (( exit_status != 0 )) || fail "health accepted $context_state Prism contexts"
+    [[ "$output" == *"[FAIL] not a real directory: ${tmp}/config/prism/contexts"* ]] || \
+      fail "health did not identify $context_state Prism contexts"
+  done
 }
 
 test_dotfiles_health_fails_when_prism_doctor_fails() {
@@ -1513,6 +1545,7 @@ test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_hands_material_ownership_to_prism
 test_clean_graphical_setup_creates_empty_hyprland_theme_stub
 test_dotfiles_health_accepts_prism_runtime
+test_dotfiles_health_rejects_missing_or_external_prism_contexts
 test_dotfiles_health_fails_when_prism_doctor_fails
 test_dotfiles_health_rejects_noctalia_config_warning
 test_dotfiles_health_rejects_noctalia_template_state_override

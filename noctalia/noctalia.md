@@ -149,3 +149,13 @@ captures panel edits on its own; `prism context pin wallpaper` makes it the
 write target for as long as it is on screen. Wallpapers are set on all
 monitors at once, so the hook firing once per connector is idempotent. The v4
 `wallpaperChange` feh command was X11-only and is not read by v5.
+
+Prism's entire config directory is linked to `prism/<hostname>/`, including
+`values.yaml` and `contexts/`. Setup creates the context directory; health
+checks the host link and rejects missing or redirected context storage.
+Pinned wallpaper edits and saved profiles therefore appear under that host
+in `git status`. Active layers and the wallpaper pin remain runtime state.
+Titan uses this layout already. Europa needs the updated checkout and
+`./setup.sh --link-only --only graphical-config`, followed by
+`bin/dotfiles-health --skip-systemd`; its context directory is tracked and
+empty until the first saved profile or pinned edit.
