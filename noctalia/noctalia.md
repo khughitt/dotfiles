@@ -140,3 +140,12 @@ Prism's panel drives niri's native glass material through its `niri` sink,
 which generates `prism.kdl` and reloads the compositor. There is no separate
 preview surface: the open Kitty and Ghostty windows are what the panel
 previews, and material sliders write once on release.
+
+The `wallpaper_changed` hook in `noctalia/config.toml` hands every wallpaper
+change to `prism context wallpaper` with `NOCTALIA_WALLPAPER_PATH`. Prism
+activates that wallpaper's context: an untuned wallpaper is an empty overlay
+and reloads nothing, a tuned one reapplies its delta. The wallpaper never
+captures panel edits on its own; `prism context pin wallpaper` makes it the
+write target for as long as it is on screen. Wallpapers are set on all
+monitors at once, so the hook firing once per connector is idempotent. The v4
+`wallpaperChange` feh command was X11-only and is not read by v5.
