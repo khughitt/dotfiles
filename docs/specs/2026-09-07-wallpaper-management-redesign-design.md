@@ -92,18 +92,20 @@ One owner per concern:
 Data flow on a timer tick:
 
 1. The timer runs `walictl next`.
-2. `walictl` rescans the wallpaper directory, computes weights, samples a
-   photo, appends it to history, then calls
-   `noctalia msg wallpaper-set <path>`.
+2. `walictl` takes the history lock, reconciles history with what Noctalia
+   reports as displayed, rescans the wallpaper directory, computes weights,
+   samples a photo, calls `noctalia msg wallpaper-set <path>`, and on success
+   records the new entry and releases the lock.
 3. Noctalia displays it, regenerates the palette, renders templates, and fires
    `wallpaper_changed` once per connector.
 4. The hook runs `prism context wallpaper "$NOCTALIA_WALLPAPER_PATH"` (as
-   today) and `walictl observe "$NOCTALIA_WALLPAPER_PATH"`. Observe finds the
-   path already at the history cursor and does nothing.
+   today) and `walictl observe`. Observe waits for the lock, asks Noctalia
+   what is displayed, finds it already at the history cursor, and does
+   nothing.
 
 Data flow on a change made through Noctalia's own panel or IPC: steps 3 and 4
-only. Observe finds a path that differs from the cursor entry and appends an
-`observed` entry.
+only. Observe finds that the displayed path differs from the cursor entry and
+appends an `observed` entry.
 
 ## Photo identity
 
@@ -114,6 +116,13 @@ Paths are derived from ids and the config, never stored as the primary key.
 A stem matching `PXL_YYYYMMDD_*` yields a capture date. Any other stem is a
 valid id with no date. Undated photos take part in sampling at base weight and
 report `date: null`.
+
+The library is the set of unique stems in the wallpaper directory, not the set
+of files. The directory holds three stems with two extensions each (two
+JPG/WebP pairs, one JPG/PNG pair), so sampling files would double-weight those
+photos and make id-to-path resolution ambiguous. When a stem has several
+files, the first of `.jpg`, `.jpeg`, `.png`, `.webp` wins. The same precedence
+applies to variants.
 
 ## Files
 
@@ -131,8 +140,8 @@ variants_dir = "~/d/linux/backgrounds/edits" # optional, reserved
 
 [sampling]
 exclude_recent = 200
-favorite_boost = 2.0
-period_boost = 3.0
+favorite_boost = 1.0   # favorites weigh 1 + favorite_boost; 0 is neutral
+period_boost = 3.0     # months weigh 1 + period_boost * favorite density
 ```
 
 `wallpaper_dir` and `favorites_file` are required. A missing config file or a
@@ -183,7 +192,12 @@ Per host, never synced.
 `origin` is one of `next`, `previous`, `random`, `observed`. Entries are
 capped at 1000; the oldest are dropped from the front and the cursor shifts
 with them. Every read-modify-write holds an `fcntl` lock on a sibling lock
-file, because the timer and the panel can run at the same time.
+file, because the timer, the panel, and the hook can run at the same time.
+Waiting for the lock is bounded at 10 seconds, after which the command fails.
+
+A missing history file or directory is the empty state and is created on
+first write. A file that exists but does not parse, or carries an unknown
+`version`, is an error; nothing overwrites it.
 
 ### Variants (reserved): `<variants_dir>/<id>.<ext>`
 
@@ -198,11 +212,12 @@ variants.
 `walictl next` (when sampling) and `walictl random`:
 
 1. List the wallpaper directory, non-recursively, filtering to `.jpg`,
-   `.jpeg`, `.png`, `.webp`. No index file; the scan is a few milliseconds for
-   7.5k entries and cannot go stale.
+   `.jpeg`, `.png`, `.webp`, and collapse to unique stems by the extension
+   precedence above. No index file; the scan is a few milliseconds for 7.5k
+   entries and cannot go stale.
 2. Weight each photo:
    - base weight 1;
-   - multiply by `favorite_boost` if the id is a favorite;
+   - multiply by `1 + favorite_boost` if the id is a favorite;
    - bucket dated photos by capture month; a bucket's density is favorites in
      the bucket divided by photos in the bucket; multiply by
      `1 + period_boost * density`; undated photos skip this step;
@@ -211,8 +226,8 @@ variants.
 3. Sample one photo proportionally to weight. If every weight is 0 (library
    smaller than `exclude_recent`), fall back to uniform over the whole library
    and say so on stderr; that is the one designed fallback in the sampler.
-4. Resolve the path (variant if present, else the raw copy), append a history
-   entry with the cursor at the end, then call `wallpaper-set`.
+4. Resolve the path (variant if present, else the raw copy) and hand it to the
+   navigation step below.
 
 With `favorite_boost = 0` and `period_boost = 0` this reduces to non-repeating
 uniform random. The RNG is injectable so tests are deterministic.
@@ -228,13 +243,31 @@ History behaves like a browser:
 - `random` always samples and appends, even mid-history. Entries after the
   cursor are discarded first, as a browser discards forward history on a new
   navigation.
-- `observe <path>` compares the real path against the entry at the cursor. If
-  equal, exit 0 with no change. Otherwise discard entries after the cursor,
-  append an `observed` entry, and move the cursor to it.
 
-History is written before `wallpaper-set` is called, so the hook's observe
-always sees a matching cursor entry for walictl's own sets. The hook firing
-once per connector is therefore idempotent.
+Every mutating command (`next`, `previous`, `random`, `observe`) runs the same
+sequence under the history lock:
+
+1. **Reconcile.** Ask Noctalia for the displayed path with
+   `noctalia msg wallpaper-get` and compare its real path with the entry at
+   the cursor. If history is empty or the paths differ, discard entries after
+   the cursor and append an `observed` entry for the displayed wallpaper. This
+   is what makes a fresh history usable (the wallpaper already on screen
+   becomes the first entry, so `previous` after the first `random` restores
+   it) and what records changes made through Noctalia's own panel or IPC.
+2. **Navigate.** For `observe`, stop here. Otherwise pick the target entry or
+   sample a new photo, then call `wallpaper-set`.
+3. **Commit.** Only after `wallpaper-set` succeeds, write the new entry and
+   cursor. A failed set leaves the file exactly as reconcile left it, and the
+   command exits non-zero with Noctalia's error. Nothing is ever recorded that
+   was not displayed.
+
+`observe` takes no argument. The hook's `NOCTALIA_WALLPAPER_PATH` is ignored
+on purpose: Noctalia's answer to `wallpaper-get` at the moment observe runs is
+the truth, so a hook firing late (after a `previous` has already moved on)
+finds the cursor already matching the display and does nothing, and firing
+once per connector is idempotent for the same reason. Because the lock is
+held across `wallpaper-set`, the hook fired by walictl's own set blocks until
+the commit is written and then sees a matching cursor.
 
 ## CLI
 
@@ -250,7 +283,7 @@ walictl favorite [--add | --remove] [<id>]
 walictl favorites --json
 walictl neighbors --json [--count N]
 walictl edit
-walictl observe <path>
+walictl observe
 walictl import-favorites <favorites.txt>
 ```
 
@@ -315,7 +348,7 @@ In `noctalia/config.toml`:
 - `[wallpaper.automation] enabled = false`. `interval_seconds` and `order` are
   removed; the timer defines the interval.
 - `wallpaper_changed` becomes a two-element array: the existing prism command
-  and `~/bin/walictl observe "$NOCTALIA_WALLPAPER_PATH"`.
+  and `~/bin/walictl observe`.
 
 `tests/setup_and_health.zsh` asserts the automation block and is updated to
 the new shape.
@@ -324,9 +357,12 @@ the new shape.
 
 `systemd/user/wali-rotate.timer` and `wali-rotate.service`, linked by
 `setup_systemd_user_units` alongside the existing dropbox-ignore-flux units.
-The service is `Type=oneshot` running `walictl next`. The timer fires on
-`OnUnitActiveSec=15min` with `AccuracySec=1min` and is not `Persistent`, since
-a missed tick should not fire a wallpaper change on login. Enabling follows the
+The service is `Type=oneshot` running `walictl next`. The timer sets
+`OnActiveSec=15min` for the first trigger after the timer starts and
+`OnUnitActiveSec=15min` for every later one; `OnUnitActiveSec` alone is
+relative to the service's previous run and would never fire the first time.
+`AccuracySec=1min`, not `Persistent`, since a missed tick should not fire a
+wallpaper change on login. Enabling follows the
 existing `--enable-user-timers` flag.
 
 ## Migration and cleanup
@@ -334,17 +370,25 @@ existing `--enable-user-timers` flag.
 In order:
 
 1. Land `walictl`, its tests, the config layout, and the setup.sh link.
-2. Run `walictl import-favorites` on this host; verify counts (683 unique
-   existing, 2 dangling reported). Keep `favorites.txt` until the panel shows
-   favorite state correctly, then delete it in its own commit.
+2. Run `walictl import-favorites` on this host and verify the report against
+   the measured state of the file: 685 lines, 644 unique stems, 41 duplicate
+   occurrences, 2 dangling original paths. One stem
+   (`PXL_20210919_170859013`) has no file in the wallpaper directory; it is
+   imported anyway, since favorites are ids, and `favorites --json` reports it
+   as missing. Keep `favorites.txt` until the panel shows favorite state
+   correctly, then delete it in its own commit.
 3. Switch Noctalia automation off, add the observe hook, add the timer.
 4. Update the panel.
 5. Trim `shell/wali`: the `wali` alias becomes `walictl random`; `wali_print`,
    `wali_save`, `wali_edit_current`, and `wali_edit_fav` (including its dead
    X11 path repair) are removed; `wali_search` becomes an fzf front-end that
-   pipes the chosen file's stem into `walictl favorite --add`. Ingestion,
-   processing, `wali_rotate`, `wali_pal`, and `wali_reload` are unchanged.
-   `tests/wali.zsh` is adjusted where it references removed functions.
+   pipes the chosen file's stem into `walictl favorite --add`. `wali_rotate`
+   calls `wali_print` today for the source path and `_wali_current_wallpaper`
+   for the display path; it is changed in the same commit to read both from
+   `walictl current --json` through `jq` (already used by the shell
+   functions), and to fail when `source_path` is null. Ingestion, processing,
+   `wali_pal`, and `wali_reload` are unchanged. `tests/wali.zsh` is adjusted
+   where it references removed functions.
 6. Rewrite `noctalia/noctalia-wallpaper-switcher.md` for the new split and add
    the observe line to the hook paragraph in `noctalia/noctalia.md`.
 
@@ -361,14 +405,22 @@ injected so no test calls the shell:
 - config loading: missing file, missing required key, tilde expansion,
   optional keys absent;
 - id and date parsing for PXL, partial PXL, and non-PXL stems;
+- library scan collapses duplicate stems by extension precedence, for both
+  the wallpaper directory and the variants directory;
 - favorites store: round-trip, toggle twice returns to the start, `--add`
   twice is one entry, atomic write leaves no temp file;
 - sampler: seeded determinism, zero boosts give uniform, favorite and period
   boosts change the weights as specified, `exclude_recent` zeroes the right
   ids, all-zero fallback;
 - history: next/previous/random/observe cursor semantics, forward history
-  discard, cap and cursor shift, lock acquired;
-- observe idempotency for the cursor path and for a repeated hook firing;
+  discard, cap and cursor shift, lock acquired, missing file is empty state,
+  corrupt file is an error;
+- reconcile: empty history is seeded from the displayed wallpaper so
+  `previous` after the first `random` restores it; a stale observe (display
+  already moved on) is a no-op; a repeated observe is a no-op; an external
+  change appends `observed`;
+- a failed `wallpaper-set` leaves history and cursor as reconcile left them
+  and exits non-zero;
 - `current --json` field contract, including nulls;
 - `neighbors` ordering across month boundaries;
 - edit resolution with and without `archive_root`;
