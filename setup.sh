@@ -172,7 +172,9 @@ elif [[ "$UBUNTU" == "true" ]]; then
     PACKAGE_INSTALL_CMD="sudo apt install -y"
     PACKAGE_UPDATE_CMD="sudo apt update"
 else
-    PACKAGES=("bat" "dust" "fd" "fzf" "glow" "btop" "lolcat" "lsd" "moor" "ripgrep" "sd" "tre-command" "thefuck" "tldr" "visidata" "xan" "zoxide")
+    # just and shellcheck are this repo's own gate dependencies: without them a
+    # machine set up by setup.sh cannot run `just check`.
+    PACKAGES=("bat" "dust" "fd" "fzf" "glow" "btop" "just" "lolcat" "lsd" "moor" "ripgrep" "sd" "shellcheck" "tre-command" "thefuck" "tldr" "visidata" "xan" "zoxide")
     FONT_PACKAGES=("ttf-nerd-fonts-symbols" "ttf-hack-nerd" "ttf-weather-icons")
     PACKAGE_INSTALL_CMD="yay -S"
     PACKAGE_UPDATE_CMD=""
