@@ -1,25 +1,10 @@
 local Logic = require("./logic.luau")
 local Shell = require("./shell.luau")
 
-local state = {
-  busy = false,
-  loading = false,
-  errorText = nil,
-  currentPath = nil,
-  sourcePath = nil,
-  parsedDate = nil,
-  displayDate = nil,
-}
+local state = { busy = false, loading = false, errorText = nil, current = nil }
 
 local render
 local refresh
-
-local function clearCurrent()
-  state.currentPath = nil
-  state.sourcePath = nil
-  state.parsedDate = nil
-  state.displayDate = nil
-end
 
 local function trimmed(value)
   return tostring(value or ""):match("^%s*(.-)%s*$")
@@ -45,13 +30,10 @@ local function finishCurrent(result)
   local payload
   if not message then payload, message = Logic.decodeCurrent(result.stdout, noctalia.json.decode) end
   if message then
-    clearCurrent()
+    state.current = nil
     state.errorText = message
   else
-    state.currentPath = payload.current_wallpaper_path
-    state.sourcePath = payload.source_wallpaper_path
-    state.parsedDate = payload.parsed_date
-    state.displayDate = payload.display_date
+    state.current = payload
     state.errorText = nil
   end
   render()
@@ -62,7 +44,6 @@ refresh = function()
   state.busy = true
   state.loading = true
   state.errorText = nil
-  clearCurrent()
   render()
   if not run(Logic.commandFor("current"), finishCurrent) then
     state.busy = false
@@ -80,53 +61,54 @@ local function finishAction(action, result)
     render()
     return
   end
-  if Logic.refreshAfter(action) then refresh() end
-  if action == "save-current" then
-    noctalia.notify("Wali Panel", "Saved the current wallpaper")
-  elseif action == "edit-current" then
-    noctalia.notify("Wali Panel", "Opened the current wallpaper in GIMP")
-  else
+  state.errorText = nil
+  if Logic.refreshAfter(action) then
+    refresh()
     return
   end
-  state.errorText = nil
+  if action == "edit" then noctalia.notify("Wali Panel", trimmed(result.stdout)) end
   render()
 end
 
 local function startAction(action)
   if not Logic.canStart(state.busy) then return end
-  local argv = Logic.commandFor(action)
   state.busy = true
   state.errorText = nil
   render()
-  if not run(argv, function(result) finishAction(action, result) end) then
+  if not run(Logic.commandFor(action), function(result) finishAction(action, result) end) then
     state.busy = false
     state.errorText = "Failed to launch walictl " .. action
     render()
   end
 end
 
-local function copySource()
-  if not Logic.canCopy(state.sourcePath) then return end
-  if noctalia.copyToClipboard(state.sourcePath, "text/plain") then
+local function copyPath()
+  if not state.current then return end
+  if noctalia.copyToClipboard(Logic.copyTarget(state.current), "text/plain") then
     state.errorText = nil
   else
-    state.errorText = "Failed to copy the source wallpaper path"
+    state.errorText = "Failed to copy the wallpaper path"
   end
   render()
 end
 
 local function preview()
-  local path = state.currentPath or state.sourcePath
-  if path then
-    return ui.image({ path = path, width = 520, height = 430, radius = 12, fit = "contain" })
+  if state.current then
+    return ui.image({ path = state.current.path, width = 520, height = 430, radius = 12, fit = "contain" })
   end
   return ui.box({ width = 520, height = 430, radius = 12, fill = "surface_variant" }, {
     ui.glyph({ name = state.loading and "loader" or "wallpaper", size = 56, color = "on_surface_variant" }),
   })
 end
 
+local function line(label, value)
+  return ui.label({ text = label .. ": " .. (value or "Unavailable"), color = "on_surface_variant", maxLines = 2 })
+end
+
 render = function()
-  local subprocessEnabled = not state.busy
+  local enabled = not state.busy
+  local current = state.current
+  local favorite = current ~= nil and current.favorite
   panel.render(ui.column({ flexGrow = 1, gap = 12 }, {
     ui.row({ align = "center", gap = 8 }, {
       ui.label({ text = "Wali Panel", fontSize = 18, fontWeight = "bold", flexGrow = 1 }),
@@ -134,27 +116,25 @@ render = function()
     }),
     preview(),
     ui.column({ gap = 4 }, {
-      ui.label({ text = "Source: " .. (state.sourcePath or "Unavailable"), color = "on_surface_variant", maxLines = 2 }),
-      ui.label({ text = "Parsed date: " .. (state.parsedDate or "Unavailable"), color = "on_surface_variant" }),
-      ui.label({ text = "Display date: " .. (state.displayDate or "Unavailable"), color = "on_surface_variant" }),
+      line("Taken", current and current.display_date),
+      line("Favorite", current and (favorite and "yes" or "no")),
+      line("Source", current and current.source_path),
+      ui.label({ text = "Variant: " .. (current and current.variant_path or ""), color = "on_surface_variant",
+        visible = current ~= nil and current.variant_path ~= nil, maxLines = 2 }),
       ui.label({ text = state.errorText or "", color = "error", visible = state.errorText ~= nil, maxLines = 3 }),
     }),
     ui.row({ align = "center", justify = "space_between", gap = 8 }, {
-      ui.button({ text = "Refresh", glyph = "refresh", enabled = subprocessEnabled, onClick = function() refresh() end }),
-      ui.button({ text = "Previous", glyph = "arrow-left", enabled = subprocessEnabled,
-        onClick = function() startAction("backward") end }),
-      ui.button({ text = "Next", glyph = "arrow-right", enabled = subprocessEnabled,
-        onClick = function() startAction("forward") end }),
-      ui.button({ text = "Random", glyph = "dice", enabled = subprocessEnabled,
-        onClick = function() startAction("random") end }),
+      ui.button({ text = "Refresh", glyph = "refresh", enabled = enabled, onClick = function() refresh() end }),
+      ui.button({ text = "Previous", glyph = "arrow-left", enabled = enabled, onClick = function() startAction("previous") end }),
+      ui.button({ text = "Next", glyph = "arrow-right", enabled = enabled, onClick = function() startAction("next") end }),
+      ui.button({ text = "Random", glyph = "dice", enabled = enabled, onClick = function() startAction("random") end }),
     }),
     ui.row({ align = "center", justify = "space_between", gap = 8 }, {
-      ui.button({ text = "Save", glyph = "heart", enabled = subprocessEnabled,
-        onClick = function() startAction("save-current") end }),
-      ui.button({ text = "Edit", glyph = "photo-edit", enabled = subprocessEnabled,
-        onClick = function() startAction("edit-current") end }),
-      ui.button({ text = "Copy", glyph = "clipboard", enabled = Logic.canCopy(state.sourcePath),
-        onClick = copySource }),
+      ui.button({ text = "Favorite", glyph = Logic.favoriteGlyph(favorite), enabled = enabled and current ~= nil,
+        onClick = function() startAction("favorite") end }),
+      ui.button({ text = "Edit", glyph = "photo-edit", enabled = enabled and current ~= nil,
+        onClick = function() startAction("edit") end }),
+      ui.button({ text = "Copy", glyph = "clipboard", enabled = current ~= nil, onClick = copyPath }),
     }),
   }))
 end

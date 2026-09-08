@@ -16,11 +16,11 @@ end
 
 local commands = {
   current = { "walictl", "current", "--json" },
-  backward = { "walictl", "backward" },
-  forward = { "walictl", "forward" },
+  previous = { "walictl", "previous" },
+  next = { "walictl", "next" },
   random = { "walictl", "random" },
-  ["save-current"] = { "walictl", "save-current" },
-  ["edit-current"] = { "walictl", "edit-current" },
+  favorite = { "walictl", "favorite" },
+  edit = { "walictl", "edit" },
 }
 
 for action, expected in pairs(commands) do equal(Logic.commandFor(action), expected) end
@@ -29,10 +29,14 @@ equal(Shell.command({ "walictl", "save-current", "/wall papers/a'b.jpg" }),
 
 local payload = {
   ok = true,
-  current_wallpaper_path = "/wall/current.jpg",
-  source_wallpaper_path = "/wall/source.jpg",
-  parsed_date = "2026-08-20",
+  id = "PXL_20260820_000000000",
+  date = "2026-08-20",
   display_date = "August 20, 2026",
+  path = "/wall/current.jpg",
+  source_path = "/wall/source.jpg",
+  variant_path = nil,
+  favorite = true,
+  history = { cursor = 3, length = 4 },
 }
 equal(Logic.decodeCurrent("valid", function(text)
   assert(text == "valid")
@@ -42,34 +46,36 @@ end), payload)
 local decoded, decodeError = Logic.decodeCurrent("invalid", function() error("invalid JSON") end)
 assert(decoded == nil and type(decodeError) == "string" and decodeError:find("invalid JSON", 1, true))
 
-local invalid, invalidError = Logic.validateCurrent({ source_wallpaper_path = "/wall/source.jpg" })
+local invalid, invalidError = Logic.validateCurrent({ source_path = "/wall/source.jpg" })
 assert(invalid == nil and type(invalidError) == "string")
 
-for _, field in ipairs({
-  "current_wallpaper_path", "source_wallpaper_path", "parsed_date", "display_date",
-}) do
-  local candidate = {
-    ok = true,
-    current_wallpaper_path = "/wall/current.jpg",
-    source_wallpaper_path = "/wall/source.jpg",
-    parsed_date = "2026-08-20",
-    display_date = "August 20, 2026",
-  }
+for _, field in ipairs({ "date", "display_date", "source_path", "variant_path" }) do
+  local candidate = { ok = true, id = "x", path = "/p", favorite = false }
   candidate[field] = 42
   invalid, invalidError = Logic.validateCurrent(candidate)
   assert(invalid == nil and type(invalidError) == "string" and invalidError:find(field, 1, true))
 end
 
-for _, action in ipairs({ "backward", "forward", "random" }) do
+for _, field in ipairs({ "id", "path" }) do
+  local candidate = { ok = true, id = "x", path = "/p", favorite = false }
+  candidate[field] = nil
+  invalid, invalidError = Logic.validateCurrent(candidate)
+  assert(invalid == nil and type(invalidError) == "string" and invalidError:find(field, 1, true))
+end
+local invalidFavorite, favoriteError = Logic.validateCurrent({ ok = true, id = "x", path = "/p", favorite = "yes" })
+assert(invalidFavorite == nil and favoriteError:find("favorite", 1, true))
+
+for _, action in ipairs({ "previous", "next", "random", "favorite" }) do
   assert(Logic.refreshAfter(action), action .. " must refresh current wallpaper metadata")
 end
 assert(not Logic.refreshAfter("current"))
-assert(not Logic.refreshAfter("save-current"))
-assert(not Logic.refreshAfter("edit-current"))
+assert(not Logic.refreshAfter("edit"))
 assert(Logic.canStart(false))
 assert(not Logic.canStart(true))
-assert(Logic.canCopy("/wall/source.jpg"))
-assert(not Logic.canCopy(nil))
+equal(Logic.copyTarget({ path = "/p", source_path = "/s" }), "/s")
+equal(Logic.copyTarget({ path = "/p" }), "/p")
+equal(Logic.favoriteGlyph(true), "heart-filled")
+equal(Logic.favoriteGlyph(false), "heart")
 
 local rendered
 local runs = {}
@@ -86,7 +92,7 @@ noctalia = {
     decode = function(text)
       if text == "with source" then return payload end
       if text == "without source" then
-        return { ok = true, current_wallpaper_path = "/wall/next.jpg" }
+        return { ok = true, id = "n", path = "/wall/next.jpg", favorite = false }
       end
       return nil, "invalid JSON"
     end,
@@ -152,7 +158,7 @@ equal(clipboardCalls, { { "/wall/source.jpg", "text/plain" } })
 
 assert(button(rendered, "Previous")).props.onClick()
 equal(#runs, 2)
-equal(runs[2].command, Shell.command(commands.backward))
+equal(runs[2].command, Shell.command(commands.previous))
 local nextWhileBusy = assert(button(rendered, "Next"))
 assert(not nextWhileBusy.props.enabled)
 nextWhileBusy.props.onClick()
@@ -164,8 +170,21 @@ equal(runs[3].command, Shell.command(commands.current))
 runs[3].callback(success("without source"))
 
 local copyWithoutSource = assert(button(rendered, "Copy"))
-assert(not copyWithoutSource.props.enabled)
+assert(copyWithoutSource.props.enabled)
 copyWithoutSource.props.onClick()
-equal(clipboardCalls, { { "/wall/source.jpg", "text/plain" } }, "copy ran without a source path")
+equal(clipboardCalls, {
+  { "/wall/source.jpg", "text/plain" },
+  { "/wall/next.jpg", "text/plain" },
+})
+
+runs[3].callback(success("with source"))
+local favorite = assert(button(rendered, "Favorite"))
+equal(favorite.props.glyph, "heart-filled")
+favorite.props.onClick()
+equal(runs[#runs].command, Shell.command(commands.favorite))
+runs[#runs].callback(success("favorited PXL_20260820_000000000"))
+equal(runs[#runs].command, Shell.command(commands.current), "favorite did not refresh metadata")
+runs[#runs].callback(success("without source"))
+equal(assert(button(rendered, "Favorite")).props.glyph, "heart")
 
 print("Wali plugin tests passed")

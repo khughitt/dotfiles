@@ -2,24 +2,25 @@ local M = {}
 
 local commands = {
   current = { "walictl", "current", "--json" },
-  backward = { "walictl", "backward" },
-  forward = { "walictl", "forward" },
+  previous = { "walictl", "previous" },
+  next = { "walictl", "next" },
   random = { "walictl", "random" },
-  ["save-current"] = { "walictl", "save-current" },
-  ["edit-current"] = { "walictl", "edit-current" },
+  favorite = { "walictl", "favorite" },
+  edit = { "walictl", "edit" },
 }
 
 function M.commandFor(action)
-  return assert(commands[action], "unknown Wali action: " .. tostring(action))
+  return assert(commands[action], "unknown walictl action: " .. tostring(action))
 end
 
 function M.validateCurrent(payload)
   if type(payload) ~= "table" then return nil, "walictl current did not return an object" end
-  if type(payload.ok) ~= "boolean" then return nil, "walictl current returned an invalid ok field" end
-  if not payload.ok then return nil, "walictl current reported failure" end
-  for _, field in ipairs({
-    "current_wallpaper_path", "source_wallpaper_path", "parsed_date", "display_date",
-  }) do
+  if payload.ok ~= true then return nil, "walictl current reported failure" end
+  for _, field in ipairs({ "id", "path" }) do
+    if type(payload[field]) ~= "string" then return nil, "walictl current returned an invalid " .. field .. " field" end
+  end
+  if type(payload.favorite) ~= "boolean" then return nil, "walictl current returned an invalid favorite field" end
+  for _, field in ipairs({ "date", "display_date", "source_path", "variant_path" }) do
     if payload[field] ~= nil and type(payload[field]) ~= "string" then
       return nil, "walictl current returned an invalid " .. field .. " field"
     end
@@ -35,15 +36,19 @@ function M.decodeCurrent(text, decoder)
 end
 
 function M.refreshAfter(action)
-  return action == "backward" or action == "forward" or action == "random"
+  return action == "previous" or action == "next" or action == "random" or action == "favorite"
 end
 
 function M.canStart(busy)
   return not busy
 end
 
-function M.canCopy(sourcePath)
-  return sourcePath ~= nil
+function M.copyTarget(payload)
+  return payload.source_path or payload.path
+end
+
+function M.favoriteGlyph(favorite)
+  return favorite and "heart-filled" or "heart"
 end
 
 return M

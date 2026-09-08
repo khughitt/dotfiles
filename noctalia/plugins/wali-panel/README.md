@@ -16,9 +16,10 @@ noctalia msg panel-toggle khughitt/wali-panel:panel
 
 ## Requirements
 
-- `walictl` must be available on `PATH`.
-- `BACKGROUND_IMG_DIR` must name the photo archive root used to derive source paths.
-- `WALI_DIR` must name Wali's state directory containing `favorites.txt`.
-- GIMP is required by `walictl edit-current`.
+- `walictl` on `PATH`, configured through `$XDG_CONFIG_HOME/wali/config.toml`.
+- GIMP for the Edit button.
 
-The panel has no plugin settings. Wali and `walictl` own wallpaper discovery, navigation, saving, and editing.
+The panel holds no state and derives nothing from paths. Navigation and Favorite
+run a `walictl` command and then re-read `walictl current --json`. Refresh reads
+the metadata directly, Copy copies the source path when present (otherwise the
+current path), and Edit runs without a metadata refresh.
