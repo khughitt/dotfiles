@@ -382,7 +382,7 @@ class Noctalia:
 
 def reconcile(history: History, displayed: Path, now: str) -> bool:
     current = history.current()
-    if current is not None and Path(current.path) == displayed:
+    if current is not None and Path(current.path).resolve() == displayed:
         return False
     history.push(HistoryEntry(ts=now, id=photo_id(displayed), path=str(displayed), origin="observed"))
     return True

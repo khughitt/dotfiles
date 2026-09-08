@@ -640,18 +640,19 @@ def test_locked_times_out_while_another_holder_exists(walictl: ModuleType, tmp_p
     def holder() -> None:
         with walictl.locked(lock):
             acquired.set()
-            release.wait()
+            assert release.wait(5)
 
     thread = threading.Thread(target=holder)
     thread.start()
-    acquired.wait()
     try:
+        assert acquired.wait(5)
         with pytest.raises(walictl.WalictlError, match="timed out waiting for"):
             with walictl.locked(lock, timeout=0.2):
                 pass
     finally:
         release.set()
-        thread.join()
+        thread.join(5)
+    assert not thread.is_alive()
     with walictl.locked(lock, timeout=0.2):
         pass
 
@@ -1078,7 +1079,7 @@ class Noctalia:
 
 def reconcile(history: History, displayed: Path, now: str) -> bool:
     current = history.current()
-    if current is not None and Path(current.path) == displayed:
+    if current is not None and Path(current.path).resolve() == displayed:
         return False
     history.push(HistoryEntry(ts=now, id=photo_id(displayed), path=str(displayed), origin="observed"))
     return True

@@ -283,18 +283,19 @@ def test_locked_times_out_while_another_holder_exists(walictl: ModuleType, tmp_p
     def holder() -> None:
         with walictl.locked(lock):
             acquired.set()
-            release.wait()
+            assert release.wait(5)
 
     thread = threading.Thread(target=holder)
     thread.start()
-    acquired.wait()
     try:
+        assert acquired.wait(5)
         with pytest.raises(walictl.WalictlError, match="timed out waiting for"):
             with walictl.locked(lock, timeout=0.2):
                 pass
     finally:
         release.set()
-        thread.join()
+        thread.join(5)
+    assert not thread.is_alive()
     with walictl.locked(lock, timeout=0.2):
         pass
 
@@ -742,6 +743,26 @@ def test_symlinked_wallpaper_dir_does_not_duplicate_history(
     history = load_history(walictl)
     assert [e.id for e in history.entries][0] == "PXL_20210608_111152739" and len(history.entries) == 2
     assert all(str(env["wallpapers"]) in e.path for e in history.entries)
+
+
+def test_file_symlink_observe_and_previous_preserve_history(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    actual = env["wallpapers"].parent / "actual"
+    actual.mkdir()
+    for path in env["wallpapers"].glob("*.jpg"):
+        if path != noctalia.default:
+            target = actual / path.name
+            path.rename(target)
+            path.symlink_to(target)
+
+    run_cli(walictl, ["random", "--seed", "3"])
+    picked = load_history(walictl).entries[1]
+    assert Path(picked.path).is_symlink()
+    assert run_cli(walictl, ["observe"])[1] == f"unchanged {picked.id}\n"
+    assert len(load_history(walictl).entries) == 2
+    assert run_cli(walictl, ["previous"])[1] == "previous: PXL_20210608_111152739\n"
+    assert noctalia.default == env["wallpapers"] / "PXL_20210608_111152739.jpg"
 
 
 def test_replay_prefers_a_variant_created_later(
