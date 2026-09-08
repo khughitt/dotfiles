@@ -1,7 +1,7 @@
 # Wallpaper management redesign: walictl owns selection, favorites, and history
 
-**Status:** Designed 2026-09-07; implemented on the `wallpaper-redesign`
-branch. Live cutover remains pending Task 17. See
+**Status:** Designed 2026-09-07; implementation complete. Live cutover is
+in progress on 2026-09-08 (Task 17). See
 `docs/plans/2026-09-07-wallpaper-management-redesign.md`.
 
 ## Problem

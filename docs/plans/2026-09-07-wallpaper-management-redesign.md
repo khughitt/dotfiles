@@ -1,7 +1,7 @@
 # Wallpaper Management Redesign Implementation Plan
 
-**Implementation status:** Tasks 1-16 are implemented on the
-`wallpaper-redesign` branch. Live cutover remains pending Task 17.
+**Implementation status:** Tasks 1-16 are implemented. Live cutover is
+in progress on 2026-09-08 (Task 17).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

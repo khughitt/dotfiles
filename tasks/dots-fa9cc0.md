@@ -1,11 +1,12 @@
 ---
 id: dots-fa9cc0
 title: Cutover on titan
-status: todo
+status: doing
 priority: 2
 size: m
+owner: wallpaper-redesign
 created: 2026-09-07T21:45:40Z
-updated: 2026-09-07T21:45:56Z
+updated: 2026-09-08T10:21:52Z
 depends: [dots-87e744, dots-f1c144, dots-202137, dots-054c69, dots-c844f5]
 parent: dots-59c279
 tags: [wallpaper, noctalia]
