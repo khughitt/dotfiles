@@ -138,6 +138,41 @@ check_absent_stale_config_link() {
     fi
 }
 
+# The dotfiles tree is shared verbatim between machines, so a symlink stored in
+# it resolves the same everywhere. A target naming one machine therefore drags
+# every other machine onto that machine's config. Per-machine selection belongs
+# in XDG_STATE_HOME, which is not shared. See niri/host_specific.sh.
+check_no_machine_specific_links() {
+    local machines=() dir link target name offenders=0
+
+    for dir in "${DOTS_HOME}"/prism/*/; do
+        [[ -d "$dir" ]] || continue
+        machines+=("$(basename "$dir")")
+    done
+
+    if [[ "${#machines[@]}" -eq 0 ]]; then
+        warn "no machines found under ${DOTS_HOME}/prism; skipping shared-tree symlink check"
+        return
+    fi
+
+    while IFS= read -r link; do
+        target="$(readlink "$link")"
+        for name in "${machines[@]}"; do
+            if [[ "$target" == *"host-${name}"* || "$target" == *"/${name}/"* ]]; then
+                fail "machine-specific symlink in the shared tree: ${link#"${DOTS_HOME}/"} -> ${target}"
+                offenders=$((offenders + 1))
+                break
+            fi
+        done
+    done < <(find "${DOTS_HOME}" \
+        \( -name .git -o -name .worktrees -o -name node_modules -o -name .venv \) -prune -o \
+        -type l -print)
+
+    if [[ "$offenders" -eq 0 ]]; then
+        pass "no machine-specific symlinks in the shared tree (${machines[*]})"
+    fi
+}
+
 echo "Dotfiles root: $DOTS_HOME"
 echo "Home: $HOME"
 echo "XDG config: $XDG_CONFIG_HOME"
@@ -356,6 +391,8 @@ if [[ -f "$wali_config" || -L "${XDG_CONFIG_HOME}/wali/config.toml" ]]; then
     check_link "${XDG_CONFIG_HOME}/wali/config.toml" "$wali_config"
 fi
 unset wali_config
+
+check_no_machine_specific_links
 
 if [[ "$failures" -gt 0 ]]; then
     echo "Health check failed: $failures failure(s), $warnings warning(s)" >&2

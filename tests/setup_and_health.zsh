@@ -1372,11 +1372,15 @@ test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
   cp "${repo_root}/setup.sh" "$fixture/setup.sh"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
   cp "${repo_root}/niri/host_specific.sh" "$fixture/niri/"
+  cp "${repo_root}/hypr/host_specific.sh" "$fixture/hypr/"
+  printf '// titan\n' > "$fixture/niri/host-titan.kdl"
+  printf '# titan\n' > "$fixture/hypr/host-titan.conf"
   printf '#!/usr/bin/env bash\nexit 0\n' > "$fixture/bin/prism"
   printf '#!/usr/bin/env bash\nprintf "titan\\n"\n' > "${tmp}/bin/hostname"
   printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/bin/niri"
   chmod +x "$fixture/setup.sh" "$fixture/bin/prism" \
-    "$fixture/niri/host_specific.sh" "${tmp}/bin/hostname" "${tmp}/bin/niri"
+    "$fixture/niri/host_specific.sh" "$fixture/hypr/host_specific.sh" \
+    "${tmp}/bin/hostname" "${tmp}/bin/niri"
 
   HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_STATE_HOME="${tmp}/state" PATH="${tmp}/bin:$PATH" \
@@ -1388,6 +1392,12 @@ test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
     fail "clean graphical setup should leave the Hyprland theme stub empty"
   [[ -d "$fixture/prism/titan/contexts" ]] || \
     fail "clean graphical setup did not create the host contexts directory"
+  [[ "$(readlink "${tmp}/state/niri/host.kdl")" == "$fixture/niri/host-titan.kdl" ]] || \
+    fail "niri host selection did not land in per-machine state"
+  [[ "$(readlink "${tmp}/state/hypr/host.conf")" == "$fixture/hypr/host-titan.conf" ]] || \
+    fail "hyprland host selection did not land in per-machine state"
+  [[ ! -e "$fixture/niri/host.kdl" && ! -e "$fixture/hypr/host.conf" ]] || \
+    fail "host selection wrote a per-machine symlink into the shared tree"
   printf 'glass.ior: 1.3\n' > "${tmp}/config/prism/contexts/pinned-write.yaml"
   [[ -f "$fixture/prism/titan/contexts/pinned-write.yaml" ]] || \
     fail "context writes do not reach the host directory"

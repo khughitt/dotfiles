@@ -48,7 +48,6 @@ vim/black
 vim/tmp
 zeit/
 claude/commands
-hypr/host.conf
 kitty/os-local.conf
 kitty/kitty.conf.bak
 kitty/prism-generated.conf
