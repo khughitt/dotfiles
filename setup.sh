@@ -351,6 +351,37 @@ function run_phase() {
     "$setup_function"
 }
 
+# prism's node_modules is gitignored and carries com.dropbox.ignored, so it is
+# per-machine and never arrives with a clone or a Dropbox sync. The
+# graphical-config phase runs bin/prism, which needs the yaml package at
+# runtime, so the bootstrap has to land before that phase.
+function setup_prism_dependencies() {
+    local prism_bin prism_root
+    prism_bin="$(readlink -f "${DOTS_HOME}/bin/prism" 2>/dev/null || true)"
+    [[ -n "$prism_bin" ]] || return 0
+    prism_root="$(dirname "$(dirname "$prism_bin")")"
+    [[ -f "${prism_root}/package.json" ]] || return 0
+
+    if [[ -d "${prism_root}/node_modules" ]]; then
+        echo "[SKIPPING] prism dependencies already installed"
+        return
+    fi
+
+    if ! command -v npm >/dev/null; then
+        echo "npm not found; prism needs it before the graphical-config phase"
+        return 1
+    fi
+
+    echo "Installing prism Node dependencies..."
+    run npm ci --prefix "$prism_root"
+
+    # Mark the new tree now rather than waiting for the dropbox-ignore-flux
+    # timer, which is opt-in and may not be enabled on this machine yet.
+    if command -v attr >/dev/null; then
+        run attr -s com.dropbox.ignored -V 1 "${prism_root}/node_modules"
+    fi
+}
+
 function setup_external_clones() {
     phase "External clone setup"
     if [[ "$SKIP_EXTERNAL_CLONES" == "true" ]]; then
@@ -365,6 +396,8 @@ function setup_external_clones() {
         ensure_dir "$(dirname "$zinit_home")"
         run git clone https://github.com/zdharma-continuum/zinit.git "$zinit_home"
     fi
+
+    setup_prism_dependencies
 }
 
 function setup_shell_links() {
