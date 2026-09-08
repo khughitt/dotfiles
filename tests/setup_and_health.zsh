@@ -744,7 +744,7 @@ test_default_setup_does_not_require_live_noctalia() {
 #!/usr/bin/env bash
 set -euo pipefail
 
-[[ "$*" == "apply niri" || "$*" == "apply debug-backdrop" ]] || exit 64
+[[ "$*" == "apply niri" || "$*" == "apply kitty" || "$*" == "apply debug-backdrop" ]] || exit 64
 exit 0
 EOF
   chmod +x "${fixture}/bin/prism"
@@ -1398,6 +1398,11 @@ test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
     fail "hyprland host selection did not land in per-machine state"
   [[ ! -e "$fixture/niri/host.kdl" && ! -e "$fixture/hypr/host.conf" ]] || \
     fail "host selection wrote a per-machine symlink into the shared tree"
+  # -e follows the link, so a dangling one fails here
+  [[ -e "$fixture/niri/prism.kdl" ]] || \
+    fail "niri include points at a generated file that was never created"
+  [[ -e "$fixture/kitty/prism-generated.conf" ]] || \
+    fail "kitty include points at a generated file that was never created"
   printf 'glass.ior: 1.3\n' > "${tmp}/config/prism/contexts/pinned-write.yaml"
   [[ -f "$fixture/prism/titan/contexts/pinned-write.yaml" ]] || \
     fail "context writes do not reach the host directory"

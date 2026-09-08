@@ -475,7 +475,9 @@ function setup_graphical_config_links() {
 
     phase "Graphical config links"
     local path wali_config
-    local niri_generated="${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/prism.kdl"
+    local prism_generated="${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated"
+    local niri_generated="${prism_generated}/prism.kdl"
+    local kitty_generated="${prism_generated}/kitty.conf"
     local niri_generated_before=""
     for path in "${GRAPHICAL_CONFIGS[@]}"; do
         [[ "$path" == "niri" ]] && continue
@@ -490,7 +492,14 @@ function setup_graphical_config_links() {
     else
         echo "No wali config for $(hostname); skipping ${XDG_CONFIG_HOME}/wali/config.toml"
     fi
-    run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/kitty.conf" "${DOTS_HOME}/kitty/prism-generated.conf"
+    # prism apply validates the real niri config, which includes these links, so
+    # the links must already exist when the sinks run. Create their targets
+    # first: aborting anywhere in between then leaves an empty include rather
+    # than an unresolvable one, which niri refuses to load.
+    ensure_dir "$prism_generated"
+    [[ -e "$niri_generated" ]] || run touch "$niri_generated"
+    [[ -e "$kitty_generated" ]] || run touch "$kitty_generated"
+    run ln -sfT "$kitty_generated" "${DOTS_HOME}/kitty/prism-generated.conf"
     run ln -sfT "$niri_generated" "${DOTS_HOME}/niri/prism.kdl"
     run env NIRI_DIR="${DOTS_HOME}/niri" "${DOTS_HOME}/niri/host_specific.sh"
     run env HYPR_DIR="${DOTS_HOME}/hypr" "${DOTS_HOME}/hypr/host_specific.sh"
@@ -511,6 +520,9 @@ function setup_graphical_config_links() {
         fi
         echo "Niri is not running; prism.kdl was generated and reload is deferred."
     fi
+    # setup.sh links kitty at this sink's output, so it has to be applied too;
+    # nothing else ran it, and the link sat dangling on a fresh machine.
+    run "${DOTS_HOME}/bin/prism" apply kitty
     run "${DOTS_HOME}/bin/prism" apply debug-backdrop
 
     run niri validate -c "${DOTS_HOME}/niri/config.kdl"
