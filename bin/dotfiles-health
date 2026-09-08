@@ -343,6 +343,12 @@ if [[ -e "${XDG_CONFIG_HOME}/prism" || -L "${XDG_CONFIG_HOME}/prism" || \
 fi
 unset prism_config prism_failures
 
+wali_config="${DOTS_HOME}/wali/$(hostname)/config.toml"
+if [[ -f "$wali_config" || -L "${XDG_CONFIG_HOME}/wali/config.toml" ]]; then
+    check_link "${XDG_CONFIG_HOME}/wali/config.toml" "$wali_config"
+fi
+unset wali_config
+
 if [[ "$failures" -gt 0 ]]; then
     echo "Health check failed: $failures failure(s), $warnings warning(s)" >&2
     exit 1

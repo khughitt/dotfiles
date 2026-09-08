@@ -1006,6 +1006,8 @@ test_dotfiles_health_fails_wrong_prism_link_without_running_doctor() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   prepare_health_fixture "$tmp"
+  mkdir -p "${tmp}/config/wali"
+  ln -s "${repo_root}/wali/titan/config.toml" "${tmp}/config/wali/config.toml"
   ln -s "${repo_root}/prism/europa" "${tmp}/config/prism"
 
   set +e
@@ -1318,6 +1320,28 @@ test_setup_graphical_config_hands_material_ownership_to_prism() {
     fail ".gitignore still names the retired generated consumer"
 }
 
+test_setup_graphical_config_links_wali_config_for_known_host() {
+  local tmp output prism_fixture
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  output=$(PRISM_TEST_HOSTNAME=titan \
+    run_setup "$tmp" --dry-run --link-only --only graphical-config)
+  [[ "$output" == *"${repo_root}/wali/titan/config.toml"* ]] || \
+    fail "graphical setup does not link the titan wali config"
+
+  # Dry-run skips Prism directory creation; supply that prerequisite.
+  prism_fixture=$(mktemp -d "${repo_root}/prism/wali-test.XXXXXX")
+  register_tmp_cleanup "$prism_fixture"
+  output=$(PRISM_TEST_HOSTNAME="${prism_fixture:t}" \
+    run_setup "$tmp" --dry-run --link-only --only graphical-config)
+  [[ "$output" == *"No wali config for ${prism_fixture:t}"* ]] || \
+    fail "graphical setup does not explain a missing wali config"
+  [[ "$output" != *"Link source does not exist"* ]] || \
+    fail "graphical setup aborted on a host without a wali config"
+}
+
 test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
   local tmp fixture
   tmp=$(make_tmpdir)
@@ -1354,6 +1378,31 @@ configure_prism_runtime() {
   local tmp="$1"
   mkdir -p "${tmp}/config/niri"
   ln -s "${repo_root}/prism/titan" "${tmp}/config/prism"
+  mkdir -p "${tmp}/config/wali"
+  ln -s "${repo_root}/wali/titan/config.toml" "${tmp}/config/wali/config.toml"
+}
+
+test_dotfiles_health_checks_wali_config_link() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/config/wali"
+  prepare_health_fixture "$tmp"
+  ln -s "${repo_root}/prism/titan" "${tmp}/config/prism"
+  ln -s "${repo_root}/wali/europa/config.toml" "${tmp}/config/wali/config.toml"
+
+  set +e
+  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
+  exit_status=$?
+  set -e
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted the wrong wali config link"
+  [[ "$output" == *"wrong link target"*"wali/config.toml"* ]] || \
+    fail "health did not explain the wrong wali config link"
+
+  rm -f "${tmp}/config/wali/config.toml"
+  ln -s "${repo_root}/wali/titan/config.toml" "${tmp}/config/wali/config.toml"
+  output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1) || \
+    fail "health rejected the correct wali config link: $output"
 }
 
 test_dotfiles_health_accepts_prism_runtime() {
@@ -1543,8 +1592,10 @@ test_dotfiles_health_rejects_legacy_yazi_directory_link
 test_dotfiles_health_checks_enabled_user_timer
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_hands_material_ownership_to_prism
+test_setup_graphical_config_links_wali_config_for_known_host
 test_clean_graphical_setup_creates_empty_hyprland_theme_stub
 test_dotfiles_health_accepts_prism_runtime
+test_dotfiles_health_checks_wali_config_link
 test_dotfiles_health_rejects_missing_or_external_prism_contexts
 test_dotfiles_health_fails_when_prism_doctor_fails
 test_dotfiles_health_rejects_noctalia_config_warning

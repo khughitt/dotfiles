@@ -399,7 +399,7 @@ function setup_graphical_config_links() {
     [[ "$HEADLESS" == "false" ]] || return 0
 
     phase "Graphical config links"
-    local path
+    local path wali_config
     local niri_generated="${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/prism.kdl"
     local niri_generated_before=""
     for path in "${GRAPHICAL_CONFIGS[@]}"; do
@@ -409,6 +409,12 @@ function setup_graphical_config_links() {
 
     ensure_dir "${DOTS_HOME}/prism/$(hostname)/contexts"
     ln_s "${DOTS_HOME}/prism/$(hostname)" "${XDG_CONFIG_HOME}/prism"
+    wali_config="${DOTS_HOME}/wali/$(hostname)/config.toml"
+    if [[ -f "$wali_config" ]]; then
+        ln_s "$wali_config" "${XDG_CONFIG_HOME}/wali/config.toml"
+    else
+        echo "No wali config for $(hostname); skipping ${XDG_CONFIG_HOME}/wali/config.toml"
+    fi
     run ln -sfT "${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/kitty.conf" "${DOTS_HOME}/kitty/prism-generated.conf"
     run ln -sfT "$niri_generated" "${DOTS_HOME}/niri/prism.kdl"
     run env NIRI_DIR="${DOTS_HOME}/niri" "${DOTS_HOME}/niri/host_specific.sh"
