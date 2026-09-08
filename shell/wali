@@ -38,7 +38,7 @@ KITTY_PREVIEW_CMD='kitten icat \
 
 # wallpaper switcher
 if [ "$WALI_BACKEND" = "noctalia" ]; then
-  alias wali="noctalia msg wallpaper-random"
+  alias wali="walictl random"
 elif [ "$WALI_BACKEND" = "swww" ]; then
   alias wali="cd ~/d/wali/ && uv run wali --image-dir=\"\$WALI_DIR/3440\" --wallpaper-backend swww change"
 else
@@ -83,74 +83,11 @@ function _wali_current_wallpaper {
   esac
 }
 
-# print path to original source image for current wallpaper
-function wali_print {
-  local file
-
-  file=$(_wali_current_wallpaper)
-
-  if [ -z "$file" ]; then
-    echo "Error: could not determine current wallpaper" >&2
-    return 1
-  fi
-
-  # extract filename and parse date (PXL_20240520_023703962.jpg -> 20240520)
-  local fname=$(basename "$file")
-  local datestr=$(echo "$fname" | cut -d '_' -f2)
-  local year=$(date -d "$datestr" +%Y)
-  local mon=$(date -d "$datestr" +%m)
-
-  # construct path to original source image
-  echo "$BACKGROUND_IMG_DIR/$year/$mon/${fname%.*}.jpg"
-}
-
-# open the current wallpaper in gimp
-alias wali_edit_current='gimp "$(wali_print)"'
-
-# search for an image by name and add it to the "favorites" list
+# find an image by name and add it to the favorites
 function wali_search {
-  target=$(fd "$1" "$WALI_DIR/3440" | \
-    grep --color='none' "$1" | \
-    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD)
-
-  [ ! -z "$target" ] && echo "Adding $target to favorites.." && echo "$target" >> "$WALI_DIR/favorites.txt"
-}
-
-# add the current background to the "favorites" list
-function wali_save {
-  local current=$(wali_print)
-  echo "$current" >> "$WALI_DIR/favorites.txt"
-  echo "Saved: $current"
-}
-
-# select an image from the favorites list and open it in gimp
-function wali_edit_fav {
-  # "tac" = reverse "cat" (lines in reverse order)
-  target=$(/bin/tac "$WALI_DIR/favorites.txt" | \
-    grep --color='none' "$1" | \
-    fzf -1 --exact --preview=$KITTY_PREVIEW_CMD)
-
-  if [ -z "$target" ]; then
-    return
-  fi
-
-  # if target exists directly, use it
-  if [ -e "$target" ]; then
-    /bin/gimp "$target"
-    return
-  fi
-
-  # try to resolve path from favorites entry (X11 legacy format)
-  local imgdir=$(dirname "$target")
-  local year=$(echo "$imgdir" | cut -d '/' -f 5)
-  local mon=$(echo "$imgdir" | cut -d '/' -f 6)
-  local prefix="/home/keith/d/linux/backgrounds/orig/$year/$mon"
-
-  if [ -e "$prefix/$target" ]; then
-    /bin/gimp "$prefix/$target"
-  else
-    echo "File not found: $target"
-  fi
+  local target
+  target=$(fd "$1" "$WALI_DIR/3440" | grep --color='none' "$1" | fzf -1 --exact --preview=$KITTY_PREVIEW_CMD)
+  [ -n "$target" ] && walictl favorite --add "${${target:t}%.*}"
 }
 
 # find an image by name and open it in gimp
@@ -331,19 +268,19 @@ function wali_rotate {
     *) echo "Usage: wali_rotate [l|r|f]"; return 1 ;;
   esac
 
-  local current
-  current=$(_wali_current_wallpaper)
+  # one payload: two separate calls could straddle a rotation and pair one
+  # photo's destination with another photo's original
+  local payload current source
+  payload=$(walictl current --json) || return 1
+  current=$(jq -r '.path' <<< "$payload")
+  source=$(jq -r '.source_path // empty' <<< "$payload")
 
-  if [ -z "$current" ]; then
-    echo "Could not determine current wallpaper"
+  if [ -z "$source" ]; then
+    echo "No source image for the current wallpaper; nothing to rotate" >&2
     return 1
   fi
-
-  # resolve source image
-  local source=$(wali_print)
-
   if [ ! -f "$source" ]; then
-    echo "Source image not found: $source"
+    echo "Source image not found: $source" >&2
     return 1
   fi
 

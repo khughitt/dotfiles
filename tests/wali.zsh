@@ -91,18 +91,33 @@ fi
 EOF
 chmod +x "${tmp}/bin/noctalia"
 
+cat > "${tmp}/bin/walictl" <<'EOF'
+#!/usr/bin/env zsh
+print -r -- "$*" >> "$NOCTALIA_LOG"
+if [[ "$1" == current ]]; then
+  printf '{"ok": true, "id": "PXL_20240520_023703962", "path": "%s", "source_path": "%s"}\n' \
+    "$NOCTALIA_WALLPAPER" "$BACKGROUND_IMG_DIR/2024/05/PXL_20240520_023703962.jpg"
+fi
+EOF
+chmod +x "${tmp}/bin/walictl"
+
 HOME="${tmp}/home" WAYLAND_DISPLAY=wayland-1 \
   PATH="${tmp}/bin:$PATH" zsh -f -c '
+    set -e
     source "$1/shell/wali"
     [[ "$WALI_BACKEND" == noctalia ]]
-    [[ "$(_wali_current_wallpaper)" == "$NOCTALIA_WALLPAPER" ]]
-    [[ "$(wali_print)" == \
-      "$BACKGROUND_IMG_DIR/2024/05/PXL_20240520_023703962.jpg" ]]
+    [[ "$(alias wali)" == *"walictl random"* ]]
+    ! typeset -f wali_print >/dev/null || exit 1
+    ! alias wali_edit_current >/dev/null 2>&1 || exit 1
+    ! typeset -f wali_save >/dev/null || exit 1
+    ! typeset -f wali_edit_fav >/dev/null || exit 1
     wali_rotate r >/dev/null
   ' zsh "$repo_root"
 
-rg -q -x 'msg wallpaper-get' "$NOCTALIA_LOG" || \
-  fail 'wali did not query the v5 wallpaper'
+rg -q -x 'current --json' "$NOCTALIA_LOG" || \
+  fail 'wali_rotate did not read the wallpaper from walictl'
+(( $(rg -c -x 'current --json' "$NOCTALIA_LOG") == 1 )) || \
+  fail 'wali_rotate must read one payload, not one per field'
 rg -q -F "msg wallpaper-set ${NOCTALIA_WALLPAPER}" "$NOCTALIA_LOG" || \
   fail 'wali rotate did not reset the v5 wallpaper'
 ! rg -q -F qs "$NOCTALIA_LOG" || fail 'wali called Quickshell IPC'
