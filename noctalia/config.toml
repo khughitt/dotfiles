@@ -10,9 +10,7 @@ transition = ["fade"]
 transition_on_startup = true
 
 [wallpaper.automation]
-enabled = true
-interval_seconds = 900
-order = "alphabetical"
+enabled = false
 
 [backdrop]
 enabled = false
@@ -47,7 +45,7 @@ transparency_mode = "glass"
 
 [hooks]
 theme_mode_changed = ["~/d/familiar/bin/familiar-noctalia scheme-sync"]
-wallpaper_changed = ["~/bin/prism context wallpaper \"$NOCTALIA_WALLPAPER_PATH\""]
+wallpaper_changed = ["~/bin/prism context wallpaper \"$NOCTALIA_WALLPAPER_PATH\"", "~/bin/walictl observe"]
 
 [idle]
 behavior_order = ["screen-off", "lock", "lock-and-suspend"]

@@ -337,9 +337,11 @@ assert "ui_scale" not in config["shell"]
 assert config["theme"] == {
     "mode": "dark", "source": "wallpaper", "wallpaper_scheme": "m3-tonal-spot"
 }
-assert config["wallpaper"]["automation"] == {
-    "enabled": True, "interval_seconds": 900, "order": "alphabetical"
-}
+assert config["wallpaper"]["automation"] == {"enabled": False}
+assert config["hooks"]["wallpaper_changed"] == [
+    '~/bin/prism context wallpaper "$NOCTALIA_WALLPAPER_PATH"',
+    "~/bin/walictl observe",
+]
 assert config["bar"]["default"]["start"] == ["workspaces", "cpu", "ram"]
 assert config["bar"]["default"]["center"] == ["active_window"]
 assert config["bar"]["default"]["end"] == [
