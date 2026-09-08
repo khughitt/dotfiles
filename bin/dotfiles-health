@@ -303,20 +303,28 @@ if [[ "$(uname)" != "Darwin" ]]; then
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer" \
         "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer"
+    check_link \
+        "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service" \
+        "${DOTS_HOME}/systemd/user/wali-rotate.service"
+    check_link \
+        "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer" \
+        "${DOTS_HOME}/systemd/user/wali-rotate.timer"
 
     if [[ "$SKIP_SYSTEMD" != "true" ]]; then
         if command -v systemctl >/dev/null 2>&1; then
-            if systemctl --user is-enabled dropbox-ignore-flux.timer >/dev/null 2>&1; then
-                pass "systemd user timer is enabled"
-            else
-                fail "systemd user timer is not enabled: dropbox-ignore-flux.timer"
-            fi
+            for timer in dropbox-ignore-flux.timer wali-rotate.timer; do
+                if systemctl --user is-enabled "$timer" >/dev/null 2>&1; then
+                    pass "systemd user timer is enabled: $timer"
+                else
+                    fail "systemd user timer is not enabled: $timer"
+                fi
 
-            if systemctl --user list-timers dropbox-ignore-flux.timer --no-pager >/dev/null 2>&1; then
-                pass "systemd user timer is queryable"
-            else
-                warn "systemd user timer could not be queried"
-            fi
+                if systemctl --user list-timers "$timer" --no-pager >/dev/null 2>&1; then
+                    pass "systemd user timer is queryable: $timer"
+                else
+                    warn "systemd user timer could not be queried: $timer"
+                fi
+            done
         else
             warn "systemctl is not available"
         fi

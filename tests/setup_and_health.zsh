@@ -594,7 +594,8 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "$(readlink "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf")" == \
       "${repo_root}/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
     fail "expected niri stop-timeout override to point into the repository"
-  for unit in familiar-reap.service familiar-reap.timer mindful-docker.service; do
+  for unit in familiar-reap.service familiar-reap.timer mindful-docker.service \
+      wali-rotate.service wali-rotate.timer; do
     [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
       fail "expected linked ${unit}"
     [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
@@ -653,6 +654,8 @@ test_setup_dry_run_can_enable_user_timers() {
     fail "expected dry-run daemon-reload command"
   [[ "$output" == *"systemctl --user enable --now dropbox-ignore-flux.timer"* ]] || \
     fail "expected dry-run timer enable command"
+  [[ "$output" == *"systemctl --user enable --now wali-rotate.timer"* ]] || \
+    fail "expected dry-run wali timer enable command"
 
   rm -rf "$tmp"
 }
@@ -1229,6 +1232,16 @@ if [[ "$*" == "--user list-timers dropbox-ignore-flux.timer --no-pager" ]]; then
   exit 0
 fi
 
+if [[ "$*" == "--user is-enabled wali-rotate.timer" ]]; then
+  printf 'enabled\n'
+  exit 0
+fi
+
+if [[ "$*" == "--user list-timers wali-rotate.timer --no-pager" ]]; then
+  printf 'NEXT LEFT LAST PASSED UNIT ACTIVATES\n'
+  exit 0
+fi
+
 exit 64
 EOF
   chmod +x "${mockbin}/systemctl"
@@ -1241,6 +1254,10 @@ EOF
     fail "expected health to query timer enabled state"
   rg -q -- '--user list-timers dropbox-ignore-flux.timer --no-pager' "$systemctl_log" || \
     fail "expected health to query timer schedule"
+  rg -q -- '--user is-enabled wali-rotate.timer' "$systemctl_log" || \
+    fail "expected health to query the wali timer enabled state"
+  rg -q -- '--user list-timers wali-rotate.timer --no-pager' "$systemctl_log" || \
+    fail "expected health to query the wali timer schedule"
 
   rm -rf "$tmp"
 }

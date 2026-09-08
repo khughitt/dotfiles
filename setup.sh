@@ -508,11 +508,14 @@ function setup_systemd_user_units() {
     ln_s "${DOTS_HOME}/systemd/user/mindful-docker.service" "${XDG_CONFIG_HOME}/systemd/user/mindful-docker.service"
     ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.service" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.service"
     ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.timer" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.timer"
+    ln_s "${DOTS_HOME}/systemd/user/wali-rotate.service" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service"
+    ln_s "${DOTS_HOME}/systemd/user/wali-rotate.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer"
 
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload
         run systemctl --user enable --now dropbox-ignore-flux.timer
         run systemctl --user enable --now kernel-gate-nudge.timer
+        run systemctl --user enable --now wali-rotate.timer
     fi
 }
 

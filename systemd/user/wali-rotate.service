@@ -1,0 +1,6 @@
+[Unit]
+Description=Pick the next wallpaper with walictl
+
+[Service]
+Type=oneshot
+ExecStart=%h/bin/walictl next
