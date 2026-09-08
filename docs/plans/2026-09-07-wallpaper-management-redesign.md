@@ -1,8 +1,8 @@
 # Wallpaper Management Redesign Implementation Plan
 
 **Implementation status:** Tasks 1-16 are implemented; the redesign is merged
-to `main` and live on titan 2026-09-08. Task 17 closeout awaits manual panel
-verification and old favorites retirement.
+to `main` and live on titan 2026-09-08; panel behavior is confirmed. Task 17
+closeout awaits old favorites retirement, which the user is handling.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -2974,7 +2974,7 @@ walictl import-favorites ~/d/linux/backgrounds/favorites.txt
 
 Expected report: `lines: 685`, `unique: 644`, `duplicate occurrences: 41`, `dangling paths: 2`, `missing display files: 1` naming `PXL_20210919_170859013`. Any other numbers mean the file changed since the design; note the new numbers.
 
-- [ ] **Step 3: Verify behaviour**
+- [x] **Step 3: Verify behaviour**
 
 ```bash
 walictl current --json
