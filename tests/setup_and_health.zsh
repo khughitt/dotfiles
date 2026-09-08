@@ -1448,6 +1448,57 @@ test_setup_continues_past_a_failing_phase() {
     fail "the summary does not name the phases that succeeded"
 }
 
+test_preflight_reports_every_unmet_prerequisite_without_mutating() {
+  local tmp fixture output rc entries
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/prismrepo/bin" \
+    "${tmp}/config" "${tmp}/bin"
+  cp "${repo_root}/setup.sh" "$fixture/setup.sh"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+  # a prism checkout with no node_modules: the tree that is never in git
+  printf '{}\n' > "$fixture/prismrepo/package.json"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$fixture/prismrepo/bin/prism"
+  chmod +x "$fixture/setup.sh" "$fixture/prismrepo/bin/prism"
+  ln -s "../prismrepo/bin/prism" "$fixture/bin/prism"
+  printf '#!/usr/bin/env bash\nprintf "titan\\n"\n' > "${tmp}/bin/hostname"
+  chmod +x "${tmp}/bin/hostname"
+
+  rc=0
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    PATH="${tmp}/bin:$PATH" \
+    bash "$fixture/setup.sh" --headless --link-only --check 2>&1) || rc=$?
+
+  [[ "$rc" -ne 0 ]] || \
+    fail "--check exited zero with unmet prerequisites"
+  # both findings must appear in one run, not one crash at a time
+  [[ "$output" == *"MISSING  prism node dependencies"* ]] || \
+    fail "preflight did not report the missing prism node_modules"
+  [[ "$output" == *"MISSING  tasks registry"* ]] || \
+    fail "preflight did not report the unpopulated tasks registry"
+  [[ "$output" == *"npm ci --prefix"* ]] || \
+    fail "preflight reported a finding without naming its fix"
+
+  [[ ! -d "$fixture/prismrepo/node_modules" ]] || \
+    fail "preflight installed prism dependencies"
+  entries=("${tmp}/config"/*(N))
+  (( ${#entries} == 0 )) || \
+    fail "preflight wrote into the config directory: ${entries}"
+
+  # outside --check the same findings are reported but do not fail the phase
+  rc=0
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    PATH="${tmp}/bin:$PATH" \
+    bash "$fixture/setup.sh" --headless --link-only --only preflight 2>&1) || rc=$?
+  [[ "$rc" -eq 0 ]] || \
+    fail "preflight findings failed a normal run: ${output}"
+  [[ "$output" == *"MISSING  tasks registry"* ]] || \
+    fail "a normal run did not report the preflight finding"
+}
+
 configure_prism_runtime() {
   local tmp="$1"
   mkdir -p "${tmp}/config/niri"
@@ -1677,5 +1728,6 @@ test_dotfiles_health_rejects_noctalia_template_state_override
 test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
 test_setup_continues_past_a_failing_phase
+test_preflight_reports_every_unmet_prerequisite_without_mutating
 
 print -- "setup and health tests passed"

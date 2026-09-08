@@ -19,10 +19,12 @@ SKIP_PACKAGES=false
 SKIP_EXTERNAL_CLONES=false
 ENABLE_USER_TIMERS=false
 ONLY_PHASES=()
+CHECK_ONLY=false
 COMPLETED_PHASES=()
 FAILED_PHASES=()
 
 VALID_PHASES=(
+    preflight
     external-clones
     shell
     gtk
@@ -63,6 +65,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --macos|-m)
             MACOS=true
+            shift
+            ;;
+        --check)
+            CHECK_ONLY=true
+            ONLY_PHASES=(preflight)
             shift
             ;;
         --dry-run)
@@ -111,6 +118,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --headless        Install only non-graphical components"
             echo "  -u, --ubuntu      Configure for Ubuntu (default: Arch Linux)"
             echo "  -m, --macos       Configure for macOS with Homebrew"
+            echo "  --check           Report unmet per-machine prerequisites and exit; changes nothing"
             echo "  --dry-run         Print planned filesystem and command actions without running them"
             echo "  --link-only       Link dotfiles only; skip package installation and external clones"
             echo "  --no-packages     Skip package installation"
@@ -424,6 +432,82 @@ function setup_prism_dependencies() {
     fi
 }
 
+# Every prerequisite below is per-machine: none of it is in git and none of it
+# syncs, so each one used to surface as an opaque crash partway through a run,
+# one at a time. Report them together and change nothing.
+function preflight_check() {
+    local label="$1" fix="$2"
+    shift 2
+
+    if "$@" >/dev/null 2>&1; then
+        echo "  ok       ${label}"
+        return 0
+    fi
+
+    echo "  MISSING  ${label}"
+    echo "           fix: ${fix}"
+    return 1
+}
+
+function setup_preflight() {
+    phase "Preflight"
+    local missing=0 prism_bin prism_root
+    local niri_generated="${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/prism.kdl"
+    local tasks_registry="${XDG_CONFIG_HOME}/tasks/projects.toml"
+
+    prism_bin="$(readlink -f "${DOTS_HOME}/bin/prism" 2>/dev/null || true)"
+    prism_root=""
+    if [[ -n "$prism_bin" ]]; then
+        prism_root="$(dirname "$(dirname "$prism_bin")")"
+        [[ -f "${prism_root}/package.json" ]] || prism_root=""
+    fi
+
+    if [[ -n "$prism_root" ]]; then
+        preflight_check "npm" "install nodejs-npm" \
+            command -v npm || missing=1
+        preflight_check "prism node dependencies" "npm ci --prefix ${prism_root}" \
+            test -d "${prism_root}/node_modules" || missing=1
+    fi
+
+    preflight_check "tasks binary" "install tasks and run 'tasks init' in each project" \
+        command -v tasks || missing=1
+    preflight_check "tasks registry" "run 'tasks init' in each project to populate ${tasks_registry}" \
+        test -s "$tasks_registry" || missing=1
+
+    if [[ "$HEADLESS" == "false" ]]; then
+        preflight_check "niri" "install niri" \
+            command -v niri || missing=1
+        preflight_check "quickshell (qs)" "install quickshell; the debug-backdrop sink needs it" \
+            command -v qs || missing=1
+        preflight_check "noctalia" "install the noctalia-qs package" \
+            command -v noctalia || missing=1
+
+        # A niri that predates what prism emits fails only at apply time, deep
+        # inside the sink. Validate the config already on disk instead.
+        if command -v niri >/dev/null && [[ -s "$niri_generated" ]]; then
+            preflight_check "installed niri accepts the generated config" \
+                "rebuild and reinstall niri-material, then 'prism apply niri'" \
+                niri validate -c "${DOTS_HOME}/niri/config.kdl" || missing=1
+        fi
+
+        if should_run_phase noctalia-plugins; then
+            preflight_check "noctalia is running" \
+                "start noctalia; the noctalia-plugins phase talks to it over IPC" \
+                noctalia msg plugins list || missing=1
+        fi
+    fi
+
+    if [[ "$missing" -gt 0 ]]; then
+        # A finding is a report, not a gate: the phase that actually needs the
+        # prerequisite fails on its own and is named in the summary. --check is
+        # the form that exists to be a gate, so only it turns findings into an
+        # exit code.
+        echo "Preflight found ${missing} unmet prerequisite(s); each is listed above with its fix." >&2
+        [[ "$CHECK_ONLY" == "true" ]] && return 1
+    fi
+    return 0
+}
+
 function setup_external_clones() {
     phase "External clone setup"
     if [[ "$SKIP_EXTERNAL_CLONES" == "true" ]]; then
@@ -732,6 +816,7 @@ echo "Setting up dotfiles..."
 
 ensure_dir "$XDG_CONFIG_HOME"
 
+run_phase preflight setup_preflight
 run_phase external-clones setup_external_clones
 run_phase shell setup_shell_links
 run_phase gtk setup_gtk_links

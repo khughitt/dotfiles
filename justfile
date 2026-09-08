@@ -16,6 +16,9 @@ health-live:
 health-systemd:
     bin/dotfiles-health
 
+preflight:
+    bash setup.sh --check
+
 setup-dry-run:
     bash setup.sh --dry-run --link-only --headless
 
