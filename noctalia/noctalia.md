@@ -152,7 +152,8 @@ through Noctalia IPC. It requires the `~/d/prism` checkout and fails if the
 Noctalia IPC endpoint is unavailable.
 
 Dotfiles owns Wali, the Noctalia configuration, and installation; Prism owns
-its plugin source. Wali depends on `walictl`; Prism depends on `prism` alone.
+its plugin source. Wali depends on `walictl` and its config link; Prism depends
+on `prism` alone.
 
 Prism's panel drives niri's native glass material through its `niri` sink,
 which generates `prism.kdl` and reloads the compositor. There is no separate
@@ -167,6 +168,9 @@ captures panel edits on its own; `prism context pin wallpaper` makes it the
 write target for as long as it is on screen. Wallpapers are set on all
 monitors at once, so the hook firing once per connector is idempotent. The v4
 `wallpaperChange` feh command was X11-only and is not read by v5.
+The same hook then runs `walictl observe`, which records a wallpaper chosen in
+Noctalia's own panel into walictl's history. Noctalia's timed automation is
+off; `wali-rotate.timer` runs `walictl next` instead.
 
 Prism's entire config directory is linked to `prism/<hostname>/`, including
 `values.yaml` and `contexts/`. Setup creates the context directory; health

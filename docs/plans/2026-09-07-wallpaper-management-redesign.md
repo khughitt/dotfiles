@@ -1,5 +1,8 @@
 # Wallpaper Management Redesign Implementation Plan
 
+**Implementation status:** Tasks 1-16 are implemented on the
+`wallpaper-redesign` branch. Live cutover remains pending Task 17.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make `walictl` the single owner of wallpaper selection, history, and favorites, driven by a systemd timer and a thin Noctalia panel, with Noctalia keeping display and color derivation.

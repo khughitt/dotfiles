@@ -1,7 +1,8 @@
 # Wallpaper management redesign: walictl owns selection, favorites, and history
 
-**Status:** designed 2026-09-07, not yet implemented. Goal task: see the
-`tasks` record attached to this spec (`--spec wallpaper-management-redesign`).
+**Status:** Designed 2026-09-07; implemented on the `wallpaper-redesign`
+branch. Live cutover remains pending Task 17. See
+`docs/plans/2026-09-07-wallpaper-management-redesign.md`.
 
 ## Problem
 
@@ -150,6 +151,10 @@ missing required key is an error on every command. `~` is expanded; nothing
 else is interpolated. The rotation interval lives in the systemd timer, not
 here, so there is one place that defines it.
 
+`exclude_recent` must be a non-negative integer. `favorite_boost` and
+`period_boost` must be finite non-negative numbers. A computed total weight
+that overflows to a non-finite value is an error.
+
 This replaces `WALI_DIR` and `BACKGROUND_IMG_DIR` for everything at runtime.
 The zsh ingestion functions (`wali_ingest`, `wali_reprocess`, `wali_rotate`,
 `_wali_process_image`) keep reading those variables for now; moving them onto
@@ -195,10 +200,11 @@ Per host, never synced.
 }
 ```
 
-`origin` is one of `next`, `previous`, `random`, `observed`. Entries are
-capped at 1000; the oldest are dropped from the front and the cursor shifts
-with them. Every read-modify-write holds an `fcntl` lock on a sibling lock
-file, because the timer, the panel, and the hook can run at the same time.
+`origin` is one of `next`, `random`, `observed`. Cursor moves (`previous`, and
+`next` while behind the end) create no entry. Entries are capped at 1000; the
+oldest are dropped from the front and the cursor shifts with them. Every
+read-modify-write holds an `fcntl` lock on a sibling lock file, because the
+timer, the panel, and the hook can run at the same time.
 Waiting for the lock is bounded at 10 seconds, after which the command fails.
 
 A missing history file or directory is the empty state and is created on
@@ -330,17 +336,19 @@ exist. `date` and `display_date` are null for undated photos.
 `--add` and `--remove` are idempotent and take an optional id. `favorites
 --json` lists every favorite with its resolved display path, source path, and
 whether the display file exists. `neighbors --json` lists the `N` photos on
-each side of the current one ordered by capture date, for mind6.
+each side of the current one ordered by capture date, for mind6; `--count`
+must be non-negative.
 
 `edit` opens GIMP on `source_path` when present, else on `path`, and prints
 which it used. `import-favorites` maps every line of the old file to an id,
 counts duplicates, lists dangling entries, and writes `favorites.json`; it
 refuses to overwrite an existing `favorites.json` unless `--force`.
 
-Every failure exits non-zero with one line on stderr. There are exactly two
-designed fallbacks: Edit degrading to the display file, and the all-zero-weight
-uniform fallback above. Missing config, unreadable state, an unknown id, or a
-Noctalia IPC failure are errors.
+Runtime failures exit non-zero with one line on stderr; argparse retains its
+standard usage output for invalid command lines. There are exactly two designed
+fallbacks: Edit degrading to the display file, and the all-zero-weight uniform
+fallback above. Missing config, unreadable state, an unknown id, or a Noctalia
+IPC failure are errors.
 
 ## Panel
 

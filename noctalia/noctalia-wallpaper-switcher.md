@@ -1,41 +1,49 @@
-# Noctalia Wallpaper Switcher
+# Wallpaper selection with walictl
 
-A CLI helper for source-photo wallpaper actions alongside Noctalia v5.
+Noctalia v5 displays wallpapers and derives colors. `bin/walictl` decides which
+photo is shown, remembers what was shown, and keeps favorites. The Wali Panel
+plugin (`khughitt/wali-panel`) is a view over `walictl current --json`.
 
-## How It Works
+## Ownership
 
-The local Wali Panel v5 plugin provides the wallpaper UI: the bar entry
-`khughitt/wali-panel:widget` opens `khughitt/wali-panel:panel`. `bin/walictl`
-remains the backend for source-photo actions: it reads the current path with
-`noctalia msg wallpaper-get`, derives photo metadata, saves favorites, and
-opens source images for editing.
-
-Source images are derived from `PXL_YYYYMMDD_*` filenames mapped to
-`$BACKGROUND_IMG_DIR/<year>/<month>/<stem>.jpg`.
+| Concern | Owner |
+|---|---|
+| Display, palette, templates, hooks | Noctalia |
+| Next photo, history, favorites, config | `walictl` |
+| Timed rotation | `systemd/user/wali-rotate.timer` running `walictl next` |
+| Changes made in Noctalia's own panel | `wallpaper_changed` hook running `walictl observe` |
+| Per-wallpaper glass deltas | prism |
 
 ## Files
 
 | Path | Purpose |
 |---|---|
-| `bin/walictl` | CLI helper (argparse) — current, save, edit, navigate |
+| `$XDG_CONFIG_HOME/wali/config.toml` | Per-host config, linked from `wali/<hostname>/config.toml` |
+| `<favorites_file>` | Favorites keyed by photo id, synced with the backgrounds directory |
+| `$XDG_STATE_HOME/wali/history.json` | Per-host history with a cursor |
+| `bin/walictl` | The CLI |
 | `tests/bin/test_walictl.py` | Tests |
 
-## CLI Commands
+## Commands
 
 ```
-walictl current --json     # wallpaper metadata (path, source, date)
-walictl save-current       # append source path to $WALI_DIR/favorites.txt
-walictl edit-current       # open source image in GIMP
-walictl forward            # next wallpaper via noctalia msg wallpaper-set
-walictl backward           # previous wallpaper via noctalia msg wallpaper-set
-walictl random             # random wallpaper via noctalia msg wallpaper-random
+walictl current --json      # id, date, path, source_path, variant_path, favorite, history
+walictl next                # forward in history, else a weighted sample
+walictl previous            # back in history
+walictl random              # a weighted sample
+walictl favorite            # toggle the current photo; --add/--remove [<id>]
+walictl favorites --json
+walictl neighbors --json    # capture-time neighbours, for mind6; --count must be non-negative
+walictl edit                # GIMP on the original, else on the display file
+walictl observe             # hook entry point
+walictl import-favorites <favorites.txt>
 ```
 
-`walictl random` uses `noctalia msg wallpaper-random`; `walictl forward` and
-`walictl backward` use `noctalia msg wallpaper-set` with the selected sibling
-path. The Wali Panel does not duplicate this behavior; it invokes `walictl`.
+Sampling weights: favorites weigh `1 + favorite_boost`, months weigh
+`1 + period_boost * favorite density`, and the last `exclude_recent` shown
+photos weigh 0. `exclude_recent` must be a non-negative integer; both boosts
+must be finite non-negative numbers, and an overflowing total weight is an
+error. History records selections Noctalia accepted; only the default
+(all-monitor) wallpaper is tracked.
 
-## Environment Variables
-
-- **`BACKGROUND_IMG_DIR`** — photo archive root (required for source path resolution)
-- **`WALI_DIR`** — wali state directory (required for `save-current`)
+Design: `docs/specs/2026-09-07-wallpaper-management-redesign-design.md`.
