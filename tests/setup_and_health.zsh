@@ -1403,6 +1403,46 @@ test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
     fail "context writes do not reach the host directory"
 }
 
+test_setup_continues_past_a_failing_phase() {
+  local tmp fixture output rc
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/hypr" "$fixture/niri" \
+    "$fixture/prism/titan" "$fixture/mime" "${tmp}/config" "${tmp}/bin"
+  cp "${repo_root}/setup.sh" "$fixture/setup.sh"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+  cp "${repo_root}/niri/host_specific.sh" "$fixture/niri/"
+  cp "${repo_root}/hypr/host_specific.sh" "$fixture/hypr/"
+  printf '// titan\n' > "$fixture/niri/host-titan.kdl"
+  printf '# titan\n' > "$fixture/hypr/host-titan.conf"
+  printf '[Default Applications]\n' > "$fixture/mimeapps.list"
+  # graphical-config fails here, and only here
+  printf '#!/usr/bin/env bash\nexit 1\n' > "$fixture/bin/prism"
+  printf '#!/usr/bin/env bash\nprintf "titan\\n"\n' > "${tmp}/bin/hostname"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/bin/niri"
+  chmod +x "$fixture/setup.sh" "$fixture/bin/prism" \
+    "$fixture/niri/host_specific.sh" "$fixture/hypr/host_specific.sh" \
+    "${tmp}/bin/hostname" "${tmp}/bin/niri"
+
+  rc=0
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    PATH="${tmp}/bin:$PATH" \
+    bash "$fixture/setup.sh" --link-only --only graphical-config,mime 2>&1) || rc=$?
+
+  [[ "$rc" -ne 0 ]] || \
+    fail "setup exited zero despite a failing phase"
+  [[ "$output" == *"MIME links"* ]] || \
+    fail "a phase after the failing one never ran"
+  [[ -L "${tmp}/config/mimeapps.list" ]] || \
+    fail "the phase after the failing one did no work"
+  [[ "$output" == *"FAILED  graphical-config"* ]] || \
+    fail "the summary does not name the failed phase"
+  [[ "$output" == *"ok      mime"* ]] || \
+    fail "the summary does not name the phases that succeeded"
+}
+
 configure_prism_runtime() {
   local tmp="$1"
   mkdir -p "${tmp}/config/niri"
@@ -1631,5 +1671,6 @@ test_dotfiles_health_rejects_noctalia_config_warning
 test_dotfiles_health_rejects_noctalia_template_state_override
 test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
+test_setup_continues_past_a_failing_phase
 
 print -- "setup and health tests passed"

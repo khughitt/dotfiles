@@ -19,6 +19,8 @@ SKIP_PACKAGES=false
 SKIP_EXTERNAL_CLONES=false
 ENABLE_USER_TIMERS=false
 ONLY_PHASES=()
+COMPLETED_PHASES=()
+FAILED_PHASES=()
 
 VALID_PHASES=(
     external-clones
@@ -346,9 +348,49 @@ function install_packages() {
 function run_phase() {
     local phase_name="$1"
     local setup_function="$2"
+    local rc=0
 
     should_run_phase "$phase_name" || return 0
-    "$setup_function"
+
+    # Each phase runs in its own subshell so a failure stops that phase at its
+    # first bad command without taking the rest of the run with it. errexit must
+    # be off in this shell for the subshell's own `set -e` to be honoured: bash
+    # suppresses errexit inside an `if` condition, and that suppression reaches
+    # into subshells.
+    set +e
+    ( set -e; "$setup_function" )
+    rc=$?
+    set -e
+
+    if [[ "$rc" -eq 0 ]]; then
+        COMPLETED_PHASES+=("$phase_name")
+    else
+        FAILED_PHASES+=("$phase_name")
+        echo "Phase failed (exit ${rc}): ${phase_name}" >&2
+    fi
+    return 0
+}
+
+function report_phases() {
+    local phase_name
+
+    echo
+    echo "==> Summary"
+    for phase_name in "${COMPLETED_PHASES[@]}"; do
+        echo "  ok      ${phase_name}"
+    done
+    for phase_name in "${FAILED_PHASES[@]}"; do
+        echo "  FAILED  ${phase_name}"
+    done
+
+    if [[ "${#FAILED_PHASES[@]}" -gt 0 ]]; then
+        printf '%s of %s phase(s) failed: %s\n' \
+            "${#FAILED_PHASES[@]}" \
+            "$(( ${#COMPLETED_PHASES[@]} + ${#FAILED_PHASES[@]} ))" \
+            "${FAILED_PHASES[*]}" >&2
+        return 1
+    fi
+    return 0
 }
 
 # prism's node_modules is gitignored and carries com.dropbox.ignored, so it is
@@ -693,5 +735,9 @@ fi
 run_phase mime setup_mime_links
 run_phase tmux setup_tmux_plugin_manager
 run_phase packages setup_package_installation
+
+if ! report_phases; then
+    exit 1
+fi
 
 echo "Done!"
