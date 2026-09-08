@@ -181,6 +181,7 @@ else
 fi
 
 GRAPHICAL_CONFIGS=("${DOTFILES_GRAPHICAL_CONFIGS[@]}")
+NOCTALIA_GENERATED=("${DOTFILES_NOCTALIA_GENERATED[@]}")
 if [[ "$MACOS" != "true" ]]; then
     dotfiles_select_common_configs true
 else
@@ -556,6 +557,26 @@ function setup_gtk_links() {
     ln_s "${DOTS_HOME}/gtk-4.0/gtk.css" "${XDG_CONFIG_HOME}/gtk-4.0/gtk.css"
 }
 
+function link_noctalia_generated() {
+    local entry tree_path state_path
+
+    for entry in "${NOCTALIA_GENERATED[@]}"; do
+        tree_path="${DOTS_HOME}/${entry%%:*}"
+        state_path="${XDG_STATE_HOME:-${HOME}/.local/state}/${entry##*:}"
+
+        ensure_dir "$(dirname "$state_path")"
+        ensure_dir "$(dirname "$tree_path")"
+
+        # Whatever this machine already generated is the right seed; a regular
+        # file here is the pre-migration layout, not something to discard.
+        if [[ ! -e "$state_path" && -f "$tree_path" && ! -L "$tree_path" ]]; then
+            run mv "$tree_path" "$state_path"
+        fi
+        [[ -e "$state_path" ]] || run touch "$state_path"
+        run ln -sfT "$state_path" "$tree_path"
+    done
+}
+
 function setup_graphical_config_links() {
     [[ "$HEADLESS" == "false" ]] || return 0
 
@@ -589,8 +610,7 @@ function setup_graphical_config_links() {
     run ln -sfT "$niri_generated" "${DOTS_HOME}/niri/prism.kdl"
     run env NIRI_DIR="${DOTS_HOME}/niri" "${DOTS_HOME}/niri/host_specific.sh"
     run env HYPR_DIR="${DOTS_HOME}/hypr" "${DOTS_HOME}/hypr/host_specific.sh"
-    run touch "${DOTS_HOME}/niri/noctalia.kdl"
-    run touch "${DOTS_HOME}/hypr/noctalia.conf"
+    link_noctalia_generated
 
     if [[ "$DRY_RUN" != "true" ]]; then
         niri_generated_before="$(stat -Lc '%d:%i' "$niri_generated" 2>/dev/null || true)"

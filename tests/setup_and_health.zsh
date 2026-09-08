@@ -3,6 +3,9 @@ set -euo pipefail
 
 repo_root=${0:A:h:h}
 source "${0:A:h}/tmp_cleanup.zsh"
+# one source of truth for the generated-output list that setup.sh links and
+# dotfiles-health verifies; the tests assert against the same data
+source "${repo_root}/lib/dotfiles-setup-data.bash"
 
 fail() {
   print -u2 -- "FAIL: $*"
@@ -1403,6 +1406,16 @@ test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
     fail "niri include points at a generated file that was never created"
   [[ -e "$fixture/kitty/prism-generated.conf" ]] || \
     fail "kitty include points at a generated file that was never created"
+  # noctalia's output must leave the shared tree, or the two machines overwrite
+  # each other's colours through the whole-directory ~/.config symlinks
+  local entry tree_path
+  for entry in "${DOTFILES_NOCTALIA_GENERATED[@]}"; do
+    tree_path="$fixture/${entry%%:*}"
+    [[ -L "$tree_path" ]] || \
+      fail "generated theme output is not a symlink: ${entry%%:*}"
+    [[ "$(readlink "$tree_path")" == "${tmp}/state/${entry##*:}" ]] || \
+      fail "generated theme output does not point at per-machine state: ${entry%%:*}"
+  done
   printf 'glass.ior: 1.3\n' > "${tmp}/config/prism/contexts/pinned-write.yaml"
   [[ -f "$fixture/prism/titan/contexts/pinned-write.yaml" ]] || \
     fail "context writes do not reach the host directory"

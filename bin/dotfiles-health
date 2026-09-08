@@ -142,6 +142,37 @@ check_absent_stale_config_link() {
 # it resolves the same everywhere. A target naming one machine therefore drags
 # every other machine onto that machine's config. Per-machine selection belongs
 # in XDG_STATE_HOME, which is not shared. See niri/host_specific.sh.
+# The symlink check above cannot see this: Noctalia's generated theme output is
+# written as file *content* into the shared tree, through the whole-directory
+# ~/.config symlinks. Each of these must be a link out to per-machine state, so
+# the colours one machine derives never reach the other.
+check_noctalia_generated_is_not_in_tree() {
+    local entry tree_path resolved offenders=0
+
+    for entry in "${DOTFILES_NOCTALIA_GENERATED[@]}"; do
+        tree_path="${DOTS_HOME}/${entry%%:*}"
+
+        if [[ ! -e "$tree_path" && ! -L "$tree_path" ]]; then
+            warn "generated theme output is absent: ${entry%%:*} (run setup.sh)"
+            continue
+        fi
+        if [[ ! -L "$tree_path" ]]; then
+            fail "generated theme output is a real file in the shared tree: ${entry%%:*}"
+            offenders=$((offenders + 1))
+            continue
+        fi
+        resolved="$(readlink -f "$tree_path" 2>/dev/null || true)"
+        if [[ "$resolved" == "${DOTS_HOME}/"* ]]; then
+            fail "generated theme output resolves back into the shared tree: ${entry%%:*} -> ${resolved}"
+            offenders=$((offenders + 1))
+        fi
+    done
+
+    if [[ "$offenders" -eq 0 ]]; then
+        pass "generated theme output is outside the shared tree (${#DOTFILES_NOCTALIA_GENERATED[@]} paths)"
+    fi
+}
+
 check_no_machine_specific_links() {
     local machines=() dir link target name offenders=0
 
@@ -393,6 +424,7 @@ fi
 unset wali_config
 
 check_no_machine_specific_links
+check_noctalia_generated_is_not_in_tree
 
 if [[ "$failures" -gt 0 ]]; then
     echo "Health check failed: $failures failure(s), $warnings warning(s)" >&2
