@@ -14,6 +14,12 @@ plugin (`khughitt/wali-panel`) is a view over `walictl current --json`.
 | Changes made in Noctalia's own panel | `wallpaper_changed` hook running `walictl observe` |
 | Per-wallpaper glass deltas | prism |
 
+Before giving the systemd timer ownership, remove `enabled` from
+`[wallpaper.automation]` in
+`${XDG_STATE_HOME:-$HOME/.local/state}/noctalia/settings.toml` if present, then run
+`noctalia msg config-reload`. Noctalia state settings override tracked config, so
+verify the exported effective config has wallpaper automation disabled.
+
 ## Files
 
 | Path | Purpose |

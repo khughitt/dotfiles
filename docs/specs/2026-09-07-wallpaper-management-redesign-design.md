@@ -1,7 +1,8 @@
 # Wallpaper management redesign: walictl owns selection, favorites, and history
 
-**Status:** Designed 2026-09-07; implementation complete. Live cutover is
-in progress on 2026-09-08 (Task 17). See
+**Status:** Designed 2026-09-07; implementation merged to `main` and live on
+titan 2026-09-08. Task 17 closeout awaits manual panel verification and old
+favorites retirement. See
 `docs/plans/2026-09-07-wallpaper-management-redesign.md`.
 
 ## Problem

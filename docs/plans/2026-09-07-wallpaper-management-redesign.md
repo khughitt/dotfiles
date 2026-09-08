@@ -1,7 +1,8 @@
 # Wallpaper Management Redesign Implementation Plan
 
-**Implementation status:** Tasks 1-16 are implemented. Live cutover is
-in progress on 2026-09-08 (Task 17).
+**Implementation status:** Tasks 1-16 are implemented; the redesign is merged
+to `main` and live on titan 2026-09-08. Task 17 closeout awaits manual panel
+verification and old favorites retirement.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -2947,19 +2948,25 @@ git commit -m "docs(wallpaper): describe walictl ownership and the observe hook"
 
 This task runs against the live system after the branch is fast-forwarded into `main` (the live links point at the main checkout; see `superpowers:finishing-a-development-branch`). Record each result as a `tasks note dots-59c279` line.
 
-- [ ] **Step 1: Merge and link**
+- [x] **Step 1: Merge and link**
 
 ```bash
 cd ~/d/dotfiles && git merge --ff-only wallpaper-redesign
 ./setup.sh --link-only --only graphical-config
-./setup.sh --link-only --only systemd --enable-user-timers
+# Remove `enabled` from [wallpaper.automation] in
+# ${XDG_STATE_HOME:-$HOME/.local/state}/noctalia/settings.toml if present.
 noctalia msg config-reload
+noctalia config export full | python3 -c 'import sys,tomllib; assert not tomllib.load(sys.stdin.buffer)["wallpaper"]["automation"]["enabled"]'
+./setup.sh --link-only --only systemd --enable-user-timers
 bin/dotfiles-health --skip-systemd
 ```
 
-Expected: `wali/config.toml` and both units linked; health passes; the timer is listed by `systemctl --user list-timers wali-rotate.timer`.
+Noctalia state settings override tracked config, so remove the persisted automation
+override before giving the timer ownership. Expected: the exported effective config
+has wallpaper automation disabled; `wali/config.toml` and both units are linked;
+health passes; the timer is listed by `systemctl --user list-timers wali-rotate.timer`.
 
-- [ ] **Step 2: Import favorites**
+- [x] **Step 2: Import favorites**
 
 ```bash
 walictl import-favorites ~/d/linux/backgrounds/favorites.txt
@@ -2978,7 +2985,7 @@ python3 -c "import json;print(json.load(open('$HOME/.local/state/wali/history.js
 
 Expected: the last history entry has `origin: observed` and the id of the photo picked in the native panel. Open the Wali Panel from the bar: the heart is filled for a favorited photo and hollow otherwise, and toggling flips it.
 
-- [ ] **Step 4: Confirm the timer fires**
+- [x] **Step 4: Confirm the timer fires**
 
 ```bash
 systemctl --user list-timers wali-rotate.timer
