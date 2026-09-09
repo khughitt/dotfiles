@@ -122,7 +122,7 @@ local function caption(current, enabled)
       ui.label({ text = detail.text, fontSize = 12, fontFamily = "monospace", color = detail.color, maxLines = 2 }),
     }),
     ui.button({ key = "favorite", glyph = Logic.favoriteGlyph(favorite), glyphSize = 22,
-      color = Logic.favoriteColor(favorite), variant = "ghost", controlSize = "md",
+      selected = favorite == true, variant = "ghost", controlSize = "md",
       tooltip = favorite and "Remove favorite" or "Favorite",
       enabled = enabled and current ~= nil, onClick = function() startAction("favorite") end }),
   })

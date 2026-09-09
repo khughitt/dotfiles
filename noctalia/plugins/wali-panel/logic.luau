@@ -51,10 +51,6 @@ function M.favoriteGlyph(favorite)
   return favorite and "heart-filled" or "heart"
 end
 
-function M.favoriteColor(favorite)
-  return favorite and "primary" or "on_surface_variant"
-end
-
 function M.captionTitle(payload)
   if payload == nil then return "" end
   return payload.display_date or payload.date or payload.id
