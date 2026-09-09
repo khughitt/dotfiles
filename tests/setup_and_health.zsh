@@ -388,7 +388,7 @@ assert wali["plugin_api"] <= 23
 assert wali["dependencies"] == ["walictl"]
 assert wali["widget"] == [{"id": "widget", "entry": "widget.luau"}]
 assert wali["panel"] == [{
-    "id": "panel", "entry": "panel.luau", "width": 588, "height": 798,
+    "id": "panel", "entry": "panel.luau", "width": 588, "height": 520,
     "placement": "attached", "position": "auto",
 }]
 assert "setting" not in wali
@@ -770,11 +770,15 @@ set -euo pipefail
 EOF
   chmod +x "${tmp}/bin/niri"
   set +e
-  output=$(NIRI_SOCKET= PRISM_TEST_HOSTNAME=titan NOCTALIA_ENABLE_STATUS=69 SETUP_ROOT="$fixture" \
+  output=$(NIRI_SOCKET= PRISM_TEST_HOSTNAME=titan NOCTALIA_TEST_THEME_MODE_STATUS=1 SETUP_ROOT="$fixture" \
     run_setup "$tmp" --link-only 2>&1)
   exit_status=$?
   set -e
   (( exit_status == 0 )) || fail "default setup required live Noctalia: ${output}"
+  [[ -L "${tmp}/data/noctalia/plugins/wali-panel" ]] || \
+    fail "default setup did not link the Noctalia plugins with Noctalia down"
+  [[ "$output" == *"linked but not enabled"* ]] || \
+    fail "default setup did not say the plugins are linked but not enabled: ${output}"
 }
 
 test_noctalia_plugin_phase_fails_when_ipc_is_unavailable() {

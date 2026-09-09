@@ -128,7 +128,7 @@ while [[ $# -gt 0 ]]; do
             echo "                    Enable linked systemd user timers on Linux"
             echo "  --only PHASES     Run only comma-separated setup phases"
             print_valid_phases
-            echo "                    noctalia-plugins is a post-shell phase requiring a running Noctalia v5 instance"
+            echo "                    noctalia-plugins links the plugins in every run; enabling them needs a running Noctalia v5"
             echo "  --help            Show this help message"
             exit 0
             ;;
@@ -493,9 +493,11 @@ function setup_preflight() {
                 niri validate -c "${DOTS_HOME}/niri/config.kdl" || missing=1
         fi
 
+        # The phase links its plugins with Noctalia down and says what is left to
+        # do, so this reports the deferred work rather than a blocked run.
         if should_run_phase noctalia-plugins; then
             preflight_check "noctalia is running" \
-                "start noctalia; the noctalia-plugins phase talks to it over IPC" \
+                "start noctalia; until then the plugins are linked but not enabled" \
                 noctalia msg plugins list || missing=1
         fi
     fi
@@ -833,6 +835,16 @@ function setup_noctalia_plugins() {
     ensure_dir "$plugin_dir"
     ln_s "${DOTS_HOME}/noctalia/plugins/wali-panel" "${plugin_dir}/wali-panel"
     ln_s "${HOME}/d/prism/integrations/noctalia-plugin" "${plugin_dir}/prism"
+
+    # The links are what dotfiles-health requires and they need nothing running, so
+    # every pass makes them. Only enabling talks to Noctalia; when it is not up, name
+    # the two commands rather than leaving a phase that never ran in a full pass.
+    if ! noctalia msg theme-mode-get >/dev/null 2>&1; then
+        echo "Noctalia is not running; its plugins are linked but not enabled." \
+            "Run 'noctalia msg plugins enable khughitt/wali-panel' and" \
+            "'noctalia msg plugins enable khughitt/prism' once it is up."
+        return 0
+    fi
     run noctalia msg plugins enable khughitt/wali-panel
     run noctalia msg plugins enable khughitt/prism
 }
@@ -881,9 +893,7 @@ run_phase systemd setup_systemd_user_units
 run_phase kitty setup_kitty_overrides
 run_phase home setup_home_dotfile_links
 run_phase app-config setup_application_config_links
-if [[ "${#ONLY_PHASES[@]}" -gt 0 ]]; then
-    run_phase noctalia-plugins setup_noctalia_plugins
-fi
+run_phase noctalia-plugins setup_noctalia_plugins
 run_phase mime setup_mime_links
 run_phase tmux setup_tmux_plugin_manager
 run_phase packages setup_package_installation
