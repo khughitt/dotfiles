@@ -1504,6 +1504,8 @@ test_preflight_reports_every_unmet_prerequisite_without_mutating() {
     fail "preflight did not report the missing prism node_modules"
   [[ "$output" == *"MISSING  tasks registry"* ]] || \
     fail "preflight did not report the unpopulated tasks registry"
+  [[ "$output" == *"MISSING  mindful environment"* ]] || \
+    fail "preflight did not report the missing mindful env file"
   [[ "$output" == *"npm ci --prefix"* ]] || \
     fail "preflight reported a finding without naming its fix"
 

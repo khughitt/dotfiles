@@ -472,6 +472,18 @@ function setup_preflight() {
             test -d "${prism_root}/node_modules" || missing=1
     fi
 
+    # Familiar's hooks run on every agent tool call and die on a missing
+    # node_modules; mindful's shell function and user unit both read the env file.
+    # Neither is in git or in Dropbox, and both are named here rather than met as a
+    # crash later. Guarded on the checkout the same way prism's are.
+    if [[ -f "${HOME}/d/familiar/package.json" ]]; then
+        preflight_check "familiar node dependencies" "npm install --prefix ${HOME}/d/familiar" \
+            test -d "${HOME}/d/familiar/node_modules" || missing=1
+    fi
+    preflight_check "mindful environment" \
+        "write MINDFUL_DBPASS into ${XDG_CONFIG_HOME}/mindful.env, mode 600" \
+        test -s "${XDG_CONFIG_HOME}/mindful.env" || missing=1
+
     preflight_check "tasks binary" "install tasks and run 'tasks init' in each project" \
         command -v tasks || missing=1
     preflight_check "tasks registry" "run 'tasks init' in each project to populate ${tasks_registry}" \
