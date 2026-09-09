@@ -76,6 +76,16 @@ equal(Logic.copyTarget({ path = "/p", source_path = "/s" }), "/s")
 equal(Logic.copyTarget({ path = "/p" }), "/p")
 equal(Logic.favoriteGlyph(true), "heart-filled")
 equal(Logic.favoriteGlyph(false), "heart")
+equal(Logic.favoriteColor(true), "primary")
+equal(Logic.favoriteColor(false), "on_surface_variant")
+equal(Logic.captionTitle(payload), "August 20, 2026")
+equal(Logic.captionTitle({ ok = true, id = "x", path = "/p", favorite = false, date = "2026-08-20" }), "2026-08-20")
+equal(Logic.captionTitle({ ok = true, id = "x", path = "/p", favorite = false }), "x")
+equal(Logic.captionTitle(nil), "")
+equal(Logic.captionDetail(payload, nil), { text = "PXL_20260820_000000000", color = "on_surface_variant" })
+equal(Logic.captionDetail(payload, "walictl next exited 1"), { text = "walictl next exited 1", color = "error" })
+equal(Logic.captionDetail(nil, nil), { text = "", color = "on_surface_variant" })
+equal(Logic.captionDetail(nil, "boom"), { text = "boom", color = "error" })
 
 local rendered
 local runs = {}
@@ -116,7 +126,7 @@ equal(toggledPanel, "khughitt/wali-panel:panel")
 
 panel = { render = function(tree) rendered = tree end }
 ui = {}
-for _, name in ipairs({ "box", "button", "column", "glyph", "image", "label", "row" }) do
+for _, name in ipairs({ "box", "button", "column", "glyph", "image", "label", "row", "spacer" }) do
   local nodeType = name
   ui[nodeType] = function(props, children)
     return { type = nodeType, props = props or {}, children = children or {} }
@@ -132,10 +142,10 @@ end
 dofile(here .. "panel.luau")
 require = realRequire
 
-local function button(node, text)
-  if node.type == "button" and node.props.text == text then return node end
+local function button(node, key)
+  if node.type == "button" and node.props.key == key then return node end
   for _, child in ipairs(node.children) do
-    local found = button(child, text)
+    local found = button(child, key)
     if found then return found end
   end
   return nil
@@ -151,15 +161,15 @@ equal(runs[1].command, Shell.command(commands.current))
 equal(runs[1].timeout, 10000)
 runs[1].callback(success("with source"))
 
-local copy = assert(button(rendered, "Copy"))
+local copy = assert(button(rendered, "copy"))
 assert(copy.props.enabled)
 copy.props.onClick()
 equal(clipboardCalls, { { "/wall/source.jpg", "text/plain" } })
 
-assert(button(rendered, "Previous")).props.onClick()
+assert(button(rendered, "previous")).props.onClick()
 equal(#runs, 2)
 equal(runs[2].command, Shell.command(commands.previous))
-local nextWhileBusy = assert(button(rendered, "Next"))
+local nextWhileBusy = assert(button(rendered, "next"))
 assert(not nextWhileBusy.props.enabled)
 nextWhileBusy.props.onClick()
 equal(#runs, 2, "a second action started while the first was busy")
@@ -169,7 +179,7 @@ equal(#runs, 3, "successful navigation did not refresh current metadata")
 equal(runs[3].command, Shell.command(commands.current))
 runs[3].callback(success("without source"))
 
-local copyWithoutSource = assert(button(rendered, "Copy"))
+local copyWithoutSource = assert(button(rendered, "copy"))
 assert(copyWithoutSource.props.enabled)
 copyWithoutSource.props.onClick()
 equal(clipboardCalls, {
@@ -178,13 +188,22 @@ equal(clipboardCalls, {
 })
 
 runs[3].callback(success("with source"))
-local favorite = assert(button(rendered, "Favorite"))
+local favorite = assert(button(rendered, "favorite"))
 equal(favorite.props.glyph, "heart-filled")
+equal(favorite.props.color, "primary")
+assert(favorite.props.text == nil, "favorite must be glyph-only")
+for _, key in ipairs({ "refresh", "previous", "next", "random", "edit", "copy" }) do
+  local node = assert(button(rendered, key), key .. " button missing")
+  assert(node.props.text == nil, key .. " must be glyph-only")
+  assert(type(node.props.tooltip) == "string" and node.props.tooltip ~= "", key .. " needs a tooltip")
+end
 favorite.props.onClick()
 equal(runs[#runs].command, Shell.command(commands.favorite))
 runs[#runs].callback(success("favorited PXL_20260820_000000000"))
 equal(runs[#runs].command, Shell.command(commands.current), "favorite did not refresh metadata")
 runs[#runs].callback(success("without source"))
-equal(assert(button(rendered, "Favorite")).props.glyph, "heart")
+local unfavorited = assert(button(rendered, "favorite"))
+equal(unfavorited.props.glyph, "heart")
+equal(unfavorited.props.color, "on_surface_variant")
 
 print("Wali plugin tests passed")

@@ -92,50 +92,72 @@ local function copyPath()
   render()
 end
 
-local function preview()
+local frameWidth, frameHeight = 540, 304
+
+local function frame()
   if state.current then
-    return ui.image({ path = state.current.path, width = 520, height = 430, radius = 12, fit = "contain" })
+    return ui.image({
+      path = state.current.path, width = frameWidth, height = frameHeight, radius = 14, fit = "contain",
+      border = "outline/0.5", borderWidth = 1,
+    })
   end
-  return ui.box({ width = 520, height = 430, radius = 12, fill = "surface_variant" }, {
-    ui.glyph({ name = state.loading and "loader" or "wallpaper", size = 56, color = "on_surface_variant" }),
+  return ui.box({
+    width = frameWidth, height = frameHeight, radius = 14, fill = "surface_variant",
+    border = "outline/0.5", borderWidth = 1,
+  }, {
+    ui.glyph({ name = state.loading and "loader" or "wallpaper", size = 48, color = "on_surface_variant/0.6" }),
   })
 end
 
-local function line(label, value)
-  return ui.label({ text = label .. ": " .. (value or "Unavailable"), color = "on_surface_variant", maxLines = 2 })
+local function caption(current, enabled)
+  local favorite = current ~= nil and current.favorite
+  local detail = Logic.captionDetail(current, state.errorText)
+  return ui.row({ align = "center", gap = 12 }, {
+    ui.column({ gap = 2, flexGrow = 1 }, {
+      ui.row({ align = "center", gap = 8 }, {
+        ui.label({ text = Logic.captionTitle(current), fontSize = 20, fontWeight = "semibold", maxLines = 1 }),
+        ui.label({ text = "variant", fontSize = 11, fontWeight = "medium", color = "tertiary",
+          visible = current ~= nil and current.variant_path ~= nil }),
+      }),
+      ui.label({ text = detail.text, fontSize = 12, fontFamily = "monospace", color = detail.color, maxLines = 2 }),
+    }),
+    ui.button({ key = "favorite", glyph = Logic.favoriteGlyph(favorite), glyphSize = 22,
+      color = Logic.favoriteColor(favorite), variant = "ghost", controlSize = "md",
+      tooltip = favorite and "Remove favorite" or "Favorite",
+      enabled = enabled and current ~= nil, onClick = function() startAction("favorite") end }),
+  })
+end
+
+local function navButton(key, glyph, tooltip, enabled, variant)
+  return ui.button({ key = key, glyph = glyph, glyphSize = 20, variant = variant or "outline", controlSize = "md",
+    width = 56, tooltip = tooltip, enabled = enabled, onClick = function() startAction(key) end })
+end
+
+local function utilityButton(key, glyph, tooltip, enabled, onClick)
+  return ui.button({ key = key, glyph = glyph, glyphSize = 16, variant = "ghost", controlSize = "sm",
+    tooltip = tooltip, enabled = enabled, onClick = onClick })
+end
+
+local function actions(current, enabled)
+  local loaded = enabled and current ~= nil
+  return ui.row({ align = "center", gap = 8 }, {
+    navButton("previous", "arrow-left", "Previous", enabled),
+    navButton("next", "arrow-right", "Next", enabled),
+    navButton("random", "dice", "Random", enabled, "primary"),
+    ui.spacer({ flexGrow = 1 }),
+    utilityButton("refresh", "refresh", "Refresh", enabled, function() refresh() end),
+    utilityButton("edit", "photo-edit", "Edit in GIMP", loaded, function() startAction("edit") end),
+    utilityButton("copy", "clipboard", "Copy source path", current ~= nil, copyPath),
+  })
 end
 
 render = function()
   local enabled = not state.busy
   local current = state.current
-  local favorite = current ~= nil and current.favorite
-  panel.render(ui.column({ flexGrow = 1, gap = 12 }, {
-    ui.row({ align = "center", gap = 8 }, {
-      ui.label({ text = "Wali Panel", fontSize = 18, fontWeight = "bold", flexGrow = 1 }),
-      ui.label({ text = state.loading and "Loading…" or "", color = "on_surface_variant" }),
-    }),
-    preview(),
-    ui.column({ gap = 4 }, {
-      line("Taken", current and current.display_date),
-      line("Favorite", current and (favorite and "yes" or "no")),
-      line("Source", current and current.source_path),
-      ui.label({ text = "Variant: " .. (current and current.variant_path or ""), color = "on_surface_variant",
-        visible = current ~= nil and current.variant_path ~= nil, maxLines = 2 }),
-      ui.label({ text = state.errorText or "", color = "error", visible = state.errorText ~= nil, maxLines = 3 }),
-    }),
-    ui.row({ align = "center", justify = "space_between", gap = 8 }, {
-      ui.button({ text = "Refresh", glyph = "refresh", enabled = enabled, onClick = function() refresh() end }),
-      ui.button({ text = "Previous", glyph = "arrow-left", enabled = enabled, onClick = function() startAction("previous") end }),
-      ui.button({ text = "Next", glyph = "arrow-right", enabled = enabled, onClick = function() startAction("next") end }),
-      ui.button({ text = "Random", glyph = "dice", enabled = enabled, onClick = function() startAction("random") end }),
-    }),
-    ui.row({ align = "center", justify = "space_between", gap = 8 }, {
-      ui.button({ text = "Favorite", glyph = Logic.favoriteGlyph(favorite), enabled = enabled and current ~= nil,
-        onClick = function() startAction("favorite") end }),
-      ui.button({ text = "Edit", glyph = "photo-edit", enabled = enabled and current ~= nil,
-        onClick = function() startAction("edit") end }),
-      ui.button({ text = "Copy", glyph = "clipboard", enabled = current ~= nil, onClick = copyPath }),
-    }),
+  panel.render(ui.column({ flexGrow = 1, gap = 16, padding = 24 }, {
+    frame(),
+    caption(current, enabled),
+    actions(current, enabled),
   }))
 end
 

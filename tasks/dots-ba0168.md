@@ -1,11 +1,12 @@
 ---
 id: dots-ba0168
 title: "Wali panel UI polish pass: buttons, spacing, typography, color"
-status: todo
+status: doing
 priority: 2
 size: m
+owner: wali-panel-polish
 created: 2026-09-09T01:31:26Z
-updated: 2026-09-09T01:32:07Z
+updated: 2026-09-09T01:54:42Z
 depends: [dots-fa9cc0]
 tags: [quick-add, noctalia, wallpaper]
 source: "mindful:thought:a1a5726e2ff44a0586a4e56dea0e5d86"
