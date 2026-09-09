@@ -101,9 +101,9 @@ local function frame()
       border = "outline/0.5", borderWidth = 1,
     })
   end
-  return ui.box({
+  return ui.column({
     width = frameWidth, height = frameHeight, radius = 14, fill = "surface_variant",
-    border = "outline/0.5", borderWidth = 1,
+    border = "outline/0.5", borderWidth = 1, align = "center", justify = "center",
   }, {
     ui.glyph({ name = state.loading and "loader" or "wallpaper", size = 48, color = "on_surface_variant/0.6" }),
   })

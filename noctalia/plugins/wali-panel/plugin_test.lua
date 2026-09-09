@@ -153,7 +153,19 @@ local function success(stdout)
   return { exitCode = 0, stdout = stdout or "", stderr = "", timedOut = false }
 end
 
+local function find(node, nodeType)
+  if node.type == nodeType then return node end
+  for _, child in ipairs(node.children) do
+    local found = find(child, nodeType)
+    if found then return found end
+  end
+  return nil
+end
+
 onOpen({})
+assert(find(rendered, "box") == nil, "ui.box cannot hold children; the placeholder frame must be a container")
+local placeholderGlyph = assert(find(rendered, "glyph"), "placeholder frame lost its glyph")
+equal(placeholderGlyph.props.name, "loader")
 equal(#runs, 1)
 equal(runs[1].command, Shell.command(commands.current))
 equal(runs[1].timeout, 10000)
