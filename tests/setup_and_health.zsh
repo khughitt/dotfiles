@@ -364,7 +364,7 @@ assert config["bar"]["default"]["end"] == [
 assert "plugins" not in config
 assert not any(name.startswith("khughitt/") for name in config.get("widget", {}))
 assert templates["builtin_ids"] == [
-    "hyprland", "gtk3", "gtk4", "qt", "niri", "ghostty", "kitty", "btop"
+    "gtk3", "gtk4", "qt", "niri", "ghostty", "kitty", "btop"
 ]
 assert templates["community_ids"] == ["zathura", "bat", "yazi"]
 assert set(templates["user"]) == {
@@ -402,25 +402,16 @@ test_noctalia_template_hook_markers_are_reproducible() {
     fail "GTK 3 import stub must not be ignored"
   rg -q -F '@import url("noctalia.css");' \
     "${repo_root}/gtk-3.0/gtk.css" || fail "missing GTK 3 Noctalia import"
-  rg -q -F 'source = ~/.config/hypr/noctalia.conf' \
-    "${repo_root}/hypr/hyprland.conf" || fail "missing v5 Hyprland source"
-  ! rg -q -F 'source = ~/.config/hypr/noctalia/noctalia-colors.conf' \
-    "${repo_root}/hypr/hyprland.conf" || fail "active Hyprland still sources v4 colors"
-  git -C "$repo_root" check-ignore -q --no-index hypr/noctalia.conf || \
-    fail "generated v5 Hyprland theme must be ignored"
 }
 
 test_compositors_use_noctalia_v5() {
   local niri="${repo_root}/niri/config.kdl"
-  local hypr="${repo_root}/hypr/hyprland.conf"
   rg -q -F 'spawn-at-startup "noctalia"' "$niri" || fail "Niri does not start v5"
   rg -q -F 'spawn "noctalia" "msg" "panel-toggle" "launcher"' "$niri" || \
     fail "Niri launcher bind is not v5"
   rg -q -F 'match app-id="dev.noctalia.Noctalia"' "$niri" || \
     fail "Niri settings window is not floating"
-  rg -q -F 'exec-once = noctalia' "$hypr" || fail "Hyprland does not start v5"
-  rg -q -F '$ipc = noctalia msg' "$hypr" || fail "Hyprland IPC is not v5"
-  ! rg -q 'noctalia-shell|qs.*noctalia' "$niri" "$hypr" || \
+  ! rg -q 'noctalia-shell|qs.*noctalia' "$niri" || \
     fail "active compositor config still calls Noctalia v4"
 }
 
@@ -429,7 +420,6 @@ test_active_noctalia_code_has_no_v4_ipc() {
     "${repo_root}/bin/walictl"
     "${repo_root}/shell/wali"
     "${repo_root}/niri/config.kdl"
-    "${repo_root}/hypr/hyprland.conf"
     "${repo_root}/setup.sh"
     "${repo_root}/bin/dotfiles-health"
   )
@@ -451,11 +441,10 @@ test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  mkdir -p "$tmp/repo/bin" "$tmp/repo/shell" "$tmp/repo/niri" "$tmp/repo/hypr"
+  mkdir -p "$tmp/repo/bin" "$tmp/repo/shell" "$tmp/repo/niri"
   cp "${repo_root}/bin/walictl" "$tmp/repo/bin/walictl"
   cp "${repo_root}/shell/wali" "$tmp/repo/shell/wali"
   cp "${repo_root}/niri/config.kdl" "$tmp/repo/niri/config.kdl"
-  cp "${repo_root}/hypr/hyprland.conf" "$tmp/repo/hypr/hyprland.conf"
   cp "${repo_root}/setup.sh" "$tmp/repo/setup.sh"
 
   set +e
@@ -474,18 +463,16 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
   register_tmp_cleanup "$tmp"
   config="${tmp}/home/.config"
   targets="${tmp}/targets"
-  mkdir -p "$config" "$targets/niri" "$targets/hypr" \
+  mkdir -p "$config" "$targets/niri" \
     "$targets/ghostty" "$targets/kitty/themes" "$targets/gtk-3.0" \
     "$targets/gtk-4.0" "${tmp}/bin"
   cp "${repo_root}/niri/config.kdl" "$targets/niri/config.kdl"
-  cp "${repo_root}/hypr/hyprland.conf" "$targets/hypr/hyprland.conf"
   cp "${repo_root}/ghostty/config.ghostty" "$targets/ghostty/config.ghostty"
   cp "${repo_root}/kitty/kitty.conf" "$targets/kitty/kitty.conf"
   cp "${repo_root}/gtk-3.0/gtk.css" "$targets/gtk-3.0/gtk.css"
   cp "${repo_root}/gtk-4.0/gtk.css" "$targets/gtk-4.0/gtk.css"
 
   ln -s "$targets/niri" "$config/niri"
-  ln -s "$targets/hypr" "$config/hypr"
   ln -s "$targets/kitty" "$config/kitty"
   mkdir -p "$config/ghostty" "$config/gtk-3.0" "$config/gtk-4.0"
   ln -s "$targets/ghostty/config.ghostty" "$config/ghostty/config.ghostty"
@@ -494,7 +481,7 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
   touch "$config/gtk-3.0/noctalia.css" "$config/gtk-4.0/noctalia.css"
   touch "$config/kitty/themes/noctalia.conf"
 
-  for command in hyprctl gsettings dconf pgrep pkill; do
+  for command in gsettings dconf pgrep pkill; do
     printf '#!/usr/bin/env bash\nexit 1\n' > "${tmp}/bin/${command}"
     chmod +x "${tmp}/bin/${command}"
   done
@@ -504,10 +491,6 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
     bash /usr/share/noctalia/assets/templates/niri/apply.sh apply 2>&1) || \
     fail "Niri hook failed: ${output}"
   hook_output+="Niri: ${output}"$'\n'
-  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
-    bash /usr/share/noctalia/assets/templates/hyprland/apply.sh apply 2>&1) || \
-    fail "Hyprland hook failed: ${output}"
-  hook_output+="Hyprland: ${output}"$'\n'
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="$config" PATH="${tmp}/bin:$PATH" \
     bash /usr/share/noctalia/assets/templates/ghostty/apply.sh 2>&1) || \
     fail "Ghostty hook failed: ${output}"
@@ -524,7 +507,7 @@ test_noctalia_builtin_hooks_leave_managed_configs_unchanged() {
 
   [[ "$after" == "$before" ]] || \
     fail "a built-in hook edited a disposable target: ${hook_output}"
-  [[ -L "$config/niri" && -L "$config/hypr" && -L "$config/kitty" ]] || \
+  [[ -L "$config/niri" && -L "$config/kitty" ]] || \
     fail "a managed directory link was replaced: ${hook_output}"
   for managed_path in ghostty/config.ghostty gtk-3.0/gtk.css gtk-4.0/gtk.css; do
     [[ -L "$config/$managed_path" ]] || \
@@ -1406,42 +1389,33 @@ test_setup_graphical_config_links_wali_config_for_known_host() {
     fail "graphical setup aborted on a host without a wali config"
 }
 
-test_clean_graphical_setup_creates_empty_hyprland_theme_stub() {
+test_clean_graphical_setup_creates_the_generated_theme_stubs() {
   local tmp fixture
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   fixture="${tmp}/repo"
-  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/feh" "$fixture/hypr" "$fixture/niri" \
+  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/feh" "$fixture/niri" \
     "$fixture/zathura" "$fixture/prism/titan" "$fixture/kitty" \
     "${tmp}/config" "${tmp}/bin"
   cp "${repo_root}/setup.sh" "$fixture/setup.sh"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
   cp "${repo_root}/niri/host_specific.sh" "$fixture/niri/"
-  cp "${repo_root}/hypr/host_specific.sh" "$fixture/hypr/"
   printf '// titan\n' > "$fixture/niri/host-titan.kdl"
-  printf '# titan\n' > "$fixture/hypr/host-titan.conf"
   printf '#!/usr/bin/env bash\nexit 0\n' > "$fixture/bin/prism"
   printf '#!/usr/bin/env bash\nprintf "titan\\n"\n' > "${tmp}/bin/hostname"
   printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/bin/niri"
   chmod +x "$fixture/setup.sh" "$fixture/bin/prism" \
-    "$fixture/niri/host_specific.sh" "$fixture/hypr/host_specific.sh" \
-    "${tmp}/bin/hostname" "${tmp}/bin/niri"
+    "$fixture/niri/host_specific.sh" "${tmp}/bin/hostname" "${tmp}/bin/niri"
 
   HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_STATE_HOME="${tmp}/state" PATH="${tmp}/bin:$PATH" \
     bash "$fixture/setup.sh" --link-only --only graphical-config >/dev/null
 
-  [[ -f "$fixture/hypr/noctalia.conf" ]] || \
-    fail "clean graphical setup did not create the Hyprland theme stub"
-  [[ ! -s "$fixture/hypr/noctalia.conf" ]] || \
-    fail "clean graphical setup should leave the Hyprland theme stub empty"
   [[ -d "$fixture/prism/titan/contexts" ]] || \
     fail "clean graphical setup did not create the host contexts directory"
   [[ "$(readlink "${tmp}/state/niri/host.kdl")" == "$fixture/niri/host-titan.kdl" ]] || \
     fail "niri host selection did not land in per-machine state"
-  [[ "$(readlink "${tmp}/state/hypr/host.conf")" == "$fixture/hypr/host-titan.conf" ]] || \
-    fail "hyprland host selection did not land in per-machine state"
-  [[ ! -e "$fixture/niri/host.kdl" && ! -e "$fixture/hypr/host.conf" ]] || \
+  [[ ! -e "$fixture/niri/host.kdl" ]] || \
     fail "host selection wrote a per-machine symlink into the shared tree"
   # -e follows the link, so a dangling one fails here
   [[ -e "$fixture/niri/prism.kdl" ]] || \
@@ -1468,22 +1442,19 @@ test_setup_continues_past_a_failing_phase() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   fixture="${tmp}/repo"
-  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/hypr" "$fixture/niri" \
+  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/niri" \
     "$fixture/prism/titan" "$fixture/mime" "${tmp}/config" "${tmp}/bin"
   cp "${repo_root}/setup.sh" "$fixture/setup.sh"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
   cp "${repo_root}/niri/host_specific.sh" "$fixture/niri/"
-  cp "${repo_root}/hypr/host_specific.sh" "$fixture/hypr/"
   printf '// titan\n' > "$fixture/niri/host-titan.kdl"
-  printf '# titan\n' > "$fixture/hypr/host-titan.conf"
   printf '[Default Applications]\n' > "$fixture/mimeapps.list"
   # graphical-config fails here, and only here
   printf '#!/usr/bin/env bash\nexit 1\n' > "$fixture/bin/prism"
   printf '#!/usr/bin/env bash\nprintf "titan\\n"\n' > "${tmp}/bin/hostname"
   printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/bin/niri"
   chmod +x "$fixture/setup.sh" "$fixture/bin/prism" \
-    "$fixture/niri/host_specific.sh" "$fixture/hypr/host_specific.sh" \
-    "${tmp}/bin/hostname" "${tmp}/bin/niri"
+    "$fixture/niri/host_specific.sh" "${tmp}/bin/hostname" "${tmp}/bin/niri"
 
   rc=0
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
@@ -1809,7 +1780,7 @@ test_setup_graphical_config_hands_material_ownership_to_prism
 test_setup_renders_the_theme_when_the_output_is_empty
 test_setup_names_the_theme_command_when_noctalia_is_down
 test_setup_graphical_config_links_wali_config_for_known_host
-test_clean_graphical_setup_creates_empty_hyprland_theme_stub
+test_clean_graphical_setup_creates_the_generated_theme_stubs
 test_dotfiles_health_accepts_prism_runtime
 test_dotfiles_health_checks_wali_config_link
 test_dotfiles_health_rejects_missing_or_external_prism_contexts

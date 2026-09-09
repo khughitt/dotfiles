@@ -61,7 +61,6 @@ wsprofiles/node_modules/
 noctalia/plugins/
 
 # noctalia colorscheme updates
-hypr/noctalia.conf
 kitty/themes/noctalia.conf
 niri/noctalia.kdl
 niri/prism.kdl

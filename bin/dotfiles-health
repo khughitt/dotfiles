@@ -392,6 +392,8 @@ raise SystemExit(any(
     unset noctalia_config_dir noctalia_plugin_dir output plugins merged templates template_id plugin_name
 fi
 
+# Hyprland left the tree on 2026-09-09: niri is the only compositor configured here.
+check_absent_stale_config_link "hypr"
 check_absent_stale_config_link "snakemake"
 check_absent_stale_config_link "tealdeer"
 

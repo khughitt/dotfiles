@@ -130,11 +130,7 @@ def test_noctalia_registry_selects_safe_cli_templates() -> None:
 
 def test_generated_compositor_colors_override_tracked_defaults() -> None:
     niri = (ROOT / "niri/config.kdl").read_text()
-    hypr = (ROOT / "hypr/hyprland.conf").read_text()
     assert niri.rindex('include "./noctalia.kdl"') > niri.rindex("insert-hint {")
-    assert hypr.rindex("source = ~/.config/hypr/noctalia.conf") > hypr.rindex(
-        "col.active_border ="
-    )
 
 
 def test_julia_uses_wallpaper_controlled_terminal_slots() -> None:

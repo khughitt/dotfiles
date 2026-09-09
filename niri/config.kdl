@@ -1,6 +1,6 @@
 // Niri config.
 //
-// Keep Hyprland-specific settings out of this file. Noctalia owns wallpaper,
+// Niri is the only compositor this tree configures. Noctalia owns wallpaper,
 // shell widgets, and generated colors; Niri owns compositor behavior.
 
 include "./prism.kdl"

@@ -643,7 +643,6 @@ function setup_graphical_config_links() {
     run ln -sfT "$kitty_generated" "${DOTS_HOME}/kitty/prism-generated.conf"
     run ln -sfT "$niri_generated" "${DOTS_HOME}/niri/prism.kdl"
     run env NIRI_DIR="${DOTS_HOME}/niri" "${DOTS_HOME}/niri/host_specific.sh"
-    run env HYPR_DIR="${DOTS_HOME}/hypr" "${DOTS_HOME}/hypr/host_specific.sh"
     link_noctalia_generated
     seed_noctalia_generated_output
 

@@ -13,10 +13,6 @@ bash_files=(
     bin/dotfiles-secrets-check
     bin/kernel-gate
     lib/dotfiles-setup-data.bash
-    hypr/host_specific.sh
-    hypr/scripts/monitor-handler.sh
-    hypr/scripts/monitor-info.sh
-    hypr/scripts/restore-wallpaper.sh
     niri/host_specific.sh
     niri/scripts/monitor-handler.sh
     nvim/tests/noctalia/run.sh
