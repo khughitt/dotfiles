@@ -577,6 +577,38 @@ function link_noctalia_generated() {
     done
 }
 
+# link_noctalia_generated leaves four empty files on a machine that has never had a
+# theme, and nothing else fills them: on titan they stayed empty until a wallpaper
+# rotation or a hand toggle happened to fire. `templates-apply` renders the current
+# palette into every template output -- verified on 2026-09-09 to rewrite an output
+# that was emptied and one holding wrong content -- so ask for it here, while setup is
+# still running, and name it when Noctalia is not up to be asked.
+function seed_noctalia_generated_output() {
+    local entry state_path unthemed=false
+
+    for entry in "${NOCTALIA_GENERATED[@]}"; do
+        state_path="${XDG_STATE_HOME:-${HOME}/.local/state}/${entry##*:}"
+        [[ -s "$state_path" ]] || unthemed=true
+    done
+    [[ "$unthemed" == "true" ]] || return 0
+
+    # Ask whether Noctalia is there before planning to talk to it: a dry run has to
+    # report which of these two it would do, and only the probe can tell it.
+    if ! noctalia msg theme-mode-get >/dev/null 2>&1; then
+        echo "Noctalia is not running; its generated theme output is still empty." \
+            "Run 'noctalia msg templates-apply' once it is up."
+        return 0
+    fi
+    run noctalia msg templates-apply
+
+    [[ "$DRY_RUN" != "true" ]] || return 0
+    for entry in "${NOCTALIA_GENERATED[@]}"; do
+        state_path="${XDG_STATE_HOME:-${HOME}/.local/state}/${entry##*:}"
+        [[ -s "$state_path" ]] || echo "Still empty after templates-apply: ${state_path}." \
+            "Noctalia renders the palette it has; set a wallpaper, then run 'noctalia msg templates-apply'."
+    done
+}
+
 function setup_graphical_config_links() {
     [[ "$HEADLESS" == "false" ]] || return 0
 
@@ -611,6 +643,7 @@ function setup_graphical_config_links() {
     run env NIRI_DIR="${DOTS_HOME}/niri" "${DOTS_HOME}/niri/host_specific.sh"
     run env HYPR_DIR="${DOTS_HOME}/hypr" "${DOTS_HOME}/hypr/host_specific.sh"
     link_noctalia_generated
+    seed_noctalia_generated_output
 
     if [[ "$DRY_RUN" != "true" ]]; then
         niri_generated_before="$(stat -Lc '%d:%i' "$niri_generated" 2>/dev/null || true)"

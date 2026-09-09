@@ -86,6 +86,16 @@ if [[ $# -eq 4 && "$1" == msg && "$2" == plugins && "$3" == enable ]]; then
   fi
   exit "${NOCTALIA_ENABLE_STATUS:-0}"
 fi
+if [[ $# -eq 2 && "$1" == msg && "$2" == theme-mode-get ]]; then
+  printf '%s\n' "${NOCTALIA_TEST_THEME_MODE:-dark}"
+  exit "${NOCTALIA_TEST_THEME_MODE_STATUS:-0}"
+fi
+if [[ $# -eq 2 && "$1" == msg && "$2" == templates-apply ]]; then
+  if [[ -n "${NOCTALIA_TEST_LOG:-}" ]]; then
+    printf '%s\n' "$*" >> "$NOCTALIA_TEST_LOG"
+  fi
+  exit "${NOCTALIA_TEST_TEMPLATES_APPLY_STATUS:-0}"
+fi
 if [[ $# -eq 3 && "$1" == msg && "$2" == plugins && "$3" == list ]]; then
   printf '%s\n' "${NOCTALIA_PLUGIN_LIST:-khughitt/wali-panel [local] 1.0.0 enabled requires walictl
 khughitt/prism [local] 1.0.0 enabled requires prism, qs}"
@@ -1308,6 +1318,34 @@ test_noctalia_v5_config_is_installed_and_validated() {
   rm -rf "$tmp"
 }
 
+test_setup_renders_the_theme_when_the_output_is_empty() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  output=$(PRISM_TEST_HOSTNAME=titan \
+    run_setup "$tmp" --dry-run --link-only --only graphical-config)
+
+  [[ "$output" == *"noctalia msg templates-apply"* ]] || \
+    fail "graphical setup leaves the generated theme output empty:
+${output}"
+}
+
+test_setup_names_the_theme_command_when_noctalia_is_down() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  output=$(PRISM_TEST_HOSTNAME=titan NOCTALIA_TEST_THEME_MODE_STATUS=1 \
+    run_setup "$tmp" --dry-run --link-only --only graphical-config)
+
+  [[ "$output" == *"Run 'noctalia msg templates-apply' once it is up."* ]] || \
+    fail "setup did not name the command that themes the machine:
+${output}"
+}
+
 test_setup_graphical_config_hands_material_ownership_to_prism() {
   local tmp output config
   tmp=$(make_tmpdir)
@@ -1764,6 +1802,8 @@ test_dotfiles_health_rejects_legacy_yazi_directory_link
 test_dotfiles_health_checks_enabled_user_timer
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_hands_material_ownership_to_prism
+test_setup_renders_the_theme_when_the_output_is_empty
+test_setup_names_the_theme_command_when_noctalia_is_down
 test_setup_graphical_config_links_wali_config_for_known_host
 test_clean_graphical_setup_creates_empty_hyprland_theme_stub
 test_dotfiles_health_accepts_prism_runtime
