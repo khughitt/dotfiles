@@ -146,9 +146,9 @@ fi
 # Greeting
 #
 
-if [[ -t 1 && "$vconsole" = false ]] && (( $+commands[figlet] )) && (( $+commands[lolcat] )); then
-    hostname | cut -d'.' -f1 | figlet | lolcat -S 33
-fi
+# if [[ -t 1 && "$vconsole" = false ]] && (( $+commands[figlet] )) && (( $+commands[lolcat] )); then
+#     hostname | cut -d'.' -f1 | figlet | lolcat -S 33
+# fi
 
 # stop profiling zshrc
 # zprof
