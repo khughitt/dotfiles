@@ -173,6 +173,45 @@ check_noctalia_generated_is_not_in_tree() {
     fi
 }
 
+# The leak surface is structural, not enumerable: ~/.config/<name> entries that are
+# whole-directory symlinks into this tree hand every file an application writes there
+# to the shared tree, and Dropbox carries it to the other machine. So derive the
+# surface instead of listing it. Anything the tree does not own is a leak: not tracked
+# in git, not a symlink routed back out of the tree, not marked com.dropbox.ignored.
+# A warning, not a failure — an uncommitted file under a config directory is also the
+# normal state of work in progress, and the named generated outputs above already fail.
+check_config_dirs_do_not_leak() {
+    local link target relative entry path resolved leaks=0 dirs=0
+
+    for link in "${XDG_CONFIG_HOME}"/*; do
+        [[ -L "$link" ]] || continue
+        target="$(readlink -f "$link" 2>/dev/null || true)"
+        [[ -d "$target" && "$target" == "${DOTS_HOME}/"* ]] || continue
+        dirs=$((dirs + 1))
+        relative="${target#"${DOTS_HOME}/"}"
+
+        while IFS= read -r entry; do
+            path="${DOTS_HOME}/${entry%/}"
+            if [[ -L "$path" ]]; then
+                resolved="$(readlink -f "$path" 2>/dev/null || true)"
+                [[ "$resolved" == "${DOTS_HOME}/"* ]] || continue
+            fi
+            if command -v attr >/dev/null 2>&1 \
+                && [[ "$(attr -q -g com.dropbox.ignored "$path" 2>/dev/null)" == "1" ]]; then
+                continue
+            fi
+            warn "not owned by the tree and syncing to every machine: ${entry} (commit it, route it to XDG_STATE_HOME, or run dropbox_ignore on it)"
+            leaks=$((leaks + 1))
+        done < <(git -C "${DOTS_HOME}" ls-files --others --directory -- "$relative" 2>/dev/null)
+    done
+
+    if [[ "$dirs" -eq 0 ]]; then
+        warn "no ~/.config entry links into the shared tree; skipping the leak check"
+    elif [[ "$leaks" -eq 0 ]]; then
+        pass "no unowned files under the ${dirs} config directories linked into the shared tree"
+    fi
+}
+
 check_no_machine_specific_links() {
     local machines=() dir link target name offenders=0
 
@@ -425,6 +464,7 @@ unset wali_config
 
 check_no_machine_specific_links
 check_noctalia_generated_is_not_in_tree
+check_config_dirs_do_not_leak
 
 if [[ "$failures" -gt 0 ]]; then
     echo "Health check failed: $failures failure(s), $warnings warning(s)" >&2

@@ -1554,6 +1554,40 @@ test_dotfiles_health_accepts_prism_runtime() {
   PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd >/dev/null
 }
 
+test_dotfiles_health_flags_files_the_tree_does_not_own() {
+  local tmp fixture output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/state"
+  prepare_health_fixture "$tmp"
+
+  fixture="${tmp}/repo"
+  mkdir -p "${fixture}/bin" "${fixture}/lib" "${fixture}/kitty"
+  cp "${repo_root}/bin/dotfiles-health" "${fixture}/bin/"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "${fixture}/lib/"
+  git -C "$fixture" init -q
+  print -r -- 'tracked' > "${fixture}/kitty/kitty.conf"
+  git -C "$fixture" add kitty/kitty.conf
+  print -r -- 'left behind by an application' > "${fixture}/kitty/os-local.conf"
+  print -r -- 'per-machine' > "${tmp}/state/noctalia.conf"
+  ln -s "${tmp}/state/noctalia.conf" "${fixture}/kitty/noctalia.conf"
+  rm -rf "${tmp}/config/kitty"
+  ln -s "${fixture}/kitty" "${tmp}/config/kitty"
+  local repo_root="$fixture"
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd 2>&1)
+  set -e
+
+  [[ "$output" == *"not owned by the tree and syncing to every machine: kitty/os-local.conf"* ]] || \
+    fail "health did not flag an unowned file under a config directory linked into the tree:
+${output}"
+  [[ "$output" != *"kitty/kitty.conf"* ]] || \
+    fail "health flagged a tracked file"
+  [[ "$output" != *"kitty/noctalia.conf"* ]] || \
+    fail "health flagged a symlink routed out of the tree"
+}
+
 test_dotfiles_health_rejects_missing_or_external_prism_contexts() {
   local tmp fixture output exit_status context_state
   tmp=$(make_tmpdir)
@@ -1735,6 +1769,7 @@ test_clean_graphical_setup_creates_empty_hyprland_theme_stub
 test_dotfiles_health_accepts_prism_runtime
 test_dotfiles_health_checks_wali_config_link
 test_dotfiles_health_rejects_missing_or_external_prism_contexts
+test_dotfiles_health_flags_files_the_tree_does_not_own
 test_dotfiles_health_fails_when_prism_doctor_fails
 test_dotfiles_health_rejects_noctalia_config_warning
 test_dotfiles_health_rejects_noctalia_template_state_override
