@@ -60,7 +60,7 @@ piece of the setup after a change:
 
 Valid phases are:
 
-    external-clones shell gtk graphical-config common-config systemd kitty home app-config mime tmux packages
+    preflight external-clones shell gtk graphical-config common-config systemd kitty home app-config noctalia-plugins mime tmux packages
 
 To install the systemd user timer that keeps high-flux Dropbox folders ignored:
 
@@ -69,6 +69,46 @@ To install the systemd user timer that keeps high-flux Dropbox folders ignored:
 The timer runs `dropbox_ignore_flux` periodically. It sets Dropbox's
 `com.dropbox.ignored` attribute on common high-churn directories such as
 `node_modules`, `.venv`, `.worktrees`, `.snakemake`, and `__pycache__`.
+
+A new machine
+-------------
+
+Three kinds of state live here, and only the first arrives with the clone.
+
+1. **Tracked in git.** Everything `setup.sh` links.
+2. **In the tree but not in git.** The checkout is inside Dropbox, so an
+   untracked file still reaches every other machine. Generated per-machine
+   output must therefore leave the tree: it lives under `XDG_STATE_HOME` and is
+   linked back in, and `dotfiles-health` fails when one of those links is a real
+   file instead. Anything that must sit in the tree and must not sync carries
+   Dropbox's `com.dropbox.ignored` — `node_modules`, `.venv`, `.worktrees`, and
+   niri-material's `.cargo` and `target`.
+3. **Per-machine: in neither git nor Dropbox.** These have to be reproduced by
+   hand, and each one used to surface as an opaque crash in the middle of a
+   setup run, one at a time.
+
+Run `setup.sh --check` first. It names every unmet prerequisite of the third
+kind at once, with its fix, and mutates nothing:
+
+| What | Where | How to reproduce |
+| --- | --- | --- |
+| Prism's node dependencies | `~/d/prism/node_modules` | `npm ci --prefix ~/d/prism` |
+| Familiar's node dependencies | `~/d/familiar/node_modules` | `npm install --prefix ~/d/familiar` |
+| The niri-material build | the installed `niri` package | build `packaging/arch/PKGBUILD` in `~/d/niri-material` and install it |
+| Noctalia | the installed `noctalia-qs` package | install it from the AUR |
+| The task tracker | the `tasks` binary and `~/.config/tasks/projects.toml` | install `tasks`, then `tasks init` in each project |
+| Mindful's database password | `~/.config/mindful.env` | write `MINDFUL_DBPASS=…`, mode 600 |
+| A fast build disk (optional) | `.cargo/config.toml` in `~/d/niri-material` | set `build.target-dir`, then `setfattr -n user.com.dropbox.ignored -v 1 .cargo` |
+
+Two things worth knowing about the ~/.config surface. The entries that are
+whole-directory symlinks into this tree — `niri`, `kitty`, `zathura`, and the
+per-machine `prism` directory — hand every file an application writes there to
+the shared tree; the ones that are real directories (`btop`, `yazi`, `bat`,
+`lsd`, `gtk-3.0`, `fastfetch`) cannot. `dotfiles-health` warns about every path
+under a linked one that the tree does not own. And Noctalia writes *through* a
+symlink rather than replacing it, which is what lets its generated theme output
+be a link out to per-machine state; `noctalia msg templates-apply` renders that
+output, and `setup.sh` asks for it whenever it is still empty.
 
 Configuration files are included for both Bash and Z shell. If you plan to use
 Z shell, you will also want to install [zinit](https://github.com/zdharma/zinit).
