@@ -69,6 +69,10 @@ alias snek="snakemake"
 
 # tasks
 alias ta='TASKS_FORMAT=pretty tasks --color=always'
+alias tag='TASKS_FORMAT=pretty tasks list --color=always | grep'
+alias tal='TASKS_FORMAT=pretty tasks list --color=always'
+alias tas='TASKS_FORMAT=pretty tasks show --color=always'
+
 
 # tmux
 alias x=xumt
