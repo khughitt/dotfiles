@@ -95,7 +95,7 @@ local function copyPath()
   render()
 end
 
-local frameWidth, frameHeight = 540, 304
+local frameHeight = 304
 
 local function toggleHelp()
   state.showHelp = not state.showHelp
@@ -113,17 +113,17 @@ local function frame()
     }) do
       rows[#rows + 1] = ui.label({ text = text, fontFamily = "monospace", fontSize = 13 })
     end
-    return ui.column({ width = frameWidth, height = frameHeight, padding = 20, gap = 6,
+    return ui.column({ height = frameHeight, padding = 20, gap = 6,
       radius = 14, fill = "surface_variant" }, rows)
   end
   if state.current then
     return ui.image({
-      path = state.current.path, width = frameWidth, height = frameHeight, radius = 14, fit = "contain",
+      path = state.current.path, height = frameHeight, radius = 14, fit = "contain",
       border = "outline/0.5", borderWidth = 1,
     })
   end
   return ui.column({
-    width = frameWidth, height = frameHeight, radius = 14, fill = "surface_variant",
+    height = frameHeight, radius = 14, fill = "surface_variant",
     border = "outline/0.5", borderWidth = 1, align = "center", justify = "center",
   }, {
     ui.glyph({ name = state.loading and "loader" or "wallpaper", size = 48, color = "on_surface_variant/0.6" }),
