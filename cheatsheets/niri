@@ -12,7 +12,7 @@ ctrl+space           // launcher
 super+s              // control center
 super+alt+comma      // settings
 super+o              // overview
-super+n              // toggle wallpaper panel (wali); ? for panel keys
+super+n              // toggle wallpaper panel (wali); F1 / ? for panel keys
 super+alt+left/right // previous/next wallpaper in history
 super+alt+r          // random wallpaper
 super+alt+f          // toggle wallpaper favorite
@@ -23,6 +23,19 @@ shift+super+c        // reload niri config
 shift+super+p        // power off monitors
 super+escape         // toggle shortcut inhibit (pass keys through to app)
 shift+super+e        // quit niri
+
+// wali panel — keys while open (no modifier)
+h / left             // previous wallpaper in history
+l / right            // next in history, or sample at the end
+k / up               // earlier photo by capture time
+j / down             // later photo by capture time
+r                    // random wallpaper
+f                    // toggle favorite
+e                    // edit in GIMP
+y                    // copy source path (display path if no source)
+F1 / ?               // toggle keyboard help
+escape               // close panel
+// If ? stops responding, use F1; reopening clears Noctalia's held-key state.
 
 // screenshots
 f6                   // whole screen
