@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The tree is shared verbatim between machines and checked out into worktrees,
+# so a tracked symlink with an absolute target both leaks one machine's layout
+# into git and breaks everywhere that layout does not hold. Relative targets
+# are allowed even when dangling; only the stored target string is inspected.
+
+DOTS_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
+repo="${1:-$DOTS_HOME}"
+
+status=0
+while IFS=$'\t' read -r mode object path; do
+    [[ "$mode" == 120000 ]] || continue
+    target="$(git -C "$repo" cat-file -p "$object")"
+    if [[ "$target" == /* ]]; then
+        echo "absolute symlink target in tracked link: ${path} -> ${target}" >&2
+        status=1
+    fi
+done < <(git -C "$repo" ls-files --stage | sed -E 's/^([0-7]+) ([0-9a-f]+) [0-9]\t/\1\t\2\t/')
+
+exit "$status"

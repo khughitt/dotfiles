@@ -22,6 +22,7 @@ bin/*
 !bin/
 !bin/dotfiles-check
 !bin/dotfiles-health
+!bin/dotfiles-layout-check
 !bin/dotfiles-secrets-check
 !bin/gpu-fan-curve
 !bin/kernel-gate

@@ -982,7 +982,7 @@ placeholder_pattern="T""BD|TO""DO|FIX""ME|PLACE""HOLDER"
   docs/plans/2026-08-19-noctalia-v5-migration.md \
   noctalia/noctalia.md noctalia/noctalia-wallpaper-switcher.md
 forbidden_home="/home/"keith
-forbidden_mount="/mnt/ssd/"Dropbox
+forbidden_mount="/mnt/"ssd/Dropbox
 ! rg -n "$forbidden_home|$forbidden_mount" \
   docs/specs/2026-08-19-noctalia-v5-migration-design.md \
   docs/plans/2026-08-19-noctalia-v5-migration.md \

@@ -16,7 +16,7 @@
 - **Reload-free hot path:** niri config is reloaded only when the catalog changes, never on a focus switch.
 - **No per-workspace wallpaper/colorscheme:** noctalia colorscheme + wallpaper are global to the shell. The per-workspace cue is niri's ring/border color.
 - **Border:** the global niri default is `border { off }`. A generated workspace block emits a `border { on; ... }` block **only** when the profile sets a `border` color; the focus-ring is globally `on` so its color renders with `active-color` alone.
-- **Paths in committed files/docs:** use `~/d/...`, never `/home/keith/...` or `/mnt/ssd/...`.
+- **Paths in committed files/docs:** use `~/d/...`, never an absolute home or mount path.
 - **No compatibility/legacy layers.**
 
 ## File Structure

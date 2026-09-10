@@ -8,6 +8,9 @@ set -euo pipefail
 DOTS_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # shellcheck source=lib/dotfiles-setup-data.bash
 source "${DOTS_HOME}/lib/dotfiles-setup-data.bash"
+# The prism checkout, reached the same way bin/prism reaches it: `~/d` is the
+# one layout the tree assumes, so no path into this machine is stored in git.
+PRISM_ROOT="${HOME}/d/prism"
 
 # Parse command line arguments
 HEADLESS=false
@@ -409,10 +412,7 @@ function report_phases() {
 # graphical-config phase runs bin/prism, which needs the yaml package at
 # runtime, so the bootstrap has to land before that phase.
 function setup_prism_dependencies() {
-    local prism_bin prism_root
-    prism_bin="$(readlink -f "${DOTS_HOME}/bin/prism" 2>/dev/null || true)"
-    [[ -n "$prism_bin" ]] || return 0
-    prism_root="$(dirname "$(dirname "$prism_bin")")"
+    local prism_root="${PRISM_ROOT}"
     [[ -f "${prism_root}/package.json" ]] || return 0
 
     if [[ -d "${prism_root}/node_modules" ]]; then
@@ -454,18 +454,12 @@ function preflight_check() {
 
 function setup_preflight() {
     phase "Preflight"
-    local missing=0 prism_bin prism_root
+    local missing=0
     local niri_generated="${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/prism.kdl"
     local tasks_registry="${XDG_CONFIG_HOME}/tasks/projects.toml"
+    local prism_root="${PRISM_ROOT}"
 
-    prism_bin="$(readlink -f "${DOTS_HOME}/bin/prism" 2>/dev/null || true)"
-    prism_root=""
-    if [[ -n "$prism_bin" ]]; then
-        prism_root="$(dirname "$(dirname "$prism_bin")")"
-        [[ -f "${prism_root}/package.json" ]] || prism_root=""
-    fi
-
-    if [[ -n "$prism_root" ]]; then
+    if [[ -f "${prism_root}/package.json" ]]; then
         preflight_check "npm" "install nodejs-npm" \
             command -v npm || missing=1
         preflight_check "prism node dependencies" "npm ci --prefix ${prism_root}" \

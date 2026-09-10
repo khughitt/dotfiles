@@ -1074,16 +1074,22 @@ test_dotfiles_health_fails_unknown_host_wrong_prism_marker_without_doctor() {
   rm -rf "$tmp"
 }
 
-test_prism_launcher_link_survives_relocated_sibling_repos() {
-  local tmp
+# A worktree or scratch checkout of dotfiles has no sibling prism directory;
+# the launcher must reach prism through `~/d`, not through its own location.
+test_prism_launcher_survives_relocated_dotfiles_checkout() {
+  local tmp output
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/repos/dotfiles/bin" "${tmp}/repos/prism/bin"
-  cp -P "${repo_root}/bin/prism" "${tmp}/repos/dotfiles/bin/prism"
-  touch "${tmp}/repos/prism/bin/prism"
+  mkdir -p "${tmp}/worktrees/dotfiles/bin" "${tmp}/home/d/prism/bin"
+  cp -P "${repo_root}/bin/prism" "${tmp}/worktrees/dotfiles/bin/prism"
+  print -r -- '#!/usr/bin/env bash
+echo "prism ran: $*"' > "${tmp}/home/d/prism/bin/prism"
+  chmod +x "${tmp}/home/d/prism/bin/prism"
 
-  [[ "${tmp}/repos/dotfiles/bin/prism" -ef "${tmp}/repos/prism/bin/prism" ]] || \
-    fail "Prism launcher link should resolve in relocated sibling repositories"
+  output=$(HOME="${tmp}/home" "${tmp}/worktrees/dotfiles/bin/prism" doctor) || \
+    fail "Prism launcher failed from a relocated dotfiles checkout"
+  [[ "$output" == "prism ran: doctor" ]] || \
+    fail "Prism launcher did not reach ~/d/prism: $output"
 
   rm -rf "$tmp"
 }
@@ -1481,15 +1487,16 @@ test_preflight_reports_every_unmet_prerequisite_without_mutating() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   fixture="${tmp}/repo"
-  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/prismrepo/bin" \
+  mkdir -p "$fixture/bin" "$fixture/lib" "${tmp}/home/d/prism/bin" \
     "${tmp}/config" "${tmp}/bin"
   cp "${repo_root}/setup.sh" "$fixture/setup.sh"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
-  # a prism checkout with no node_modules: the tree that is never in git
-  printf '{}\n' > "$fixture/prismrepo/package.json"
-  printf '#!/usr/bin/env bash\nexit 0\n' > "$fixture/prismrepo/bin/prism"
-  chmod +x "$fixture/setup.sh" "$fixture/prismrepo/bin/prism"
-  ln -s "../prismrepo/bin/prism" "$fixture/bin/prism"
+  # a prism checkout with no node_modules, where setup.sh looks for it: the
+  # tree that is never in git
+  printf '{}\n' > "${tmp}/home/d/prism/package.json"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/home/d/prism/bin/prism"
+  chmod +x "$fixture/setup.sh" "${tmp}/home/d/prism/bin/prism"
+  cp "${repo_root}/bin/prism" "$fixture/bin/prism"
   printf '#!/usr/bin/env bash\nprintf "titan\\n"\n' > "${tmp}/bin/hostname"
   chmod +x "${tmp}/bin/hostname"
 
@@ -1511,7 +1518,7 @@ test_preflight_reports_every_unmet_prerequisite_without_mutating() {
   [[ "$output" == *"npm ci --prefix"* ]] || \
     fail "preflight reported a finding without naming its fix"
 
-  [[ ! -d "$fixture/prismrepo/node_modules" ]] || \
+  [[ ! -d "${tmp}/home/d/prism/node_modules" ]] || \
     fail "preflight installed prism dependencies"
   entries=("${tmp}/config"/*(N))
   (( ${#entries} == 0 )) || \
@@ -1768,7 +1775,7 @@ test_dotfiles_health_fails_when_prism_plugin_is_not_enabled
 test_dotfiles_health_fails_when_plugin_list_is_unavailable
 test_dotfiles_health_offline_flag_skips_only_plugin_ipc
 test_dotfiles_health_skips_noctalia_on_macos
-test_prism_launcher_link_survives_relocated_sibling_repos
+test_prism_launcher_survives_relocated_dotfiles_checkout
 test_dotfiles_health_fails_unknown_host_wrong_prism_marker_without_doctor
 test_dotfiles_health_fails_unknown_host_dangling_prism_marker_without_doctor
 test_dotfiles_health_fails_wrong_prism_link_without_running_doctor

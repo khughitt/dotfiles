@@ -31,6 +31,20 @@ mindful_output=$(HOME="$mindful_home" "${repo_root}/bin/mindful" --flag "two wor
 [[ "$mindful_output" == '["--flag","two words"]' ]] || \
   fail "mindful wrapper did not forward arguments: $mindful_output"
 
+# bin/prism is a wrapper rather than a symlink so the tree carries no path to
+# the prism checkout: `~/d` is the only layout the repository assumes, and a
+# worktree checkout of dotfiles still resolves it.
+[[ ! -L "${repo_root}/bin/prism" ]] || fail "bin/prism must be a wrapper, not a symlink"
+prism_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-prism-home.XXXXXX")
+register_tmp_cleanup "$prism_home"
+mkdir -p "${prism_home}/d/prism/bin"
+print -r -- '#!/usr/bin/env bash
+printf "%s\n" "$@"' > "${prism_home}/d/prism/bin/prism"
+chmod +x "${prism_home}/d/prism/bin/prism"
+prism_output=$(HOME="$prism_home" "${repo_root}/bin/prism" apply "two words")
+[[ "$prism_output" == $'apply\ntwo words' ]] || \
+  fail "prism wrapper did not forward arguments: $prism_output"
+
 modeline_files=(
   zshrc
   shell/aliases

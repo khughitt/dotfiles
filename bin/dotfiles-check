@@ -10,6 +10,7 @@ bash_files=(
     setup.sh
     bin/dotfiles-check
     bin/dotfiles-health
+    bin/dotfiles-layout-check
     bin/dotfiles-secrets-check
     bin/kernel-gate
     lib/dotfiles-setup-data.bash
@@ -38,6 +39,7 @@ zsh_files=(
     tests/secrets_check.zsh
     tests/setup_and_health.zsh
     tests/dotfiles_check.zsh
+    tests/layout_check.zsh
     tests/tmp_cleanup.zsh
     tests/wali.zsh
 )
@@ -54,6 +56,9 @@ shellcheck -x "${bash_files[@]}"
 
 echo "zsh -n"
 zsh -n "${zsh_files[@]}"
+
+echo "tracked symlink targets"
+bin/dotfiles-layout-check
 
 echo "zsh modelines"
 if rg -n 'vi:syntax=(bash|zsh)' shell --glob '!private/**' --glob '!local/**'; then

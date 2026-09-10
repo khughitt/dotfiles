@@ -18,7 +18,7 @@
 - Keyboard focus: `WlrLayershell.keyboardFocus` is `WlrKeyboardFocus.OnDemand` while shown, `WlrKeyboardFocus.None` while hidden.
 - Digits come from `event.key` (`Qt.Key_1..Qt.Key_9`), never `event.text`; `Shift` only selects `new` vs `open`. `'+'` comes from `event.text`.
 - Profile `id` grammar and color rules are inherited from Phase 1 (`ID_RE = /^[a-z][a-z0-9-]*$/`, no `-<digits>` suffix); the selector never re-validates — it trusts the daemon-emitted JSON.
-- Use `~/d/...` (not `/home/keith/...` or `/mnt/ssd/...`) in any committed paths/docs.
+- Use `~/d/...` (never an absolute home or mount path) in any committed paths/docs.
 - Phase 1 catalog/profile shape (from `src/catalog.js`): each profile is
   `{ id, label, instances, ring, border|null, icon, theme: { colorscheme|null, wallpaper|null, mode|null } }`.
 

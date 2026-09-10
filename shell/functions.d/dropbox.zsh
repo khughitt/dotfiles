@@ -75,7 +75,8 @@ function _dropbox_ignore_flux_is_ignored {
 }
 
 function dropbox_ignore_flux {
-  local root="/mnt/ssd/Dropbox"
+  local root
+  root="$(readlink -f "${HOME}/d")"
   local quiet=false
   local dry_run=false
   local -a names

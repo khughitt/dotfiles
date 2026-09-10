@@ -1,1 +1,5 @@
-../../prism/bin/prism
+#!/usr/bin/env bash
+# A wrapper rather than a symlink: a relative link assumes dotfiles and prism
+# are siblings, which a worktree checkout breaks, and an absolute link writes
+# this machine's layout into git. `~/d` is the one layout the tree assumes.
+exec "$HOME/d/prism/bin/prism" "$@"

@@ -21,7 +21,7 @@
 - Generated files live ONLY under `~/.cache/noctalia/` — never inside the repo tree (it syncs via Dropbox across machines).
 - **Cache path contract:** production paths are pinned to literal `~/.cache/noctalia/` everywhere — kitty's `include` line and noctalia's `user-templates.toml` cannot express an XDG fallback, so nothing in this pipeline honors `XDG_CACHE_HOME`. The Python scripts accept a dedicated `NOCTALIA_GLASS_DIR` env override, used ONLY by tests.
 - No new nvim plugin dependencies; no Python packages beyond stdlib.
-- Do not use paths like `/home/keith` or `/mnt/ssd/Dropbox` in code comments or docs; `~` is fine.
+- Do not use absolute home or mount paths in code comments or docs; `~` is fine.
 - Lua tests run headless from the repo root: `nvim -l nvim/tests/noctalia/<name>_test.lua` — they must print `OK <name>` and exit 0. `nvim -l` may load config and cached modules here; tests for existing config modules must prepend the worktree's `nvim` directory to `runtimepath` and clear the relevant `package.loaded` entries before requiring them.
 - Every task is red-first: write the test, watch it fail for the expected reason, then implement.
 - The glass-role → material-token mapping lives ONLY in the template (Task 4). Every other component consumes the artifact's `glass` table verbatim.
