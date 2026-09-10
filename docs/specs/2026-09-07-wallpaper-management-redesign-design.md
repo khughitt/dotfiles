@@ -5,6 +5,10 @@ titan 2026-09-08; panel behavior confirmed by the user. Task 17 closeout
 awaits old favorites retirement, which the user is handling. See
 `docs/plans/2026-09-07-wallpaper-management-redesign.md`.
 
+The keyboard extension is merged and activated on titan: panel capture, global
+niri shortcuts, and capture-time navigation. Bindings are documented in
+`noctalia/noctalia-wallpaper-switcher.md`.
+
 ## Problem
 
 Wallpaper behaviour is spread over five places with overlapping ownership:
