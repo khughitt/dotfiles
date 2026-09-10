@@ -201,7 +201,9 @@ Per host, never synced.
 }
 ```
 
-`origin` is one of `next`, `random`, `observed`. Cursor moves (`previous`, and
+`origin` is one of `next`, `random`, `observed`, `earlier`, `later`. The keyboard
+extension adds `earlier`/`later` for capture-time selections, using the same
+ordering as `neighbors` and preferring variants. Cursor moves (`previous`, and
 `next` while behind the end) create no entry. Entries are capped at 1000; the
 oldest are dropped from the front and the cursor shifts with them. Every
 read-modify-write holds an `fcntl` lock on a sibling lock file, because the

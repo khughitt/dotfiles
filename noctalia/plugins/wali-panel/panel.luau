@@ -1,7 +1,7 @@
 local Logic = require("./logic.luau")
 local Shell = require("./shell.luau")
 
-local state = { busy = false, loading = false, errorText = nil, current = nil }
+local state = { busy = false, loading = false, errorText = nil, current = nil, showHelp = false }
 
 local render
 local refresh
@@ -72,6 +72,9 @@ end
 
 local function startAction(action)
   if not Logic.canStart(state.busy) then return end
+  if not state.current and (action == "favorite" or action == "edit" or action == "earlier" or action == "later") then
+    return
+  end
   state.busy = true
   state.errorText = nil
   render()
@@ -94,7 +97,25 @@ end
 
 local frameWidth, frameHeight = 540, 304
 
+local function toggleHelp()
+  state.showHelp = not state.showHelp
+  render()
+end
+
 local function frame()
+  if state.showHelp then
+    local rows = { ui.label({ text = "Keyboard shortcuts", fontSize = 20, fontWeight = "semibold" }) }
+    for _, text in ipairs({
+      "h / ←       Previous in history", "l / →       Next in history, else sample",
+      "k / ↑       Earlier photo by capture time", "j / ↓       Later photo by capture time",
+      "r           Random photo", "f           Toggle favorite", "e           Edit in GIMP",
+      "y           Copy source path", "? / F1      Toggle help    Esc  Close panel",
+    }) do
+      rows[#rows + 1] = ui.label({ text = text, fontFamily = "monospace", fontSize = 13 })
+    end
+    return ui.column({ width = frameWidth, height = frameHeight, padding = 20, gap = 6,
+      radius = 14, fill = "surface_variant" }, rows)
+  end
   if state.current then
     return ui.image({
       path = state.current.path, width = frameWidth, height = frameHeight, radius = 14, fit = "contain",
@@ -123,7 +144,7 @@ local function caption(current, enabled)
     }),
     ui.button({ key = "favorite", glyph = Logic.favoriteGlyph(favorite), glyphSize = 22,
       selected = favorite == true, variant = "ghost", controlSize = "md",
-      tooltip = favorite and "Remove favorite" or "Favorite",
+      tooltip = favorite and "Remove favorite (f)" or "Favorite (f)",
       enabled = enabled and current ~= nil, onClick = function() startAction("favorite") end }),
   })
 end
@@ -141,13 +162,14 @@ end
 local function actions(current, enabled)
   local loaded = enabled and current ~= nil
   return ui.row({ align = "center", gap = 8 }, {
-    navButton("previous", "arrow-left", "Previous", enabled),
-    navButton("next", "arrow-right", "Next", enabled),
-    navButton("random", "dice", "Random", enabled, "primary"),
+    navButton("previous", "arrow-left", "Previous (h / ←)", enabled),
+    navButton("next", "arrow-right", "Next (l / →)", enabled),
+    navButton("random", "dice", "Random (r)", enabled, "primary"),
     ui.spacer({ flexGrow = 1 }),
     utilityButton("refresh", "refresh", "Refresh", enabled, function() refresh() end),
-    utilityButton("edit", "photo-edit", "Edit in GIMP", loaded, function() startAction("edit") end),
-    utilityButton("copy", "clipboard", "Copy source path", current ~= nil, copyPath),
+    utilityButton("edit", "photo-edit", "Edit in GIMP (e)", loaded, function() startAction("edit") end),
+    utilityButton("copy", "clipboard", "Copy source path (y)", current ~= nil, copyPath),
+    utilityButton("help", "keyboard", "Keyboard shortcuts (? / F1)", true, toggleHelp),
   })
 end
 
@@ -162,5 +184,23 @@ render = function()
 end
 
 function onOpen(_context)
+  state.showHelp = false
   refresh()
+end
+
+local keyActions = {
+  h = "previous", Left = "previous", l = "next", Right = "next",
+  k = "earlier", Up = "earlier", j = "later", Down = "later",
+  r = "random", f = "favorite", e = "edit",
+}
+
+function onKey(chord, pressed)
+  if not pressed then return end
+  if chord == "shift+question" or chord == "F1" then
+    toggleHelp()
+  elseif chord == "y" then
+    copyPath()
+  elseif keyActions[chord] then
+    startAction(keyActions[chord])
+  end
 end

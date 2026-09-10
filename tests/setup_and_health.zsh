@@ -390,6 +390,8 @@ assert wali["widget"] == [{"id": "widget", "entry": "widget.luau"}]
 assert wali["panel"] == [{
     "id": "panel", "entry": "panel.luau", "width": 588, "height": 520,
     "placement": "attached", "position": "auto",
+    "keyboard_focus": "exclusive",
+    "capture_keys": ["h", "Left", "l", "Right", "k", "Up", "j", "Down", "r", "f", "e", "y", "shift+question", "F1"],
 }]
 assert "setting" not in wali
 PY

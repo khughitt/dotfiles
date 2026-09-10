@@ -12,7 +12,10 @@ ctrl+space           // launcher
 super+s              // control center
 super+alt+comma      // settings
 super+o              // overview
-super+n              // wallpaper picker (wali)
+super+n              // toggle wallpaper panel (wali); ? for panel keys
+super+alt+left/right // previous/next wallpaper in history
+super+alt+r          // random wallpaper
+super+alt+f          // toggle wallpaper favorite
 super+q              // close window
 alt+f4               // close window
 super+alt+l          // lock screen

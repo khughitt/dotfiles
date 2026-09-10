@@ -217,4 +217,61 @@ local unfavorited = assert(button(rendered, "favorite"))
 equal(unfavorited.props.glyph, "heart")
 equal(unfavorited.props.selected, false)
 
+assert(type(onKey) == "function", "panel must handle captured keys")
+for _, binding in ipairs({
+  { "h", "previous" }, { "Left", "previous" }, { "l", "next" }, { "Right", "next" },
+  { "k", "earlier" }, { "Up", "earlier" }, { "j", "later" }, { "Down", "later" },
+  { "r", "random" }, { "f", "favorite" }, { "e", "edit" },
+}) do
+  local count = #runs
+  onKey(binding[1], false)
+  equal(#runs, count, "release must not act")
+  onKey(binding[1], true)
+  equal(#runs, count + 1)
+  equal(runs[#runs].command, "'walictl' '" .. binding[2] .. "'")
+  onKey("r", true)
+  equal(#runs, count + 1, "keyboard action bypassed the busy guard")
+  runs[#runs].callback(success())
+  if binding[2] ~= "edit" then
+    equal(runs[#runs].command, "'walictl' 'current' '--json'")
+    runs[#runs].callback(success("with source"))
+  end
+end
+
+local count = #clipboardCalls
+onKey("y", true)
+equal(clipboardCalls[count + 1], { "/wall/source.jpg", "text/plain" })
+local runCount = #runs
+onKey("unknown", true)
+equal(#runs, runCount)
+onKey("shift+question", true)
+assert(find(rendered, "image") == nil, "help must replace the preview")
+onKey("shift+question", false)
+assert(find(rendered, "image") == nil, "release must leave help open")
+onKey("shift+question", true)
+assert(find(rendered, "image") ~= nil, "help must toggle back to the preview")
+onKey("F1", true)
+assert(find(rendered, "image") == nil, "unshifted help key must open help")
+onKey("F1", false)
+assert(find(rendered, "image") == nil)
+onKey("F1", true)
+assert(find(rendered, "image") ~= nil)
+assert(button(rendered, "help")).props.onClick()
+assert(find(rendered, "image") == nil)
+onOpen({})
+runs[#runs].callback(success("with source"))
+assert(find(rendered, "image") ~= nil, "opening must reset help")
+
+onKey("l", true)
+runs[#runs].callback({ exitCode = 1, stdout = "", stderr = "navigation failed", timedOut = false })
+assert(button(rendered, "next")).props.onClick()
+equal(runs[#runs].command, "'walictl' 'next'", "failure must release the busy guard")
+runs[#runs].callback(success())
+runs[#runs].callback(success("invalid current"))
+runCount = #runs
+count = #clipboardCalls
+for _, chord in ipairs({ "f", "e", "y", "j", "k" }) do onKey(chord, true) end
+equal(#runs, runCount, "photo actions require loaded metadata")
+equal(#clipboardCalls, count)
+
 print("Wali plugin tests passed")

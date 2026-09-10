@@ -333,7 +333,11 @@ binds {
     F6 { screenshot-screen; }
     Super+F6 { screenshot; }
     Alt+Print { screenshot-window; }
-    Super+N { spawn-sh "wali"; }
+    Super+N repeat=false hotkey-overlay-title="Wallpaper Panel" { spawn "noctalia" "msg" "panel-toggle" "khughitt/wali-panel:panel"; }
+    Super+Alt+Left repeat=false hotkey-overlay-title="Previous Wallpaper" { spawn-sh "notify-send -a Wali -t 2500 Wali \"$(walictl previous 2>&1)\""; }
+    Super+Alt+Right repeat=false hotkey-overlay-title="Next Wallpaper" { spawn-sh "notify-send -a Wali -t 2500 Wali \"$(walictl next 2>&1)\""; }
+    Super+Alt+R repeat=false hotkey-overlay-title="Random Wallpaper" { spawn-sh "notify-send -a Wali -t 2500 Wali \"$(walictl random 2>&1)\""; }
+    Super+Alt+F repeat=false hotkey-overlay-title="Favorite Wallpaper" { spawn-sh "notify-send -a Wali -t 2500 Wali \"$(walictl favorite 2>&1)\""; }
 
     Super+1 { focus-workspace 1; }
     Super+2 { focus-workspace 2; }

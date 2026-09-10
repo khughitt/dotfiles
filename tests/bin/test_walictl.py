@@ -892,6 +892,56 @@ def test_neighbors_fails_for_undated_current(walictl: ModuleType, env: dict[str,
     assert (code, stderr) == (1, "current wallpaper has no capture date: IMG_1\n")
 
 
+def test_capture_navigation_preserves_variants_and_browser_history(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    variants = env["wallpapers"].parent / "variants"
+    variants.mkdir()
+    target = variants / "PXL_20210609_120000000.png"
+    target.touch()
+    config = env["config_home"] / "wali" / "config.toml"
+    config.write_text(config.read_text() + f'variants_dir = "{variants}"\n')
+    (env["wallpapers"] / "IMG_undated.jpg").touch()
+    assert run_cli(walictl, ["later"]) == (0, "later: PXL_20210609_120000000\n", "")
+    assert noctalia.default == target
+    assert run_cli(walictl, ["later"])[0] == 0
+    assert run_cli(walictl, ["previous"])[0] == 0
+    assert noctalia.default == target
+    assert run_cli(walictl, ["earlier"])[0] == 0
+    history = load_history(walictl)
+    assert [(e.id, e.origin) for e in history.entries] == [
+        ("PXL_20210608_111152739", "observed"),
+        ("PXL_20210609_120000000", "later"),
+        ("PXL_20210608_111152739", "earlier"),
+    ]
+    assert history.cursor == 2
+
+
+@pytest.mark.parametrize("action,photo,error", [
+    ("earlier", "PXL_20210608_111152739", "no earlier photo"),
+    ("later", "PXL_20220402_162957459", "no later photo"),
+    ("later", "IMG_undated", "no capture date"),
+    ("earlier", "PXL_20200101_000000000", "not in the library"),
+])
+def test_capture_navigation_errors_do_not_set_wallpaper(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, action: str, photo: str, error: str
+) -> None:
+    noctalia.default = env["wallpapers"] / f"{photo}.jpg"
+    code, stdout, stderr = run_cli(walictl, [action])
+    assert code == 1 and stdout == "" and error in stderr
+    assert all(call[2] != "wallpaper-set" for call in noctalia.calls)
+    assert len(load_history(walictl).entries) == 1
+
+
+def test_rejected_capture_navigation_does_not_commit_selection(
+    walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia
+) -> None:
+    noctalia.reject_set = "boom"
+    code, _, stderr = run_cli(walictl, ["later"])
+    assert code == 1 and "wallpaper-set rejected" in stderr
+    assert [e.origin for e in load_history(walictl).entries] == ["observed"]
+
+
 def test_edit_opens_source_when_present_else_display_file(
     walictl: ModuleType, env: dict[str, Path], noctalia: FakeNoctalia, monkeypatch: pytest.MonkeyPatch
 ) -> None:

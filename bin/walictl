@@ -277,7 +277,7 @@ class Favorites:
 
 HISTORY_VERSION = 1
 HISTORY_CAP = 1000
-ORIGINS = ("next", "random", "observed")
+ORIGINS = ("next", "random", "observed", "earlier", "later")
 
 
 def history_path() -> Path:
@@ -503,14 +503,21 @@ def navigate(ctx: Context, action: str, rng: random.Random) -> str:
             raise WalictlError("already at the oldest wallpaper in history")
         else:
             library = scan_library(ctx.config.wallpaper_dir)
-            favorites = Favorites.load(ctx.config.favorites_file)
-            weighted = weights(
-                list(library),
-                favorites,
-                history.recent_ids(ctx.config.sampling.exclude_recent),
-                ctx.config.sampling,
-            )
-            picked = sample(weighted, rng, lambda message: print(message, file=ctx.err))
+            if action in ("earlier", "later"):
+                ordered, index = dated_position(library, current.id)
+                index += -1 if action == "earlier" else 1
+                if not 0 <= index < len(ordered):
+                    raise WalictlError(f"no {action} photo in the library")
+                picked = ordered[index]
+            else:
+                favorites = Favorites.load(ctx.config.favorites_file)
+                weighted = weights(
+                    list(library),
+                    favorites,
+                    history.recent_ids(ctx.config.sampling.exclude_recent),
+                    ctx.config.sampling,
+                )
+                picked = sample(weighted, rng, lambda message: print(message, file=ctx.err))
             displayed = display_path(ctx.config, library, picked)
             ctx.noctalia.set_default(displayed)
             history.push(HistoryEntry(ts=utc_now(), id=picked, path=str(displayed), origin=action))
@@ -538,6 +545,11 @@ def cmd_previous(ctx: Context, args: argparse.Namespace) -> int:
 
 def cmd_random(ctx: Context, args: argparse.Namespace) -> int:
     navigate(ctx, "random", _rng(args))
+    return 0
+
+
+def cmd_neighbor(ctx: Context, args: argparse.Namespace) -> int:
+    navigate(ctx, args.command, _rng(args))
     return 0
 
 
@@ -620,19 +632,22 @@ def cmd_import_favorites(ctx: Context, args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_neighbors(ctx: Context, args: argparse.Namespace) -> int:
-    if args.count < 0:
-        raise WalictlError("count must be non-negative")
-    photo = _current_id(ctx)
-    taken = capture_date(photo)
-    if taken is None:
+def dated_position(library: dict[str, Path], photo: str) -> tuple[list[str], int]:
+    if capture_date(photo) is None:
         raise WalictlError(f"current wallpaper has no capture date: {photo}")
-    library = scan_library(ctx.config.wallpaper_dir)
     dated = sorted((taken, candidate) for candidate in library if (taken := capture_date(candidate)) is not None)
     ordered = [candidate for _, candidate in dated]
     if photo not in ordered:
         raise WalictlError(f"current wallpaper is not in the library: {photo}")
-    index = ordered.index(photo)
+    return ordered, ordered.index(photo)
+
+
+def cmd_neighbors(ctx: Context, args: argparse.Namespace) -> int:
+    if args.count < 0:
+        raise WalictlError("count must be non-negative")
+    photo = _current_id(ctx)
+    library = scan_library(ctx.config.wallpaper_dir)
+    ordered, index = dated_position(library, photo)
 
     def item(candidate: str) -> dict[str, object]:
         candidate_date = capture_date(candidate)
@@ -671,6 +686,8 @@ COMMANDS: dict[str, Callable[[Context, argparse.Namespace], int]] = {
     "favorites": cmd_favorites,
     "import-favorites": cmd_import_favorites,
     "neighbors": cmd_neighbors,
+    "earlier": cmd_neighbor,
+    "later": cmd_neighbor,
     "next": cmd_next,
     "previous": cmd_previous,
     "random": cmd_random,
@@ -707,6 +724,8 @@ def build_parser() -> argparse.ArgumentParser:
         sub = subparsers.add_parser(name, help=help_text)
         sub.add_argument("--seed", type=int, default=None, help="seed the sampler (tests)")
     subparsers.add_parser("previous", help="back one entry in history")
+    subparsers.add_parser("earlier", help="previous photo by capture time, discarding forward history")
+    subparsers.add_parser("later", help="next photo by capture time, discarding forward history")
     subparsers.add_parser("observe", help="record a wallpaper change made outside walictl (hook entry point)")
     return parser
 

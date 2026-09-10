@@ -5,6 +5,8 @@ local commands = {
   previous = { "walictl", "previous" },
   next = { "walictl", "next" },
   random = { "walictl", "random" },
+  earlier = { "walictl", "earlier" },
+  later = { "walictl", "later" },
   favorite = { "walictl", "favorite" },
   edit = { "walictl", "edit" },
 }
@@ -37,6 +39,7 @@ end
 
 function M.refreshAfter(action)
   return action == "previous" or action == "next" or action == "random" or action == "favorite"
+    or action == "earlier" or action == "later"
 end
 
 function M.canStart(busy)

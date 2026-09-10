@@ -17,3 +17,5 @@ width = 588
 height = 520
 placement = "attached"
 position = "auto"
+keyboard_focus = "exclusive"
+capture_keys = ["h", "Left", "l", "Right", "k", "Up", "j", "Down", "r", "f", "e", "y", "shift+question", "F1"]
