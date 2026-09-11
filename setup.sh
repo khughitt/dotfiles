@@ -11,6 +11,9 @@ source "${DOTS_HOME}/lib/dotfiles-setup-data.bash"
 # The prism checkout, reached the same way bin/prism reaches it: `~/d` is the
 # one layout the tree assumes, so no path into this machine is stored in git.
 PRISM_ROOT="${HOME}/d/prism"
+# The wali checkout, reached the same way: bin/walictl execs into it and the
+# systemd and Noctalia-plugin phases link out of it.
+WALI_ROOT="${HOME}/d/wali"
 
 # Parse command line arguments
 HEADLESS=false
@@ -466,6 +469,11 @@ function setup_preflight() {
             test -d "${prism_root}/node_modules" || missing=1
     fi
 
+    # ln_s stops the systemd and plugin phases on a missing checkout; this names
+    # the fix up front, with the rest of the per-machine prerequisites.
+    preflight_check "wali checkout" "git clone git@github.com:khughitt/wali.git ${WALI_ROOT}" \
+        test -x "${WALI_ROOT}/bin/walictl" || missing=1
+
     # Familiar's hooks run on every agent tool call and die on a missing
     # node_modules; mindful's shell function and user unit both read the env file.
     # Neither is in git or in Dropbox, and both are named here rather than met as a
@@ -742,8 +750,8 @@ function setup_systemd_user_units() {
     ln_s "${DOTS_HOME}/systemd/user/mindful-docker.service" "${XDG_CONFIG_HOME}/systemd/user/mindful-docker.service"
     ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.service" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.service"
     ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.timer" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.timer"
-    ln_s "${DOTS_HOME}/systemd/user/wali-rotate.service" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service"
-    ln_s "${DOTS_HOME}/systemd/user/wali-rotate.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer"
+    ln_s "${WALI_ROOT}/systemd/wali-rotate.service" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service"
+    ln_s "${WALI_ROOT}/systemd/wali-rotate.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer"
 
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload
@@ -838,7 +846,7 @@ function setup_noctalia_plugins() {
     local plugin_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/noctalia/plugins"
 
     ensure_dir "$plugin_dir"
-    ln_s "${DOTS_HOME}/noctalia/plugins/wali-panel" "${plugin_dir}/wali-panel"
+    ln_s "${WALI_ROOT}/integrations/noctalia-plugin" "${plugin_dir}/wali-panel"
     ln_s "${HOME}/d/prism/integrations/noctalia-plugin" "${plugin_dir}/prism"
 
     # The links are what dotfiles-health requires and they need nothing running, so

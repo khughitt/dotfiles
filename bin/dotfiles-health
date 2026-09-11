@@ -320,7 +320,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
 
     noctalia_plugin_dir="${XDG_DATA_HOME}/noctalia/plugins"
     check_link "${noctalia_plugin_dir}/wali-panel" \
-        "${DOTS_HOME}/noctalia/plugins/wali-panel"
+        "${HOME}/d/wali/integrations/noctalia-plugin"
     check_link "${noctalia_plugin_dir}/prism" \
         "${HOME}/d/prism/integrations/noctalia-plugin"
 
@@ -412,10 +412,10 @@ if [[ "$(uname)" != "Darwin" ]]; then
         "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer"
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service" \
-        "${DOTS_HOME}/systemd/user/wali-rotate.service"
+        "${HOME}/d/wali/systemd/wali-rotate.service"
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer" \
-        "${DOTS_HOME}/systemd/user/wali-rotate.timer"
+        "${HOME}/d/wali/systemd/wali-rotate.timer"
 
     if [[ "$SKIP_SYSTEMD" != "true" ]]; then
         if command -v systemctl >/dev/null 2>&1; then
@@ -432,6 +432,12 @@ if [[ "$(uname)" != "Darwin" ]]; then
                     warn "systemd user timer could not be queried: $timer"
                 fi
             done
+            # systemctl enable resolved the unit's symlink when it wrote this
+            # link, so is-enabled keeps saying yes after the unit source moves.
+            # realpath in check_link accepts either spelling of the live path.
+            check_link \
+                "${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/wali-rotate.timer" \
+                "${HOME}/d/wali/systemd/wali-rotate.timer"
         else
             warn "systemctl is not available"
         fi

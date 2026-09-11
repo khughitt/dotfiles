@@ -147,6 +147,15 @@ run_setup() {
     mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin"
     touch "${tmp}/home/d/prism/integrations/noctalia-plugin/plugin.toml"
   fi
+  if [[ "${WALI_SOURCE_PRESENT:-true}" == true ]]; then
+    mkdir -p "${tmp}/home/d/wali/integrations/noctalia-plugin" \
+      "${tmp}/home/d/wali/systemd" "${tmp}/home/d/wali/bin"
+    touch "${tmp}/home/d/wali/integrations/noctalia-plugin/plugin.toml"
+    touch "${tmp}/home/d/wali/systemd/wali-rotate.service" \
+      "${tmp}/home/d/wali/systemd/wali-rotate.timer"
+    printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/home/d/wali/bin/walictl"
+    chmod +x "${tmp}/home/d/wali/bin/walictl"
+  fi
   install_test_stubs "$tmp"
   cat > "${tmp}/bin/hostname" <<'EOF'
 #!/usr/bin/env bash
@@ -405,8 +414,6 @@ test_compositors_use_noctalia_v5() {
 
 test_active_noctalia_code_has_no_v4_ipc() {
   local output exit_status files=(
-    "${repo_root}/bin/walictl"
-    "${repo_root}/shell/wali"
     "${repo_root}/niri/config.kdl"
     "${repo_root}/setup.sh"
     "${repo_root}/bin/dotfiles-health"
@@ -429,9 +436,7 @@ test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  mkdir -p "$tmp/repo/bin" "$tmp/repo/shell" "$tmp/repo/niri"
-  cp "${repo_root}/bin/walictl" "$tmp/repo/bin/walictl"
-  cp "${repo_root}/shell/wali" "$tmp/repo/shell/wali"
+  mkdir -p "$tmp/repo/niri"
   cp "${repo_root}/niri/config.kdl" "$tmp/repo/niri/config.kdl"
   cp "${repo_root}/setup.sh" "$tmp/repo/setup.sh"
 
@@ -580,13 +585,19 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "$(readlink "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf")" == \
       "${repo_root}/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
     fail "expected niri stop-timeout override to point into the repository"
-  for unit in familiar-reap.service familiar-reap.timer mindful-docker.service \
-      wali-rotate.service wali-rotate.timer; do
+  for unit in familiar-reap.service familiar-reap.timer mindful-docker.service; do
     [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
       fail "expected linked ${unit}"
     [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
         "${repo_root}/systemd/user/${unit}" ]] || \
       fail "expected ${unit} to point into the repository"
+  done
+  for unit in wali-rotate.service wali-rotate.timer; do
+    [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
+      fail "expected linked ${unit}"
+    [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
+        "${tmp}/home/d/wali/systemd/${unit}" ]] || \
+      fail "expected ${unit} to point into the wali checkout"
   done
   [[ ! -e "${tmp}/data/zinit" ]] || fail "link-only should not clone zinit"
   [[ ! -e "${tmp}/home/.tmux/plugins/tpm" ]] || fail "link-only should not clone tpm"
@@ -778,6 +789,21 @@ test_noctalia_plugin_phase_requires_prism_source() {
   (( exit_status != 0 )) || fail "plugin setup accepted a missing Prism plugin source"
   [[ "$output" == *"Link source does not exist"* ]] || \
     fail "plugin setup did not explain the missing Prism plugin source"
+}
+
+test_noctalia_plugin_phase_requires_wali_source() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  set +e
+  output=$(WALI_SOURCE_PRESENT=false run_setup "$tmp" --link-only \
+    --only noctalia-plugins 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "plugin setup accepted a missing wali plugin source"
+  [[ "$output" == *"Link source does not exist"* && "$output" == *"d/wali/integrations"* ]] || \
+    fail "plugin setup did not explain the missing wali plugin source: ${output}"
 }
 
 test_setup_and_health_share_managed_link_metadata() {
@@ -1213,6 +1239,12 @@ test_dotfiles_health_checks_enabled_user_timer() {
 
   prepare_health_fixture "$tmp"
 
+  # systemctl enable writes this link with the unit's resolved path; the
+  # fixture stands in for a host whose timer was enabled from ~/d/wali.
+  mkdir -p "${tmp}/config/systemd/user/timers.target.wants"
+  ln -s "${tmp}/home/d/wali/systemd/wali-rotate.timer" \
+    "${tmp}/config/systemd/user/timers.target.wants/wali-rotate.timer"
+
   cat > "${mockbin}/systemctl" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -1256,6 +1288,38 @@ EOF
     fail "expected health to query the wali timer schedule"
 
   rm -rf "$tmp"
+}
+
+test_dotfiles_health_fails_stale_wali_timer_wants_link() {
+  local tmp mockbin output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mockbin="${tmp}/bin"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "$mockbin" "${tmp}/stale"
+  prepare_health_fixture "$tmp"
+  # is-enabled says yes even when the wants link still points at a unit file
+  # that moved; only the link target tells the two apart.
+  cat > "${mockbin}/systemctl" <<'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  "--user is-enabled "*) printf 'enabled\n'; exit 0 ;;
+  "--user list-timers "*) printf 'NEXT LEFT LAST PASSED UNIT ACTIVATES\n'; exit 0 ;;
+esac
+exit 64
+EOF
+  chmod +x "${mockbin}/systemctl"
+  touch "${tmp}/stale/wali-rotate.timer"
+  mkdir -p "${tmp}/config/systemd/user/timers.target.wants"
+  ln -s "${tmp}/stale/wali-rotate.timer" \
+    "${tmp}/config/systemd/user/timers.target.wants/wali-rotate.timer"
+
+  set +e
+  output=$(PATH="${mockbin}:$PATH" run_health "$tmp" 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted a stale wali timer wants link"
+  [[ "$output" == *"wrong link target"* && "$output" == *"timers.target.wants/wali-rotate.timer"* ]] || \
+    fail "health did not identify the stale wants link: ${output}"
 }
 
 test_noctalia_v5_config_is_installed_and_validated() {
@@ -1501,6 +1565,10 @@ test_preflight_reports_every_unmet_prerequisite_without_mutating() {
     fail "preflight did not report the unpopulated tasks registry"
   [[ "$output" == *"MISSING  mindful environment"* ]] || \
     fail "preflight did not report the missing mindful env file"
+  [[ "$output" == *"MISSING  wali checkout"* ]] || \
+    fail "preflight did not report the missing wali checkout"
+  [[ "$output" == *"git clone git@github.com:khughitt/wali.git"* ]] || \
+    fail "preflight reported the wali finding without naming its fix"
   [[ "$output" == *"npm ci --prefix"* ]] || \
     fail "preflight reported a finding without naming its fix"
 
@@ -1751,6 +1819,7 @@ test_noctalia_plugin_phase_links_and_enables_exact_ids
 test_default_setup_does_not_require_live_noctalia
 test_noctalia_plugin_phase_fails_when_ipc_is_unavailable
 test_noctalia_plugin_phase_requires_prism_source
+test_noctalia_plugin_phase_requires_wali_source
 test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_skips_prism_when_unconfigured
 test_dotfiles_health_fails_missing_noctalia_config
@@ -1772,6 +1841,7 @@ test_dotfiles_health_fails_broken_managed_config_link
 test_dotfiles_health_rejects_legacy_lsd_directory_link
 test_dotfiles_health_rejects_legacy_yazi_directory_link
 test_dotfiles_health_checks_enabled_user_timer
+test_dotfiles_health_fails_stale_wali_timer_wants_link
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_hands_material_ownership_to_prism
 test_setup_renders_the_theme_when_the_output_is_empty
