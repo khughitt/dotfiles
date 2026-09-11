@@ -129,7 +129,7 @@ record; wali's own docs start with the switcher doc.
 | `wali/<host>/config.toml` | Unchanged. Per-host config, linked to `$XDG_CONFIG_HOME/wali/config.toml` by setup.sh as today. |
 | `bin/walictl` | Becomes a wrapper: `exec "$HOME/d/wali/bin/walictl" "$@"`, modelled on `bin/prism`. |
 | `setup.sh` | `WALI_ROOT="${HOME}/d/wali"` beside `PRISM_ROOT`. `setup_noctalia_plugins` links `${WALI_ROOT}/integrations/noctalia-plugin`; the systemd phase links `${WALI_ROOT}/systemd/wali-rotate.{service,timer}`. Preflight reports `${WALI_ROOT}/bin/walictl` with the clone command as its fix — advisory, like every preflight finding (only `--check` turns findings into an exit code). The hard gate is `ln_s`: it exits 1 when a link source is missing, so the systemd and Noctalia-plugin phases stop on a missing checkout whether or not preflight ran, including under phase selection. The shim itself has no gate, exactly like `bin/prism`: a missing checkout surfaces as `exec` failing at call time. |
-| `bin/dotfiles-health` | Plugin link check expects `${HOME}/d/wali/integrations/noctalia-plugin`; systemd link checks expect `${HOME}/d/wali/systemd/…`. Plugin-enabled and timer checks unchanged. |
+| `bin/dotfiles-health` | Plugin link check expects `${HOME}/d/wali/integrations/noctalia-plugin`; systemd link checks expect `${HOME}/d/wali/systemd/…`. A new `check_link` on `${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/wali-rotate.timer` expects the same unit source: `systemctl --user enable` writes that link with the unit's resolved path, so `is-enabled` keeps reporting success after the source moves while the link points at a deleted file. Plugin-enabled and timer-schedule checks unchanged. |
 | `zshrc` | `wali` leaves `shell_fragments`; after the loop, `[[ -r "${HOME}/d/wali/shell/wali.zsh" ]] && source "${HOME}/d/wali/shell/wali.zsh"`. |
 | `bin/dotfiles-check` | `shell/wali` and `tests/wali.zsh` leave the zsh file list. |
 | `justfile` | `test` drops `zsh tests/wali.zsh`, the `lua` guard, and the `lua … plugin_test.lua` line. |
@@ -207,18 +207,30 @@ are verified on the new targets.
    still holds its own copies; nothing running is affected.
 2. **dotfiles retarget commit** (`wali-migration` worktree): the shim,
    `WALI_ROOT`, setup.sh/health/test retargets, zshrc sourcing, the moved
-   manifest assertions, and the justfile/pyproject/dotfiles-check trims —
-   with the original files still in place. `just check test` green in the
+   manifest assertions, and the justfile/pyproject/dotfiles-check trims. The
+   files live consumers still link to stay in place
+   (`noctalia/plugins/wali-panel/`, `systemd/user/wali-rotate.*`,
+   `shell/wali`). The two test suites go in this commit, not the removal one:
+   pytest has no `testpaths` and would discover `tests/bin/test_walictl.py`,
+   whose `SourceFileLoader` would import the bash shim as Python; `tests/wali.zsh`
+   likewise leaves with its justfile line. `just check test` green in the
    worktree.
 3. **Cut over titan:** ff-merge into `main` from the main checkout; run
-   `setup.sh`'s graphical-config, systemd, and Noctalia-plugin phases.
-   `ln_s` replaces the three symlinks (each currently points elsewhere, so
-   none is skipped), `systemctl --user daemon-reload` picks up the moved
-   units, and `noctalia msg plugins enable` is idempotent on an
-   already-enabled id. `dotfiles-health` green on `main`.
+   `setup.sh --enable-user-timers` for the graphical-config, systemd, and
+   Noctalia-plugin phases. `ln_s` replaces the three symlinks (each currently
+   points elsewhere, so none is skipped), and `--enable-user-timers` is what
+   makes the systemd phase run `daemon-reload` and `enable --now`: `enable`
+   rewrites `timers.target.wants/wali-rotate.timer`, a fourth link that today
+   points directly at the dotfiles unit and that the phase's `ln_s` calls do
+   not touch. Without the flag the timer would keep firing from a link into
+   the soon-deleted file. `noctalia msg plugins enable` is idempotent on an
+   already-enabled id. `dotfiles-health` green on `main`, including the new
+   wants-link check.
 4. **Cut over europa:** once Dropbox has delivered both trees, run the same
-   `setup.sh` phases and `dotfiles-health` there. Both hosts now link into
-   `~/d/wali`; nothing resolves into `dotfiles/noctalia/plugins/wali-panel` or
+   `setup.sh --enable-user-timers` phases and `dotfiles-health` there. On
+   both hosts, `readlink` of the plugin link, the two unit links, and the
+   wants link now resolve into `~/d/wali`; nothing resolves into
+   `dotfiles/noctalia/plugins/wali-panel` or
    `dotfiles/systemd/user/wali-rotate.*` any more.
 5. **dotfiles removal commit:** `git rm` the originals; `just check test`
    green; ff-merge; `dotfiles-health` green on titan. europa needs no action —
@@ -234,7 +246,10 @@ are verified on the new targets.
   compare live links (which point into `main`) against the worktree.
   `just health` runs on `main` after each cutover step.
 - Live: `walictl current --json` through the shim; `systemctl --user
-  list-timers wali-rotate.timer`; `noctalia msg plugins list` shows
+  list-timers wali-rotate.timer` and `readlink
+  ~/.config/systemd/user/timers.target.wants/wali-rotate.timer` into
+  `~/d/wali` (`is-enabled` alone cannot tell a stale wants link from a fresh
+  one); `noctalia msg plugins list` shows
   `khughitt/wali-panel … enabled`; `Super+N` opens the panel; a new zsh has
   `wali_ingest` defined.
 - `bin/dotfiles-layout-check` passes: the shim is a file, not a symlink, so no
