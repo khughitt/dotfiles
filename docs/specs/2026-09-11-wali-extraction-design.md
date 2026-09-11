@@ -79,8 +79,6 @@ one `git log --follow` away. Rejected: `git filter-repo` / subtree split.
   tests/test_walictl.py                ← dotfiles tests/bin/test_walictl.py
   tests/wali.zsh                       ← dotfiles tests/wali.zsh
   tests/tmp_cleanup.zsh                ← copied from dotfiles tests/ (16-line helper wali.zsh sources)
-  docs/specs/2026-09-07-wallpaper-management-redesign-design.md
-  docs/plans/2026-09-07-wallpaper-management-redesign.md
   docs/noctalia-wallpaper-switcher.md  ← dotfiles noctalia/noctalia-wallpaper-switcher.md
   pyproject.toml                       (name wali; dev group only: pytest, ruff, pyright)
   uv.lock
@@ -115,8 +113,14 @@ Noctalia's enabled-plugin state survives the move.
   resolves to the dotfiles shim.
 - `pyproject.toml` `[tool.pyright] include` and `[tool.ruff] extend-include`
   list `bin/walictl` and `tests/test_walictl.py`.
-- The redesign spec and plan keep their content; a one-line note under their
-  status header records the move.
+- `tests/wali.zsh` gains the `plugin.toml` manifest assertions (id, plugin_api,
+  dependencies, widget and panel entries) that `tests/setup_and_health.zsh`
+  makes today; they are the plugin's contract with Noctalia, not dotfiles'.
+
+The 2026-09-07 redesign spec and plan **stay in dotfiles**: eighteen task
+records there (`dots-59c279`'s subtree) carry them as `spec:`/`plan:` paths and
+`tasks check` validates those. The wali README links to them as the design
+record; wali's own docs start with the switcher doc.
 
 ## What dotfiles keeps
 
@@ -124,13 +128,13 @@ Noctalia's enabled-plugin state survives the move.
 |---|---|
 | `wali/<host>/config.toml` | Unchanged. Per-host config, linked to `$XDG_CONFIG_HOME/wali/config.toml` by setup.sh as today. |
 | `bin/walictl` | Becomes a wrapper: `exec "$HOME/d/wali/bin/walictl" "$@"`, modelled on `bin/prism`. |
-| `setup.sh` | `WALI_ROOT="${HOME}/d/wali"` beside `PRISM_ROOT`. `setup_noctalia_plugins` links `${WALI_ROOT}/integrations/noctalia-plugin`; the systemd phase links `${WALI_ROOT}/systemd/wali-rotate.{service,timer}`. A preflight requires `${WALI_ROOT}/bin/walictl` to exist, so a machine without the checkout fails early with the clone command, as the prism node-deps preflight does. |
+| `setup.sh` | `WALI_ROOT="${HOME}/d/wali"` beside `PRISM_ROOT`. `setup_noctalia_plugins` links `${WALI_ROOT}/integrations/noctalia-plugin`; the systemd phase links `${WALI_ROOT}/systemd/wali-rotate.{service,timer}`. Preflight reports `${WALI_ROOT}/bin/walictl` with the clone command as its fix — advisory, like every preflight finding (only `--check` turns findings into an exit code). The hard gate is `ln_s`: it exits 1 when a link source is missing, so the systemd and Noctalia-plugin phases stop on a missing checkout whether or not preflight ran, including under phase selection. The shim itself has no gate, exactly like `bin/prism`: a missing checkout surfaces as `exec` failing at call time. |
 | `bin/dotfiles-health` | Plugin link check expects `${HOME}/d/wali/integrations/noctalia-plugin`; systemd link checks expect `${HOME}/d/wali/systemd/…`. Plugin-enabled and timer checks unchanged. |
 | `zshrc` | `wali` leaves `shell_fragments`; after the loop, `[[ -r "${HOME}/d/wali/shell/wali.zsh" ]] && source "${HOME}/d/wali/shell/wali.zsh"`. |
 | `bin/dotfiles-check` | `shell/wali` and `tests/wali.zsh` leave the zsh file list. |
 | `justfile` | `test` drops `zsh tests/wali.zsh`, the `lua` guard, and the `lua … plugin_test.lua` line. |
 | `pyproject.toml` | Renamed `dotfiles`; `bin/walictl` and `tests/bin/test_walictl.py` leave pyright/ruff includes. Other pytest suites still use it, so it stays. `uv.lock` regenerated. |
-| `tests/setup_and_health.zsh` | Link-target assertions retarget to `~/d/wali/…`; `test_active_noctalia_code_has_no_v4_ipc` and its scan-error twin drop `bin/walictl` and `shell/wali` from their file lists; plugin.toml assertions read `${HOME}/d/wali/integrations/noctalia-plugin/plugin.toml`. |
+| `tests/setup_and_health.zsh` | The `run_setup` harness gains a wali fixture beside the prism one: `${tmp}/home/d/wali/integrations/noctalia-plugin/plugin.toml`, `${tmp}/home/d/wali/systemd/wali-rotate.{service,timer}`, and an executable `${tmp}/home/d/wali/bin/walictl` stub. Link-target assertions retarget to `${tmp}/home/d/wali/…`; the wrong-link tests keep working against the fixture. `test_active_noctalia_code_has_no_v4_ipc` and its scan-error twin drop `bin/walictl` and `shell/wali`. The plugin.toml manifest assertions move to wali's `tests/wali.zsh` (above); the `noctalia/config.toml` assertions (widget list, `wallpaper_changed` hook) stay. |
 | `tests/justfile.zsh` | Assertions that the `test` recipe includes the wali and lua lines are removed; the ordering assertion goes with them. |
 | `tests/dotfiles_check.zsh` | `shell/wali` leaves its expected file list. |
 | `niri/config.kdl`, `noctalia/config.toml`, `cheatsheets/niri` | Unchanged. |
@@ -138,20 +142,34 @@ Noctalia's enabled-plugin state survives the move.
 
 Removed from dotfiles: `bin/walictl` (content), `shell/wali`,
 `noctalia/plugins/wali-panel/`, `systemd/user/wali-rotate.{service,timer}`,
-`tests/bin/test_walictl.py`, `tests/wali.zsh`, the two redesign docs,
-`noctalia/noctalia-wallpaper-switcher.md`.
+`tests/bin/test_walictl.py`, `tests/wali.zsh`,
+`noctalia/noctalia-wallpaper-switcher.md`. `noctalia/plugins/` and `/docs/*`
+are gitignored and these files were force-added, so the removal is an explicit
+`git rm`, not a sweep.
 
-`tests/setup_and_health.zsh` currently reads the plugin's `plugin.toml` and
-copies `bin/walictl` from the repo; after the move those tests reference the
-`~/d/wali` checkout. This mirrors how prism's plugin link is already checked
-against `${HOME}/d/prism/…`, and it means `just test` in dotfiles requires the
-wali checkout — which setup.sh's preflight already requires.
+With the fixture, `just check test` in dotfiles does not need a real `~/d/wali`;
+only `dotfiles-health` on a live machine does.
 
 ## Task migration
 
-`tasks` has no cross-project move, so each task is re-created and the original
-dropped. For each of `dots-59c279`, `dots-5760ef`, `dots-9bfdc0`,
-`dots-b9ba7c`, `dots-2aa60c`, `dots-b3e5ae`:
+Inventory of what references wallpaper work in dots today:
+
+- `dots-59c279`, the redesign goal: 17 children under `--plan
+  docs/plans/2026-09-07-wallpaper-management-redesign.md`, 16 done and
+  `dots-fa9cc0` (Task 17, cutover) still `doing`. `tasks drop` refuses a goal
+  with an open descendant, and the 18 records pin the plan path.
+- `dots-cdb659` (idea, mind6 integration) depends on `dots-59c279`.
+- `dots-2aa60c` (idea) depends on `dots-59c279`; `dots-b9ba7c` (idea) depends
+  on the done `dots-ba0168`.
+- `dots-5760ef`, `dots-9bfdc0`, `dots-b3e5ae`: no relations.
+
+**The redesign goal and its subtree stay in dots.** It is the record of work
+done in dotfiles, its docs stay there, and it closes there when `fa9cc0` does.
+`dots-cdb659` stays too: it is mind6-facing and keeps its dependency.
+
+**Five forward-looking tasks move.** `tasks` has no cross-project move, so for
+each of `dots-5760ef`, `dots-9bfdc0`, `dots-b9ba7c`, `dots-2aa60c`,
+`dots-b3e5ae`:
 
 1. `tasks add "<title>" --project wali --source dots-<id>` with the same
    status, priority, size, tags, and body.
@@ -160,8 +178,8 @@ dropped. For each of `dots-59c279`, `dots-5760ef`, `dots-9bfdc0`,
 
 Then:
 
-- `wali-<59c279'>`: `--spec docs/specs/2026-09-07-wallpaper-management-redesign-design.md --plan docs/plans/2026-09-07-wallpaper-management-redesign.md`.
-- `wali-<2aa60c'>` depends on `wali-<59c279'>` (was `dots-2aa60c → dots-59c279`).
+- `tasks dep wali-<2aa60c'> --on dots-59c279`: the cross-project form keeps the
+  ordering it had.
 - `dots-b9ba7c`'s dependency on `dots-ba0168` is not carried over: `ba0168` is done.
 - `tasks feedback "no way to move a task between registered projects" --category gap`.
 
@@ -173,25 +191,48 @@ attached, and closes when the dotfiles change merges.
 The dotfiles tree is live on titan and europa and `~/bin` is `dotfiles/bin`,
 so no intermediate state may leave walictl, the timer, or the panel broken.
 
-1. **wali repo first.** Legacy branch and tag; replacement commit with the
-   full layout above; `just setup && just verify` green. dotfiles still holds
-   its own copies, so nothing running is affected.
-2. **dotfiles branch** (`wali-migration` worktree): shim, retargets, removals;
-   `just verify` green in the worktree.
-3. **Land:** ff-merge into `main` from the main checkout; run `setup.sh`'s
-   graphical-config, systemd, and Noctalia-plugin phases; `dotfiles-health`
-   green on titan. The `~/.local/share/noctalia/plugins/wali-panel` symlink is
-   replaced by `ln_s`, and `noctalia msg plugins enable` is idempotent on an
-   already-enabled id. europa picks up both trees over Dropbox and re-runs
-   `setup.sh`.
-4. **Tasks last**, once both repos are on `main`.
+Today's live links on titan resolve into the dotfiles tree
+(`~/d/dotfiles/noctalia/plugins/wali-panel`,
+`~/d/dotfiles/systemd/user/wali-rotate.*`), and europa's do the same. Deleting
+the originals in the commit that retargets setup.sh would dangle those links on
+both hosts until setup.sh reruns — and on europa Dropbox may deliver the
+dotfiles change before `~/d/wali` has finished syncing. So the dotfiles side
+lands as **two commits**, and the originals are deleted only after both hosts
+are verified on the new targets.
+
+1. **wali repo lands and syncs.** Legacy branch and tag; replacement commit
+   with the full layout above; `just setup && just verify` green on titan.
+   Confirm on europa that `~/d/wali/bin/walictl` and
+   `~/d/wali/integrations/noctalia-plugin/plugin.toml` have arrived. dotfiles
+   still holds its own copies; nothing running is affected.
+2. **dotfiles retarget commit** (`wali-migration` worktree): the shim,
+   `WALI_ROOT`, setup.sh/health/test retargets, zshrc sourcing, the moved
+   manifest assertions, and the justfile/pyproject/dotfiles-check trims —
+   with the original files still in place. `just check test` green in the
+   worktree.
+3. **Cut over titan:** ff-merge into `main` from the main checkout; run
+   `setup.sh`'s graphical-config, systemd, and Noctalia-plugin phases.
+   `ln_s` replaces the three symlinks (each currently points elsewhere, so
+   none is skipped), `systemctl --user daemon-reload` picks up the moved
+   units, and `noctalia msg plugins enable` is idempotent on an
+   already-enabled id. `dotfiles-health` green on `main`.
+4. **Cut over europa:** once Dropbox has delivered both trees, run the same
+   `setup.sh` phases and `dotfiles-health` there. Both hosts now link into
+   `~/d/wali`; nothing resolves into `dotfiles/noctalia/plugins/wali-panel` or
+   `dotfiles/systemd/user/wali-rotate.*` any more.
+5. **dotfiles removal commit:** `git rm` the originals; `just check test`
+   green; ff-merge; `dotfiles-health` green on titan. europa needs no action —
+   nothing it links to is touched.
+6. **Tasks last**, once both repos are on `main`.
 
 ## Verification
 
 - wali: `just verify` — pytest, `tests/wali.zsh`, `plugin_test.lua`, ruff,
   pyright, `tasks check`.
-- dotfiles: `just verify` (`check test health`) in the worktree, then
-  `dotfiles-health` on `main` after setup.sh.
+- dotfiles: `just check test` in the worktree — not `just verify`, whose
+  `health` recipe derives `DOTS_HOME` from the executing checkout and would
+  compare live links (which point into `main`) against the worktree.
+  `just health` runs on `main` after each cutover step.
 - Live: `walictl current --json` through the shim; `systemctl --user
   list-timers wali-rotate.timer`; `noctalia msg plugins list` shows
   `khughitt/wali-panel … enabled`; `Super+N` opens the panel; a new zsh has
