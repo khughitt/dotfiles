@@ -5,8 +5,8 @@ status: todo
 priority: 2
 size: m
 created: 2026-09-11T22:02:34Z
-updated: 2026-09-11T22:16:01Z
-depends: []
+updated: 2026-09-11T22:48:11Z
+depends: [dots-193410]
 parent: dots-3a1770
 tags: [wallpaper]
 plan: docs/plans/2026-09-11-wali-extraction.md
