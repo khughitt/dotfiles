@@ -1,6 +1,6 @@
 # Extract wali from dotfiles into `khughitt/wali`
 
-**Status:** Designed 2026-09-11; not yet implemented. Task `dots-3a1770`.
+**Status:** Partially implemented. Files landed in `wali@35ac931`, dotfiles retarget prepared; both host cutovers and source removal/task migration pending.
 
 ## Problem
 

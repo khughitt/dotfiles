@@ -147,13 +147,13 @@ Bootstrap them in two stages:
 ```
 
 Ordinary setup remains usable before the shell starts. The explicit plugin
-phase links Wali from dotfiles and Prism from `~/d/prism`, then enables both
-through Noctalia IPC. It requires the `~/d/prism` checkout and fails if the
-Noctalia IPC endpoint is unavailable.
+phase links Wali from `~/d/wali` and Prism from `~/d/prism`. When Noctalia is
+running, it enables both through IPC; otherwise setup defers enablement until
+Noctalia is available. It requires both checkouts.
 
-Dotfiles owns Wali, the Noctalia configuration, and installation; Prism owns
-its plugin source. Wali depends on `walictl` and its config link; Prism depends
-on `prism` alone.
+Dotfiles owns the Noctalia configuration and installation; Wali and Prism each
+own their plugin source. Wali depends on `walictl` (a shim into `~/d/wali`) and
+its config link; Prism depends on `prism` alone.
 
 Prism's panel drives niri's native glass material through its `niri` sink,
 which generates `prism.kdl` and reloads the compositor. There is no separate

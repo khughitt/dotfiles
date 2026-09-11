@@ -10,7 +10,7 @@ plugin (`khughitt/wali-panel`) is a view over `walictl current --json`.
 |---|---|
 | Display, palette, templates, hooks | Noctalia |
 | Next photo, history, favorites, config | `walictl` |
-| Timed rotation | `systemd/user/wali-rotate.timer` running `walictl next` |
+| Timed rotation | `~/d/wali/systemd/wali-rotate.timer` running `walictl next` |
 | Changes made in Noctalia's own panel | `wallpaper_changed` hook running `walictl observe` |
 | Per-wallpaper glass deltas | prism |
 
@@ -27,8 +27,8 @@ verify the exported effective config has wallpaper automation disabled.
 | `$XDG_CONFIG_HOME/wali/config.toml` | Per-host config, linked from `wali/<hostname>/config.toml` |
 | `<favorites_file>` | Favorites keyed by photo id, synced with the backgrounds directory |
 | `$XDG_STATE_HOME/wali/history.json` | Per-host history with a cursor |
-| `bin/walictl` | The CLI |
-| `tests/bin/test_walictl.py` | Tests |
+| `~/d/wali/bin/walictl` | The CLI |
+| `~/d/wali/tests/test_walictl.py` | Tests |
 
 ## Commands
 

@@ -125,11 +125,14 @@ fi
 # Dotfile fragments
 #
 
-shell_fragments=(aliases audio functions fzf macos ubuntu vconsole wali zoxide)
+shell_fragments=(aliases audio functions fzf macos ubuntu vconsole zoxide)
 for file in "${shell_fragments[@]}"; do
     [[ -r "${HOME}/.shell/${file}" ]] && source "${HOME}/.shell/${file}"
 done
 unset file shell_fragments
+
+# wali's helpers live in their own checkout, reached the way bin/walictl is.
+[[ -r "${HOME}/d/wali/shell/wali.zsh" ]] && source "${HOME}/d/wali/shell/wali.zsh"
 
 if [[ -d "${HOME}/.shell/private" ]]; then
     for file in "${HOME}/.shell/private"/*; do
