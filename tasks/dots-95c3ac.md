@@ -6,7 +6,7 @@ priority: 2
 size: s
 owner: wali-migration
 created: 2026-09-11T22:02:34Z
-updated: 2026-09-11T23:47:33Z
+updated: 2026-09-11T23:49:21Z
 started: 2026-09-11T23:47:33Z
 depends: [dots-95adc5, dots-193410]
 parent: dots-3a1770
@@ -18,3 +18,5 @@ step: "Task 9: Cut over titan"
 ## Notes
 
 - 2026-09-11T23:13:55Z (wali-migration): User confirmed europa has executable walictl plus plugin manifest and timer; pre-merge sync prerequisite satisfied.
+- 2026-09-11T23:49:21Z (wali-migration): Retarget ce0f399 fast-forwarded to main; setup exited 0; four links point into wali, CLI JSON works, timer active, plugin enabled, fresh shell sources wali, full health green; unrelated prism content unchanged. Awaiting visual Super+N confirmation.
+- 2026-09-11T23:49:21Z (wali-migration): parked (waiting on user, review): Confirm Super+N opens Wali panel on titan; all automated cutover checks passed.
