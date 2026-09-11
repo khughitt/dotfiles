@@ -32,7 +32,6 @@ zsh_files=(
     shell/tmux
     shell/ubuntu
     shell/vconsole
-    shell/wali
     shell/zoxide
     tests/dropbox_ignore_flux.zsh
     tests/history.zsh
@@ -41,7 +40,6 @@ zsh_files=(
     tests/dotfiles_check.zsh
     tests/layout_check.zsh
     tests/tmp_cleanup.zsh
-    tests/wali.zsh
 )
 
 while IFS= read -r file; do

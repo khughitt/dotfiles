@@ -55,7 +55,6 @@ modeline_files=(
   shell/tmux
   shell/ubuntu
   shell/vconsole
-  shell/wali
   shell/zoxide
 )
 

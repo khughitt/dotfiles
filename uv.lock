@@ -24,7 +24,7 @@ wheels = [
 ]
 
 [[package]]
-name = "dotfiles-wali-tools"
+name = "dotfiles"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

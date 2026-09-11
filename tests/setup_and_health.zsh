@@ -338,13 +338,11 @@ test_noctalia_v5_config_contract() {
   done
 
   python3 - "${repo_root}/noctalia/config.toml" \
-    "${repo_root}/noctalia/templates.toml" \
-    "${repo_root}/noctalia/plugins/wali-panel/plugin.toml" <<'PY'
+    "${repo_root}/noctalia/templates.toml" <<'PY'
 import sys, tomllib
 
 config = tomllib.load(open(sys.argv[1], "rb"))
 templates = tomllib.load(open(sys.argv[2], "rb"))["theme"]["templates"]
-wali = tomllib.load(open(sys.argv[3], "rb"))
 assert config["accessibility"]["ui_scale"] == 1.05
 assert "ui_scale" not in config["shell"]
 assert config["theme"] == {
@@ -382,18 +380,6 @@ assert templates["user"]["fastfetch"] == {
     "input_path": "$XDG_CONFIG_HOME/noctalia/templates/fastfetch.jsonc",
     "output_path": "$XDG_CONFIG_HOME/fastfetch/config.jsonc",
 }
-assert wali["id"] == "khughitt/wali-panel"
-assert wali["plugin_api"] == 22
-assert wali["plugin_api"] <= 23
-assert wali["dependencies"] == ["walictl"]
-assert wali["widget"] == [{"id": "widget", "entry": "widget.luau"}]
-assert wali["panel"] == [{
-    "id": "panel", "entry": "panel.luau", "width": 588, "height": 520,
-    "placement": "attached", "position": "auto",
-    "keyboard_focus": "exclusive",
-    "capture_keys": ["h", "Left", "l", "Right", "k", "Up", "j", "Down", "r", "f", "e", "y", "shift+question", "F1"],
-}]
-assert "setting" not in wali
 PY
 }
 
