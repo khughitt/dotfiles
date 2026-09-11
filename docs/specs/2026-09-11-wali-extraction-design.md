@@ -98,7 +98,12 @@ Noctalia's enabled-plugin state survives the move.
 - `test`: `uv run --frozen pytest -q`, `zsh tests/wali.zsh`,
   `lua integrations/noctalia-plugin/plugin_test.lua` (with the same
   `command -v lua` guard dotfiles uses).
-- `check`: `uv run ruff check`, `uv run pyright`, `tasks check`.
+- `check`: `just --fmt --check`, `uv run ruff check`, `zsh -n` over the zsh
+  files, `tasks check`. ruff and pyright are run once at extraction; a tool
+  that reports findings on the inherited code is left out of `check` and its
+  findings filed as a `wali` task, since behaviour changes are out of scope.
+  pyright is not added either way: dotfiles never ran it, so its state is
+  unknown.
 - `verify`: `check test`.
 
 ### Path adjustments inside moved files
@@ -197,15 +202,15 @@ Today's live links on titan resolve into the dotfiles tree
 the originals in the commit that retargets setup.sh would dangle those links on
 both hosts until setup.sh reruns — and on europa Dropbox may deliver the
 dotfiles change before `~/d/wali` has finished syncing. So the dotfiles side
-lands as **two commits**, and the originals are deleted only after both hosts
-are verified on the new targets.
+lands in **two merges** — retarget, then removal — and the originals are
+deleted only after both hosts are verified on the new targets.
 
 1. **wali repo lands and syncs.** Legacy branch and tag; replacement commit
    with the full layout above; `just setup && just verify` green on titan.
    Confirm on europa that `~/d/wali/bin/walictl` and
    `~/d/wali/integrations/noctalia-plugin/plugin.toml` have arrived. dotfiles
    still holds its own copies; nothing running is affected.
-2. **dotfiles retarget commit** (`wali-migration` worktree): the shim,
+2. **dotfiles retarget merge** (`wali-migration` worktree, several commits): the shim,
    `WALI_ROOT`, setup.sh/health/test retargets, zshrc sourcing, the moved
    manifest assertions, and the justfile/pyproject/dotfiles-check trims. The
    files live consumers still link to stay in place
@@ -232,7 +237,7 @@ are verified on the new targets.
    wants link now resolve into `~/d/wali`; nothing resolves into
    `dotfiles/noctalia/plugins/wali-panel` or
    `dotfiles/systemd/user/wali-rotate.*` any more.
-5. **dotfiles removal commit:** `git rm` the originals; `just check test`
+5. **dotfiles removal merge:** `git rm` the originals; `just check test`
    green; ff-merge; `dotfiles-health` green on titan. europa needs no action —
    nothing it links to is touched.
 6. **Tasks last**, once both repos are on `main`.
