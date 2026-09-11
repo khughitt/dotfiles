@@ -512,13 +512,13 @@ registers the wali prefix."
 ```
 Expected: `just verify` green (`tasks check` now passes).
 
-- [ ] **Step 7: Confirm the checkout has synced to europa**
+- [ ] **Step 7: Hand off the europa sync check to Task 9**
 
 This step needs the user: ask them to run on europa
 ```bash
 ls -l ~/d/wali/bin/walictl ~/d/wali/integrations/noctalia-plugin/plugin.toml ~/d/wali/systemd/wali-rotate.timer
 ```
-and report. Do not start Part B's cutover (Task 9) until all three exist there. Parts B's Tasks 6–8 may proceed in the meantime: they touch only the worktree.
+and report. Record the report against Task 9: its merge is blocked until all three exist there. Task 5 is complete after local verification and this handoff; Tasks 6–8 may proceed while the report is pending because they touch only the worktree.
 
 ---
 
@@ -876,7 +876,9 @@ git commit -m "refactor(zsh): source the wali helpers from ~/d/wali"
 - Consumes: branch `wali-migration` (Tasks 6–8) and `~/d/wali` on `main` (Task 5).
 - Produces: every wali link on titan resolves into `~/d/wali`.
 
-- [ ] **Step 1: Confirm nothing else is pending on main and merge**
+- [ ] **Step 1: Confirm europa sync, then confirm nothing else is pending on main and merge**
+
+Require the europa file-arrival report handed off from Task 5 before this merge.
 
 ```bash
 cd /mnt/ssd/Dropbox/dotfiles
