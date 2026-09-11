@@ -1,6 +1,6 @@
 # Wallpaper selection with walictl
 
-Noctalia v5 displays wallpapers and derives colors. `bin/walictl` decides which
+Noctalia v5 displays wallpapers and derives colors. `~/d/wali/bin/walictl` decides which
 photo is shown, remembers what was shown, and keeps favorites. The Wali Panel
 plugin (`khughitt/wali-panel`) is a view over `walictl current --json`.
 
