@@ -247,8 +247,12 @@ deleted only after both hosts are verified on the new targets.
 
 ## Verification
 
-- wali: `just verify` — pytest, `tests/wali.zsh`, `plugin_test.lua`, ruff,
-  pyright, `tasks check`.
+- wali: `just verify` — `just check` runs justfile-format, zsh syntax, and
+  `tasks check`; `just test` runs pytest, `tests/wali.zsh`, and
+  `plugin_test.lua`.
+  One-time extraction checks found seven inherited Ruff findings and a clean
+  Pyright result; Ruff is tracked in `wali-3bbc34` and neither tool is part of
+  the recurring recipe.
 - dotfiles: `just check test` in the worktree — not `just verify`, whose
   `health` recipe derives `DOTS_HOME` from the executing checkout and would
   compare live links (which point into `main`) against the worktree.
