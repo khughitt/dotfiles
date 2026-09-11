@@ -115,7 +115,10 @@ Noctalia's enabled-plugin state survives the move.
   sourcing `${0:A:h}/tmp_cleanup.zsh`, which is copied alongside it (dotfiles
   keeps its own copy: six other suites there use it).
 - `shell/wali.zsh`: no path changes; it calls `walictl` from `$PATH`, which
-  resolves to the dotfiles shim.
+  resolves to the dotfiles shim. The two `wali` alias branches that ran the
+  old CLI go (see Out of scope).
+- `tests/wali.zsh` sources the fragment twice — at top level and inside a
+  `zsh -c` subprocess; both lines retarget to `shell/wali.zsh`.
 - `pyproject.toml` `[tool.pyright] include` and `[tool.ruff] extend-include`
   list `bin/walictl` and `tests/test_walictl.py`.
 - `tests/wali.zsh` gains the `plugin.toml` manifest assertions (id, plugin_api,
@@ -263,6 +266,11 @@ deleted only after both hosts are verified on the new targets.
 ## Out of scope
 
 - Any behaviour change to walictl, the panel, or the shell helpers (those are
-  the moved tasks' business).
+  the moved tasks' business) — with one exception. The `swww` and `feh`
+  branches of the `wali` alias in `shell/wali` ran the old click CLI via
+  `cd ~/d/wali && uv run wali …`; that entry point leaves `main` with the
+  old package, so those two branches are removed rather than left as a
+  silently broken alias. `wali_set`, `wali_rotate`, and the other helpers
+  call `wal`, `swww`, and `feh` directly and keep their non-Noctalia paths.
 - The old CLI's macOS port: parked on `legacy-click-cli`.
 - Publishing walictl as an installable package.

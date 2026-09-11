@@ -19,7 +19,7 @@
 - Verification in the dotfiles worktree is `just check test`, never `just verify` — `health` derives `DOTS_HOME` from the executing checkout and the live links point into `main`. `just health` runs from the main checkout after a cutover.
 - No behaviour changes to walictl, `shell/wali`, or the plugin. If a lint or type check turns something up, file a `wali` task; do not fix it here.
 - Conventional commits, no attribution trailers.
-- Task-tracker discipline: `tasks start <id>` before a task, `tasks done <id> "<what landed>"` in the commit that lands it. Ids for the children of `dots-3a1770` are printed by `tasks tree dots-3a1770 --pretty`.
+- Task-tracker discipline: `tasks start <id>` before a task, `tasks done <id> "<what landed>"` when it lands. The step records live only in the dotfiles worktree, and `~/d/wali` is not a tasks project until Task 5, so **every `tasks` command in this plan runs as `tasks -C "$DOTS_WT" …`** with `DOTS_WT=/mnt/ssd/Dropbox/dotfiles/.worktrees/wali-migration`. In Parts B–E the record goes in the same dotfiles commit as the code. In Part A the code lands in wali, so after each wali commit run `tasks -C "$DOTS_WT" done <id> "landed in wali@$(git -C ~/d/wali rev-parse --short HEAD)"` and commit the record in the worktree: `git -C "$DOTS_WT" add tasks && git -C "$DOTS_WT" commit -m "chore(tasks): Task N landed in wali"`. Ids for the children of `dots-3a1770` are printed by `tasks -C "$DOTS_WT" tree dots-3a1770 --pretty`.
 
 ---
 
@@ -78,7 +78,7 @@ Expected: `legacy-click-cli` one commit ahead of `main`; `(HEAD -> main, tag: v0
 
 **Interfaces:**
 - Consumes: dotfiles `bin/walictl` (stdlib-only Python, `#!/usr/bin/env python3`), dotfiles `tests/bin/test_walictl.py` (`SCRIPT = Path(__file__).resolve().parents[2] / "bin" / "walictl"`).
-- Produces: `~/d/wali/bin/walictl` executable at the path the dotfiles shim (Task 6) execs; `just setup`, `just test`, `just check`, `just verify` recipes that Tasks 3–5 extend.
+- Produces: `~/d/wali/bin/walictl` executable at the path the dotfiles shim (Task 7) execs; `just setup`, `just test`, `just check`, `just verify` recipes that Tasks 3–5 extend.
 
 - [ ] **Step 1: Remove the old package**
 
@@ -221,7 +221,7 @@ legacy-click-cli branch and the v0.1-legacy tag."
 - Modify: `~/d/wali/justfile` (`test` recipe)
 
 **Interfaces:**
-- Produces: `~/d/wali/integrations/noctalia-plugin/` — the directory dotfiles' `setup_noctalia_plugins` links as `${XDG_DATA_HOME}/noctalia/plugins/wali-panel` (Task 6). Plugin id stays `khughitt/wali-panel`.
+- Produces: `~/d/wali/integrations/noctalia-plugin/` — the directory dotfiles' `setup_noctalia_plugins` links as `${XDG_DATA_HOME}/noctalia/plugins/wali-panel` (Task 7). Plugin id stays `khughitt/wali-panel`.
 
 - [ ] **Step 1: Copy the plugin**
 
@@ -267,7 +267,7 @@ and plugin.toml are unchanged so Noctalia's enabled state survives."
 
 **Interfaces:**
 - Consumes: `walictl` on `$PATH` (the dotfiles shim; the fragment never spells a path).
-- Produces: `~/d/wali/shell/wali.zsh`, sourced by dotfiles `zshrc` (Task 8). `tests/wali.zsh` now owns the plugin.toml manifest assertions that leave `tests/setup_and_health.zsh` in Task 8.
+- Produces: `~/d/wali/shell/wali.zsh`, sourced by dotfiles `zshrc` (Task 8). `tests/wali.zsh` now owns the plugin.toml manifest assertions that leave `tests/setup_and_health.zsh` in Task 6.
 
 - [ ] **Step 1: Copy the files**
 
@@ -280,9 +280,10 @@ cp "$DOTS/tests/wali.zsh" tests/wali.zsh
 cp "$DOTS/tests/tmp_cleanup.zsh" tests/tmp_cleanup.zsh
 ```
 
-- [ ] **Step 2: Retarget the suite's source line**
+- [ ] **Step 2: Retarget both of the suite's source lines**
 
-In `~/d/wali/tests/wali.zsh` line 44, change:
+`tests/wali.zsh` sources the fragment twice: at the top level and again inside
+a `zsh -c` subprocess. In `~/d/wali/tests/wali.zsh` change line 44:
 ```zsh
 source "${repo_root}/shell/wali"
 ```
@@ -290,12 +291,52 @@ to:
 ```zsh
 source "${repo_root}/shell/wali.zsh"
 ```
+and line 107:
+```zsh
+    source "$1/shell/wali"
+```
+to:
+```zsh
+    source "$1/shell/wali.zsh"
+```
 `repo_root=${0:A:h:h}` on line 4 already resolves to `~/d/wali`; leave it.
+`grep -n 'shell/wali' tests/wali.zsh` must now print exactly two lines, both ending in `.zsh"`.
 
 - [ ] **Step 3: Run the suite before adding anything**
 
 Run: `zsh ~/d/wali/tests/wali.zsh`
-Expected: `wali tests passed`.
+Expected: `wali tests passed`. (With only line 44 changed, the subprocess exits 127 on the missing file.)
+
+- [ ] **Step 3b: Drop the two aliases that ran the old CLI**
+
+`shell/wali.zsh` lines 40–46 define the `wali` alias per backend. The `swww`
+and `feh` branches run `cd ~/d/wali/ && uv run wali …` — the click CLI that
+Task 2 removed from `main`; left in place they would be a silently broken
+alias. Replace:
+```zsh
+# wallpaper switcher
+if [ "$WALI_BACKEND" = "noctalia" ]; then
+  alias wali="walictl random"
+elif [ "$WALI_BACKEND" = "swww" ]; then
+  alias wali="cd ~/d/wali/ && uv run wali --image-dir=\"\$WALI_DIR/3440\" --wallpaper-backend swww change"
+else
+  alias wali="cd ~/d/wali/ && uv run wali --image-dir=\"\$WALI_DIR/3440\" change"
+fi
+```
+with:
+```zsh
+# wallpaper switcher. The swww and feh backends have no switcher any more: the
+# click CLI they ran is on the legacy-click-cli branch, not on main.
+if [ "$WALI_BACKEND" = "noctalia" ]; then
+  alias wali="walictl random"
+fi
+```
+`wali_set`, `wali_rotate`, and the rest call `wal`, `swww`, and `feh`
+directly and keep their non-Noctalia branches. This is the one behaviour
+change in the extraction; the spec's out-of-scope section names it.
+
+Run: `zsh ~/d/wali/tests/wali.zsh`
+Expected: `wali tests passed` (the suite exercises the functions, not the alias).
 
 - [ ] **Step 4: Add the manifest contract assertions**
 
@@ -359,7 +400,8 @@ git add shell tests justfile
 git commit -m "feat: add the wali shell helpers and their suite
 
 shell/wali and tests/wali.zsh from dotfiles, plus the plugin.toml manifest
-assertions that dotfiles' setup suite made on the plugin's behalf."
+assertions that dotfiles' setup suite made on the plugin's behalf. The swww
+and feh wali aliases went: they ran the click CLI that main no longer has."
 ```
 
 ### Task 5: Add the systemd units, docs, README, and register the tasks project
@@ -369,7 +411,7 @@ assertions that dotfiles' setup suite made on the plugin's behalf."
 - Modify: `~/d/wali/README.md` (rewrite), `~/d/wali/docs/noctalia-wallpaper-switcher.md` (path table)
 
 **Interfaces:**
-- Produces: `~/d/wali/systemd/wali-rotate.{service,timer}` — the sources dotfiles' systemd phase links (Task 6); the `wali` tasks prefix used by Task 12.
+- Produces: `~/d/wali/systemd/wali-rotate.{service,timer}` — the sources dotfiles' systemd phase links (Task 7); the `wali` tasks prefix used by Task 12.
 
 - [ ] **Step 1: Copy units and the switcher doc**
 
@@ -482,18 +524,83 @@ and report. Do not start Part B's cutover (Task 9) until all three exist there. 
 
 ## Part B — dotfiles retargets (worktree `.worktrees/wali-migration`)
 
-All paths in Part B are relative to the worktree. Every task ends with `just check test` green in the worktree.
+All paths in Part B are relative to the worktree. Every task ends with `just check test` green in the worktree. The order matters for that: Task 6 removes the pytest suite that would import the shim, and Task 7 changes setup.sh and dotfiles-health together because the setup/health suite links with one and checks with the other.
 
-### Task 6: Shim, `WALI_ROOT`, setup.sh retargets, and the test fixture
+### Task 6: Drop the moved suites and lint entries
 
 **Files:**
-- Modify: `bin/walictl` (replace content), `setup.sh:11-13`, `setup.sh:455-461` (preflight), `setup.sh:745-746` (systemd links), `setup.sh:841` (plugin link), `tests/setup_and_health.zsh:144-149` (fixture), `tests/setup_and_health.zsh:598-605` (unit link assertions), `tests/setup_and_health.zsh:1486-1516` (preflight test), `tests/setup_and_health.zsh:415-450` (v4 IPC scans)
+- Delete: `tests/bin/test_walictl.py`, `tests/wali.zsh`
+- Modify: `justfile:31-42`, `tests/justfile.zsh:73-88`, `pyproject.toml`, `uv.lock`, `bin/dotfiles-check:35,44`, `tests/dotfiles_check.zsh:58`, `tests/setup_and_health.zsh:340-342,385-396` (manifest assertions)
 
 **Interfaces:**
-- Consumes: `~/d/wali/bin/walictl`, `~/d/wali/integrations/noctalia-plugin`, `~/d/wali/systemd/wali-rotate.*` (Tasks 2, 3, 5).
-- Produces: `WALI_ROOT` in setup.sh; the `WALI_SOURCE_PRESENT` fixture switch in `run_setup`, which Tasks 7–8 rely on.
+- Consumes: nothing from `~/d/wali` — this task only stops dotfiles testing what moved.
+- Produces: a `just test` that no longer discovers `test_walictl.py`, so Task 7 can replace `bin/walictl` with a bash shim.
 
-- [ ] **Step 1: Add the wali fixture to `run_setup` and watch the systemd assertions fail**
+- [ ] **Step 1: Trim the justfile test assertions first, and see them still pass**
+
+In `tests/justfile.zsh` delete lines 73–74 (`zsh tests/wali.zsh` assertion), 77–80 (`command -v lua` and `lua noctalia/plugins/wali-panel/plugin_test.lua` assertions), and 82–87 (`test_lines`, the three `_at` lookups, and the ordering check). Keep the `uv run --frozen pytest -q` assertion.
+
+Run: `zsh tests/justfile.zsh`
+Expected: still passes (assertions only got fewer).
+
+- [ ] **Step 2: Trim the justfile**
+
+In the `justfile` `test` recipe, delete the lines `zsh tests/wali.zsh`, the `@command -v lua …` guard, and `lua noctalia/plugins/wali-panel/plugin_test.lua`.
+
+Run: `zsh tests/justfile.zsh`
+Expected: `justfile tests passed`.
+
+- [ ] **Step 3: Remove the moved suites and the walictl lint entries**
+
+```bash
+git rm -q tests/bin/test_walictl.py tests/wali.zsh
+```
+In `pyproject.toml`: change `name = "dotfiles-wali-tools"` to `name = "dotfiles"`; delete the whole `[tool.pyright]` table (its only entries were the two walictl paths); delete the line `extend-include = ["bin/walictl"]`. Leave `dependencies` alone — other suites may use them and that is not this change's question. Then:
+```bash
+uv lock
+uv run --frozen pytest -q
+```
+Expected: the lock updates only the project name; pytest runs the remaining `tests/*.py` and `tests/niri/*.py` suites and passes.
+
+- [ ] **Step 4: Move the manifest assertions out of the Noctalia contract test**
+
+In `tests/setup_and_health.zsh` `test_noctalia_v5_config_contract`: change the python invocation (lines ~340–342) to pass only two files:
+```zsh
+  python3 - "${repo_root}/noctalia/config.toml" \
+    "${repo_root}/noctalia/templates.toml" <<'PY'
+```
+delete the line `wali = tomllib.load(open(sys.argv[3], "rb"))`, and delete the block from `assert wali["id"] == "khughitt/wali-panel"` through `assert "setting" not in wali` (Task 4 put those in `~/d/wali/tests/wali.zsh`). The `config["hooks"]["wallpaper_changed"]` and `bar…end` assertions naming `walictl` and `khughitt/wali-panel:widget` stay: those are dotfiles' Noctalia config.
+
+- [ ] **Step 5: Drop the fragment and suite from the zsh lint lists**
+
+In `bin/dotfiles-check` delete the lines `    shell/wali` (35) and `    tests/wali.zsh` (44). In `tests/dotfiles_check.zsh` delete the line `  shell/wali` (58). `shell/wali` itself stays in the tree for now: `~/.shell/wali` still resolves to it on both hosts until Task 8's zshrc is live.
+
+- [ ] **Step 6: Run everything**
+
+Run: `just check test`
+Expected: green. Nothing links differently yet; only what is tested changed.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add justfile tests/justfile.zsh pyproject.toml uv.lock bin/dotfiles-check tests/dotfiles_check.zsh tests/setup_and_health.zsh
+git commit -m "test(wali): stop running the suites that moved to khughitt/wali
+
+The walictl pytest suite and tests/wali.zsh now run in the wali repo; the
+plugin manifest assertions went with them. pytest has no testpaths, so
+the suite had to go before bin/walictl can become a bash shim."
+```
+
+### Task 7: Shim, setup.sh and dotfiles-health retargets, and the test fixture
+
+**Files:**
+- Modify: `bin/walictl` (replace content), `setup.sh:11-13`, `setup.sh:455-467` (preflight), `setup.sh:745-746` (systemd links), `setup.sh:841` (plugin link), `bin/dotfiles-health:322-323`, `bin/dotfiles-health:413-418`, `bin/dotfiles-health:420-435` (wants-link check), `tests/setup_and_health.zsh:144-149` (fixture), `:415-450` (v4 IPC scans), `:598-605` (unit link assertions), `:795` (new plugin-source test), `:1220-1275` (timer health tests), `:1486-1516` (preflight test)
+
+**Interfaces:**
+- Consumes: `~/d/wali/bin/walictl`, `~/d/wali/integrations/noctalia-plugin`, `~/d/wali/systemd/wali-rotate.*` (Tasks 2, 3, 5) on a live host; in the suite, the fixture below stands in for them.
+- Produces: `WALI_ROOT` in setup.sh; the `WALI_SOURCE_PRESENT` fixture switch in `run_setup`; a `dotfiles-health` that passes on a host whose links resolve into `~/d/wali` and fails when `timers.target.wants/wali-rotate.timer` points elsewhere.
+
+- [ ] **Step 1: Add the wali fixture to `run_setup` and change what the link test expects**
 
 In `tests/setup_and_health.zsh`, after the prism fixture block (lines 146–149) inside `run_setup`, add:
 ```zsh
@@ -525,117 +632,9 @@ Then in `test_setup_link_only_creates_expected_links_without_external_clones` (l
   done
 ```
 
-- [ ] **Step 2: Run the suite to see the new expectation fail**
+- [ ] **Step 2: Write the health and setup tests that will fail**
 
-Run: `zsh tests/setup_and_health.zsh`
-Expected: `FAIL: expected wali-rotate.service to point into the wali checkout`.
-
-- [ ] **Step 3: Add `WALI_ROOT` and retarget setup.sh**
-
-In `setup.sh`, after line 13 (`PRISM_ROOT="${HOME}/d/prism"`), add:
-```bash
-# The wali checkout, reached the same way: bin/walictl execs into it and the
-# systemd and Noctalia-plugin phases link out of it.
-WALI_ROOT="${HOME}/d/wali"
-```
-Replace lines 745–746:
-```bash
-    ln_s "${WALI_ROOT}/systemd/wali-rotate.service" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service"
-    ln_s "${WALI_ROOT}/systemd/wali-rotate.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer"
-```
-Replace line 841:
-```bash
-    ln_s "${WALI_ROOT}/integrations/noctalia-plugin" "${plugin_dir}/wali-panel"
-```
-In `setup_preflight`, after the `prism node dependencies` block (line 467, before the familiar comment), add:
-```bash
-    # ln_s stops the systemd and plugin phases on a missing checkout; this names
-    # the fix up front, with the rest of the per-machine prerequisites.
-    preflight_check "wali checkout" "git clone git@github.com:khughitt/wali.git ${WALI_ROOT}" \
-        test -x "${WALI_ROOT}/bin/walictl" || missing=1
-```
-
-- [ ] **Step 4: Replace the shim**
-
-Replace the content of `bin/walictl` with:
-```bash
-#!/usr/bin/env bash
-# A wrapper rather than a symlink, like bin/prism: a relative link assumes
-# dotfiles and wali are siblings, which a worktree checkout breaks, and an
-# absolute link writes this machine's layout into git. `~/d` is the one layout
-# the tree assumes.
-exec "$HOME/d/wali/bin/walictl" "$@"
-```
-Then `chmod +x bin/walictl` (it already is; confirm with `ls -l bin/walictl`).
-
-- [ ] **Step 5: Drop the moved files from the v4-IPC scans**
-
-In `test_active_noctalia_code_has_no_v4_ipc` (line ~420), the `files=(` array loses `"${repo_root}/bin/walictl"` and `"${repo_root}/shell/wali"`, leaving `niri/config.kdl`, `setup.sh`, and `bin/dotfiles-health`. In `test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error` (line ~445), change `mkdir -p "$tmp/repo/bin" "$tmp/repo/shell" "$tmp/repo/niri"` to `mkdir -p "$tmp/repo/niri"` and delete the two lines `cp "${repo_root}/bin/walictl" "$tmp/repo/bin/walictl"` and `cp "${repo_root}/shell/wali" "$tmp/repo/shell/wali"`. The test still fails the scan on purpose: it never copies `bin/dotfiles-health`.
-
-- [ ] **Step 6: Extend the preflight test**
-
-In the `--check` test around line 1512, after the `MISSING  mindful environment` assertion, add:
-```zsh
-  [[ "$output" == *"MISSING  wali checkout"* ]] || \
-    fail "preflight did not report the missing wali checkout"
-  [[ "$output" == *"git clone git@github.com:khughitt/wali.git"* ]] || \
-    fail "preflight reported the wali finding without naming its fix"
-```
-(That test's fixture builds `${tmp}/home/d/prism` by hand and no `wali`, so the finding is expected.)
-
-- [ ] **Step 7: Add a negative test for the plugin phase**
-
-After `test_noctalia_plugin_phase_requires_prism_source` (line ~795), add:
-```zsh
-test_noctalia_plugin_phase_requires_wali_source() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  set +e
-  output=$(WALI_SOURCE_PRESENT=false run_setup "$tmp" --link-only \
-    --only noctalia-plugins 2>&1)
-  exit_status=$?
-  set -e
-  (( exit_status != 0 )) || fail "plugin setup accepted a missing wali plugin source"
-  [[ "$output" == *"Link source does not exist"* && "$output" == *"d/wali/integrations"* ]] || \
-    fail "plugin setup did not explain the missing wali plugin source: ${output}"
-}
-```
-and register it in the call list at the bottom of the file, directly after `test_noctalia_plugin_phase_requires_prism_source`.
-
-- [ ] **Step 8: Run the suites**
-
-```bash
-zsh tests/setup_and_health.zsh
-just check
-```
-Expected: `setup and health tests passed` (or the file's final success line); `just check` green — `bin/dotfiles-layout-check` accepts the shim because it is a regular file, and shellcheck does not cover `bin/walictl` (it is not in `bash_files`).
-
-- [ ] **Step 9: Commit**
-
-```bash
-git add bin/walictl setup.sh tests/setup_and_health.zsh
-git commit -m "feat(wali): reach walictl, its plugin, and its units through ~/d/wali
-
-bin/walictl becomes an exec shim like bin/prism; setup.sh links the
-Noctalia plugin and wali-rotate units out of WALI_ROOT and preflight names
-the checkout. The setup suite fakes ~/d/wali beside its prism fixture.
-The originals stay until every host's links are retargeted."
-```
-
-### Task 7: dotfiles-health retargets and the `timers.target.wants` check
-
-**Files:**
-- Modify: `bin/dotfiles-health:322-323`, `bin/dotfiles-health:413-418`, `bin/dotfiles-health:420-435` (wants-link check), `tests/setup_and_health.zsh:1220-1275` (timer health test), `tests/setup_and_health.zsh:859-878` (wrong plugin link test)
-
-**Interfaces:**
-- Consumes: the `run_setup` fixture from Task 6 (units and plugin under `${tmp}/home/d/wali`).
-- Produces: `dotfiles-health` passes on a host whose links resolve into `~/d/wali`, and fails when `timers.target.wants/wali-rotate.timer` points elsewhere.
-
-- [ ] **Step 1: Write the failing wants-link test**
-
-In `tests/setup_and_health.zsh`, inside `test_dotfiles_health_checks_enabled_user_timer` right after `prepare_health_fixture "$tmp"` (line ~1229), add:
+Inside `test_dotfiles_health_checks_enabled_user_timer` right after `prepare_health_fixture "$tmp"` (line ~1229), add:
 ```zsh
   # systemctl enable writes this link with the unit's resolved path; the
   # fixture stands in for a host whose timer was enabled from ~/d/wali.
@@ -643,7 +642,7 @@ In `tests/setup_and_health.zsh`, inside `test_dotfiles_health_checks_enabled_use
   ln -s "${tmp}/home/d/wali/systemd/wali-rotate.timer" \
     "${tmp}/config/systemd/user/timers.target.wants/wali-rotate.timer"
 ```
-Then add a new test after it:
+Add a new test after that function:
 ```zsh
 test_dotfiles_health_fails_stale_wali_timer_wants_link() {
   local tmp mockbin output exit_status
@@ -679,12 +678,65 @@ EOF
 ```
 Register it in the call list directly after `test_dotfiles_health_checks_enabled_user_timer`.
 
-- [ ] **Step 2: Run to see both fail**
+Add, after `test_noctalia_plugin_phase_requires_prism_source` (line ~795):
+```zsh
+test_noctalia_plugin_phase_requires_wali_source() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  set +e
+  output=$(WALI_SOURCE_PRESENT=false run_setup "$tmp" --link-only \
+    --only noctalia-plugins 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "plugin setup accepted a missing wali plugin source"
+  [[ "$output" == *"Link source does not exist"* && "$output" == *"d/wali/integrations"* ]] || \
+    fail "plugin setup did not explain the missing wali plugin source: ${output}"
+}
+```
+and register it directly after `test_noctalia_plugin_phase_requires_prism_source`.
+
+In the `--check` preflight test (around line 1512), after the `MISSING  mindful environment` assertion, add:
+```zsh
+  [[ "$output" == *"MISSING  wali checkout"* ]] || \
+    fail "preflight did not report the missing wali checkout"
+  [[ "$output" == *"git clone git@github.com:khughitt/wali.git"* ]] || \
+    fail "preflight reported the wali finding without naming its fix"
+```
+(That test's fixture builds `${tmp}/home/d/prism` by hand and no `wali`, so the finding is expected.)
+
+- [ ] **Step 3: Run the suite to see the new expectations fail**
 
 Run: `zsh tests/setup_and_health.zsh`
-Expected: the first failure is from `test_dotfiles_health_checks_enabled_user_timer` — health reports `wrong link target` for `wali-rotate.service` (it still expects `${DOTS_HOME}/systemd/user/…`).
+Expected: the first failure is `FAIL: expected wali-rotate.service to point into the wali checkout`.
 
-- [ ] **Step 3: Retarget dotfiles-health**
+- [ ] **Step 4: Add `WALI_ROOT` and retarget setup.sh**
+
+In `setup.sh`, after line 13 (`PRISM_ROOT="${HOME}/d/prism"`), add:
+```bash
+# The wali checkout, reached the same way: bin/walictl execs into it and the
+# systemd and Noctalia-plugin phases link out of it.
+WALI_ROOT="${HOME}/d/wali"
+```
+Replace lines 745–746:
+```bash
+    ln_s "${WALI_ROOT}/systemd/wali-rotate.service" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service"
+    ln_s "${WALI_ROOT}/systemd/wali-rotate.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer"
+```
+Replace line 841:
+```bash
+    ln_s "${WALI_ROOT}/integrations/noctalia-plugin" "${plugin_dir}/wali-panel"
+```
+In `setup_preflight`, after the `prism node dependencies` block (line 467, before the familiar comment), add:
+```bash
+    # ln_s stops the systemd and plugin phases on a missing checkout; this names
+    # the fix up front, with the rest of the per-machine prerequisites.
+    preflight_check "wali checkout" "git clone git@github.com:khughitt/wali.git ${WALI_ROOT}" \
+        test -x "${WALI_ROOT}/bin/walictl" || missing=1
+```
+
+- [ ] **Step 5: Retarget dotfiles-health and add the wants-link check**
 
 In `bin/dotfiles-health` replace lines 322–323:
 ```bash
@@ -710,65 +762,56 @@ Inside the `if [[ "$SKIP_SYSTEMD" != "true" ]]; then` / `if command -v systemctl
                 "${HOME}/d/wali/systemd/wali-rotate.timer"
 ```
 
-- [ ] **Step 4: Run the suite**
+- [ ] **Step 6: Replace the shim**
 
-Run: `zsh tests/setup_and_health.zsh`
-Expected: passes, including `test_dotfiles_health_fails_wrong_noctalia_plugin_link` (its `${tmp}/wrong-wali` link is still wrong against the new target) and the two timer tests.
+Replace the content of `bin/walictl` with:
+```bash
+#!/usr/bin/env bash
+# A wrapper rather than a symlink, like bin/prism: a relative link assumes
+# dotfiles and wali are siblings, which a worktree checkout breaks, and an
+# absolute link writes this machine's layout into git. `~/d` is the one layout
+# the tree assumes.
+exec "$HOME/d/wali/bin/walictl" "$@"
+```
+Confirm it is still executable: `ls -l bin/walictl`.
 
-- [ ] **Step 5: Check and commit**
+- [ ] **Step 7: Drop the moved files from the v4-IPC scans**
+
+In `test_active_noctalia_code_has_no_v4_ipc` (line ~420), the `files=(` array loses `"${repo_root}/bin/walictl"` and `"${repo_root}/shell/wali"`, leaving `niri/config.kdl`, `setup.sh`, and `bin/dotfiles-health`. In `test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error` (line ~445), change `mkdir -p "$tmp/repo/bin" "$tmp/repo/shell" "$tmp/repo/niri"` to `mkdir -p "$tmp/repo/niri"` and delete the two lines `cp "${repo_root}/bin/walictl" "$tmp/repo/bin/walictl"` and `cp "${repo_root}/shell/wali" "$tmp/repo/shell/wali"`. The test still fails the scan on purpose: it never copies `bin/dotfiles-health`.
+
+- [ ] **Step 8: Run everything**
 
 ```bash
-just check
-git add bin/dotfiles-health tests/setup_and_health.zsh
-git commit -m "feat(health): expect wali links into ~/d/wali and check the timer wants link
+zsh tests/setup_and_health.zsh
+just check test
+```
+Expected: the suite passes, including `test_dotfiles_health_fails_wrong_noctalia_plugin_link` (its `${tmp}/wrong-wali` link is still wrong against the new target), both timer tests, and the new plugin-source and preflight assertions. `just check` is green — `bin/dotfiles-layout-check` accepts the shim because it is a regular file, and shellcheck does not cover `bin/walictl` (it is not in `bash_files`). `just test` has no pytest suite that imports the shim any more (Task 6).
 
-systemctl enable writes timers.target.wants/wali-rotate.timer with the
-unit's resolved path, so is-enabled cannot tell a link into a moved file
-from a fresh one; check_link can."
+- [ ] **Step 9: Commit**
+
+```bash
+git add bin/walictl setup.sh bin/dotfiles-health tests/setup_and_health.zsh
+git commit -m "feat(wali): reach walictl, its plugin, and its units through ~/d/wali
+
+bin/walictl becomes an exec shim like bin/prism; setup.sh links the
+Noctalia plugin and wali-rotate units out of WALI_ROOT and preflight names
+the checkout; dotfiles-health expects the same targets and checks
+timers.target.wants/wali-rotate.timer, which systemctl enable writes with
+the unit's resolved path and is-enabled cannot tell apart. The setup suite
+fakes ~/d/wali beside its prism fixture. The originals stay until every
+host's links are retargeted."
 ```
 
-### Task 8: Shell sourcing, test/lint trims, and the moved suites
+### Task 8: Source the shell helpers from ~/d/wali
 
 **Files:**
-- Modify: `zshrc:128-132`, `bin/dotfiles-check:35,44`, `tests/dotfiles_check.zsh:58`, `justfile:31-42`, `tests/justfile.zsh:73-88`, `pyproject.toml`, `tests/setup_and_health.zsh:340-342,385-396` (manifest assertions), `noctalia/noctalia.md:149-156`
-- Delete: `tests/bin/test_walictl.py`, `tests/wali.zsh`
+- Modify: `zshrc:128-132`, `noctalia/noctalia.md:149-156`
 
 **Interfaces:**
 - Consumes: `~/d/wali/shell/wali.zsh` (Task 4).
-- Produces: a dotfiles tree whose `just check test` no longer touches walictl, its tests, or the plugin test — while `shell/wali`, `noctalia/plugins/wali-panel/`, and `systemd/user/wali-rotate.*` remain for the live links.
+- Produces: a zshrc that defines `wali_ingest` and friends from the checkout instead of `~/.shell/wali`.
 
-- [ ] **Step 1: Trim the justfile test assertions first, and see them fail**
-
-In `tests/justfile.zsh` delete lines 73–74 (`zsh tests/wali.zsh` assertion), 77–80 (`command -v lua` and `lua noctalia/plugins/wali-panel/plugin_test.lua` assertions), and 82–87 (`test_lines`, the three `_at` lookups, and the ordering check). Keep the `uv run --frozen pytest -q` assertion. Then:
-
-Run: `zsh tests/justfile.zsh`
-Expected: still passes (assertions only got fewer). Now edit the `justfile`: in the `test` recipe, delete the lines `zsh tests/wali.zsh`, the `@command -v lua …` guard, and `lua noctalia/plugins/wali-panel/plugin_test.lua`.
-
-Run: `zsh tests/justfile.zsh`
-Expected: `justfile tests passed`.
-
-- [ ] **Step 2: Remove the moved suites and the walictl lint entries**
-
-```bash
-git rm -q tests/bin/test_walictl.py tests/wali.zsh
-```
-In `pyproject.toml`: change `name = "dotfiles-wali-tools"` to `name = "dotfiles"`; delete the whole `[tool.pyright]` table (its only entries were the two walictl paths); delete the line `extend-include = ["bin/walictl"]`. Leave `dependencies` alone — other suites may use them and that is not this change's question. Then:
-```bash
-uv lock
-uv run --frozen pytest -q
-```
-Expected: the lock updates only the project name; pytest runs the remaining `tests/*.py` and `tests/niri/*.py` suites and passes. (Without removing `test_walictl.py` first, this step would fail with a `SyntaxError` from importing the bash shim.)
-
-- [ ] **Step 3: Move the manifest assertions out of the Noctalia contract test**
-
-In `tests/setup_and_health.zsh` `test_noctalia_v5_config_contract`: change the python invocation (lines ~340–342) to pass only two files:
-```zsh
-  python3 - "${repo_root}/noctalia/config.toml" \
-    "${repo_root}/noctalia/templates.toml" <<'PY'
-```
-delete the line `wali = tomllib.load(open(sys.argv[3], "rb"))`, and delete the block from `assert wali["id"] == "khughitt/wali-panel"` through `assert "setting" not in wali` (Task 4 put those in `~/d/wali/tests/wali.zsh`). The `config["hooks"]["wallpaper_changed"]` and `bar…end` assertions naming `walictl` and `khughitt/wali-panel:widget` stay: those are dotfiles' Noctalia config.
-
-- [ ] **Step 4: Source the fragment from the checkout**
+- [ ] **Step 1: Source the fragment from the checkout**
 
 In `zshrc`, change line 128 to:
 ```zsh
@@ -779,9 +822,8 @@ and after the `unset file shell_fragments` line (132) add:
 # wali's helpers live in their own checkout, reached the way bin/walictl is.
 [[ -r "${HOME}/d/wali/shell/wali.zsh" ]] && source "${HOME}/d/wali/shell/wali.zsh"
 ```
-In `bin/dotfiles-check` delete the lines `    shell/wali` (35) and `    tests/wali.zsh` (44). In `tests/dotfiles_check.zsh` delete the line `  shell/wali` (58).
 
-- [ ] **Step 5: Update the live-layout prose**
+- [ ] **Step 2: Update the live-layout prose**
 
 In `noctalia/noctalia.md` lines 149–156, replace:
 ```
@@ -806,22 +848,20 @@ own their plugin source. Wali depends on `walictl` (a shim into `~/d/wali`) and
 its config link; Prism depends on `prism` alone.
 ```
 
-- [ ] **Step 6: Run everything**
+- [ ] **Step 3: Verify**
 
 ```bash
 just check test
+zsh -n zshrc
+zsh -c 'source ./zshrc >/dev/null 2>&1; whence -v wali_ingest'
 ```
-Expected: green. `zsh -n` in `dotfiles-check` no longer lists `shell/wali`; `tests/dotfiles_check.zsh` no longer expects its modeline; the setup suite passes with the fixture. Open a new zsh (`zsh -ic 'type wali_ingest'`) — expected `wali_ingest is a shell function`, because `~/.shell/wali` (the link into main's `shell/wali`) is still sourced by the live zshrc; the worktree's zshrc is not live yet, so this only confirms nothing broke.
+Expected: green; `zsh -n` silent; the last command prints `wali_ingest is a shell function from /home/keith/d/wali/shell/wali.zsh` — the worktree's zshrc sources the checkout. (The live shell still reads main's zshrc until Task 9.)
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add zshrc bin/dotfiles-check tests/dotfiles_check.zsh justfile tests/justfile.zsh pyproject.toml uv.lock tests/setup_and_health.zsh noctalia/noctalia.md
-git commit -m "refactor(wali): source the shell helpers from ~/d/wali and drop the moved suites
-
-The walictl pytest suite and tests/wali.zsh now run in the wali repo; the
-plugin manifest assertions went with them. pytest has no testpaths and
-would otherwise import the bash shim as Python."
+git add zshrc noctalia/noctalia.md
+git commit -m "refactor(zsh): source the wali helpers from ~/d/wali"
 ```
 
 ---
@@ -955,9 +995,9 @@ In `docs/specs/2026-09-11-wali-extraction-design.md` line 3, change `**Status:**
 
 ```bash
 just check test
-git grep -n -E 'noctalia/plugins/wali-panel|shell/wali\b|tests/wali\.zsh|tests/bin/test_walictl' -- . ':!docs' ':!tasks'
+git grep -n -E 'noctalia/plugins/wali-panel|shell/wali([^.]|$)|tests/wali\.zsh|tests/bin/test_walictl' -- . ':!docs' ':!tasks'
 ```
-Expected: green; the grep prints nothing (historical docs and task records are the only remaining mentions, and they are excluded on purpose).
+Expected: green; the grep prints nothing. `shell/wali([^.]|$)` matches the old fragment path but not `shell/wali.zsh` in the new zshrc; historical docs and task records are the only remaining mentions of the old paths, and they are excluded on purpose.
 
 - [ ] **Step 5: Commit, merge, verify live**
 
@@ -988,7 +1028,7 @@ Runs after both repos are on `main`. Use the CLI only; never edit `tasks/*.md` b
 - [ ] **Step 1: Read each task in full**
 
 ```bash
-for t in dots-5760ef dots-9bfdc0 dots-b9ba7c dots-2aa60c dots-b3e5ae; do tasks show $t --pretty; echo ======; done
+for t in dots-5760ef dots-9bfdc0 dots-b9ba7c dots-2aa60c dots-b3e5ae; do tasks -C "$DOTS_WT" show $t --pretty; echo ======; done
 ```
 Note each one's `status`, `priority`, `size`, `tags`, and body verbatim.
 
@@ -1002,7 +1042,7 @@ tasks add "<title verbatim>" --status <status> -p <priority> [--size <size>] --t
 The command prints the new id; keep the mapping `dots-<id> → wali-<new>`. Then for each:
 ```bash
 tasks note wali-<new> "moved from dots-<id>"
-tasks drop dots-<id> "moved to wali-<new>"
+tasks -C "$DOTS_WT" drop dots-<id> "moved to wali-<new>"
 ```
 
 - [ ] **Step 3: Restore the one dependency that still matters**
@@ -1022,13 +1062,14 @@ tasks feedback "no way to move a task between registered projects" --category ga
 
 ```bash
 cd ~/d/wali && tasks check && tasks list --pretty
-cd /mnt/ssd/Dropbox/dotfiles && tasks check
-tasks done dots-3a1770 "walictl, shell helpers, plugin, units, tests, and five tasks moved to khughitt/wali; dotfiles reaches them through ~/d/wali; both hosts cut over"
-git add tasks
-git commit -m "chore(tasks): move the wali tasks to the wali project and close the extraction"
+tasks -C "$DOTS_WT" check
+tasks -C "$DOTS_WT" done dots-4f4b89 "five wallpaper tasks re-added in wali with --source and dropped here; feedback filed"
+tasks -C "$DOTS_WT" done dots-3a1770 "walictl, shell helpers, plugin, units, tests, and five tasks moved to khughitt/wali; dotfiles reaches them through ~/d/wali; both hosts cut over"
+git -C "$DOTS_WT" add tasks
+git -C "$DOTS_WT" commit -m "chore(tasks): move the wali tasks to the wali project and close the extraction"
 cd ~/d/wali && git add tasks && git commit -m "chore(tasks): take over the five wallpaper tasks from dotfiles"
 ```
-Expected: `tasks check` clean in both; `tasks list` in wali shows five tasks with `source: dots-…`; `dots-3a1770` closes without `--force` (it has no children — the plan-step children created for this plan are done by then, one per task above).
+Expected: `tasks check` clean in both; `tasks list` in wali shows five tasks with `source: dots-…`; `dots-3a1770` closes without `--force` because its last open child, `dots-4f4b89` (this task), was closed on the line before. Then merge: `cd /mnt/ssd/Dropbox/dotfiles && git merge --ff-only wali-migration`.
 
 - [ ] **Step 6: Clean up the worktree**
 
