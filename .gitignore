@@ -77,3 +77,6 @@ familiar/identities.yaml
 
 # familiar installed theme art (reinstall with `familiar theme add`, see theme-receipts/)
 familiar/themes/
+
+# crush keeps its session db and logs beside its config
+crush/.crush/
