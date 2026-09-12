@@ -1,8 +1,8 @@
 # Wallpaper Management Redesign Implementation Plan
 
-**Implementation status:** Tasks 1-16 are implemented; the redesign is merged
-to `main` and live on titan 2026-09-08; panel behavior is confirmed. Task 17
-closeout awaits old favorites retirement, which the user is handling.
+**Implementation status:** Complete. Tasks 1-16 landed and went live on titan
+2026-09-08; Task 17 closed 2026-09-12 when the legacy `favorites.txt` was
+retired. The code this plan created has since moved to `khughitt/wali`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

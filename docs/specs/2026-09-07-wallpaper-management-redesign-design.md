@@ -1,8 +1,10 @@
 # Wallpaper management redesign: walictl owns selection, favorites, and history
 
 **Status:** Designed 2026-09-07; implementation merged to `main` and live on
-titan 2026-09-08; panel behavior confirmed by the user. Task 17 closeout
-awaits old favorites retirement, which the user is handling. See
+titan 2026-09-08; panel behavior confirmed by the user. Complete 2026-09-12:
+the legacy `favorites.txt` was retired after confirming every photo in it is
+in walictl's favorites store. walictl and the panel have since moved to
+`khughitt/wali` (`docs/specs/2026-09-11-wali-extraction-design.md`). See
 `docs/plans/2026-09-07-wallpaper-management-redesign.md`.
 
 The keyboard extension is merged and activated on titan: panel capture, global
