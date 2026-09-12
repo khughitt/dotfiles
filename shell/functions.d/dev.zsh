@@ -154,3 +154,16 @@ function vite_proj {
   echo "Manual step:"
   echo "dropbox_ignore node_modules"
 }
+
+# opencode / crush run the mid-tier models, so they pick tasks under a complexity
+# envelope: `tasks ready`/`next`/`prime` hide work rated above TASKS_MAX_COMPLEXITY
+# and unrated work. The default applies only when the variable is unset, so
+# `TASKS_MAX_COMPLEXITY=high crush` raises it and `TASKS_MAX_COMPLEXITY= crush`
+# lifts it for one session.
+function opencode {
+  TASKS_MAX_COMPLEXITY="${TASKS_MAX_COMPLEXITY-mid}" command opencode "$@"
+}
+
+function crush {
+  TASKS_MAX_COMPLEXITY="${TASKS_MAX_COMPLEXITY-mid}" command crush "$@"
+}
