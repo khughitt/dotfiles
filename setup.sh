@@ -769,19 +769,21 @@ function setup_systemd_user_units() {
     fi
 }
 
+# The OS overrides themselves are selected by each host's kitty/<hostname>.conf,
+# so nothing here writes into the tree.
 function setup_kitty_overrides() {
-    phase "Kitty OS overrides"
-    if [[ "$MACOS" == "true" ]]; then
-        ln_s "${DOTS_HOME}/kitty/os-macos.conf" "${DOTS_HOME}/kitty/os-local.conf"
+    [[ "$MACOS" == "true" ]] || return 0
 
-        # macOS ships no xterm-kitty in its terminfo db, so git/less/etc. warn the
-        # "terminal is not fully functional". Compile kitty's bundled entry into
-        # ~/.terminfo, which ncurses auto-searches. (Linux gets it from the
-        # kitty-terminfo package.)
-        local kitty_terminfo="/Applications/kitty.app/Contents/Resources/kitty/terminfo/kitty.terminfo"
-        [[ -f "$kitty_terminfo" ]] && run tic -x -o "${HOME}/.terminfo" "$kitty_terminfo"
+    phase "Kitty OS overrides"
+    # macOS ships no xterm-kitty in its terminfo db, so git/less/etc. warn the
+    # "terminal is not fully functional". Compile kitty's bundled entry into
+    # ~/.terminfo, which ncurses auto-searches. (Linux gets it from the
+    # kitty-terminfo package.)
+    local kitty_terminfo="/Applications/kitty.app/Contents/Resources/kitty/terminfo/kitty.terminfo"
+    if [[ -f "$kitty_terminfo" ]]; then
+        run tic -x -o "${HOME}/.terminfo" "$kitty_terminfo"
     else
-        ln_s "${DOTS_HOME}/kitty/os-linux.conf" "${DOTS_HOME}/kitty/os-local.conf"
+        echo "kitty.app terminfo not found at ${kitty_terminfo}; install kitty, then rerun this phase"
     fi
 }
 

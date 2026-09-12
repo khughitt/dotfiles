@@ -1706,6 +1706,46 @@ test_dotfiles_health_accepts_prism_runtime() {
   PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd >/dev/null
 }
 
+test_kitty_os_overrides_are_selected_per_host() {
+  # kitty.conf includes ${HOSTNAME}.conf, and that file is where a machine
+  # picks its OS override. A symlink chosen by OS inside the shared tree would
+  # be flipped by whichever machine ran setup last.
+  local host_conf os_includes
+  ! rg -q 'os-local\.conf' "${repo_root}/kitty/kitty.conf" || \
+    fail "kitty.conf still includes an in-tree OS selection link"
+  [[ ! -e "${repo_root}/kitty/os-local.conf" && ! -L "${repo_root}/kitty/os-local.conf" ]] || \
+    fail "kitty/os-local.conf is still in the tree"
+  rg -q '^include \$\{HOSTNAME\}\.conf$' "${repo_root}/kitty/kitty.conf" || \
+    fail "kitty.conf no longer includes the per-host file"
+  for host_conf in "${repo_root}"/kitty/*.conf(N); do
+    case "${host_conf:t}" in
+      kitty.conf|os-*.conf|noctalia-selection-fallback.conf|prism-generated.conf) continue ;;
+    esac
+    os_includes=$(rg -c '^include os-(linux|macos)\.conf$' "$host_conf" 2>/dev/null || print 0)
+    [[ "$os_includes" == 1 ]] || \
+      fail "${host_conf:t} must include exactly one of os-linux.conf/os-macos.conf (found ${os_includes})"
+  done
+  rg -q '^include os-macos\.conf$' "${repo_root}/kitty/Keiths-MacBook-Air.local.conf" || \
+    fail "the macOS host does not select os-macos.conf"
+  rg -q '^include os-linux\.conf$' "${repo_root}/kitty/titan.conf" || \
+    fail "titan does not select os-linux.conf"
+}
+
+test_setup_kitty_phase_links_nothing_into_the_tree() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  output=$(run_setup "$tmp" --dry-run --link-only --only kitty 2>&1) || \
+    fail "kitty phase failed: ${output}"
+  [[ "$output" != *"os-local.conf"* ]] || \
+    fail "kitty phase still creates the OS selection link: ${output}"
+  output=$(run_setup "$tmp" --dry-run --link-only --macos --only kitty 2>&1) || \
+    fail "macOS kitty phase failed: ${output}"
+  [[ "$output" != *"os-local.conf"* ]] || \
+    fail "macOS kitty phase still creates the OS selection link: ${output}"
+}
+
 test_dotfiles_health_flags_files_the_tree_does_not_own() {
   local tmp fixture output
   tmp=$(make_tmpdir)
@@ -2103,5 +2143,7 @@ test_dotfiles_health_rejects_symlinked_opencode_local
 test_setup_continues_past_a_failing_phase
 test_preflight_reports_every_unmet_prerequisite_without_mutating
 test_preflight_reads_prism_sink_requirements
+test_kitty_os_overrides_are_selected_per_host
+test_setup_kitty_phase_links_nothing_into_the_tree
 
 print -- "setup and health tests passed"
