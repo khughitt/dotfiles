@@ -13,6 +13,7 @@ bash_files=(
     bin/dotfiles-layout-check
     bin/dotfiles-secrets-check
     bin/kernel-gate
+    bin/mindful
     lib/dotfiles-setup-data.bash
     niri/host_specific.sh
     niri/scripts/monitor-handler.sh
@@ -72,5 +73,8 @@ python3 tests/noctalia_agent_themes_test.py
 # match the promoted nvim palette. Fails on partial/desynced state; passes on
 # fresh machines. See bin/noctalia-glass-check.
 bin/noctalia-glass-check
+
+node --check bin/mindful-backup.mjs
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("bin/mindful-release").read_text())'
 
 echo "dotfiles checks passed"

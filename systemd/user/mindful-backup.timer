@@ -1,0 +1,9 @@
+[Unit]
+Description=Nightly Mindful v6 backup
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

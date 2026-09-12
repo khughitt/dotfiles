@@ -461,6 +461,33 @@ if [[ "$(uname)" != "Darwin" ]]; then
         "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer" \
         "${HOME}/d/wali/systemd/wali-rotate.timer"
 
+    for unit in mindful-web.service mindful-backup.service mindful-backup.timer; do
+        check_link "${XDG_CONFIG_HOME}/systemd/user/${unit}" "${DOTS_HOME}/systemd/user/${unit}"
+    done
+    if [[ -e "${HOME}/.local/share/mindful/current" ]]; then
+        for wants in graphical-session.target.wants default.target.wants; do
+            if [[ -e "${XDG_CONFIG_HOME}/systemd/user/${wants}/mindful-docker.service" || \
+                  -L "${XDG_CONFIG_HOME}/systemd/user/${wants}/mindful-docker.service" ]]; then
+                fail "mindful-docker.service is still enabled after v6 activation"
+            fi
+        done
+        if [[ "$SKIP_SYSTEMD" != "true" ]] && command -v systemctl >/dev/null 2>&1; then
+            if systemctl --user is-active --quiet mindful-docker.service || \
+               systemctl --user is-enabled --quiet mindful-docker.service; then
+                fail "mindful-docker.service can revive v3 after v6 activation"
+            fi
+            if runtime_env=$(systemctl --user show mindful-web.service --property=Environment --value); then
+                for setting in HOST=localhost PORT=3331 "MINDFUL_HOME=${HOME}/d/thoughts"; do
+                    if [[ " $runtime_env " != *" $setting "* ]]; then
+                        fail "mindful-web.service lacks canonical setting: $setting"
+                    fi
+                done
+            else
+                fail "mindful-web.service environment could not be queried"
+            fi
+        fi
+    fi
+
     if [[ "$SKIP_SYSTEMD" != "true" ]]; then
         if command -v systemctl >/dev/null 2>&1; then
             for timer in dropbox-ignore-flux.timer wali-rotate.timer; do

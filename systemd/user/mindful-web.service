@@ -1,0 +1,17 @@
+[Unit]
+Description=Mindful v6 web
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+WorkingDirectory=%h/.local/share/mindful/current/packages/web
+# serve.mjs derives ORIGIN from HOST; match the browser's localhost form origin.
+Environment=HOST=localhost
+Environment=PORT=3331
+Environment=MINDFUL_HOME=%h/d/thoughts
+ExecStart=%h/.local/share/mindful/current/bin/node scripts/serve.mjs
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

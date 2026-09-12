@@ -585,13 +585,15 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "$(readlink "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf")" == \
       "${repo_root}/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
     fail "expected niri stop-timeout override to point into the repository"
-  for unit in familiar-reap.service familiar-reap.timer mindful-docker.service; do
+  for unit in familiar-reap.service familiar-reap.timer mindful-web.service mindful-backup.service mindful-backup.timer; do
     [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
       fail "expected linked ${unit}"
     [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
         "${repo_root}/systemd/user/${unit}" ]] || \
       fail "expected ${unit} to point into the repository"
   done
+  [[ ! -e "${tmp}/config/systemd/user/mindful-docker.service" ]] || \
+    fail "setup must not revive the v3 unit"
   for unit in wali-rotate.service wali-rotate.timer; do
     [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
       fail "expected linked ${unit}"
@@ -647,6 +649,8 @@ test_setup_dry_run_can_enable_user_timers() {
 
   output=$(run_setup "$tmp" --dry-run --link-only --headless --enable-user-timers)
 
+  [[ "$output" != *"enable --now mindful-"* ]] || \
+    fail "setup must leave mindful activation to cutover"
   [[ "$output" == *"systemctl --user daemon-reload"* ]] || \
     fail "expected dry-run daemon-reload command"
   [[ "$output" == *"systemctl --user enable --now dropbox-ignore-flux.timer"* ]] || \
@@ -1637,8 +1641,8 @@ test_preflight_reports_every_unmet_prerequisite_without_mutating() {
     fail "preflight did not report the missing prism node_modules"
   [[ "$output" == *"MISSING  tasks registry"* ]] || \
     fail "preflight did not report the unpopulated tasks registry"
-  [[ "$output" == *"MISSING  mindful environment"* ]] || \
-    fail "preflight did not report the missing mindful env file"
+  [[ "$output" != *"MISSING  mindful environment"* ]] || \
+    fail "v6 preflight must not require the v3 database password"
   [[ "$output" == *"MISSING  wali checkout"* ]] || \
     fail "preflight did not report the missing wali checkout"
   [[ "$output" == *"git clone git@github.com:khughitt/wali.git"* ]] || \
@@ -2072,6 +2076,22 @@ test_dotfiles_health_rejects_symlinked_opencode_local() {
     fail "health did not explain symlinked opencode.local"
 }
 
+test_mindful_health_rejects_v3_revival_after_activation() {
+  local tmp output rc
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  prepare_health_fixture "$tmp"
+  mkdir -p "${tmp}/home/.local/share/mindful/releases/test"
+  ln -s releases/test "${tmp}/home/.local/share/mindful/current"
+  mkdir -p "${tmp}/config/systemd/user/graphical-session.target.wants"
+  ln -s "${repo_root}/systemd/user/mindful-docker.service" \
+    "${tmp}/config/systemd/user/graphical-session.target.wants/mindful-docker.service"
+  rc=0
+  output=$(run_health "$tmp" --skip-systemd 2>&1) || rc=$?
+  (( rc != 0 )) || fail "health accepted enabled v3 after v6 activation"
+  [[ "$output" == *"mindful-docker.service"* ]] || fail "health did not name v3 revival"
+}
+
 test_tmp_cleanup_runs_only_at_process_exit
 test_tmp_cleanup_is_centralized
 test_setup_and_health_install_safe_noctalia_stubs
@@ -2145,5 +2165,7 @@ test_preflight_reports_every_unmet_prerequisite_without_mutating
 test_preflight_reads_prism_sink_requirements
 test_kitty_os_overrides_are_selected_per_host
 test_setup_kitty_phase_links_nothing_into_the_tree
+
+test_mindful_health_rejects_v3_revival_after_activation
 
 print -- "setup and health tests passed"

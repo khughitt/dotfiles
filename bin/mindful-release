@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""Build an immutable, self-contained Mindful release without activating it."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
+def command(*args, cwd=None):
+    return subprocess.check_output(args, cwd=cwd, text=True).strip()
+
+
+def revision(root):
+    if Path(command('git', 'rev-parse', '--show-toplevel', cwd=root)).resolve() not in [root, *root.parents]:
+        raise ValueError(f'not an identified checkout: {root}')
+    if command('git', 'status', '--porcelain', '--untracked-files=all', cwd=root):
+        raise ValueError(f'dirty checkout: {root}')
+    return command('git', 'rev-parse', 'HEAD', cwd=root)
+
+
+def sha256(path):
+    with path.open('rb') as source:
+        return hashlib.file_digest(source, 'sha256').hexdigest()
+
+
+def tree_size(path, ancestors=()):
+    """Count dereferenced copies, refusing dependency cycles before copying."""
+    actual = path.resolve(strict=True)
+    if actual in ancestors:
+        raise ValueError(f'cyclic dependency link: {path}')
+    if actual.is_dir():
+        return sum(tree_size(child, (*ancestors, actual)) for child in path.iterdir())
+    if not actual.is_file():
+        raise ValueError(f'unsupported runtime file: {path}')
+    return actual.stat().st_size
+
+
+def build(checkout, output):
+    checkout = checkout.resolve(strict=True)
+    output = output.absolute()
+    if os.path.lexists(output):
+        raise ValueError(f'release already exists: {output}')
+    if output.resolve().is_relative_to(checkout):
+        raise ValueError('release output must be outside the source checkout')
+    if json.loads((checkout / 'package.json').read_text())['name'] != 'mindful-v6-workspace':
+        raise ValueError('expected mindful-v6-workspace checkout')
+    mind6_revision = revision(checkout)
+    lock_hash = sha256(checkout / 'package-lock.json')
+    node = Path(shutil.which('node') or '').resolve(strict=True)
+    node_version = command(str(node), '--version')
+    for args in [('ci',), ('run', 'prepare')]:
+        subprocess.run(['npm', *args], cwd=checkout, check=True, stdout=sys.stderr)
+    nodes = (checkout / 'node_modules/@verifiably/nodes').resolve(strict=True)
+    if json.loads((nodes / 'package.json').read_text())['name'] != '@verifiably/nodes':
+        raise ValueError('expected @verifiably/nodes dependency')
+    nodes_revision = revision(nodes)
+    src_time = max(path.stat().st_mtime_ns for path in (nodes / 'src').rglob('*.ts'))
+    dist_time = max((path.stat().st_mtime_ns for path in (nodes / 'dist').rglob('*') if path.is_file()), default=-1)
+    if dist_time < src_time:
+        raise ValueError('stale nodes dist; build nodes before making a release')
+    subprocess.run([str(node), 'packages/mindful/scripts/check-core-freshness.mjs'], cwd=checkout, check=True)
+    subprocess.run(['npm', 'run', 'build'], cwd=checkout, check=True, stdout=sys.stderr)
+    sources = {name: checkout / name for name in [
+        'package.json', 'package-lock.json', 'packages/web/package.json', 'packages/web/build',
+        'packages/web/scripts/serve.mjs', 'packages/mindful/package.json', 'packages/mindful/dist', 'node_modules',
+    ]}
+    for package in ['web', 'mindful']:
+        relative = f'packages/{package}/node_modules'
+        if (checkout / relative).exists():
+            sources[relative] = checkout / relative
+    sources['bin/node'] = node
+    size = sum(tree_size(source) for source in sources.values())
+    output.parent.mkdir(parents=True, exist_ok=True)
+    # Copies and filesystem metadata need headroom beyond the sum of file lengths.
+    if shutil.disk_usage(output.parent).free < size * 1.1 + 64 * 1024 * 1024:
+        raise ValueError(f'insufficient disk space for {size} bytes of runtime files')
+    with tempfile.TemporaryDirectory(prefix='.mindful-release-', dir=output.parent) as temporary:
+        stage = Path(temporary) / 'release'
+        stage.mkdir()
+        for relative, source in sources.items():
+            target = stage / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if source.is_dir():
+                shutil.copytree(source, target, symlinks=False)
+            else:
+                shutil.copy2(source, target)
+        if any(path.is_symlink() for path in stage.rglob('*')):
+            raise ValueError('release retained a dependency symlink')
+        if revision(checkout) != mind6_revision or revision(nodes) != nodes_revision:
+            raise ValueError('source revision changed during release build')
+        if sha256(checkout / 'package-lock.json') != lock_hash:
+            raise ValueError('package lock changed during release build')
+        provenance = dict(mind6_revision=mind6_revision, nodes_revision=nodes_revision,
+                          mind6_dirty=False, nodes_dirty=False, package_lock_sha256=lock_hash,
+                          node_version=node_version, built_at=datetime.now(timezone.utc).isoformat(),
+                          runtime_sha256={str(path.relative_to(stage)): sha256(path)
+                                          for path in sorted(stage.rglob('*')) if path.is_file()})
+        (stage / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')
+        # Reserve the destination exclusively; even another concurrent build cannot replace it.
+        output.mkdir()
+        try:
+            for path in stage.iterdir():
+                path.rename(output / path.name)
+        except BaseException:
+            shutil.rmtree(output)
+            raise
+    return output
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--checkout', required=True, type=Path)
+    parser.add_argument('--output', required=True, type=Path)
+    args = parser.parse_args()
+    try:
+        print(build(args.checkout, args.output))
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+        sys.exit(f'mindful-release: {error}')

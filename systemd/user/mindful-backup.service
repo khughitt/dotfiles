@@ -1,0 +1,8 @@
+[Unit]
+Description=Mindful v6 whole-store backup
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=%h/.local/share/mindful/current/bin/node %h/d/dotfiles/bin/mindful-backup.mjs --release %h/.local/share/mindful/current --root %h/d/thoughts --output %h/d/mindful/archive/backup/v6 --service mindful-web.service
+TimeoutStartSec=infinity

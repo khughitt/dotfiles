@@ -1,2 +1,5 @@
 #!/usr/bin/env bash
-exec node "$HOME/d/mindful/v6/packages/mindful/dist/bin.js" "$@"
+set -euo pipefail
+export MINDFUL_HOME="${MINDFUL_HOME:-$HOME/d/thoughts}"
+release="$HOME/.local/share/mindful/current"
+exec "$release/bin/node" "$release/packages/mindful/dist/bin.js" "$@"

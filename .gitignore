@@ -26,6 +26,8 @@ bin/*
 !bin/dotfiles-secrets-check
 !bin/gpu-fan-curve
 !bin/kernel-gate
+!bin/mindful-release
+!bin/mindful-backup.mjs
 !bin/prism
 bookmarks
 dojo/
@@ -55,6 +57,7 @@ docs/
 !/docs/
 /docs/*
 !/docs/fresh-install-hardening.md
+!/docs/mindful-runtime.md
 wsprofiles/node_modules/
 
 # noctalia plugins

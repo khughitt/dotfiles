@@ -476,16 +476,12 @@ function setup_preflight() {
         test -x "${WALI_ROOT}/bin/walictl" || missing=1
 
     # Familiar's hooks run on every agent tool call and die on a missing
-    # node_modules; mindful's shell function and user unit both read the env file.
-    # Neither is in git or in Dropbox, and both are named here rather than met as a
-    # crash later. Guarded on the checkout the same way prism's are.
+    # node_modules. Name the missing local install before hooks crash.
+    # Guarded on the checkout the same way prism's dependencies are.
     if [[ -f "${HOME}/d/familiar/package.json" ]]; then
         preflight_check "familiar node dependencies" "npm install --prefix ${HOME}/d/familiar" \
             test -d "${HOME}/d/familiar/node_modules" || missing=1
     fi
-    preflight_check "mindful environment" \
-        "write MINDFUL_DBPASS into ${XDG_CONFIG_HOME}/mindful.env, mode 600" \
-        test -s "${XDG_CONFIG_HOME}/mindful.env" || missing=1
 
     preflight_check "tasks binary" "install tasks and run 'tasks init' in each project" \
         command -v tasks || missing=1
@@ -755,7 +751,11 @@ function setup_systemd_user_units() {
     ln_s "${DOTS_HOME}/systemd/user/niri.service.d/stop-timeout.conf" "${XDG_CONFIG_HOME}/systemd/user/niri.service.d/stop-timeout.conf"
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.service" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.service"
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.timer" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.timer"
-    ln_s "${DOTS_HOME}/systemd/user/mindful-docker.service" "${XDG_CONFIG_HOME}/systemd/user/mindful-docker.service"
+    local unit
+    # Activation and v3 retirement belong to the reviewed cutover, never setup.
+    for unit in mindful-web.service mindful-backup.service mindful-backup.timer; do
+        ln_s "${DOTS_HOME}/systemd/user/${unit}" "${XDG_CONFIG_HOME}/systemd/user/${unit}"
+    done
     ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.service" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.service"
     ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.timer" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.timer"
     ln_s "${WALI_ROOT}/systemd/wali-rotate.service" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service"

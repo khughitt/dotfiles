@@ -58,11 +58,11 @@ exist:
 
 ```sh
 systemctl --user enable --now familiar-reap.timer
-systemctl --user enable --now mindful-docker.service
 ```
 
-The Familiar timer expects `%h/d/familiar`, while the Mindful service expects
-`%h/d/mindful/v3` and a running system Docker service.
+The Familiar timer expects `%h/d/familiar`. Mindful v6 units are linked without
+activation; follow [the runtime runbook](mindful-runtime.md) at the separately
+approved cutover. The old Docker unit is retained only for deliberate rollback.
 
 ## Kernel parameters
 

@@ -103,8 +103,11 @@ kind at once, with its fix, and mutates nothing:
 | What each prism sink needs (quickshell, a niri that accepts the material node) | declared in the sink's `manifest.yaml`, evaluated by `prism requirements` | preflight relays each unmet line and its fix verbatim |
 | Noctalia | the installed `noctalia-qs` package | install it from the AUR |
 | The task tracker | the `tasks` binary and `~/.config/tasks/projects.toml` | install `tasks`, then `tasks init` in each project |
-| Mindful's database password | `~/.config/mindful.env` | write `MINDFUL_DBPASS=…`, mode 600 |
 | A fast build disk (optional) | `.cargo/config.toml` in `~/d/niri-material` | set `build.target-dir`, then `setfattr -n user.com.dropbox.ignored -v 1 .cargo` |
+
+Mindful v6 runtime and backup units are staged without automatic activation. Follow
+[the runtime runbook](docs/mindful-runtime.md) for the approved cutover; retain
+`~/.config/mindful.env` only for deliberate v3 rollback.
 
 Two things worth knowing about the ~/.config surface. The entries that are
 whole-directory symlinks into this tree — `niri`, `kitty`, `zathura`, and the
