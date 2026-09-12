@@ -1,6 +1,6 @@
 # Wali Extraction Implementation Plan
 
-**Status:** Runtime is live on titan and europa; source removal and migration of five tasks to wali have landed. Controller cleanup and closure of task `dots-3a1770` remain.
+**Status:** Runtime is live on titan and europa; source removal and migration of five tasks to wali have landed. Task `dots-3a1770`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
