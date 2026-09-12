@@ -1426,7 +1426,7 @@ test_setup_graphical_config_hands_material_ownership_to_prism() {
 }
 
 test_setup_graphical_config_links_wali_config_for_known_host() {
-  local tmp output prism_fixture
+  local tmp output shadow entry
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
@@ -1436,15 +1436,27 @@ test_setup_graphical_config_links_wali_config_for_known_host() {
   [[ "$output" == *"${repo_root}/wali/titan/config.toml"* ]] || \
     fail "graphical setup does not link the titan wali config"
 
-  # Dry-run skips Prism directory creation; supply that prerequisite.
-  prism_fixture=$(mktemp -d "${repo_root}/prism/wali-test.XXXXXX")
-  register_tmp_cleanup "$prism_fixture"
-  output=$(PRISM_TEST_HOSTNAME="${prism_fixture:t}" \
+  # Dry-run skips Prism directory creation, so the unknown host needs a
+  # prism/<host> that exists. It gets one in a shadow of the tree under the
+  # test's tmpdir, never in the repository: dotfiles-health reads prism/*/ as
+  # the machine list, so a fixture leaked there by an interrupted run would be
+  # reported as a machine.
+  shadow="${tmp}/repo"
+  mkdir -p "${shadow}/prism/wali-test"
+  for entry in "${repo_root}"/*(DN); do
+    [[ "${entry:t}" == prism || "${entry:t}" == .git ]] && continue
+    ln -s "$entry" "${shadow}/${entry:t}"
+  done
+  ln -s "${repo_root}/prism/titan" "${shadow}/prism/titan"
+  ln -s "${repo_root}/prism/europa" "${shadow}/prism/europa"
+  output=$(PRISM_TEST_HOSTNAME=wali-test SETUP_ROOT="$shadow" \
     run_setup "$tmp" --dry-run --link-only --only graphical-config)
-  [[ "$output" == *"No wali config for ${prism_fixture:t}"* ]] || \
-    fail "graphical setup does not explain a missing wali config"
+  [[ "$output" == *"No wali config for wali-test"* ]] || \
+    fail "graphical setup does not explain a missing wali config: ${output}"
   [[ "$output" != *"Link source does not exist"* ]] || \
     fail "graphical setup aborted on a host without a wali config"
+  [[ -z "$(print -l "${repo_root}"/prism/wali-test*(N))" ]] || \
+    fail "the fake host fixture leaked into the repository"
 }
 
 test_clean_graphical_setup_creates_the_generated_theme_stubs() {
