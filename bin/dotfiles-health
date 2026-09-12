@@ -374,6 +374,23 @@ raise SystemExit(any(
         else
             fail "merged Noctalia template selection differs from tracked registry"
         fi
+
+        # The tracked config turns Noctalia's own rotation off because
+        # wali-rotate.timer owns it. Noctalia persists settings over the
+        # tracked file, and a persisted true ran both rotators on titan while
+        # every link and timer check passed. Nothing is rewritten here.
+        rotator=$(python3 -c '
+import sys, tomllib
+tracked = tomllib.load(open(sys.argv[1], "rb"))["wallpaper"]["automation"]["enabled"]
+merged = tomllib.loads(sys.stdin.read())["wallpaper"]["automation"]["enabled"]
+print("noctalia" if tracked else ("conflict" if merged else "timer"))
+' "${DOTS_HOME}/noctalia/config.toml" <<<"$merged" 2>/dev/null) || rotator="unreadable"
+        case "$rotator" in
+            timer) pass "wali-rotate.timer owns wallpaper rotation: Noctalia automation is off" ;;
+            noctalia) pass "Noctalia owns wallpaper rotation: tracked config enables its automation" ;;
+            conflict) fail "competing wallpaper rotators: persisted Noctalia state sets wallpaper.automation.enabled=true over the tracked false while wali-rotate.timer runs; fix it in Noctalia's settings, then re-run" ;;
+            *) fail "could not read wallpaper.automation.enabled from the tracked and merged Noctalia config" ;;
+        esac
     else
         fail "Noctalia merged config export failed"
     fi
@@ -389,7 +406,7 @@ raise SystemExit(any(
     else
         fail "Noctalia template listing failed: $templates"
     fi
-    unset noctalia_config_dir noctalia_plugin_dir output plugins merged templates template_id plugin_name
+    unset noctalia_config_dir noctalia_plugin_dir output plugins merged rotator templates template_id plugin_name
 fi
 
 # Hyprland left the tree on 2026-09-09: niri is the only compositor configured here.

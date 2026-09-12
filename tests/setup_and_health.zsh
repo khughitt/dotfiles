@@ -1755,6 +1755,39 @@ EOF
     fail "health did not explain the template state override: ${output}"
 }
 
+test_dotfiles_health_rejects_competing_wallpaper_rotators() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  prepare_health_fixture "$tmp"
+  mkdir -p "${tmp}/home/.local/state/noctalia"
+  # Noctalia persists its own settings over the tracked config; this is the
+  # override that let native rotation run beside wali-rotate.timer on titan.
+  cat > "${tmp}/home/.local/state/noctalia/settings.toml" <<'EOF'
+[wallpaper.automation]
+enabled = true
+EOF
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "health accepted Noctalia native rotation beside wali-rotate.timer"
+  [[ "$output" == *"competing wallpaper rotators"* && "$output" == *"wallpaper.automation.enabled"* ]] || \
+    fail "health did not explain the competing rotators: ${output}"
+
+  cat > "${tmp}/home/.local/state/noctalia/settings.toml" <<'EOF'
+[wallpaper.automation]
+enabled = false
+EOF
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1) || \
+    fail "health rejected disabled Noctalia automation: ${output}"
+  [[ "$output" == *"wali-rotate.timer owns wallpaper rotation"* ]] || \
+    fail "health did not report the single rotator: ${output}"
+}
+
 test_dotfiles_health_fails_wrong_opencode_theme_link() {
   local tmp output exit_status theme_link mockbin
   tmp=$(make_tmpdir)
@@ -1855,6 +1888,7 @@ test_dotfiles_health_flags_files_the_tree_does_not_own
 test_dotfiles_health_fails_when_prism_doctor_fails
 test_dotfiles_health_rejects_noctalia_config_warning
 test_dotfiles_health_rejects_noctalia_template_state_override
+test_dotfiles_health_rejects_competing_wallpaper_rotators
 test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
 test_setup_continues_past_a_failing_phase
