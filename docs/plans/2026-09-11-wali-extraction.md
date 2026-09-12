@@ -1,5 +1,7 @@
 # Wali Extraction Implementation Plan
 
+**Status:** Runtime is live on titan and europa; source removal and migration of five tasks to wali have landed. Controller cleanup and closure of task `dots-3a1770` remain.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Move walictl, its shell helpers, Noctalia plugin, systemd units, and tests out of dotfiles into the existing `khughitt/wali` repo at `~/d/wali`, with dotfiles reaching them the way it reaches prism.

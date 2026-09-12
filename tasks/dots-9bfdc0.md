@@ -1,11 +1,11 @@
 ---
 id: dots-9bfdc0
 title: "Wali panel polish pass 2: borderless buttons, subtle color, drop Refresh"
-status: todo
+status: dropped
 priority: 2
 size: s
 created: 2026-09-09T02:28:45Z
-updated: 2026-09-09T02:47:54Z
+updated: 2026-09-12T09:35:40Z
 depends: []
 tags: [quick-add, noctalia, wallpaper]
 source: "mindful:thought:1784d44106a5411bb28a90796f46acf4"
@@ -19,3 +19,7 @@ Second design pass on noctalia/plugins/wali-panel after pass 1 (dots-ba0168). Tr
 - Palette swatches under the frame: four small dots in primary, secondary, tertiary, and surface so the photo-to-palette relationship is visible (ties to prism and the glass material).
 - Move Edit and Copy behind a right-click context menu on the photo (panel.openContextMenu), leaving nav plus heart as the visible chrome. Needs plugin_api 28+; check the installed Noctalia's supported range first (5.0.1 today).
 - Click the photo for Random (ui.image accepts onClick), so the Random button can drop to the same weight as its neighbors.
+
+## Notes
+
+- 2026-09-12T09:35:40Z (wali-migration): moved to wali-3e56a3

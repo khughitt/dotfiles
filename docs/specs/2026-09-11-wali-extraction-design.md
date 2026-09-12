@@ -1,6 +1,6 @@
 # Extract wali from dotfiles into `khughitt/wali`
 
-**Status:** Runtime landed on titan 2026-09-11 and europa 2026-09-12; source removal landed, task migration pending. Task `dots-3a1770`.
+**Status:** Runtime is live on titan and europa; source removal and migration of five tasks to wali have landed. Controller cleanup and closure of task `dots-3a1770` remain.
 
 ## Problem
 
