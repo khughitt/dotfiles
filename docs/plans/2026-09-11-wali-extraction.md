@@ -999,7 +999,7 @@ In `docs/specs/2026-09-11-wali-extraction-design.md` line 3, change `**Status:**
 just check test
 git grep -n -E 'noctalia/plugins/wali-panel|shell/wali([^.]|$)|tests/wali\.zsh|tests/bin/test_walictl' -- . ':!docs' ':!tasks'
 ```
-Expected: green; the grep prints nothing. `shell/wali([^.]|$)` matches the old fragment path but not `shell/wali.zsh` in the new zshrc; historical docs and task records are the only remaining mentions of the old paths, and they are excluded on purpose.
+Expected: green. Inspect every grep match and require no active caller of a removed source path. Installed plugin destinations in `tests/setup_and_health.zsh` and historical plan references such as `noctalia/memory-alert-implementation-plan.md` are valid matches; `shell/wali([^.]|$)` matches the old fragment path but not `shell/wali.zsh` in the new zshrc.
 
 - [ ] **Step 5: Commit, merge, verify live**
 

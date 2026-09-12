@@ -131,7 +131,7 @@ Dotfiles links the source directories into the v5 local-plugin directory:
 
 ```text
 $XDG_DATA_HOME/noctalia/plugins/wali-panel
-  -> dotfiles/noctalia/plugins/wali-panel
+  -> ~/d/wali/integrations/noctalia-plugin   (moved out of dotfiles 2026-09; see 2026-09-11-wali-extraction-design.md)
 
 $XDG_DATA_HOME/noctalia/plugins/prism
   -> ~/d/prism/integrations/noctalia-plugin

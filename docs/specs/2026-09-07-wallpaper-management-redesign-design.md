@@ -7,7 +7,7 @@ awaits old favorites retirement, which the user is handling. See
 
 The keyboard extension is merged and activated on titan: panel capture, global
 niri shortcuts, and capture-time navigation. Bindings are documented in
-`noctalia/noctalia-wallpaper-switcher.md`.
+`~/d/wali/docs/noctalia-wallpaper-switcher.md`.
 
 ## Problem
 

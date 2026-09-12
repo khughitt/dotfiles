@@ -1,6 +1,6 @@
 # Extract wali from dotfiles into `khughitt/wali`
 
-**Status:** Partially implemented. Files landed in `wali@35ac931`, dotfiles retarget prepared; both host cutovers and source removal/task migration pending.
+**Status:** Runtime landed on titan 2026-09-11 and europa 2026-09-12; source removal landed, task migration pending. Task `dots-3a1770`.
 
 ## Problem
 
