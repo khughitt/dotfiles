@@ -100,6 +100,7 @@ kind at once, with its fix, and mutates nothing:
 | Prism's node dependencies | `~/d/prism/node_modules` | `npm ci --prefix ~/d/prism` |
 | Familiar's node dependencies | `~/d/familiar/node_modules` | `npm install --prefix ~/d/familiar` |
 | The niri-material build | the installed `niri` package | build `packaging/arch/PKGBUILD` in `~/d/niri-material` and install it |
+| What each prism sink needs (quickshell, a niri that accepts the material node) | declared in the sink's `manifest.yaml`, evaluated by `prism requirements` | preflight relays each unmet line and its fix verbatim |
 | Noctalia | the installed `noctalia-qs` package | install it from the AUR |
 | The task tracker | the `tasks` binary and `~/.config/tasks/projects.toml` | install `tasks`, then `tasks init` in each project |
 | Mindful's database password | `~/.config/mindful.env` | write `MINDFUL_DBPASS=…`, mode 600 |

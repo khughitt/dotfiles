@@ -459,9 +459,9 @@ function preflight_check() {
 function setup_preflight() {
     phase "Preflight"
     local missing=0
-    local niri_generated="${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated/prism.kdl"
     local tasks_registry="${XDG_CONFIG_HOME}/tasks/projects.toml"
     local prism_root="${PRISM_ROOT}"
+    local requirements line
 
     if [[ -f "${prism_root}/package.json" ]]; then
         preflight_check "npm" "install nodejs-npm" \
@@ -495,17 +495,24 @@ function setup_preflight() {
     if [[ "$HEADLESS" == "false" ]]; then
         preflight_check "niri" "install niri" \
             command -v niri || missing=1
-        preflight_check "quickshell (qs)" "install quickshell; the debug-backdrop sink needs it" \
-            command -v qs || missing=1
         preflight_check "noctalia" "install the noctalia-qs package" \
             command -v noctalia || missing=1
 
-        # A niri that predates what prism emits fails only at apply time, deep
-        # inside the sink. Validate the config already on disk instead.
-        if command -v niri >/dev/null && [[ -s "$niri_generated" ]]; then
-            preflight_check "installed niri accepts the generated config" \
-                "rebuild and reinstall niri-material, then 'prism apply niri'" \
-                niri validate -c "${DOTS_HOME}/niri/config.kdl" || missing=1
+        # What each sink needs (quickshell for the debug backdrop, a niri that
+        # accepts the material node for glass) is declared in the sink's own
+        # manifest and evaluated by prism against this machine's resolved
+        # params, so nothing is restated here. Only when prism can run: the
+        # node_modules finding above already covers the other case.
+        if [[ -d "${prism_root}/node_modules" ]]; then
+            if requirements=$("${prism_root}/bin/prism" requirements 2>&1); then
+                echo "  ok       prism sink requirements"
+            else
+                echo "  MISSING  prism sink requirements"
+                while IFS= read -r line; do
+                    echo "           ${line#requirements: }"
+                done <<<"$requirements"
+                missing=1
+            fi
         fi
 
         # The phase links its plugins with Noctalia down and says what is left to

@@ -1544,6 +1544,68 @@ test_setup_continues_past_a_failing_phase() {
     fail "the summary does not name the phases that succeeded"
 }
 
+test_preflight_reads_prism_sink_requirements() {
+  local tmp fixture output rc
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "$fixture/bin" "$fixture/lib" "${tmp}/home/d/prism/bin" \
+    "${tmp}/home/d/prism/node_modules" "${tmp}/config" "${tmp}/bin"
+  cp "${repo_root}/setup.sh" "$fixture/setup.sh"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+  printf '{}\n' > "${tmp}/home/d/prism/package.json"
+  # prism owns what its sinks need; preflight only relays what it says
+  cat > "${tmp}/home/d/prism/bin/prism" <<'EOF'
+#!/usr/bin/env bash
+[[ "$*" == requirements ]] || exit 64
+if [[ "${PRISM_REQUIREMENTS_STATUS:-0}" -ne 0 ]]; then
+  printf 'requirements: debug-backdrop: qs is not installed — install quickshell (extra/quickshell)\n'
+  printf 'requirements: niri: this niri does not accept the material node — install niri-material\n'
+  exit "$PRISM_REQUIREMENTS_STATUS"
+fi
+printf 'requirements: ok\n'
+EOF
+  chmod +x "$fixture/setup.sh" "${tmp}/home/d/prism/bin/prism"
+  for command in niri noctalia; do
+    printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/bin/${command}"
+    chmod +x "${tmp}/bin/${command}"
+  done
+
+  rc=0
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    PATH="${tmp}/bin:$PATH" PRISM_REQUIREMENTS_STATUS=1 \
+    bash "$fixture/setup.sh" --link-only --only preflight 2>&1) || rc=$?
+  [[ "$output" == *"MISSING  prism sink requirements"* ]] || \
+    fail "preflight did not report prism's unmet requirements: ${output}"
+  [[ "$output" == *"debug-backdrop: qs is not installed — install quickshell (extra/quickshell)"* ]] || \
+    fail "preflight did not relay the sink's own line and fix: ${output}"
+  [[ "$output" == *"niri: this niri does not accept the material node — install niri-material"* ]] || \
+    fail "preflight relayed only the first unmet requirement: ${output}"
+  [[ "$output" != *"quickshell (qs)"* && "$output" != *"installed niri accepts"* ]] || \
+    fail "preflight still restates a requirement the sink declares: ${output}"
+
+  rc=0
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    PATH="${tmp}/bin:$PATH" \
+    bash "$fixture/setup.sh" --link-only --check 2>&1) || rc=$?
+  [[ "$output" == *"ok       prism sink requirements"* ]] || \
+    fail "preflight did not report prism's requirements as met: ${output}"
+
+  # without node_modules prism cannot run; the finding above already names that
+  rm -r "${tmp}/home/d/prism/node_modules"
+  rc=0
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    PATH="${tmp}/bin:$PATH" PRISM_REQUIREMENTS_STATUS=1 \
+    bash "$fixture/setup.sh" --link-only --only preflight 2>&1) || rc=$?
+  [[ "$output" == *"MISSING  prism node dependencies"* ]] || \
+    fail "preflight lost the node_modules finding: ${output}"
+  [[ "$output" != *"prism sink requirements"* ]] || \
+    fail "preflight asked prism for requirements without its dependencies: ${output}"
+}
+
 test_preflight_reports_every_unmet_prerequisite_without_mutating() {
   local tmp fixture output rc entries
   tmp=$(make_tmpdir)
@@ -2040,5 +2102,6 @@ test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
 test_setup_continues_past_a_failing_phase
 test_preflight_reports_every_unmet_prerequisite_without_mutating
+test_preflight_reads_prism_sink_requirements
 
 print -- "setup and health tests passed"
