@@ -60,7 +60,7 @@ piece of the setup after a change:
 
 Valid phases are:
 
-    preflight external-clones shell gtk graphical-config common-config systemd kitty home app-config noctalia-plugins mime tmux packages
+    preflight external-clones shell gtk graphical-config common-config systemd kitty home app-config noctalia-plugins mime dropbox-ignore tmux packages
 
 To install the systemd user timer that keeps high-flux Dropbox folders ignored:
 
@@ -82,7 +82,12 @@ Three kinds of state live here, and only the first arrives with the clone.
    linked back in, and `dotfiles-health` fails when one of those links is a real
    file instead. Anything that must sit in the tree and must not sync carries
    Dropbox's `com.dropbox.ignored` — `node_modules`, `.venv`, `.worktrees`, and
-   niri-material's `.cargo` and `target`.
+   niri-material's `.cargo` and `target`. Applications also write per-machine
+   state straight into the tree through the whole-directory `~/.config` links
+   (fcitx's caches and D-Bus address, crush's session database, familiar's
+   installed theme art); those paths are declared in
+   `lib/dotfiles-setup-data.bash`, the `dropbox-ignore` phase creates and marks
+   them on each machine, and `dotfiles-health` fails when one is left unmarked.
 3. **Per-machine: in neither git nor Dropbox.** These have to be reproduced by
    hand, and each one used to surface as an opaque crash in the middle of a
    setup run, one at a time.

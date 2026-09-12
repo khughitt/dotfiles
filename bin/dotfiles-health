@@ -215,6 +215,30 @@ check_config_dirs_do_not_leak() {
     fi
 }
 
+# The declared per-machine paths must carry the xattr on this machine, or the
+# next application write syncs to the other one. Absent directories are only a
+# nudge: setup.sh creates them so the mark precedes the first write.
+check_declared_dropbox_ignores_applied() {
+    local entry path offenders=0
+
+    for entry in "${DOTFILES_DROPBOX_IGNORED[@]}"; do
+        path="${DOTS_HOME}/${entry%/}"
+        if [[ ! -e "$path" ]]; then
+            [[ "$entry" == */ ]] && warn "declared per-machine directory is absent: ${entry} (run setup.sh)"
+            continue
+        fi
+        if [[ "$(attr -q -g com.dropbox.ignored "$path" 2>/dev/null)" == "1" ]]; then
+            continue
+        fi
+        fail "declared per-machine but syncing: ${entry} (run setup.sh)"
+        offenders=$((offenders + 1))
+    done
+
+    if [[ "$offenders" -eq 0 ]]; then
+        pass "declared per-machine paths are marked com.dropbox.ignored (${#DOTFILES_DROPBOX_IGNORED[@]} declared)"
+    fi
+}
+
 check_no_machine_specific_links() {
     local machines=() dir link target name offenders=0
 
@@ -492,6 +516,9 @@ unset wali_config
 
 check_no_machine_specific_links
 check_noctalia_generated_is_not_in_tree
+if [[ "$(uname)" != "Darwin" ]]; then
+    check_declared_dropbox_ignores_applied
+fi
 check_config_dirs_do_not_leak
 
 if [[ "$failures" -gt 0 ]]; then

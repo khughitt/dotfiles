@@ -42,6 +42,7 @@ VALID_PHASES=(
     app-config
     noctalia-plugins
     mime
+    dropbox-ignore
     tmux
     packages
 )
@@ -875,6 +876,36 @@ function setup_mime_links() {
     ln_s "${DOTS_HOME}/mimeapps.list" "${XDG_CONFIG_HOME}/mimeapps.list"
 }
 
+# The paths in DOTFILES_DROPBOX_IGNORED are per-machine state written into the
+# shared tree. The xattr is itself per-machine and never syncs, so every machine
+# runs this; marking a directory before the application's first write is what
+# keeps that write local.
+function setup_dropbox_ignores() {
+    [[ "$MACOS" != "true" ]] || return 0
+
+    phase "Dropbox ignores"
+    if ! command -v attr >/dev/null; then
+        echo "attr is required to mark per-machine paths com.dropbox.ignored"
+        return 1
+    fi
+
+    local entry path
+    for entry in "${DOTFILES_DROPBOX_IGNORED[@]}"; do
+        path="${DOTS_HOME}/${entry%/}"
+        if [[ "$entry" == */ ]]; then
+            ensure_dir "$path"
+        elif [[ ! -e "$path" ]]; then
+            echo "[SKIPPING] not present yet: ${entry}"
+            continue
+        fi
+        if [[ "$(attr -q -g com.dropbox.ignored "$path" 2>/dev/null)" == "1" ]]; then
+            echo "[SKIPPING] already ignored: ${entry}"
+            continue
+        fi
+        run attr -s com.dropbox.ignored -V 1 "$path"
+    done
+}
+
 function setup_tmux_plugin_manager() {
     phase "Tmux plugin manager"
     if [[ "$SKIP_EXTERNAL_CLONES" == "true" ]]; then
@@ -908,6 +939,7 @@ run_phase home setup_home_dotfile_links
 run_phase app-config setup_application_config_links
 run_phase noctalia-plugins setup_noctalia_plugins
 run_phase mime setup_mime_links
+run_phase dropbox-ignore setup_dropbox_ignores
 run_phase tmux setup_tmux_plugin_manager
 run_phase packages setup_package_installation
 

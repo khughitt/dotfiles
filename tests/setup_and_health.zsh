@@ -1778,6 +1778,114 @@ test_dotfiles_health_resolves_its_root_through_a_symlinked_path() {
     fail "health skipped the leak check when invoked through a symlinked root: ${output}"
 }
 
+test_setup_dropbox_ignore_phase_marks_declared_paths() {
+  local tmp fixture output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "$fixture/lib" "$fixture/familiar" "${tmp}/home" "${tmp}/config"
+  cp "${repo_root}/setup.sh" "$fixture/setup.sh"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+  # the one declared file that exists on this machine; crush/.crush is a
+  # declared directory that does not exist yet
+  printf 'identities: []\n' > "$fixture/familiar/identities.yaml"
+
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    bash "$fixture/setup.sh" --headless --link-only --only dropbox-ignore 2>&1) || \
+    fail "dropbox-ignore phase failed: ${output}"
+
+  [[ -d "$fixture/crush/.crush" ]] || \
+    fail "phase did not create the declared directory before marking it"
+  [[ "$(attr -q -g com.dropbox.ignored "$fixture/crush/.crush")" == "1" ]] || \
+    fail "phase did not mark the declared directory"
+  [[ "$(attr -q -g com.dropbox.ignored "$fixture/familiar/identities.yaml")" == "1" ]] || \
+    fail "phase did not mark the declared file"
+  [[ ! -e "$fixture/familiar/themes/../nonexistent" ]]
+  [[ -d "$fixture/familiar/themes" ]] || \
+    fail "phase did not create every declared directory"
+
+  # idempotent: a second run marks nothing again
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    bash "$fixture/setup.sh" --headless --link-only --only dropbox-ignore 2>&1) || \
+    fail "second dropbox-ignore run failed: ${output}"
+  [[ "$output" == *"[SKIPPING] already ignored: crush/.crush/"* ]] || \
+    fail "second run did not report the directory as already ignored: ${output}"
+  [[ "$output" != *"attr -s"* ]] || \
+    fail "second run re-marked a path: ${output}"
+
+  # a declared file that does not exist is left alone, not created
+  rm "$fixture/familiar/identities.yaml"
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    bash "$fixture/setup.sh" --headless --link-only --only dropbox-ignore 2>&1) || \
+    fail "dropbox-ignore run with a missing file failed: ${output}"
+  [[ ! -e "$fixture/familiar/identities.yaml" ]] || \
+    fail "phase created a declared file"
+  [[ "$output" == *"[SKIPPING] not present yet: familiar/identities.yaml"* ]] || \
+    fail "phase did not say the file is not present yet: ${output}"
+}
+
+test_setup_dropbox_ignore_phase_dry_run_writes_nothing() {
+  local tmp fixture output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "$fixture/lib" "$fixture/fcitx/dbus" "${tmp}/home" "${tmp}/config"
+  cp "${repo_root}/setup.sh" "$fixture/setup.sh"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    bash "$fixture/setup.sh" --headless --dry-run --link-only --only dropbox-ignore 2>&1) || \
+    fail "dry-run dropbox-ignore phase failed: ${output}"
+  [[ "$output" == *"[DRY-RUN] attr -s com.dropbox.ignored -V 1 ${fixture}/fcitx/dbus"* ]] || \
+    fail "dry run did not describe the attr command: ${output}"
+  [[ "$(attr -q -g com.dropbox.ignored "$fixture/fcitx/dbus" 2>/dev/null)" != "1" ]] || \
+    fail "dry run marked a path"
+  [[ ! -d "$fixture/crush/.crush" ]] || fail "dry run created a directory"
+}
+
+test_dotfiles_health_fails_unmarked_declared_dropbox_ignore() {
+  local tmp fixture output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  # a tree with one declared path present and unmarked: what a fresh Dropbox
+  # sync of the other machine's write looks like before setup.sh has run here
+  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/fcitx/dbus" \
+    "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  cp "${repo_root}/bin/dotfiles-health" "$fixture/bin/"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+  install_test_stubs "$tmp"
+
+  set +e
+  output=$(HOME="${tmp}/home" XDG_CACHE_HOME="${tmp}/cache" \
+    XDG_CONFIG_HOME="${tmp}/config" XDG_DATA_HOME="${tmp}/data" \
+    XDG_STATE_HOME="${tmp}/home/.local/state" PATH="${tmp}/bin:$PATH" \
+    "$fixture/bin/dotfiles-health" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted an unmarked declared path"
+  [[ "$output" == *"declared per-machine but syncing: fcitx/dbus/ (run setup.sh)"* ]] || \
+    fail "health did not name the unmarked declared path: ${output}"
+
+  attr -s com.dropbox.ignored -V 1 "$fixture/fcitx/dbus" >/dev/null
+  set +e
+  output=$(HOME="${tmp}/home" XDG_CACHE_HOME="${tmp}/cache" \
+    XDG_CONFIG_HOME="${tmp}/config" XDG_DATA_HOME="${tmp}/data" \
+    XDG_STATE_HOME="${tmp}/home/.local/state" PATH="${tmp}/bin:$PATH" \
+    "$fixture/bin/dotfiles-health" --skip-systemd --skip-noctalia-ipc 2>&1)
+  set -e
+  [[ "$output" != *"declared per-machine but syncing"* ]] || \
+    fail "health still flagged the marked path: ${output}"
+  [[ "$output" == *"declared per-machine paths are marked com.dropbox.ignored"* ]] || \
+    fail "health did not report the marked declarations: ${output}"
+  [[ "$output" == *"declared per-machine directory is absent: crush/.crush/ (run setup.sh)"* ]] || \
+    fail "health did not warn about the absent declared directory: ${output}"
+}
+
 test_dotfiles_health_rejects_competing_wallpaper_rotators() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
@@ -1913,6 +2021,9 @@ test_dotfiles_health_rejects_noctalia_config_warning
 test_dotfiles_health_rejects_noctalia_template_state_override
 test_dotfiles_health_rejects_competing_wallpaper_rotators
 test_dotfiles_health_resolves_its_root_through_a_symlinked_path
+test_setup_dropbox_ignore_phase_marks_declared_paths
+test_setup_dropbox_ignore_phase_dry_run_writes_nothing
+test_dotfiles_health_fails_unmarked_declared_dropbox_ignore
 test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
 test_setup_continues_past_a_failing_phase
