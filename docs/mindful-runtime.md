@@ -100,6 +100,9 @@ The timer runs at 03:00 local time with `Persistent=true`, under
 backup/restore succeeds. Keep all backups; no automatic expiry is implemented.
 Nightly backups briefly interrupt writes. HTTP captures during that window fail
 to their callers; they are neither queued nor automatically retried.
+The backup unit orders after queued web startup for persistent timer catch-up.
+It runs the backup script from the live Dots checkout using the release's Node;
+editing that script changes nightly backup behavior without a release bump.
 
 On failed cutover acceptance, stop v6 and snapshot every post-activation write
 first. Disable the new backup timer, restore the retained store/release/launcher,

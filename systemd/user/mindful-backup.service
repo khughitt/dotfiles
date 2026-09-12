@@ -1,5 +1,7 @@
 [Unit]
 Description=Mindful v6 whole-store backup
+# Order a persistent timer catch-up after any queued web startup.
+After=mindful-web.service
 
 [Service]
 Type=oneshot
