@@ -1755,6 +1755,29 @@ EOF
     fail "health did not explain the template state override: ${output}"
 }
 
+test_dotfiles_health_resolves_its_root_through_a_symlinked_path() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  prepare_health_fixture "$tmp"
+  # ~/d/dotfiles is a symlink spelling of the tree. Invoked through it, the
+  # root must still be the physical path the link checks resolve to, or every
+  # "inside the tree" comparison silently misses and the leak check skips.
+  ln -s "$repo_root" "${tmp}/tree-alias"
+  install_test_stubs "$tmp"
+
+  output=$(HOME="${tmp}/home" XDG_CACHE_HOME="${tmp}/cache" \
+    XDG_CONFIG_HOME="${tmp}/config" XDG_DATA_HOME="${tmp}/data" \
+    XDG_STATE_HOME="${tmp}/home/.local/state" PATH="${tmp}/bin:$PATH" \
+    "${tmp}/tree-alias/bin/dotfiles-health" --skip-systemd --skip-noctalia-ipc 2>&1) || \
+    fail "health failed when invoked through a symlinked root: ${output}"
+  [[ "$output" == *"Dotfiles root: ${repo_root}"* ]] || \
+    fail "health did not resolve its root to the physical path: ${output}"
+  [[ "$output" != *"skipping the leak check"* ]] || \
+    fail "health skipped the leak check when invoked through a symlinked root: ${output}"
+}
+
 test_dotfiles_health_rejects_competing_wallpaper_rotators() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
@@ -1889,6 +1912,7 @@ test_dotfiles_health_fails_when_prism_doctor_fails
 test_dotfiles_health_rejects_noctalia_config_warning
 test_dotfiles_health_rejects_noctalia_template_state_override
 test_dotfiles_health_rejects_competing_wallpaper_rotators
+test_dotfiles_health_resolves_its_root_through_a_symlinked_path
 test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
 test_setup_continues_past_a_failing_phase
