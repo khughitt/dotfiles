@@ -1,0 +1,17 @@
+debug.backdrop: false
+terminal.apps:
+  - kitty
+  - com.mitchellh.ghostty
+glass.inactive.attenuationDistance: 3
+glass.attenuationDistance: 3
+glass.thickness: 23.6
+glass.inactive.thickness: 39.7
+glass.inactive.ior: 1.26
+glass.distortionScale: 0.25
+glass.inactive.distortionScale: 0.17
+glass.distortion: 0.3
+glass.inactive.distortion: 1
+glass.roughness: 0.24
+glass.inactive.roughness: 0.19
+glass.backdropBlur: true
+terminal.background.opacity.active: 0.56

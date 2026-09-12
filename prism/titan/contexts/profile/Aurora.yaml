@@ -1,0 +1,61 @@
+# Aurora: native niri-material preset optics in both focus states.
+# Full Prism snapshot; noise is off and saturation is 1, independent of host blur settings.
+compositor.gaps: 24
+debug.backdrop: false
+glass.enabled: true
+glass.paneLip: 6
+glass.paneShiftX: 6
+glass.paneShiftY: 6
+glass.jellyFlex: 0.004
+glass.jellyRipple: 0.06
+glass.focusSplit: true
+glass.backdropBlur: false
+glass.inactive.backdropBlur: false
+glass.roughness: 0
+glass.inactive.roughness: 0
+glass.attenuationColor: "#cfe0ff"
+glass.inactive.attenuationColor: "#cfe0ff"
+glass.attenuationDistance: 60
+glass.inactive.attenuationDistance: 60
+glass.ior: 1.5
+glass.inactive.ior: 1.5
+glass.thickness: 20
+glass.inactive.thickness: 20
+glass.chromaticAberration: 0
+glass.inactive.chromaticAberration: 0
+glass.distortion: 0
+glass.inactive.distortion: 0
+glass.distortionScale: 0.5
+glass.inactive.distortionScale: 0.5
+glass.anisotropicBlur: 0
+glass.inactive.anisotropicBlur: 0
+glass.noise: 0
+glass.inactive.noise: 0
+glass.noiseType: white
+glass.saturation: 1
+glass.inactive.saturation: 1
+glass.iridescence: 0
+glass.inactive.iridescence: 0
+glass.aurora: 0.5
+glass.inactive.aurora: 0.5
+glass.auroraDriftHz: 4
+glass.inactive.auroraDriftHz: 4
+glass.auroraColorA: "#3dffb0"
+glass.inactive.auroraColorA: "#3dffb0"
+glass.auroraColorB: "#7a5cff"
+glass.inactive.auroraColorB: "#7a5cff"
+glass.bypass.backdrop: false
+glass.bypass.distortion: false
+glass.bypass.refraction: false
+glass.bypass.fringing: false
+glass.bypass.directionalBlur: false
+glass.bypass.tint: false
+glass.bypass.saturation: false
+glass.bypass.noise: false
+glass.bypass.iridescence: false
+glass.bypass.aurora: false
+terminal.background.opacity.active: 0
+terminal.background.opacity.inactive: 0
+terminal.apps:
+  - kitty
+  - com.mitchellh.ghostty
