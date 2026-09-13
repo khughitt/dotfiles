@@ -6,7 +6,7 @@ priority: 1
 size: l
 complexity: high
 created: 2026-09-12T18:19:33Z
-updated: 2026-09-13T13:40:15Z
+updated: 2026-09-13T14:08:18Z
 completed: 2026-09-12T20:34:55Z
 depends: [mind6-8de715]
 tags: [cross-project]
@@ -22,3 +22,4 @@ Prepare the dots-owned mindful-web.service with explicit PORT=3331 and MINDFUL_H
 - 2026-09-12T20:34:55Z (main): Staged 69e370b: Prepared immutable releases, lock-safe private backups, v6 units/launcher and retirement runbook; 23 runtime tests and setup/health/check pass, activation deferred.
 - 2026-09-12T20:34:55Z (main): Prepared and independently reviewed at 69e370b in .worktrees/mindful-runtime (feat/mindful-runtime): 23 runtime tests, setup/health, Ruff, just check and temporary-unit verification pass. Code remains staged because active mindful launcher symlinks main; use staged tooling for mind6 Task 4 acceptance. No production activation.
 - 2026-09-13T13:40:15Z (feat/mindful-runtime): Live cutover approved 2026-09-13. Integrated current main task record; selected runtime release 3d37fbf copied byte-identically for activation. Reviewed runtime tooling and units remain unchanged from f599209.
+- 2026-09-13T14:08:18Z (feat/mindful-runtime): Activated 2026-09-13: exact release 3d37fbf-20260912, web enabled at localhost:3331, 03:00 backup timer enabled with all 50 attachment roots. Actual service backup/restore verified 8652 store files and 114 image files; web restarted. Original store and PostgreSQL storage retained; v3 unit/containers retired. See mind6 live-cutover report.

@@ -1,7 +1,12 @@
-# Mindful v6 runtime preparation
+# Mindful v6 runtime
 
-Status: prepared tooling; no runtime activation has occurred. The approved
-cutover plan lives in `~/d/mindful/v6/docs/plans/2026-09-12-mindful-v6-local-cutover-plan.md`.
+Status: active since 2026-09-13. The approved cutover uses release
+`3d37fbf-20260912` at `http://localhost:3331`, with `~/d/thoughts` as the store.
+Web and the 03:00 backup timer are enabled; production backup/restore passed
+for all source/history/config bytes and 114 legacy image files. Images remain
+deferred in the UI. The prior store and PostgreSQL bind storage are retained.
+See `~/d/mindful/v6/docs/reports/2026-09-13-mindful-v6-local-cutover.md` and the
+private rollback record under `~/d/mindful/archive/cutover/2026-09-13/`.
 
 Build a clean, reviewed checkout into a new release ID. The builder installs and
 builds in that checkout, checks the linked nodes build, and copies dependencies
@@ -14,9 +19,9 @@ package-lock hash, Node version, build time, and every copied runtime hash.
   --output "$HOME/.local/share/mindful/releases/$RELEASE_ID"
 ```
 
-Keep this preparation branch unmerged until cutover: `~/bin/mindful` is already a
-symlink into the main Dots checkout, so merging the replacement launcher changes
-the active command immediately. The pre-cutover launcher is:
+The runtime branch is integrated. `~/bin/mindful` is a symlink into the main
+Dots checkout, so edits to the launcher affect the active command immediately.
+The retained pre-cutover launcher was:
 
 ```sh
 #!/usr/bin/env bash
