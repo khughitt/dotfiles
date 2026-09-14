@@ -9,7 +9,8 @@ running OpenCode processes was removed. On OpenCode 1.18.29 the TUI's
 SIGUSR2 theme refresh escalates to a global config update whose handler
 disposes every instance, aborting in-flight agent sessions at each wallpaper
 rotation. OpenCode now picks up the committed theme generation on its next
-launch only.
+launch only. Upstream fix: anomalyco/opencode#48990 (draft); restore the
+signal if it lands.
 
 ## Goal
 
