@@ -89,11 +89,16 @@ export PYTEST_ADDOPTS="-o tmp_path_retention_policy=failed"
 # CACHE_DIR defaults to XDG ~/.cache (already outside Dropbox, per host). To park
 # caches elsewhere on a given machine (e.g. a separate data disk), export CACHE_DIR
 # from shell/local/${HOST}.env.zsh — sourced here at zshenv time (not zshrc) so
-# non-interactive tool runs (scripts, systemd, uv) see it too. No host currently
-# overrides it; ~/.cache is an NVMe SSD with room, so the default is used.
+# non-interactive tool runs (scripts, systemd, uv) see it too. titan overrides it:
+# its root filesystem is small and the bulky caches below had filled it (2026-09).
 #   - PYTHONPYCACHEPREFIX: writes all __pycache__/.pyc to a shadow tree, so none
 #     appear next to source (Python >=3.8).
 #   - RUFF_CACHE_DIR / MYPY_CACHE_DIR: single shared cache, safe across projects.
+#   - HF_HOME, GOCACHE, npm_config_cache, PLAYWRIGHT_BROWSERS_PATH,
+#     PUPPETEER_CACHE_DIR, BUN_INSTALL_CACHE_DIR: the multi-gigabyte download and
+#     build caches (models, browsers, tarballs, objects). Each tool's own default
+#     lives under ~/.cache or ~; naming them here keeps them under CACHE_DIR too.
+# uv's cache is relocated separately by the untracked ~/.config/uv/uv.toml.
 # pytest's .pytest_cache is intentionally NOT redirected here: cache_dir has no
 # per-project env var, so a global one collides (lastfailed/nodeids) and races
 # under parallel runs. It stays in-tree and is handled by dropbox-ignore-flux.
@@ -104,6 +109,12 @@ export CACHE_DIR="${CACHE_DIR:-$XDG_CACHE_HOME}"
 export PYTHONPYCACHEPREFIX="$CACHE_DIR/pycache"
 export RUFF_CACHE_DIR="$CACHE_DIR/ruff"
 export MYPY_CACHE_DIR="$CACHE_DIR/mypy"
+export HF_HOME="$CACHE_DIR/huggingface"
+export GOCACHE="$CACHE_DIR/go-build"
+export npm_config_cache="$CACHE_DIR/npm"
+export PLAYWRIGHT_BROWSERS_PATH="$CACHE_DIR/ms-playwright"
+export PUPPETEER_CACHE_DIR="$CACHE_DIR/puppeteer"
+export BUN_INSTALL_CACHE_DIR="$CACHE_DIR/bun/install/cache"
 
 # ripgrep
 export RIPGREP_CONFIG_PATH="$DOTFILES/ripgreprc"
