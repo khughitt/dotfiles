@@ -27,6 +27,7 @@ bin/*
 !bin/gpu-fan-curve
 !bin/kernel-gate
 !bin/mindful-release
+!bin/work-link
 !bin/mindful-backup.mjs
 !bin/prism
 bookmarks

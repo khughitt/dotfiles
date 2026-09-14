@@ -31,6 +31,7 @@ secrets:
 test:
     uv run --frozen pytest -q
     zsh tests/dropbox_ignore_flux.zsh
+    zsh tests/work_link.zsh
     zsh tests/history.zsh
     zsh tests/secrets_check.zsh
     zsh tests/setup_and_health.zsh

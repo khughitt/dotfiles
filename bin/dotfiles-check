@@ -34,7 +34,9 @@ zsh_files=(
     shell/ubuntu
     shell/vconsole
     shell/zoxide
+    bin/work-link
     tests/dropbox_ignore_flux.zsh
+    tests/work_link.zsh
     tests/history.zsh
     tests/secrets_check.zsh
     tests/setup_and_health.zsh

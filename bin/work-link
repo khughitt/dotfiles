@@ -1,0 +1,444 @@
+#!/usr/bin/env zsh
+# work-link: keep a checkout's git worktrees and generated build directories on
+# WORK_ROOT (a host-local disk) and reach them through in-tree symlinks.
+#
+# Same name, other disk: for an entry at <root>/<rel>/<name>, the external copy
+# is $WORK_ROOT/<rel>/<name> and the in-tree entry is a symlink to it. Names:
+# .worktrees, .venv, and target (only beside Cargo.toml). node_modules stays
+# in-tree: npm workspace links are relative and escape the directory.
+#
+#   work-link [--root DIR] [PATH ...]                converge: report, relink, lock
+#   work-link --migrate [--dry-run] [--root DIR] [PATH ...]
+#   work-link --ensure NAME ...                       inside a repository
+#
+# WORK_ROOT unset: an unconfigured host, everything stays in-tree. WORK_ROOT
+# set but not a directory: the storage is unavailable and every mode refuses,
+# so nothing is rebuilt in-tree during an outage. The root is never created
+# here: it is a mount point on the root filesystem, and mkdir -p would rebuild
+# the tree on the wrong disk. Design: ops docs/specs/2026-09-14-checkout-local-storage-design.md
+set -euo pipefail
+
+typeset -ga WORK_LINK_NAMES=(.worktrees .venv target)
+typeset -g WORK_LINK_LOCK_REASON="on WORK_ROOT storage"
+
+work_link_usage() {
+  cat <<'EOF'
+Usage: work-link [--root DIR] [PATH ...]
+       work-link --migrate [--dry-run] [--root DIR] [PATH ...]
+       work-link --ensure NAME ...
+
+Keep .worktrees, .venv and Cargo target directories on $WORK_ROOT behind
+in-tree symlinks. Converge reports drift, relinks entries whose external copy
+exists, and locks worktrees that resolve under WORK_ROOT. --migrate moves real
+directories out (refusing any with open file handles). --ensure creates the
+external directory and link for the named entries in the current repository.
+EOF
+}
+
+# Storage state from WORK_ROOT: unconfigured, available, or unavailable.
+work_link_storage() {
+  if [[ -z "${WORK_ROOT:-}" ]]; then
+    print -- unconfigured
+  elif [[ -d "$WORK_ROOT" ]]; then
+    print -- available
+  else
+    print -- unavailable
+  fi
+}
+
+work_link_refuse_unavailable() {
+  print -u2 -- "WORK_ROOT is set to ${WORK_ROOT} but it is not a directory: storage unavailable, refusing"
+  return 1
+}
+
+# Candidate entries under a scan root: top-level matches of the names, never
+# following symlinks, never descending into a match (a worktree's own .venv is
+# part of the worktree). Byte-ordered.
+work_link_candidates() {
+  local root="$1"
+  [[ -d "$root" ]] || { print -u2 -- "Scan root is not a directory: $root"; return 1; }
+  local pattern='^(\.worktrees|\.venv|target)$'
+  # Command substitution, not a process substitution loop: a failing fd must
+  # abort the run (set -e), not be swallowed as an empty scan.
+  local -a found
+  found=("${(@0)$(fd -uu -0 -t d -t l --prune "$pattern" "$root")}") || {
+    print -u2 -- "Scan failed under ${root} (fd exit $?)"
+    return 1
+  }
+  found=("${(@)found:#}")
+  found=("${(@)found%/}")
+  local candidate
+  local LC_COLLATE=C
+  local -a kept
+  local existing skip
+  for candidate in ${(o)found}; do
+    skip=false
+    for existing in "${kept[@]}"; do
+      [[ "$candidate" == "$existing" || "$candidate" == "$existing"/* ]] && { skip=true; break; }
+    done
+    [[ "$skip" == false ]] && kept+=("$candidate")
+  done
+  (( ${#kept} )) && printf '%s\n' "${kept[@]}"
+  return 0
+}
+
+# Is this in-tree path a relocatable entry? target only beside Cargo.toml.
+work_link_is_entry() {
+  local entry="$1" name="${1:t}"
+  case "$name" in
+    .worktrees|.venv) return 0 ;;
+    target) [[ -f "${entry:h}/Cargo.toml" ]] ;;
+    *) return 1 ;;
+  esac
+}
+
+# The repository that owns an in-tree path: nearest ancestor with a .git entry.
+work_link_repo_of() {
+  local dir="${1:h}"
+  while [[ "$dir" != "/" ]]; do
+    [[ -e "$dir/.git" ]] && { print -- "$dir"; return 0; }
+    dir="${dir:h}"
+  done
+  return 1
+}
+
+# Classify an in-tree path against its external path. Prints one word.
+work_link_classify() {
+  local intree="$1" external="$2"
+  if [[ -L "$intree" ]]; then
+    local target
+    target=$(readlink -- "$intree")
+    if [[ "$target" == "$external" ]]; then
+      [[ -e "$intree" ]] && print -- linked || print -- dangling
+    else
+      print -- foreign
+    fi
+  elif [[ -d "$intree" ]]; then
+    if [[ -d "$external" ]] && [[ -n "$(ls -A -- "$external")" ]]; then
+      print -- conflict
+    else
+      print -- needs-migration
+    fi
+  elif [[ -e "$intree" ]]; then
+    print -- foreign
+  elif [[ -d "$external" ]]; then
+    print -- relink
+  else
+    print -- absent
+  fi
+}
+
+work_link_size() {
+  du -sh -- "$1" 2>/dev/null | cut -f1
+}
+
+# Will the entry be ignored once it is a symlink? Reads the matching pattern
+# rather than the verdict: a trailing-slash pattern (.venv/) matches the real
+# directory today and stops matching the link tomorrow, and the global excludes
+# file would hide either problem. Prints ok, unignored, or slash.
+work_link_ignore_verdict() {
+  local intree="$1" repo line pattern
+  repo=$(work_link_repo_of "$intree") || { print -- ok; return 0; }
+  line=$(git -C "${intree:h}" -c core.excludesFile=/dev/null check-ignore -v --no-index -- "${intree:t}" 2>/dev/null) || { print -- unignored; return 0; }
+  pattern="${${line%%	*}##*:}"
+  if [[ "$pattern" == !* ]]; then print -- unignored
+  elif [[ "$pattern" == */ ]]; then print -- slash
+  else print -- ok
+  fi
+}
+
+work_link_check_ignore() {
+  local intree="$1"
+  case "$(work_link_ignore_verdict "$intree")" in
+    ok) return 0 ;;
+    slash) work_link_report unignored "$intree" "repository rule ends in /, which matches a directory but not a symlink; use the bare name ${intree:t}"; return 1 ;;
+    unignored) work_link_report unignored "$intree" "repository rules do not ignore ${intree:t}; add the bare name to .gitignore"; return 1 ;;
+  esac
+}
+
+# Lock every worktree inside a .worktrees entry that resolves under WORK_ROOT,
+# each through its own repository: a worktree parked here may belong to another
+# repository, and only that repository's prune would delete it. Then report the
+# owning repository's entries whose recorded path no longer resolves.
+work_link_lock_worktrees() {
+  local dotwt="$1" child real gitdir
+  for child in "$dotwt"/*(N/); do
+    [[ -L "$child" ]] && continue                      # a cross-project symlink, not a worktree
+    [[ -f "$child/.git" ]] || continue                 # a plain directory parked here
+    real=$(realpath -- "$child")
+    [[ "$real" == "$WORK_ROOT"/* ]] || continue
+    gitdir=$(git -C "$child" rev-parse --path-format=absolute --git-dir 2>/dev/null) || {
+      work_link_report broken "$child" "has a .git file but git cannot open it"
+      continue
+    }
+    [[ -f "$gitdir/locked" ]] && continue
+    git -C "$child" worktree lock --reason "$WORK_LINK_LOCK_REASON" -- "$child"
+    print -- "locked	${child}"
+  done
+  local repo wt
+  repo=$(work_link_repo_of "$dotwt") || return 0
+  for wt in "${(@f)$(git -C "$repo" worktree list --porcelain | awk '/^worktree /{print substr($0,10)}')}"; do
+    [[ -n "$wt" ]] || continue
+    realpath -e -- "$wt" >/dev/null 2>&1 || work_link_report prunable "$wt" "recorded in ${repo} but the path does not resolve"
+  done
+}
+
+typeset -gi WORK_LINK_REPORTED=0
+
+work_link_report() {
+  print -- "$1	$2	${3:-}"
+  WORK_LINK_REPORTED=$((WORK_LINK_REPORTED + 1))
+}
+
+# Processes holding files open anywhere under a directory, one "pid command"
+# per line. lsof exits 1 both when nothing is open and when it failed; only
+# stderr tells them apart. Both streams are captured together (no temp file,
+# so there is no file creation or redirection that could itself fail
+# unnoticed): with -F pc every stdout line starts with p or c, so any other
+# line is stderr, and any such line or an exit above 1 is an inspection
+# failure. Callers run this in a || context where set -e is off, so every
+# status is checked here explicitly.
+work_link_open_handles() {
+  local dir="$1" out rc=0
+  out=$(lsof +D "$dir" -F pc 2>&1) || rc=$?
+  local -a lines noise
+  lines=("${(@f)out}")
+  noise=("${(@M)lines:#[^pc]*}")
+  noise=("${(@)noise:#}")
+  if (( rc > 1 )) || (( ${#noise} )); then
+    print -- "inspection failed (lsof exit ${rc}): ${noise[1]:-no message}"
+    return 1
+  fi
+  local handles
+  handles=$(print -l -- "${lines[@]}" | awk '/^p/{pid=substr($0,2)} /^c/{print pid, substr($0,2)}' | sort -u) || {
+    print -- "inspection failed: could not parse lsof output"
+    return 1
+  }
+  print -- "$handles"
+}
+
+# Move an in-tree directory to its external path and leave the link.
+work_link_move() {
+  local intree="$1" external="$2"
+  mkdir -p -- "${external:h}"
+  [[ -d "$external" ]] && rmdir -- "$external"
+  mv -- "$intree" "$external"
+  ln -s -- "$external" "$intree"
+}
+
+# Converge or migrate one entry. Mode is converge, migrate, or plan.
+work_link_handle() {
+  local mode="$1" intree="$2" root="$3"
+  local rel="${intree#$root/}"
+  local external="${WORK_ROOT}/${rel}"
+  local state
+  state=$(work_link_classify "$intree" "$external")
+  case "$state" in
+    linked)
+      work_link_check_ignore "$intree" || true
+      ;;
+    relink)
+      if [[ "$mode" == plan ]]; then
+        print -- "relink	${intree}	<- ${external}"
+      else
+        ln -s -- "$external" "$intree"
+        print -- "relinked	${intree}	<- ${external}"
+      fi
+      ;;
+    needs-migration)
+      case "$mode" in
+        converge)
+          work_link_report needs-migration "$intree" "$(work_link_size "$intree") -> ${external}"
+          work_link_check_ignore "$intree" || true
+          ;;
+        plan|migrate)
+          local ignore_ok=true
+          work_link_check_ignore "$intree" || ignore_ok=false
+          local holders="" inspect_ok=true
+          holders=$(work_link_open_handles "$intree") || inspect_ok=false
+          holders="${(j:, :)${(f)holders}}"
+          if [[ "$inspect_ok" == false ]]; then
+            work_link_report uninspectable "$intree" "${holders}; not moved"
+          elif [[ -n "$holders" ]]; then
+            work_link_report busy "$intree" "$(work_link_size "$intree") -> ${external}; open handles: ${holders}; stop them and rerun"
+          elif [[ "$ignore_ok" == false ]]; then
+            print -- "held	${intree}	fix the ignore rule first"
+          elif [[ "$mode" == plan ]]; then
+            print -- "move	${intree}	$(work_link_size "$intree") -> ${external}"
+          else
+            work_link_move "$intree" "$external"
+            print -- "moved	${intree}	-> ${external}"
+          fi
+          ;;
+      esac
+      ;;
+    conflict)
+      work_link_report conflict "$intree" "real directory ($(work_link_size "$intree")) and non-empty ${external} ($(work_link_size "$external")); delete one side"
+      ;;
+    dangling)
+      work_link_report dangling "$intree" "external ${external} is gone; run work-link --ensure ${intree:t} in the repository"
+      ;;
+    foreign)
+      work_link_report foreign "$intree" "not a link to ${external}"
+      ;;
+  esac
+}
+
+# Scan both sides: the in-tree scope for entries, and WORK_ROOT for external
+# copies whose in-tree entry is gone (the relink case). Then lock worktrees.
+work_link_run() {
+  local mode="$1" root="$2"; shift 2
+  local -a scopes
+  scopes=("$@")
+  (( ${#scopes} )) || scopes=("$root")
+
+  local -A seen
+  local scope candidate intree
+  local -a candidates
+  for scope in "${scopes[@]}"; do
+    candidates=("${(@f)$(work_link_candidates "$scope")}") || return 1
+    for candidate in "${candidates[@]}"; do
+      [[ -n "$candidate" ]] || continue
+      work_link_is_entry "$candidate" || continue
+      seen[$candidate]=1
+      work_link_handle "$mode" "$candidate" "$root"
+    done
+  done
+
+  local external
+  candidates=("${(@f)$(work_link_candidates "$WORK_ROOT")}") || return 1
+  for external in "${candidates[@]}"; do
+    [[ -n "$external" ]] || continue
+    intree="${root}/${external#$WORK_ROOT/}"
+    [[ -n "${seen[$intree]:-}" ]] && continue
+    local in_scope=false
+    for scope in "${scopes[@]}"; do
+      [[ "$intree" == "$scope" || "$intree" == "$scope"/* ]] && { in_scope=true; break; }
+    done
+    [[ "$in_scope" == true ]] || continue
+    seen[$intree]=1
+    if [[ ! -d "${intree:h}" ]]; then
+      work_link_report orphan "$intree" "external ${external} has no checkout behind it; delete it by hand or restore the checkout"
+      continue
+    fi
+    work_link_is_entry "$intree" || continue
+    work_link_handle "$mode" "$intree" "$root"
+  done
+
+  [[ "$mode" == plan ]] && return 0
+  for intree in "${(@ko)seen}"; do
+    [[ "${intree:t}" == .worktrees && -L "$intree" && -d "$intree" ]] || continue
+    work_link_lock_worktrees "$intree"
+  done
+}
+
+work_link_ensure() {
+  local storage="$1"; shift
+  local toplevel
+  toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || {
+    print -u2 -- "work-link --ensure: not inside a git repository"
+    return 1
+  }
+  local root
+  root=$(readlink -f -- "${HOME}/d")
+  local name intree
+  for name in "$@"; do
+    case "$name" in
+      .worktrees|.venv|target) ;;
+      *) print -u2 -- "work-link --ensure: unknown name ${name} (use .worktrees, .venv, target)"; return 1 ;;
+    esac
+    intree="${toplevel}/${name}"
+    if [[ "$storage" == unconfigured ]]; then
+      if [[ -L "$intree" && ! -e "$intree" ]]; then
+        rm -- "$intree"
+        print -- "removed-dangling	${intree}"
+      fi
+      continue
+    fi
+    if [[ "$toplevel" == "$WORK_ROOT"/* ]]; then
+      print -- "external	${intree}	already under WORK_ROOT"
+      continue
+    fi
+    [[ "$toplevel" == "$root"/* ]] || {
+      print -u2 -- "work-link --ensure: ${toplevel} is not under ${root}"
+      return 1
+    }
+    local external="${WORK_ROOT}/${toplevel#$root/}/${name}"
+    case "$(work_link_classify "$intree" "$external")" in
+      linked) print -- "ok	${intree}" ;;
+      absent) mkdir -p -- "$external"; ln -s -- "$external" "$intree"; print -- "created	${intree}	-> ${external}" ;;
+      relink) ln -s -- "$external" "$intree"; print -- "relinked	${intree}	-> ${external}" ;;
+      dangling) rm -- "$intree"; mkdir -p -- "$external"; ln -s -- "$external" "$intree"; print -- "recreated	${intree}	-> ${external}" ;;
+      needs-migration|conflict) print -- "needs-migration	${intree}	real directory, left for work-link --migrate ${toplevel}" ;;
+      foreign) print -u2 -- "work-link --ensure: ${intree} exists and is not a link to ${external}"; return 1 ;;
+    esac
+  done
+}
+
+work_link_main() {
+  local mode=converge dry_run=false root="" ensure=false
+  local -a paths
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --migrate) mode=migrate ;;
+      --dry-run) dry_run=true ;;
+      --ensure) ensure=true ;;
+      --root) shift; root="${1:?Missing value for --root}" ;;
+      --help|-h) work_link_usage; return 0 ;;
+      --) shift; paths+=("$@"); break ;;
+      -*) print -u2 -- "Unknown option: $1"; work_link_usage >&2; return 2 ;;
+      *) paths+=("$1") ;;
+    esac
+    shift
+  done
+  # --ensure runs from every project's setup and must work on a machine that has
+  # only git; the scan needs fd, and only a migration needs lsof.
+  local -a required=(git realpath)
+  [[ "$ensure" == true ]] || required+=(fd)
+  [[ "$mode" == migrate || "$dry_run" == true ]] && required+=(lsof)
+  local cmd
+  for cmd in "${required[@]}"; do
+    command -v "$cmd" >/dev/null || { print -u2 -- "Missing required command: $cmd"; return 127; }
+  done
+
+  local storage
+  storage=$(work_link_storage)
+  [[ "$storage" == unavailable ]] && { work_link_refuse_unavailable; return 1; }
+
+  if [[ "$ensure" == true ]]; then
+    (( ${#paths} )) || { print -u2 -- "work-link --ensure needs at least one name"; return 2; }
+    work_link_ensure "$storage" "${paths[@]}"
+    return
+  fi
+
+  if [[ "$storage" == unconfigured ]]; then
+    print -- "WORK_ROOT is unset: unconfigured host, entries stay in-tree"
+    return 0
+  fi
+
+  [[ -n "$root" ]] || root=$(readlink -f -- "${HOME}/d")
+  root=$(readlink -f -- "$root")
+  [[ -d "$root" ]] || { print -u2 -- "Scan root not found: $root"; return 1; }
+  WORK_ROOT=$(readlink -f -- "$WORK_ROOT")
+  [[ "$WORK_ROOT" == "$root"/* || "$root" == "$WORK_ROOT"/* ]] && {
+    print -u2 -- "WORK_ROOT ${WORK_ROOT} and the scan root ${root} must not nest"
+    return 1
+  }
+  local -a scopes
+  local p
+  for p in "${paths[@]}"; do
+    [[ -d "$p" ]] || { print -u2 -- "Not a directory: $p"; return 1; }
+    p=$(readlink -f -- "$p")
+    [[ "$p" == "$root" || "$p" == "$root"/* ]] || { print -u2 -- "Not under ${root}: $p"; return 1; }
+    scopes+=("$p")
+  done
+
+  if [[ "$dry_run" == true ]]; then
+    work_link_run plan "$root" "${scopes[@]}" || return 1
+    return 0
+  fi
+  work_link_run "$mode" "$root" "${scopes[@]}" || return 1
+  (( WORK_LINK_REPORTED == 0 ))
+}
+
+work_link_main "$@"
