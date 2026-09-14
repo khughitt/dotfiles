@@ -397,6 +397,72 @@ test_root_and_work_root_must_not_nest() {
   [[ $rc -eq 1 && "$out" == *nest* ]] || fail "nested WORK_ROOT must refuse: $out"
 }
 
+# A failing mv must be reported, not swallowed: work_link_run is invoked as
+# `... || return 1`, and in zsh that suppresses ERR_EXIT for the whole call
+# tree, so a plain `set -e` inside work_link_move would not have caught this.
+test_migrate_reports_failed_move_instead_of_swallowing_it() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${repo}/.venv/lib"; touch "${repo}/.venv/lib/x.py"
+  mkdir -p "${WORK}/proj"
+  chmod a-w "${WORK}/proj"
+  local out rc=0
+  out=$(run_work_link --migrate "${repo}") || rc=$?
+  chmod u+w "${WORK}/proj"
+  [[ $rc -ne 0 && "$out" == *"failed	${repo}/.venv"* ]] || fail "failed move must be reported: $out"
+  [[ "$out" != *"moved	${repo}/.venv"* ]] || fail "must not print moved when mv fails: $out"
+  [[ -d "${repo}/.venv" && ! -L "${repo}/.venv" && -f "${repo}/.venv/lib/x.py" ]] || \
+    fail "in-tree directory must stay real with its content intact after a failed move: $out"
+}
+
+# A failing `git worktree lock` must be reported, not swallowed.
+test_migrate_reports_failed_lock_instead_of_swallowing_it() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  git -C "$repo" worktree add -q .worktrees/old -b old
+  mkdir -p "${tmp}/shim"
+  cat > "${tmp}/shim/git" <<'EOF'
+#!/bin/sh
+case " $* " in
+  *" worktree lock "*)
+    echo "git: simulated lock failure" >&2
+    exit 1
+    ;;
+esac
+git_real=$(command -v -p git 2>/dev/null || echo /usr/bin/git)
+exec "$git_real" "$@"
+EOF
+  chmod +x "${tmp}/shim/git"
+  local out rc=0
+  out=$(PATH="${tmp}/shim:$PATH" run_work_link --migrate "${repo}") || rc=$?
+  [[ $rc -ne 0 && "$out" == *"failed	"*"/.worktrees/old"* ]] || fail "failed lock must be reported: $out"
+  [[ "$out" != *"locked	"* ]] || fail "must not print locked when git worktree lock fails: $out"
+}
+
+# --ensure builds `external` from the raw WORK_ROOT; converge/migrate resolve
+# it with readlink -f. A trailing slash must not make them disagree.
+test_ensure_then_converge_agree_on_trailing_slash_work_root() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  local out
+  out=$(cd "$repo" && WORK_ROOT="${WORK}/" "$work_link" --ensure .venv 2>&1) || fail "ensure with trailing slash: $out"
+  [[ "$(readlink "${repo}/.venv")" != *//* ]] || fail "ensure must not embed a doubled slash in the link target: $out"
+  out=$(WORK_ROOT="${WORK}/" run_work_link "${repo}") || fail "converge after ensure with trailing slash must be clean: $out"
+  [[ -z "$out" ]] || fail "converge must resolve the same external path ensure created: $out"
+}
+
+# Same disagreement, via a WORK_ROOT that is itself a symlink.
+test_ensure_then_converge_agree_on_symlinked_work_root() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  local alt="${tmp}/work-alias"
+  ln -s "$WORK" "$alt"
+  local out
+  out=$(cd "$repo" && WORK_ROOT="$alt" "$work_link" --ensure .venv 2>&1) || fail "ensure with symlinked WORK_ROOT: $out"
+  out=$(WORK_ROOT="$alt" run_work_link "${repo}") || fail "converge after ensure with symlinked WORK_ROOT must be clean: $out"
+  [[ -z "$out" ]] || fail "converge must resolve the same external path ensure created: $out"
+}
+
 test_migrate_moves_and_links
 test_nested_rel_path
 test_converge_relinks_when_intree_absent
@@ -409,6 +475,10 @@ test_worktrees_survive_migration_and_get_locked
 test_outage_prune_recovery
 test_ensure
 test_root_and_work_root_must_not_nest
+test_migrate_reports_failed_move_instead_of_swallowing_it
+test_migrate_reports_failed_lock_instead_of_swallowing_it
+test_ensure_then_converge_agree_on_trailing_slash_work_root
+test_ensure_then_converge_agree_on_symlinked_work_root
 test_scan_root_behind_symlink
 test_inspection_failure_refuses_migration
 test_foreign_worktree_locked_through_its_owner

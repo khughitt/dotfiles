@@ -172,8 +172,11 @@ work_link_lock_worktrees() {
       continue
     }
     [[ -f "$gitdir/locked" ]] && continue
-    git -C "$child" worktree lock --reason "$WORK_LINK_LOCK_REASON" -- "$child"
-    print -- "locked	${child}"
+    if git -C "$child" worktree lock --reason "$WORK_LINK_LOCK_REASON" -- "$child"; then
+      print -- "locked	${child}"
+    else
+      work_link_report failed "$child" "git worktree lock failed"
+    fi
   done
   local repo wt
   repo=$(work_link_repo_of "$dotwt") || return 0
@@ -185,6 +188,11 @@ work_link_lock_worktrees() {
 
 typeset -gi WORK_LINK_REPORTED=0
 
+# Reports (as opposed to the actions moved/relinked/locked, which mean the
+# named change happened): needs-migration, conflict, dangling, foreign,
+# unignored, orphan, prunable, broken, busy, uninspectable, and failed (a
+# mutating command that should have succeeded did not: see work_link_move,
+# the relink branch of work_link_handle, and work_link_lock_worktrees).
 work_link_report() {
   print -- "$1	$2	${3:-}"
   WORK_LINK_REPORTED=$((WORK_LINK_REPORTED + 1))
@@ -217,13 +225,21 @@ work_link_open_handles() {
   print -- "$handles"
 }
 
-# Move an in-tree directory to its external path and leave the link.
+# Move an in-tree directory to its external path and leave the link. Returns
+# non-zero if any step fails (a full disk, a read-only external parent, a
+# permission error): the caller must not report success when this fails.
+# Explicit `|| return 1` on each step rather than relying on `set -e`: this
+# function is invoked deep under a `... || return 1` call chain, and in zsh
+# that suppresses ERR_EXIT for the whole call tree, so a failing mv or ln -s
+# would otherwise be silently swallowed.
 work_link_move() {
   local intree="$1" external="$2"
-  mkdir -p -- "${external:h}"
-  [[ -d "$external" ]] && rmdir -- "$external"
-  mv -- "$intree" "$external"
-  ln -s -- "$external" "$intree"
+  mkdir -p -- "${external:h}" || return 1
+  if [[ -d "$external" ]]; then
+    rmdir -- "$external" || return 1
+  fi
+  mv -- "$intree" "$external" || return 1
+  ln -s -- "$external" "$intree" || return 1
 }
 
 # Converge or migrate one entry. Mode is converge, migrate, or plan.
@@ -240,9 +256,10 @@ work_link_handle() {
     relink)
       if [[ "$mode" == plan ]]; then
         print -- "relink	${intree}	<- ${external}"
-      else
-        ln -s -- "$external" "$intree"
+      elif ln -s -- "$external" "$intree"; then
         print -- "relinked	${intree}	<- ${external}"
+      else
+        work_link_report failed "$intree" "relink to ${external} failed"
       fi
       ;;
     needs-migration)
@@ -265,9 +282,10 @@ work_link_handle() {
             print -- "held	${intree}	fix the ignore rule first"
           elif [[ "$mode" == plan ]]; then
             print -- "move	${intree}	$(work_link_size "$intree") -> ${external}"
-          else
-            work_link_move "$intree" "$external"
+          elif work_link_move "$intree" "$external"; then
             print -- "moved	${intree}	-> ${external}"
+          else
+            work_link_report failed "$intree" "move to ${external} failed"
           fi
           ;;
       esac
@@ -404,6 +422,10 @@ work_link_main() {
   local storage
   storage=$(work_link_storage)
   [[ "$storage" == unavailable ]] && { work_link_refuse_unavailable; return 1; }
+  # Normalized once, here, before --ensure and converge/migrate can diverge:
+  # both compare paths against $WORK_ROOT, and a trailing slash or a symlink
+  # component left unresolved makes the two sides disagree on "external".
+  [[ "$storage" == available ]] && WORK_ROOT=$(readlink -f -- "$WORK_ROOT")
 
   if [[ "$ensure" == true ]]; then
     (( ${#paths} )) || { print -u2 -- "work-link --ensure needs at least one name"; return 2; }
@@ -419,7 +441,6 @@ work_link_main() {
   [[ -n "$root" ]] || root=$(readlink -f -- "${HOME}/d")
   root=$(readlink -f -- "$root")
   [[ -d "$root" ]] || { print -u2 -- "Scan root not found: $root"; return 1; }
-  WORK_ROOT=$(readlink -f -- "$WORK_ROOT")
   [[ "$WORK_ROOT" == "$root"/* || "$root" == "$WORK_ROOT"/* ]] && {
     print -u2 -- "WORK_ROOT ${WORK_ROOT} and the scan root ${root} must not nest"
     return 1
