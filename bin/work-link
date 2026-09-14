@@ -31,7 +31,8 @@ Keep .worktrees, .venv and Cargo target directories on $WORK_ROOT behind
 in-tree symlinks. Converge reports drift, relinks entries whose external copy
 exists, and locks worktrees that resolve under WORK_ROOT. --migrate moves real
 directories out (refusing any with open file handles). --ensure creates the
-external directory and link for the named entries in the current repository.
+external directory and link for the named entries in the current repository;
+outside the scan root (~/d) it reports `outside` and leaves the entry in-tree.
 EOF
 }
 
@@ -377,9 +378,12 @@ work_link_ensure() {
       print -- "external	${intree}	already under WORK_ROOT"
       continue
     fi
+    # Outside the scan root (a clone under a temp dir) nothing is covered: the
+    # entry stays in-tree and setup goes on; only a synced dangling link goes.
     [[ "$toplevel" == "$root"/* ]] || {
-      print -u2 -- "work-link --ensure: ${toplevel} is not under ${root}"
-      return 1
+      if [[ -L "$intree" && ! -e "$intree" ]]; then rm -- "$intree"; fi
+      print -- "outside	${intree}	${toplevel} is not under ${root}; stays in-tree"
+      continue
     }
     local external="${WORK_ROOT}/${toplevel#$root/}/${name}"
     case "$(work_link_classify "$intree" "$external")" in

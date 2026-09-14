@@ -241,6 +241,15 @@ test_ensure() {
   ln -sf /titan/work/proj/target "${repo}/target"
   out=$(cd "$repo" && WORK_ROOT= "$work_link" --ensure target .venv 2>&1) || fail "ensure unconfigured: $out"
   [[ "$out" == removed-dangling* && ! -L "${repo}/target" && -d "${repo}/.venv/real" ]] || fail "unconfigured ensure: $out"
+
+  # A checkout outside the scan root (a clone under a temp dir) is not covered:
+  # setup must still succeed, the entry stays in-tree, a dangling link goes.
+  local outside="${SANDBOX}/elsewhere/clone"
+  mkdir -p "$outside" && git -C "$outside" init -q
+  ln -s "${WORK}/elsewhere/clone/.venv" "${outside}/.venv"
+  out=$(cd "$outside" && "$work_link" --ensure .venv .worktrees 2>&1) || fail "ensure outside the scan root must not fail setup: $out"
+  [[ "$out" == "outside	${outside}/.venv"*$'\n'"outside	${outside}/.worktrees"* ]] || fail "ensure outside must report every name: $out"
+  [[ ! -e "${outside}/.venv" && ! -L "${outside}/.venv" && ! -e "${outside}/.worktrees" && ! -e "${WORK}/elsewhere" ]] || fail "ensure outside must create nothing and drop the dangling link"
 }
 
 test_scan_root_behind_symlink() {
