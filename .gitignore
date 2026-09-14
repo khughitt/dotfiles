@@ -14,7 +14,8 @@ id_ed25519
 .npmrc
 kubeconfig
 kubeconfig.*
-.worktrees/
+.worktrees
+.venv
 .stignore
 .stversions
 _archive
