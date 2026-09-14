@@ -99,6 +99,10 @@ export PYTEST_ADDOPTS="-o tmp_path_retention_policy=failed"
 #     build caches (models, browsers, tarballs, objects). Each tool's own default
 #     lives under ~/.cache or ~; naming them here keeps them under CACHE_DIR too.
 # uv's cache is relocated separately by the untracked ~/.config/uv/uv.toml.
+# The other half of the same policy is WORK_ROOT (per checkout, not per tool):
+# git worktrees, .venv and cargo target directories live there behind in-tree
+# symlinks kept by bin/work-link. Also exported from the host file, on purpose
+# without a guard: see the comment there.
 # pytest's .pytest_cache is intentionally NOT redirected here: cache_dir has no
 # per-project env var, so a global one collides (lastfailed/nodeids) and races
 # under parallel runs. It stays in-tree and is handled by dropbox-ignore-flux.
