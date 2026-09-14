@@ -748,6 +748,8 @@ function setup_systemd_user_units() {
     ensure_dir "${XDG_CONFIG_HOME}/systemd/user"
     ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service"
     ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer"
+    ln_s "${DOTS_HOME}/systemd/user/work-link.service" "${XDG_CONFIG_HOME}/systemd/user/work-link.service"
+    ln_s "${DOTS_HOME}/systemd/user/work-link.timer" "${XDG_CONFIG_HOME}/systemd/user/work-link.timer"
     ln_s "${DOTS_HOME}/systemd/user/niri.service.d/stop-timeout.conf" "${XDG_CONFIG_HOME}/systemd/user/niri.service.d/stop-timeout.conf"
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.service" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.service"
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.timer" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.timer"
@@ -764,6 +766,7 @@ function setup_systemd_user_units() {
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload
         run systemctl --user enable --now dropbox-ignore-flux.timer
+        run systemctl --user enable --now work-link.timer
         run systemctl --user enable --now kernel-gate-nudge.timer
         run systemctl --user enable --now wali-rotate.timer
     fi

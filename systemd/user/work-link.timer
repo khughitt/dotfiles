@@ -1,0 +1,12 @@
+[Unit]
+Description=Periodically converge checkout entries with WORK_ROOT
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=2h
+AccuracySec=15min
+Persistent=true
+Unit=work-link.service
+
+[Install]
+WantedBy=timers.target

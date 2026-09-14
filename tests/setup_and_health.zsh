@@ -535,6 +535,7 @@ test_setup_dry_run_link_only_does_not_write_home() {
   [[ ! -e "${tmp}/home/.shell" ]] || fail "dry-run should not create ~/.shell"
   [[ ! -e "${tmp}/config/systemd/user/dropbox-ignore-flux.timer" ]] || \
     fail "dry-run should not link systemd user timer"
+  [[ ! -e "${tmp}/config/systemd/user/work-link.timer" ]] || fail "dry-run should not link work-link timer"
   [[ ! -e "${tmp}/data/zinit" ]] || fail "link-only dry-run should not clone zinit"
 
   rm -rf "$tmp"
@@ -580,6 +581,7 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
     fail "expected tracked Yazi config link"
   [[ -L "${tmp}/config/systemd/user/dropbox-ignore-flux.timer" ]] || \
     fail "expected linked Dropbox ignore timer"
+  [[ -L "${tmp}/config/systemd/user/work-link.timer" ]] || fail "expected linked work-link timer"
   [[ -L "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
     fail "expected linked niri stop-timeout override"
   [[ "$(readlink "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf")" == \
@@ -655,6 +657,8 @@ test_setup_dry_run_can_enable_user_timers() {
     fail "expected dry-run daemon-reload command"
   [[ "$output" == *"systemctl --user enable --now dropbox-ignore-flux.timer"* ]] || \
     fail "expected dry-run timer enable command"
+  [[ "$output" == *"systemctl --user enable --now work-link.timer"* ]] || \
+    fail "expected dry-run work-link timer enable command"
   [[ "$output" == *"systemctl --user enable --now wali-rotate.timer"* ]] || \
     fail "expected dry-run wali timer enable command"
 
@@ -1264,6 +1268,16 @@ if [[ "$*" == "--user list-timers dropbox-ignore-flux.timer --no-pager" ]]; then
   exit 0
 fi
 
+if [[ "$*" == "--user is-enabled work-link.timer" ]]; then
+  printf 'enabled\n'
+  exit 0
+fi
+
+if [[ "$*" == "--user list-timers work-link.timer --no-pager" ]]; then
+  printf 'NEXT LEFT LAST PASSED UNIT ACTIVATES\n'
+  exit 0
+fi
+
 if [[ "$*" == "--user is-enabled wali-rotate.timer" ]]; then
   printf 'enabled\n'
   exit 0
@@ -1286,6 +1300,10 @@ EOF
     fail "expected health to query timer enabled state"
   rg -q -- '--user list-timers dropbox-ignore-flux.timer --no-pager' "$systemctl_log" || \
     fail "expected health to query timer schedule"
+  rg -q -- '--user is-enabled work-link.timer' "$systemctl_log" || \
+    fail "expected health to query the work-link timer enabled state"
+  rg -q -- '--user list-timers work-link.timer --no-pager' "$systemctl_log" || \
+    fail "expected health to query the work-link timer schedule"
   rg -q -- '--user is-enabled wali-rotate.timer' "$systemctl_log" || \
     fail "expected health to query the wali timer enabled state"
   rg -q -- '--user list-timers wali-rotate.timer --no-pager' "$systemctl_log" || \

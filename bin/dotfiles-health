@@ -455,6 +455,12 @@ if [[ "$(uname)" != "Darwin" ]]; then
         "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer" \
         "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer"
     check_link \
+        "${XDG_CONFIG_HOME}/systemd/user/work-link.service" \
+        "${DOTS_HOME}/systemd/user/work-link.service"
+    check_link \
+        "${XDG_CONFIG_HOME}/systemd/user/work-link.timer" \
+        "${DOTS_HOME}/systemd/user/work-link.timer"
+    check_link \
         "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service" \
         "${HOME}/d/wali/systemd/wali-rotate.service"
     check_link \
@@ -490,7 +496,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
 
     if [[ "$SKIP_SYSTEMD" != "true" ]]; then
         if command -v systemctl >/dev/null 2>&1; then
-            for timer in dropbox-ignore-flux.timer wali-rotate.timer; do
+            for timer in dropbox-ignore-flux.timer work-link.timer wali-rotate.timer; do
                 if systemctl --user is-enabled "$timer" >/dev/null 2>&1; then
                     pass "systemd user timer is enabled: $timer"
                 else
