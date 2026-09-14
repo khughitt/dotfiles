@@ -10,11 +10,16 @@ rename.
 
 The rename is the COMMIT POINT. Before it, any failure or kill leaves the
 previous generation fully intact -- readers (kitty include, nvim load) go
-through `current` and never see a half-promoted state. Kitty/Nvim SIGUSR1 and
-OpenCode SIGUSR2 signals after it are post-commit reconciliation, not part of
-the transaction: a kill between commit and signalling leaves already-running
-processes on the old generation until the next successful run signals them
-(new processes always read the committed generation).
+through `current` and never see a half-promoted state. Kitty/Nvim SIGUSR1
+signals after it are post-commit reconciliation, not part of the transaction:
+a kill between commit and signalling leaves already-running processes on the
+old generation until the next successful run signals them (new processes
+always read the committed generation).
+
+Running OpenCode processes are deliberately NOT signalled: OpenCode's SIGUSR2
+theme refresh escalates to a global config update that disposes every
+instance, aborting in-flight agent sessions (observed on 1.18.29,
+dots-f26ed6). OpenCode picks up the committed generation on its next launch.
 
 Specs: docs/specs/2026-08-09-noctalia-nvim-theme-design.md and
 docs/specs/2026-08-12-noctalia-opencode-crush-kitty-design.md
@@ -23,7 +28,6 @@ from __future__ import annotations
 
 import json
 import os
-import signal
 import shutil
 import subprocess
 import sys
@@ -183,37 +187,12 @@ def build_opencode_theme(raw: dict) -> dict:
     return {'$schema': 'https://opencode.ai/theme.json', 'theme': colors}
 
 
-def signal_opencode(proc_root: Path = Path('/proc')) -> None:
-    caught_bit = 1 << (signal.SIGUSR2 - 1)
-    for process in sorted(proc_root.glob('[0-9]*'), key=lambda p: int(p.name)):
-        try:
-            fields = {}
-            for line in (process / 'status').read_text().splitlines():
-                key, separator, value = line.partition(':')
-                if separator:
-                    fields[key] = value.strip()
-            if fields['Name'] != 'opencode':
-                continue
-            if int(fields['Uid'].split()[0]) != os.getuid():
-                continue
-            if not int(fields['SigCgt'], 16) & caught_bit:
-                continue
-            os.kill(int(process.name), signal.SIGUSR2)
-        except FileNotFoundError:
-            continue
-        except ProcessLookupError:
-            continue
-        except (KeyError, IndexError, ValueError) as exc:
-            raise OSError(f'invalid status for PID {process.name}') from exc
-
-
 def signal_programs() -> None:
     for process in ('kitty', 'nvim'):
         result = subprocess.run(
             ['pkill', '-SIGUSR1', '-x', process], check=False)
         if result.returncode not in (0, 1):
             fail(f'pkill {process} failed with exit {result.returncode}')
-    signal_opencode()
 
 
 def main() -> None:

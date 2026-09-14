@@ -4,6 +4,12 @@
 Revised 2026-09-07 by `dots-aa6cc4`: nested captures verified the current
 TUI surfaces over pure glass; diff alphas are 0.55. Current app observations
 and the seven chosen alphas are recorded in `noctalia/noctalia.md`.
+Revised 2026-09-14 by `dots-f26ed6`: the post-commit `SIGUSR2` signal to
+running OpenCode processes was removed. On OpenCode 1.18.29 the TUI's
+SIGUSR2 theme refresh escalates to a global config update whose handler
+disposes every instance, aborting in-flight agent sessions at each wallpaper
+rotation. OpenCode now picks up the committed theme generation on its next
+launch only.
 
 ## Goal
 
@@ -97,22 +103,19 @@ The existing Noctalia Nvim template remains the single render entry point:
    - `opencode-theme.json`
 5. Renaming a prepared symlink over
    `~/.cache/noctalia/nvim-glass/current` remains the commit point.
-6. After the commit, the hook signals Kitty first and Nvim second with
-   `SIGUSR1`, then handles OpenCode last. It enumerates exact-name, current-user
-   `opencode` processes and reads each Linux `/proc/<pid>/status` `SigCgt` mask.
-   It sends `SIGUSR2` only when that process currently catches the signal. A
-   missing process is success; any other signal error is reported as a
-   post-commit reconciliation failure.
+ 6. After the commit, the hook signals Kitty first and Nvim second with
+    `SIGUSR1`. OpenCode is not signalled (see below); it reads the committed
+    generation on its next launch.
 
-OpenCode 1.18.18 installs that handler in the interactive TUI and `run`
-footer, but not in modes such as `serve`. A broad
-`pkill -SIGUSR2 -x opencode` is forbidden: the default action for an
-uncaught `SIGUSR2` terminates the process. Checking the kernel's caught-signal
-mask targets the capability directly instead of duplicating OpenCode's CLI
-mode parsing. This still has an unavoidable read-then-signal race: a process
-can disappear, exec and clear its handler, or have its PID reused after
-`SigCgt` is read. A vanished PID is ignored; the narrower exec/PID-reuse race is
-accepted for this local hook.
+OpenCode installs a `SIGUSR2` theme-refresh handler in its interactive TUI and
+`run` footer, and this design originally signalled it post-commit so running
+processes repainted on the new palette. That signal was removed in
+`dots-f26ed6`: on OpenCode 1.18.29 the refresh escalates to a global config
+update whose handler disposes every instance, and disposing an instance aborts
+its in-flight LLM streams. A wallpaper rotation every fifteen minutes was
+killing active agent sessions. If upstream makes theme refresh
+non-destructive, the signal can be restored; the SigCgt-mask check remained
+the right way to target only processes that catch `SIGUSR2`.
 
 Pre-commit failure leaves the previous generation untouched and signals
 nothing. A failure after the symlink rename leaves the new generation
@@ -124,10 +127,6 @@ The new checker requires all three files and verifies the OpenCode theme's
 shape and exact background mappings. A current generation created by the old
 format is present-but-incomplete, not a fresh-machine state, and must fail the
 checker until Noctalia renders once with the new hook.
-
-Kitty is signalled before OpenCode so its registered RGB opacity rules normally
-arrive before OpenCode repaints those RGB values. This ordering is best effort,
-not part of the atomic-read guarantee.
 
 ### OpenCode configuration layout
 
