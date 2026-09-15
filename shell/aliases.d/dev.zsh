@@ -74,6 +74,7 @@ alias tal='TASKS_FORMAT=pretty tasks list --color=always'
 alias tan='TASKS_FORMAT=pretty tasks next --color=always'
 alias tap='TASKS_FORMAT=pretty tasks projects --color=always'
 alias tas='TASKS_FORMAT=pretty tasks show --color=always'
+alias tuia='tui --all'
 
 # tmux
 alias x=xumt

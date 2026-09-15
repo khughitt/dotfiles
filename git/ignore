@@ -16,7 +16,7 @@
 .snakemake
 .superpowers
 .worktrees
-.venv/
+.venv
 .vscode
 .worktrees
 /archive
