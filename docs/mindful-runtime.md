@@ -1,6 +1,6 @@
 # Mindful v6 runtime
 
-Status: active since 2026-09-13. The approved cutover uses release
+Status: active since 2026-09-13. The approved cutover used release
 `3d37fbf-20260912` at `http://localhost:3331`, with `~/d/thoughts` as the store.
 Web and the 03:00 backup timer are enabled; production backup/restore passed
 for all source/history/config bytes and 114 legacy image files. Images remain
@@ -47,6 +47,39 @@ Compose containers/restart policies without deleting its database storage. Then
 start/enable `mindful-web.service` and verify `http://localhost:3331` forms,
 loopback listeners, capture, and restart persistence. Health checks reject a
 revivable v3 unit after `current` exists and verify the loaded web environment.
+
+## Phone access over Tailscale
+
+The web unit optionally reads `~/.config/mindful-serve.env`. For tailnet access,
+create it with both values, using the host's Tailscale DNS name without a trailing
+dot and the exact login of the user connecting from the phone:
+
+```ini
+MINDFUL_SERVE_HOST=desk.tail1234.ts.net
+MINDFUL_SERVE_LOGIN=you@example.com
+```
+
+Keep this host-specific file private and outside the repository. Without the
+file, the unit serves loopback only; setting just one variable makes the server
+refuse startup. Retain `HOST=localhost` and `PORT=3331`.
+
+After deploying a release with mobile support, reload the unit and restart web,
+then configure Serve on the authenticated host:
+
+```sh
+systemctl --user daemon-reload
+systemctl --user restart mindful-web.service
+tailscale serve --bg --https=443 http://127.0.0.1:3331
+tailscale serve status
+```
+
+Tailscale must be running with MagicDNS and HTTPS certificates enabled. Check
+that port 3331 still listens only on loopback. The unit's `Restart=on-failure`
+restarts an interrupted exit 1; verify `TimeoutStopUSec` with `systemctl --user
+show mindful-web.service` is greater than the server's 5-second drain deadline
+(the default on the production host is 90 seconds).
+
+Phone installation and interaction acceptance are tracked by `mind6-8e9161`.
 
 ## Backups and isolated restore
 

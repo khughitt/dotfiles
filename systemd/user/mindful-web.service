@@ -9,6 +9,7 @@ WorkingDirectory=%h/.local/share/mindful/current/packages/web
 Environment=HOST=localhost
 Environment=PORT=3331
 Environment=MINDFUL_HOME=%h/d/thoughts
+EnvironmentFile=-%h/.config/mindful-serve.env
 ExecStart=%h/.local/share/mindful/current/bin/node scripts/serve.mjs
 Restart=on-failure
 RestartSec=2
