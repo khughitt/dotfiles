@@ -105,6 +105,20 @@ test_converge_reports_without_writing() {
   [[ -d "${repo}/target" && ! -L "${repo}/target" ]] || fail "converge must not resolve a conflict"
 }
 
+# node_modules stays in-tree even beside a package.json: npm workspace links
+# are relative and would escape the directory if node_modules moved out.
+test_node_modules_beside_package_json_is_never_a_candidate() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${repo}/node_modules/leftpad"
+  touch "${repo}/package.json"
+  local out
+  out=$(run_work_link "${repo}") || fail "converge must ignore node_modules: $out"
+  [[ "$out" != *node_modules* ]] || fail "converge must not mention node_modules: $out"
+  out=$(run_work_link --migrate --dry-run "${repo}") || fail "plan must ignore node_modules: $out"
+  [[ "$out" != *"move	"*node_modules* ]] || fail "migrate --dry-run must not offer to move node_modules: $out"
+}
+
 test_converge_reports_unignored_link() {
   sandbox
   local repo; repo=$(make_repo proj)
@@ -125,6 +139,31 @@ test_converge_reports_unignored_link() {
   printf '.venv\ntarget\n' > "${repo}/.gitignore"
   out=$(run_work_link --migrate "${repo}") || fail "bare patterns must pass: $out"
   [[ -L "${repo}/target" ]] || fail "entry must migrate once the rule is fixed"
+}
+
+# The ignore verdict runs check-ignore with -c core.excludesFile=/dev/null so a
+# global excludes file cannot stand in for a repository's own rule. sandbox
+# sets GIT_CONFIG_GLOBAL=/dev/null itself, which would hide a dropped flag, so
+# this test points GIT_CONFIG_GLOBAL at a real global excludes file instead.
+# The repository here has no rule for .venv at all; the global file ignores it
+# by the bare name. Without the -c flag, that global rule masks the omission
+# and check-ignore succeeds through it (no unignored line); with the flag, it
+# is disregarded and the repository's own lack of a rule is caught.
+test_check_ignore_disregards_global_excludes_file() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  printf 'target\n' > "${repo}/.gitignore"   # no .venv rule in the repository
+  mkdir -p "${repo}/.venv"; touch "${repo}/Cargo.toml"
+
+  local global_ignore="${tmp}/global-gitignore"
+  printf '.venv\n' > "$global_ignore"
+  local global_config="${tmp}/global-gitconfig"
+  printf '[core]\n\texcludesFile = %s\n' "$global_ignore" > "$global_config"
+
+  local out rc=0
+  out=$(GIT_CONFIG_GLOBAL="$global_config" run_work_link "${repo}") || rc=$?
+  [[ $rc -ne 0 && "$out" == *"unignored	${repo}/.venv"* ]] || \
+    fail "the repository's own rule must decide, not a global excludes file: $out"
 }
 
 test_unconfigured_and_unavailable() {
@@ -250,6 +289,25 @@ test_ensure() {
   out=$(cd "$outside" && "$work_link" --ensure .venv .worktrees 2>&1) || fail "ensure outside the scan root must not fail setup: $out"
   [[ "$out" == "outside	${outside}/.venv"*$'\n'"outside	${outside}/.worktrees"* ]] || fail "ensure outside must report every name: $out"
   [[ ! -e "${outside}/.venv" && ! -L "${outside}/.venv" && ! -e "${outside}/.worktrees" && ! -e "${WORK}/elsewhere" ]] || fail "ensure outside must create nothing and drop the dangling link"
+}
+
+# A checkout outside the scan root can still carry a link that resolves: a
+# `cp -r` of a project under ~/d brings its .venv symlink along, pointing back
+# at the original project's external storage. --ensure must refuse rather than
+# report `outside`, or the installer that follows writes into that storage.
+test_ensure_outside_refuses_a_resolving_link() {
+  sandbox
+  local outside="${SANDBOX}/elsewhere/clone"
+  mkdir -p "$outside" && git -C "$outside" init -q
+  mkdir -p "${WORK}/proj/.venv"
+  ln -s "${WORK}/proj/.venv" "${outside}/.venv"
+  local out rc=0
+  out=$(cd "$outside" && "$work_link" --ensure .venv 2>&1) || rc=$?
+  [[ $rc -ne 0 ]] || fail "a resolving link from outside the scan root must refuse: $out"
+  [[ "$out" == "work-link --ensure: ${outside}/.venv is a link into ${WORK}/proj/.venv from a checkout outside ${HOME}/d; remove it or copy without symlinks" ]] || \
+    fail "expected the foreign-link message: $out"
+  [[ -L "${outside}/.venv" && "$(readlink "${outside}/.venv")" == "${WORK}/proj/.venv" ]] || fail "the link must be untouched: $out"
+  [[ -d "${WORK}/proj/.venv" ]] || fail "the external directory must be untouched: $out"
 }
 
 test_scan_root_behind_symlink() {
@@ -476,13 +534,16 @@ test_migrate_moves_and_links
 test_nested_rel_path
 test_converge_relinks_when_intree_absent
 test_converge_reports_without_writing
+test_node_modules_beside_package_json_is_never_a_candidate
 test_converge_reports_unignored_link
+test_check_ignore_disregards_global_excludes_file
 test_unconfigured_and_unavailable
 test_migrate_refuses_conflict_and_open_handle
 test_dry_run_moves_nothing
 test_worktrees_survive_migration_and_get_locked
 test_outage_prune_recovery
 test_ensure
+test_ensure_outside_refuses_a_resolving_link
 test_root_and_work_root_must_not_nest
 test_migrate_reports_failed_move_instead_of_swallowing_it
 test_migrate_reports_failed_lock_instead_of_swallowing_it

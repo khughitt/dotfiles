@@ -380,8 +380,20 @@ work_link_ensure() {
     fi
     # Outside the scan root (a clone under a temp dir) nothing is covered: the
     # entry stays in-tree and setup goes on; only a synced dangling link goes.
+    # A link that resolves is another matter: a `cp -r` of a project under
+    # ~/d carries its symlinks along, so this can be a live link back into
+    # another checkout's external storage. Refuse rather than leave it for the
+    # installer that follows to write into that storage.
     [[ "$toplevel" == "$root"/* ]] || {
-      if [[ -L "$intree" && ! -e "$intree" ]]; then rm -- "$intree"; fi
+      if [[ -L "$intree" ]]; then
+        if [[ -e "$intree" ]]; then
+          local foreign_target
+          foreign_target=$(readlink -- "$intree")
+          print -u2 -- "work-link --ensure: ${intree} is a link into ${foreign_target} from a checkout outside ${root}; remove it or copy without symlinks"
+          return 1
+        fi
+        rm -- "$intree"
+      fi
       print -- "outside	${intree}	${toplevel} is not under ${root}; stays in-tree"
       continue
     }
