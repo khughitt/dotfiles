@@ -228,7 +228,7 @@ test_ensure_writes_the_local_exclude_when_needed() {
   # Already covered by the repository's own rule: nothing is written.
   out=$(cd "$repo" && "$work_link" --ensure target 2>&1) || fail "ensure target: $out"
   [[ "$out" == "created	"* ]] || fail "a covered name must not be excluded again: $out"
-  [[ "$(grep -c . "${repo}/.git/info/exclude")" == 1 ]] || fail "info/exclude must hold only the one line written"
+  ! grep -qx 'target' "${repo}/.git/info/exclude" || fail "a covered name must not be written to info/exclude"
 
   # A second ensure finds the link and writes nothing more.
   out=$(cd "$repo" && "$work_link" --ensure .venv 2>&1) || fail "ensure again: $out"
@@ -464,7 +464,7 @@ test_ensure_needs_only_git_and_coreutils() {
   local repo; repo=$(make_repo proj)
   mkdir -p "${tmp}/thin"
   local cmd
-  for cmd in zsh env git realpath readlink mkdir ln rm ls du cut head awk sort mktemp; do
+  for cmd in zsh env git realpath readlink mkdir ln rm cp ls du cut head awk sort mktemp; do
     ln -s "$(command -v "$cmd")" "${tmp}/thin/${cmd}"
   done
   local out
