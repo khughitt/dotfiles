@@ -133,27 +133,79 @@ work_link_size() {
   du -sh -- "$1" 2>/dev/null | cut -f1
 }
 
-# Will the entry be ignored once it is a symlink? Reads the matching pattern
-# rather than the verdict: a trailing-slash pattern (.venv/) matches the real
-# directory today and stops matching the link tomorrow, and the global excludes
-# file would hide either problem. Prints ok, unignored, or slash.
+# Will the entry be ignored once it is a symlink? git matches a trailing-slash
+# pattern (.venv/) only against a directory, so the real directory awaiting
+# migration says nothing about the link that replaces it. The verdict is taken
+# in a scratch work-tree that carries copies of the repository's .gitignore
+# chain and nothing at the entry's path: git judges a missing path the way it
+# judges a symlink. The repository's own rules count, .git/info/exclude included
+# (a shared repository's tracked rule is not ours to change); the global
+# excludes file does not. Prints ok, unignored, or slash; a failed probe
+# returns 1 with the reason on stderr.
 work_link_ignore_verdict() {
-  local intree="$1" repo line pattern
+  local intree="$1" repo gitdir rel scratch dir line pattern rc
   repo=$(work_link_repo_of "$intree") || { print -- ok; return 0; }
-  line=$(git -C "${intree:h}" -c core.excludesFile=/dev/null check-ignore -v --no-index -- "${intree:t}" 2>/dev/null) || { print -- unignored; return 0; }
-  pattern="${${line%%	*}##*:}"
-  if [[ "$pattern" == !* ]]; then print -- unignored
-  elif [[ "$pattern" == */ ]]; then print -- slash
-  else print -- ok
-  fi
+  gitdir=$(git -C "$repo" rev-parse --absolute-git-dir 2>/dev/null) || {
+    print -u2 -- "git cannot open ${repo}"
+    return 1
+  }
+  rel="${intree#"$repo"/}"
+  scratch=$(mktemp -d "${TMPDIR:-/tmp}/work-link-ignore.XXXXXX") || {
+    print -u2 -- "mktemp failed"
+    return 1
+  }
+  {
+    local -a dirs=("$repo")
+    dir="$repo"
+    local part
+    for part in "${(@s:/:)${rel:h}}"; do
+      [[ "$part" == . ]] && continue
+      dir="${dir}/${part}"
+      dirs+=("$dir")
+    done
+    for dir in "${dirs[@]}"; do
+      [[ -f "${dir}/.gitignore" ]] || continue
+      mkdir -p -- "${scratch}/${dir#"$repo"}" || { print -u2 -- "cannot build the ignore probe"; return 1; }
+      cp -- "${dir}/.gitignore" "${scratch}/${dir#"$repo"}/.gitignore" || { print -u2 -- "cannot build the ignore probe"; return 1; }
+    done
+    rc=0
+    line=$(git --git-dir="$gitdir" --work-tree="$scratch" -c core.excludesFile=/dev/null \
+      check-ignore -v --no-index -- "$rel" 2>&1) || rc=$?
+    if (( rc == 0 )); then
+      pattern="${${line%%	*}##*:}"
+      if [[ "$pattern" == !* ]]; then print -- unignored
+      elif [[ "$pattern" == */ ]]; then print -- slash
+      else print -- ok
+      fi
+      return 0
+    elif (( rc != 1 )); then
+      print -u2 -- "check-ignore failed (exit ${rc}): ${line}"
+      return 1
+    fi
+    # The link would not be ignored. Say whether a slash-form rule is the reason.
+    if line=$(git -C "${intree:h}" -c core.excludesFile=/dev/null check-ignore -v --no-index -- "${intree:t}" 2>/dev/null) \
+        && [[ "${${line%%	*}##*:}" == */ ]]; then
+      print -- slash
+    else
+      print -- unignored
+    fi
+    return 0
+  } always {
+    rm -rf -- "$scratch"
+  }
 }
 
 work_link_check_ignore() {
-  local intree="$1"
-  case "$(work_link_ignore_verdict "$intree")" in
+  local intree="$1" verdict
+  verdict=$(work_link_ignore_verdict "$intree" 2>&1) || {
+    work_link_report failed "$intree" "ignore probe failed: ${verdict}; not moved"
+    return 1
+  }
+  case "$verdict" in
     ok) return 0 ;;
-    slash) work_link_report unignored "$intree" "repository rule ends in /, which matches a directory but not a symlink; use the bare name ${intree:t}"; return 1 ;;
-    unignored) work_link_report unignored "$intree" "repository rules do not ignore ${intree:t}; add the bare name to .gitignore"; return 1 ;;
+    slash) work_link_report unignored "$intree" "repository rule ends in /, which matches a directory but not a symlink; use the bare name ${intree:t} (in .gitignore or .git/info/exclude)"; return 1 ;;
+    unignored) work_link_report unignored "$intree" "repository rules do not ignore ${intree:t}; add the bare name to .gitignore or .git/info/exclude"; return 1 ;;
+    *) work_link_report failed "$intree" "ignore probe printed '${verdict}'; not moved"; return 1 ;;
   esac
 }
 

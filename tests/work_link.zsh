@@ -166,6 +166,48 @@ test_check_ignore_disregards_global_excludes_file() {
     fail "the repository's own rule must decide, not a global excludes file: $out"
 }
 
+# The verdict is about the link, not the directory: a tracked slash rule that
+# is not ours to change (a shared repository) is satisfied by a bare name in
+# .git/info/exclude, because once the entry is a symlink the slash rule no
+# longer matches and the local rule does. Nested .gitignore files are part of
+# the chain the probe copies.
+test_info_exclude_bare_rule_satisfies_the_verdict() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  printf '.venv/\n' > "${repo}/.gitignore"
+  mkdir -p "${repo}/.venv" "${repo}/.git/info"
+  printf '/.venv\n' > "${repo}/.git/info/exclude"   # anchored: the nested case below is not covered
+  local out rc=0
+  out=$(run_work_link "${repo}") || rc=$?
+  [[ $rc -ne 0 && "$out" == *"needs-migration	${repo}/.venv"* && "$out" != *unignored* ]] || \
+    fail "a bare rule in info/exclude must satisfy the verdict: $out"
+  out=$(run_work_link --migrate "${repo}") || fail "migrate with an info/exclude rule: $out"
+  [[ -L "${repo}/.venv" && -z "$(git -C "$repo" status --short -- .venv)" ]] || fail "the link must be ignored after the move: $(git -C "$repo" status --short)"
+
+  # A nested checkout directory with its own .gitignore: the chain is copied.
+  mkdir -p "${repo}/services/api/.venv"
+  printf '.venv/\n' > "${repo}/services/api/.gitignore"
+  rc=0; out=$(run_work_link "${repo}") || rc=$?
+  [[ "$out" == *"unignored	${repo}/services/api/.venv"*"ends in /"* ]] || fail "nested slash rule must be reported: $out"
+  printf '.venv\n' > "${repo}/services/api/.gitignore"
+  rc=0; out=$(run_work_link "${repo}") || rc=$?
+  [[ "$out" != *unignored* ]] || fail "nested bare rule must satisfy the verdict: $out"
+}
+
+# A probe that cannot be built is a refusal: converge reports it and migrate
+# leaves the directory in place.
+test_failed_ignore_probe_refuses() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${repo}/.venv" "${tmp}/shim"
+  printf '#!/bin/sh\necho "mktemp: shim failure" >&2\nexit 1\n' > "${tmp}/shim/mktemp"
+  chmod +x "${tmp}/shim/mktemp"
+  local out rc=0
+  out=$(PATH="${tmp}/shim:$PATH" run_work_link --migrate "${repo}") || rc=$?
+  [[ $rc -ne 0 && "$out" == *"failed	${repo}/.venv	ignore probe failed"* && -d "${repo}/.venv" && ! -L "${repo}/.venv" ]] || \
+    fail "a failed probe must refuse and leave the directory: $out"
+}
+
 test_unconfigured_and_unavailable() {
   sandbox
   local repo; repo=$(make_repo proj)
@@ -537,6 +579,8 @@ test_converge_reports_without_writing
 test_node_modules_beside_package_json_is_never_a_candidate
 test_converge_reports_unignored_link
 test_check_ignore_disregards_global_excludes_file
+test_info_exclude_bare_rule_satisfies_the_verdict
+test_failed_ignore_probe_refuses
 test_unconfigured_and_unavailable
 test_migrate_refuses_conflict_and_open_handle
 test_dry_run_moves_nothing
