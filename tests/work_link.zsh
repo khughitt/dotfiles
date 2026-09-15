@@ -208,6 +208,33 @@ test_failed_ignore_probe_refuses() {
     fail "a failed probe must refuse and leave the directory: $out"
 }
 
+# A fresh clone of a shared repository: its tracked rule is the slash form and
+# no local rule exists yet. --ensure adds the bare name to the clone's
+# .git/info/exclude before linking, reports it, and leaves a repository whose
+# own rules already cover the link alone.
+test_ensure_writes_the_local_exclude_when_needed() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  printf '.venv/\ntarget\n' > "${repo}/.gitignore"   # slash form for .venv; target covered
+  git -C "$repo" commit -qam "slash form, not ours to change"
+  local out
+  out=$(cd "$repo" && "$work_link" --ensure .venv 2>&1) || fail "ensure on a slash rule: $out"
+  [[ "$out" == "excluded	${repo}/.venv	.venv added to "*$'\n'"created	${repo}/.venv"* ]] || fail "ensure must report the exclude write then the link: $out"
+  [[ -L "${repo}/.venv" ]] || fail "ensure must link"
+  grep -qx '.venv' "${repo}/.git/info/exclude" || fail "the bare name must be in info/exclude"
+  [[ -z "$(git -C "$repo" status --short)" ]] || fail "the link must be ignored: $(git -C "$repo" status --short)"
+  out=$(run_work_link "${repo}") || fail "converge must be clean after ensure: $out"
+
+  # Already covered by the repository's own rule: nothing is written.
+  out=$(cd "$repo" && "$work_link" --ensure target 2>&1) || fail "ensure target: $out"
+  [[ "$out" == "created	"* ]] || fail "a covered name must not be excluded again: $out"
+  [[ "$(grep -c . "${repo}/.git/info/exclude")" == 1 ]] || fail "info/exclude must hold only the one line written"
+
+  # A second ensure finds the link and writes nothing more.
+  out=$(cd "$repo" && "$work_link" --ensure .venv 2>&1) || fail "ensure again: $out"
+  [[ "$out" == "ok	"* && "$(grep -c '^\.venv$' "${repo}/.git/info/exclude")" == 1 ]] || fail "ensure must be idempotent: $out"
+}
+
 test_unconfigured_and_unavailable() {
   sandbox
   local repo; repo=$(make_repo proj)
@@ -581,6 +608,7 @@ test_converge_reports_unignored_link
 test_check_ignore_disregards_global_excludes_file
 test_info_exclude_bare_rule_satisfies_the_verdict
 test_failed_ignore_probe_refuses
+test_ensure_writes_the_local_exclude_when_needed
 test_unconfigured_and_unavailable
 test_migrate_refuses_conflict_and_open_handle
 test_dry_run_moves_nothing

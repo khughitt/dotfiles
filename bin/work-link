@@ -31,8 +31,10 @@ Keep .worktrees, .venv and Cargo target directories on $WORK_ROOT behind
 in-tree symlinks. Converge reports drift, relinks entries whose external copy
 exists, and locks worktrees that resolve under WORK_ROOT. --migrate moves real
 directories out (refusing any with open file handles). --ensure creates the
-external directory and link for the named entries in the current repository;
-outside the scan root (~/d) it reports `outside` and leaves the entry in-tree.
+external directory and link for the named entries in the current repository,
+adding the bare name to the clone's .git/info/exclude when its rules would
+not ignore the link; outside the scan root (~/d) it reports `outside` and
+leaves the entry in-tree.
 EOF
 }
 
@@ -403,6 +405,35 @@ work_link_run() {
   done
 }
 
+# Before --ensure links an entry: will this clone ignore the link? A shared
+# repository's tracked rule may be the slash form that is not ours to change,
+# and a fresh clone has no local rule yet, so the bare name goes into the
+# clone's .git/info/exclude, git's file for exactly this. A repository whose
+# own rules already cover the link is left alone; the write is reported.
+work_link_ensure_excluded() {
+  local intree="$1" verdict exclude
+  verdict=$(work_link_ignore_verdict "$intree" 2>&1) || {
+    print -u2 -- "work-link --ensure: ignore probe failed for ${intree}: ${verdict}"
+    return 1
+  }
+  [[ "$verdict" == ok ]] && return 0
+  exclude=$(git -C "${intree:h}" rev-parse --git-path info/exclude 2>/dev/null) || {
+    print -u2 -- "work-link --ensure: git cannot name info/exclude for ${intree}"
+    return 1
+  }
+  [[ "$exclude" == /* ]] || exclude="${intree:h}/${exclude}"
+  mkdir -p -- "${exclude:h}" && printf '%s\n' "${intree:t}" >> "$exclude" || {
+    print -u2 -- "work-link --ensure: cannot write ${exclude}"
+    return 1
+  }
+  verdict=$(work_link_ignore_verdict "$intree" 2>&1) || return 1
+  [[ "$verdict" == ok ]] || {
+    print -u2 -- "work-link --ensure: ${intree} is still ${verdict} after writing ${exclude}"
+    return 1
+  }
+  print -- "excluded	${intree}	${intree:t} added to ${exclude}"
+}
+
 work_link_ensure() {
   local storage="$1"; shift
   local toplevel
@@ -450,7 +481,12 @@ work_link_ensure() {
       continue
     }
     local external="${WORK_ROOT}/${toplevel#$root/}/${name}"
-    case "$(work_link_classify "$intree" "$external")" in
+    local state
+    state=$(work_link_classify "$intree" "$external")
+    case "$state" in
+      absent|relink|dangling) work_link_ensure_excluded "$intree" || return 1 ;;
+    esac
+    case "$state" in
       linked) print -- "ok	${intree}" ;;
       absent) mkdir -p -- "$external"; ln -s -- "$external" "$intree"; print -- "created	${intree}	-> ${external}" ;;
       relink) ln -s -- "$external" "$intree"; print -- "relinked	${intree}	-> ${external}" ;;
