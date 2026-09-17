@@ -1,8 +1,12 @@
 # walictl configuration for europa. No photo archive on this host: Edit opens the display file.
 wallpaper_dir = "~/d/linux/backgrounds/3440"
 favorites_file = "~/d/linux/backgrounds/favorites.json"
+edits_file = "~/d/linux/backgrounds/edits.json"
 
 [sampling]
 exclude_recent = 200
 favorite_boost = 1.0
 period_boost = 3.0
+
+[edits]
+output = "1920x1200"

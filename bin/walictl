@@ -1,6 +1,3 @@
 #!/usr/bin/env bash
-# A wrapper rather than a symlink, like bin/prism: a relative link assumes
-# dotfiles and wali are siblings, which a worktree checkout breaks, and an
-# absolute link writes this machine's layout into git. `~/d` is the one layout
-# the tree assumes.
-exec "$HOME/d/wali/bin/walictl" "$@"
+# review shim: restored from ~/d/dotfiles/bin/walictl afterwards
+exec "/home/keith/d/wali/.worktrees/quick-edit/bin/walictl" "$@"

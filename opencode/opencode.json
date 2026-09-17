@@ -3,8 +3,8 @@
   "formatter": true,
   "lsp": {},
   "plugin": [
-    "superpowers@git+https://github.com/obra/superpowers.git",
-    "/mnt/ssd/Dropbox/familiar/integrations/opencode/plugin.js"
+    "superpowers@git+https://github.com/obra/superpowers.git"
+    // "/mnt/ssd/Dropbox/familiar/integrations/opencode/plugin.js"
   ],
   "watcher": {
     "ignore": ["node_modules/**", "dist/**", ".git/**", ".venv/**", ".snakemake/**"]

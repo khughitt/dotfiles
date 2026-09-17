@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/tui.json",
-  "theme": "noctalia",
+  // "theme": "noctalia",
   "keybinds": {
     "messages_first": "ctrl+g",
     "messages_last": "ctrl+alt+g",
@@ -8,8 +8,8 @@
     "input_visual_line_end": "end,alt+e",
     "input_buffer_home": "ctrl+home",
     "input_buffer_end": "ctrl+end"
-  },
-  "plugin": [
-    "/mnt/ssd/Dropbox/familiar/integrations/opencode/sprite-plugin.tsx"
-  ]
+  }
+  // "plugin": [
+  //   "/mnt/ssd/Dropbox/familiar/integrations/opencode/sprite-plugin.tsx"
+  // ]
 }
