@@ -1,13 +1,15 @@
 ---
 id: dots-4f3ff3
 title: dotfiles_check builds the pre-runtime mindful layout and fails the wrapper test
-status: todo
+status: doing
 priority: 3
 size: xs
 complexity: low
 process: direct
+owner: main
 created: 2026-09-14T11:13:07Z
-updated: 2026-09-14T11:13:07Z
+updated: 2026-09-17T11:19:42Z
+started: 2026-09-17T11:19:42Z
 depends: []
 tags: [configuration]
 agent: claude-code/claude-opus-5
