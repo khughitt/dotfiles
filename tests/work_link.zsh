@@ -599,6 +599,101 @@ test_ensure_then_converge_agree_on_symlinked_work_root() {
   [[ -z "$out" ]] || fail "converge must resolve the same external path ensure created: $out"
 }
 
+# An external target with no Cargo.toml beside the in-tree path is storage
+# nothing claims: it is reported as an orphan, not skipped silently.
+test_external_target_without_cargo_toml_is_reported() {
+  sandbox
+  local repo; repo=$(make_repo proj)     # no Cargo.toml
+  mkdir -p "${repo}/data/target" "${WORK}/proj/target/debug" "${WORK}/proj/data/target"
+  local out rc=0
+  out=$(run_work_link "${repo}") || rc=$?
+  [[ $rc -ne 0 ]] || fail "an unclaimed external target must exit non-zero: $out"
+  [[ "$out" == *"orphan	${repo}/target"*Cargo.toml* ]] || fail "external target without Cargo.toml must be reported: $out"
+  [[ "$out" == *"orphan	${repo}/data/target"*Cargo.toml* ]] || fail "a nested external target without Cargo.toml must be reported: $out"
+  [[ "$out" != *needs-migration* ]] || fail "an entry that is not relocatable must not be held for migration: $out"
+  [[ -d "${repo}/data/target" && ! -L "${repo}/data/target" ]] || fail "the in-tree directory must stay: $out"
+}
+
+# The lock loop's realpath is checked: a failure must be reported and the child
+# left unlocked, not skipped as though it resolved to nothing. The shim fails
+# only `realpath --` (the lock loop's form); `realpath -e` in the prunable
+# check must keep working, or the failure would masquerade as prunable too.
+test_realpath_failure_on_a_worktree_is_reported() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  git -C "$repo" worktree add -q .worktrees/old -b old
+  mkdir -p "${tmp}/shim"
+  cat > "${tmp}/shim/realpath" <<'EOF'
+#!/bin/sh
+case " $* " in
+  " -- $HOME"/*) echo "realpath: simulated failure" >&2; exit 1 ;;
+esac
+exec /usr/bin/realpath "$@"
+EOF
+  chmod +x "${tmp}/shim/realpath"
+  local out rc=0
+  out=$(PATH="${tmp}/shim:$PATH" run_work_link --migrate "${repo}") || rc=$?
+  [[ $rc -ne 0 && "$out" == *"failed	${repo}/.worktrees/old"*"not locked"* && "$out" == *"simulated failure"* ]] || \
+    fail "a realpath failure must be reported with the child left unlocked: $out"
+  [[ "$out" != *"locked	"* ]] || fail "must not print locked when realpath fails: $out"
+}
+
+# A worktree git itself marks prunable (its .git file is gone) still resolves
+# as a path: the listing's prunable mark must decide, not path resolution alone.
+# A locked worktree is never marked prunable: the lock is the prune protection,
+# so the fixture unlocks first.
+test_prunable_marked_by_git_is_reported() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  git -C "$repo" worktree add -q .worktrees/old -b old
+  run_work_link --migrate "${repo}" >/dev/null || fail "migrate"
+  git -C "$repo" worktree unlock .worktrees/old
+  rm "${repo}/.worktrees/old/.git"
+  local out rc=0
+  out=$(run_work_link "${repo}") || rc=$?
+  [[ $rc -ne 0 && "$out" == *"prunable	${repo}/.worktrees/old"*"git marks it prunable"* ]] || \
+    fail "a git-marked prunable worktree must be reported: $out"
+}
+
+# A failing `git worktree list` must be reported, not read as an empty listing.
+test_failing_worktree_list_is_reported() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  git -C "$repo" worktree add -q .worktrees/old -b old
+  run_work_link --migrate "${repo}" >/dev/null || fail "migrate"
+  mkdir -p "${tmp}/shim"
+  cat > "${tmp}/shim/git" <<'EOF'
+#!/bin/sh
+case " $* " in
+  *" worktree list "*) echo "git: simulated listing failure" >&2; exit 1 ;;
+esac
+git_real=$(command -v -p git 2>/dev/null || echo /usr/bin/git)
+exec "$git_real" "$@"
+EOF
+  chmod +x "${tmp}/shim/git"
+  local out rc=0
+  out=$(PATH="${tmp}/shim:$PATH" run_work_link "${repo}") || rc=$?
+  [[ $rc -ne 0 && "$out" == *"failed	${repo}/.worktrees"*"worktree list failed in ${repo}"* ]] || \
+    fail "a failing worktree listing must be reported: $out"
+}
+
+# --root names the scan root under --ensure too: without it the ~/d default
+# applies and the same checkout reports `outside`.
+test_ensure_honors_root() {
+  sandbox; local tmp="$SANDBOX"
+  local alt="${tmp}/alt-root"
+  local repo="${alt}/proj"
+  mkdir -p "$repo" && git -C "$repo" init -q
+  local out
+  out=$(cd "$repo" && "$work_link" --ensure --root "$alt" .venv 2>&1) || fail "ensure with --root: $out"
+  [[ "$out" == *"created	${repo}/.venv	-> ${WORK}/proj/.venv"* && -L "${repo}/.venv" ]] || \
+    fail "--root must bring the checkout into scope: $out"
+  rm "${repo}/.venv"; rm -rf "${WORK}/proj"
+  out=$(cd "$repo" && "$work_link" --ensure .venv 2>&1) || fail "ensure without --root must not fail setup: $out"
+  [[ "$out" == "outside	${repo}/.venv"* ]] || fail "the ~/d default must still apply without --root: $out"
+  [[ ! -e "${repo}/.venv" && ! -e "${WORK}/proj" ]] || fail "the outside report must create nothing: $out"
+}
+
 test_migrate_moves_and_links
 test_nested_rel_path
 test_converge_relinks_when_intree_absent
@@ -629,5 +724,10 @@ test_missing_scope_is_an_error
 test_ensure_needs_only_git_and_coreutils
 test_partial_lsof_output_is_an_inspection_failure
 test_scan_failure_fails_every_mode
+test_external_target_without_cargo_toml_is_reported
+test_realpath_failure_on_a_worktree_is_reported
+test_prunable_marked_by_git_is_reported
+test_failing_worktree_list_is_reported
+test_ensure_honors_root
 
 print -- "work-link tests passed"

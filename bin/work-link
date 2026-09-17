@@ -9,7 +9,7 @@
 #
 #   work-link [--root DIR] [PATH ...]                converge: report, relink, lock
 #   work-link --migrate [--dry-run] [--root DIR] [PATH ...]
-#   work-link --ensure NAME ...                       inside a repository
+#   work-link --ensure [--root DIR] NAME ...           inside a repository
 #
 # WORK_ROOT unset: an unconfigured host, everything stays in-tree. WORK_ROOT
 # set but not a directory: the storage is unavailable and every mode refuses,
@@ -25,7 +25,7 @@ work_link_usage() {
   cat <<'EOF'
 Usage: work-link [--root DIR] [PATH ...]
        work-link --migrate [--dry-run] [--root DIR] [PATH ...]
-       work-link --ensure NAME ...
+       work-link --ensure [--root DIR] NAME ...
 
 Keep .worktrees, .venv and Cargo target directories on $WORK_ROOT behind
 in-tree symlinks. Converge reports drift, relinks entries whose external copy
@@ -33,8 +33,8 @@ exists, and locks worktrees that resolve under WORK_ROOT. --migrate moves real
 directories out (refusing any with open file handles). --ensure creates the
 external directory and link for the named entries in the current repository,
 adding the bare name to the clone's .git/info/exclude when its rules would
-not ignore the link; outside the scan root (~/d) it reports `outside` and
-leaves the entry in-tree.
+not ignore the link; outside the scan root (--root DIR, default ~/d) it
+reports `outside` and leaves the entry in-tree.
 EOF
 }
 
@@ -214,13 +214,17 @@ work_link_check_ignore() {
 # Lock every worktree inside a .worktrees entry that resolves under WORK_ROOT,
 # each through its own repository: a worktree parked here may belong to another
 # repository, and only that repository's prune would delete it. Then report the
-# owning repository's entries whose recorded path no longer resolves.
+# owning repository's entries that git itself marks prunable, or whose recorded
+# path no longer resolves.
 work_link_lock_worktrees() {
   local dotwt="$1" child real gitdir
   for child in "$dotwt"/*(N/); do
     [[ -L "$child" ]] && continue                      # a cross-project symlink, not a worktree
     [[ -f "$child/.git" ]] || continue                 # a plain directory parked here
-    real=$(realpath -- "$child")
+    real=$(realpath -- "$child") || {
+      work_link_report failed "$child" "realpath could not resolve it: not locked"
+      continue
+    }
     [[ "$real" == "$WORK_ROOT"/* ]] || continue
     gitdir=$(git -C "$child" rev-parse --path-format=absolute --git-dir 2>/dev/null) || {
       work_link_report broken "$child" "has a .git file but git cannot open it"
@@ -233,11 +237,34 @@ work_link_lock_worktrees() {
       work_link_report failed "$child" "git worktree lock failed"
     fi
   done
-  local repo wt
+  local repo listing line wt="" reason="" i
   repo=$(work_link_repo_of "$dotwt") || return 0
-  for wt in "${(@f)$(git -C "$repo" worktree list --porcelain | awk '/^worktree /{print substr($0,10)}')}"; do
-    [[ -n "$wt" ]] || continue
-    realpath -e -- "$wt" >/dev/null 2>&1 || work_link_report prunable "$wt" "recorded in ${repo} but the path does not resolve"
+  # A failing listing is not an empty one: git worktree list is the only source
+  # for what the owning repository still records, so its failure is reported.
+  listing=$(git -C "$repo" worktree list --porcelain 2>/dev/null) || {
+    work_link_report failed "$dotwt" "git worktree list failed in ${repo}; prunable entries not checked"
+    return 0
+  }
+  # Path resolution alone misses what git already knows: a worktree whose .git
+  # file is gone or broken is marked prunable in the listing while its recorded
+  # path still resolves, so git's own prunable mark decides first.
+  local -a wts=() reasons=()
+  for line in "${(@f)listing}"; do
+    if [[ "$line" == worktree\ * ]]; then
+      wts+=("$wt"); reasons+=("$reason")
+      wt="${line#worktree }"; reason=""
+    elif [[ "$line" == prunable* ]]; then
+      reason="${${line#prunable}# }"
+    fi
+  done
+  wts+=("$wt"); reasons+=("$reason")
+  for (( i = 1; i <= ${#wts}; i++ )); do
+    [[ -n "${wts[$i]}" ]] || continue
+    if [[ -n "${reasons[$i]}" ]]; then
+      work_link_report prunable "${wts[$i]}" "git marks it prunable (${reasons[$i]}); git -C ${repo} worktree prune would remove it"
+    elif ! realpath -e -- "${wts[$i]}" >/dev/null 2>&1; then
+      work_link_report prunable "${wts[$i]}" "recorded in ${repo} but the path does not resolve"
+    fi
   done
 }
 
@@ -394,7 +421,13 @@ work_link_run() {
       work_link_report orphan "$intree" "external ${external} has no checkout behind it; delete it by hand or restore the checkout"
       continue
     fi
-    work_link_is_entry "$intree" || continue
+    # A name that is not a relocatable entry in this checkout: an external
+    # target with no Cargo.toml beside the in-tree path is storage nothing
+    # claims, so it is reported rather than skipped silently.
+    work_link_is_entry "$intree" || {
+      work_link_report orphan "$intree" "external ${external} is a target with no Cargo.toml beside ${intree:h}; delete it by hand or add one"
+      continue
+    }
     work_link_handle "$mode" "$intree" "$root"
   done
 
@@ -435,14 +468,22 @@ work_link_ensure_excluded() {
 }
 
 work_link_ensure() {
-  local storage="$1"; shift
+  local storage="$1" root="$2"; shift 2
   local toplevel
   toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || {
     print -u2 -- "work-link --ensure: not inside a git repository"
     return 1
   }
-  local root
-  root=$(readlink -f -- "${HOME}/d")
+  if [[ -n "$root" ]]; then
+    local resolved
+    resolved=$(readlink -f -- "$root") || {
+      print -u2 -- "work-link --ensure: cannot resolve --root ${root}"
+      return 1
+    }
+    root="$resolved"
+  else
+    root=$(readlink -f -- "${HOME}/d")
+  fi
   local name intree
   for name in "$@"; do
     case "$name" in
@@ -533,7 +574,7 @@ work_link_main() {
 
   if [[ "$ensure" == true ]]; then
     (( ${#paths} )) || { print -u2 -- "work-link --ensure needs at least one name"; return 2; }
-    work_link_ensure "$storage" "${paths[@]}"
+    work_link_ensure "$storage" "$root" "${paths[@]}"
     return
   fi
 
