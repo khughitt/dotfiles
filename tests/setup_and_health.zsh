@@ -152,7 +152,9 @@ run_setup() {
       "${tmp}/home/d/wali/systemd" "${tmp}/home/d/wali/bin"
     touch "${tmp}/home/d/wali/integrations/noctalia-plugin/plugin.toml"
     touch "${tmp}/home/d/wali/systemd/wali-rotate.service" \
-      "${tmp}/home/d/wali/systemd/wali-rotate.timer"
+      "${tmp}/home/d/wali/systemd/wali-rotate.timer" \
+      "${tmp}/home/d/wali/systemd/wali-phone-sync.service" \
+      "${tmp}/home/d/wali/systemd/wali-phone-sync.timer"
     printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/home/d/wali/bin/walictl"
     chmod +x "${tmp}/home/d/wali/bin/walictl"
   fi
@@ -596,7 +598,7 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   done
   [[ ! -e "${tmp}/config/systemd/user/mindful-docker.service" ]] || \
     fail "setup must not revive the v3 unit"
-  for unit in wali-rotate.service wali-rotate.timer; do
+  for unit in wali-rotate.service wali-rotate.timer wali-phone-sync.service wali-phone-sync.timer; do
     [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
       fail "expected linked ${unit}"
     [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \

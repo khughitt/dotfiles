@@ -762,6 +762,9 @@ function setup_systemd_user_units() {
     ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.timer" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.timer"
     ln_s "${WALI_ROOT}/systemd/wali-rotate.service" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service"
     ln_s "${WALI_ROOT}/systemd/wali-rotate.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer"
+    # Only titan has a [phone] table; the timer is enabled by hand there.
+    ln_s "${WALI_ROOT}/systemd/wali-phone-sync.service" "${XDG_CONFIG_HOME}/systemd/user/wali-phone-sync.service"
+    ln_s "${WALI_ROOT}/systemd/wali-phone-sync.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-phone-sync.timer"
 
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload

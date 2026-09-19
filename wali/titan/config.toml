@@ -11,3 +11,7 @@ period_boost = 3.0
 
 [edits]
 output = "3440x1440"
+
+[phone]
+dir = "~/d/linux/backgrounds/amalthea"   # under Dropbox; walictl owns its *.jpg
+output = "1344x2992"                     # the phone's screen
