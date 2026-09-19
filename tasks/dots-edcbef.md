@@ -1,15 +1,16 @@
 ---
 id: dots-edcbef
 title: "Link wali-phone-sync units, add titan's [phone] table"
-status: doing
+status: done
 priority: 2
 size: xs
 complexity: low
 process: direct
 owner: main
 created: 2026-09-19T12:42:18Z
-updated: 2026-09-19T13:15:19Z
+updated: 2026-09-19T13:19:49Z
 started: 2026-09-19T13:15:19Z
+completed: 2026-09-19T13:19:49Z
 depends: []
 tags: []
 agent: claude-code/claude-opus-5
@@ -20,4 +21,8 @@ Wali's phone sync (goal wali-51adcc, spec docs/specs/2026-09-19-phone-sync-desig
 ## Notes
 
 - 2026-09-19T13:15:19Z (main): started
+  provenance: {"harness_session":"claude-code:f80a968e-fd50-4a48-8930-8977cd5cb9f0","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-09-19T13:19:49Z (feat/wali-phone-sync): done
+  provenance: {"harness_session":"claude-code:f80a968e-fd50-4a48-8930-8977cd5cb9f0","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-09-19T13:19:49Z (feat/wali-phone-sync): setup links wali-phone-sync.service/.timer beside the rotation units; setup_and_health fixture and assertions cover them; titan gets [phone] dir=~/d/linux/backgrounds/amalthea output=1344x2992
   provenance: {"harness_session":"claude-code:f80a968e-fd50-4a48-8930-8977cd5cb9f0","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
