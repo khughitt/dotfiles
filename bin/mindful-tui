@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# The terminal UI from the active release: the same build as mindful-web, so the
+# contracts it speaks match the service it talks to (MINDFUL_WEB_ORIGIN, default
+# http://localhost:3331). It has no data directory of its own.
+set -euo pipefail
+release="$HOME/.local/share/mindful/current"
+exec "$release/bin/bun" "$release/packages/tui/src/bin.ts" "$@"
