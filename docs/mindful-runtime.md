@@ -21,6 +21,11 @@ package-lock hash, Node version, build time, and every copied runtime hash.
 
 The runtime branch is integrated. `~/bin/mindful` is a symlink into the main
 Dots checkout, so edits to the launcher affect the active command immediately.
+`~/bin/mindful-tui` is the terminal UI from the same release: the builder ships
+`packages/tui/src` with a pinned `bin/bun` whenever the checkout has a TUI, and
+the launcher execs that Bun on `packages/tui/src/bin.ts`, so the TUI always speaks
+the contracts of the `mindful-web` it was built with. It needs `nvim` on `PATH`
+and the service running; it has no data directory.
 The retained pre-cutover launcher was:
 
 ```sh

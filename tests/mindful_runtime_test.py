@@ -89,6 +89,30 @@ def test_release_is_independent_and_records_provenance(checkout, tmp_path):
     assert run(str(output / 'bin/node'), str(output / 'packages/web/scripts/serve.mjs')).stdout == '42\n'
 
 
+def test_release_ships_the_tui_with_a_pinned_bun(checkout, tmp_path):
+    root, _nodes, env = checkout
+    write(root / 'packages/tui/package.json', '{"name":"@mindful/tui","type":"module"}')
+    write(root / 'packages/tui/src/bin.ts', 'console.log("tui");')
+    git_tree(root)
+    mockbin = Path(env['PATH'].split(':')[0])
+    executable(mockbin / 'bun', '#!/bin/sh\ncase "$1" in --version) echo 9.9.9;; *) cat "$1";; esac\n')
+    output = tmp_path / 'release'
+    result = run(str(REPO / 'bin/mindful-release'), '--checkout', str(root), '--output', str(output), env=env)
+    assert result.returncode == 0, result.stderr
+    provenance = json.loads((output / 'provenance.json').read_text())
+    assert provenance['bun_version'] == '9.9.9' and provenance['runtime_sha256']['bin/bun']
+    assert run(str(output / 'bin/bun'), str(output / 'packages/tui/src/bin.ts')).stdout == 'console.log("tui");'
+
+
+def test_release_without_a_tui_ships_no_bun(checkout, tmp_path):
+    root, _nodes, env = checkout
+    output = tmp_path / 'release'
+    result = run(str(REPO / 'bin/mindful-release'), '--checkout', str(root), '--output', str(output), env=env)
+    assert result.returncode == 0, result.stderr
+    assert json.loads((output / 'provenance.json').read_text())['bun_version'] is None
+    assert not (output / 'bin/bun').exists()
+
+
 @pytest.mark.parametrize('problem', ['dirty', 'dirty_nodes', 'stale_nodes', 'exists'])
 def test_release_refuses_unreviewed_or_existing_output(checkout, tmp_path, problem):
     root, nodes, env = checkout

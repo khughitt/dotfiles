@@ -70,7 +70,20 @@ def build(checkout, output):
         'package.json', 'package-lock.json', 'packages/web/package.json', 'packages/web/build',
         'packages/web/scripts/serve.mjs', 'packages/mindful/package.json', 'packages/mindful/dist', 'node_modules',
     ]}
-    for package in ['web', 'mindful']:
+    # The TUI runs its TypeScript source under Bun; it ships with the release so that
+    # bin/mindful-tui always talks to the service it was built with. A checkout without
+    # one still releases, and a checkout with one needs bun on PATH.
+    bun_version = None
+    if (checkout / 'packages/tui').is_dir():
+        bun = Path(shutil.which('bun') or '')
+        if not bun.is_file():
+            raise ValueError('packages/tui needs bun on PATH to make a release')
+        bun = bun.resolve(strict=True)
+        bun_version = command(str(bun), '--version')
+        sources['packages/tui/package.json'] = checkout / 'packages/tui/package.json'
+        sources['packages/tui/src'] = checkout / 'packages/tui/src'
+        sources['bin/bun'] = bun
+    for package in ['web', 'mindful', 'tui']:
         relative = f'packages/{package}/node_modules'
         if (checkout / relative).exists():
             sources[relative] = checkout / relative
@@ -98,7 +111,8 @@ def build(checkout, output):
             raise ValueError('package lock changed during release build')
         provenance = dict(mind6_revision=mind6_revision, nodes_revision=nodes_revision,
                           mind6_dirty=False, nodes_dirty=False, package_lock_sha256=lock_hash,
-                          node_version=node_version, built_at=datetime.now(timezone.utc).isoformat(),
+                          node_version=node_version, bun_version=bun_version,
+                          built_at=datetime.now(timezone.utc).isoformat(),
                           runtime_sha256={str(path.relative_to(stage)): sha256(path)
                                           for path in sorted(stage.rglob('*')) if path.is_file()})
         (stage / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')
