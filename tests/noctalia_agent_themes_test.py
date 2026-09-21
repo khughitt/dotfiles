@@ -7,6 +7,18 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def load_jsonc(path):
+    """Parse JSON that opencode reads as JSONC.
+
+    Only whole-line ``//`` comments are dropped: a trailing-comment strip
+    would also cut the ``https://`` inside plugin URLs.
+    """
+    lines = path.read_text().splitlines()
+    return json.loads("\n".join(
+        line for line in lines if not line.lstrip().startswith("//")))
+
 PLACEHOLDER = re.compile(r"{{colors\.([a-z0-9_]+)\.default\.hex}}")
 NOCTALIA_ROLES = frozenset(
     """
@@ -80,8 +92,8 @@ codex_scopes = {
 assert codex_scopes["markup.inserted"]["background"] == "#022800"
 assert codex_scopes["markup.deleted"]["background"] == "#3d0100"
 
-opencode_server = json.loads((ROOT / "opencode/opencode.json").read_text())
-opencode_tui = json.loads((ROOT / "opencode/tui.json").read_text())
+opencode_server = load_jsonc(ROOT / "opencode/opencode.json")
+opencode_tui = load_jsonc(ROOT / "opencode/tui.json")
 assert "tui" not in opencode_server
 assert opencode_tui["theme"] == "noctalia"
 
