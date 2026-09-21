@@ -42,9 +42,14 @@ def probe(malformed):
             "XDG_CACHE_HOME": str(home / ".cache"),
             "TERM": "tmux-256color",
         }
+        # --standalone keeps the probe off the shared background service
+        # (opencode 2.x); stderr goes to a file so an exit before the first
+        # frame is reported instead of an empty capture.
+        stderr_path = root / "stderr.txt"
         command = shlex.join(
             ["env", *(f"{key}={value}" for key, value in isolated.items()),
-             binary, "--pure", str(project)])
+             binary, "--standalone", str(project)]
+        ) + f" 2>{shlex.quote(str(stderr_path))}"
         subprocess.run(
             [tmux, "-L", socket, "new-session", "-d", "-x", "100",
              "-y", "30", command], check=True, timeout=3,
@@ -62,10 +67,12 @@ def probe(malformed):
                         and "\x1b[48;2;10;10;10m" in capture):
                     break
                 time.sleep(0.2)
+            stderr = stderr_path.read_text() if stderr_path.exists() else ""
             assert ("Ask anything" in capture
                     and "\x1b[48;2;10;10;10m" in capture), (
                 f"OpenCode did not render built-in fallback for "
-                f"{'malformed' if malformed else 'dangling'} theme: {capture!r}")
+                f"{'malformed' if malformed else 'dangling'} theme: "
+                f"{capture!r}\nstderr: {stderr[:500]!r}")
         finally:
             subprocess.run(
                 [tmux, "-L", socket, "kill-server"], check=False, timeout=2,
