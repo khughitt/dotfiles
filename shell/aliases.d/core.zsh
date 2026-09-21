@@ -83,7 +83,7 @@ alias locate=plocate
 
 # ls
 if type "lsd" > /dev/null; then
-    alias ls='lsd --group-dirs=first'
+    alias ls='lsd --group-dirs=first -L'
 fi
 
 alias l='ls -l'
