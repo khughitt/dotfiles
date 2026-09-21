@@ -52,3 +52,22 @@ glass.iridescence: 0
 glass.bypass.iridescence: false
 glass.bypass.aurora: true
 glass.inactive.saturation: 0.45
+_wallpapers:
+  4702efa8:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20220504_214013482.jpg
+    glass.inactive.attenuationColor: "#0A0C0B"
+    glass.attenuationColor: "#121314"
+  6623f785:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20240522_044837893.jpg
+    glass.enabled: false
+  bf6b0d29:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230202_202834914.jpg
+    compositor.gaps: 39
+    glass.jellyFlex: 0.0072
+  e443a760:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20220809_010640167.jpg
+    glass.paneLip: 8
+    glass.paneShiftY: 6
+  ed4c39c4:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230212_193553761.jpg
+    glass.ring.beamSpeed: 300

@@ -1,5 +1,3 @@
-# Aurora: native niri-material preset optics in both focus states.
-# Full Prism snapshot; noise is off and saturation is 1, independent of host blur settings.
 compositor.gaps: 24
 debug.backdrop: false
 glass.enabled: true
@@ -59,3 +57,32 @@ terminal.background.opacity.inactive: 0
 terminal.apps:
   - kitty
   - com.mitchellh.ghostty
+_wallpapers:
+  4702efa8:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20220504_214013482.jpg
+    glass.inactive.attenuationColor: "#0A0C0B"
+    glass.attenuationColor: "#121314"
+  6623f785:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20240522_044837893.jpg
+    glass.enabled: false
+  bf6b0d29:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230202_202834914.jpg
+    compositor.gaps: 39
+    glass.jellyFlex: 0.0072
+  e443a760:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20220809_010640167.jpg
+    glass.paneLip: 8
+    glass.paneShiftY: 6
+  ed4c39c4:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230212_193553761.jpg
+    glass.ring.beamSpeed: 300
+  704aac04:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20240508_055952147.jpg
+    glass.inactive.backdropBlur: true
+    glass.inactive.distortion: 0.42
+    glass.inactive.ior: 1.32
+    glass.paneLip: 11
+    glass.inactive.attenuationDistance: 1982
+    glass.inactive.thickness: 57.6
+    glass.inactive.noise: 0.05
+    glass.inactive.attenuationColor: "#0F1210"

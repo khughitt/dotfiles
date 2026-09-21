@@ -1,0 +1,103 @@
+compositor.gaps: 40
+debug.backdrop: false
+glass.enabled: true
+glass.paneLip: 7
+glass.paneShiftX: -5
+glass.paneShiftY: 2
+glass.jellyFlex: 0.0066
+glass.jellyRipple: 0.23
+glass.focusSplit: true
+glass.backdropBlur: true
+glass.inactive.backdropBlur: false
+glass.roughness: 0.24
+glass.inactive.roughness: 0.36
+glass.attenuationColor: "#152F30"
+glass.inactive.attenuationColor: "#0E1819"
+glass.attenuationDistance: 10
+glass.inactive.attenuationDistance: 100
+glass.ior: 1.28
+glass.inactive.ior: 1.14
+glass.thickness: 31.2
+glass.inactive.thickness: 75.3
+glass.chromaticAberration: 0.36
+glass.inactive.chromaticAberration: 0.32
+glass.distortion: 0
+glass.inactive.distortion: 0.18
+glass.distortionScale: 0.09
+glass.inactive.distortionScale: 0.08
+glass.anisotropicBlur: 0.13
+glass.inactive.anisotropicBlur: 0.26
+glass.noise: 0.03
+glass.inactive.noise: 0.03
+glass.noiseType: white
+glass.saturation: 0.95
+glass.inactive.saturation: 0.85
+glass.iridescence: 0
+glass.inactive.iridescence: 0.01
+glass.aurora: 0
+glass.inactive.aurora: 0.01
+glass.auroraDriftHz: 4
+glass.inactive.auroraDriftHz: 4
+glass.auroraColorA: "#3dffb0"
+glass.inactive.auroraColorA: "#3dffb0"
+glass.auroraColorB: "#7a5cff"
+glass.inactive.auroraColorB: "#7a5cff"
+glass.bypass.backdrop: false
+glass.bypass.distortion: false
+glass.bypass.refraction: false
+glass.bypass.fringing: false
+glass.bypass.directionalBlur: false
+glass.bypass.tint: false
+glass.bypass.saturation: false
+glass.bypass.noise: false
+glass.bypass.iridescence: false
+glass.bypass.aurora: true
+glass.ring.focus: true
+glass.ring.colorSource: noctalia
+glass.ring.color: "#ccccff"
+terminal.background.opacity.active: 0
+terminal.background.opacity.inactive: 0
+terminal.apps:
+  - kitty
+  - com.mitchellh.ghostty
+_wallpapers:
+  d8e21b40:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20221120_192835926.jpg
+    glass.inactive.attenuationColor: "#1DEBBC"
+    glass.paneLip: 11
+    glass.paneShiftY: -5
+    glass.inactive.roughness: 0.57
+    glass.inactive.thickness: 54.1
+    glass.inactive.ior: 1.2
+    glass.inactive.attenuationDistance: 214
+    glass.inactive.iridescence: 0
+    glass.inactive.aurora: 0.04
+    glass.inactive.chromaticAberration: 0.36
+  59decb55:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20221231_180619768.jpg
+    glass.inactive.roughness: 0.96
+    glass.inactive.noise: 0.04
+  7023c424:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20221213_202553590.jpg
+    glass.inactive.attenuationDistance: 83
+    glass.inactive.attenuationColor: "#0A0D0C"
+    glass.inactive.thickness: 80.7
+  8b7ea11f:
+    _source: /home/keith/.cache/wali/variants/PXL_20210712_141515287/8810a25d220e126d/PXL_20210712_141515287.jpg
+    glass.inactive.attenuationColor: "#111513"
+    glass.inactive.iridescence: 0
+    glass.inactive.ior: 1.08
+    glass.inactive.roughness: 0.66
+    glass.inactive.attenuationDistance: 271
+    glass.inactive.saturation: 0.75
+    glass.inactive.thickness: 70.5
+    glass.inactive.distortion: 0.16
+    glass.inactive.anisotropicBlur: 0.15
+  8cd079dd:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20210728_134551072.jpg
+    glass.inactive.roughness: 0.16
+    glass.inactive.backdropBlur: true
+  fdd86d8f:
+    _source: /home/keith/.cache/wali/variants/PXL_20210728_134551072/c1d5f131035d5140/PXL_20210728_134551072.jpg
+    glass.inactive.roughness: 0.03
+glass.ring.beamSpeed: 300
