@@ -477,6 +477,29 @@ hardcodes an atoms checkout and a repo-specific review workflow, so it is not
 general host configuration. A fresh machine gets the gate and reports
 `Certified: unknown` until that checkout exists.
 
+## Console keymap
+
+`tmux.conf` binds `M-Up`, `M-Down`, `M-Left`, `M-Right`, and `M-PPage`. They work in a
+terminal emulator and silently do nothing on a VT, because the stock `us` console
+keymap replicates a cursor keysym into every modifier column (Alt+Down sends plain
+Down), binds Alt+Left/Right to VT switching, and only synthesises `Meta_x` for ASCII
+characters. `kbd/us-tmux.map` includes `us` and binds the Alt column of the cursor
+and page keys to the xterm modifier sequences (`ESC[1;3B` and friends) that tmux
+already decodes:
+
+```sh
+install -Dm0644 kbd/us-tmux.map /usr/share/kbd/keymaps/i386/qwerty/us-tmux.map
+sed -i 's/^KEYMAP=.*/KEYMAP=us-tmux/' /etc/vconsole.conf
+systemctl restart systemd-vconsole-setup
+```
+
+It has to live under `/usr/share/kbd/keymaps/` because `loadkeys` searches only
+that tree; pacman leaves the unowned file alone. The `keymap` and `sd-vconsole`
+initramfs hooks find it by name too, so `mkinitcpio -P` is only needed for the
+early-boot keymap. Alt+Left/Right stop switching VTs; Alt+F<n> still does.
+`tests/console_keymap.zsh` compiles the map with `loadkeys -m` and checks the Alt
+entries, so a change there is caught without a console.
+
 ## Auditing systemd changes
 
 No single command shows every difference from a fresh Arch install.

@@ -38,5 +38,6 @@ test:
     zsh tests/dotfiles_check.zsh
     zsh tests/layout_check.zsh
     zsh tests/justfile.zsh
+    zsh tests/console_keymap.zsh
 
 verify: check test health

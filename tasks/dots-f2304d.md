@@ -1,17 +1,19 @@
 ---
 id: dots-f2304d
 title: Track the console keymap that gives tmux Alt+arrow keys on a TTY
-status: doing
+status: done
 priority: 3
 size: xs
 complexity: low
 process: direct
 owner: main
 created: 2026-09-21T09:39:26Z
-updated: 2026-09-21T09:39:31Z
+updated: 2026-09-21T09:43:55Z
 started: 2026-09-21T09:39:31Z
+completed: 2026-09-21T09:43:55Z
 depends: []
 tags: [configuration]
+model: "claude-opus-5[1m]"
 agent: claude-code/claude-opus-5
 ---
 
@@ -20,4 +22,8 @@ The Linux console keymap (KEYMAP=us) replicates cursor keysyms into the Alt colu
 ## Notes
 
 - 2026-09-21T09:39:31Z (main): started
+  provenance: {"harness_session":"claude-code:c0f271e1-a69e-447e-854e-5127749f824c","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-09-21T09:43:55Z (chore/console-keymap-tmux): done
+  provenance: {"harness_session":"claude-code:c0f271e1-a69e-447e-854e-5127749f824c","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-09-21T09:43:55Z (chore/console-keymap-tmux): kbd/us-tmux.map tracked with a loadkeys -m test (tests/console_keymap.zsh, wired into just test) and a Console keymap section in docs/fresh-install-hardening.md with the install commands
   provenance: {"harness_session":"claude-code:c0f271e1-a69e-447e-854e-5127749f824c","harness_session_source":"CLAUDE_CODE_SESSION_ID"}

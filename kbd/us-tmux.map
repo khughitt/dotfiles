@@ -1,0 +1,25 @@
+# The us console keymap plus xterm-style sequences for Alt+arrow and
+# Alt+PageUp/PageDown, so tmux's M-Up/M-Down/M-Left/M-Right/M-PPage bindings
+# work on a VT the same way they do in a terminal emulator.
+#
+# The stock map replicates a cursor keysym into every modifier column
+# (Alt+Down sends plain Down) and binds Alt+Left/Right to VT switching; the
+# alt_is_meta rule only synthesises Meta_x for ASCII characters, so letters and
+# digits get an ESC prefix but cursor keys cannot. Alt+F<n> still switches VTs.
+#
+# Install: docs/fresh-install-hardening.md, "Console keymap".
+include "/usr/share/kbd/keymaps/i386/qwerty/us.map"
+
+string F70 = "\033[1;3A"
+string F71 = "\033[1;3B"
+string F72 = "\033[1;3C"
+string F73 = "\033[1;3D"
+string F74 = "\033[5;3~"
+string F75 = "\033[6;3~"
+
+alt keycode 103 = F70   # Up
+alt keycode 108 = F71   # Down
+alt keycode 106 = F72   # Right
+alt keycode 105 = F73   # Left
+alt keycode 104 = F74   # PageUp
+alt keycode 109 = F75   # PageDown
