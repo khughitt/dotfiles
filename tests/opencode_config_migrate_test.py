@@ -48,7 +48,7 @@ with tempfile.TemporaryDirectory() as tmp:
     config.parent.mkdir(parents=True)
     config.symlink_to(alias_root / "opencode", target_is_directory=True)
     write(source / "opencode.json", "{}\n")
-    write(source / "tui.json", "{}\n")
+    write(source / "cli.json", "{}\n")
     write(source / "package.json", "same\n")
     write(source / ".gitignore", "runtime ignore\n")
     write(source / "node_modules/pkg/index.js", "runtime\n")
@@ -60,7 +60,7 @@ with tempfile.TemporaryDirectory() as tmp:
         [MIGRATE, source, source, config, local, theme], check=True, text=True)
     assert config.is_symlink() and config.resolve() == local.resolve()
     assert (local / "opencode.json").resolve() == (source / "opencode.json").resolve()
-    assert (local / "tui.json").resolve() == (source / "tui.json").resolve()
+    assert (local / "cli.json").resolve() == (source / "cli.json").resolve()
     assert os.readlink(local / "themes/noctalia.json") == str(theme)
     assert (local / "node_modules/pkg/index.js").read_text() == "runtime\n"
     assert (local / ".gitignore").read_text() == "runtime ignore\n"
@@ -70,7 +70,7 @@ with tempfile.TemporaryDirectory() as tmp:
     assert (source / "node_modules/pkg/index.js").read_text() == "runtime\n"
     assert (source / "themes/noctalia.json").read_text() == "obsolete\n"
     assert (source / "opencode.json").is_file()
-    assert (source / "tui.json").is_file()
+    assert (source / "cli.json").is_file()
 
     # Reruns accept the already-active layout.
     subprocess.run(
@@ -83,7 +83,7 @@ with tempfile.TemporaryDirectory() as tmp:
     config = base / "home/.config/opencode"
     theme = base / "home/.cache/noctalia/nvim-glass/current/opencode-theme.json"
     write(source / "opencode.json", "{}\n")
-    write(source / "tui.json", "{}\n")
+    write(source / "cli.json", "{}\n")
     write(source / "one", "source one\n")
     write(source / "two", "source two\n")
     write(local / "one", "destination one\n")
@@ -115,7 +115,7 @@ for source_path, destination_path in (
         config = base / "home/.config/opencode"
         theme = base / "theme.json"
         write(tracked / "opencode.json", "{}\n")
-        write(tracked / "tui.json", "{}\n")
+        write(tracked / "cli.json", "{}\n")
         write(runtime / source_path, "same\n")
         write(local / destination_path, "same\n")
         config.parent.mkdir(parents=True, exist_ok=True)
@@ -150,7 +150,7 @@ with tempfile.TemporaryDirectory() as tmp:
     config = base / "home/.config/opencode"
     theme = base / "theme.json"
     write(tracked / "opencode.json", "{}\n")
-    write(tracked / "tui.json", "{}\n")
+    write(tracked / "cli.json", "{}\n")
     write(runtime / "changing", "before\n")
     config.parent.mkdir(parents=True, exist_ok=True)
     config.symlink_to(tracked, target_is_directory=True)
@@ -200,7 +200,7 @@ for ancestor_kind in ("file", "symlink"):
         theme = base / "theme.json"
         outside = base / "outside"
         write(tracked / "opencode.json", "{}\n")
-        write(tracked / "tui.json", "{}\n")
+        write(tracked / "cli.json", "{}\n")
         config.parent.mkdir(parents=True, exist_ok=True)
         config.symlink_to(tracked, target_is_directory=True)
         if ancestor_kind == "file":
@@ -235,7 +235,7 @@ with tempfile.TemporaryDirectory() as tmp:
     config = base / "home/.config/opencode"
     theme = base / "theme.json"
     write(tracked / "opencode.json", "{}\n")
-    write(tracked / "tui.json", "{}\n")
+    write(tracked / "cli.json", "{}\n")
     write(local / "payload", "keep\n")
     config.parent.mkdir(parents=True, exist_ok=True)
     config.symlink_to(tracked, target_is_directory=True)
@@ -257,7 +257,7 @@ with tempfile.TemporaryDirectory() as tmp:
     config = base / "home/.config/opencode"
     theme = base / "theme.json"
     write(tracked / "opencode.json", "{}\n")
-    write(tracked / "tui.json", "{}\n")
+    write(tracked / "cli.json", "{}\n")
     write(runtime / "Foo", "source\n")
     write(local / "foo", "destination\n")
     config.parent.mkdir(parents=True, exist_ok=True)

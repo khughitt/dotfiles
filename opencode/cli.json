@@ -1,0 +1,23 @@
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "theme": {
+    "name": "noctalia"
+  },
+  "keybinds": {
+    "session.first": "ctrl+g",
+    "session.last": "ctrl+alt+g",
+    "input.visual.line.home": "home,alt+a",
+    "input.visual.line.end": "end,alt+e",
+    "input.buffer.home": "ctrl+home",
+    "input.buffer.end": "ctrl+end"
+  },
+  "diffs": {
+    "wrap": "word"
+  },
+  "session": {
+    "sidebar": "auto",
+    "scrollbar": false,
+    "thinking": "hide"
+  },
+  "animations": true
+}

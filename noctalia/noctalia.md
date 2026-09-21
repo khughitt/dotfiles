@@ -98,7 +98,7 @@ The local evidence is in `.superpowers/evidence/dots-aa6cc4/` (gitignored).
 ```text
 ~/.config/opencode -> ~/.config/opencode.local
 ~/.config/opencode/opencode.json -> ~/d/dotfiles/opencode/opencode.json
-~/.config/opencode/tui.json -> ~/d/dotfiles/opencode/tui.json
+~/.config/opencode/cli.json -> ~/d/dotfiles/opencode/cli.json
 ~/.config/opencode/themes/noctalia.json
   -> ~/.cache/noctalia/nvim-glass/current/opencode-theme.json
 ```

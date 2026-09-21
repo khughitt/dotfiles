@@ -93,9 +93,9 @@ assert codex_scopes["markup.inserted"]["background"] == "#022800"
 assert codex_scopes["markup.deleted"]["background"] == "#3d0100"
 
 opencode_server = load_jsonc(ROOT / "opencode/opencode.json")
-opencode_tui = load_jsonc(ROOT / "opencode/tui.json")
+opencode_cli = load_jsonc(ROOT / "opencode/cli.json")
 assert "tui" not in opencode_server
-assert opencode_tui["theme"] == "noctalia"
+assert opencode_cli["theme"]["name"] == "noctalia"
 
 crush_lines = (ROOT / "crush/crushrc").read_text().splitlines()
 assert crush_lines.count("option ui transparent true") == 1

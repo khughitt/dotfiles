@@ -332,7 +332,7 @@ else
 fi
 check_link "${XDG_CONFIG_HOME}/opencode" "$opencode_local"
 check_link "$opencode_local/opencode.json" "${DOTS_HOME}/opencode/opencode.json"
-check_link "$opencode_local/tui.json" "${DOTS_HOME}/opencode/tui.json"
+check_link "$opencode_local/cli.json" "${DOTS_HOME}/opencode/cli.json"
 check_link_target \
     "$opencode_local/themes/noctalia.json" \
     "${HOME}/.cache/noctalia/nvim-glass/current/opencode-theme.json"

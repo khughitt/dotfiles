@@ -26,7 +26,7 @@ def probe(malformed):
         project = root / "project"
         themes.mkdir(parents=True)
         project.mkdir()
-        (config / "tui.json").write_text('{"theme":"noctalia"}\n')
+        (config / "cli.json").write_text('{"theme":{"name":"noctalia"}}\n')
         theme = themes / "noctalia.json"
         if malformed:
             theme.write_text('{ broken\n')

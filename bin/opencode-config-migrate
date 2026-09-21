@@ -9,7 +9,7 @@ from pathlib import Path, PurePath
 
 MANAGED = {
     PurePath('opencode.json'),
-    PurePath('tui.json'),
+    PurePath('cli.json'),
     PurePath('themes/noctalia.json'),
 }
 MANAGED_KEYS = {PurePath(*(part.casefold() for part in path.parts)) for path in MANAGED}
@@ -106,10 +106,10 @@ def main() -> None:
 
     links = {
         local / 'opencode.json': tracked / 'opencode.json',
-        local / 'tui.json': tracked / 'tui.json',
+        local / 'cli.json': tracked / 'cli.json',
         local / 'themes/noctalia.json': theme,
     }
-    for tracked_file in (tracked / 'opencode.json', tracked / 'tui.json'):
+    for tracked_file in (tracked / 'opencode.json', tracked / 'cli.json'):
         if not tracked_file.is_file():
             conflicts.append(str(tracked_file))
     for destination, target in links.items():

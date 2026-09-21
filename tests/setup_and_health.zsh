@@ -557,9 +557,9 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "${opencode_local}/opencode.json" -ef \
       "${repo_root}/opencode/opencode.json" ]] || \
     fail "expected tracked OpenCode server config link"
-  [[ "${opencode_local}/tui.json" -ef \
-      "${repo_root}/opencode/tui.json" ]] || \
-    fail "expected tracked OpenCode TUI config link"
+  [[ "${opencode_local}/cli.json" -ef \
+      "${repo_root}/opencode/cli.json" ]] || \
+    fail "expected tracked OpenCode CLI config link"
   [[ -L "${opencode_local}/themes/noctalia.json" ]] || \
     fail "expected dangling-safe OpenCode theme link"
 
