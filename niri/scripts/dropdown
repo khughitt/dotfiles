@@ -14,7 +14,7 @@ set -euo pipefail
 WIDTH_FRACTION=0.80
 
 usage() {
-    echo "usage: ${0##*/} [--hidden] <term|ipython|ghci>" >&2
+    echo "usage: ${0##*/} [--hidden] <term|ipython|ghci|mindful>" >&2
     exit 2
 }
 
@@ -27,10 +27,21 @@ fi
 [[ $# -eq 1 ]] || usage
 name=$1
 
+# The terminals take the keyboard exclusively while shown and keep kitty's quick-access
+# glass; the scratchpad yields the keyboard on demand, so a window it is written beside
+# stays usable and a click hands focus back, and is near-opaque because it sits over
+# other windows' text rather than the wallpaper. The same goes for the cells nvim paints
+# itself: kitty.conf lists its cursorline and chrome colours as translucent for the
+# glass, and over other windows that makes the input line unreadable. kitty ignores an
+# empty override of that list, so the scratchpad replaces it with one colour nothing
+# paints, at full opacity.
+focus=exclusive; opacity=0.85; glass=()
 case "$name" in
     term)    lines=30; cmd=() ;;
     ipython) lines=40; cmd=(ipython) ;;
     ghci)    lines=40; cmd=(ghci-color) ;;  # the interactive-shell alias for ghci
+    mindful) lines=30; focus=on-demand; opacity=0.98; glass=(-o "kitty_override=transparent_background_colors=#000001@1.0")
+             cmd=("$(dirname "$(readlink -f "$0")")/mindful-scratch") ;;
     *) echo "${0##*/}: unknown dropdown '$name'" >&2; usage ;;
 esac
 
@@ -46,5 +57,8 @@ exec kitten quick-access-terminal "--instance-group=dropdown-$name" --detach \
     -o "margin_left=$margin" \
     -o "margin_right=$margin" \
     -o hide_on_focus_loss=no \
+    -o "focus_policy=$focus" \
+    -o "background_opacity=$opacity" \
+    "${glass[@]}" \
     "${hidden[@]}" \
     "${cmd[@]}"

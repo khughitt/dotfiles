@@ -75,6 +75,28 @@ def test_ghci_runs_the_colour_wrapper_not_the_shell_alias(run):
     assert argv[-1] == "ghci-color"
 
 
+def test_mindful_runs_the_scratch_loop_beside_the_script(run):
+    proc, argv = run("mindful")
+
+    assert proc.returncode == 0, proc.stderr
+    assert argv[1] == "--instance-group=dropdown-mindful"
+    assert "app_id=dropdown-mindful" in argv
+    # The loop script is resolved next to this one, so a relocated config still finds it.
+    assert argv[-1] == str(SCRIPT.parent / "mindful-scratch")
+    assert "focus_policy=on-demand" in argv
+    assert "background_opacity=0.98" in argv
+    # nvim's own cell backgrounds are opaque here too, not kitty.conf's glass tones.
+    assert "kitty_override=transparent_background_colors=#000001@1.0" in argv
+
+
+def test_terminals_keep_exclusive_focus(run):
+    for name in ("term", "ipython", "ghci"):
+        _, argv = run(name)
+        assert "focus_policy=exclusive" in argv, name
+        assert "background_opacity=0.85" in argv, name
+        assert not any(a.startswith("kitty_override=") for a in argv), name
+
+
 def test_width_is_80_percent_of_the_focused_output(run):
     _, argv = run("term")
 

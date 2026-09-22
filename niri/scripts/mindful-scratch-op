@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+"""A scratchpad buffer on stdin becomes one mindful capture operation on stdout.
+
+The convention: the first line is the title; a last line made only of `#tags` names
+the tags; whatever lies between is the body. Blank edges are trimmed at every seam,
+so a buffer can breathe. Every capture also carries `scratch`, the pile it came from.
+The actor is the caller's business (`mindful-op --self`).
+"""
+import json
+import re
+import sys
+
+TITLE_CHARS = 80
+PILE = "scratch"
+TAG_LINE = re.compile(r"^#[\w-]+(?:\s+#[\w-]+)*$")
+
+
+def trim(lines):
+    while lines and not lines[0].strip():
+        lines = lines[1:]
+    while lines and not lines[-1].strip():
+        lines = lines[:-1]
+    return lines
+
+
+def parse(text):
+    lines = trim(text.split("\n"))
+    if not lines:
+        return None
+    title = lines[0].strip()[:TITLE_CHARS]
+    rest = trim(lines[1:])
+    tags = [PILE]
+    if rest and TAG_LINE.match(rest[-1].strip()):
+        for tag in rest[-1].split():
+            if tag[1:] not in tags:
+                tags.append(tag[1:])
+        rest = trim(rest[:-1])
+    return {"kind": "capture", "title": title, "body": "\n".join(rest), "tags": tags}
+
+
+def main():
+    op = parse(sys.stdin.read())
+    if op is None:
+        print(f"{sys.argv[0].rsplit('/', 1)[-1]}: the buffer is blank", file=sys.stderr)
+        return 2
+    print(json.dumps(op))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

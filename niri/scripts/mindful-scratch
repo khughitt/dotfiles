@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# The loop inside the mindful dropdown: an editor on a fresh buffer, over and over.
+#
+# `:wq` captures the buffer as a thought and `:q!` discards it; either way the dropdown
+# hides itself first, so the capture's latency is never seen, and a new buffer is
+# waiting behind the next toggle. `:cq` ends the loop. The sibling mindful-scratch-op
+# reads the buffer's convention (first line title, last-line #tags, body between) and
+# the post goes through ops's mindful-op to the running mindful web, as the human, with
+# no agent via. A failed post keeps the buffer under the state dir, says so, and reopens
+# it on the next toggle, so a tag that resolved to nothing is fixed in place.
+set -euo pipefail
+
+MINDFUL_OP=${MINDFUL_OP:-$HOME/d/ops/bin/mindful-op}
+here=$(dirname "$0")  # the sibling scripts, through whichever path launched this
+spool=${XDG_STATE_HOME:-$HOME/.local/state}/mindful-scratch
+
+if [[ ! -x $MINDFUL_OP ]]; then
+    echo "${0##*/}: mindful-op is not executable at $MINDFUL_OP (set MINDFUL_OP)" >&2
+    exit 2
+fi
+mkdir -p "$spool"
+
+buf=
+while :; do
+    [[ -n $buf ]] || buf=$spool/$(date +%Y%m%dT%H%M%S.%N).md
+    nvim +startinsert "$buf"
+    "$here/dropdown" mindful
+    if [[ ! -e $buf ]] || ! grep -q '[^[:space:]]' "$buf"; then
+        rm -f "$buf"; buf=
+        continue
+    fi
+    if error=$("$here/mindful-scratch-op" < "$buf" | "$MINDFUL_OP" --self 2>&1 >/dev/null); then
+        rm -f "$buf"; buf=
+    else
+        notify-send --urgency=critical "mindful scratch: capture failed" \
+            "kept $buf"$'\n'"$error"
+    fi
+done

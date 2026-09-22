@@ -122,6 +122,7 @@ spawn-at-startup "~/.config/niri/scripts/fill-new-window"
 spawn-at-startup "~/.config/niri/scripts/dropdown" "--hidden" "term"
 spawn-at-startup "~/.config/niri/scripts/dropdown" "--hidden" "ipython"
 spawn-at-startup "~/.config/niri/scripts/dropdown" "--hidden" "ghci"
+spawn-at-startup "~/.config/niri/scripts/dropdown" "--hidden" "mindful"
 spawn-sh-at-startup "qs -p ~/d/software/ohai/ohai/shell.qml"
 spawn-sh-at-startup "node ~/d/software/ohai/bin/ohai-mcp"
 
@@ -258,6 +259,7 @@ binds {
     Alt+Return hotkey-overlay-title="Toggle Dropdown Terminal" repeat=false { spawn "~/.config/niri/scripts/dropdown" "term"; }
     Alt+P hotkey-overlay-title="Toggle Dropdown IPython" repeat=false { spawn "~/.config/niri/scripts/dropdown" "ipython"; }
     Alt+G hotkey-overlay-title="Toggle Dropdown GHCi" repeat=false { spawn "~/.config/niri/scripts/dropdown" "ghci"; }
+    Alt+M hotkey-overlay-title="Toggle Mindful Scratchpad" repeat=false { spawn "~/.config/niri/scripts/dropdown" "mindful"; }
     Super+Alt+L hotkey-overlay-title="Lock Screen" { spawn "swaylock"; }
     Super+Q repeat=false { close-window; }
     Alt+F4 repeat=false { close-window; }

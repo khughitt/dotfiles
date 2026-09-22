@@ -8,6 +8,7 @@ super+e              // yazi
 alt+return           // toggle dropdown terminal
 alt+p                // toggle dropdown ipython
 alt+g                // toggle dropdown ghci
+alt+m                // toggle mindful scratchpad (:wq captures, :q! discards)
 ctrl+space           // launcher
 super+s              // control center
 super+alt+comma      // settings
