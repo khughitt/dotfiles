@@ -1,9 +1,10 @@
 [Unit]
-Description=Report checkout entries that drifted from WORK_ROOT and relink the safe case
+Description=Report checkout entries that drifted from their storage and repair the safe cases
 
 [Service]
 Type=oneshot
-# work-link exits 1 while anything is reported, so the unit stays failed until the
-# drift is resolved and `systemctl --user --failed` is the signal; the journal
-# holds the report lines. No ConditionEnvironment: a skipped unit is silent.
+# work-link exits 1 on anything new (a foreign link, an unignored entry, an
+# orphan, a failed write), so the unit stays failed until it is resolved and
+# `systemctl --user --failed` is the signal; standing needs-migration and
+# conflict entries are printed to the journal without failing the unit. No ConditionEnvironment: a skipped unit is silent.
 ExecStart=/usr/bin/zsh -lc 'work-link'

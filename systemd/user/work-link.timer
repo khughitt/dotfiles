@@ -2,9 +2,9 @@
 Description=Periodically converge checkout entries with WORK_ROOT
 
 [Timer]
-OnBootSec=15min
-OnUnitActiveSec=2h
-AccuracySec=15min
+OnBootSec=2min
+OnUnitActiveSec=30min
+AccuracySec=1min
 Persistent=true
 Unit=work-link.service
 

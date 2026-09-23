@@ -183,8 +183,8 @@ test_info_exclude_bare_rule_satisfies_the_verdict() {
   printf '/.venv\n' > "${repo}/.git/info/exclude"   # anchored: the nested case below is not covered
   local out rc=0
   out=$(run_work_link "${repo}") || rc=$?
-  [[ $rc -ne 0 && "$out" == *"needs-migration	${repo}/.venv"* && "$out" != *unignored* ]] || \
-    fail "a bare rule in info/exclude must satisfy the verdict: $out"
+  [[ $rc -eq 0 && "$out" == *"needs-migration	${repo}/.venv"* && "$out" != *unignored* ]] || \
+    fail "a bare rule in info/exclude must satisfy the verdict, and a lone needs-migration exits 0: rc=$rc $out"
   out=$(run_work_link --migrate "${repo}") || fail "migrate with an info/exclude rule: $out"
   [[ -L "${repo}/.venv" && -z "$(git -C "$repo" status --short -- .venv)" ]] || fail "the link must be ignored after the move: $(git -C "$repo" status --short)"
 
@@ -558,6 +558,19 @@ test_ensure_rewrites_legacy() {
   out=$(cd "$repo" && "$work_link" --ensure .venv 2>&1) || fail "ensure legacy: $out"
   [[ "$out" == "rewritten	${repo}/.venv"* && "$(readlink "${repo}/.venv")" == "../../.dropbox-work/proj/.venv" ]] || fail "ensure must rewrite a legacy link: $out"
 }
+test_standing_entries_do_not_fail_converge() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${repo}/.venv" "${repo}/target" "${WORK}/proj/target/x"; touch "${repo}/Cargo.toml"
+  local out
+  out=$(run_work_link "${repo}") || fail "needs-migration and conflict alone must exit 0: $out"
+  [[ "$out" == *"needs-migration	${repo}/.venv"* && "$out" == *"conflict	${repo}/target"* ]] || fail "both still reported: $out"
+  mkdir -p "${repo}/sub"; ln -s /elsewhere "${repo}/sub/.venv"
+  local rc=0
+  out=$(run_work_link "${repo}") || rc=$?
+  [[ $rc -eq 1 ]] || fail "foreign must still fail converge: $out"
+}
+
 test_scan_root_behind_symlink() {
   sandbox; local tmp="$SANDBOX"
   mv "${HOME}/d" "${tmp}/real-d" && ln -s "${tmp}/real-d" "${HOME}/d"
@@ -919,5 +932,6 @@ test_missing_locked_worktrees_by_owner
 test_bare_lock_is_restamped_with_host
 test_ensure_never_removes_a_link
 test_ensure_rewrites_legacy
+test_standing_entries_do_not_fail_converge
 
 print -- "work-link tests passed"

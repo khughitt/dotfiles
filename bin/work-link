@@ -356,6 +356,7 @@ work_link_lock_worktrees() {
 }
 
 typeset -gi WORK_LINK_REPORTED=0
+typeset -g WORK_LINK_MODE=converge
 
 # Reports (as opposed to the actions moved/relinked/materialized/rewritten/
 # relocked/locked, which mean the named change happened): needs-migration,
@@ -363,8 +364,14 @@ typeset -gi WORK_LINK_REPORTED=0
 # uninspectable, and failed (a
 # mutating command that should have succeeded did not: see work_link_move,
 # the relink branch of work_link_handle, and work_link_lock_worktrees).
+# In converge, needs-migration and conflict are standing work that a person
+# does by hand: they are printed but do not fail the run, so a failed timer
+# unit means something new. --migrate still fails on a conflict.
 work_link_report() {
   print -- "$1	$2	${3:-}"
+  if [[ "$WORK_LINK_MODE" == converge && ( "$1" == needs-migration || "$1" == conflict ) ]]; then
+    return 0
+  fi
   WORK_LINK_REPORTED=$((WORK_LINK_REPORTED + 1))
 }
 
@@ -717,9 +724,11 @@ work_link_main() {
   done
 
   if [[ "$dry_run" == true ]]; then
+    WORK_LINK_MODE=plan
     work_link_run plan "$root" "${scopes[@]}" || return 1
     return 0
   fi
+  WORK_LINK_MODE="$mode"
   work_link_run "$mode" "$root" "${scopes[@]}" || return 1
   (( WORK_LINK_REPORTED == 0 ))
 }
