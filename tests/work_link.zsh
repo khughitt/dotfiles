@@ -641,6 +641,81 @@ test_reasonless_lock_is_restamped() {
     fail "reasonless locks must be restamped: $out"
 }
 
+admin_marked() { [[ "$(attr -q -g com.dropbox.ignored "$1" 2>/dev/null)" == 1 ]]; }
+
+# --ensure .worktrees makes the admin directory before git does, already
+# ignored by Dropbox, so worktree admin never syncs to another host.
+test_ensure_worktrees_marks_admin() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  local out
+  out=$(cd "$repo" && "$work_link" --ensure .worktrees 2>&1) || fail "ensure: $out"
+  [[ -d "${repo}/.git/worktrees" ]] && admin_marked "${repo}/.git/worktrees" || fail "admin created and marked: $out"
+  [[ "$out" == *"ignored	"*"/proj/.git/worktrees"* ]] || fail "marking reported: $out"
+  git -C "$repo" worktree add -q .worktrees/wt -b wt
+  admin_marked "${repo}/.git/worktrees" || fail "still marked after git worktree add"
+  out=$(cd "$repo" && "$work_link" --ensure .worktrees 2>&1) || fail "again: $out"
+  [[ "$out" != *ignored* ]] || fail "marking is idempotent: $out"
+}
+
+# An existing unmarked admin directory with an entry missing here may hold
+# another host's worktree: marking it would delete that entry there.
+test_ensure_leaves_shared_admin_unmarked() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  (cd "$repo" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure"
+  git -C "$repo" worktree add -q .worktrees/remote -b remote
+  git -C "$repo" worktree lock --reason "on WORK_ROOT storage (host: host-b)" .worktrees/remote
+  rm -rf "${WORK}/proj/.worktrees/remote"
+  attr -q -r com.dropbox.ignored "${repo}/.git/worktrees"
+  local out
+  out=$(cd "$repo" && "$work_link" --ensure .worktrees 2>&1) || fail "ensure must not fail setup: $out"
+  [[ "$out" == *"shared-admin	"*"/proj/.git/worktrees"* ]] || fail "shared admin reported: $out"
+  admin_marked "${repo}/.git/worktrees" && fail "shared admin must stay unmarked"
+  true
+}
+
+test_ensure_worktrees_needs_attr() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${tmp}/thin"
+  local cmd
+  for cmd in zsh env git realpath readlink mkdir ln rm cp ls du cut head awk sort mktemp uname mv; do
+    ln -s "$(command -v "$cmd")" "${tmp}/thin/${cmd}"
+  done
+  local out rc=0
+  out=$(cd "$repo" && PATH="${tmp}/thin" "$work_link" --ensure .worktrees 2>&1) || rc=$?
+  [[ $rc -ne 0 && "$out" == *attr* ]] || fail "ensure .worktrees must refuse without attr: rc=$rc $out"
+  [[ ! -e "${repo}/.git/worktrees" ]] || fail "nothing unmarked may be left behind"
+}
+
+# Converge marks an admin directory only for the host that owns every entry.
+test_converge_marks_owned_admin_only() {
+  sandbox
+  local a b c
+  a=$(make_repo a); b=$(make_repo b); c=$(make_repo c)
+  local r
+  for r in "$a" "$b" "$c"; do (cd "$r" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure $r"; done
+  git -C "$a" worktree add -q .worktrees/wt -b wt                  # local only
+  git -C "$b" worktree add -q .worktrees/remote -b remote          # another host's only
+  git -C "$c" worktree add -q .worktrees/wt -b wt                  # both
+  git -C "$c" worktree add -q .worktrees/remote -b remote
+  for r in "$b" "$c"; do
+    git -C "$r" worktree lock --reason "on WORK_ROOT storage (host: host-b)" .worktrees/remote
+    rm -rf "${WORK}/${r:t}/.worktrees/remote"
+  done
+  for r in "$a" "$b" "$c"; do attr -q -r com.dropbox.ignored "${r}/.git/worktrees"; done
+  local out rc=0
+  out=$(run_work_link) || rc=$?
+  admin_marked "${a}/.git/worktrees" || fail "local-only admin marked: $out"
+  [[ "$out" == *"ignored	"*"/a/.git/worktrees"* ]] || fail "marking reported: $out"
+  admin_marked "${b}/.git/worktrees" && fail "another host's admin must stay unmarked: $out"
+  [[ "$out" != *"/b/.git/worktrees"* ]] || fail "another host's admin is not reported: $out"
+  admin_marked "${c}/.git/worktrees" && fail "mixed admin must stay unmarked: $out"
+  [[ $rc -eq 1 && "$out" == *"shared-admin	"*"/c/.git/worktrees"* ]] || fail "mixed admin reported and failing: rc=$rc $out"
+  true
+}
+
 test_scan_root_behind_symlink() {
   sandbox; local tmp="$SANDBOX"
   mv "${HOME}/d" "${tmp}/real-d" && ln -s "${tmp}/real-d" "${HOME}/d"
@@ -1007,5 +1082,9 @@ test_anchor_inside_dropbox_refuses
 test_empty_orphan_is_removed
 test_restamp_never_unlocks
 test_reasonless_lock_is_restamped
+test_ensure_worktrees_marks_admin
+test_ensure_leaves_shared_admin_unmarked
+test_ensure_worktrees_needs_attr
+test_converge_marks_owned_admin_only
 
 print -- "work-link tests passed"

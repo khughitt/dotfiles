@@ -371,6 +371,60 @@ work_link_lock_worktrees() {
   done
 }
 
+# Keep a repository's worktree admin directory (<git common dir>/worktrees)
+# with the host that owns its worktrees: marked com.dropbox.ignored, it never
+# syncs, so no other host can delete it by ignoring a synced copy. An entry is
+# local when the path in its gitdir file exists here. MODE ensure creates the
+# directory when missing and runs before git worktree add; converge and
+# migrate only mark an existing one; plan prints what it would mark.
+# Unmarked with only missing entries: another host's, left alone (ensure
+# reports it). Missing entries beside local ones: shared-admin, because
+# marking would delete the other host's entries there.
+work_link_mark_admin() {
+  local repo="$1" mode="$2" common admin entry target
+  local -i here=0 missing=0
+  common=$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || {
+    [[ "$mode" == ensure ]] && { print -u2 -- "work-link --ensure: git cannot name the common git directory of ${repo}"; return 1; }
+    work_link_report failed "$repo" "git cannot name the common git directory"
+    return 0
+  }
+  admin="${common}/worktrees"
+  if [[ ! -d "$admin" ]]; then
+    [[ "$mode" == ensure ]] || return 0
+    mkdir -- "$admin" || { print -u2 -- "work-link --ensure: cannot create ${admin}"; return 1; }
+  fi
+  [[ "$(attr -q -g com.dropbox.ignored "$admin" 2>/dev/null)" == 1 ]] && return 0
+  for entry in "$admin"/*(N/); do
+    target=""
+    [[ -f "${entry}/gitdir" ]] && target=$(<"${entry}/gitdir")
+    if [[ -n "$target" && -e "$target" ]]; then
+      here+=1
+    else
+      missing+=1
+    fi
+  done
+  if (( missing > 0 )); then
+    if [[ "$mode" == ensure ]]; then
+      print -- "shared-admin	${admin}	holds ${missing} worktree(s) missing here, left unmarked; marking would delete them on the host that has them"
+    elif (( here > 0 )); then
+      work_link_report shared-admin "$admin" "${here} worktree(s) here and ${missing} missing here; marking would delete the missing ones on the host that has them: resolve by hand"
+    fi
+    return 0
+  fi
+  if [[ "$mode" == plan ]]; then
+    print -- "ignore	${admin}"
+    return 0
+  fi
+  if attr -q -s com.dropbox.ignored -V 1 "$admin"; then
+    print -- "ignored	${admin}"
+  elif [[ "$mode" == ensure ]]; then
+    print -u2 -- "work-link --ensure: cannot mark ${admin} ignored"
+    return 1
+  else
+    work_link_report failed "$admin" "cannot mark it ignored"
+  fi
+}
+
 typeset -gi WORK_LINK_REPORTED=0
 typeset -g WORK_LINK_MODE=converge
 
@@ -590,10 +644,12 @@ work_link_run() {
     work_link_handle "$mode" "$intree" "$root"
   done
 
-  [[ "$mode" == plan ]] && return 0
+  local repo
   for intree in "${(@ko)seen}"; do
     [[ "${intree:t}" == .worktrees && -L "$intree" && -d "$intree" ]] || continue
-    work_link_lock_worktrees "$intree"
+    [[ "$mode" == plan ]] || work_link_lock_worktrees "$intree"
+    repo=$(work_link_repo_of "$intree") || continue
+    work_link_mark_admin "$repo" "$mode"
   done
 }
 
@@ -694,6 +750,11 @@ work_link_ensure() {
       needs-migration|conflict) print -- "needs-migration	${intree}	real directory, left for work-link --migrate ${toplevel}" ;;
       foreign) print -u2 -- "work-link --ensure: ${intree} exists and is not a link to ${text}"; return 1 ;;
     esac
+    # Before git worktree add: the admin directory git is about to write is
+    # already ignored, so nothing of it syncs.
+    if [[ "$name" == .worktrees ]]; then
+      work_link_mark_admin "$toplevel" ensure || return 1
+    fi
   done
 }
 
@@ -716,7 +777,9 @@ work_link_main() {
   # --ensure runs from every project's setup and must work on a machine that has
   # only git; the scan needs fd, and only a migration needs lsof.
   local -a required=(git realpath)
-  [[ "$ensure" == true ]] || required+=(fd)
+  [[ "$ensure" == true ]] || required+=(fd attr)
+  # --ensure needs attr only to mark the worktree admin directory.
+  [[ "$ensure" == true ]] && (( ${paths[(Ie).worktrees]} )) && required+=(attr)
   [[ "$mode" == migrate || "$dry_run" == true ]] && required+=(lsof)
   local cmd
   for cmd in "${required[@]}"; do

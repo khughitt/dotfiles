@@ -26,7 +26,10 @@ function _dropbox_ignore_flux_candidates {
   if [[ $# -gt 0 ]]; then
     names=("$@")
   else
-    names=(node_modules .venv .worktrees worktrees .snakemake __pycache__ .pytest_cache .ruff_cache .mypy_cache .uv-cache)
+    # Not the bare name worktrees: <repo>/.git/worktrees is marked only by the
+    # host that owns its worktrees (work-link). Marking a synced copy here
+    # deletes the owner's admin directories through Dropbox.
+    names=(node_modules .venv .worktrees .snakemake __pycache__ .pytest_cache .ruff_cache .mypy_cache .uv-cache)
   fi
 
   local pattern
@@ -98,8 +101,10 @@ function dropbox_ignore_flux {
 Usage: dropbox_ignore_flux [--root DIR] [--quiet] [--dry-run] [NAME ...]
 
 Set com.dropbox.ignored=1 on top-level high-churn Dropbox directories.
-Default names: node_modules .venv .worktrees worktrees .snakemake __pycache__
+Default names: node_modules .venv .worktrees .snakemake __pycache__
                .pytest_cache .ruff_cache .mypy_cache .uv-cache
+(<repo>/.git/worktrees is left to work-link, which marks it only on the host
+that owns its worktrees.)
 EOF
         return 0
         ;;
@@ -133,7 +138,7 @@ EOF
   }
 
   if [[ ${#names[@]} -eq 0 ]]; then
-    names=(node_modules .venv .worktrees worktrees .snakemake __pycache__ .pytest_cache .ruff_cache .mypy_cache .uv-cache)
+    names=(node_modules .venv .worktrees .snakemake __pycache__ .pytest_cache .ruff_cache .mypy_cache .uv-cache)
   fi
 
   local -a candidates

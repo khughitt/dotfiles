@@ -172,8 +172,23 @@ test_fu_finds_functions_d_modules() {
   rm -rf "$tmp"
 }
 
+# .git/worktrees holds git's per-worktree admin directories. Only the host
+# that owns them marks them (work-link); flux marking a synced copy deletes
+# the owner's (ops-d099f0).
+test_default_names_leave_git_worktrees_alone() {
+  local tmp
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/repo/.git/worktrees/wt" "${tmp}/repo/node_modules" "${tmp}/repo/.worktrees"
+  local out
+  out=$(dropbox_ignore_flux --root "$tmp" --dry-run)
+  [[ "$out" == *"Would ignore: ${tmp}/repo/node_modules"* ]] || fail "default names still mark node_modules: $out"
+  [[ "$out" != *"/.git/worktrees"* ]] || fail "default names must not mark .git/worktrees: $out"
+}
+
 test_candidates_keep_only_top_level_matches
 test_candidates_do_not_follow_symlinks
+test_default_names_leave_git_worktrees_alone
 test_dropbox_ignore_flux_sets_only_missing_attrs_without_sudo
 test_dropbox_ignore_flux_reports_failed_candidate_ownership
 test_fu_finds_functions_d_modules
