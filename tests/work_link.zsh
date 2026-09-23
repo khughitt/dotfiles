@@ -571,6 +571,76 @@ test_standing_entries_do_not_fail_converge() {
   [[ $rc -eq 1 ]] || fail "foreign must still fail converge: $out"
 }
 
+# The anchor must sit outside the synced tree: a scan root below the Dropbox
+# folder (whose root carries a regular file named .dropbox) would put it
+# inside, where it and everything behind it syncs.
+test_anchor_inside_dropbox_refuses() {
+  sandbox
+  touch "${HOME}/d/.dropbox"
+  local repo; repo=$(make_repo grp/proj)
+  mkdir -p "${HOME}/.dropbox"                      # the client's config directory is not the marker
+  local out rc=0
+  out=$(run_work_link --root "${HOME}/d/grp") || rc=$?
+  [[ $rc -eq 1 && "$out" == *"inside the Dropbox folder"* && ! -e "${HOME}/d/.dropbox-work" && ! -L "${HOME}/d/.dropbox-work" ]] || \
+    fail "an anchor inside the synced tree must refuse: $out"
+  rc=0; out=$(cd "$repo" && "$work_link" --ensure --root "${HOME}/d/grp" .venv 2>&1) || rc=$?
+  [[ $rc -eq 1 && ! -L "${repo}/.venv" ]] || fail "ensure must refuse the same: $out"
+  out=$(run_work_link) || fail "the Dropbox folder itself as root is fine: $out"
+}
+
+# An empty external directory whose checkout is gone (a materialized link
+# for a checkout another host deleted) is removed, not reported forever.
+test_empty_orphan_is_removed() {
+  sandbox
+  local repo; repo=$(make_repo scratch/proj)
+  ln -s "../../../.dropbox-work/scratch/proj/.venv" "${repo}/.venv"
+  run_work_link >/dev/null || fail "materialize"
+  [[ -d "${WORK}/scratch/proj/.venv" ]] || fail "materialized"
+  rm -rf "${HOME}/d/scratch"
+  local out
+  out=$(run_work_link) || fail "an empty orphan must not fail converge: $out"
+  [[ "$out" == *"removed-orphan	"*"/scratch/proj/.venv"* ]] || fail "removal must be reported: $out"
+  [[ ! -e "${WORK}/scratch" && -d "$WORK" ]] || fail "empty parents go, the store stays: $(ls -R "$WORK")"
+}
+
+# Restamping writes the lock file in one rename: the worktree is never
+# unlocked, even when git's own lock commands would fail.
+test_restamp_never_unlocks() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  (cd "$repo" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure"
+  git -C "$repo" worktree add -q .worktrees/wt -b wt
+  git -C "$repo" worktree lock --reason "on WORK_ROOT storage" .worktrees/wt
+  mkdir -p "${tmp}/shim"
+  cat > "${tmp}/shim/git" <<EOF
+#!/bin/sh
+case " \$* " in *" worktree unlock "*|*" worktree lock "*) echo "simulated lock failure" >&2; exit 1 ;; esac
+exec $(command -v git) "\$@"
+EOF
+  chmod +x "${tmp}/shim/git"
+  local out
+  out=$(PATH="${tmp}/shim:$PATH" run_work_link "${repo}") || fail "restamp without git lock commands: $out"
+  [[ "$out" == *"relocked	${repo}/.worktrees/wt"* ]] || fail "restamp reported: $out"
+  [[ "$(git -C "$repo" worktree list --porcelain | grep '^locked')" == "locked on WORK_ROOT storage (host: host-a)" ]] || \
+    fail "lock reason after restamp: $(git -C "$repo" worktree list --porcelain)"
+  ls -A "$(git -C "${repo}/.worktrees/wt" rev-parse --path-format=absolute --git-dir)" | grep -q 'locked\.' && fail "no temporary lock file may remain"
+  true
+}
+
+# A lock with no reason on a worktree that exists here is this host's too.
+test_reasonless_lock_is_restamped() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  (cd "$repo" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure"
+  git -C "$repo" worktree add -q --lock .worktrees/wt -b wt          # git writes "added with --lock"
+  git -C "$repo" worktree add -q .worktrees/plain -b plain
+  git -C "$repo" worktree lock .worktrees/plain                      # git writes an empty reason
+  local out
+  out=$(run_work_link "${repo}") || fail "restamp: $out"
+  [[ "$out" == *"relocked	${repo}/.worktrees/plain"* && "$out" == *"relocked	${repo}/.worktrees/wt"* ]] || \
+    fail "reasonless locks must be restamped: $out"
+}
+
 test_scan_root_behind_symlink() {
   sandbox; local tmp="$SANDBOX"
   mv "${HOME}/d" "${tmp}/real-d" && ln -s "${tmp}/real-d" "${HOME}/d"
@@ -636,7 +706,7 @@ test_orphan_external_is_reported_and_skipped() {
   local repo; repo=$(make_repo proj)
   git -C "$repo" worktree add -q .worktrees/wt -b wt
   run_work_link --migrate "${repo}" >/dev/null || fail "migrate"
-  mkdir -p "${WORK}/gone/.venv"                                   # checkout deleted, external tree left behind
+  mkdir -p "${WORK}/gone/.venv/lib"                               # checkout deleted, external tree with content left behind
   git -C "$repo" worktree unlock .worktrees/wt                    # so this run has a lock to make after the orphan
   local out rc=0
   out=$(run_work_link) || rc=$?
@@ -933,5 +1003,9 @@ test_bare_lock_is_restamped_with_host
 test_ensure_never_removes_a_link
 test_ensure_rewrites_legacy
 test_standing_entries_do_not_fail_converge
+test_anchor_inside_dropbox_refuses
+test_empty_orphan_is_removed
+test_restamp_never_unlocks
+test_reasonless_lock_is_restamped
 
 print -- "work-link tests passed"

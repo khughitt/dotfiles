@@ -65,6 +65,18 @@ work_link_refuse_unavailable() {
 # storage behind an anchor is done by hand, as migration is.
 work_link_prepare_anchor() {
   local root="$1" anchor="${1:h}/${WORK_LINK_ANCHOR_NAME}"
+  # The anchor must be outside the synced tree, or it and everything behind it
+  # syncs. The Dropbox root carries a regular file named .dropbox (the
+  # client's config directory of the same name in $HOME is not a marker).
+  local dir="${root:h}"
+  while true; do
+    [[ -f "${dir}/.dropbox" ]] && {
+      print -u2 -- "anchor ${anchor} would be inside the Dropbox folder ${dir}; scan from the Dropbox folder itself"
+      return 1
+    }
+    [[ "$dir" == / ]] && break
+    dir="${dir:h}"
+  done
   if [[ -n "${WORK_ROOT:-}" ]]; then
     if [[ -L "$anchor" ]]; then
       [[ -e "$anchor" ]] || {
@@ -277,7 +289,7 @@ work_link_check_ignore() {
 # lock names: this host's is breakage, another host's is skipped, a lock that
 # names no host is `unowned`.
 work_link_lock_worktrees() {
-  local dotwt="$1" child real gitdir
+  local dotwt="$1" child real gitdir current tmp
   for child in "$dotwt"/*(N/); do
     [[ -L "$child" ]] && continue                      # a cross-project symlink, not a worktree
     [[ -f "$child/.git" ]] || continue                 # a plain directory parked here
@@ -291,16 +303,20 @@ work_link_lock_worktrees() {
       continue
     }
     if [[ -f "$gitdir/locked" ]]; then
-      # A bare lock (the 2026-09-14 reason, or one taken by hand from the
-      # rule's older text) on a worktree that exists here is this host's:
-      # restamp it so other hosts can tell it is not theirs. Any other reason
-      # is someone else's lock and is left alone.
-      [[ "$(<"$gitdir/locked")" == "$WORK_LINK_LOCK_PREFIX" ]] || continue
-      if git -C "$child" worktree unlock -- "$child" \
-          && git -C "$child" worktree lock --reason "$WORK_LINK_LOCK_REASON" -- "$child"; then
+      # A bare lock, or one git took with no reason given (empty, or "added
+      # with --lock"), on a worktree that exists here is this host's:
+      # restamp it so other hosts can tell it is not theirs. The reason is
+      # written in one rename, so the worktree is never unlocked, not even
+      # for a moment another host's prune could see through Dropbox. Any
+      # other reason is someone else's lock and is left alone.
+      current=$(<"$gitdir/locked")
+      [[ -z "$current" || "$current" == "added with --lock" || "$current" == "$WORK_LINK_LOCK_PREFIX" ]] || continue
+      tmp="${gitdir}/locked.work-link.$$"
+      if printf '%s' "$WORK_LINK_LOCK_REASON" > "$tmp" && mv -f -- "$tmp" "$gitdir/locked"; then
         print -- "relocked	${child}	${WORK_LINK_LOCK_REASON}"
       else
-        work_link_report failed "$child" "relock with the host name failed"
+        rm -f -- "$tmp"
+        work_link_report failed "$child" "restamping the lock with the host name failed"
       fi
       continue
     fi
@@ -359,7 +375,7 @@ typeset -gi WORK_LINK_REPORTED=0
 typeset -g WORK_LINK_MODE=converge
 
 # Reports (as opposed to the actions moved/relinked/materialized/rewritten/
-# relocked/locked, which mean the named change happened): needs-migration,
+# relocked/locked/removed-orphan, which mean the named change happened): needs-migration,
 # conflict, foreign, unignored, orphan, prunable, unowned, broken, busy,
 # uninspectable, and failed (a
 # mutating command that should have succeeded did not: see work_link_move,
@@ -513,7 +529,7 @@ work_link_handle() {
 # Scan both sides: the in-tree scope for entries, and the store for external
 # copies whose in-tree entry is gone (the relink case). Then lock worktrees.
 work_link_run() {
-  local mode="$1" root="$2"; shift 2
+  local mode="$1" root="$2" parent; shift 2
   local -a scopes
   scopes=("$@")
   (( ${#scopes} )) || scopes=("$root")
@@ -544,6 +560,23 @@ work_link_run() {
     [[ "$in_scope" == true ]] || continue
     seen[$intree]=1
     if [[ ! -d "${intree:h}" ]]; then
+      # Empty: a target materialized for a checkout another host has since
+      # deleted or renamed. Nothing is lost by removing it and its empty
+      # parents up to the store.
+      if [[ -d "$external" && -z "$(ls -A -- "$external")" ]]; then
+        if [[ "$mode" == plan ]]; then
+          print -- "remove-orphan	${intree}	empty ${external}"
+        elif rmdir -- "$external"; then
+          parent="${external:h}"
+          while [[ "$parent" == "$WORK_LINK_STORE"/* ]] && rmdir -- "$parent" 2>/dev/null; do
+            parent="${parent:h}"
+          done
+          print -- "removed-orphan	${intree}	empty ${external}"
+        else
+          work_link_report failed "$intree" "cannot remove empty orphan ${external}"
+        fi
+        continue
+      fi
       work_link_report orphan "$intree" "external ${external} has no checkout behind it; delete it by hand or restore the checkout"
       continue
     fi
