@@ -1,25 +1,33 @@
 #!/usr/bin/env zsh
 # work-link: keep a checkout's git worktrees and generated build directories on
-# WORK_ROOT (a host-local disk) and reach them through in-tree symlinks.
+# host-local storage, off the synced tree, and reach them through in-tree symlinks.
 #
-# Same name, other disk: for an entry at <root>/<rel>/<name>, the external copy
-# is $WORK_ROOT/<rel>/<name> and the in-tree entry is a symlink to it. Names:
-# .worktrees, .venv, and target (only beside Cargo.toml). node_modules stays
-# in-tree: npm workspace links are relative and escape the directory.
+# Same name, other disk: for an entry at <root>/<rel>/<name>, the storage is
+# <anchor>/<rel>/<name> and the in-tree entry is a relative symlink to it
+# (../ per segment of <rel>, one more, then .dropbox-work/<rel>/<name>). The
+# anchor is <root>/../.dropbox-work, beside the synced root and outside it, so
+# the link text is the same on every host that syncs the tree and each host
+# decides where it lands. Names: .worktrees, .venv, and target (only beside
+# Cargo.toml). node_modules stays in-tree: npm workspace links are relative and
+# escape the directory.
 #
 #   work-link [--root DIR] [PATH ...]                converge: report, relink, lock
 #   work-link --migrate [--dry-run] [--root DIR] [PATH ...]
 #   work-link --ensure [--root DIR] NAME ...           inside a repository
 #
-# WORK_ROOT unset: an unconfigured host, everything stays in-tree. WORK_ROOT
-# set but not a directory: the storage is unavailable and every mode refuses,
-# so nothing is rebuilt in-tree during an outage. The root is never created
-# here: it is a mount point on the root filesystem, and mkdir -p would rebuild
-# the tree on the wrong disk. Design: ops docs/specs/2026-09-14-checkout-local-storage-design.md
+# WORK_ROOT set: the anchor is a link to it. Unset: the anchor is a local
+# directory. WORK_ROOT set but not a directory: the storage is unavailable and
+# every mode refuses, so nothing is rebuilt elsewhere during an outage.
+# WORK_ROOT itself is never created here: it is a mount point on the root
+# filesystem, and mkdir -p would rebuild the tree on the wrong disk.
+# Design: ops docs/specs/2026-09-14-checkout-local-storage-design.md, amended
+# by docs/specs/2026-09-23-host-neutral-work-links-design.md
 set -euo pipefail
 
 typeset -ga WORK_LINK_NAMES=(.worktrees .venv target)
 typeset -g WORK_LINK_LOCK_REASON="on WORK_ROOT storage"
+typeset -g WORK_LINK_ANCHOR_NAME=.dropbox-work
+typeset -g WORK_LINK_STORE=""
 
 work_link_usage() {
   cat <<'EOF'
@@ -27,9 +35,12 @@ Usage: work-link [--root DIR] [PATH ...]
        work-link --migrate [--dry-run] [--root DIR] [PATH ...]
        work-link --ensure [--root DIR] NAME ...
 
-Keep .worktrees, .venv and Cargo target directories on $WORK_ROOT behind
-in-tree symlinks. Converge reports drift, relinks entries whose external copy
-exists, and locks worktrees that resolve under WORK_ROOT. --migrate moves real
+Keep .worktrees, .venv and Cargo target directories off the synced tree,
+behind relative in-tree symlinks through the anchor <root>/../.dropbox-work
+(a link to $WORK_ROOT when it is set, a local directory otherwise). Converge
+reports drift, relinks entries whose external copy exists, materializes the
+target of a link that arrived from another host, rewrites this host's old
+absolute links, and locks worktrees in the store. --migrate moves real
 directories out (refusing any with open file handles). --ensure creates the
 external directory and link for the named entries in the current repository,
 adding the bare name to the clone's .git/info/exclude when its rules would
@@ -38,20 +49,58 @@ reports `outside` and leaves the entry in-tree.
 EOF
 }
 
-# Storage state from WORK_ROOT: unconfigured, available, or unavailable.
-work_link_storage() {
-  if [[ -z "${WORK_ROOT:-}" ]]; then
-    print -- unconfigured
-  elif [[ -d "$WORK_ROOT" ]]; then
-    print -- available
-  else
-    print -- unavailable
-  fi
-}
-
 work_link_refuse_unavailable() {
   print -u2 -- "WORK_ROOT is set to ${WORK_ROOT} but it is not a directory: storage unavailable, refusing"
   return 1
+}
+
+# Find or create the anchor beside the scan root and set WORK_LINK_STORE to
+# its physical path. WORK_ROOT (already resolved by main) set: the anchor must
+# be a link to it. Unset: a real directory. Anything else refuses; moving
+# storage behind an anchor is done by hand, as migration is.
+work_link_prepare_anchor() {
+  local root="$1" anchor="${1:h}/${WORK_LINK_ANCHOR_NAME}"
+  if [[ -n "${WORK_ROOT:-}" ]]; then
+    if [[ -L "$anchor" ]]; then
+      [[ -e "$anchor" ]] || {
+        print -u2 -- "anchor ${anchor} dangles ($(readlink -- "$anchor")): storage unavailable, refusing"
+        return 1
+      }
+      local resolved; resolved=$(readlink -f -- "$anchor")
+      [[ "$resolved" == "$WORK_ROOT" ]] || {
+        print -u2 -- "anchor ${anchor} resolves to ${resolved}, not WORK_ROOT ${WORK_ROOT}; repoint it by hand"
+        return 1
+      }
+    elif [[ -e "$anchor" ]]; then
+      print -u2 -- "anchor ${anchor} is not a link to WORK_ROOT ${WORK_ROOT}; move its content under WORK_ROOT and replace it by hand"
+      return 1
+    else
+      ln -s -- "$WORK_ROOT" "$anchor" || { print -u2 -- "cannot create anchor ${anchor}"; return 1; }
+      print -- "created	${anchor}	-> ${WORK_ROOT}"
+    fi
+  else
+    if [[ -L "$anchor" ]]; then
+      print -u2 -- "anchor ${anchor} is a link but WORK_ROOT is unset; set WORK_ROOT to its target or replace it by hand"
+      return 1
+    elif [[ -e "$anchor" && ! -d "$anchor" ]]; then
+      print -u2 -- "anchor ${anchor} exists and is not a directory"
+      return 1
+    elif [[ ! -e "$anchor" ]]; then
+      mkdir -- "$anchor" || { print -u2 -- "cannot create anchor ${anchor}"; return 1; }
+      print -- "created	${anchor}	-> local directory"
+    fi
+  fi
+  WORK_LINK_STORE=$(readlink -f -- "$anchor")
+}
+
+# The link text for <root>/<entryrel>: up out of the entry's directory and
+# out of the synced root, then into the anchor. The same on every host.
+work_link_link_text() {
+  local entryrel="$1" dir="${1:h}" up="../" seg
+  if [[ "$dir" != . ]]; then
+    for seg in "${(@s:/:)dir}"; do up+="../"; done
+  fi
+  print -- "${up}${WORK_LINK_ANCHOR_NAME}/${entryrel}"
 }
 
 # Candidate entries under a scan root: top-level matches of the names, never
@@ -105,14 +154,18 @@ work_link_repo_of() {
   return 1
 }
 
-# Classify an in-tree path against its external path. Prints one word.
+# Classify an in-tree path. TEXT is the relative link this tool writes; LEGACY
+# is this host's absolute form from before the anchor ($WORK_ROOT/<rel>/<name>,
+# empty when WORK_ROOT is unset). Prints one word.
 work_link_classify() {
-  local intree="$1" external="$2"
+  local intree="$1" external="$2" text="$3" legacy="$4"
   if [[ -L "$intree" ]]; then
     local target
     target=$(readlink -- "$intree")
-    if [[ "$target" == "$external" ]]; then
-      [[ -e "$intree" ]] && print -- linked || print -- dangling
+    if [[ "$target" == "$text" ]]; then
+      [[ -e "$intree" ]] && print -- linked || print -- materialize
+    elif [[ -n "$legacy" && "$target" == "$legacy" ]]; then
+      print -- legacy
     else
       print -- foreign
     fi
@@ -211,7 +264,7 @@ work_link_check_ignore() {
   esac
 }
 
-# Lock every worktree inside a .worktrees entry that resolves under WORK_ROOT,
+# Lock every worktree inside a .worktrees entry that resolves under the store,
 # each through its own repository: a worktree parked here may belong to another
 # repository, and only that repository's prune would delete it. Then report the
 # owning repository's entries that git itself marks prunable, or whose recorded
@@ -225,7 +278,7 @@ work_link_lock_worktrees() {
       work_link_report failed "$child" "realpath could not resolve it: not locked"
       continue
     }
-    [[ "$real" == "$WORK_ROOT"/* ]] || continue
+    [[ "$real" == "$WORK_LINK_STORE"/* ]] || continue
     gitdir=$(git -C "$child" rev-parse --path-format=absolute --git-dir 2>/dev/null) || {
       work_link_report broken "$child" "has a .git file but git cannot open it"
       continue
@@ -315,22 +368,25 @@ work_link_open_handles() {
 # that suppresses ERR_EXIT for the whole call tree, so a failing mv or ln -s
 # would otherwise be silently swallowed.
 work_link_move() {
-  local intree="$1" external="$2"
+  local intree="$1" external="$2" text="$3"
   mkdir -p -- "${external:h}" || return 1
   if [[ -d "$external" ]]; then
     rmdir -- "$external" || return 1
   fi
   mv -- "$intree" "$external" || return 1
-  ln -s -- "$external" "$intree" || return 1
+  ln -s -- "$text" "$intree" || return 1
 }
 
 # Converge or migrate one entry. Mode is converge, migrate, or plan.
 work_link_handle() {
   local mode="$1" intree="$2" root="$3"
   local rel="${intree#$root/}"
-  local external="${WORK_ROOT}/${rel}"
+  local external="${WORK_LINK_STORE}/${rel}"
+  local text; text=$(work_link_link_text "$rel")
+  local legacy=""
+  [[ -n "${WORK_ROOT:-}" ]] && legacy="${WORK_ROOT}/${rel}"
   local state
-  state=$(work_link_classify "$intree" "$external")
+  state=$(work_link_classify "$intree" "$external" "$text" "$legacy")
   case "$state" in
     linked)
       work_link_check_ignore "$intree" || true
@@ -338,7 +394,7 @@ work_link_handle() {
     relink)
       if [[ "$mode" == plan ]]; then
         print -- "relink	${intree}	<- ${external}"
-      elif ln -s -- "$external" "$intree"; then
+      elif ln -s -- "$text" "$intree"; then
         print -- "relinked	${intree}	<- ${external}"
       else
         work_link_report failed "$intree" "relink to ${external} failed"
@@ -364,7 +420,7 @@ work_link_handle() {
             print -- "held	${intree}	fix the ignore rule first"
           elif [[ "$mode" == plan ]]; then
             print -- "move	${intree}	$(work_link_size "$intree") -> ${external}"
-          elif work_link_move "$intree" "$external"; then
+          elif work_link_move "$intree" "$external" "$text"; then
             print -- "moved	${intree}	-> ${external}"
           else
             work_link_report failed "$intree" "move to ${external} failed"
@@ -375,16 +431,19 @@ work_link_handle() {
     conflict)
       work_link_report conflict "$intree" "real directory ($(work_link_size "$intree")) and non-empty ${external} ($(work_link_size "$external")); delete one side"
       ;;
-    dangling)
-      work_link_report dangling "$intree" "external ${external} is gone; run work-link --ensure ${intree:t} in the repository"
+    materialize)
+      work_link_report dangling "$intree" "target ${external} is missing"
+      ;;
+    legacy)
+      work_link_report foreign "$intree" "absolute link to ${legacy}; not yet rewritten"
       ;;
     foreign)
-      work_link_report foreign "$intree" "not a link to ${external}"
+      work_link_report foreign "$intree" "not a link to ${text}"
       ;;
   esac
 }
 
-# Scan both sides: the in-tree scope for entries, and WORK_ROOT for external
+# Scan both sides: the in-tree scope for entries, and the store for external
 # copies whose in-tree entry is gone (the relink case). Then lock worktrees.
 work_link_run() {
   local mode="$1" root="$2"; shift 2
@@ -406,10 +465,10 @@ work_link_run() {
   done
 
   local external
-  candidates=("${(@f)$(work_link_candidates "$WORK_ROOT")}") || return 1
+  candidates=("${(@f)$(work_link_candidates "$WORK_LINK_STORE")}") || return 1
   for external in "${candidates[@]}"; do
     [[ -n "$external" ]] || continue
-    intree="${root}/${external#$WORK_ROOT/}"
+    intree="${root}/${external#$WORK_LINK_STORE/}"
     [[ -n "${seen[$intree]:-}" ]] && continue
     local in_scope=false
     for scope in "${scopes[@]}"; do
@@ -468,21 +527,17 @@ work_link_ensure_excluded() {
 }
 
 work_link_ensure() {
-  local storage="$1" root="$2"; shift 2
+  local root="$1"; shift
   local toplevel
   toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || {
     print -u2 -- "work-link --ensure: not inside a git repository"
     return 1
   }
-  if [[ -n "$root" ]]; then
-    local resolved
-    resolved=$(readlink -f -- "$root") || {
-      print -u2 -- "work-link --ensure: cannot resolve --root ${root}"
-      return 1
-    }
-    root="$resolved"
-  else
-    root=$(readlink -f -- "${HOME}/d")
+  # The anchor is validated (and created when missing) before any write, as
+  # in every mode. A scan root that does not exist means this host syncs
+  # nothing: there is no anchor, and every checkout is outside.
+  if [[ -d "$root" ]]; then
+    work_link_prepare_anchor "$root" || return 1
   fi
   local name intree
   for name in "$@"; do
@@ -491,19 +546,15 @@ work_link_ensure() {
       *) print -u2 -- "work-link --ensure: unknown name ${name} (use .worktrees, .venv, target)"; return 1 ;;
     esac
     intree="${toplevel}/${name}"
-    if [[ "$storage" == unconfigured ]]; then
-      if [[ -L "$intree" && ! -e "$intree" ]]; then
-        rm -- "$intree"
-        print -- "removed-dangling	${intree}"
-      fi
-      continue
-    fi
-    if [[ "$toplevel" == "$WORK_ROOT"/* ]]; then
-      print -- "external	${intree}	already under WORK_ROOT"
+    # A worktree in the store: git reports its physical path, which is
+    # outside the scan root, so this comes before the outside check.
+    if [[ -n "$WORK_LINK_STORE" && "$toplevel" == "$WORK_LINK_STORE"/* ]]; then
+      print -- "external	${intree}	already in the store"
       continue
     fi
     # Outside the scan root (a clone under a temp dir) nothing is covered: the
-    # entry stays in-tree and setup goes on; only a synced dangling link goes.
+    # entry stays in-tree and setup goes on; only a dangling link goes. It is
+    # the one link --ensure removes: that checkout is not synced.
     # A link that resolves is another matter: a `cp -r` of a project under
     # ~/d carries its symlinks along, so this can be a live link back into
     # another checkout's external storage. Refuse rather than leave it for the
@@ -521,19 +572,24 @@ work_link_ensure() {
       print -- "outside	${intree}	${toplevel} is not under ${root}; stays in-tree"
       continue
     }
-    local external="${WORK_ROOT}/${toplevel#$root/}/${name}"
+    local rel="${toplevel#$root/}/${name}"
+    local external="${WORK_LINK_STORE}/${rel}"
+    local text; text=$(work_link_link_text "$rel")
+    local legacy=""
+    [[ -n "${WORK_ROOT:-}" ]] && legacy="${WORK_ROOT}/${rel}"
     local state
-    state=$(work_link_classify "$intree" "$external")
+    state=$(work_link_classify "$intree" "$external" "$text" "$legacy")
     case "$state" in
-      absent|relink|dangling) work_link_ensure_excluded "$intree" || return 1 ;;
+      absent|relink|materialize|legacy) work_link_ensure_excluded "$intree" || return 1 ;;
     esac
     case "$state" in
       linked) print -- "ok	${intree}" ;;
-      absent) mkdir -p -- "$external"; ln -s -- "$external" "$intree"; print -- "created	${intree}	-> ${external}" ;;
-      relink) ln -s -- "$external" "$intree"; print -- "relinked	${intree}	-> ${external}" ;;
-      dangling) rm -- "$intree"; mkdir -p -- "$external"; ln -s -- "$external" "$intree"; print -- "recreated	${intree}	-> ${external}" ;;
+      absent) mkdir -p -- "$external"; ln -s -- "$text" "$intree"; print -- "created	${intree}	-> ${external}" ;;
+      relink) ln -s -- "$text" "$intree"; print -- "relinked	${intree}	-> ${external}" ;;
+      materialize) mkdir -p -- "$external"; print -- "materialized	${intree}	-> ${external}" ;;
+      legacy) print -u2 -- "work-link --ensure: ${intree} is an absolute link to ${legacy}; run work-link to rewrite it"; return 1 ;;
       needs-migration|conflict) print -- "needs-migration	${intree}	real directory, left for work-link --migrate ${toplevel}" ;;
-      foreign) print -u2 -- "work-link --ensure: ${intree} exists and is not a link to ${external}"; return 1 ;;
+      foreign) print -u2 -- "work-link --ensure: ${intree} exists and is not a link to ${text}"; return 1 ;;
     esac
   done
 }
@@ -564,32 +620,30 @@ work_link_main() {
     command -v "$cmd" >/dev/null || { print -u2 -- "Missing required command: $cmd"; return 127; }
   done
 
-  local storage
-  storage=$(work_link_storage)
-  [[ "$storage" == unavailable ]] && { work_link_refuse_unavailable; return 1; }
-  # Normalized once, here, before --ensure and converge/migrate can diverge:
-  # both compare paths against $WORK_ROOT, and a trailing slash or a symlink
-  # component left unresolved makes the two sides disagree on "external".
-  [[ "$storage" == available ]] && WORK_ROOT=$(readlink -f -- "$WORK_ROOT")
+  if [[ -n "${WORK_ROOT:-}" ]]; then
+    [[ -d "$WORK_ROOT" ]] || { work_link_refuse_unavailable; return 1; }
+    # Normalized once: the anchor comparison and the legacy link form both
+    # use it, and a trailing slash or a symlink component left unresolved
+    # makes them disagree.
+    WORK_ROOT=$(readlink -f -- "$WORK_ROOT")
+  fi
+  [[ -n "$root" ]] || root="${HOME}/d"
+  root=$(readlink -f -- "$root") || { print -u2 -- "cannot resolve scan root ${root}"; return 1; }
 
   if [[ "$ensure" == true ]]; then
     (( ${#paths} )) || { print -u2 -- "work-link --ensure needs at least one name"; return 2; }
-    work_link_ensure "$storage" "$root" "${paths[@]}"
+    work_link_ensure "$root" "${paths[@]}"
     return
   fi
 
-  if [[ "$storage" == unconfigured ]]; then
-    print -- "WORK_ROOT is unset: unconfigured host, entries stay in-tree"
-    return 0
-  fi
-
-  [[ -n "$root" ]] || root=$(readlink -f -- "${HOME}/d")
-  root=$(readlink -f -- "$root")
   [[ -d "$root" ]] || { print -u2 -- "Scan root not found: $root"; return 1; }
-  [[ "$WORK_ROOT" == "$root"/* || "$root" == "$WORK_ROOT"/* ]] && {
-    print -u2 -- "WORK_ROOT ${WORK_ROOT} and the scan root ${root} must not nest"
-    return 1
-  }
+  if [[ -n "${WORK_ROOT:-}" ]]; then
+    [[ "$WORK_ROOT" == "$root"/* || "$root" == "$WORK_ROOT"/* ]] && {
+      print -u2 -- "WORK_ROOT ${WORK_ROOT} and the scan root ${root} must not nest"
+      return 1
+    }
+  fi
+  work_link_prepare_anchor "$root" || return 1
   local -a scopes
   local p
   for p in "${paths[@]}"; do

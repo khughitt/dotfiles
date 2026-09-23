@@ -20,6 +20,8 @@ make_tmpdir() {
 # A sandbox: $HOME/d is the scan root, $WORK is the storage. Exports HOME,
 # WORK_ROOT, SANDBOX (the temp root), and git isolation for the commands that
 # follow. Never call it in a subshell: the exports must reach the test.
+# $HOME/.dropbox-work is the anchor: a link to $WORK, as on a host that sets
+# WORK_ROOT.
 sandbox() {
   local tmp
   tmp=$(make_tmpdir)
@@ -32,6 +34,7 @@ sandbox() {
   export GIT_CONFIG_NOSYSTEM=1
   export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
   mkdir -p "${HOME}/d" "$WORK"
+  ln -s "$WORK" "${HOME}/.dropbox-work"   # the anchor beside the scan root, as titan has it
 }
 
 # A repository at $HOME/d/<rel> with a first commit and bare-name ignore rules.
@@ -60,7 +63,7 @@ test_migrate_moves_and_links() {
 
   local out
   out=$(run_work_link --migrate "${repo}") || fail "migrate exited non-zero: $out"
-  [[ -L "${repo}/.venv" && "$(readlink "${repo}/.venv")" == "${WORK}/proj/.venv" ]] || fail ".venv not linked: $out"
+  [[ -L "${repo}/.venv" && "$(readlink "${repo}/.venv")" == "../../.dropbox-work/proj/.venv" ]] || fail ".venv not linked: $out"
   [[ -f "${WORK}/proj/.venv/lib/x.py" ]] || fail ".venv content not moved"
   [[ -L "${repo}/target" && -f "${WORK}/proj/target/debug/bin" ]] || fail "cargo target not moved: $out"
   [[ -d "${repo}/data/target" && ! -L "${repo}/data/target" ]] || fail "target without Cargo.toml must stay"
@@ -74,7 +77,7 @@ test_nested_rel_path() {
   local repo; repo=$(make_repo group/sub/proj)
   mkdir -p "${repo}/.venv"
   run_work_link --migrate "${repo}" >/dev/null || fail "nested migrate"
-  [[ "$(readlink "${repo}/.venv")" == "${WORK}/group/sub/proj/.venv" ]] || fail "nested rel path"
+  [[ "$(readlink "${repo}/.venv")" == "../../../../.dropbox-work/group/sub/proj/.venv" ]] || fail "nested rel path"
 }
 
 test_converge_relinks_when_intree_absent() {
@@ -92,14 +95,13 @@ test_converge_reports_without_writing() {
   local repo; repo=$(make_repo proj)
   mkdir -p "${repo}/.venv" "${WORK}/proj/target/debug" "${repo}/target"
   touch "${repo}/Cargo.toml"
-  ln -s "${WORK}/proj/.worktrees" "${repo}/.worktrees"          # dangling
+  ln -s "../../.dropbox-work/proj/.worktrees" "${repo}/.worktrees"   # relative, target missing: materialized
   mkdir -p "${repo}/sub"; ln -s /elsewhere "${repo}/sub/.venv"  # foreign
   local out rc=0
   out=$(run_work_link "${repo}") || rc=$?
   [[ $rc -ne 0 ]] || fail "converge with findings must exit non-zero"
   [[ "$out" == *"needs-migration	${repo}/.venv"* ]] || fail "missing needs-migration: $out"
   [[ "$out" == *"conflict	${repo}/target"* ]] || fail "missing conflict: $out"
-  [[ "$out" == *"dangling	${repo}/.worktrees"* ]] || fail "missing dangling: $out"
   [[ "$out" == *"foreign	${repo}/sub/.venv"* ]] || fail "missing foreign: $out"
   [[ -d "${repo}/.venv" && ! -L "${repo}/.venv" ]] || fail "converge must not move"
   [[ -d "${repo}/target" && ! -L "${repo}/target" ]] || fail "converge must not resolve a conflict"
@@ -124,7 +126,7 @@ test_converge_reports_unignored_link() {
   local repo; repo=$(make_repo proj)
   printf '.venv/\ntarget/\n' > "${repo}/.gitignore"   # directory-only patterns
   mkdir -p "${WORK}/proj/.venv" "${repo}/target"; touch "${repo}/Cargo.toml"
-  ln -s "${WORK}/proj/.venv" "${repo}/.venv"
+  ln -s "../../.dropbox-work/proj/.venv" "${repo}/.venv"
   local out rc=0
   out=$(run_work_link "${repo}") || rc=$?
   [[ $rc -ne 0 && "$out" == *"unignored	${repo}/.venv"* ]] || fail "slash pattern on a link must be reported: $out"
@@ -235,20 +237,70 @@ test_ensure_writes_the_local_exclude_when_needed() {
   [[ "$out" == "ok	"* && "$(grep -c '^\.venv$' "${repo}/.git/info/exclude")" == 1 ]] || fail "ensure must be idempotent: $out"
 }
 
-test_unconfigured_and_unavailable() {
+test_anchor_states() {
   sandbox
   local repo; repo=$(make_repo proj)
   mkdir -p "${repo}/.venv"
-  local out
-  out=$(WORK_ROOT= run_work_link "${repo}") || fail "unconfigured converge must exit 0: $out"
-  [[ "$out" == *unconfigured* && -d "${repo}/.venv" ]] || fail "unconfigured must do nothing: $out"
-  local rc=0
-  out=$(WORK_ROOT="${WORK}/missing" run_work_link "${repo}") || rc=$?
+  local anchor="${HOME}/.dropbox-work" out rc
+
+  # No WORK_ROOT: the anchor becomes a real local directory, and converge runs.
+  rm "$anchor"
+  out=$(WORK_ROOT= run_work_link "${repo}") || true            # exit status on needs-migration is Task 3's
+  [[ -d "$anchor" && ! -L "$anchor" ]] || fail "anchor must be a real directory without WORK_ROOT: $out"
+  [[ "$out" == "created	${anchor}	-> local directory"* ]] || fail "anchor creation must be reported: $out"
+  [[ "$out" == *"needs-migration	${repo}/.venv"* ]] || fail "converge must run without WORK_ROOT: $out"
+
+  # WORK_ROOT set while the anchor is a real directory: refuse, write nothing.
+  rc=0; out=$(run_work_link "${repo}") || rc=$?
+  [[ $rc -eq 1 && "$out" == *"${anchor}"* && "$out" == *"not a link to WORK_ROOT"* ]] || fail "real anchor with WORK_ROOT must refuse: $out"
+
+  # WORK_ROOT set: the anchor becomes a link to it.
+  rmdir "$anchor"
+  out=$(run_work_link "${repo}") || true
+  [[ -L "$anchor" && "$(readlink -f "$anchor")" == "$(readlink -f "$WORK")" ]] || fail "anchor must link to WORK_ROOT: $out"
+
+  # An anchor pointing elsewhere refuses.
+  rm "$anchor"; mkdir -p "${SANDBOX}/other"; ln -s "${SANDBOX}/other" "$anchor"
+  rc=0; out=$(run_work_link "${repo}") || rc=$?
+  [[ $rc -eq 1 && "$out" == *"not WORK_ROOT"* ]] || fail "anchor elsewhere must refuse: $out"
+
+  # A link anchor while WORK_ROOT is unset refuses.
+  rc=0; out=$(WORK_ROOT= run_work_link "${repo}") || rc=$?
+  [[ $rc -eq 1 ]] || fail "link anchor without WORK_ROOT must refuse: $out"
+
+  # A dangling anchor is unavailable storage.
+  rm "$anchor"; ln -s "${SANDBOX}/gone" "$anchor"
+  rc=0; out=$(run_work_link "${repo}") || rc=$?
+  [[ $rc -eq 1 && "$out" == *dangles* ]] || fail "dangling anchor must refuse: $out"
+
+  # --ensure validates the anchor before the outside branch may drop a link.
+  local outside="${SANDBOX}/elsewhere/clone"
+  mkdir -p "$outside" && git -C "$outside" init -q
+  ln -s "${SANDBOX}/nowhere" "${outside}/.venv"
+  rc=0; out=$(cd "$outside" && "$work_link" --ensure .venv 2>&1) || rc=$?
+  [[ $rc -eq 1 && -L "${outside}/.venv" ]] || fail "ensure outside must refuse on an invalid anchor before touching the link: $out"
+
+  # WORK_ROOT set but not a directory: every mode refuses and nothing is created.
+  rm "$anchor"
+  rc=0; out=$(WORK_ROOT="${WORK}/missing" run_work_link "${repo}") || rc=$?
   [[ $rc -eq 1 && "$out" == *unavailable* ]] || fail "unavailable must refuse: $out"
-  [[ ! -e "${WORK}/missing" ]] || fail "unavailable must not create the root"
-  rc=0
-  out=$(cd "$repo" && WORK_ROOT="${WORK}/missing" "$work_link" --ensure .venv 2>&1) || rc=$?
+  [[ ! -e "${WORK}/missing" && ! -e "$anchor" && ! -L "$anchor" ]] || fail "unavailable must create nothing"
+  rc=0; out=$(cd "$repo" && WORK_ROOT="${WORK}/missing" "$work_link" --ensure .venv 2>&1) || rc=$?
   [[ $rc -eq 1 ]] || fail "ensure must refuse when unavailable: $out"
+}
+
+test_link_text_depth() {
+  sandbox
+  local a b c
+  a=$(make_repo one); b=$(make_repo two/deep); c=$(make_repo g/h/i/four)
+  local out
+  out=$(cd "$a" && "$work_link" --ensure .venv 2>&1) || fail "ensure one: $out"
+  out=$(cd "$b" && "$work_link" --ensure .venv 2>&1) || fail "ensure two: $out"
+  out=$(cd "$c" && "$work_link" --ensure .worktrees 2>&1) || fail "ensure four: $out"
+  [[ "$(readlink "${a}/.venv")" == "../../.dropbox-work/one/.venv" ]] || fail "depth one: $(readlink "${a}/.venv")"
+  [[ "$(readlink "${b}/.venv")" == "../../../.dropbox-work/two/deep/.venv" ]] || fail "depth two: $(readlink "${b}/.venv")"
+  [[ "$(readlink "${c}/.worktrees")" == "../../../../../.dropbox-work/g/h/i/four/.worktrees" ]] || fail "depth four: $(readlink "${c}/.worktrees")"
+  [[ "$(readlink -f "${c}/.worktrees")" == "$(readlink -f "${WORK}/g/h/i/four/.worktrees")" ]] || fail "depth four must resolve into WORK"
 }
 
 test_migrate_refuses_conflict_and_open_handle() {
@@ -335,7 +387,7 @@ test_ensure() {
 
   rm -rf "${WORK}/proj/.venv"
   out=$(cd "$repo" && "$work_link" --ensure .venv 2>&1) || fail "ensure dangling: $out"
-  [[ "$out" == recreated* && -d "${WORK}/proj/.venv" ]] || fail "ensure must recreate a dangling link: $out"
+  [[ "$out" == materialized* && -d "${WORK}/proj/.venv" ]] || fail "ensure must materialize a link whose target is gone: $out"
 
   rm "${repo}/.venv"; mkdir -p "${repo}/.venv/real"
   out=$(cd "$repo" && "$work_link" --ensure .venv 2>&1) || fail "ensure on a real dir must not fail setup: $out"
@@ -345,10 +397,6 @@ test_ensure() {
   out=$(cd "${repo}/.worktrees/wt" && "$work_link" --ensure .venv 2>&1) || fail "ensure in worktree: $out"
   [[ "$out" == external* && ! -e "${repo}/.worktrees/wt/.venv" ]] || fail "ensure inside WORK_ROOT must be a no-op: $out"
 
-  # Unconfigured host: a synced dangling link is removed, nothing else happens.
-  ln -sf /titan/work/proj/target "${repo}/target"
-  out=$(cd "$repo" && WORK_ROOT= "$work_link" --ensure target .venv 2>&1) || fail "ensure unconfigured: $out"
-  [[ "$out" == removed-dangling* && ! -L "${repo}/target" && -d "${repo}/.venv/real" ]] || fail "unconfigured ensure: $out"
 
   # A checkout outside the scan root (a clone under a temp dir) is not covered:
   # setup must still succeed, the entry stays in-tree, a dangling link goes.
@@ -382,12 +430,13 @@ test_ensure_outside_refuses_a_resolving_link() {
 test_scan_root_behind_symlink() {
   sandbox; local tmp="$SANDBOX"
   mv "${HOME}/d" "${tmp}/real-d" && ln -s "${tmp}/real-d" "${HOME}/d"
+  ln -s "$WORK" "${tmp}/.dropbox-work"
   local repo; repo=$(make_repo proj)
   git -C "$repo" worktree add -q .worktrees/wt -b wt
   mkdir -p "${repo}/.venv"
   local out
   out=$(run_work_link --migrate "${repo}") || fail "migrate behind symlinked root: $out"
-  [[ "$(readlink "${tmp}/real-d/proj/.venv")" == "${WORK}/proj/.venv" ]] || fail "rel must come from the resolved root"
+  [[ "$(readlink "${tmp}/real-d/proj/.venv")" == "../../.dropbox-work/proj/.venv" ]] || fail "rel must come from the resolved root"
   [[ "$out" == *"locked	"*"/.worktrees/wt"* ]] || fail "worktree locked behind symlinked root: $out"
   out=$(run_work_link) || fail "converge over the default root: $out"
   [[ -z "$out" ]] || fail "clean converge over ~/d: $out"
@@ -470,7 +519,9 @@ test_ensure_needs_only_git_and_coreutils() {
   local out
   out=$(cd "$repo" && PATH="${tmp}/thin" "$work_link" --ensure .venv 2>&1) || fail "ensure without fd and lsof on PATH: $out"
   [[ "$out" == created* ]] || fail "ensure on the thin PATH: $out"
-  out=$(cd "$repo" && PATH="${tmp}/thin" WORK_ROOT= "$work_link" --ensure .venv 2>&1) || fail "unconfigured ensure on the thin PATH: $out"
+  rm "${HOME}/.dropbox-work" "${repo}/.venv"
+  out=$(cd "$repo" && PATH="${tmp}/thin" WORK_ROOT= "$work_link" --ensure .venv 2>&1) || fail "ensure creating the anchor on the thin PATH: $out"
+  [[ -d "${HOME}/.dropbox-work" && "$out" == *"created	${repo}/.venv"* ]] || fail "thin PATH anchor creation: $out"
 }
 
 test_partial_lsof_output_is_an_inspection_failure() {
@@ -704,7 +755,8 @@ test_check_ignore_disregards_global_excludes_file
 test_info_exclude_bare_rule_satisfies_the_verdict
 test_failed_ignore_probe_refuses
 test_ensure_writes_the_local_exclude_when_needed
-test_unconfigured_and_unavailable
+test_anchor_states
+test_link_text_depth
 test_migrate_refuses_conflict_and_open_handle
 test_dry_run_moves_nothing
 test_worktrees_survive_migration_and_get_locked
