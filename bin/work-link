@@ -25,7 +25,12 @@
 set -euo pipefail
 
 typeset -ga WORK_LINK_NAMES=(.worktrees .venv target)
-typeset -g WORK_LINK_LOCK_REASON="on WORK_ROOT storage"
+# A worktree's lock names the host that owns it: a missing worktree's recorded
+# path cannot (a migrated one keeps its in-tree path, the same string on every
+# host), so the lock is what tells another host's worktree from local breakage.
+typeset -g WORK_LINK_HOST="${WORK_LINK_HOST:-$(uname -n)}"
+typeset -g WORK_LINK_LOCK_PREFIX="on WORK_ROOT storage"
+typeset -g WORK_LINK_LOCK_REASON="${WORK_LINK_LOCK_PREFIX} (host: ${WORK_LINK_HOST})"
 typeset -g WORK_LINK_ANCHOR_NAME=.dropbox-work
 typeset -g WORK_LINK_STORE=""
 
@@ -268,7 +273,9 @@ work_link_check_ignore() {
 # each through its own repository: a worktree parked here may belong to another
 # repository, and only that repository's prune would delete it. Then report the
 # owning repository's entries that git itself marks prunable, or whose recorded
-# path no longer resolves.
+# path no longer resolves. A missing worktree is classified by the host its
+# lock names: this host's is breakage, another host's is skipped, a lock that
+# names no host is `unowned`.
 work_link_lock_worktrees() {
   local dotwt="$1" child real gitdir
   for child in "$dotwt"/*(N/); do
@@ -283,7 +290,20 @@ work_link_lock_worktrees() {
       work_link_report broken "$child" "has a .git file but git cannot open it"
       continue
     }
-    [[ -f "$gitdir/locked" ]] && continue
+    if [[ -f "$gitdir/locked" ]]; then
+      # A bare lock (the 2026-09-14 reason, or one taken by hand from the
+      # rule's older text) on a worktree that exists here is this host's:
+      # restamp it so other hosts can tell it is not theirs. Any other reason
+      # is someone else's lock and is left alone.
+      [[ "$(<"$gitdir/locked")" == "$WORK_LINK_LOCK_PREFIX" ]] || continue
+      if git -C "$child" worktree unlock -- "$child" \
+          && git -C "$child" worktree lock --reason "$WORK_LINK_LOCK_REASON" -- "$child"; then
+        print -- "relocked	${child}	${WORK_LINK_LOCK_REASON}"
+      else
+        work_link_report failed "$child" "relock with the host name failed"
+      fi
+      continue
+    fi
     if git -C "$child" worktree lock --reason "$WORK_LINK_LOCK_REASON" -- "$child"; then
       print -- "locked	${child}"
     else
@@ -301,31 +321,46 @@ work_link_lock_worktrees() {
   # Path resolution alone misses what git already knows: a worktree whose .git
   # file is gone or broken is marked prunable in the listing while its recorded
   # path still resolves, so git's own prunable mark decides first.
-  local -a wts=() reasons=()
+  local -a wts=() reasons=() locks=()
+  local lock=""
   for line in "${(@f)listing}"; do
     if [[ "$line" == worktree\ * ]]; then
-      wts+=("$wt"); reasons+=("$reason")
-      wt="${line#worktree }"; reason=""
+      wts+=("$wt"); reasons+=("$reason"); locks+=("$lock")
+      wt="${line#worktree }"; reason=""; lock=""
     elif [[ "$line" == prunable* ]]; then
       reason="${${line#prunable}# }"
+    elif [[ "$line" == locked ]]; then
+      lock="(no reason)"
+    elif [[ "$line" == locked\ * ]]; then
+      lock="${line#locked }"
     fi
   done
-  wts+=("$wt"); reasons+=("$reason")
+  wts+=("$wt"); reasons+=("$reason"); locks+=("$lock")
   for (( i = 1; i <= ${#wts}; i++ )); do
     [[ -n "${wts[$i]}" ]] || continue
     if [[ -n "${reasons[$i]}" ]]; then
       work_link_report prunable "${wts[$i]}" "git marks it prunable (${reasons[$i]}); git -C ${repo} worktree prune would remove it"
     elif ! realpath -e -- "${wts[$i]}" >/dev/null 2>&1; then
-      work_link_report prunable "${wts[$i]}" "recorded in ${repo} but the path does not resolve"
+      case "${locks[$i]}" in
+        "")
+          work_link_report prunable "${wts[$i]}" "recorded in ${repo} but the path does not resolve" ;;
+        "$WORK_LINK_LOCK_REASON")
+          work_link_report prunable "${wts[$i]}" "locked for this host but the path does not resolve: its storage is gone" ;;
+        "${WORK_LINK_LOCK_PREFIX} (host: "*")")
+          ;;  # another host's worktree: absent here by design, kept by its lock
+        *)
+          work_link_report unowned "${wts[$i]}" "locked (${locks[$i]}) with no host named and the path does not resolve here; relock it on the host that owns it" ;;
+      esac
     fi
   done
 }
 
 typeset -gi WORK_LINK_REPORTED=0
 
-# Reports (as opposed to the actions moved/relinked/locked, which mean the
-# named change happened): needs-migration, conflict, dangling, foreign,
-# unignored, orphan, prunable, broken, busy, uninspectable, and failed (a
+# Reports (as opposed to the actions moved/relinked/materialized/rewritten/
+# relocked/locked, which mean the named change happened): needs-migration,
+# conflict, foreign, unignored, orphan, prunable, unowned, broken, busy,
+# uninspectable, and failed (a
 # mutating command that should have succeeded did not: see work_link_move,
 # the relink branch of work_link_handle, and work_link_lock_worktrees).
 work_link_report() {
@@ -375,6 +410,15 @@ work_link_move() {
   fi
   mv -- "$intree" "$external" || return 1
   ln -s -- "$text" "$intree" || return 1
+}
+
+# Replace a link with TEXT in one rename, so the path never stops resolving:
+# the new link is made under a temporary name beside it and renamed over it
+# (rename(2) replaces the link itself, not what it points at).
+work_link_rewrite() {
+  local intree="$1" text="$2" tmp="${1:h}/.${1:t}.work-link.$$"
+  ln -s -- "$text" "$tmp" || return 1
+  mv -T -- "$tmp" "$intree" || { rm -f -- "$tmp"; return 1; }
 }
 
 # Converge or migrate one entry. Mode is converge, migrate, or plan.
@@ -432,10 +476,26 @@ work_link_handle() {
       work_link_report conflict "$intree" "real directory ($(work_link_size "$intree")) and non-empty ${external} ($(work_link_size "$external")); delete one side"
       ;;
     materialize)
-      work_link_report dangling "$intree" "target ${external} is missing"
+      if [[ "$mode" == plan ]]; then
+        print -- "materialize	${intree}	-> ${external}"
+      elif mkdir -p -- "$external"; then
+        print -- "materialized	${intree}	-> ${external}"
+      else
+        work_link_report failed "$intree" "cannot create ${external}"
+      fi
       ;;
     legacy)
-      work_link_report foreign "$intree" "absolute link to ${legacy}; not yet rewritten"
+      if [[ "$mode" == plan ]]; then
+        print -- "rewrite	${intree}	${legacy} -> ${text}"
+      elif work_link_rewrite "$intree" "$text"; then
+        print -- "rewritten	${intree}	-> ${text}"
+        if [[ ! -e "$intree" ]]; then
+          mkdir -p -- "$external" && print -- "materialized	${intree}	-> ${external}" \
+            || work_link_report failed "$intree" "cannot create ${external}"
+        fi
+      else
+        work_link_report failed "$intree" "rewrite to ${text} failed"
+      fi
       ;;
     foreign)
       work_link_report foreign "$intree" "not a link to ${text}"
@@ -587,7 +647,10 @@ work_link_ensure() {
       absent) mkdir -p -- "$external"; ln -s -- "$text" "$intree"; print -- "created	${intree}	-> ${external}" ;;
       relink) ln -s -- "$text" "$intree"; print -- "relinked	${intree}	-> ${external}" ;;
       materialize) mkdir -p -- "$external"; print -- "materialized	${intree}	-> ${external}" ;;
-      legacy) print -u2 -- "work-link --ensure: ${intree} is an absolute link to ${legacy}; run work-link to rewrite it"; return 1 ;;
+      legacy)
+        work_link_rewrite "$intree" "$text" || { print -u2 -- "work-link --ensure: rewrite of ${intree} failed"; return 1; }
+        [[ -e "$intree" ]] || mkdir -p -- "$external"
+        print -- "rewritten	${intree}	-> ${text}" ;;
       needs-migration|conflict) print -- "needs-migration	${intree}	real directory, left for work-link --migrate ${toplevel}" ;;
       foreign) print -u2 -- "work-link --ensure: ${intree} exists and is not a link to ${text}"; return 1 ;;
     esac

@@ -30,6 +30,7 @@ sandbox() {
   export HOME="${tmp}/home"
   export WORK="${tmp}/work"
   export WORK_ROOT="$WORK"
+  export WORK_LINK_HOST=host-a
   export GIT_CONFIG_GLOBAL=/dev/null
   export GIT_CONFIG_NOSYSTEM=1
   export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
@@ -103,6 +104,7 @@ test_converge_reports_without_writing() {
   [[ "$out" == *"needs-migration	${repo}/.venv"* ]] || fail "missing needs-migration: $out"
   [[ "$out" == *"conflict	${repo}/target"* ]] || fail "missing conflict: $out"
   [[ "$out" == *"foreign	${repo}/sub/.venv"* ]] || fail "missing foreign: $out"
+  [[ "$out" == *"materialized	${repo}/.worktrees"* && -d "${WORK}/proj/.worktrees" ]] || fail "missing materialized: $out"
   [[ -d "${repo}/.venv" && ! -L "${repo}/.venv" ]] || fail "converge must not move"
   [[ -d "${repo}/target" && ! -L "${repo}/target" ]] || fail "converge must not resolve a conflict"
 }
@@ -427,6 +429,135 @@ test_ensure_outside_refuses_a_resolving_link() {
   [[ -d "${WORK}/proj/.venv" ]] || fail "the external directory must be untouched: $out"
 }
 
+test_converge_materializes_a_synced_link() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  ln -s "../../.dropbox-work/proj/.venv" "${repo}/.venv"      # arrived from another host
+  local out
+  out=$(run_work_link --migrate --dry-run "${repo}") || fail "plan: $out"
+  [[ "$out" == *"materialize	${repo}/.venv"* && ! -e "${WORK}/proj/.venv" ]] || fail "dry run must only plan: $out"
+  out=$(run_work_link "${repo}") || fail "materialize must exit 0: $out"
+  [[ "$out" == "materialized	${repo}/.venv	-> "* ]] || fail "expected materialized: $out"
+  [[ -d "${WORK}/proj/.venv" && -z "$(ls -A "${WORK}/proj/.venv")" ]] || fail "target must be an empty directory"
+  [[ "$(readlink "${repo}/.venv")" == "../../.dropbox-work/proj/.venv" ]] || fail "the link must be untouched"
+  out=$(run_work_link "${repo}") || fail "second converge: $out"
+  [[ -z "$out" ]] || fail "materialize must be idempotent: $out"
+}
+
+test_converge_rewrites_legacy_absolute_link() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${WORK}/proj/.venv/lib"; touch "${WORK}/proj/.venv/lib/x.py"
+  ln -s "${WORK}/proj/.venv" "${repo}/.venv"                     # the 2026-09-14 form
+  mkdir -p "${repo}/sub"; git -C "${repo}/sub" init -q
+  printf '.venv\n' > "${repo}/sub/.gitignore"
+  ln -s "${WORK}/proj/sub/.venv" "${repo}/sub/.venv"             # legacy and dangling
+  local inode_before; inode_before=$(stat -L -c %i "${repo}/.venv")
+  exec {fd}<"${repo}/.venv/lib/x.py"                             # a process holding a file open under it
+  local out
+  out=$(run_work_link --migrate --dry-run "${repo}") || fail "plan: $out"
+  [[ "$out" == *"rewrite	${repo}/.venv"* && "$(readlink "${repo}/.venv")" == "${WORK}/proj/.venv" ]] || fail "dry run must only plan: $out"
+  out=$(run_work_link "${repo}") || fail "rewrite must exit 0: $out"
+  [[ "$out" == *"rewritten	${repo}/.venv"* ]] || fail "expected rewritten: $out"
+  [[ "$(readlink "${repo}/.venv")" == "../../.dropbox-work/proj/.venv" ]] || fail "link text not rewritten: $(readlink "${repo}/.venv")"
+  [[ "$(stat -L -c %i "${repo}/.venv")" == "$inode_before" ]] || fail "rewrite must resolve to the same directory"
+  read -r -u $fd _ || true; exec {fd}<&-
+  [[ "$out" == *"rewritten	${repo}/sub/.venv"* && -d "${WORK}/proj/sub/.venv" ]] || fail "a dangling legacy link is rewritten and materialized: $out"
+  ls -A "${repo}" | grep -q 'work-link' && fail "no temporary link may be left behind"
+  out=$(run_work_link "${repo}") || fail "second converge: $out"
+  [[ -z "$out" ]] || fail "rewrite must be idempotent: $out"
+
+  # Without WORK_ROOT the absolute form means nothing here: it is foreign and untouched.
+  ln -sfn "${WORK}/proj/.venv" "${repo}/.venv"
+  rm "${HOME}/.dropbox-work"
+  local rc=0
+  out=$(WORK_ROOT= run_work_link "${repo}") || rc=$?
+  [[ $rc -eq 1 && "$out" == *"foreign	${repo}/.venv"* && "$(readlink "${repo}/.venv")" == "${WORK}/proj/.venv" ]] || fail "absolute link on another host must be foreign: $out"
+}
+
+# One synced tree read by two hosts at the same path, as titan and europa
+# see it: host B has none of host A's storage and its own anchor. The
+# migrated worktree's recorded path is the same string on both hosts, so only
+# the host named in its lock tells host B that it is not its own.
+test_two_hosts_share_link_text() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  git -C "$repo" worktree add -q .worktrees/wt -b wt              # migrated: keeps its in-tree path
+  run_work_link --migrate "${repo}" >/dev/null || fail "migrate on host A"
+  git -C "$repo" worktree add -q .worktrees/post -b post          # post-link: records the store path
+  run_work_link "${repo}" >/dev/null || fail "lock on host A"
+  (cd "$repo" && "$work_link" --ensure .venv >/dev/null) || fail "ensure on host A"
+  local text; text=$(readlink "${repo}/.venv")
+  mv "$WORK" "${WORK}.away"; rm "${HOME}/.dropbox-work"
+  local out rc=0
+  out=$(WORK_LINK_HOST=host-b WORK_ROOT= run_work_link) || rc=$?
+  [[ $rc -eq 0 ]] || fail "host B converge must pass while host A's storage is absent: rc=$rc $out"
+  [[ "$out" != *prunable* && "$out" != *unowned* ]] || fail "host A's locked worktrees are neither prunable nor unowned on host B: $out"
+  [[ -d "${HOME}/.dropbox-work" && ! -L "${HOME}/.dropbox-work" ]] || fail "host B anchor: $out"
+  [[ "$out" == *"materialized	${repo}/.venv"* ]] || fail "host B materializes .venv: $out"
+  [[ "$out" == *"materialized	${repo}/.worktrees"* ]] || fail "host B materializes .worktrees: $out"
+  [[ "$out" != *rewritten* && "$out" != *relinked* && "$out" != *relocked* ]] || fail "host B must not write links or locks: $out"
+  [[ "$(readlink "${repo}/.venv")" == "$text" ]] || fail "link text must be untouched"
+  [[ "$(readlink -f "${repo}/.venv")" == "$(readlink -f "${HOME}/.dropbox-work")/proj/.venv" ]] || fail "host B link resolves into its own anchor"
+}
+
+# The same missing worktrees on their own host are breakage, whatever form
+# their recorded path takes; another host's are skipped; a lock that names no
+# host is reported, because nothing says who owns it.
+test_missing_locked_worktrees_by_owner() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  git -C "$repo" worktree add -q .worktrees/pre -b pre
+  run_work_link --migrate "${repo}" >/dev/null || fail "migrate"
+  git -C "$repo" worktree add -q .worktrees/post -b post
+  run_work_link "${repo}" >/dev/null || fail "lock post"
+  git -C "$repo" worktree add -q .worktrees/remote -b remote
+  git -C "$repo" worktree lock --reason "on WORK_ROOT storage (host: host-b)" .worktrees/remote
+  git -C "$repo" worktree add -q .worktrees/other -b other
+  git -C "$repo" worktree lock --reason "something else" .worktrees/other
+  rm -rf "${WORK}/proj/.worktrees/"{pre,post,remote,other}
+  local out rc=0
+  out=$(run_work_link "${repo}") || rc=$?
+  [[ $rc -eq 1 ]] || fail "local breakage must fail converge: $out"
+  [[ "$out" == *"prunable	"*"/.worktrees/pre	"* ]] || fail "a migrated local worktree is local breakage: $out"
+  [[ "$out" == *"prunable	"*"/.worktrees/post	"* ]] || fail "a post-link local worktree is local breakage: $out"
+  [[ "$out" != *"/.worktrees/remote"* ]] || fail "another host's worktree is skipped: $out"
+  [[ "$out" == *"unowned	"*"/.worktrees/other	"* ]] || fail "a lock without a host is reported: $out"
+}
+
+test_bare_lock_is_restamped_with_host() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  (cd "$repo" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure"
+  git -C "$repo" worktree add -q .worktrees/wt -b wt
+  git -C "$repo" worktree lock --reason "on WORK_ROOT storage" .worktrees/wt
+  local out
+  out=$(run_work_link "${repo}") || fail "restamp must exit 0: $out"
+  [[ "$out" == *"relocked	${repo}/.worktrees/wt	on WORK_ROOT storage (host: host-a)"* ]] || fail "bare lock restamped: $out"
+  [[ "$(git -C "$repo" worktree list --porcelain | grep '^locked')" == "locked on WORK_ROOT storage (host: host-a)" ]] || fail "lock reason: $(git -C "$repo" worktree list --porcelain)"
+  out=$(run_work_link "${repo}") || fail "second converge: $out"
+  [[ -z "$out" ]] || fail "restamp must be idempotent: $out"
+}
+
+test_ensure_never_removes_a_link() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  rm "${HOME}/.dropbox-work"
+  ln -s "../../.dropbox-work/proj/target" "${repo}/target"; touch "${repo}/Cargo.toml"
+  local out
+  out=$(cd "$repo" && WORK_ROOT= "$work_link" --ensure target .venv 2>&1) || fail "ensure without WORK_ROOT: $out"
+  [[ "$out" == *"materialized	${repo}/target"* && -L "${repo}/target" && -d "${HOME}/.dropbox-work/proj/target" ]] || fail "ensure must materialize, not remove: $out"
+  [[ "$out" == *"created	${repo}/.venv"* && -L "${repo}/.venv" ]] || fail "ensure must link on a host without WORK_ROOT: $out"
+}
+
+test_ensure_rewrites_legacy() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${WORK}/proj/.venv"; ln -s "${WORK}/proj/.venv" "${repo}/.venv"
+  local out
+  out=$(cd "$repo" && "$work_link" --ensure .venv 2>&1) || fail "ensure legacy: $out"
+  [[ "$out" == "rewritten	${repo}/.venv"* && "$(readlink "${repo}/.venv")" == "../../.dropbox-work/proj/.venv" ]] || fail "ensure must rewrite a legacy link: $out"
+}
 test_scan_root_behind_symlink() {
   sandbox; local tmp="$SANDBOX"
   mv "${HOME}/d" "${tmp}/real-d" && ln -s "${tmp}/real-d" "${HOME}/d"
@@ -781,5 +912,12 @@ test_realpath_failure_on_a_worktree_is_reported
 test_prunable_marked_by_git_is_reported
 test_failing_worktree_list_is_reported
 test_ensure_honors_root
+test_converge_materializes_a_synced_link
+test_converge_rewrites_legacy_absolute_link
+test_two_hosts_share_link_text
+test_missing_locked_worktrees_by_owner
+test_bare_lock_is_restamped_with_host
+test_ensure_never_removes_a_link
+test_ensure_rewrites_legacy
 
 print -- "work-link tests passed"
