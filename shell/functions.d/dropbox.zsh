@@ -18,8 +18,17 @@ function _dropbox_ignore_flux_name_pattern {
   printf '^(%s)$\n' "${(j:|:)escaped}"
 }
 
+# Build output names are generic (a repository can commit its dist), so a
+# match is marked only when git ignores it and tracks nothing under it.
+typeset -ga DROPBOX_IGNORE_FLUX_GUARDED_NAMES=(dist build .svelte-kit)
+
 function _dropbox_ignore_flux_candidates {
-  local root="${1:?Usage: _dropbox_ignore_flux_candidates ROOT [NAME ...]}"
+  local -a excludes
+  while [[ "${1:-}" == --exclude ]]; do
+    excludes+=(--exclude "${2:?Missing value for --exclude}")
+    shift 2
+  done
+  local root="${1:?Usage: _dropbox_ignore_flux_candidates [--exclude NAME ...] ROOT [NAME ...]}"
   shift
 
   local -a names candidates kept
@@ -44,7 +53,7 @@ function _dropbox_ignore_flux_candidates {
   while IFS= read -r -d $'\0' candidate; do
     candidate="${candidate%/}"
     [[ -n "${name_set[${candidate:t}]-}" ]] && candidates+=("$candidate")
-  done < <(fd -uu -0 -t d --prune "$pattern" "$root")
+  done < <(fd -uu -0 -t d --prune "${excludes[@]}" "$pattern" "$root")
 
   # Sort by byte value, not locale collation. UTF-8 locales ignore leading
   # punctuation when collating, so under en_US.UTF-8 "$root/.venv" collates as
@@ -69,6 +78,22 @@ function _dropbox_ignore_flux_candidates {
   done
 
   printf '%s\n' "${kept[@]}"
+}
+
+# Why a guarded candidate must stay synced, or nothing when git tracks nothing
+# under it and ignores it (tracked content first: check-ignore already calls a
+# directory with tracked files unignored, which would hide the reason). Anything git cannot answer for stays synced.
+function _dropbox_ignore_flux_guard_refusal {
+  local dir="${1:h}" name="${1:t}"
+  git -C "$dir" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+    print -- "not in a git work tree"
+    return
+  }
+  [[ -z "$(git -C "$dir" ls-files -- "$name")" ]] || {
+    print -- "tracked files inside"
+    return
+  }
+  git -C "$dir" check-ignore -q -- "$name" || print -- "not ignored by git"
 }
 
 function _dropbox_ignore_flux_is_ignored {
@@ -103,6 +128,9 @@ Usage: dropbox_ignore_flux [--root DIR] [--quiet] [--dry-run] [NAME ...]
 Set com.dropbox.ignored=1 on top-level high-churn Dropbox directories.
 Default names: node_modules .venv .worktrees .snakemake __pycache__
                .pytest_cache .ruff_cache .mypy_cache .uv-cache
+               dist build .svelte-kit
+dist, build and .svelte-kit are marked only when git ignores the directory
+and tracks nothing under it; any other match is reported and left synced.
 (<repo>/.git/worktrees is left to work-link, which marks it only on the host
 that owns its worktrees.)
 EOF
@@ -138,13 +166,29 @@ EOF
   }
 
   if [[ ${#names[@]} -eq 0 ]]; then
-    names=(node_modules .venv .worktrees .snakemake __pycache__ .pytest_cache .ruff_cache .mypy_cache .uv-cache)
+    names=(node_modules .venv .worktrees .snakemake __pycache__ .pytest_cache .ruff_cache .mypy_cache .uv-cache
+      "${DROPBOX_IGNORE_FLUX_GUARDED_NAMES[@]}")
   fi
 
-  local -a candidates
-  candidates=("${(@f)$(_dropbox_ignore_flux_candidates "$root" "${names[@]}")}")
+  # Two scans, because a scan stops at every match: a guarded name that fails
+  # its guard (a tracked build/ of sources) must not hide a node_modules below
+  # it. The guarded scan skips the plain names' directories, which are marked
+  # whole.
+  local -a plain guarded excludes candidates
+  local name
+  for name in "${names[@]}"; do
+    if (( ${DROPBOX_IGNORE_FLUX_GUARDED_NAMES[(Ie)$name]} )); then
+      guarded+=("$name")
+    else
+      plain+=("$name")
+      excludes+=(--exclude "$name")
+    fi
+  done
+  (( ${#plain} )) && candidates+=("${(@f)$(_dropbox_ignore_flux_candidates "$root" "${plain[@]}")}")
+  (( ${#guarded} )) && candidates+=("${(@f)$(_dropbox_ignore_flux_candidates "${excludes[@]}" "$root" "${guarded[@]}")}")
+  candidates=("${(@)candidates:#}")
 
-  local checked=0 ignored=0 updated=0 failed=0 candidate
+  local checked=0 ignored=0 updated=0 skipped=0 failed=0 candidate refusal
   for candidate in "${candidates[@]}"; do
     checked=$((checked + 1))
 
@@ -152,6 +196,15 @@ EOF
       ignored=$((ignored + 1))
       [[ "$quiet" == "true" ]] || print -- "Already ignored: $candidate"
       continue
+    fi
+
+    if (( ${DROPBOX_IGNORE_FLUX_GUARDED_NAMES[(Ie)${candidate:t}]} )); then
+      refusal=$(_dropbox_ignore_flux_guard_refusal "$candidate")
+      if [[ -n "$refusal" ]]; then
+        skipped=$((skipped + 1))
+        [[ "$quiet" == "true" ]] || print -- "Skipped ($refusal): $candidate"
+        continue
+      fi
     fi
 
     if [[ "$dry_run" == "true" ]]; then
@@ -170,7 +223,7 @@ EOF
   done
 
   if [[ "$quiet" != "true" ]]; then
-    print -- "Checked: $checked, already ignored: $ignored, updated: $updated, failed: $failed"
+    print -- "Checked: $checked, already ignored: $ignored, updated: $updated, skipped: $skipped, failed: $failed"
   fi
 
   [[ "$failed" -eq 0 ]]

@@ -186,9 +186,45 @@ test_default_names_leave_git_worktrees_alone() {
   [[ "$out" != *"/.git/worktrees"* ]] || fail "default names must not mark .git/worktrees: $out"
 }
 
+# Build output names are generic, so git decides: marked only when ignored and
+# nothing under it is tracked. A guarded match that stays synced must not hide
+# the plain names below it (the scan stops at matches).
+test_guarded_build_output_follows_git() {
+  local tmp
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p \
+    "${tmp}/app/dist" "${tmp}/app/packages/web/.svelte-kit" "${tmp}/app/node_modules/pkg/dist" \
+    "${tmp}/lib/dist" "${tmp}/lib/build/tool/node_modules" \
+    "${tmp}/plain/dist" "${tmp}/loose/build"
+  print -l 'dist/' '.svelte-kit/' 'node_modules/' > "${tmp}/app/.gitignore"
+  print -- 'x' > "${tmp}/lib/dist/index.js"
+  print -- 'x' > "${tmp}/lib/build/make.sh"
+  local repo
+  for repo in app lib plain; do
+    git -C "${tmp}/${repo}" init -q
+  done
+  print -- 'dist/' > "${tmp}/lib/.gitignore"
+  git -C "${tmp}/lib" add build/make.sh
+  git -C "${tmp}/lib" add -f dist/index.js
+
+  local out
+  out=$(dropbox_ignore_flux --root "$tmp" --dry-run)
+  [[ "$out" == *"Would ignore: ${tmp}/app/dist"$'\n'* ]] || fail "ignored dist is marked: $out"
+  [[ "$out" == *"Would ignore: ${tmp}/app/packages/web/.svelte-kit"* ]] || fail "ignored .svelte-kit is marked: $out"
+  [[ "$out" != *"${tmp}/app/node_modules/pkg/dist"* ]] || fail "dist under a marked node_modules is not a candidate: $out"
+  [[ "$out" == *"Skipped (tracked files inside): ${tmp}/lib/dist"* ]] || fail "tracked dist stays synced: $out"
+  [[ "$out" == *"Skipped (tracked files inside): ${tmp}/lib/build"* ]] || fail "tracked build stays synced: $out"
+  [[ "$out" == *"Would ignore: ${tmp}/lib/build/tool/node_modules"* ]] || fail "node_modules under a synced build is marked: $out"
+  [[ "$out" == *"Skipped (not ignored by git): ${tmp}/plain/dist"* ]] || fail "unignored dist stays synced: $out"
+  [[ "$out" == *"Skipped (not in a git work tree): ${tmp}/loose/build"* ]] || fail "build outside git stays synced: $out"
+  [[ "$out" == *"skipped: 4, failed: 0" ]] || fail "summary counts the skips: $out"
+}
+
 test_candidates_keep_only_top_level_matches
 test_candidates_do_not_follow_symlinks
 test_default_names_leave_git_worktrees_alone
+test_guarded_build_output_follows_git
 test_dropbox_ignore_flux_sets_only_missing_attrs_without_sudo
 test_dropbox_ignore_flux_reports_failed_candidate_ownership
 test_fu_finds_functions_d_modules
