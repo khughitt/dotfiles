@@ -76,3 +76,9 @@ _wallpapers:
   ed4c39c4:
     _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230212_193553761.jpg
     glass.ring.beamSpeed: 300
+  7d51229c:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20221215_190955099.jpg
+    glass.inactive.distortion: 0.72
+    glass.inactive.roughness: 0.15
+    glass.roughness: 0.14
+    glass.inactive.noise: 0.02

@@ -69,10 +69,13 @@ alias snek="snakemake"
 
 # tasks
 alias ta='TASKS_FORMAT=pretty tasks --color=always'
-alias tag='TASKS_FORMAT=pretty tasks list --color=always | grep'
+alias tag='TASKS_FORMAT=pretty tasks list | grep -i'
 alias tal='TASKS_FORMAT=pretty tasks list --color=always'
+alias tals='TASKS_FORMAT=pretty tasks list --color=always --sort created'
+alias talp='TASKS_FORMAT=pretty tasks list --color=always --sort created --all-projects'
 alias tan='TASKS_FORMAT=pretty tasks next --color=always'
 alias tap='TASKS_FORMAT=pretty tasks projects --color=always'
+alias taps='TASKS_FORMAT=pretty tasks projects --color=always --sort activity'
 alias tas='TASKS_FORMAT=pretty tasks show --color=always'
 alias tuia='tui --all'
 

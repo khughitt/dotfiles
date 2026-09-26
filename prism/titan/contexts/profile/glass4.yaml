@@ -80,3 +80,16 @@ _wallpapers:
   ed4c39c4:
     _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230212_193553761.jpg
     glass.ring.beamSpeed: 300
+  6c1e59a4:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20240511_054540676.jpg
+    compositor.gaps: 36
+    glass.paneLip: 10
+  04e8e911:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20210725_140920030.jpg
+    glass.enabled: false
+  62c6ee14:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20220602_161647830.jpg
+    glass.ring.colorSource: familiar
+  216fba94:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20221205_185448322.jpg
+    glass.enabled: false

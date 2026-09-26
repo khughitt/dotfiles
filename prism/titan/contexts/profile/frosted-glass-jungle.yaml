@@ -34,3 +34,23 @@ _wallpapers:
   ed4c39c4:
     _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230212_193553761.jpg
     glass.ring.beamSpeed: 300
+  7d51229c:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20221215_190955099.jpg
+    glass.attenuationColor: "#097E5A"
+    glass.ior: 1.46
+    glass.chromaticAberration: 0.36
+    glass.inactive.chromaticAberration: 0.32
+    glass.inactive.iridescence: 0.02
+    glass.iridescence: 0.02
+    glass.inactive.noise: 0.05
+    glass.inactive.saturation: 0.85
+    glass.inactive.thickness: 73.9
+    glass.inactive.attenuationDistance: 28
+    glass.inactive.attenuationColor: "#435C99"
+    glass.attenuationDistance: 18
+    glass.distortion: 0.2
+    glass.inactive.distortion: 0.22
+    glass.inactive.roughness: 0.02
+    glass.inactive.distortionScale: 0.23
+    glass.inactive.ior: 1.5
+    glass.noise: 0.03
