@@ -46,6 +46,7 @@ transparency_mode = "glass"
 [hooks]
 theme_mode_changed = ["~/d/familiar/bin/familiar-noctalia scheme-sync"]
 wallpaper_changed = ["~/bin/prism context wallpaper \"$NOCTALIA_WALLPAPER_PATH\"", "~/bin/walictl observe"]
+colors_changed = ["~/bin/prism apply niri"]
 
 [idle]
 behavior_order = ["screen-off", "lock", "lock-and-suspend"]

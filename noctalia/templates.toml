@@ -34,3 +34,7 @@ output_path = "$XDG_CONFIG_HOME/lsd/colors.yaml"
 [theme.templates.user.ohai]
 input_path = "~/d/software/ohai/ohai/templates/noctalia/ohai-config.toml"
 output_path = "$XDG_CONFIG_HOME/ohai/config.toml"
+
+[theme.templates.user.prism]
+input_path = "~/d/prism/integrations/niri/noctalia-palette.template"
+output_path = "$XDG_STATE_HOME/prism/noctalia-palette.json"
