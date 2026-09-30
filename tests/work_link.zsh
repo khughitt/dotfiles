@@ -525,6 +525,26 @@ test_missing_locked_worktrees_by_owner() {
   [[ "$out" == *"unowned	"*"/.worktrees/other	"* ]] || fail "a lock without a host is reported: $out"
 }
 
+# A repository that moved within the scan root leaves worktree records at its
+# previous location: no host owns them, so relocking is the wrong advice.
+test_moved_repository_reports_moved_not_unowned() {
+  sandbox
+  local old; old=$(make_repo moved-proj)
+  git -C "$old" worktree add -q "$old/.claude/worktrees/agent-1" -b agent-1
+  git -C "$old" worktree lock --reason "claude agent agent-1 (pid 4242)" "$old/.claude/worktrees/agent-1"
+  mv -- "$old" "${HOME}/d/new-place"
+  (cd "${HOME}/d/new-place" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure after move"
+  git -C "${HOME}/d/new-place" worktree add -q .worktrees/live -b live
+  local out rc=0
+  out=$(run_work_link "${HOME}/d/new-place") || rc=$?
+  [[ $rc -eq 1 ]] || fail "a stale record must fail converge: $out"
+  [[ "$out" == *"prunable	${HOME}/d/moved-proj/.claude/worktrees/agent-1"*"the repository moved"* ]] || \
+    fail "a record under the scan root but outside the repository must read as a move: $out"
+  [[ "$out" == *"worktree unlock ${HOME}/d/moved-proj/.claude/worktrees/agent-1"* ]] || fail "unlock must be suggested: $out"
+  [[ "$out" != *"unowned	${HOME}/d/moved-proj"* ]] || fail "a moved repository's record must not read unowned: $out"
+  [[ "$out" == *"Claude Code agent lock"* ]] || fail "a Claude agent lock must be named as such: $out"
+}
+
 test_bare_lock_is_restamped_with_host() {
   sandbox
   local repo; repo=$(make_repo proj)
@@ -1074,6 +1094,7 @@ test_converge_materializes_a_synced_link
 test_converge_rewrites_legacy_absolute_link
 test_two_hosts_share_link_text
 test_missing_locked_worktrees_by_owner
+test_moved_repository_reports_moved_not_unowned
 test_bare_lock_is_restamped_with_host
 test_ensure_never_removes_a_link
 test_ensure_rewrites_legacy

@@ -287,9 +287,11 @@ work_link_check_ignore() {
 # owning repository's entries that git itself marks prunable, or whose recorded
 # path no longer resolves. A missing worktree is classified by the host its
 # lock names: this host's is breakage, another host's is skipped, a lock that
-# names no host is `unowned`.
+# names no host is `unowned`, unless the recorded path sits under the scan
+# root but outside the repository's current top level: then the repository
+# itself moved, no host owns the record, and unlock plus prune clears it.
 work_link_lock_worktrees() {
-  local dotwt="$1" child real gitdir current tmp
+  local dotwt="$1" root="$2" child real gitdir current tmp desc
   for child in "$dotwt"/*(N/); do
     [[ -L "$child" ]] && continue                      # a cross-project symlink, not a worktree
     [[ -f "$child/.git" ]] || continue                 # a plain directory parked here
@@ -365,7 +367,13 @@ work_link_lock_worktrees() {
         "${WORK_LINK_LOCK_PREFIX} (host: "*")")
           ;;  # another host's worktree: absent here by design, kept by its lock
         *)
-          work_link_report unowned "${wts[$i]}" "locked (${locks[$i]}) with no host named and the path does not resolve here; relock it on the host that owns it" ;;
+          desc="locked (${locks[$i]})"
+          [[ "${locks[$i]}" == "claude agent agent-"*\ \(pid\ *\) ]] && desc="a Claude Code agent lock (${locks[$i]})"
+          if [[ "${wts[$i]}" == "$root"/* && "${wts[$i]}" != "$repo"/* ]]; then
+            work_link_report prunable "${wts[$i]}" "${desc} at the repository's previous location: the repository moved to ${repo}; git -C ${repo} worktree unlock ${wts[$i]} and git -C ${repo} worktree prune would remove it"
+          else
+            work_link_report unowned "${wts[$i]}" "${desc} with no host named and the path does not resolve here; relock it on the host that owns it"
+          fi ;;
       esac
     fi
   done
@@ -647,7 +655,7 @@ work_link_run() {
   local repo
   for intree in "${(@ko)seen}"; do
     [[ "${intree:t}" == .worktrees && -L "$intree" && -d "$intree" ]] || continue
-    [[ "$mode" == plan ]] || work_link_lock_worktrees "$intree"
+    [[ "$mode" == plan ]] || work_link_lock_worktrees "$intree" "$root"
     repo=$(work_link_repo_of "$intree") || continue
     work_link_mark_admin "$repo" "$mode"
   done
