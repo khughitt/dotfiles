@@ -285,11 +285,11 @@ work_link_check_ignore() {
 # each through its own repository: a worktree parked here may belong to another
 # repository, and only that repository's prune would delete it. Then report the
 # owning repository's entries that git itself marks prunable, or whose recorded
-# path no longer resolves. A missing worktree is classified by the host its
-# lock names: this host's is breakage, another host's is skipped, a lock that
-# names no host is `unowned`, unless the recorded path sits under the scan
-# root but outside the repository's current top level: then the repository
-# itself moved, no host owns the record, and unlock plus prune clears it.
+# path no longer resolves. When the recorded path sits under the scan root
+# but outside the repository's current top level, the repository itself
+# moved: no host owns the record, whatever its lock names, and unlock plus
+# prune clears it. Otherwise the lock classifies: this host's is breakage,
+# another host's is skipped, a lock that names no host is `unowned`.
 work_link_lock_worktrees() {
   local dotwt="$1" root="$2" child real gitdir current tmp desc
   for child in "$dotwt"/*(N/); do
@@ -359,22 +359,31 @@ work_link_lock_worktrees() {
     if [[ -n "${reasons[$i]}" ]]; then
       work_link_report prunable "${wts[$i]}" "git marks it prunable (${reasons[$i]}); git -C ${repo} worktree prune would remove it"
     elif ! realpath -e -- "${wts[$i]}" >/dev/null 2>&1; then
-      case "${locks[$i]}" in
-        "")
-          work_link_report prunable "${wts[$i]}" "recorded in ${repo} but the path does not resolve" ;;
-        "$WORK_LINK_LOCK_REASON")
-          work_link_report prunable "${wts[$i]}" "locked for this host but the path does not resolve: its storage is gone" ;;
-        "${WORK_LINK_LOCK_PREFIX} (host: "*")")
-          ;;  # another host's worktree: absent here by design, kept by its lock
-        *)
-          desc="locked (${locks[$i]})"
-          [[ "${locks[$i]}" == "claude agent agent-"*\ \(pid\ *\) ]] && desc="a Claude Code agent lock (${locks[$i]})"
-          if [[ "${wts[$i]}" == "$root"/* && "${wts[$i]}" != "$repo"/* ]]; then
-            work_link_report prunable "${wts[$i]}" "${desc} at the repository's previous location: the repository moved to ${repo}; git -C ${repo} worktree unlock ${wts[$i]} and git -C ${repo} worktree prune would remove it"
-          else
-            work_link_report unowned "${wts[$i]}" "${desc} with no host named and the path does not resolve here; relock it on the host that owns it"
-          fi ;;
-      esac
+      if [[ "${wts[$i]}" == "$root"/* && "${wts[$i]}" != "$repo"/* ]]; then
+        # The repository itself moved: the record points at its previous
+        # location, which no lock can keep alive and no host can relock.
+        desc="locked (${locks[$i]})"
+        [[ -z "${locks[$i]}" ]] && desc="no lock"
+        case "${locks[$i]}" in
+          "$WORK_LINK_LOCK_REASON") desc="locked for this host" ;;
+          "${WORK_LINK_LOCK_PREFIX} (host: "*) desc="locked for another host (${locks[$i]})" ;;
+        esac
+        [[ "${locks[$i]}" == "claude agent agent-"*\ \(pid\ *\) ]] && desc="a Claude Code agent lock (${locks[$i]})"
+        work_link_report prunable "${wts[$i]}" "${desc} at the repository's previous location: the repository moved to ${repo}; git -C ${repo} worktree unlock ${wts[$i]} and git -C ${repo} worktree prune would remove it"
+      else
+        case "${locks[$i]}" in
+          "")
+            work_link_report prunable "${wts[$i]}" "recorded in ${repo} but the path does not resolve" ;;
+          "$WORK_LINK_LOCK_REASON")
+            work_link_report prunable "${wts[$i]}" "locked for this host but the path does not resolve: its storage is gone" ;;
+          "${WORK_LINK_LOCK_PREFIX} (host: "*)
+            ;;  # another host's worktree: absent here by design, kept by its lock
+          *)
+            desc="locked (${locks[$i]})"
+            [[ "${locks[$i]}" == "claude agent agent-"*\ \(pid\ *\) ]] && desc="a Claude Code agent lock (${locks[$i]})"
+            work_link_report unowned "${wts[$i]}" "${desc} with no host named and the path does not resolve here; relock it on the host that owns it" ;;
+        esac
+      fi
     fi
   done
 }
