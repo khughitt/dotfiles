@@ -6,9 +6,9 @@ priority: 3
 size: xs
 complexity: mid
 process: direct
-owner: main
+owner: dots-43b9e5
 created: 2026-09-23T10:46:21Z
-updated: 2026-09-30T18:20:09Z
+updated: 2026-09-30T18:20:44Z
 started: 2026-09-30T18:20:09Z
 depends: []
 tags: [testing]
@@ -20,3 +20,5 @@ Seen 2026-09-23 during ops-d099f0: just check and just test each failed once wit
 ## Notes
 
 - 2026-09-30T18:20:09Z (main): started
+- 2026-09-30T18:20:44Z (dots-43b9e5): resumed
+- 2026-09-30T18:20:44Z (dots-43b9e5): took over session sid:1810269 (owner main, stale)
