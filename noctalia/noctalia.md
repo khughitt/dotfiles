@@ -163,9 +163,10 @@ previews, and material sliders write once on release.
 The `wallpaper_changed` hook in `noctalia/config.toml` hands every wallpaper
 change to `prism context wallpaper` with `NOCTALIA_WALLPAPER_PATH`. Prism
 activates that wallpaper's context: an untuned wallpaper is an empty overlay
-and reloads nothing, a tuned one reapplies its delta. The wallpaper never
-captures panel edits on its own; `prism context pin wallpaper` makes it the
-write target for as long as it is on screen. Wallpapers are set on all
+and reloads nothing, a tuned one reapplies its delta. Panel edits never
+write the wallpaper directly: they land in a scratch layer, and when a
+wallpaper leaves, the hook folds scratch into that wallpaper's delta, so
+every edit stays with the wallpaper it was made on. Wallpapers are set on all
 monitors at once, so the hook firing once per connector is idempotent. The v4
 `wallpaperChange` feh command was X11-only and is not read by v5.
 The same hook then runs `walictl observe`, which records a wallpaper chosen in
@@ -175,9 +176,9 @@ off; `wali-rotate.timer` runs `walictl next` instead.
 Prism's entire config directory is linked to `prism/<hostname>/`, including
 `values.yaml` and `contexts/`. Setup creates the context directory; health
 checks the host link and rejects missing or redirected context storage.
-Pinned wallpaper edits and saved profiles therefore appear under that host
-in `git status`. Active layers and the wallpaper pin remain runtime state.
+Wallpaper deltas and saved profiles therefore appear under that host
+in `git status`. Active layers and the scratch layer remain runtime state.
 Titan uses this layout already. Europa needs the updated checkout and
 `./setup.sh --link-only --only graphical-config`, followed by
 `bin/dotfiles-health --skip-systemd`; its context directory is tracked and
-empty until the first saved profile or pinned edit.
+empty until the first saved profile or folded wallpaper edit.
