@@ -14,6 +14,9 @@ PRISM_ROOT="${HOME}/d/prism"
 # The wali checkout, reached the same way: bin/walictl execs into it and the
 # systemd and Noctalia-plugin phases link out of it.
 WALI_ROOT="${HOME}/d/wali"
+# The ops checkout, reached the same way: the obs-index systemd user units link
+# out of it.
+OPS_ROOT="${HOME}/d/ops"
 
 # Parse command line arguments
 HEADLESS=false
@@ -475,6 +478,9 @@ function setup_preflight() {
     preflight_check "wali checkout" "git clone git@github.com:khughitt/wali.git ${WALI_ROOT}" \
         test -x "${WALI_ROOT}/bin/walictl" || missing=1
 
+    preflight_check "ops checkout" "git clone git@github.com:khughitt/ops.git ${OPS_ROOT}" \
+        test -x "${OPS_ROOT}/bin/obs-index" || missing=1
+
     # Familiar's hooks run on every agent tool call and die on a missing
     # node_modules. Name the missing local install before hooks crash.
     # Guarded on the checkout the same way prism's dependencies are.
@@ -765,6 +771,8 @@ function setup_systemd_user_units() {
     # Only titan has a [phone] table; the timer is enabled by hand there.
     ln_s "${WALI_ROOT}/systemd/wali-phone-sync.service" "${XDG_CONFIG_HOME}/systemd/user/wali-phone-sync.service"
     ln_s "${WALI_ROOT}/systemd/wali-phone-sync.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-phone-sync.timer"
+    ln_s "${OPS_ROOT}/systemd/user/obs-index.service" "${XDG_CONFIG_HOME}/systemd/user/obs-index.service"
+    ln_s "${OPS_ROOT}/systemd/user/obs-index.timer" "${XDG_CONFIG_HOME}/systemd/user/obs-index.timer"
 
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload
@@ -772,6 +780,7 @@ function setup_systemd_user_units() {
         run systemctl --user enable --now work-link.timer
         run systemctl --user enable --now kernel-gate-nudge.timer
         run systemctl --user enable --now wali-rotate.timer
+        run systemctl --user enable --now obs-index.timer
     fi
 }
 
