@@ -12,6 +12,7 @@
 # escape the directory.
 #
 #   work-link [--root DIR] [PATH ...]                converge: report, relink, lock
+#   work-link --check [--root DIR] [PATH ...]        read-only: list dangling links
 #   work-link --migrate [--dry-run] [--root DIR] [PATH ...]
 #   work-link --ensure [--root DIR] NAME ...           inside a repository
 #
@@ -37,6 +38,7 @@ typeset -g WORK_LINK_STORE=""
 work_link_usage() {
   cat <<'EOF'
 Usage: work-link [--root DIR] [PATH ...]
+       work-link --check [--root DIR] [PATH ...]
        work-link --migrate [--dry-run] [--root DIR] [PATH ...]
        work-link --ensure [--root DIR] NAME ...
 
@@ -45,12 +47,19 @@ behind relative in-tree symlinks through the anchor <root>/../.dropbox-work
 (a link to $WORK_ROOT when it is set, a local directory otherwise). Converge
 reports drift, relinks entries whose external copy exists, materializes the
 target of a link that arrived from another host, rewrites this host's old
-absolute links, and locks worktrees in the store. --migrate moves real
-directories out (refusing any with open file handles). --ensure creates the
-external directory and link for the named entries in the current repository,
-adding the bare name to the clone's .git/info/exclude when its rules would
-not ignore the link; outside the scan root (--root DIR, default ~/d) it
-reports `outside` and leaves the entry in-tree.
+absolute links, and locks worktrees in the store. --check is a read-only
+preflight: it lists managed links whose target does not resolve and exits
+non-zero, so a setup or a hook can fail with the cause and the fix instead
+of a downstream tool's own error. --migrate moves real directories out
+(refusing any with open file handles). --ensure creates the external
+directory and link for the named entries in the current repository: NAME is
+a relative path ending in .worktrees, .venv or target, resolved against the
+current directory, except that a bare .worktrees always means the repository
+root's, wherever the cwd is; the bare name goes into the clone's
+.git/info/exclude when its rules would not ignore the link; outside the
+scan root (--root DIR, default ~/d) it reports `outside` and leaves the
+entry in-tree. The anchor resolves to $WORK_ROOT, so the directories under
+it are the in-tree links' targets on this host, not residue to clean up.
 EOF
 }
 
@@ -744,24 +753,58 @@ work_link_ensure_excluded() {
 
 work_link_ensure() {
   local root="$1"; shift
-  local toplevel
+  local toplevel prefix
   toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || {
     print -u2 -- "work-link --ensure: not inside a git repository"
     return 1
   }
+  # NAME resolves against the current directory: a setup recipe that cds
+  # into a subdirectory (python/.venv) means that subdirectory's entry, not
+  # one silently created at the repository root. --show-prefix is git's own
+  # view of the cwd, so the joined path can never disagree with the
+  # toplevel. A bare .worktrees is the repository's wherever the cwd is: it
+  # is one entry per repository, at the root, and a stray nested one would
+  # become a candidate converge then has to report.
+  prefix=$(git rev-parse --show-prefix 2>/dev/null) || prefix=""
   # The anchor is validated (and created when missing) before any write, as
   # in every mode. A scan root that does not exist means this host syncs
   # nothing: there is no anchor, and every checkout is outside.
   if [[ -d "$root" ]]; then
     work_link_prepare_anchor "$root" || return 1
   fi
-  local name intree
+  local name intree part
+  local -a parts
   for name in "$@"; do
-    case "$name" in
+    [[ "$name" == /* ]] && {
+      print -u2 -- "work-link --ensure: NAME must be relative to the current directory, not ${name}"
+      return 1
+    }
+    parts=("${(@s:/:)name}")
+    for part in "${parts[@]}"; do
+      [[ "$part" == . || "$part" == .. || -z "$part" ]] && {
+        print -u2 -- "work-link --ensure: NAME must be a plain relative path, not ${name}"
+        return 1
+      }
+    done
+    case "${parts[-1]}" in
       .worktrees|.venv|target) ;;
-      *) print -u2 -- "work-link --ensure: unknown name ${name} (use .worktrees, .venv, target)"; return 1 ;;
+      *) print -u2 -- "work-link --ensure: unknown name ${name} (use a path ending in .worktrees, .venv or target)"; return 1 ;;
     esac
-    intree="${toplevel}/${name}"
+    if [[ "${#parts}" -eq 1 && "${parts[-1]}" == .worktrees ]]; then
+      intree="${toplevel}/.worktrees"
+    else
+      intree="${toplevel}/${prefix}${name}"
+      # --ensure links inside an existing directory; it does not create the
+      # project's own directories.
+      [[ -d "${intree:h}" ]] || {
+        print -u2 -- "work-link --ensure: ${intree:h} does not exist; --ensure does not create it"
+        return 1
+      }
+    fi
+    [[ "$(readlink -f -- "${intree:h}")" == "${intree:h}" ]] || {
+      print -u2 -- "work-link --ensure: ${intree:h} contains a symlink; refusing a path outside the repository"
+      return 1
+    }
     # A worktree in the store: git reports its physical path, which is
     # outside the scan root, so this comes before the outside check.
     if [[ -n "$WORK_LINK_STORE" && "$toplevel" == "$WORK_LINK_STORE"/* ]]; then
@@ -788,7 +831,7 @@ work_link_ensure() {
       print -- "outside	${intree}	${toplevel} is not under ${root}; stays in-tree"
       continue
     }
-    local rel="${toplevel#$root/}/${name}"
+    local rel="${intree#$root/}"
     local external="${WORK_LINK_STORE}/${rel}"
     local text; text=$(work_link_link_text "$rel")
     local legacy=""
@@ -812,20 +855,66 @@ work_link_ensure() {
     esac
     # Before git worktree add: the admin directory git is about to write is
     # already ignored, so nothing of it syncs.
-    if [[ "$name" == .worktrees ]]; then
+    if [[ "${name:t}" == .worktrees ]]; then
       work_link_mark_admin "$toplevel" ensure || return 1
     fi
   done
 }
 
+# A read-only dangling detector for prefights: lists managed in-tree links
+# whose target does not resolve (the external directory deleted out from
+# under the link, the anchor gone) and exits non-zero, so a setup or a hook
+# can fail with the link and the fix instead of a downstream tool's own
+# error (uv's "File exists", where a dangling link stands in the place of
+# the directory it wants to create). Managed means the host-neutral link
+# text this tool writes or this host's legacy absolute form; anything else
+# is someone else's link. Nothing is created or validated here: the anchor
+# is not prepared (preparing writes), so a missing or dangling anchor
+# surfaces as every managed link dangling, which converge then names when
+# it refuses it. Converge (or --ensure, from the entry's directory)
+# materializes what is missing.
+work_link_check_dangling() {
+  local root="$1"; shift
+  local -a scopes
+  scopes=("$@")
+  (( ${#scopes} )) || scopes=("$root")
+  local scope candidate rel text target repo dangling=0
+  local -a candidates
+  for scope in "${scopes[@]}"; do
+    candidates=("${(@f)$(work_link_candidates "$scope")}") || return 1
+    for candidate in "${candidates[@]}"; do
+      [[ -n "$candidate" ]] || continue
+      work_link_is_entry "$candidate" || continue
+      [[ -L "$candidate" ]] || continue
+      rel="${candidate#$root/}"
+      text=$(work_link_link_text "$rel")
+      target=$(readlink -- "$candidate")
+      if [[ "$target" != "$text" ]]; then
+        [[ -n "${WORK_ROOT:-}" && "$target" == "${WORK_ROOT}/${rel}" ]] || continue
+      fi
+      [[ -e "$candidate" ]] && continue
+      repo=$(work_link_repo_of "$candidate") || repo=""
+      if [[ -n "$repo" ]]; then
+        printf 'dangling\t%s\t%s does not resolve; run work-link --root %s %s to materialize it\n' "$candidate" "$target" "${(q)root}" "${(q)repo}"
+      else
+        printf 'dangling\t%s\t%s does not resolve; run work-link --root %s to materialize it\n' "$candidate" "$target" "${(q)root}"
+      fi
+      dangling=1
+    done
+  done
+  (( dangling == 0 )) || return 1
+  return 0
+}
+
 work_link_main() {
-  local mode=converge dry_run=false root="" ensure=false
+  local mode=converge dry_run=false root="" ensure=false check=false
   local -a paths
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --migrate) mode=migrate ;;
       --dry-run) dry_run=true ;;
       --ensure) ensure=true ;;
+      --check) check=true ;;
       --root) shift; root="${1:?Missing value for --root}" ;;
       --help|-h) work_link_usage; return 0 ;;
       --) shift; paths+=("$@"); break ;;
@@ -834,12 +923,30 @@ work_link_main() {
     esac
     shift
   done
+  # --check is a read-only preflight, not a step of another mode.
+  if [[ "$check" == true && ( "$ensure" == true || "$mode" == migrate || "$dry_run" == true ) ]]; then
+    print -u2 -- "work-link: --check stands alone; it cannot combine with --ensure, --migrate or --dry-run"
+    return 2
+  fi
   # --ensure runs from every project's setup and must work on a machine that has
-  # only git; the scan needs fd, and only a migration needs lsof.
-  local -a required=(git realpath)
-  [[ "$ensure" == true ]] || required+=(fd attr)
-  # --ensure needs attr only to mark the worktree admin directory.
-  [[ "$ensure" == true ]] && (( ${paths[(Ie).worktrees]} )) && required+=(attr)
+  # only git; the scan needs fd, only a migration needs lsof, and --check needs
+  # only the scan, being read-only. --ensure needs attr only to mark the
+  # worktree admin directory, which any name ending in .worktrees asks for.
+  local -a required
+  if [[ "$ensure" == true ]]; then
+    required=(git realpath)
+    local n
+    for n in "${paths[@]}"; do
+      if [[ "${n:t}" == .worktrees ]]; then
+        required+=(attr)
+        break
+      fi
+    done
+  elif [[ "$check" == true ]]; then
+    required=(fd)
+  else
+    required=(git realpath fd attr)
+  fi
   [[ "$mode" == migrate || "$dry_run" == true ]] && required+=(lsof)
   local cmd
   for cmd in "${required[@]}"; do
@@ -863,13 +970,6 @@ work_link_main() {
   fi
 
   [[ -d "$root" ]] || { print -u2 -- "Scan root not found: $root"; return 1; }
-  if [[ -n "${WORK_ROOT:-}" ]]; then
-    [[ "$WORK_ROOT" == "$root"/* || "$root" == "$WORK_ROOT"/* ]] && {
-      print -u2 -- "WORK_ROOT ${WORK_ROOT} and the scan root ${root} must not nest"
-      return 1
-    }
-  fi
-  work_link_prepare_anchor "$root" || return 1
   local -a scopes
   local p
   for p in "${paths[@]}"; do
@@ -878,6 +978,22 @@ work_link_main() {
     [[ "$p" == "$root" || "$p" == "$root"/* ]] || { print -u2 -- "Not under ${root}: $p"; return 1; }
     scopes+=("$p")
   done
+
+  if [[ "$check" == true ]]; then
+    # Read-only: the anchor is not prepared (preparing writes), so nothing
+    # is created or validated here; a missing or dangling anchor surfaces
+    # as every managed link dangling, which converge names when it refuses.
+    work_link_check_dangling "$root" "${scopes[@]}" || return 1
+    return 0
+  fi
+
+  if [[ -n "${WORK_ROOT:-}" ]]; then
+    [[ "$WORK_ROOT" == "$root"/* || "$root" == "$WORK_ROOT"/* ]] && {
+      print -u2 -- "WORK_ROOT ${WORK_ROOT} and the scan root ${root} must not nest"
+      return 1
+    }
+  fi
+  work_link_prepare_anchor "$root" || return 1
 
   if [[ "$dry_run" == true ]]; then
     WORK_LINK_MODE=plan

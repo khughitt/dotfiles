@@ -1105,6 +1105,97 @@ test_ensure_honors_root() {
   [[ ! -e "${repo}/.venv" && ! -e "${WORK}/proj" ]] || fail "the outside report must create nothing: $out"
 }
 
+# --ensure resolves NAME against the current directory: a setup recipe that
+# cds into a subdirectory (beliefs' python/.venv) means that subdirectory's
+# entry, not one silently created at the repository root. A bare .worktrees
+# is the repository's wherever the cwd is (one entry per repository, at the
+# root, and a stray nested one would become a candidate). An explicit path
+# names any directory's entry; an absolute or escaping NAME, or one that
+# ends in something else or sits under a directory that does not exist, is
+# refused rather than guessed at.
+test_ensure_resolves_name_against_cwd() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${repo}/python"; touch "${repo}/python/Cargo.toml"
+  local out rc=0
+  out=$(cd "${repo}/python" && "$work_link" --ensure .venv 2>&1) || fail "ensure from a subdirectory: $out"
+  [[ -L "${repo}/python/.venv" ]] || fail "the subdirectory's entry must be linked: $out"
+  [[ "$(readlink "${repo}/python/.venv")" == "../../../.dropbox-work/proj/python/.venv" ]] || \
+    fail "the link text must name the subdirectory's storage: $(readlink "${repo}/python/.venv")"
+  [[ -d "${WORK}/proj/python/.venv" ]] || fail "the external directory must be the subdirectory's: $out"
+  [[ ! -e "${repo}/.venv" && ! -e "${WORK}/proj/.venv" ]] || fail "nothing may be created at the repository root: $out"
+  out=$(run_work_link "${repo}") || fail "converge must be clean over the nested entry: $out"
+
+  # The incident's shape: a dangling link in the subdirectory (its external
+  # target deleted), ensured from there, materializes in place.
+  rm -rf "${WORK}/proj/python/.venv"
+  out=$(cd "${repo}/python" && "$work_link" --ensure .venv 2>&1) || fail "ensure over a dangling nested link: $out"
+  [[ "$out" == "materialized	${repo}/python/.venv"* && -d "${WORK}/proj/python/.venv" ]] || \
+    fail "the dangling nested link must materialize in place: $out"
+
+  # A bare .worktrees is the repository's, not the cwd's.
+  out=$(cd "${repo}/python" && "$work_link" --ensure .worktrees 2>&1) || fail "ensure .worktrees from a subdirectory: $out"
+  [[ -L "${repo}/.worktrees" && ! -e "${repo}/python/.worktrees" ]] || fail "a bare .worktrees belongs to the repository root: $out"
+
+  # An explicit path names any directory's entry.
+  out=$(cd "${repo}" && "$work_link" --ensure python/target 2>&1) || fail "ensure with a path NAME: $out"
+  [[ -L "${repo}/python/target" && -d "${WORK}/proj/python/target" ]] || fail "a path NAME must ensure that path's entry: $out"
+  out=$(run_work_link "${repo}") || fail "converge over the path-named entry: $out"
+
+  # Malformed and escaping NAMEs are refused, and nothing is created.
+  rc=0; out=$(cd "${repo}" && "$work_link" --ensure ../.venv 2>&1) || rc=$?
+  [[ $rc -ne 0 && "$out" == *"plain relative path"* ]] || fail "an escaping NAME must be refused: $out"
+  rc=0; out=$(cd "${repo}" && "$work_link" --ensure /tmp/.venv 2>&1) || rc=$?
+  [[ $rc -ne 0 && "$out" == *"relative to the current directory"* ]] || fail "an absolute NAME must be refused: $out"
+  rc=0; out=$(cd "${repo}" && "$work_link" --ensure python/code 2>&1) || rc=$?
+  [[ $rc -ne 0 && "$out" == *unknown* ]] || fail "a NAME not ending in a managed name must be refused: $out"
+  rc=0; out=$(cd "${repo}" && "$work_link" --ensure missing/.venv 2>&1) || rc=$?
+  [[ $rc -ne 0 && "$out" == *"does not exist"* && ! -e "${repo}/missing" ]] || \
+    fail "a NAME under a missing directory must be refused, not created: $out"
+
+  mkdir -p "${SANDBOX}/elsewhere"
+  ln -s "${SANDBOX}/elsewhere" "${repo}/escape"
+  rc=0; out=$(cd "${repo}" && "$work_link" --ensure escape/.venv 2>&1) || rc=$?
+  [[ $rc -ne 0 && ! -e "${SANDBOX}/elsewhere/.venv" ]] || \
+    fail "a NAME through a symlinked directory must not write outside the repository: $out"
+}
+
+# A dangling managed link (its external target deleted out from under it)
+# must surface in --check with the link and the fix, not only later as a
+# downstream tool's own error (uv's "File exists"). --check is the preflight
+# a setup or a hook can call: read-only, listing every managed form (the
+# host-neutral text and this host's legacy absolute one), leaving foreign
+# links alone, and exiting 0 printing nothing over a clean tree.
+test_check_lists_dangling_links() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${repo}/python" "${repo}/sub" "${repo}/foreign"
+  (cd "${repo}" && "$work_link" --ensure .venv python/.venv >/dev/null) || fail "ensure"
+  rm -rf "${WORK}/proj/.venv" "${WORK}/proj/python/.venv"
+  ln -s "${WORK}/proj/sub/.venv" "${repo}/sub/.venv"   # legacy form, dangling
+  ln -s /elsewhere "${repo}/foreign/.venv"           # foreign: not ours to report
+  local out rc=0
+  out=$(run_work_link --check --root "${HOME}/d" "${repo}") || rc=$?
+  [[ $rc -ne 0 ]] || fail "--check must exit non-zero over dangling links: $out"
+  [[ "$out" == *"dangling	${repo}/.venv	"*"work-link --root ${HOME}/d ${repo} to materialize it"* ]] || \
+    fail "the root entry must be listed with the fix: $out"
+  [[ "$out" == *"dangling	${repo}/python/.venv	"*"work-link --root ${HOME}/d ${repo}"* ]] || fail "a nested entry must be listed: $out"
+  [[ "$out" == *"dangling	${repo}/sub/.venv	"* ]] || fail "a legacy-form dangling link must be listed: $out"
+  [[ "$out" != *"foreign/.venv"* ]] || fail "a foreign link is not a managed dangling link: $out"
+  [[ ! -e "${WORK}/proj/.venv" && ! -e "${WORK}/proj/python/.venv" ]] || fail "--check must not materialize: $out"
+  rm "${repo}/foreign/.venv"
+  out=$(run_work_link "${repo}") || fail "converge repairs everything --check listed: $out"
+  out=$(run_work_link --check "${repo}") || fail "--check must exit 0 over a clean tree: $out"
+  [[ -z "$out" ]] || fail "--check must print nothing over a clean tree: $out"
+  # The default scope is the scan root, as in converge.
+  rm -rf "${WORK}/proj/.venv"
+  rc=0; out=$(run_work_link --check) || rc=$?
+  [[ $rc -ne 0 && "$out" == *"dangling	${repo}/.venv	"* ]] || fail "--check over the default root must list dangling links: $out"
+  # A mode that cannot combine with --check is a usage error.
+  rc=0; out=$(run_work_link --check --migrate "${repo}" 2>&1) || rc=$?
+  [[ $rc -eq 2 ]] || fail "--check --migrate must be a usage error: rc=$rc $out"
+}
+
 test_migrate_moves_and_links
 test_nested_rel_path
 test_converge_relinks_when_intree_absent
@@ -1141,6 +1232,8 @@ test_realpath_failure_on_a_worktree_is_reported
 test_prunable_marked_by_git_is_reported
 test_failing_worktree_list_is_reported
 test_ensure_honors_root
+test_ensure_resolves_name_against_cwd
+test_check_lists_dangling_links
 test_converge_materializes_a_synced_link
 test_converge_rewrites_legacy_absolute_link
 test_two_hosts_share_link_text
