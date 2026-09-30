@@ -9,7 +9,7 @@ source "${0:A:h}/tmp_cleanup.zsh"
 work_link="${repo_root}/bin/work-link"
 
 fail() {
-  print -u2 -- "FAIL: $*"
+  print -ru2 -- "FAIL: $*"
   exit 1
 }
 
@@ -52,7 +52,9 @@ make_repo() {
 run_work_link() {
   local out rc=0
   out=$("$work_link" "$@" 2>&1) || rc=$?
-  print -- "$out"
+  # -r: work-link's output is printed raw, so an escape sequence in it,
+  # such as the quoted apostrophe in suggested commands, survives.
+  print -r -- "$out"
   return $rc
 }
 
@@ -552,6 +554,23 @@ test_moved_repository_reports_moved_not_unowned() {
   [[ "$out" == *"Claude Code agent lock"* ]] || fail "a Claude agent lock must be named as such: $out"
   [[ "$out" == *"locked for another host (on WORK_ROOT storage (host: host-b))"* ]] || fail "another host's lock must be named: $out"
   [[ "$out" != *"its storage is gone"* ]] || fail "a moved repository's record must not read as lost storage: $out"
+}
+
+# The suggested commands must parse as printed even when the repository's
+# old path carries an apostrophe.
+test_moved_advice_escapes_apostrophes() {
+  sandbox
+  local old; old=$(make_repo "new'project")
+  git -C "$old" worktree add -q "$old/.claude/worktrees/agent-9" -b agent-9
+  git -C "$old" worktree lock --reason "claude agent agent-9 (pid 7)" "$old/.claude/worktrees/agent-9"
+  mv -- "$old" "${HOME}/d/moved again"
+  (cd "${HOME}/d/moved again" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure after move"
+  git -C "${HOME}/d/moved again" worktree add -q .worktrees/live -b live
+  local out
+  out=$(run_work_link "${HOME}/d/moved again") || true
+  [[ "$out" == *"worktree unlock '${HOME}/d/new'\\''project/.claude/worktrees/agent-9'"* ]] || \
+    fail "the unlock advice must escape the apostrophe: $out"
+  [[ "$out" == *"the repository moved"* ]] || fail "the move must be reported: $out"
 }
 
 # A worktree deliberately checked out outside its repository — a sibling of
@@ -1127,6 +1146,7 @@ test_converge_rewrites_legacy_absolute_link
 test_two_hosts_share_link_text
 test_missing_locked_worktrees_by_owner
 test_moved_repository_reports_moved_not_unowned
+test_moved_advice_escapes_apostrophes
 test_sibling_worktree_outside_repo_is_not_a_move
 test_bare_lock_is_restamped_with_host
 test_ensure_never_removes_a_link

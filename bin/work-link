@@ -408,7 +408,9 @@ work_link_lock_worktrees() {
           "${WORK_LINK_LOCK_PREFIX} (host: "*) desc="locked for another host (${locks[$i]})" ;;
         esac
         [[ "${locks[$i]}" == "claude agent agent-"*\ \(pid\ *\) ]] && desc="a Claude Code agent lock (${locks[$i]})"
-        work_link_report prunable "${wts[$i]}" "${desc} at the repository's previous location: the repository moved to ${repo}; git -C '${repo}' worktree unlock '${wts[$i]}' and git -C '${repo}' worktree prune would remove it"
+        # The suggested commands must run as printed: paths are single-quoted
+        # with embedded apostrophes spelled '\''.
+        work_link_report prunable "${wts[$i]}" "${desc} at the repository's previous location: the repository moved to ${repo}; git -C ${(qq)repo} worktree unlock ${(qq)wts[$i]} and git -C ${(qq)repo} worktree prune would remove it"
       else
         case "${locks[$i]}" in
           "")
@@ -494,7 +496,9 @@ typeset -g WORK_LINK_MODE=converge
 # does by hand: they are printed but do not fail the run, so a failed timer
 # unit means something new. --migrate still fails on a conflict.
 work_link_report() {
-  print -- "$1	$2	${3:-}"
+  # printf, not print: message text is printed raw, so an escaped
+  # apostrophe in a suggested command survives.
+  printf '%s\t%s\t%s\n' "$1" "$2" "${3:-}"
   if [[ "$WORK_LINK_MODE" == converge && ( "$1" == needs-migration || "$1" == conflict ) ]]; then
     return 0
   fi
