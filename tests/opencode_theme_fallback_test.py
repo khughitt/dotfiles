@@ -17,6 +17,30 @@ if not tmux:
     raise SystemExit(0)
 
 
+def wait_gone(pid, seconds=5.0):
+    """Block until pid has exited (gone or zombie): it can no longer write.
+
+    kill-server only signals the pane process and returns immediately;
+    opencode then runs its exit writes (db, log) into the temp HOME for
+    ~0.5s. Without this wait, TemporaryDirectory's rmtree at context exit
+    races that live writer and fails with Errno 39 (Directory not empty)
+    under suite load. On timeout the wait gives up and rmtree surfaces
+    whatever is still being written.
+    """
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        try:
+            stat = Path(f"/proc/{pid}/stat").read_text()
+        except FileNotFoundError:
+            return True
+        # state char is the first field after the comm paren; a zombie has
+        # already exited, it just has not been reaped yet
+        if stat[stat.rindex(")") + 2:].split()[0] == "Z":
+            return True
+        time.sleep(0.02)
+    return False
+
+
 def probe(malformed):
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -54,6 +78,13 @@ def probe(malformed):
             [tmux, "-L", socket, "new-session", "-d", "-x", "100",
              "-y", "30", command], check=True, timeout=3,
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        # capture the pane process's pid while the server still answers;
+        # kill-server below only signals it, and the wait needs its pid
+        listed = subprocess.run(
+            [tmux, "-L", socket, "list-panes", "-a", "-F", "#{pane_pid}"],
+            text=True, timeout=2, stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL).stdout.strip()
+        pane_pid = int(listed.splitlines()[0]) if listed else None
         try:
             deadline = time.monotonic() + 8
             capture = ""
@@ -77,6 +108,11 @@ def probe(malformed):
             subprocess.run(
                 [tmux, "-L", socket, "kill-server"], check=False, timeout=2,
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # kill-server signals the pane but returns before the process
+            # finishes its exit writes into the temp tree; wait it out or
+            # the TemporaryDirectory cleanup below races a live writer
+            if pane_pid:
+                wait_gone(pane_pid)
 
 
 probe(malformed=False)
