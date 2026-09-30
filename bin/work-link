@@ -295,7 +295,9 @@ work_link_record_moved_with_repo() {
   for name in "$admin/worktrees"/*(N); do
     [[ -f "${name}/gitdir" ]] || continue
     entry_path=$(<"${name}/gitdir")
-    [[ "${entry_path%%[[:space:]]*}" == "${rec}/.git" || "${entry_path%%[[:space:]]*}" == "$rec" ]] && {
+    # The recorded path can contain spaces: compare it whole. git writes
+    # "<worktree>/.git"; accept the bare directory too.
+    [[ "$entry_path" == "${rec}/.git" || "$entry_path" == "$rec" ]] && {
       entry="${name:t}"
       break
     }
@@ -307,7 +309,8 @@ work_link_record_moved_with_repo() {
     [[ "$a" == "$root" ]] && break
     rest="${rec#$a}"
     candidate="${repo}${rest}/.git"
-    if [[ -f "$candidate" && "$(<"$candidate")" == *"worktrees/${entry}"* ]]; then
+    # The name must end the reference: agent must not match worktrees/agent1.
+    if [[ -f "$candidate" && "$(<"$candidate")" == *"worktrees/${entry}" ]]; then
       return 0
     fi
   done

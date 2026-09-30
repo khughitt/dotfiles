@@ -530,24 +530,24 @@ test_missing_locked_worktrees_by_owner() {
 # relocking is the wrong advice and the move is the report.
 test_moved_repository_reports_moved_not_unowned() {
   sandbox
-  local old; old=$(make_repo moved-proj)
+  local old; old=$(make_repo "moved proj")
   git -C "$old" worktree add -q "$old/.claude/worktrees/agent-1" -b agent-1
   git -C "$old" worktree lock --reason "claude agent agent-1 (pid 4242)" "$old/.claude/worktrees/agent-1"
   git -C "$old" worktree add -q "$old/.claude/worktrees/agent-2" -b agent-2
   git -C "$old" worktree lock --reason "on WORK_ROOT storage (host: host-a)" "$old/.claude/worktrees/agent-2"
   git -C "$old" worktree add -q "$old/.claude/worktrees/agent-3" -b agent-3
   git -C "$old" worktree lock --reason "on WORK_ROOT storage (host: host-b)" "$old/.claude/worktrees/agent-3"
-  mv -- "$old" "${HOME}/d/new-place"
-  (cd "${HOME}/d/new-place" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure after move"
-  git -C "${HOME}/d/new-place" worktree add -q .worktrees/live -b live
+  mv -- "$old" "${HOME}/d/new place"
+  (cd "${HOME}/d/new place" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure after move"
+  git -C "${HOME}/d/new place" worktree add -q .worktrees/live -b live
   local out rc=0
-  out=$(run_work_link "${HOME}/d/new-place") || rc=$?
+  out=$(run_work_link "${HOME}/d/new place") || rc=$?
   [[ $rc -eq 1 ]] || fail "a stale record must fail converge: $out"
   for agent in agent-1 agent-2 agent-3; do
-    [[ "$out" == *"prunable	${HOME}/d/moved-proj/.claude/worktrees/${agent}"*"the repository moved"* ]] || \
+    [[ "$out" == *"prunable	${HOME}/d/moved proj/.claude/worktrees/${agent}"*"the repository moved"* ]] || \
       fail "a record under the scan root but outside the repository must read as a move: $out"
-    [[ "$out" == *"worktree unlock ${HOME}/d/moved-proj/.claude/worktrees/${agent}"* ]] || fail "unlock must be suggested: $out"
-    [[ "$out" != *"unowned	${HOME}/d/moved-proj"* ]] || fail "a moved repository's record must not read unowned: $out"
+    [[ "$out" == *"worktree unlock ${HOME}/d/moved proj/.claude/worktrees/${agent}"* ]] || fail "unlock must be suggested: $out"
+    [[ "$out" != *"unowned	${HOME}/d/moved proj"* ]] || fail "a moved repository's record must not read unowned: $out"
   done
   [[ "$out" == *"Claude Code agent lock"* ]] || fail "a Claude agent lock must be named as such: $out"
   [[ "$out" == *"locked for another host (on WORK_ROOT storage (host: host-b))"* ]] || fail "another host's lock must be named: $out"
@@ -561,15 +561,20 @@ test_moved_repository_reports_moved_not_unowned() {
 test_sibling_worktree_outside_repo_is_not_a_move() {
   sandbox
   local repo; repo=$(make_repo proj)
-  git -C "$repo" worktree add -q "${HOME}/d/sibling/.claude/worktrees/wt" -b wt
-  git -C "$repo" worktree lock --reason "on WORK_ROOT storage (host: host-b)" "${HOME}/d/sibling/.claude/worktrees/wt"
-  rm -rf "${HOME}/d/sibling"    # absent here, but not because the repository moved
+  mkdir -p "${HOME}/d/sib"
+  git -C "$repo" worktree add -q "${HOME}/d/sib/agent" -b sib-agent
+  git -C "$repo" worktree lock --reason "on WORK_ROOT storage (host: host-b)" "${HOME}/d/sib/agent"
+  # A worktree inside the repository whose admin entry git names agent1,
+  # because the sibling took agent: a prefix match on the reference must not
+  # mistake the missing sibling's record for a repository move.
+  git -C "$repo" worktree add -q "${repo}/agent" -b in-agent
+  rm -rf "${HOME}/d/sib"    # absent here, but not because the repository moved
   (cd "$repo" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure"
   git -C "$repo" worktree add -q .worktrees/live -b live
   local out
   out=$(run_work_link "$repo") || true
   [[ "$out" != *"the repository moved"* ]] || fail "a sibling worktree must not read as a move: $out"
-  [[ "$out" != *"/d/sibling"* ]] || fail "another host's sibling worktree must be skipped: $out"
+  [[ "$out" != *"/d/sib/"* ]] || fail "another host's sibling worktree must be skipped: $out"
 }
 
 test_bare_lock_is_restamped_with_host() {
