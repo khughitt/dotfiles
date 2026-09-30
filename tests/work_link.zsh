@@ -546,7 +546,7 @@ test_moved_repository_reports_moved_not_unowned() {
   for agent in agent-1 agent-2 agent-3; do
     [[ "$out" == *"prunable	${HOME}/d/moved proj/.claude/worktrees/${agent}"*"the repository moved"* ]] || \
       fail "a record under the scan root but outside the repository must read as a move: $out"
-    [[ "$out" == *"worktree unlock ${HOME}/d/moved proj/.claude/worktrees/${agent}"* ]] || fail "unlock must be suggested: $out"
+    [[ "$out" == *"worktree unlock '${HOME}/d/moved proj/.claude/worktrees/${agent}'"* ]] || fail "unlock must be suggested with quoted paths: $out"
     [[ "$out" != *"unowned	${HOME}/d/moved proj"* ]] || fail "a moved repository's record must not read unowned: $out"
   done
   [[ "$out" == *"Claude Code agent lock"* ]] || fail "a Claude agent lock must be named as such: $out"

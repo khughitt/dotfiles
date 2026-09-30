@@ -408,7 +408,7 @@ work_link_lock_worktrees() {
           "${WORK_LINK_LOCK_PREFIX} (host: "*) desc="locked for another host (${locks[$i]})" ;;
         esac
         [[ "${locks[$i]}" == "claude agent agent-"*\ \(pid\ *\) ]] && desc="a Claude Code agent lock (${locks[$i]})"
-        work_link_report prunable "${wts[$i]}" "${desc} at the repository's previous location: the repository moved to ${repo}; git -C ${repo} worktree unlock ${wts[$i]} and git -C ${repo} worktree prune would remove it"
+        work_link_report prunable "${wts[$i]}" "${desc} at the repository's previous location: the repository moved to ${repo}; git -C '${repo}' worktree unlock '${wts[$i]}' and git -C '${repo}' worktree prune would remove it"
       else
         case "${locks[$i]}" in
           "")
