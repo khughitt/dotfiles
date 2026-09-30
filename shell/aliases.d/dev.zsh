@@ -70,6 +70,13 @@ alias snek="snakemake"
 # tasks
 alias ta='TASKS_FORMAT=pretty tasks --color=always'
 alias tag='TASKS_FORMAT=pretty tasks list | grep -i'
+taj() {
+  (( $# )) || { print -u2 'usage: taj PATTERN [tasks list options]'; return 2; }
+  setopt localoptions pipefail
+  local pattern=$1
+  shift
+  tasks list --json "$@" | jq --arg pattern "$pattern" '.tasks |= map(select(any(.. | strings; test($pattern; "i"))))'
+}
 alias tal='TASKS_FORMAT=pretty tasks list --color=always'
 alias tals='TASKS_FORMAT=pretty tasks list --color=always --sort created'
 alias talp='TASKS_FORMAT=pretty tasks list --color=always --sort created --all-projects'

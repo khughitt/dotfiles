@@ -30,6 +30,7 @@ secrets:
 
 test:
     uv run --frozen pytest -q
+    zsh tests/task_json_search.zsh
     zsh tests/dropbox_ignore_flux.zsh
     zsh tests/work_link.zsh
     zsh tests/history.zsh
