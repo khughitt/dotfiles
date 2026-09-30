@@ -281,14 +281,49 @@ work_link_check_ignore() {
   esac
 }
 
+# Does a stale record at PATH belong to a repository that moved to REPO?
+# A worktree recorded inside the repository's previous top level moved along
+# with it, so its .git file now sits at the same relative path inside the
+# repository's current top and still names the same worktree admin entry.
+# A worktree deliberately checked out outside the repository — a sibling of
+# it under another directory of the scan root — has no such copy, whatever
+# its lock says, so the move must not be inferred from the location alone.
+work_link_record_moved_with_repo() {
+  local repo="$1" root="$2" rec="$3" admin entry entry_path name rest candidate
+  admin=$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 1
+  entry=""
+  for name in "$admin/worktrees"/*(N); do
+    [[ -f "${name}/gitdir" ]] || continue
+    entry_path=$(<"${name}/gitdir")
+    [[ "${entry_path%%[[:space:]]*}" == "${rec}/.git" || "${entry_path%%[[:space:]]*}" == "$rec" ]] && {
+      entry="${name:t}"
+      break
+    }
+  done
+  [[ -n "$entry" ]] || return 1
+  local a="$rec"
+  while [[ "$a" != "$root" && "$a" != "/" ]]; do
+    a="${a:h}"
+    [[ "$a" == "$root" ]] && break
+    rest="${rec#$a}"
+    candidate="${repo}${rest}/.git"
+    if [[ -f "$candidate" && "$(<"$candidate")" == *"worktrees/${entry}"* ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 # Lock every worktree inside a .worktrees entry that resolves under the store,
 # each through its own repository: a worktree parked here may belong to another
 # repository, and only that repository's prune would delete it. Then report the
 # owning repository's entries that git itself marks prunable, or whose recorded
 # path no longer resolves. When the recorded path sits under the scan root
-# but outside the repository's current top level, the repository itself
-# moved: no host owns the record, whatever its lock names, and unlock plus
-# prune clears it. Otherwise the lock classifies: this host's is breakage,
+# but outside the repository's current top level and the worktree itself
+# moved along with the repository, the repository moved: no host owns the
+# record, whatever its lock names, and unlock plus prune clears it. A
+# worktree deliberately checked out outside the repository has no copy
+# inside it and keeps the lock's classification: this host's is breakage,
 # another host's is skipped, a lock that names no host is `unowned`.
 work_link_lock_worktrees() {
   local dotwt="$1" root="$2" child real gitdir current tmp desc
@@ -359,7 +394,8 @@ work_link_lock_worktrees() {
     if [[ -n "${reasons[$i]}" ]]; then
       work_link_report prunable "${wts[$i]}" "git marks it prunable (${reasons[$i]}); git -C ${repo} worktree prune would remove it"
     elif ! realpath -e -- "${wts[$i]}" >/dev/null 2>&1; then
-      if [[ "${wts[$i]}" == "$root"/* && "${wts[$i]}" != "$repo"/* ]]; then
+      if [[ "${wts[$i]}" == "$root"/* && "${wts[$i]}" != "$repo"/* ]] \
+        && work_link_record_moved_with_repo "$repo" "$root" "${wts[$i]}"; then
         # The repository itself moved: the record points at its previous
         # location, which no lock can keep alive and no host can relock.
         desc="locked (${locks[$i]})"

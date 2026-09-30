@@ -554,6 +554,24 @@ test_moved_repository_reports_moved_not_unowned() {
   [[ "$out" != *"its storage is gone"* ]] || fail "a moved repository's record must not read as lost storage: $out"
 }
 
+# A worktree deliberately checked out outside its repository — a sibling of
+# it under the scan root — is valid wherever it is. A missing one must not
+# read as a repository move, and another host's must be kept: the move is
+# inferred only when the worktree's .git file moved along with the repo.
+test_sibling_worktree_outside_repo_is_not_a_move() {
+  sandbox
+  local repo; repo=$(make_repo proj)
+  git -C "$repo" worktree add -q "${HOME}/d/sibling/.claude/worktrees/wt" -b wt
+  git -C "$repo" worktree lock --reason "on WORK_ROOT storage (host: host-b)" "${HOME}/d/sibling/.claude/worktrees/wt"
+  rm -rf "${HOME}/d/sibling"    # absent here, but not because the repository moved
+  (cd "$repo" && "$work_link" --ensure .worktrees >/dev/null) || fail "ensure"
+  git -C "$repo" worktree add -q .worktrees/live -b live
+  local out
+  out=$(run_work_link "$repo") || true
+  [[ "$out" != *"the repository moved"* ]] || fail "a sibling worktree must not read as a move: $out"
+  [[ "$out" != *"/d/sibling"* ]] || fail "another host's sibling worktree must be skipped: $out"
+}
+
 test_bare_lock_is_restamped_with_host() {
   sandbox
   local repo; repo=$(make_repo proj)
@@ -1104,6 +1122,7 @@ test_converge_rewrites_legacy_absolute_link
 test_two_hosts_share_link_text
 test_missing_locked_worktrees_by_owner
 test_moved_repository_reports_moved_not_unowned
+test_sibling_worktree_outside_repo_is_not_a_move
 test_bare_lock_is_restamped_with_host
 test_ensure_never_removes_a_link
 test_ensure_rewrites_legacy
