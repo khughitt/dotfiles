@@ -336,6 +336,7 @@ binds {
     Super+F6 { screenshot; }
     Alt+Print { screenshot-window; }
     Super+N repeat=false hotkey-overlay-title="Wallpaper Panel" { spawn "noctalia" "msg" "panel-toggle" "khughitt/wali-panel:panel"; }
+    Super+P repeat=false hotkey-overlay-title="Prism Panel" { spawn "noctalia" "msg" "panel-toggle" "khughitt/prism:panel"; }
     Super+Alt+Left repeat=false hotkey-overlay-title="Previous Wallpaper" { spawn-sh "notify-send -a Wali -t 2500 Wali \"$(walictl previous 2>&1)\""; }
     Super+Alt+Right repeat=false hotkey-overlay-title="Next Wallpaper" { spawn-sh "notify-send -a Wali -t 2500 Wali \"$(walictl next 2>&1)\""; }
     Super+Alt+R repeat=false hotkey-overlay-title="Random Wallpaper" { spawn-sh "notify-send -a Wali -t 2500 Wali \"$(walictl random 2>&1)\""; }
