@@ -500,6 +500,41 @@ early-boot keymap. Alt+Left/Right stop switching VTs; Alt+F<n> still does.
 `tests/console_keymap.zsh` compiles the map with `loadkeys -m` and checks the Alt
 entries, so a change there is caught without a console.
 
+## Keyring unlock at console login
+
+With no display manager, logging in on a VT and starting niri leaves the GNOME
+keyring locked: only a display manager's PAM stack (`gdm-password`, for instance)
+ships `pam_gnome_keyring`. The first app to ask for a secret then raises an unlock
+popup, and `gh auth token`, run at shell start by `shell/private/api`, waits on an
+unlock prompt for the `login` collection for 60 s (go-keyring always unlocks
+`login`, whatever the default keyring is). Add the module to the console login stack:
+
+```sh
+# /etc/pam.d/login: after the auth include, and after the session include
+auth       optional     pam_gnome_keyring.so
+session    optional     pam_gnome_keyring.so auto_start
+```
+
+PAM unlocks only the keyring named `login`, and only when its password equals the
+login password; set it in seahorse if they differ. Keep a single keyring: a second
+one (an old `Default_keyring`, say) stays locked and brings the popup back.
+`~/.local/share/keyrings/default` names the default keyring and should read `login`.
+
+`setup.sh`'s `systemd` phase links a D-Bus service override for
+`org.freedesktop.secrets`. The packaged file has no `SystemdService=`, so an app
+that asks for the secret service early in the session gets a second
+gnome-keyring-daemon beside the socket-activated unit; the override routes it
+through `gnome-keyring-daemon.service`.
+
+Check after the next login:
+
+```sh
+pgrep -a gnome-keyring    # exactly one daemon
+busctl --user get-property org.freedesktop.secrets \
+  /org/freedesktop/secrets/collection/login org.freedesktop.Secret.Collection Locked
+# b false
+```
+
 ## Auditing systemd changes
 
 No single command shows every difference from a fresh Arch install.
