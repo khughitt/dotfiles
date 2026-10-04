@@ -583,6 +583,28 @@ Then try the paths that should fail. From the client:
 A login from the LAN address must fail too, and `journalctl -u sshd` must log
 `not listed in AllowUsers` for it.
 
+## sshd: tailnet only, keys only
+
+`ssh/sshd_config.d/10-tailnet.conf` admits only `keith`, only from tailnet
+addresses, and only by public key; root login is off. It leans on Tailscale's
+netfilter rules (`NetfilterMode` on, the default), which drop `100.64.0.0/10`
+sources that do not arrive on `tailscale0`, so the source check cannot be met from
+the LAN. Leave the stock `/etc/nftables.conf` disabled: its `forward` policy drops
+Docker's traffic.
+
+Authorize the other machines' keys first (titan, the phone): one public key per
+line in `~/.ssh/authorized_keys`, mode 0600. Then:
+
+```sh
+install -Dm0644 ssh/sshd_config.d/10-tailnet.conf /etc/ssh/sshd_config.d/10-tailnet.conf
+sshd -t && systemctl enable --now sshd
+```
+
+From another tailnet machine, `ssh keith@<host>` (MagicDNS) should log in, and
+`ssh -o PubkeyAuthentication=no keith@<host>` should be refused with
+`Permission denied (publickey)`. On the host, `journalctl -u sshd` names any
+refused source as "not listed in AllowUsers".
+
 ## Auditing systemd changes
 
 No single command shows every difference from a fresh Arch install.
