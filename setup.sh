@@ -759,6 +759,8 @@ function setup_systemd_user_units() {
     ln_s "${DOTS_HOME}/systemd/user/niri.service.d/stop-timeout.conf" "${XDG_CONFIG_HOME}/systemd/user/niri.service.d/stop-timeout.conf"
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.service" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.service"
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.timer" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.timer"
+    ensure_dir "${HOME}/.local/share/dbus-1/services"
+    ln_s "${DOTS_HOME}/local/share/dbus-1/services/org.freedesktop.secrets.service" "${HOME}/.local/share/dbus-1/services/org.freedesktop.secrets.service"
     local unit
     # Activation and v3 retirement belong to the reviewed cutover, never setup.
     for unit in mindful-web.service mindful-backup.service mindful-backup.timer; do
