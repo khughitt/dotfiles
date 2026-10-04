@@ -535,6 +535,54 @@ busctl --user get-property org.freedesktop.secrets \
 # b false
 ```
 
+## SSH from the tailnet
+
+sshd accepts key logins for one user, from Tailscale addresses only, through the
+drop-in `ssh/sshd_config.d/10-tailnet.conf`. Authorize the client's key **before**
+enabling sshd: password login is off, so `ssh-copy-id` cannot bootstrap it. On the
+client, print its public key (`cat ~/.ssh/id_ed25519.pub`), then on this machine:
+
+```sh
+install -m 0700 -d ~/.ssh
+echo '<client public key>' >> ~/.ssh/authorized_keys && chmod 0600 ~/.ssh/authorized_keys
+
+install -m 0644 ssh/sshd_config.d/10-tailnet.conf /etc/ssh/sshd_config.d/
+sshd -t && systemctl enable --now sshd
+```
+
+From the client, `ssh <host>` resolves through MagicDNS.
+
+Three things that are non-obvious:
+
+**sshd keeps the first value it reads.** Arch's `sshd_config` includes
+`sshd_config.d/*.conf` at the top, in lexical order, and for most keywords the
+first occurrence wins. That is why the file is numbered 10, ahead of
+`99-archlinux.conf`. A setting appended to the end of `sshd_config` is ignored.
+
+**The tailnet restriction is `AllowUsers`, not `ListenAddress`.** Binding sshd to
+the Tailscale address races `tailscaled` at boot: the address does not exist yet,
+the bind fails, and sshd never comes up. Listening everywhere and allowing only
+`keith@100.64.0.0/10` and `keith@fd7a:115c:a1e0::/48` avoids the race. The cost is
+that a LAN client still reaches sshd's pre-auth code before it is turned away.
+
+**`PasswordAuthentication no` alone does not stop passwords.** With `UsePAM yes`,
+keyboard-interactive authentication asks PAM, and PAM asks for the password.
+`KbdInteractiveAuthentication no` closes that, and `AuthenticationMethods
+publickey` refuses everything else.
+
+Verify against the daemon, not the file. `sshd -T` prints the merged result for a
+given connection:
+
+```sh
+sshd -T -C user=keith,addr=100.84.70.109,host=x,laddr=100.72.125.0,lport=22 \
+  | grep -iE '^(allowusers|passwordauth|kbdinteractive|permitrootlogin|authenticationmethods)'
+```
+
+Then try the paths that should fail. From the client:
+`ssh -o PubkeyAuthentication=no <host>` must say `Permission denied (publickey)`.
+A login from the LAN address must fail too, and `journalctl -u sshd` must log
+`not listed in AllowUsers` for it.
+
 ## Auditing systemd changes
 
 No single command shows every difference from a fresh Arch install.
