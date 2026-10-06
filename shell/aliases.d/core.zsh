@@ -92,6 +92,9 @@ alias lr='ls -latr'
 alias lrd='ls -latr doc/*.md'
 alias lsr='ls -lSr'
 
+# mindful
+alias mt='mindful-tui'
+
 # rm
 alias rmf="rm -rf"
 

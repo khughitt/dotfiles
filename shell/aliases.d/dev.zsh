@@ -77,13 +77,17 @@ taj() {
   shift
   tasks list --json "$@" | jq --arg pattern "$pattern" '.tasks |= map(select(any(.. | strings; test($pattern; "i"))))'
 }
-alias tal='TASKS_FORMAT=pretty tasks list --color=always'
-alias tals='TASKS_FORMAT=pretty tasks list --color=always --sort created'
-alias talp='TASKS_FORMAT=pretty tasks list --color=always --sort created --all-projects'
-alias tan='TASKS_FORMAT=pretty tasks next --color=always'
-alias tap='TASKS_FORMAT=pretty tasks projects --color=always'
-alias taps='TASKS_FORMAT=pretty tasks projects --color=always --sort activity'
-alias tas='TASKS_FORMAT=pretty tasks show --color=always'
+alias tal='ta list'
+alias tan='ta next'
+alias tap='ta projects'
+alias tas='ta show'
+alias tals='ta list --sort updated'
+alias taps='ta projects --sort activity'
+
+alias Tal='ta list --all-projects'
+alias Tals='ta list --sort updated'
+alias Tag='TASKS_FORMAT=pretty tasks list --all-projects | grep -i'
+
 alias tuia='tui --all'
 
 # tmux
