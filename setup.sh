@@ -42,6 +42,7 @@ VALID_PHASES=(
     systemd
     kitty
     home
+    bin
     app-config
     noctalia-plugins
     mime
@@ -812,6 +813,16 @@ function setup_home_dotfile_links() {
     done
 }
 
+function setup_bin_link() {
+    # dotfiles-health resolves its root from its own path, so a copied
+    # ~/bin/dotfiles-health makes it look in the home directory and die. The
+    # link needs nothing running, so it is its own phase: every pass makes it,
+    # and a failure elsewhere in app-config cannot leave a copy behind. The
+    # whole directory is linked, so everything under bin ships with it.
+    phase "Bin links"
+    ln_s "${DOTS_HOME}/bin" "${HOME}/bin"
+}
+
 function setup_application_config_links() {
     phase "Application config links"
 
@@ -863,7 +874,6 @@ function setup_application_config_links() {
     ln_s "${DOTS_HOME}/condarc" "${HOME}/.mambarc"
     ln_s "${DOTS_HOME}/lintr" "${HOME}/.lintr"
     ln_s "${DOTS_HOME}/rgignore" "${HOME}/.rgignore"
-    ln_s "${DOTS_HOME}/bin" "${HOME}/bin"
 }
 
 function setup_noctalia_plugins() {
@@ -962,6 +972,7 @@ run_phase common-config setup_common_config_links
 run_phase systemd setup_systemd_user_units
 run_phase kitty setup_kitty_overrides
 run_phase home setup_home_dotfile_links
+run_phase bin setup_bin_link
 run_phase app-config setup_application_config_links
 run_phase noctalia-plugins setup_noctalia_plugins
 run_phase mime setup_mime_links

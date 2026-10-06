@@ -158,6 +158,13 @@ run_setup() {
     printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/home/d/wali/bin/walictl"
     chmod +x "${tmp}/home/d/wali/bin/walictl"
   fi
+  if [[ "${OPS_SOURCE_PRESENT:-true}" == true ]]; then
+    # the systemd phase links obs-index.service and obs-index.timer out of the
+    # ops checkout, which a test HOME does not have
+    mkdir -p "${tmp}/home/d/ops/systemd/user"
+    touch "${tmp}/home/d/ops/systemd/user/obs-index.service" \
+      "${tmp}/home/d/ops/systemd/user/obs-index.timer"
+  fi
   install_test_stubs "$tmp"
   cat > "${tmp}/bin/hostname" <<'EOF'
 #!/usr/bin/env bash
@@ -432,6 +439,64 @@ test_active_noctalia_code_has_no_v4_ipc() {
     1) ;;
     *) fail "active Noctalia v4 scan failed: ${output}" ;;
   esac
+}
+
+test_setup_bin_phase_links_the_bin_directory_and_replaces_a_copy() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home/bin"
+  cp "${repo_root}/bin/dotfiles-health" "${tmp}/home/bin/dotfiles-health"
+
+  output=$(run_setup "$tmp" --link-only --headless --only bin 2>&1) || \
+    fail "bin phase failed: ${output}"
+
+  [[ "$output" == *"==> Bin links"* ]] || fail "expected the Bin links phase: ${output}"
+  [[ -L "${tmp}/home/bin" ]] || fail "setup left ~/bin a real directory"
+  [[ "$(readlink -f "${tmp}/home/bin")" == "${repo_root}/bin" ]] || \
+    fail "~/bin does not link into the tree: $(readlink "${tmp}/home/bin")"
+  [[ -f "${tmp}/home/bin.bak/dotfiles-health" ]] || \
+    fail "the copied install was not preserved in the backup"
+
+  rm -rf "$tmp"
+}
+
+test_dotfiles_health_flags_a_copied_install() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/copy/bin" "${tmp}/home"
+  cp "${repo_root}/bin/dotfiles-health" "${tmp}/copy/bin/"
+
+  set +e
+  output=$(HOME="${tmp}/home" "${tmp}/copy/bin/dotfiles-health" 2>&1)
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted a copied install"
+  [[ "$output" == *"copied install"* ]] || \
+    fail "health did not explain the copied install: ${output}"
+  [[ "$output" != *"dotfiles-setup-data.bash: No such file"* ]] || \
+    fail "health still died on the missing setup data instead of its own check: ${output}"
+}
+
+test_dotfiles_health_flags_a_real_bin_directory() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  prepare_health_fixture "$tmp"
+  rm "${tmp}/home/bin"
+  mkdir -p "${tmp}/home/bin"
+  cp "${repo_root}/bin/dotfiles-health" "${tmp}/home/bin/dotfiles-health"
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+
+  [[ "$exit_status" -ne 0 ]] || fail "health accepted a real ~/bin over a copy"
+  [[ "$output" == *"not a symlink: ${tmp}/home/bin"* ]] || \
+    fail "health did not flag the unlinked ~/bin: ${output}"
 }
 
 test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error() {
@@ -1011,7 +1076,7 @@ test_dotfiles_health_skips_noctalia_on_macos() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --macos \
-    --only shell,common-config,home,app-config >/dev/null
+    --only shell,common-config,home,bin,app-config >/dev/null
   printf '#!/usr/bin/env bash\nprintf "called\\n" >> "$NOCTALIA_LOG"\nexit 99\n' \
     > "${tmp}/bin/noctalia"
   printf '#!/usr/bin/env bash\nprintf "Darwin\\n"\n' > "${tmp}/bin/uname"
@@ -2133,6 +2198,9 @@ test_setup_dry_run_can_enable_user_timers
 test_setup_only_runs_selected_phase
 test_setup_only_accepts_multiple_phases
 test_setup_only_rejects_unknown_phase
+test_setup_bin_phase_links_the_bin_directory_and_replaces_a_copy
+test_dotfiles_health_flags_a_copied_install
+test_dotfiles_health_flags_a_real_bin_directory
 test_noctalia_plugin_phase_links_and_enables_exact_ids
 test_default_setup_does_not_require_live_noctalia
 test_noctalia_plugin_phase_fails_when_ipc_is_unavailable

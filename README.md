@@ -60,7 +60,7 @@ piece of the setup after a change:
 
 Valid phases are:
 
-    preflight external-clones shell gtk graphical-config common-config systemd kitty home app-config noctalia-plugins mime dropbox-ignore tmux packages
+    preflight external-clones shell gtk graphical-config common-config systemd kitty home bin app-config noctalia-plugins mime dropbox-ignore tmux packages
 
 To install the systemd user timer that keeps high-flux Dropbox folders ignored:
 
