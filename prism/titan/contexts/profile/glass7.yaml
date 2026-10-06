@@ -71,3 +71,22 @@ _wallpapers:
   4fb41740:
     _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20220530_181348390.jpg
     glass.inactive.attenuationDistance: 53
+  e464e49d:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20220819_160335681.jpg
+    glass.inactive.thickness: 55.3
+    glass.inactive.attenuationDistance: 27
+  0969bcbf:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230510_160234350.jpg
+    glass.inactive.attenuationDistance: 19
+  8badef68:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20240514_070041665.jpg
+    glass.inactive.attenuationDistance: 29
+  4f5b49ce:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20210606_125842728.jpg
+    glass.inactive.attenuationDistance: 18
+  01f25321:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20211106_123208483.NIGHT.jpg
+    glass.inactive.attenuationDistance: 6
+  ca63e0f6:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20240510_152337328.jpg
+    glass.inactive.attenuationDistance: 21
