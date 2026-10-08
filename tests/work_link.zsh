@@ -907,6 +907,42 @@ EOF
   [[ -d "${repo}/.venv" && ! -L "${repo}/.venv" ]] || fail "uninspectable entry must not move"
 }
 
+# A container's overlay or network namespace that lsof cannot stat says nothing
+# about the files under the entry; a warning about the entry's own file system,
+# an ancestor's, or a mount inside it still refuses.
+test_foreign_mount_warning_does_not_block_migration() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${repo}/.venv/lib" "${tmp}/shim"
+  write_warning_shim() {
+    cat > "${tmp}/shim/lsof" <<EOF
+#!/bin/sh
+echo "lsof: WARNING: can't stat() $1 file system $2" >&2
+echo "      Output information may be incomplete." >&2
+lsof_real=\$(command -v -p lsof 2>/dev/null || echo /usr/bin/lsof)
+exec "\$lsof_real" "\$@"
+EOF
+    chmod +x "${tmp}/shim/lsof"
+  }
+  local out rc
+  for fs in "${repo:A}/.venv/mnt" "${HOME:A}" /; do
+    write_warning_shim fuse "$fs"
+    rc=0; out=$(PATH="${tmp}/shim:$PATH" run_work_link --migrate "${repo}") || rc=$?
+    [[ $rc -ne 0 && "$out" == *"uninspectable	${repo}/.venv"* && "$out" == *"file system ${fs}"* ]] || fail "a warning about ${fs} must refuse: $out"
+    [[ -d "${repo}/.venv" && ! -L "${repo}/.venv" ]] || fail "entry moved despite a warning about ${fs}"
+  done
+  touch "${repo}/.venv/lib/open.log"
+  sleep 60 < "${repo}/.venv/lib/open.log" &
+  local holder=$!
+  write_warning_shim nsfs /run/docker/netns/default
+  rc=0; out=$(PATH="${tmp}/shim:$PATH" run_work_link --migrate "${repo}") || rc=$?
+  kill "$holder" 2>/dev/null; wait "$holder" 2>/dev/null || true
+  [[ $rc -ne 0 && "$out" == *"busy	${repo}/.venv"* && "$out" == *sleep* ]] || fail "an open handle beside a foreign warning must refuse as open: $out"
+  write_warning_shim overlay /var/lib/docker/overlay2/x/merged
+  out=$(PATH="${tmp}/shim:$PATH" run_work_link --migrate "${repo}") || fail "a foreign mount warning must not refuse: $out"
+  [[ -L "${repo}/.venv" && -d "${WORK}/proj/.venv/lib" ]] || fail "entry not migrated past a foreign mount warning: $out"
+}
+
 test_scan_failure_fails_every_mode() {
   sandbox; local tmp="$SANDBOX"
   local repo; repo=$(make_repo proj)
@@ -1226,6 +1262,7 @@ test_orphan_external_is_reported_and_skipped
 test_missing_scope_is_an_error
 test_ensure_needs_only_git_and_coreutils
 test_partial_lsof_output_is_an_inspection_failure
+test_foreign_mount_warning_does_not_block_migration
 test_scan_failure_fails_every_mode
 test_external_target_without_cargo_toml_is_reported
 test_realpath_failure_on_a_worktree_is_reported
