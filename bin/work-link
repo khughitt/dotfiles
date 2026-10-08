@@ -521,14 +521,34 @@ work_link_report() {
 # unnoticed): with -F pc every stdout line starts with p or c, so any other
 # line is stderr, and any such line or an exit above 1 is an inspection
 # failure. Callers run this in a || context where set -e is off, so every
-# status is checked here explicitly.
+# status is checked here explicitly. The one exception is lsof failing to stat
+# a file system that neither holds the directory nor sits inside it (a
+# container's overlay or network namespace): that warning, and the "may be
+# incomplete" line after it, say nothing about the files under the directory.
 work_link_open_handles() {
   local dir="$1" out rc=0
   out=$(lsof +D "$dir" -F pc 2>&1) || rc=$?
-  local -a lines noise
+  local -a lines noise kept
   lines=("${(@f)out}")
   noise=("${(@M)lines:#[^pc]*}")
   noise=("${(@)noise:#}")
+  local real=${dir:A} line fs foreign=0
+  for line in "${noise[@]}"; do
+    if [[ "$line" == "lsof: WARNING: can't stat() "*" file system /"* ]]; then
+      fs=${line##* file system }
+      if [[ "$fs" != "$real" && "$real" != "${fs%/}"/* && "$fs" != "$real"/* ]]; then
+        foreign=$((foreign + 1))
+        continue
+      fi
+    fi
+    kept+=("$line")
+  done
+  if (( foreign )); then
+    noise=()
+    for line in "${kept[@]}"; do
+      [[ "${line#"${line%%[![:space:]]*}"}" == "Output information may be incomplete." ]] || noise+=("$line")
+    done
+  fi
   if (( rc > 1 )) || (( ${#noise} )); then
     print -- "inspection failed (lsof exit ${rc}): ${noise[1]:-no message}"
     return 1
