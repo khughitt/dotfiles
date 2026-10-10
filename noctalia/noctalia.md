@@ -104,10 +104,12 @@ The local evidence is in `.superpowers/evidence/dots-aa6cc4/` (gitignored).
 ```
 
 The Noctalia Nvim template hook generates the OpenCode theme in the same atomic
-generation as Nvim and Kitty. OpenCode 1.18.18 reloads a running interactive
-TUI or `run` footer after a wallpaper switch; non-TUI modes such as `serve` are
-not signalled. Before the first render, the dangling theme link is ignored and
-OpenCode uses its built-in theme.
+generation as Nvim and Kitty. A running OpenCode TUI or mini footer repaints
+after a wallpaper switch without interrupting an in-flight session (verified on
+2.0.26). Only processes that catch `SIGUSR2` are signalled; `serve`, including
+the v2 background service, would be killed by it and is left alone. Before the
+first render, the dangling theme link is ignored and OpenCode uses its
+built-in theme.
 
 Setup copies existing ignored OpenCode runtime files into the machine-local
 directory and atomically activates it. Inactive source copies remain ignored in
