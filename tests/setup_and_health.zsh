@@ -584,6 +584,35 @@ test_zsh_pager_is_ansi_aware() {
     zsh "${repo_root}/zshenv" || fail "zsh should configure an ANSI-aware pager"
 }
 
+# zsh reads zshenv on every start, so an isolated root a caller exports (a scratch
+# tasks registry under XDG_CONFIG_HOME=$(mktemp -d)) must survive it.
+test_zshenv_keeps_inherited_xdg_roots() {
+  local output
+  output=$(env -i \
+    HOME=/tmp \
+    HOSTNAME=dotfiles-test \
+    PATH=/usr/bin:/bin \
+    XDG_CONFIG_HOME=/isolated/config \
+    XDG_STATE_HOME=/isolated/state \
+    XDG_CACHE_HOME=/isolated/cache \
+    zsh -f -c 'source "$1"; print -r -- "$XDG_CONFIG_HOME|$XDG_STATE_HOME|$XDG_CACHE_HOME"' \
+    zsh "${repo_root}/zshenv")
+  [[ "$output" == "/isolated/config|/isolated/state|/isolated/cache" ]] || \
+    fail "zshenv replaced inherited XDG roots: ${output}"
+}
+
+test_zshenv_defaults_unset_xdg_roots() {
+  local output
+  output=$(env -i \
+    HOME=/tmp/xdg-home \
+    HOSTNAME=dotfiles-test \
+    PATH=/usr/bin:/bin \
+    zsh -f -c 'source "$1"; print -r -- "$XDG_CONFIG_HOME|$XDG_STATE_HOME|$XDG_CACHE_HOME"' \
+    zsh "${repo_root}/zshenv")
+  [[ "$output" == "/tmp/xdg-home/.config|/tmp/xdg-home/.local/state|/tmp/xdg-home/.cache" ]] || \
+    fail "zshenv did not default unset XDG roots: ${output}"
+}
+
 test_setup_dry_run_link_only_does_not_write_home() {
   local tmp output
   tmp=$(make_tmpdir)
@@ -2190,6 +2219,8 @@ test_active_noctalia_code_has_no_v4_ipc
 test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error
 test_noctalia_builtin_hooks_leave_managed_configs_unchanged
 test_zsh_pager_is_ansi_aware
+test_zshenv_keeps_inherited_xdg_roots
+test_zshenv_defaults_unset_xdg_roots
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
 test_setup_migrates_legacy_lsd_directory_link
