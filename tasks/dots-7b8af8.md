@@ -8,7 +8,7 @@ complexity: mid
 process: direct
 owner: dots-7b8af8
 created: 2026-10-08T14:31:59Z
-updated: 2026-10-11T11:17:41Z
+updated: 2026-10-11T11:22:34Z
 started: 2026-10-11T11:09:33Z
 completed: 2026-10-11T11:17:40Z
 depends: []
@@ -33,3 +33,4 @@ Seen 2026-10-08 on titan while gating dots-b9fff3: just test stops at zsh tests/
   provenance: {"harness_session":"codex:01a12aa6-8bbc-7a72-a346-1ff761573875","harness_session_source":"CODEX_THREAD_ID"}
 - 2026-10-11T11:17:40Z (dots-7b8af8): Updated the stale eight-template premise to include the existing Prism template in the exact registry assertion and both real Noctalia listing checks; corrected the documentation to nine. Focused regression and full just test passed on titan; independent review accepted with no findings.
   provenance: {"harness_session":"codex:01a12aa6-8bbc-7a72-a346-1ff761573875","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T11:22:34Z (dots-7b8af8): integration verification: merged concurrent main changes (XDG root fix) cleanly; just test on the combined tree exited 0, with 103 Python tests and every shell script passing.
