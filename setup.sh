@@ -925,6 +925,20 @@ function setup_dropbox_ignores() {
         return 1
     fi
 
+    # Git replaces its index inode; native rules also ignore each replacement.
+    local rules_file="${HOME}/d/rules.dropboxignore" existing_rules=""
+    local git_rules=$'**/.git/index*\n**/.git/sharedindex*\n**/.git/next-index-*'
+    if [[ -d "${HOME}/d" ]]; then
+        if [[ -e "$rules_file" ]]; then
+            existing_rules=$(tail -n 3 -- "$rules_file")
+        fi
+        if [[ "$existing_rules" != "$git_rules" ]]; then
+            run bash -c 'printf "\n%s\n" "$2" >> "$1"' bash "$rules_file" "$git_rules"
+        fi
+    else
+        echo "[SKIPPING] Dropbox root not present: ${HOME}/d"
+    fi
+
     local entry path
     for entry in "${DOTFILES_DROPBOX_IGNORED[@]}"; do
         path="${DOTS_HOME}/${entry%/}"
