@@ -485,7 +485,9 @@ keymap replicates a cursor keysym into every modifier column (Alt+Down sends pla
 Down), binds Alt+Left/Right to VT switching, and only synthesises `Meta_x` for ASCII
 characters. `kbd/us-tmux.map` includes `us` and binds the Alt column of the cursor
 and page keys to the xterm modifier sequences (`ESC[1;3B` and friends) that tmux
-already decodes:
+already decodes. It also gives Shift+Enter its own sequence, `ESC CR` (Meta+Enter):
+the stock map sends the same CR for Enter and Shift+Enter, so Claude Code on a VT
+submits where it would insert a newline in kitty.
 
 ```sh
 install -Dm0644 kbd/us-tmux.map /usr/share/kbd/keymaps/i386/qwerty/us-tmux.map
@@ -498,7 +500,7 @@ that tree; pacman leaves the unowned file alone. The `keymap` and `sd-vconsole`
 initramfs hooks find it by name too, so `mkinitcpio -P` is only needed for the
 early-boot keymap. Alt+Left/Right stop switching VTs; Alt+F<n> still does.
 `tests/console_keymap.zsh` compiles the map with `loadkeys -m` and checks the Alt
-entries, so a change there is caught without a console.
+and Shift+Enter entries, so a change there is caught without a console.
 
 ## Keyring unlock at console login
 

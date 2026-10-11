@@ -37,4 +37,17 @@ for seq in '\033,[,1,;,3,A,0,' '\033,[,1,;,3,B,0,' '\033,[,1,;,3,C,0,' '\033,[,1
   [[ "$strings" == *"$seq"* ]] || fail "missing string ${(q)seq} in compiled keymap"
 done
 
+# Shift+Enter must send ESC CR (Meta+Enter), which Claude Code reads as a
+# newline; the stock map sends the same CR as Enter.
+shift_column() {
+  local keycode="$1"
+  print -r -- "$table" \
+    | sed -n '/^static unsigned short shift_map\[NR_KEYS\] = {/,/^};/p' \
+    | grep -o '0x[0-9a-f]\{4\}' \
+    | sed -n "$((keycode + 1))p"
+}
+value=$(shift_column 28)
+[[ "$value" == 0xf1* ]] || fail "Shift+Enter (keycode 28) is ${value}, not a string entry"
+[[ "$strings" == *'\033,\015,0,'* ]] || fail "missing string ESC CR in compiled keymap"
+
 print -- "console keymap tests passed"
