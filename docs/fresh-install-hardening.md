@@ -556,7 +556,32 @@ sshd -t && systemctl enable --now sshd
 only when sshd starts, so on a machine where sshd has never run `sshd -t` fails
 first with `no hostkeys available -- exiting`.
 
-From another tailnet machine, `ssh <host>` resolves through MagicDNS.
+The client configuration is local and is not installed by `setup.sh`. Add a
+short alias to `~/.ssh/config` using the server's full MagicDNS name:
+
+```sshconfig
+Host <alias>
+  HostName <machine>.<tailnet>.ts.net
+  HostKeyAlias <already-trusted-host-name>
+  User <remote-user>
+```
+
+Replace the placeholders with the alias you want to type, the server's full
+`DNSName` from `tailscale status --json`, and its login user. When updating an
+existing alias, use its previously trusted name for `HostKeyAlias`; on a new
+client, omit that line and verify the server's host-key fingerprint before
+accepting it. Check the resulting settings with `ssh -G <alias>`, then connect
+with `ssh <alias>`.
+
+An unqualified name can resolve through local name discovery to a link-local
+IPv6 address. The tailnet-only `AllowUsers` rule then rejects the LAN source
+before accepting its key; the sshd journal reports `not listed in AllowUsers`
+for the `fe80::` client. Pinning the full name selects the tailnet while
+retaining both IPv4 and IPv6.
+[OpenSSH's `HostName` directive](https://man.openbsd.org/ssh_config#HostName)
+sets the destination independently of the alias.
+`HostKeyAlias` keeps verifying against an existing entry in `known_hosts`, so
+changing the destination name does not require trusting a new key.
 
 Four things that are non-obvious:
 
@@ -585,7 +610,8 @@ Verify against the daemon, not the file. `sshd -T` prints the merged result for 
 given connection:
 
 ```sh
-sshd -T -C user=keith,addr=100.84.70.109,host=x,laddr=100.72.125.0,lport=22 \
+sshd -T -C \
+  'user=<remote-user>,addr=<client-tailnet-ip>,host=<client-hostname>,laddr=<server-tailnet-ip>,lport=22' \
   | grep -iE '^(allowusers|passwordauth|kbdinteractive|permitrootlogin|authenticationmethods)'
 ```
 
