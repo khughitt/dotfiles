@@ -8,7 +8,7 @@ complexity: low
 process: direct
 owner: dots-e65d96
 created: 2026-10-05T00:22:17Z
-updated: 2026-10-11T11:52:33Z
+updated: 2026-10-11T12:12:56Z
 started: 2026-10-11T11:43:23Z
 completed: 2026-10-11T11:52:33Z
 depends: []
@@ -31,3 +31,4 @@ In Claude Code's terminal UI, Shift+Enter should insert a newline instead of sub
   provenance: {"harness_session":"claude-code:f8130dda-d060-4a8f-aadf-ba110b30d31a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-11T11:52:33Z (dots-e65d96): kbd/us-tmux.map: Shift+Enter (keycode 28 shift column) sends ESC CR (\033\015; loadkeys has no \r escape), Claude Code's newline sequence; test in tests/console_keymap.zsh, install doc updated. Live install on titan needs the root install commands in docs/fresh-install-hardening.md.
   provenance: {"harness_session":"claude-code:f8130dda-d060-4a8f-aadf-ba110b30d31a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-11T12:12:56Z (main): Verified live by the user on a TTY after installing the map: Shift+Enter inserts a newline in Claude Code.
