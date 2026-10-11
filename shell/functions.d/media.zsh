@@ -2,7 +2,7 @@
 
 # kitty theme switcher
 function kit {
-  local themedir="$HOME/.config/kitty/themes"
+  local themedir="${XDG_CONFIG_HOME:-$HOME/.config}/kitty/themes"
   local theme
   theme=$(/bin/ls "$themedir" | grep -v README | sed 's/.conf//' | grep --color='none' "$1" | fzf -1 --exact)
   kitten @ set-colors "$themedir/$theme.conf"
