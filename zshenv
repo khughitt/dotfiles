@@ -24,8 +24,8 @@ export EDITOR=nvim
 export PAGER='less -R'
 export PDFVIEWER=zathura
 export SYSTEMD_EDITOR=nvim
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_STATE_HOME="$HOME/.local/state"
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 
 # hostname (use existing if already set)
 export HOSTNAME="${HOSTNAME:-$(hostname)}"
