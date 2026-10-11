@@ -33,7 +33,10 @@ existing index. Verify the same behavior on any other client before rollout.
 
 ## Existing checkouts
 
-Do this with both hosts available, before either resumes normal Git work:
+Do this with both hosts available. Hold Git writers on both hosts until the
+clients have restarted and confirmed every index is ignored. A writer during
+startup can replace the marked inode before Dropbox observes its attribute,
+leaving the previously synced index in circulation.
 
 1. Pause both Dropbox clients with `dropbox-cli stop`. Check that they stopped;
    a disabled systemd unit says nothing about a desktop-launched client.

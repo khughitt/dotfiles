@@ -1,15 +1,16 @@
 ---
 id: dots-dbb1ae
 title: Git index files under Dropbox produce conflicted copies across hosts and stall sync
-status: doing
+status: done
 priority: 2
 size: s
 complexity: mid
 process: direct
 owner: fix/dots-dbb1ae
 created: 2026-10-06T11:20:33Z
-updated: 2026-10-11T10:12:08Z
+updated: 2026-10-11T10:22:56Z
 started: 2026-10-11T09:25:10Z
+completed: 2026-10-11T10:22:56Z
 depends: []
 tags: []
 agent: claude-code/claude-fable-5-1
@@ -39,3 +40,11 @@ Checkouts under ~/d keep .git in-tree in Dropbox, so two hosts share .git/index 
 - 2026-10-11T10:10:55Z (fix/dots-dbb1ae): review: impl round 3 — verdict: accept; findings: none; reviewer: codex
 - 2026-10-11T10:10:55Z (fix/dots-dbb1ae): Both startup policies now native desktop: systemd units disabled/inactive, desktop autostart files present. Live desktop daemon PIDs titan 3162772 / europa 63957. Startup command on europa inherited its SSH stderr and kept the tracked SSH call open after Done; relaunching with a host-local stderr log so the intended persistent daemon does not hold a harness command open.
 - 2026-10-11T10:12:08Z (fix/dots-dbb1ae): Desktop launch cutover complete: systemd units disabled/inactive on both hosts, native autostart files present, one daemon per host. Both native client startup/ignored-status checks are running through tracked foreground watchers (15-minute limits), logs under each host backup directory. The startup policy/runbook change passed independent review round 3. Index preservation checks remain green; remote Git HEAD object catch-up is distinct from staged-index preservation.
+- 2026-10-11T10:14:55Z (fix/dots-dbb1ae): Persistent desktop daemons are being put in their own user scopes so they do not remain under the agent terminal. Titan PID 3162772 is now in dropbox-desktop.scope. Europa's SSH-started client lacked DISPLAY, WAYLAND_DISPLAY and XDG_CURRENT_DESKTOP; restarting it with the existing desktop's environment (:0, wayland-1, niri), retaining DBUS/XDG runtime, before final startup checks.
+- 2026-10-11T10:18:56Z (fix/dots-dbb1ae): Live verification: europa reports all 278 indexes ignored; titan reached Up to date. Two other live sessions legitimately committed in mindful/v6 and quarry during client startup, replacing their marked indexes before Dropbox observed the attributes; both were still synced. Recent git logs identify those commits. Saved the current versions under backup/concurrent-writer-indexes, reapplied ignore attributes while client was ready, and confirmed unchanged bytes/staged entries across the repair. No rollback of other sessions' work. Migration must hold Git writers until all indexes are confirmed ignored, not merely until attributes are applied.
+- 2026-10-11T10:22:30Z (fix/dots-dbb1ae): review: impl round 4 — verdict: accept; findings: none; reviewer: codex
+- 2026-10-11T10:22:31Z (fix/dots-dbb1ae): Final live checks passed: all 283 titan and 278 europa indexes report ignored; forced atomic replacement of each host's real dotfiles main index also remains ignored with identical staged entries. Titan reached Up to date and europa's backlog fell from ~13,000 files to 43, with dotfiles HEAD now resolving. Both clients live in independent dropbox-desktop.scope user scopes (titan PID 3162772, europa PID 66590); stop via dropbox-cli stop or systemctl --user stop dropbox-desktop.scope. No session-scope processes remain. Known baseline shell-suite failures stay with dots-90f33d / dots-7b8af8; minor (deferred): failure-test naming and separate append-failure coverage.
+- 2026-10-11T10:22:56Z (fix/dots-dbb1ae): done
+  provenance: {"harness_session":"codex:01a12a46-fa57-7fd0-95bb-9aaaa1b552f5","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T10:22:56Z (fix/dots-dbb1ae): Native per-device Git-index ignore rules installed on titan/europa; 283 + 278 indexes verified ignored with staging preserved, atomic-rewrite checks passed, conflict copies archived/removed, and native desktop startup standardized. Setup installer and runbook reviewed; 103 Python tests and just check passed. Existing Noctalia/setup baseline failures remain in dots-90f33d and dots-7b8af8; minor deferred test naming/append-error coverage recorded.
+  provenance: {"harness_session":"codex:01a12a46-fa57-7fd0-95bb-9aaaa1b552f5","harness_session_source":"CODEX_THREAD_ID"}
