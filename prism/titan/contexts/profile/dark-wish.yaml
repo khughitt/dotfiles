@@ -1,4 +1,4 @@
-compositor.gaps: 24
+compositor.gaps: 30
 debug.backdrop: false
 glass.enabled: true
 glass.paneLip: 6
@@ -13,8 +13,8 @@ glass.roughness: 0.45
 glass.inactive.roughness: 0.19
 glass.attenuationColor: "#dfe8ff"
 glass.inactive.attenuationColor: "#dfe8ff"
-glass.attenuationDistance: 3
-glass.inactive.attenuationDistance: 3
+glass.attenuationDistance: 10
+glass.inactive.attenuationDistance: 26
 glass.ior: 1.5
 glass.inactive.ior: 1.26
 glass.thickness: 23.6
@@ -22,13 +22,13 @@ glass.inactive.thickness: 39.7
 glass.chromaticAberration: 0.36
 glass.inactive.chromaticAberration: 0.36
 glass.distortion: 0.3
-glass.inactive.distortion: 0.48
+glass.inactive.distortion: 0.4
 glass.distortionScale: 0.25
 glass.inactive.distortionScale: 0.17
 glass.anisotropicBlur: 0.16
 glass.inactive.anisotropicBlur: 0.13
 glass.noise: 0
-glass.inactive.noise: 0
+glass.inactive.noise: 0.03
 glass.noiseType: fine
 glass.saturation: 1
 glass.inactive.saturation: 1
@@ -46,24 +46,81 @@ glass.bypass.backdrop: false
 glass.bypass.distortion: false
 glass.bypass.refraction: false
 glass.bypass.fringing: false
-glass.bypass.directionalBlur: false
+glass.bypass.directionalBlur: true
 glass.bypass.tint: false
 glass.bypass.saturation: false
 glass.bypass.noise: false
-glass.bypass.iridescence: false
-glass.bypass.aurora: false
+glass.bypass.iridescence: true
+glass.bypass.aurora: true
 glass.ring.focus: true
 glass.ring.colorSource: familiar
 glass.ring.color: "#ccccff"
 glass.ring.beamSpeed: 300
 glass.ring.beamNoise: 0
 glass.ring.beamNoiseHz: 3
-glass.ring.gap: 8
-glass.ring.width: 2.6
-glass.ring.glow: 1
+glass.ring.gap: 2
+glass.ring.width: 0.9
+glass.ring.glow: 0.8
 glass.lightIor: 6
 terminal.background.opacity.active: 0.56
 terminal.background.opacity.inactive: 0
 terminal.apps:
   - kitty
   - com.mitchellh.ghostty
+glass.bypass.edgeHighlight: true
+glass.ring.accent: 0.6
+glass.ring.rest: 0.5
+_wallpapers:
+  "78261735":
+    _source: /home/keith/.cache/wali/variants/PXL_20230531_233541755/fb01e803a14e73bb/PXL_20230531_233541755.jpg
+    compositor.gaps: 78
+    glass.paneLip: 34
+    glass.bevelProfile: 4.7
+    glass.paneShiftX: -63
+    glass.paneShiftY: 4
+    glass.jellyFlex: 0.0074
+    glass.jellyRipple: 0.385
+    glass.roughness: 0.78
+    glass.inactive.roughness: 0
+    glass.tintAccentMix: 0
+    glass.accentTint: 0.86
+    glass.inactive.accentTint: 0.58
+    glass.attenuationDistance: 3012
+    glass.inactive.attenuationDistance: 55201
+    glass.ior: 1.72
+    glass.inactive.ior: 1.36
+    glass.thickness: 34
+    glass.inactive.thickness: 99.9
+    glass.chromaticAberration: 0.56
+    glass.inactive.chromaticAberration: 0.42
+    glass.distortion: 0.6
+    glass.inactive.distortion: 0.18
+    glass.distortionScale: 0.57
+    glass.inactive.distortionScale: 0.98
+    glass.inactive.anisotropicBlur: 0.41
+    glass.noise: 0.37
+    glass.inactive.noise: 0.57
+    glass.saturation: 2.5
+    glass.inactive.saturation: 0.4
+    glass.iridescence: 0.22
+    glass.inactive.iridescence: 0.32
+    glass.inactive.aurora: 0.47
+    glass.auroraDriftHz: 16
+    glass.inactive.auroraDriftHz: 19
+    glass.reflection: 0.84
+    glass.inactive.reflection: 0.2
+    glass.edgeHighlight: 0.67
+    glass.inactive.edgeHighlight: 0.14
+    glass.ring.gap: 82
+    glass.ring.width: 13.5
+    glass.lightIor: 1
+    glass.ring.accent: 0.4
+    glass.ring.beamSpeed: 900
+    glass.ring.beamNoise: 0.8
+    glass.ring.beamNoiseHz: 26.5
+    glass.ring.decay: 11900
+    glass.ring.glow: 2.4
+    glass.ring.rest: 2.4
+    glass.anisotropicBlur: 0.06
+    glass.aurora: 0.71
+    glass.inactive.bevelProfile: 2.7

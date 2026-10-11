@@ -68,3 +68,6 @@ terminal.background.opacity.inactive: 0
 terminal.apps:
   - kitty
   - com.mitchellh.ghostty
+_wallpapers:
+  8452cef2:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230503_184017492.jpg
