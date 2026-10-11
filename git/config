@@ -1,6 +1,6 @@
 [user]
-	email = keith.hughitt@gmail.com
-	name = Keith Hughitt
+	email = t@t
+	name = t
 [color]
 	ui = true
 [core]
@@ -47,3 +47,5 @@
 # matches through the ~/d symlink; the leading **/ is layout-neutral.
 [includeIf "gitdir:**/cainex/"]
 	path = ~/.gitconfig-cainex
+[protocol "file"]
+	allow = always

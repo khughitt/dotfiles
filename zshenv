@@ -34,6 +34,10 @@ export HOSTNAME="${HOSTNAME:-$(hostname)}"
 # https://changes.ankiweb.net/#/known-issues
 export ANKI_NOHIGHDPI=1
 
+# claude code
+export DISABLE_TELEMETRY=1
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
 # open code plan -> build auto switch
 export OPENCODE_EXPERIMENTAL_PLAN_MODE=1 
 export OPENCODE_DISABLE_AUTOUPDATE=1

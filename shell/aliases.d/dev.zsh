@@ -5,14 +5,19 @@ alias cl='claude --dangerously-skip-permissions'
 alias clr='claude --dangerously-skip-permissions --resume'
 alias clp='claude --dangerously-skip-permissions --plugin-dir ~/d/proto/science'
 
-# codex (linux symlink work-around)
-alias co='codex --dangerously-bypass-approvals-and-sandbox'
-alias cor='codex --dangerously-bypass-approvals-and-sandbox resume'
+# codex
+# --no-daemon: Codex 0.160+ otherwise runs hooks under its shared background server,
+# which has no terminal, so familiar can't tell which window a hook belongs to.
+alias co='codex --no-daemon --dangerously-bypass-approvals-and-sandbox'
+alias cor='codex --no-daemon --dangerously-bypass-approvals-and-sandbox resume'
 
 # conda/mamba
 alias cde='micromamba deactivate'
 alias cs='micromamba search'
 alias mamba='micromamba'
+
+# crush
+alias cr='crush -y'
 
 # docker
 alias doc='docker'
@@ -80,13 +85,54 @@ taj() {
 alias tal='ta list'
 alias tan='ta next'
 alias tap='ta projects'
-alias tas='ta show'
 alias tals='ta list --sort updated'
 alias taps='ta projects --sort activity'
+
+# The terminal's colors as a TASKS_PALETTE value. tasks queries the terminal itself only
+# when stdout is a terminal, so a pipeline into a pager has to ask first, before the
+# pager starts reading the same terminal.
+_tasks_palette() {
+  local saved buf= ch
+  saved=$(stty -g </dev/tty 2>/dev/null) || return 1
+  stty -echo -icanon </dev/tty
+  # fg, bg, palette slots 5 (magenta) and 6 (cyan), then DA1 as a fence: every terminal
+  # answers it, after the color replies.
+  print -rn $'\e]10;?\e\\\e]11;?\e\\\e]4;5;?\e\\\e]4;6;?\e\\\e[c' >/dev/tty
+  while read -rsk 1 -t 0.5 ch </dev/tty; do
+    buf+=$ch
+    [[ $buf == *$'\e[?'*c ]] && break
+  done
+  stty $saved </dev/tty
+  _tasks_palette_parse $buf
+}
+
+# Replies look like ESC ] 10 ; rgb:rrrr/gggg/bbbb ST; the top two hex digits of each
+# channel make the #rrggbb.
+_tasks_palette_parse() {
+  local buf=$1 key query out=() h='[0-9a-fA-F]'
+  for key query in fg 10 bg 11 magenta 4\;5 cyan 4\;6; do
+    [[ $buf =~ $'\e]'"$query;rgb:($h$h)$h*/($h$h)$h*/($h$h)" ]] || return 1
+    out+=("$key=#$match[1]$match[2]$match[3]")
+  done
+  print -r -- "${(j: :)out}"
+}
+
+# show task in a pager; COLUMNS makes tasks wrap prose itself, which it skips when piped
+tas() {
+  local palette
+  # No reply leaves TASKS_PALETTE as inherited: unset, tasks warns rather than going plain.
+  if palette=$(_tasks_palette); then
+    local -x TASKS_PALETTE=$palette
+  fi
+  COLUMNS=$COLUMNS ta show "$@" | moor --terminal-fg --no-linenumbers
+}
 
 alias Tal='ta list --all-projects'
 alias Tals='ta list --sort updated'
 alias Tag='TASKS_FORMAT=pretty tasks list --all-projects | grep -i'
+alias lil='Tal  --process direct --size xs'
+alias smol='Tal  --process direct --size s'
+alias chore='git add tasks && git commit "chore: task updates"'
 
 alias tuia='tui --all'
 
