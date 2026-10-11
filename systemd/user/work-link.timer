@@ -1,5 +1,5 @@
 [Unit]
-Description=Periodically converge checkout entries with WORK_ROOT
+Description=Periodically converge checkout entries with host-local storage
 
 [Timer]
 OnBootSec=2min

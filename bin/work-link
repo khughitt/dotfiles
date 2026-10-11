@@ -86,6 +86,12 @@ work_link_prepare_anchor() {
     [[ "$dir" == / ]] && break
     dir="${dir:h}"
   done
+  # Serialize every writer before anchor creation, including setup's --ensure.
+  # The lock lives beside the anchor, outside the synced tree, until exit.
+  local lock="${anchor}.lock"
+  zmodload zsh/system || { print -u2 -- "cannot load zsh/system for storage locking"; return 1; }
+  : >> "$lock" || { print -u2 -- "cannot create lock ${lock}"; return 1; }
+  zsystem flock "$lock" || { print -u2 -- "cannot lock ${lock}"; return 1; }
   if [[ -n "${WORK_ROOT:-}" ]]; then
     if [[ -L "$anchor" ]]; then
       [[ -e "$anchor" ]] || {
@@ -582,9 +588,15 @@ work_link_move() {
 # the new link is made under a temporary name beside it and renamed over it
 # (rename(2) replaces the link itself, not what it points at).
 work_link_rewrite() {
+  setopt localoptions localtraps
   local intree="$1" text="$2" tmp="${1:h}/.${1:t}.work-link.$$"
+  # The writer lock excludes active rewrites; recover links left by SIGKILL.
+  rm -f -- "${intree:h}/.${intree:t}.work-link."*(N@) || return 1
+  # A function's EXIT trap runs after its local variables have been restored.
+  trap "rm -f -- ${(q)tmp}" EXIT
+  trap "rm -f -- ${(q)tmp}; exit 1" HUP INT TERM
   ln -s -- "$text" "$tmp" || return 1
-  mv -T -- "$tmp" "$intree" || { rm -f -- "$tmp"; return 1; }
+  mv -T -- "$tmp" "$intree" || return 1
 }
 
 # Converge or migrate one entry. Mode is converge, migrate, or plan.
@@ -653,6 +665,7 @@ work_link_handle() {
     legacy)
       if [[ "$mode" == plan ]]; then
         print -- "rewrite	${intree}	${legacy} -> ${text}"
+        [[ -e "$intree" ]] || print -- "materialize	${intree}	-> ${external}"
       elif work_link_rewrite "$intree" "$text"; then
         print -- "rewritten	${intree}	-> ${text}"
         if [[ ! -e "$intree" ]]; then

@@ -449,7 +449,7 @@ test_converge_materializes_a_synced_link() {
 test_converge_rewrites_legacy_absolute_link() {
   sandbox
   local repo; repo=$(make_repo proj)
-  mkdir -p "${WORK}/proj/.venv/lib"; touch "${WORK}/proj/.venv/lib/x.py"
+  mkdir -p "${WORK}/proj/.venv/lib"; print -r -- 'open before rewrite' > "${WORK}/proj/.venv/lib/x.py"
   ln -s "${WORK}/proj/.venv" "${repo}/.venv"                     # the 2026-09-14 form
   mkdir -p "${repo}/sub"; git -C "${repo}/sub" init -q
   printf '.venv\n' > "${repo}/sub/.gitignore"
@@ -459,11 +459,16 @@ test_converge_rewrites_legacy_absolute_link() {
   local out
   out=$(run_work_link --migrate --dry-run "${repo}") || fail "plan: $out"
   [[ "$out" == *"rewrite	${repo}/.venv"* && "$(readlink "${repo}/.venv")" == "${WORK}/proj/.venv" ]] || fail "dry run must only plan: $out"
+  [[ "$out" == *"materialize	${repo}/sub/.venv	-> ${WORK}/proj/sub/.venv"* ]] || fail "plan must include the dangling legacy target: $out"
+  [[ ! -e "${WORK}/proj/sub/.venv" ]] || fail "plan must not materialize the target"
+  local held
+  read -r -u $fd held || fail "file opened before rewrite must be readable"
+  [[ "$held" == 'open before rewrite' ]] || fail "open file content changed"
   out=$(run_work_link "${repo}") || fail "rewrite must exit 0: $out"
   [[ "$out" == *"rewritten	${repo}/.venv"* ]] || fail "expected rewritten: $out"
   [[ "$(readlink "${repo}/.venv")" == "../../.dropbox-work/proj/.venv" ]] || fail "link text not rewritten: $(readlink "${repo}/.venv")"
   [[ "$(stat -L -c %i "${repo}/.venv")" == "$inode_before" ]] || fail "rewrite must resolve to the same directory"
-  read -r -u $fd _ || true; exec {fd}<&-
+  exec {fd}<&-
   [[ "$out" == *"rewritten	${repo}/sub/.venv"* && -d "${WORK}/proj/sub/.venv" ]] || fail "a dangling legacy link is rewritten and materialized: $out"
   ls -A "${repo}" | grep -q 'work-link' && fail "no temporary link may be left behind"
   out=$(run_work_link "${repo}") || fail "second converge: $out"
@@ -475,6 +480,143 @@ test_converge_rewrites_legacy_absolute_link() {
   local rc=0
   out=$(WORK_ROOT= run_work_link "${repo}") || rc=$?
   [[ $rc -eq 1 && "$out" == *"foreign	${repo}/.venv"* && "$(readlink "${repo}/.venv")" == "${WORK}/proj/.venv" ]] || fail "absolute link on another host must be foreign: $out"
+}
+
+test_interrupted_rewrite_cleans_temporary_link() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${WORK}/proj/.venv" "${tmp}/shim"
+  export WORK_LINK_TEST_REAL_MV="$(command -v mv)"
+  cat > "${tmp}/shim/mv" <<'SH'
+#!/usr/bin/env bash
+if [[ "$1" == -T ]]; then
+  kill -"$WORK_LINK_TEST_SIGNAL" "$PPID"
+  exit 1
+fi
+exec "$WORK_LINK_TEST_REAL_MV" "$@"
+SH
+  chmod +x "${tmp}/shim/mv"
+  local signal out rc
+  local -a leftover
+  for signal in TERM KILL; do
+    ln -s "${WORK}/proj/.venv" "${repo}/.venv"
+    rc=0
+    out=$(PATH="${tmp}/shim:$PATH" WORK_LINK_TEST_SIGNAL="$signal" run_work_link "$repo") || rc=$?
+    [[ $rc -ne 0 ]] || fail "interrupted rewrite must fail: $out"
+    [[ "$(readlink "${repo}/.venv")" == "${WORK}/proj/.venv" ]] || fail "interruption must preserve the original link"
+    if [[ "$signal" == TERM ]]; then
+      leftover=("${repo}"/.*.work-link.*(N))
+      (( ${#leftover} == 0 )) || fail "TERM must clean the temporary link"
+    fi
+    out=$(run_work_link "$repo") || fail "retry after $signal: $out"
+    leftover=("${repo}"/.*.work-link.*(N))
+    (( ${#leftover} == 0 )) || fail "retry after $signal must clean temporary links"
+    rm "${repo}/.venv"
+  done
+}
+
+test_parent_termination_cleans_rewrite() (
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${WORK}/proj/.venv" "${tmp}/shim"
+  ln -s "${WORK}/proj/.venv" "${repo}/.venv"
+  mkfifo "${tmp}/release"
+  export WORK_LINK_TEST_BARRIER="$tmp"
+  cat > "${tmp}/shim/mv" <<'SH'
+#!/usr/bin/env bash
+touch "$WORK_LINK_TEST_BARRIER/ready"
+read -r _ < "$WORK_LINK_TEST_BARRIER/release"
+exit 1
+SH
+  chmod +x "${tmp}/shim/mv"
+  local writer=0 guard=0 rc=0 attempt lockfd
+  local -a leftover
+  trap '(( writer )) && kill -TERM -- "-$writer" 2>/dev/null || true; (( guard )) && kill "$guard" 2>/dev/null || true; wait 2>/dev/null || true; cleanup_registered_tmpdirs' EXIT
+  trap 'exit 1' INT TERM HUP
+  zmodload zsh/system
+  zmodload zsh/zselect
+  setsid env PATH="${tmp}/shim:$PATH" "$work_link" "$repo" > "${tmp}/writer.out" 2>&1 & writer=$!
+  zsh -c 'zmodload zsh/zselect; zselect -t 1500; kill -KILL -- "-$1"' guard "$writer" & guard=$!
+  for attempt in {1..500}; do
+    [[ -f "${tmp}/ready" ]] && break
+    zselect -t 1 || true
+  done
+  [[ -f "${tmp}/ready" ]] || fail "rewrite did not reach the rename"
+  kill -TERM "$writer"
+  zselect -t 5 || true
+  if zsystem flock -t 0 -f lockfd "${HOME}/.dropbox-work.lock" 2>/dev/null; then
+    zsystem flock -u "$lockfd"
+    fail "TERM must not release the writer lock while its rename is still running"
+  fi
+  print -- release > "${tmp}/release"
+  wait "$writer" || rc=$?
+  [[ $rc -ne 0 ]] || fail "terminated work-link must fail"
+  leftover=("${repo}"/.*.work-link.*(N))
+  (( ${#leftover} == 0 )) || fail "terminating the actual work-link PID must clean its temporary link"
+  [[ "$(readlink "${repo}/.venv")" == "${WORK}/proj/.venv" ]] || fail "termination must preserve the original link"
+)
+
+# Pause the first link creation so a second writer reaches the same entry.
+# All processes stay children of this test and are reaped on every exit.
+test_concurrent_writers_serialize() (
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo proj)
+  mkdir -p "${WORK}/proj/.venv" "${tmp}/shim"
+  mkfifo "${tmp}/ready" "${tmp}/release" "${tmp}/second"
+  export WORK_LINK_TEST_BARRIER="$tmp"
+  export WORK_LINK_TEST_REAL_LN="$(command -v ln)"
+  export WORK_LINK_TEST_REAL_READLINK="$(command -v readlink)"
+  cat > "${tmp}/shim/ln" <<'SH'
+#!/usr/bin/env bash
+if mkdir "$WORK_LINK_TEST_BARRIER/paused" 2>/dev/null; then
+  echo ready > "$WORK_LINK_TEST_BARRIER/ready"
+  read -r _ < "$WORK_LINK_TEST_BARRIER/release"
+fi
+exec "$WORK_LINK_TEST_REAL_LN" "$@"
+SH
+  cat > "${tmp}/shim/readlink" <<'SH'
+#!/usr/bin/env bash
+if [[ "${WORK_LINK_TEST_SECOND:-}" == 1 ]] && mkdir "$WORK_LINK_TEST_BARRIER/started" 2>/dev/null; then
+  echo started > "$WORK_LINK_TEST_BARRIER/second"
+fi
+exec "$WORK_LINK_TEST_REAL_READLINK" "$@"
+SH
+  chmod +x "${tmp}/shim/ln" "${tmp}/shim/readlink"
+  local first=0 second=0 guard=0 lockfd
+  trap 'for child in $first $second; do (( child )) && kill -TERM -- "-$child" 2>/dev/null || true; done; (( guard )) && kill "$guard" 2>/dev/null || true; wait 2>/dev/null || true; cleanup_registered_tmpdirs' EXIT
+  trap 'exit 1' INT TERM HUP
+  zmodload zsh/system
+  zsh -c 'zmodload zsh/zselect; zselect -t 1500; kill -TERM "$1"' guard "$sysparams[pid]" & guard=$!
+  setsid env PATH="${tmp}/shim:$PATH" "$work_link" "$repo" > "${tmp}/first.out" 2>&1 & first=$!
+  read -r _ < "${tmp}/ready"
+  if zsystem flock -t 0 -f lockfd "${HOME}/.dropbox-work.lock" 2>/dev/null; then
+    zsystem flock -u "$lockfd"
+    fail "writer must hold the anchor lock until its writes finish"
+  fi
+  [[ -f "${HOME}/.dropbox-work.lock" ]] || fail "writer has no anchor lock"
+  (cd "$repo" && exec setsid env PATH="${tmp}/shim:$PATH" WORK_LINK_TEST_SECOND=1 "$work_link" --ensure .venv) > "${tmp}/second.out" 2>&1 & second=$!
+  read -r _ < "${tmp}/second"
+  print -- release > "${tmp}/release"
+  wait "$first" || fail "first writer: $(<"${tmp}/first.out")"
+  first=0
+  wait "$second" || fail "second writer: $(<"${tmp}/second.out")"
+  second=0
+  [[ "$(readlink "${repo}/.venv")" == '../../.dropbox-work/proj/.venv' ]] || fail "writers must leave the managed link"
+  [[ "$(<"${tmp}/second.out")" == "ok	${repo}/.venv" ]] || fail "second writer must see the first writer's link"
+)
+
+test_two_hosts_at_different_paths() {
+  sandbox; local tmp="$SANDBOX"
+  local repo; repo=$(make_repo group/proj)
+  (cd "$repo" && "$work_link" --ensure .venv >/dev/null) || fail "ensure on host A"
+  local other_home="${tmp}/other/deeper/home"
+  mkdir -p "${other_home}/d"
+  cp -a "${HOME}/d/group" "${other_home}/d/"
+  local other_repo="${other_home}/d/group/proj" out
+  out=$(HOME="$other_home" WORK_ROOT= WORK_LINK_HOST=host-b run_work_link) || fail "host B: $out"
+  [[ "$(readlink "${other_repo}/.venv")" == '../../../.dropbox-work/group/proj/.venv' ]] || fail "host B must keep the same relative link text"
+  [[ "$(readlink -f "${other_repo}/.venv")" == "${other_home}/.dropbox-work/group/proj/.venv" ]] || fail "host B must resolve to its own storage"
+  [[ -d "${WORK}/group/proj/.venv" ]] || fail "host A's storage must remain"
 }
 
 # One synced tree read by two hosts at the same path, as titan and europa
@@ -873,14 +1015,18 @@ test_ensure_needs_only_git_and_coreutils() {
   local repo; repo=$(make_repo proj)
   mkdir -p "${tmp}/thin"
   local cmd
-  for cmd in zsh env git realpath readlink mkdir ln rm cp ls du cut head awk sort mktemp; do
+  for cmd in zsh env git realpath readlink mkdir ln rm cp ls du cut head awk sort mktemp uname mv; do
     ln -s "$(command -v "$cmd")" "${tmp}/thin/${cmd}"
   done
   local out
-  out=$(cd "$repo" && PATH="${tmp}/thin" "$work_link" --ensure .venv 2>&1) || fail "ensure without fd and lsof on PATH: $out"
+  out=$(cd "$repo" && unset WORK_LINK_HOST && PATH="${tmp}/thin" "$work_link" --ensure .venv 2>&1) || fail "ensure without fd and lsof on PATH: $out"
   [[ "$out" == created* ]] || fail "ensure on the thin PATH: $out"
   rm "${HOME}/.dropbox-work" "${repo}/.venv"
-  out=$(cd "$repo" && PATH="${tmp}/thin" WORK_ROOT= "$work_link" --ensure .venv 2>&1) || fail "ensure creating the anchor on the thin PATH: $out"
+  ln -s "${WORK}/proj/.venv" "${repo}/.venv"
+  out=$(cd "$repo" && unset WORK_LINK_HOST && PATH="${tmp}/thin" "$work_link" --ensure .venv 2>&1) || fail "ensure rewrite on the thin PATH: $out"
+  [[ "$(readlink "${repo}/.venv")" == '../../.dropbox-work/proj/.venv' ]] || fail "thin PATH must support atomic rewrite"
+  rm "${repo}/.venv" "${HOME}/.dropbox-work"
+  out=$(cd "$repo" && unset WORK_LINK_HOST && PATH="${tmp}/thin" WORK_ROOT= "$work_link" --ensure .venv 2>&1) || fail "ensure creating the anchor on the thin PATH: $out"
   [[ -d "${HOME}/.dropbox-work" && "$out" == *"created	${repo}/.venv"* ]] || fail "thin PATH anchor creation: $out"
 }
 
@@ -1232,6 +1378,12 @@ test_check_lists_dangling_links() {
   [[ $rc -eq 2 ]] || fail "--check --migrate must be a usage error: rc=$rc $out"
 }
 
+if (( $# )); then
+  for test in "$@"; do "$test"; done
+  print -- "work-link tests passed"
+  exit 0
+fi
+
 test_migrate_moves_and_links
 test_nested_rel_path
 test_converge_relinks_when_intree_absent
@@ -1273,6 +1425,10 @@ test_ensure_resolves_name_against_cwd
 test_check_lists_dangling_links
 test_converge_materializes_a_synced_link
 test_converge_rewrites_legacy_absolute_link
+test_interrupted_rewrite_cleans_temporary_link
+test_parent_termination_cleans_rewrite
+test_concurrent_writers_serialize
+test_two_hosts_at_different_paths
 test_two_hosts_share_link_text
 test_missing_locked_worktrees_by_owner
 test_moved_repository_reports_moved_not_unowned

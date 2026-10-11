@@ -6,5 +6,6 @@ Type=oneshot
 # work-link exits 1 on anything new (a foreign link, an unignored entry, an
 # orphan, a failed write), so the unit stays failed until it is resolved and
 # `systemctl --user --failed` is the signal; standing needs-migration and
-# conflict entries are printed to the journal without failing the unit. No ConditionEnvironment: a skipped unit is silent.
+# conflict entries are printed to the journal without failing the unit.
+# No ConditionEnvironment: a skipped unit is silent.
 ExecStart=/usr/bin/zsh -lc 'work-link'
