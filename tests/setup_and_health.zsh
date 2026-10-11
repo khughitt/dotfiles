@@ -349,7 +349,7 @@ test_noctalia_v5_config_contract() {
     XDG_CACHE_HOME="${tmp}/cache" XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should list the tracked template registry"
-  for id in glow nvim claude codex lsd fzf fastfetch ohai; do
+  for id in glow nvim claude codex lsd fzf fastfetch ohai prism; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "missing user template: ${id}"
@@ -384,7 +384,7 @@ assert templates["builtin_ids"] == [
 ]
 assert templates["community_ids"] == ["zathura", "bat", "yazi"]
 assert set(templates["user"]) == {
-    "glow", "nvim", "claude", "codex", "lsd", "fzf", "fastfetch", "ohai"
+    "glow", "nvim", "claude", "codex", "lsd", "fzf", "fastfetch", "ohai", "prism"
 }
 assert templates["user"]["lsd"] == {
     "input_path": "$XDG_CONFIG_HOME/noctalia/templates/lsd.yaml",
@@ -1443,7 +1443,7 @@ test_noctalia_v5_config_is_installed_and_validated() {
     XDG_STATE_HOME="${tmp}/state" \
     noctalia theme --list-templates 2>/dev/null) || \
     fail "Noctalia should load the installed template config"
-  for id in glow nvim claude codex lsd fzf fastfetch ohai; do
+  for id in glow nvim claude codex lsd fzf fastfetch ohai prism; do
     print -r -- "$templates" | \
       rg -q "^[[:space:]]+${id}[[:space:]]+user([[:space:]]|$)" || \
       fail "Noctalia should register the ${id} user template"

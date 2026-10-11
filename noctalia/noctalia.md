@@ -7,9 +7,9 @@ the template sources, and the custom palette files into Noctalia's config.
 
 ## Templates
 
-`noctalia/templates.toml` is the only registry. It selects eight user
+`noctalia/templates.toml` is the only registry. It selects nine user
 templates: Glow, Nvim/glass synchronization, Claude Code, Codex, LSD, Fzf,
-Fastfetch, and Ohai. It also selects seven built-ins: GTK 3, GTK 4, Qt, Niri,
+Fastfetch, Ohai, and Prism. It also selects seven built-ins: GTK 3, GTK 4, Qt, Niri,
 Ghostty, Kitty, and Btop, and selects the Zathura, Bat, and Yazi community
 templates.
 
