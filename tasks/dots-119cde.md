@@ -1,15 +1,16 @@
 ---
 id: dots-119cde
 title: "work-link: deferred minors from the host-neutral links review"
-status: doing
+status: done
 priority: 3
 size: s
 complexity: low
 process: direct
 owner: fix/dots-119cde
 created: 2026-09-23T12:19:08Z
-updated: 2026-10-11T15:10:55Z
+updated: 2026-10-11T15:26:07Z
 started: 2026-10-11T14:48:56Z
+completed: 2026-10-11T15:26:06Z
 depends: []
 tags: [work-link]
 agent: "claude-code/claude-opus-5-5[1m]"
@@ -34,4 +35,11 @@ From ops-d099f0's final review (2026-09-23): (1) a killed rewrite can leave a .<
 - 2026-10-11T15:06:48Z (fix/dots-119cde): Ruling: accepted fresh scoped re-review after corrective round 1; no Critical, Important, or minor (deferred) findings remain. Reviewer checked both rewrite callers, lock lifetime, scoped traps, literal path quoting, and regression sequencing. Distributed locking is outside this host-local task; TERM cleanup waits for foreground rename completion while holding the writer lock.
 - 2026-10-11T15:10:54Z (fix/dots-119cde): Final verification: just test exited 0 after corrective round 1 (118 Python tests and all 11 Zsh suites); just check, Zsh syntax, git diff --check, and tasks check exited 0. The setup/health suite prints its known Noctalia fixture diagnostic and expected missing-generated-theme warnings but exits 0. Installed service/timer and work-link launcher resolve to main; no host pointer was repointed and no live service operation was run.
 - 2026-10-11T15:10:54Z (fix/dots-119cde): parked (waiting on user, approval): User approves merging the reviewed fix/dots-119cde branch; then agent resumes in .worktrees/dots-119cde, closes dots-119cde on the branch, merges into main, and performs required worktree cleanup checks. Approval is required because installed work-link service/timer files resolve to main, a live service surface.
+  provenance: {"harness_session":"codex:01a12b6f-62a6-76e3-8346-f660fc1cec3d","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T15:25:21Z (fix/dots-119cde): resumed
+  provenance: {"harness_session":"codex:01a12b6f-62a6-76e3-8346-f660fc1cec3d","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T15:26:06Z (fix/dots-119cde): User approved merging into main. Resumed the preserved worktree; focused regressions, just check, tasks check, and git diff --check passed again. Full suite already passed on the reviewed code; repeat it on merged main. Cleanup inventory contains only generated .venv and .pytest_cache, with no plan ledgers or submodules; tt-report exited 0.
+- 2026-10-11T15:26:06Z (fix/dots-119cde): done
+  provenance: {"harness_session":"codex:01a12b6f-62a6-76e3-8346-f660fc1cec3d","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T15:26:06Z (fix/dots-119cde): Addressed all five deferred host-neutral work-link review items: interrupted rewrite cleanup and SIGKILL retry recovery, complete legacy dry-run materialization, host-local writer locking across converge/ensure/migrate, requested regression coverage, and service/timer wording. Accepted independent re-review after fixing parent-termination lock lifetime; full just test and just check passed. User approved local merge.
   provenance: {"harness_session":"codex:01a12b6f-62a6-76e3-8346-f660fc1cec3d","harness_session_source":"CODEX_THREAD_ID"}
