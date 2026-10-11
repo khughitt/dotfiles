@@ -1,1 +1,4 @@
 prefix = "dots"
+
+[git]
+commit = true
