@@ -8,7 +8,7 @@ complexity: low
 process: direct
 owner: fix/dots-119cde
 created: 2026-09-23T12:19:08Z
-updated: 2026-10-11T15:26:07Z
+updated: 2026-10-11T15:31:34Z
 started: 2026-10-11T14:48:56Z
 completed: 2026-10-11T15:26:06Z
 depends: []
@@ -43,3 +43,4 @@ From ops-d099f0's final review (2026-09-23): (1) a killed rewrite can leave a .<
   provenance: {"harness_session":"codex:01a12b6f-62a6-76e3-8346-f660fc1cec3d","harness_session_source":"CODEX_THREAD_ID"}
 - 2026-10-11T15:26:06Z (fix/dots-119cde): Addressed all five deferred host-neutral work-link review items: interrupted rewrite cleanup and SIGKILL retry recovery, complete legacy dry-run materialization, host-local writer locking across converge/ensure/migrate, requested regression coverage, and service/timer wording. Accepted independent re-review after fixing parent-termination lock lifetime; full just test and just check passed. User approved local merge.
   provenance: {"harness_session":"codex:01a12b6f-62a6-76e3-8346-f660fc1cec3d","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T15:31:34Z (main): Integrated into main by user-approved fast-forward through b7e8545. Post-merge just test exited 0 (118 Python tests and all 11 Zsh suites), just check and tasks check exited 0. Host launcher/user-unit/config scan found no pointer into the task worktree. Cleanup removes only generated .venv and .pytest_cache; no submodules or plan ledgers. No service restart, daemon reload, or push performed.
