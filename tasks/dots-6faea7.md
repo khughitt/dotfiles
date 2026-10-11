@@ -1,15 +1,16 @@
 ---
 id: dots-6faea7
 title: "docs/mindful-runtime.md: tailscale serve should target http://localhost:3331, not 127.0.0.1 (the service binds ::1 once IPv6 is on)"
-status: doing
+status: done
 priority: 2
 size: xs
 complexity: low
 process: direct
-owner: main
+owner: docs/dots-6faea7
 created: 2026-10-03T17:36:13Z
-updated: 2026-10-11T14:44:28Z
+updated: 2026-10-11T14:46:30Z
 started: 2026-10-11T14:44:27Z
+completed: 2026-10-11T14:46:28Z
 depends: []
 tags: [docs]
 agent: claude-code/claude-opus-5-5
@@ -21,4 +22,12 @@ Line 77 documents 'tailscale serve --bg --https=443 http://127.0.0.1:3331'. Sinc
 
 - 2026-10-11T14:44:26Z (main): Direct documentation correction: replace the single Tailscale Serve IPv4 literal with localhost to match HOST=localhost and the already-corrected live target. No callers, tests, fixtures, exports, or runtime configuration need changes; verify the diff and repository checks.
 - 2026-10-11T14:44:27Z (main): started
+  provenance: {"harness_session":"codex:01a12b69-9f7f-7d93-a836-6cf561e07bee","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T14:44:59Z (docs/dots-6faea7): resumed
+  provenance: {"harness_session":"codex:01a12b69-9f7f-7d93-a836-6cf561e07bee","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T14:46:28Z (docs/dots-6faea7): review: impl round 1 — verdict: accept; findings: none; reviewer: codex
+- 2026-10-11T14:46:28Z (docs/dots-6faea7): Ruling: live listener resolution and Serve connectivity remain outside this documentation-only task; no runtime configuration changed. Verification: just check, tasks check, and git diff --check passed.
+- 2026-10-11T14:46:28Z (docs/dots-6faea7): done
+  provenance: {"harness_session":"codex:01a12b69-9f7f-7d93-a836-6cf561e07bee","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T14:46:28Z (docs/dots-6faea7): Corrected docs/mindful-runtime.md Serve target to http://localhost:3331, matching HOST=localhost and the already-corrected live setup. Review accepted with no findings; repository and whitespace checks passed.
   provenance: {"harness_session":"codex:01a12b69-9f7f-7d93-a836-6cf561e07bee","harness_session_source":"CODEX_THREAD_ID"}

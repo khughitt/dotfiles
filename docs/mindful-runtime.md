@@ -74,7 +74,7 @@ then configure Serve on the authenticated host:
 ```sh
 systemctl --user daemon-reload
 systemctl --user restart mindful-web.service
-tailscale serve --bg --https=443 http://127.0.0.1:3331
+tailscale serve --bg --https=443 http://localhost:3331
 tailscale serve status
 ```
 
