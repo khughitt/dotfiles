@@ -1,13 +1,15 @@
 ---
 id: dots-dbb1ae
 title: Git index files under Dropbox produce conflicted copies across hosts and stall sync
-status: todo
+status: doing
 priority: 2
 size: s
 complexity: mid
 process: direct
+owner: main
 created: 2026-10-06T11:20:33Z
-updated: 2026-10-08T00:12:17Z
+updated: 2026-10-11T09:26:28Z
+started: 2026-10-11T09:25:10Z
 depends: []
 tags: []
 agent: claude-code/claude-fable-5-1
@@ -18,3 +20,6 @@ Checkouts under ~/d keep .git in-tree in Dropbox, so two hosts share .git/index 
 ## Notes
 
 - 2026-10-08T00:12:17Z (main): evidence 2026-10-07 (hq cutover): a plain git status run over ssh on the second host rewrote that host's .git/index while it still held the pre-commit entry; Dropbox carried it back over this host's index a minute after a commit, leaving a phantom MM on the committed file (whole-second mtime marks the Dropbox write). Fixed with git reset -- <path>; polling the other host with git --no-optional-locks status avoided it from then on.
+- 2026-10-11T09:25:10Z (main): started
+  provenance: {"harness_session":"codex:01a12a46-fa57-7fd0-95bb-9aaaa1b552f5","harness_session_source":"CODEX_THREAD_ID"}
+- 2026-10-11T09:26:28Z (main): Investigation: titan Dropbox is up to date; two index conflict copies remain in hq. Europa SSH times out over IPv4 and Tailscale reports offline, last seen two days ago. Checking native Dropbox ignore rules, which may avoid Git wrappers and atomic-replacement xattr loss.
