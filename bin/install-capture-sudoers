@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export LC_ALL=C
+
+if [[ $# != 1 ]]; then
+    echo "Usage: sudo $0 USERNAME" >&2
+    exit 1
+fi
+capture_user=$1
+if [[ ! "$capture_user" =~ ^[a-z_][a-z0-9_-]*[$]?$ ]]; then
+    echo "Invalid username: $capture_user" >&2
+    exit 1
+fi
+if ! id -u -- "$capture_user" >/dev/null; then
+    echo "Unknown user: $capture_user" >&2
+    exit 1
+fi
+if [[ $(id -u) != 0 ]]; then
+    echo "Run with sudo: sudo $0 $capture_user" >&2
+    exit 1
+fi
+
+rule_dir=$(mktemp -d)
+trap 'rm -rf -- "$rule_dir"' EXIT
+printf '%s ALL=(root) NOPASSWD: /usr/bin/chvt\n' "$capture_user" > "$rule_dir/50-chvt"
+printf '%s ALL=(root) NOPASSWD: /usr/bin/tee /sys/class/graphics/fb0/blank\n' "$capture_user" > "$rule_dir/50-fb-blank"
+
+# Validate both before replacing either live rule.
+for rule in 50-chvt 50-fb-blank; do
+    visudo -cf "$rule_dir/$rule"
+done
+for rule in 50-chvt 50-fb-blank; do
+    install -C -T -m 0440 -o root -g root "$rule_dir/$rule" "/etc/sudoers.d/$rule"
+done

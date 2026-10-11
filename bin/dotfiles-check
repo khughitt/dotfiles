@@ -13,6 +13,7 @@ bash_files=(
     bin/dotfiles-layout-check
     bin/dotfiles-secrets-check
     bin/kernel-gate
+    bin/install-capture-sudoers
     bin/mindful
     bin/mindful-tui
     lib/dotfiles-setup-data.bash

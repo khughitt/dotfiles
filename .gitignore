@@ -27,6 +27,7 @@ bin/*
 !bin/dotfiles-secrets-check
 !bin/gpu-fan-curve
 !bin/kernel-gate
+!bin/install-capture-sudoers
 !bin/mindful
 !bin/mindful-release
 !bin/mindful-tui
@@ -61,6 +62,7 @@ docs/
 !/docs/
 /docs/*
 !/docs/fresh-install-hardening.md
+!/docs/capture-host-setup.md
 !/docs/mindful-runtime.md
 wsprofiles/node_modules/
 

@@ -70,6 +70,9 @@ The timer runs `dropbox_ignore_flux` periodically. It sets Dropbox's
 `com.dropbox.ignored` attribute on common high-churn directories such as
 `node_modules`, `.venv`, `.worktrees`, `.snakemake`, and `__pycache__`.
 
+Capture hosts need two explicit sudoers grants; follow
+[the capture-host setup instructions](docs/capture-host-setup.md) to install them.
+
 A new machine
 -------------
 
