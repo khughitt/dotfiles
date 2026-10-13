@@ -6,9 +6,9 @@ priority: 2
 size: s
 complexity: mid
 process: direct
-owner: main
+owner: nm-autostart-autoconnect
 created: 2026-10-13T08:45:18Z
-updated: 2026-10-13T08:45:25Z
+updated: 2026-10-13T08:45:33Z
 started: 2026-10-13T08:45:25Z
 depends: []
 tags: [desktop]
@@ -20,4 +20,6 @@ NetworkManager blocks autoconnect on a device after a user disconnect (nm-applet
 ## Notes
 
 - 2026-10-13T08:45:25Z (main): started
+  provenance: {"harness_session":"claude-code:5588d70a-e1c7-421c-b52f-6681dc7b6eeb","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-13T08:45:33Z (nm-autostart-autoconnect): resumed
   provenance: {"harness_session":"claude-code:5588d70a-e1c7-421c-b52f-6681dc7b6eeb","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
