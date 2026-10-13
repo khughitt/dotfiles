@@ -1,0 +1,6 @@
+# Noctalia provides the network widget and the NetworkManager secret agent, so
+# the system nm-applet autostart entry is hidden for this user.
+[Desktop Entry]
+Type=Application
+Name=Network
+Hidden=true

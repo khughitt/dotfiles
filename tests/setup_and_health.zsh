@@ -1458,6 +1458,8 @@ test_noctalia_v5_config_is_installed_and_validated() {
     fail "expected linked Noctalia Glow palette"
   [[ ! -e "${tmp}/config/noctalia/plugins" ]] || \
     fail "setup should not create Noctalia v4 plugin links"
+  [[ "$(readlink "${tmp}/config/autostart/nm-applet.desktop")" == "${repo_root}/autostart/nm-applet.desktop" ]] || \
+    fail "expected the nm-applet autostart override to point into the repository"
 
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_CACHE_HOME="${tmp}/cache" XDG_STATE_HOME="${tmp}/state" \

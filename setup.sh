@@ -860,6 +860,10 @@ function setup_application_config_links() {
         ln_s "${DOTS_HOME}/noctalia/palettes/Glow.json" "$glow_palette"
         ln_s "${DOTS_HOME}/noctalia/templates" "$noctalia_templates"
         ln_s "${DOTS_HOME}/noctalia/templates.toml" "$noctalia_templates_config"
+
+        # Noctalia's network widget replaces nm-applet; hide its system autostart.
+        ensure_dir "${XDG_CONFIG_HOME}/autostart"
+        ln_s "${DOTS_HOME}/autostart/nm-applet.desktop" "${XDG_CONFIG_HOME}/autostart/nm-applet.desktop"
     fi
 
     ln_s "${DOTS_HOME}/git/ignore" "${HOME}/.gitignore_global"
