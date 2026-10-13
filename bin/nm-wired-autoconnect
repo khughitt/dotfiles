@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Reconnect a wired port when its link returns after a user disconnect.
+#
+# Why this exists: a "disconnect" from nm-applet or Noctalia makes
+# NetworkManager block autoconnect on the device, and the block survives the
+# cable being unplugged and replugged; only a reboot or a manual connect clears
+# it. An accidental click once left this host on Wi-Fi for two days with a live
+# cable. NetworkManager has no setting for this, and its dispatcher fires no
+# carrier events, so this watches device states instead.
+#
+# `nmcli device set <dev> autoconnect yes` is not enough: it clears the flag
+# but NetworkManager does not then activate anything. `nmcli device connect`
+# does both.
+#
+# A deliberate disconnect still holds while the link stays up: only an
+# ethernet device going unavailable -> disconnected (carrier regained) with
+# autoconnect still blocked is reconnected.
+
+set -uo pipefail
+
+log() { printf '%s\n' "$*"; }
+
+declare -A last_state=()
+
+# State strings are localized; the parser needs the C ones.
+export LC_ALL=C
+
+while IFS= read -r line; do
+    # Lines look like "enp6s0: connecting (prepare)"; anything else (such as
+    # "NetworkManager is stopped") is not a device state.
+    [[ "$line" == *": "* ]] || continue
+    dev=${line%%: *}
+    state=${line#*: }
+    prev=${last_state[$dev]:-}
+    last_state[$dev]=$state
+
+    [[ "$prev" == "unavailable" && "$state" == "disconnected" ]] || continue
+
+    # The device can vanish between the event and the query (a USB adapter).
+    if ! props=$(nmcli -g GENERAL.TYPE,GENERAL.AUTOCONNECT device show "$dev" 2>/dev/null); then
+        continue
+    fi
+    { read -r kind; read -r autoconnect; } <<<"$props"
+    [[ "$kind" == "ethernet" && "$autoconnect" == "no" ]] || continue
+
+    log "$dev: link returned with autoconnect blocked; connecting"
+    nmcli device connect "$dev" || log "$dev: connect failed"
+done < <(nmcli device monitor)
+
+log "nmcli device monitor ended"
+exit 1

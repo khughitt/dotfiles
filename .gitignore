@@ -26,6 +26,7 @@ bin/*
 !bin/dotfiles-layout-check
 !bin/dotfiles-secrets-check
 !bin/gpu-fan-curve
+!bin/nm-wired-autoconnect
 !bin/kernel-gate
 !bin/install-capture-sudoers
 !bin/mindful

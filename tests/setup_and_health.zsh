@@ -683,7 +683,8 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "$(readlink "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf")" == \
       "${repo_root}/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
     fail "expected niri stop-timeout override to point into the repository"
-  for unit in familiar-reap.service familiar-reap.timer mindful-web.service mindful-backup.service mindful-backup.timer; do
+  for unit in familiar-reap.service familiar-reap.timer mindful-web.service mindful-backup.service mindful-backup.timer \
+      nm-wired-autoconnect.service; do
     [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
       fail "expected linked ${unit}"
     [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \

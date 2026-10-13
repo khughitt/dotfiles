@@ -1,0 +1,13 @@
+[Unit]
+Description=Reconnect a wired port when its link returns after a user disconnect
+Documentation=file://%h/bin/nm-wired-autoconnect
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=%h/bin/nm-wired-autoconnect
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

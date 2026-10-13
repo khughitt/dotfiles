@@ -769,6 +769,8 @@ function setup_systemd_user_units() {
     done
     ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.service" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.service"
     ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.timer" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.timer"
+    # Needs NetworkManager; enabled by hand on the hosts that run it.
+    ln_s "${DOTS_HOME}/systemd/user/nm-wired-autoconnect.service" "${XDG_CONFIG_HOME}/systemd/user/nm-wired-autoconnect.service"
     ln_s "${WALI_ROOT}/systemd/wali-rotate.service" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service"
     ln_s "${WALI_ROOT}/systemd/wali-rotate.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer"
     # Only titan has a [phone] table; the timer is enabled by hand there.
