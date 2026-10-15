@@ -1,4 +1,5 @@
 prefix = "dots"
+color = "#776558"
 
 [git]
 commit = true
