@@ -6,9 +6,9 @@ priority: 0
 size: xs
 complexity: low
 process: direct
-owner: main
+owner: dots-c3a650
 created: 2026-10-16T16:29:42Z
-updated: 2026-10-16T16:29:43Z
+updated: 2026-10-16T16:29:48Z
 started: 2026-10-16T16:29:42Z
 depends: []
 tags: []
@@ -20,4 +20,6 @@ A sandboxed test script (HOME overridden, XDG_CONFIG_HOME not) ran git config --
 ## Notes
 
 - 2026-10-16T16:29:42Z (main): started
+  provenance: {"harness_session":"claude-code:9c070e8d-dc83-4336-8ab8-fa5eb8b20204","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-16T16:29:48Z (dots-c3a650): resumed
   provenance: {"harness_session":"claude-code:9c070e8d-dc83-4336-8ab8-fa5eb8b20204","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
