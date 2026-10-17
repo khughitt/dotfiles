@@ -7,8 +7,8 @@ size: xs
 complexity: low
 process: direct
 created: 2026-10-17T11:24:06Z
-updated: 2026-10-17T11:24:06Z
-depends: []
+updated: 2026-10-17T11:24:13Z
+depends: [ops-b06c52]
 tags: [git]
 agent: claude-code/claude-opus-5-5
 ---
