@@ -7,7 +7,7 @@ size: xs
 complexity: low
 process: direct
 created: 2026-10-17T11:24:06Z
-updated: 2026-10-17T11:24:13Z
+updated: 2026-10-17T11:24:14Z
 depends: [ops-b06c52]
 tags: [git]
 agent: claude-code/claude-opus-5-5
@@ -20,3 +20,7 @@ Done: the entry reads `command = git-identity-check`, and its comment says the s
 Order: only after ops-b06c52 lands the shebang and `just install`'s link points at it; before that, the name would run under the `python3` first on PATH.
 
 Where: `git/config`, the hook block and its comment.
+
+## Notes
+
+- 2026-10-17T11:24:13Z (main): concerns: dots-9dfbd3 defect — the hook command expands $HOME, so a HOME-only sandbox that inherits XDG_CONFIG_HOME fails every commit
