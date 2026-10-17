@@ -3,11 +3,8 @@ id: dots-a417c7
 title: "dropdown terminals: a distinct prism x niri-material profile"
 status: idea
 priority: 2
-reviewed: true
-awaiting_user: true
-reviewed_at: 2026-10-17T21:20:01Z
 created: 2026-09-06T17:43:16Z
-updated: 2026-10-17T21:20:02Z
+updated: 2026-10-17T22:25:13Z
 depends: []
 tags: [niri, dropdown, prism]
 ---
@@ -30,3 +27,4 @@ Follow-up to dots-7b24fa: theme the dropdown layer surfaces (kitty colours via k
 ## Notes
 
 - 2026-10-17T21:20:01Z (main): scope: question; body gains the evidence (prism reaches only window-rules and one kitty.conf; niri-material layer-rules take no glass material; quick-access-terminal.conf is the kitty seam) and two open questions: which look, (a) static blur and colours, (b) prism-owned dropdown.* keys, or (c) layer-surface glass in niri-material, and whether the scratchpad shares it; checked at 69e226c
+- 2026-10-17T22:25:13Z (main): answer (user, 2026-10-17): (b) initially: prism owns the dropdown look as dropdown.* keys (niri sink emits the ^dropdown- layer-rule, kitty sink a quick-access-terminal.conf). Long term the user asks whether (c) could become a standalone material renderer: the material split from niri's logic, niri-material plus a 'material-surface' that can be toggled above a workspace, with kitty shown alongside it and coordinated. Q2 (does the scratchpad share the look) unanswered.
