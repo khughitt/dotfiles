@@ -3,11 +3,8 @@ id: dots-06eb59
 title: "dropdown: ops dashboard"
 status: idea
 priority: 2
-reviewed: true
-awaiting_user: true
-reviewed_at: 2026-10-17T21:20:19Z
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-17T21:20:20Z
+updated: 2026-10-17T22:25:13Z
 depends: []
 tags: [niri, dropdown]
 ---
@@ -26,3 +23,4 @@ Follow-up to dots-7b24fa: another quick-access-terminal instance group running t
 ## Notes
 
 - 2026-10-17T21:20:19Z (main): scope: question; no terminal ops dashboard exists to run (ops bin/ has no live view; obs's dashboard is a browser page, its terminal summary is off PATH); body gains the evidence and one open question: what it shows, (a) a refreshed composition of host-load and tasks claims/lanes, (b) obs dashboard summary/findings, or (c) what was meant; checked at 69e226c
+- 2026-10-17T22:25:13Z (main): answer (user, 2026-10-17): do a wider, deeper exploration and brainstorm across the projects most active with ops (tasks, obs, fam, crew, mind6). Consider what is useful to convey; interactive or read-only (e.g. the transponder inbox, a task launcher); nested or multiscale (a home view of all projects, each with a space, then a concise full-page view per project); keeping it uncluttered while conveying the most useful text and visuals; snapshot (point) vs change (rates, gradients); fam art (the video-game art style ideas in trans); other considerations.
