@@ -7,7 +7,7 @@ size: s
 complexity: mid
 process: direct
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-17T21:19:30Z
+updated: 2026-10-17T21:19:43Z
 depends: []
 tags: [niri, dropdown]
 ---
@@ -27,3 +27,7 @@ Done when:
 - Live check: search, open a thought, hop to a related one, hide and show again with state kept, and confirm thought sprites render inside the kitty quick-access surface (OpenTUI and kitty's placeholder cells have clashed elsewhere). Taking the live desktop asks first; run the worktree's copy by explicit path and kill that instance at merge.
 
 Where: niri/scripts/dropdown, niri/scripts/mindful-scratch (the loop pattern), niri/config.kdl, cheatsheets/niri, tests/niri/test_dropdown.py; keys and environment in mind6's packages/tui/README.md.
+
+## Notes
+
+- 2026-10-17T21:19:43Z (main): scope: scoped; idea -> todo P2 s mid direct, retitled from 'mind6 quick thought i/o terminal'; the capture half landed as dots-8cf055 (e844874), so this is the find/read half over mindful-tui; mid for two bounded unknowns (exit status with no web, reconnect after a web restart); checked at 69e226c
