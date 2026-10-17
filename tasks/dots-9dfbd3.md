@@ -6,9 +6,9 @@ priority: 2
 size: xs
 complexity: low
 process: direct
-owner: main
+owner: feat/git-identity-hook
 created: 2026-10-17T09:56:21Z
-updated: 2026-10-17T10:25:25Z
+updated: 2026-10-17T10:25:26Z
 started: 2026-10-17T10:25:25Z
 depends: []
 tags: []
@@ -21,4 +21,6 @@ The commit identity guard (ops docs/specs/2026-10-16-commit-identity-guard-desig
 ## Notes
 
 - 2026-10-17T10:25:25Z (main): started
+  provenance: {"harness_session":"claude-code:854dcd72-1ec1-4c31-9036-697c6944b3bc","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-17T10:25:25Z (feat/git-identity-hook): resumed
   provenance: {"harness_session":"claude-code:854dcd72-1ec1-4c31-9036-697c6944b3bc","harness_session_source":"CLAUDE_CODE_SESSION_ID"}

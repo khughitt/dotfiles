@@ -47,3 +47,12 @@
 # matches through the ~/d symlink; the leading **/ is layout-neutral.
 [includeIf "gitdir:**/cainex/"]
 	path = ~/.gitconfig-cainex
+# Refuse a commit or merge whose author or committer is not the identity the
+# checkout's profile declares (ops bin/git-identity-check; design: ops
+# docs/specs/2026-10-16-commit-identity-guard-design.md). Config-declared hooks
+# run in every repository beside its own core.hooksPath hooks. The system
+# interpreter, so an older python3 first on PATH never decides the verdict.
+[hook "identity-check"]
+	event = pre-commit
+	event = pre-merge-commit
+	command = /usr/bin/python3 $HOME/.local/bin/git-identity-check
