@@ -8,7 +8,7 @@ complexity: low
 process: direct
 owner: main
 created: 2026-10-17T11:24:06Z
-updated: 2026-10-17T11:49:48Z
+updated: 2026-10-17T11:49:49Z
 started: 2026-10-17T11:43:26Z
 depends: [ops-b06c52]
 tags: [git]
@@ -37,3 +37,5 @@ Gate: the global git config is a live global surface: ask the user before mergin
 - 2026-10-17T11:46:55Z (main): resumed
   provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-17T11:49:48Z (main): merged ff7144b on user approval; titan verified: git hook list names global identity-check, a wrong -c user.email commit in a claimed checkout is refused and writes nothing; europa offline (tailscale: last seen ~19m before), unverified
+- 2026-10-17T11:49:49Z (main): parked (waiting on agent, environment): When europa is back online: ssh europa, confirm git config --global --get hook.identity-check.command shows the PATH-then-$HOME entry and ~/.local/bin/git-identity-check resolves to a script starting #!/usr/bin/python3; in ~/d/ops run the entry via sh -c with GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_EMAIL=t@t (expect a refusal) and without (expect exit 0); then tasks done
+  provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
