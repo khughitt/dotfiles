@@ -8,7 +8,7 @@ complexity: low
 process: direct
 owner: main
 created: 2026-10-17T11:24:06Z
-updated: 2026-10-17T11:46:55Z
+updated: 2026-10-17T11:49:48Z
 started: 2026-10-17T11:43:26Z
 depends: [ops-b06c52]
 tags: [git]
@@ -36,3 +36,4 @@ Gate: the global git config is a live global surface: ask the user before mergin
   provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-17T11:46:55Z (main): resumed
   provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-17T11:49:48Z (main): merged ff7144b on user approval; titan verified: git hook list names global identity-check, a wrong -c user.email commit in a claimed checkout is refused and writes nothing; europa offline (tailscale: last seen ~19m before), unverified
