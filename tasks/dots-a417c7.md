@@ -7,8 +7,8 @@ size: xs
 complexity: low
 process: direct
 created: 2026-09-06T17:43:16Z
-updated: 2026-10-17T22:29:29Z
-depends: []
+updated: 2026-10-17T22:29:30Z
+depends: [prism-6a628e]
 tags: [niri, dropdown, prism]
 ---
 
