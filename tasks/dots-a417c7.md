@@ -3,8 +3,11 @@ id: dots-a417c7
 title: "dropdown terminals: a distinct prism x niri-material profile"
 status: idea
 priority: 2
+reviewed: true
+awaiting_user: true
+reviewed_at: 2026-10-17T21:20:01Z
 created: 2026-09-06T17:43:16Z
-updated: 2026-10-17T21:20:01Z
+updated: 2026-10-17T21:20:02Z
 depends: []
 tags: [niri, dropdown, prism]
 ---
@@ -23,3 +26,7 @@ Follow-up to dots-7b24fa: theme the dropdown layer surfaces (kitty colours via k
 
 1. Which look do you want for the dropdowns? (a) A distinct non-glass look from existing pieces (layer-rule background-effect blur plus kitty colours and opacity), in dotfiles only. (b) The same look owned by prism as dropdown.* keys you can tune from the panel: the niri sink emits the `^dropdown-` layer-rule and the kitty sink a quick-access-terminal.conf. This is prism work. (c) niri-material glass on the dropdowns, which first needs layer-surface material rendering designed in niri-material. Lean: (a) if they only need to read differently from windows; (b) if you expect to tune them alongside the glass; (c) only if the glass itself is the point.
 2. Should the mindful scratchpad share that look? It sits over other windows' text at 0.98 opacity, so it may need to keep its readability-first override.
+
+## Notes
+
+- 2026-10-17T21:20:01Z (main): scope: question; body gains the evidence (prism reaches only window-rules and one kitty.conf; niri-material layer-rules take no glass material; quick-access-terminal.conf is the kitty seam) and two open questions: which look, (a) static blur and colours, (b) prism-owned dropdown.* keys, or (c) layer-surface glass in niri-material, and whether the scratchpad shares it; checked at 69e226c
