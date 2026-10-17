@@ -1,28 +1,31 @@
 ---
 id: dots-a417c7
-title: "dropdown terminals: a distinct prism x niri-material profile"
-status: idea
+title: "dropdown terminals: take their look from prism (dotfiles side of prism-6a628e)"
+status: todo
 priority: 2
+size: xs
+complexity: low
+process: direct
 created: 2026-09-06T17:43:16Z
-updated: 2026-10-17T22:25:13Z
+updated: 2026-10-17T22:29:29Z
 depends: []
 tags: [niri, dropdown, prism]
 ---
 
-Follow-up to dots-7b24fa: theme the dropdown layer surfaces (kitty colours via kitty_conf/kitty_override, niri layer-rule shadow/blur/corner radius) as their own prism profile rather than the default terminal look.
+Why: theme the dropdown layer surfaces (kitty colours via kitty_conf/kitty_override, niri layer-rule shadow/blur/corner radius) as their own prism-owned look rather than the default terminal look. Follow-up to dots-7b24fa. On 2026-10-17 the owner chose option (b): prism owns the look as dropdown.* keys. That work is prism-6a628e. This task is the dotfiles side that follows it.
 
-## Evidence (scope 2026-10-17)
+Established (scope 2026-10-17; evidence in prism-6a628e):
+- dotfiles hand-sets the look today: niri/config.kdl's `^dropdown-` layer-rule (geometry-corner-radius 0 0 12 12, shadow on), plus per-case kitty options in niri/scripts/dropdown (background_opacity 0.85; for the mindful scratchpad 0.98 and an opaque transparent_background_colors sentinel).
+- Neither prism's render path nor niri-material reaches layer surfaces today. Prism's live kitty push does: it sends `set-background-opacity --all` to every `@dotfiles-kitty-<pid>` socket, and the dropdowns hold such sockets. Fixing that belongs to prism-6a628e.
+- Options considered and not chosen now: (a) a static dotfiles look; (c) niri-material glass on the dropdowns, which needs layer-surface material rendering that niri-material has not designed (its docs/notes/2026-10-14-noctalia-material-brief.md, alternative 2). The owner's long-term idea of a material renderer split out from niri is filed in niri-material as an idea.
 
-- Two hand-set places hold today's dropdown look. niri/config.kdl's `^dropdown-` layer-rule sets corner radius 0 0 12 12 and a shadow, with no background-effect. niri/scripts/dropdown sets kitty options per case: background_opacity 0.85, and for the mindful scratchpad 0.98 plus an opaque transparent_background_colors sentinel.
-- Prism does not reach either. Its niri sink emits the glass only as window-rules matched on `terminal.apps` (kitty, ghostty), and the dropdowns are layer surfaces, which window-rules never match. Its kitty sink writes one kitty.conf (background_opacity from terminal.background.opacity.active), and every dropdown overrides that on its command line.
-- In prism, a "profile" is a whole named look, with one active at a time (prism-aec90f's compositional profiles, prism-2f0b4b's contexts). A dropdown look beside the window look would be new keys, such as a dropdown.* group, rather than a profile.
-- niri-material cannot draw the glass on a layer surface. Its layer-rules accept background-effect (blur, xray, noise, saturation) and surface-remap. surface-remap recolours an opaque shell's surfaces to a material's face and the workspace's project hue (material-62347d, landed 2026-10-17 for Noctalia). Material rendering for layer surfaces is alternative 2 of niri-material's docs/notes/2026-10-14-noctalia-material-brief.md: unbuilt, and it would need its own design (surface footprint, client composition, lifecycle).
-- kitty's quick-access-terminal reads its own quick-access-terminal.conf (or `-c <path>`), which can carry kitty_conf and kitty_override. A generated file there is where a prism kitty output would write.
+Done when, after prism-6a628e lands:
+- niri/config.kdl drops its `^dropdown-` layer-rule, now emitted in prism.kdl. Check that rule order in the include leaves no stale override.
+- niri/scripts/dropdown stops passing background_opacity per case and reads prism's generated quick-access config, by the path prism-6a628e's design names. The scratchpad's readability override stays or moves as that design decides.
+- tests/niri/test_dropdown.py follows: `uv run --frozen pytest -q tests/niri/test_dropdown.py`, then `just test`.
+- Live check: restart the dropdowns, see prism's values, change one from the prism panel, and confirm the dropdowns follow it (or respawn, if the design says so). Taking the live desktop asks first.
 
-## Open questions
-
-1. Which look do you want for the dropdowns? (a) A distinct non-glass look from existing pieces (layer-rule background-effect blur plus kitty colours and opacity), in dotfiles only. (b) The same look owned by prism as dropdown.* keys you can tune from the panel: the niri sink emits the `^dropdown-` layer-rule and the kitty sink a quick-access-terminal.conf. This is prism work. (c) niri-material glass on the dropdowns, which first needs layer-surface material rendering designed in niri-material. Lean: (a) if they only need to read differently from windows; (b) if you expect to tune them alongside the glass; (c) only if the glass itself is the point.
-2. Should the mindful scratchpad share that look? It sits over other windows' text at 0.98 opacity, so it may need to keep its readability-first override.
+Where: niri/config.kdl, niri/scripts/dropdown, tests/niri/test_dropdown.py; prism-6a628e's spec once written.
 
 ## Notes
 
