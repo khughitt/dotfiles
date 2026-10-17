@@ -7,7 +7,7 @@ size: xs
 complexity: low
 process: direct
 created: 2026-09-06T17:43:16Z
-updated: 2026-10-17T22:29:30Z
+updated: 2026-10-17T22:29:31Z
 depends: [prism-6a628e]
 tags: [niri, dropdown, prism]
 ---
@@ -31,3 +31,4 @@ Where: niri/config.kdl, niri/scripts/dropdown, tests/niri/test_dropdown.py; pris
 
 - 2026-10-17T21:20:01Z (main): scope: question; body gains the evidence (prism reaches only window-rules and one kitty.conf; niri-material layer-rules take no glass material; quick-access-terminal.conf is the kitty seam) and two open questions: which look, (a) static blur and colours, (b) prism-owned dropdown.* keys, or (c) layer-surface glass in niri-material, and whether the scratchpad shares it; checked at 69e226c
 - 2026-10-17T22:25:13Z (main): answer (user, 2026-10-17): (b) initially: prism owns the dropdown look as dropdown.* keys (niri sink emits the ^dropdown- layer-rule, kitty sink a quick-access-terminal.conf). Long term the user asks whether (c) could become a standalone material renderer: the material split from niri's logic, niri-material plus a 'material-surface' that can be toggled above a workspace, with kitty shown alongside it and coordinated. Q2 (does the scratchpad share the look) unanswered.
+- 2026-10-17T22:29:30Z (main): scope: scoped; idea -> todo P2 xs low direct on the owner's answer (b); prism-6a628e filed for the prism side (dropdown.* keys, layer-rule and quick-access config outputs, live-push fix) and this task depends on it; retitled from 'a distinct prism x niri-material profile'; checked at dotfiles 69e226c, prism f8c6c88, niri-material 8cfd964a
