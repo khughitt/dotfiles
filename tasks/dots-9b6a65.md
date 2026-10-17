@@ -1,15 +1,17 @@
 ---
 id: dots-9b6a65
 title: Run git-identity-check by name from the global identity-check hook
-status: doing
+status: done
 priority: 2
 size: xs
 complexity: low
 process: direct
 owner: main
 created: 2026-10-17T11:24:06Z
-updated: 2026-10-17T16:47:03Z
+updated: 2026-10-17T16:47:12Z
 started: 2026-10-17T11:43:26Z
+completed: 2026-10-17T16:47:12Z
+closed: 2026-10-17T16:47:12Z
 depends: [ops-b06c52]
 tags: [git]
 agent: claude-code/claude-opus-5-5
@@ -40,4 +42,8 @@ Gate: the global git config is a live global surface: ask the user before mergin
 - 2026-10-17T11:49:49Z (main): parked (waiting on agent, environment): When europa is back online: ssh europa, confirm git config --global --get hook.identity-check.command shows the PATH-then-$HOME entry and ~/.local/bin/git-identity-check resolves to a script starting #!/usr/bin/python3; in ~/d/ops run the entry via sh -c with GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_EMAIL=t@t (expect a refusal) and without (expect exit 0); then tasks done
   provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-17T16:47:03Z (main): resumed
+  provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-17T16:47:12Z (main): done
+  provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-17T16:47:12Z (main): hook entry runs git-identity-check from PATH, else $HOME/.local/bin (ff7144b); verified on titan (wrong-email commit refused, nothing written) and europa (entry and #!/usr/bin/python3 shebang synced, git hook list names global identity-check, entry refuses t@t with exit 1 and passes the real identity with exit 0)
   provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
