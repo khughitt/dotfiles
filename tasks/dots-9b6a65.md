@@ -1,13 +1,15 @@
 ---
 id: dots-9b6a65
 title: Run git-identity-check by name from the global identity-check hook
-status: todo
+status: doing
 priority: 2
 size: xs
 complexity: low
 process: direct
+owner: main
 created: 2026-10-17T11:24:06Z
-updated: 2026-10-17T11:38:36Z
+updated: 2026-10-17T11:43:26Z
+started: 2026-10-17T11:43:26Z
 depends: [ops-b06c52]
 tags: [git]
 agent: claude-code/claude-opus-5-5
@@ -26,3 +28,5 @@ Gate: the global git config is a live global surface: ask the user before mergin
 ## Notes
 
 - 2026-10-17T11:24:13Z (main): concerns: dots-9dfbd3 defect — the hook command expands $HOME, so a HOME-only sandbox that inherits XDG_CONFIG_HOME fails every commit
+- 2026-10-17T11:43:26Z (main): started
+  provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
