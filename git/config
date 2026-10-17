@@ -50,9 +50,11 @@
 # Refuse a commit or merge whose author or committer is not the identity the
 # checkout's profile declares (ops bin/git-identity-check; design: ops
 # docs/specs/2026-10-16-commit-identity-guard-design.md). Config-declared hooks
-# run in every repository beside its own core.hooksPath hooks. The system
-# interpreter, so an older python3 first on PATH never decides the verdict.
+# run in every repository beside its own core.hooksPath hooks. The script on PATH,
+# else the one under $HOME: a test that sandboxes HOME (still reading this file
+# through XDG_CONFIG_HOME) or rewrites PATH reaches it either way. The script's
+# #!/usr/bin/python3 shebang keeps an older python3 first on PATH from deciding.
 [hook "identity-check"]
 	event = pre-commit
 	event = pre-merge-commit
-	command = /usr/bin/python3 $HOME/.local/bin/git-identity-check
+	command = command -v git-identity-check >/dev/null && exec git-identity-check || exec \"$HOME/.local/bin/git-identity-check\"
