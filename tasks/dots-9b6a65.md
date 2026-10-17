@@ -8,7 +8,7 @@ complexity: low
 process: direct
 owner: fix/identity-hook-by-name
 created: 2026-10-17T11:24:06Z
-updated: 2026-10-17T11:43:27Z
+updated: 2026-10-17T11:44:51Z
 started: 2026-10-17T11:43:26Z
 depends: [ops-b06c52]
 tags: [git]
@@ -31,4 +31,6 @@ Gate: the global git config is a live global surface: ask the user before mergin
 - 2026-10-17T11:43:26Z (main): started
   provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-17T11:43:26Z (fix/identity-hook-by-name): resumed
+  provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-17T11:44:51Z (fix/identity-hook-by-name): parked (waiting on user, approval): On the user's approval: merge fix/identity-hook-by-name (715af39, verified via GIT_CONFIG_GLOBAL probes) into dotfiles main from ~/d/dotfiles, then on titan and europa check git hook list --show-scope pre-commit names identity-check and a wrong -c user.email commit in a claimed checkout is refused; remove the worktree and tasks done
   provenance: {"harness_session":"claude-code:a8e01f86-bfc2-47ab-8483-117fa3a98456","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
