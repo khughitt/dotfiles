@@ -7,7 +7,7 @@ size: xs
 complexity: low
 process: direct
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-17T21:18:54Z
+updated: 2026-10-17T21:19:07Z
 depends: []
 tags: [niri, dropdown]
 ---
@@ -26,3 +26,7 @@ Done when:
 - Live check: the bind shows and hides the view on the focused output, and the keyboard returns to the window underneath on hide. Taking the live desktop asks first; run the worktree's copy by explicit path (`.worktrees/<name>/niri/scripts/dropdown tasks`) and kill that instance at merge, so the bind and pre-spawn run the main checkout's copy (as dots-8cf055 did).
 
 Where: niri/scripts/dropdown, niri/config.kdl (spawn-at-startup and the Alt+Return/Alt+P/Alt+M binds), cheatsheets/niri, tests/niri/test_dropdown.py.
+
+## Notes
+
+- 2026-10-17T21:19:07Z (main): scope: scoped; idea -> todo P2 xs low direct; the tool exists (tasks-tui `tui` on niri's spawn PATH) and the ghci/mindful dropdown cases (dots-464460, dots-8cf055) are the pattern; body rewritten with done-when and live-check rules; checked at 69e226c
