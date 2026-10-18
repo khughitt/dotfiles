@@ -10,10 +10,14 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "bin/install-capture-sudoers"
+HELPER = ROOT / "bin/gpu-ctl"
 USERNAME = pwd.getpwuid(os.getuid()).pw_name
 RULES = {
     "50-chvt": f"{USERNAME} ALL=(root) NOPASSWD: /usr/bin/chvt\n",
     "50-fb-blank": f"{USERNAME} ALL=(root) NOPASSWD: /usr/bin/tee /sys/class/graphics/fb0/blank\n",
+    "50-gpu-ctl": (f"{USERNAME} ALL=(root) NOPASSWD: /usr/local/sbin/gpu-ctl persistence on, "
+                   "/usr/local/sbin/gpu-ctl persistence off, /usr/local/sbin/gpu-ctl fan auto, "
+                   "/usr/local/sbin/gpu-ctl fan [4-9][0-9], /usr/local/sbin/gpu-ctl fan 100\n"),
 }
 
 
@@ -23,10 +27,13 @@ def rig(tmp_path):
     bindir.mkdir()
     destination = tmp_path / "sudoers.d"
     destination.mkdir()
+    helpers = tmp_path / "sbin"
+    helpers.mkdir()
     temporary = tmp_path / "tmp"
     temporary.mkdir()
     env = dict(PATH=f"{bindir}:{os.environ['PATH']}", TMPDIR=str(temporary),
-               RULE_DEST=str(destination), RULE_LOG=str(tmp_path / "calls"))
+               RULE_DEST=str(destination), HELPER_DEST=str(helpers),
+               RULE_LOG=str(tmp_path / "calls"))
     visudo = shutil.which("visudo")
     assert visudo, "visudo is required to test capture-host sudoers installation"
     env["VISUDO"] = visudo
@@ -48,7 +55,12 @@ exec "$VISUDO" "$@"
 ''',
         "install": f'''#!/bin/bash
 set -euo pipefail
-[[ $# == 10 && $1 == -C && $2 == -T && $3 == -m && $4 == 0440 && $5 == -o && $6 == root && $7 == -g && $8 == root ]]
+[[ $# == 10 && $1 == -C && $2 == -T && $3 == -m && $5 == -o && $6 == root && $7 == -g && $8 == root ]]
+if [[ $4 == 0755 && "${{10}}" == /usr/local/sbin/gpu-ctl ]]; then
+    printf 'install helper\\n' >> "$RULE_LOG"
+    exec /usr/bin/install -C -T -m 0755 -o {os.getuid()} -g {os.getgid()} "$9" "$HELPER_DEST/gpu-ctl"
+fi
+[[ $4 == 0440 ]]
 name=$(basename "$9")
 [[ "${{10}}" == "/etc/sudoers.d/$name" ]]
 printf 'install %s\\n' "$name" >> "$RULE_LOG"
@@ -73,18 +85,23 @@ def test_installs_exact_rules_and_repeats_without_rewriting(rig):
     result = run(rig, USERNAME)
     assert result.returncode == 0, result.stderr
     assert (tmp / "calls").read_text().splitlines() == [
-        "check 50-chvt", "check 50-fb-blank", "install 50-chvt", "install 50-fb-blank",
+        "check 50-chvt", "check 50-fb-blank", "check 50-gpu-ctl",
+        "install helper", "install 50-chvt", "install 50-fb-blank", "install 50-gpu-ctl",
     ]
+    helper = tmp / "sbin/gpu-ctl"
+    assert helper.read_bytes() == HELPER.read_bytes()
+    assert helper.stat().st_mode & 0o777 == 0o755
     before = {}
     for name, expected in RULES.items():
         path = tmp / "sudoers.d" / name
         assert path.read_text() == expected
         assert path.stat().st_mode & 0o777 == 0o440
         before[name] = path.stat()
+    before["helper"] = helper.stat()
     result = run(rig, USERNAME)
     assert result.returncode == 0, result.stderr
     for name, previous in before.items():
-        current = (tmp / "sudoers.d" / name).stat()
+        current = (helper if name == "helper" else tmp / "sudoers.d" / name).stat()
         assert (current.st_ino, current.st_mtime_ns) == (previous.st_ino, previous.st_mtime_ns)
     assert not list((tmp / "tmp").iterdir())
 
@@ -103,8 +120,8 @@ def test_repairs_content_and_permissions(rig):
         assert path.stat().st_mode & 0o777 == 0o440
 
 
-@pytest.mark.parametrize("failed_rule", ["50-chvt", "50-fb-blank"])
-def test_failed_validation_leaves_both_existing_files_alone(rig, failed_rule):
+@pytest.mark.parametrize("failed_rule", list(RULES))
+def test_failed_validation_installs_nothing(rig, failed_rule):
     tmp, _ = rig
     for name in RULES:
         (tmp / "sudoers.d" / name).write_text("existing rule\n")
@@ -112,6 +129,7 @@ def test_failed_validation_leaves_both_existing_files_alone(rig, failed_rule):
     assert result.returncode == 42
     assert "install" not in (tmp / "calls").read_text()
     assert all((tmp / "sudoers.d" / name).read_text() == "existing rule\n" for name in RULES)
+    assert not (tmp / "sbin/gpu-ctl").exists()
     assert not list((tmp / "tmp").iterdir())
 
 

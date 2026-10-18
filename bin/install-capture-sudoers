@@ -20,15 +20,22 @@ if [[ $(id -u) != 0 ]]; then
     exit 1
 fi
 
+helper=$(dirname -- "$(readlink -f -- "$0")")/gpu-ctl
 rule_dir=$(mktemp -d)
 trap 'rm -rf -- "$rule_dir"' EXIT
 printf '%s ALL=(root) NOPASSWD: /usr/bin/chvt\n' "$capture_user" > "$rule_dir/50-chvt"
 printf '%s ALL=(root) NOPASSWD: /usr/bin/tee /sys/class/graphics/fb0/blank\n' "$capture_user" > "$rule_dir/50-fb-blank"
+gpu_ctl=/usr/local/sbin/gpu-ctl
+printf '%s ALL=(root) NOPASSWD: %s persistence on, %s persistence off, %s fan auto, %s fan [4-9][0-9], %s fan 100\n' \
+    "$capture_user" "$gpu_ctl" "$gpu_ctl" "$gpu_ctl" "$gpu_ctl" "$gpu_ctl" > "$rule_dir/50-gpu-ctl"
+rules=(50-chvt 50-fb-blank 50-gpu-ctl)
 
-# Validate both before replacing either live rule.
-for rule in 50-chvt 50-fb-blank; do
+# Validate every rule before replacing any live one; the helper goes in before
+# the rule that grants it.
+for rule in "${rules[@]}"; do
     visudo -cf "$rule_dir/$rule"
 done
-for rule in 50-chvt 50-fb-blank; do
+install -C -T -m 0755 -o root -g root "$helper" "$gpu_ctl"
+for rule in "${rules[@]}"; do
     install -C -T -m 0440 -o root -g root "$rule_dir/$rule" "/etc/sudoers.d/$rule"
 done

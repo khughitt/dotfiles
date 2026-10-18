@@ -29,6 +29,7 @@ bin/*
 !bin/nm-wired-autoconnect
 !bin/kernel-gate
 !bin/install-capture-sudoers
+!bin/gpu-ctl
 !bin/mindful
 !bin/mindful-release
 !bin/mindful-tui

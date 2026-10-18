@@ -1,0 +1,138 @@
+#!/usr/bin/python3 -I
+"""GPU persistence mode and fan control through NVML, without a display.
+
+    gpu-ctl status                state of GPU 0 (needs no privilege)
+    gpu-ctl persistence on|off    driver persistence mode
+    gpu-ctl fan auto              every fan back on the card's own curve
+    gpu-ctl fan <45-100>          every fan held at that percentage (manual)
+
+The writes need root; install-capture-sudoers installs this as
+/usr/local/sbin/gpu-ctl with a rule granting exactly these forms. 45% is
+gpu-fan-curve's floor, clear of the measured stall edge. In a desktop session
+gpu-fan-curve re-asserts manual control within its 60 s verify, so a fan
+change there does not last.
+"""
+
+import ctypes
+import sys
+
+USAGE = "usage: gpu-ctl status | persistence on|off | fan auto | fan <45-100>"
+FAN_MIN, FAN_MAX = 45, 100
+POLICIES = {0: "auto", 1: "manual"}
+
+
+class NvmlError(Exception):
+    pass
+
+
+def parse(argv):
+    match argv:
+        case ["status"]:
+            return "status", None
+        case ["persistence", ("on" | "off") as word]:
+            return "persistence", word == "on"
+        case ["fan", "auto"]:
+            return "fan", None
+        case ["fan", percent] if (percent.isascii() and percent.isdigit()
+                                  and str(int(percent)) == percent
+                                  and FAN_MIN <= int(percent) <= FAN_MAX):
+            return "fan", int(percent)
+    raise ValueError(argv)
+
+
+class Nvml:
+    def __init__(self):
+        try:
+            self.lib = ctypes.CDLL("libnvidia-ml.so.1")
+        except OSError as error:
+            raise NvmlError(f"cannot load libnvidia-ml.so.1: {error}") from error
+        self.lib.nvmlErrorString.restype = ctypes.c_char_p
+        self._call("nvmlInit_v2")
+        self.device = ctypes.c_void_p()
+        try:
+            self._call("nvmlDeviceGetHandleByIndex_v2", ctypes.c_uint(0), ctypes.byref(self.device))
+        except NvmlError:
+            self.lib.nvmlShutdown()
+            raise
+
+    def _call(self, name, *args):
+        status = getattr(self.lib, name)(*args)
+        if status != 0:
+            raise NvmlError(f"{name}: {self.lib.nvmlErrorString(status).decode()}")
+
+    def _uint(self, name, *args):
+        value = ctypes.c_uint()
+        self._call(name, self.device, *args, ctypes.byref(value))
+        return value.value
+
+    def num_fans(self):
+        return self._uint("nvmlDeviceGetNumFans")
+
+    def persistence(self):
+        return self._uint("nvmlDeviceGetPersistenceMode") == 1
+
+    def fan_policy(self, fan):
+        policy = self._uint("nvmlDeviceGetFanControlPolicy_v2", ctypes.c_uint(fan))
+        return POLICIES.get(policy, f"policy {policy}")
+
+    def fan_target(self, fan):
+        return self._uint("nvmlDeviceGetTargetFanSpeed", ctypes.c_uint(fan))
+
+    def fan_speed(self, fan):
+        return self._uint("nvmlDeviceGetFanSpeed_v2", ctypes.c_uint(fan))
+
+    def set_persistence(self, enabled):
+        self._call("nvmlDeviceSetPersistenceMode", self.device, ctypes.c_uint(int(enabled)))
+
+    def set_fan_auto(self, fan):
+        self._call("nvmlDeviceSetDefaultFanSpeed_v2", self.device, ctypes.c_uint(fan))
+
+    def set_fan_speed(self, fan, percent):
+        self._call("nvmlDeviceSetFanSpeed_v2", self.device, ctypes.c_uint(fan), ctypes.c_uint(percent))
+
+    def close(self):
+        self.lib.nvmlShutdown()
+
+
+def report(nvml, fans):
+    lines = [f"persistence: {'on' if nvml.persistence() else 'off'}"]
+    for fan in fans:
+        lines.append(f"fan {fan}: {nvml.fan_policy(fan)}, target {nvml.fan_target(fan)}%, "
+                     f"speed {nvml.fan_speed(fan)}%")
+    print("\n".join(lines))
+
+
+def main(argv, open_nvml=Nvml):
+    try:
+        command, value = parse(argv)
+    except ValueError:
+        print(USAGE, file=sys.stderr)
+        return 2
+    try:
+        nvml = open_nvml()
+    except NvmlError as error:
+        print(f"gpu-ctl: {error}", file=sys.stderr)
+        return 1
+    try:
+        fans = range(nvml.num_fans())
+        if command == "persistence":
+            nvml.set_persistence(value)
+        elif command == "fan":
+            if not fans:
+                raise NvmlError("GPU 0 reports no fans")
+            for fan in fans:
+                if value is None:
+                    nvml.set_fan_auto(fan)
+                else:
+                    nvml.set_fan_speed(fan, value)
+        report(nvml, fans)
+    except NvmlError as error:
+        print(f"gpu-ctl: {error}", file=sys.stderr)
+        return 1
+    finally:
+        nvml.close()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
