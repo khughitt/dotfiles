@@ -6,9 +6,9 @@ priority: 2
 size: s
 complexity: mid
 process: direct
-owner: main
+owner: dots-0e5d83
 created: 2026-10-18T08:41:34Z
-updated: 2026-10-18T08:41:45Z
+updated: 2026-10-18T08:41:47Z
 started: 2026-10-18T08:41:45Z
 depends: []
 tags: []
@@ -23,4 +23,6 @@ Scope: bin/gpu-ctl (Python, ctypes on libnvidia-ml.so.1, GPU 0, every fan) accep
 ## Notes
 
 - 2026-10-18T08:41:45Z (main): started
+  provenance: {"harness_session":"claude-code:5449fcbc-f1d5-4050-872d-855f55483679","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-18T08:41:47Z (dots-0e5d83): resumed
   provenance: {"harness_session":"claude-code:5449fcbc-f1d5-4050-872d-855f55483679","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
