@@ -4,8 +4,8 @@ title: "Restyle the Noctalia bar, launcher, and settings panel"
 status: idea
 priority: 2
 created: 2026-09-07T10:25:11Z
-updated: 2026-09-07T10:25:11Z
-depends: []
+updated: 2026-10-18T10:17:33Z
+depends: [material-1c4a82]
 tags: [quick-add, noctalia, glass]
 source: "mindful:thought:ec1726a8595c47f78ddaad57f65eb89e"
 ---
