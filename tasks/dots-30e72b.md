@@ -7,7 +7,7 @@ size: xs
 complexity: low
 process: direct
 created: 2026-09-07T21:16:21Z
-updated: 2026-10-18T10:16:30Z
+updated: 2026-10-18T10:24:30Z
 depends: []
 tags: [noctalia]
 ---
@@ -18,7 +18,7 @@ Established 2026-10-18, so no session needs to re-derive it: nothing rewrites se
 
 Done: settings.json, settings.json.bak, plugins.json, colors.json and user-templates.toml.v4-backup are moved out of ~/.config/noctalia (to a dated backup outside ~/.config, or deleted once confirmed), the next Noctalia restart or config reload logs no new warning in ~/.cache/noctalia/noctalia.log, and none of the files reappears.
 
-Where: ~/.config/noctalia; the v5 source checkout (~/software/noctalia): grep src for each filename before removing it. On 2026-10-18 none of these names is read from ~/.config/noctalia; the colors.json v5 reads is ~/.cache/wal/colors.json (src/theme/firefox_theme/firefox_theme.cpp). dots-1fed32 removes the matching v4 cache. Side: the quickshell package (the v4 runtime) is still explicitly installed and required by nothing; removing it is a separate host decision for the owner.
+Where: ~/.config/noctalia; the v5 source checkout (~/software/noctalia): grep src for each filename before removing it. On 2026-10-18 none of these names is read from ~/.config/noctalia; the colors.json v5 reads is ~/.cache/wal/colors.json (src/theme/firefox_theme/firefox_theme.cpp). dots-1fed32 removes the matching v4 cache. Keep the quickshell package: it is not only the v4 runtime. On 2026-10-18 it ran ohai's shell.qml and familiar's integrations/niri-desktop, and Prism's debug-backdrop sink requires qs.
 
 ## Notes
 
