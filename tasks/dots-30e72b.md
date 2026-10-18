@@ -1,10 +1,10 @@
 ---
 id: dots-30e72b
 title: Find what still rewrites the dead v4 noctalia settings.json
-status: idea
+status: todo
 priority: 2
 created: 2026-09-07T21:16:21Z
-updated: 2026-09-07T21:16:21Z
+updated: 2026-10-18T10:16:28Z
 depends: []
 tags: [noctalia]
 ---
