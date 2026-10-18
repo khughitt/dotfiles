@@ -6,9 +6,9 @@ priority: 2
 size: xs
 complexity: low
 process: direct
-owner: main
+owner: fix/redact-work-login
 created: 2026-10-18T22:46:05Z
-updated: 2026-10-18T23:59:35Z
+updated: 2026-10-18T23:59:43Z
 started: 2026-10-18T23:59:35Z
 depends: []
 tags: [git]
@@ -20,4 +20,6 @@ Found 2026-10-18 while publishing relay v0.1.0 (relay-c19c0a), which rewrote the
 ## Notes
 
 - 2026-10-18T23:59:35Z (main): started
+  provenance: {"harness_session":"claude-code:bf715d77-6d48-4fed-929f-69b7047cfd1f","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-18T23:59:43Z (fix/redact-work-login): resumed
   provenance: {"harness_session":"claude-code:bf715d77-6d48-4fed-929f-69b7047cfd1f","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
