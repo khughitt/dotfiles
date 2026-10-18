@@ -3,8 +3,10 @@ id: dots-cdb659
 title: Expose the current wallpaper and its time-neighbors to mind6
 status: idea
 priority: 2
+reviewed: true
+reviewed_at: 2026-10-18T10:17:33Z
 created: 2026-09-06T22:07:49Z
-updated: 2026-09-07T21:16:21Z
+updated: 2026-10-18T10:17:33Z
 depends: [dots-59c279]
 tags: [noctalia, wallpaper, mind6]
 source: "mindful:thought:fee58ae2c54b4072ad2b0ba02a2cf1d1"
@@ -15,3 +17,4 @@ dotfiles half of the wallpaper/background sync with mind6 (hub in the mind6 proj
 ## Notes
 
 - 2026-09-07T21:16:21Z (wallpaper-redesign): dots-59c279 gives mind6 favorites.json keyed by photo stem plus walictl current --json and neighbors --json; pick the interface there.
+- 2026-10-18T10:17:33Z (main): scope: drop; no body change; proposal: drop — the interface it was to choose landed in dots-59c279 (walictl current --json and neighbors --json, now in the wali repo), and the pull-vs-push transport choice is mind6-29b4b3's design; any push-side hook is filed in wali from that design. Before dropping, run tasks dep mind6-ed7695 --on mind6-29b4b3 (from the mind6 checkout) so mind6-ed7695 keeps a recorded wait
