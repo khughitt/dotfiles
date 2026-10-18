@@ -7,7 +7,7 @@ size: s
 complexity: low
 process: direct
 created: 2026-10-18T03:52:22Z
-updated: 2026-10-18T03:52:22Z
+updated: 2026-10-18T09:08:23Z
 depends: []
 tags: []
 source: material-04818d
@@ -24,3 +24,7 @@ Consequences:
 Fix direction: treat a socket as live only when something listens on it (e.g. its path appears in ss -xl, or a short wayland client handshake succeeds). Prefer the newest live socket over the first glob match. When no live session exists, keep a way to hand the card back to automatic control (NVML as root does not need a display) so MAXTEMP and --revert still work.
 
 Found while investigating material-04818d (idle GPU floor). Evidence: journalctl -u gpu-fan-curve on 2026-10-17 from 22:42, and a stale wayland-1 from 2026-10-16 10:12 still present at 23:10.
+
+## Notes
+
+- 2026-10-18T09:08:23Z (main): Fix direction now available: dots-0e5d83's gpu-ctl drives fan control through NVML (ctypes on libnvidia-ml.so.1) with no display, so the daemon (already root) could drop nvidia-settings and the Wayland-session discovery entirely; MAXTEMP and --revert would then work in TTY sessions too.
