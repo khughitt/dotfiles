@@ -8,7 +8,7 @@ complexity: mid
 process: direct
 owner: dots-0e5d83
 created: 2026-10-18T08:41:34Z
-updated: 2026-10-18T09:03:06Z
+updated: 2026-10-18T09:03:07Z
 started: 2026-10-18T08:41:45Z
 depends: []
 tags: []
@@ -27,3 +27,4 @@ Scope: bin/gpu-ctl (Python, ctypes on libnvidia-ml.so.1, GPU 0, every fan) accep
 - 2026-10-18T08:41:47Z (dots-0e5d83): resumed
   provenance: {"harness_session":"claude-code:5449fcbc-f1d5-4050-872d-855f55483679","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-18T09:03:06Z (dots-0e5d83): review: impl round 1 — verdict: revise; findings: Important 1, Minor 8; reviewer: claude-code
+- 2026-10-18T09:03:06Z (dots-0e5d83): Round 1 ruling: fix I1 (fake-library tests for the ctypes layer). Also fix four Minors now because this is a root grant: M1 (the rule admitted fan 40-44; tighten to 4[5-9]/[5-9][0-9]/100 and test that the rule patterns admit exactly what the helper accepts); M2 (clear the environment before NVML loads, since libnvidia-ml getenv()s __NVML_DBG_FILE, and pin env_reset in 50-gpu-ctl); M4 (a failed fan N falls back to auto on every fan); M6 (sudo examples by absolute path; ~/bin's copy shadows the root one). minor (deferred): M3 no thermal refusal on fan N (callers restore in an EXIT trap; documented); M5 a readback failure after a successful write exits 1; M7 the installer copies whatever bin/gpu-ctl holds (same trust as running the installer); nit: num_fans read before a persistence write.
