@@ -133,6 +133,7 @@ alias Tag='TASKS_FORMAT=pretty tasks list --all-projects | grep -i'
 alias lil='Tal  --process direct --size xs'
 alias smol='Tal  --process direct --size s'
 alias chore='git add tasks && git commit "chore: task updates"'
+alias parked='tal --parked --waiting-on user --all-projects'
 
 alias tuia='tui --all'
 

@@ -61,6 +61,9 @@ echo "${x%???}"
 # get the first n characters of a string
 ${x:0:$n}
 
+# case-insensitive matches
+ls "[A-Z]*/(#i)*.pdf"   # matches pdf|PDF
+
 # redirect stderr to stdout
 cmd 2>&1
 

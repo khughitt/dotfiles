@@ -36,7 +36,9 @@ export ANKI_NOHIGHDPI=1
 
 # claude code
 export DISABLE_TELEMETRY=1
-export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
+# blocks remote control
+# export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 
 # open code plan -> build auto switch
 export OPENCODE_EXPERIMENTAL_PLAN_MODE=1 
@@ -155,3 +157,6 @@ export SUDO_ASKPASS=/usr/bin/ksshaskpass
 # familiar-forge post-split configuration (Phase 3 repository split)
 export FAMILIAR_FORGE_THEME_DIR="$HOME/d/familiar-cats"
 export FAMILIAR_FORGE_THEME_GRAPH_DIR="$HOME/.local/share/familiar-forge/graphs/cats"
+
+# mindful
+export MINDFUL_HOME="$HOME/d/thoughts"
