@@ -1,10 +1,10 @@
 ---
 id: dots-1fed32
 title: Bound the Noctalia large-wallpaper cache
-status: idea
+status: todo
 priority: 2
 created: 2026-09-14T11:13:07Z
-updated: 2026-09-14T11:13:07Z
+updated: 2026-10-18T10:16:29Z
 depends: []
 tags: [noctalia, wallpaper]
 agent: claude-code/claude-opus-5
