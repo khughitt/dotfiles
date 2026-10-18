@@ -7,7 +7,7 @@ size: xs
 complexity: low
 process: direct
 created: 2026-09-07T21:16:21Z
-updated: 2026-10-18T10:24:30Z
+updated: 2026-10-18T10:24:31Z
 depends: []
 tags: [noctalia]
 ---
@@ -23,3 +23,4 @@ Where: ~/.config/noctalia; the v5 source checkout (~/software/noctalia): grep sr
 ## Notes
 
 - 2026-10-18T10:16:28Z (main): scope: scoped; premise checked 2026-10-18: settings.json mtime frozen at 2026-09-06 21:42, no writer in the tree (git grep at ecab164), no v4 shell config; narrowed from finding the writer to removing the v4 files; P3 xs low direct
+- 2026-10-18T10:24:30Z (main): corrected the quickshell side note: qs is in use (ohai shell.qml, familiar niri-desktop, Prism debug-backdrop), not a v4 leftover
