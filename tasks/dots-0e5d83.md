@@ -8,7 +8,7 @@ complexity: mid
 process: direct
 owner: dots-0e5d83
 created: 2026-10-18T08:41:34Z
-updated: 2026-10-18T09:17:41Z
+updated: 2026-10-18T09:17:42Z
 started: 2026-10-18T08:41:45Z
 depends: []
 tags: []
@@ -29,3 +29,4 @@ Scope: bin/gpu-ctl (Python, ctypes on libnvidia-ml.so.1, GPU 0, every fan) accep
 - 2026-10-18T09:03:06Z (dots-0e5d83): review: impl round 1 — verdict: revise; findings: Important 1, Minor 8; reviewer: claude-code
 - 2026-10-18T09:03:06Z (dots-0e5d83): Round 1 ruling: fix I1 (fake-library tests for the ctypes layer). Also fix four Minors now because this is a root grant: M1 (the rule admitted fan 40-44; tighten to 4[5-9]/[5-9][0-9]/100 and test that the rule patterns admit exactly what the helper accepts); M2 (clear the environment before NVML loads, since libnvidia-ml getenv()s __NVML_DBG_FILE, and pin env_reset in 50-gpu-ctl); M4 (a failed fan N falls back to auto on every fan); M6 (sudo examples by absolute path; ~/bin's copy shadows the root one). minor (deferred): M3 no thermal refusal on fan N (callers restore in an EXIT trap; documented); M5 a readback failure after a successful write exits 1; M7 the installer copies whatever bin/gpu-ctl holds (same trust as running the installer); nit: num_fans read before a persistence write.
 - 2026-10-18T09:17:41Z (dots-0e5d83): review: impl round 2 — verdict: accept; findings: Minor 5; reviewer: claude-code
+- 2026-10-18T09:17:41Z (dots-0e5d83): Round 2 ruling: accept. Fixes verified (62 tests; reviewer mutation run caught 24 of 26, the two survivors edit the expected rule text in both installer and test). minor (deferred): fan auto is not best-effort across fans (the EXIT-trap restore path stops at the first failing fan); the grant test does not assert every entry names /usr/local/sbin/gpu-ctl or that env_reset is pinned (exact-content test covers both today); a dead fail= value in test_a_failed_fallback_is_reported_too; docs overstate 'sudo -n refuses' a bare gpu-ctl (true only without secure_path); unprivileged fan N reports a failed fallback. Earlier deferred: M3 no thermal refusal, M5 readback failure exits 1, M7 installer copies whatever bin/gpu-ctl holds, num_fans before a persistence write.
