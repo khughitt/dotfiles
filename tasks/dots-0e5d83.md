@@ -8,7 +8,7 @@ complexity: mid
 process: direct
 owner: dots-0e5d83
 created: 2026-10-18T08:41:34Z
-updated: 2026-10-18T08:41:47Z
+updated: 2026-10-18T09:03:06Z
 started: 2026-10-18T08:41:45Z
 depends: []
 tags: []
@@ -26,3 +26,4 @@ Scope: bin/gpu-ctl (Python, ctypes on libnvidia-ml.so.1, GPU 0, every fan) accep
   provenance: {"harness_session":"claude-code:5449fcbc-f1d5-4050-872d-855f55483679","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-18T08:41:47Z (dots-0e5d83): resumed
   provenance: {"harness_session":"claude-code:5449fcbc-f1d5-4050-872d-855f55483679","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-18T09:03:06Z (dots-0e5d83): review: impl round 1 — verdict: revise; findings: Important 1, Minor 8; reviewer: claude-code
