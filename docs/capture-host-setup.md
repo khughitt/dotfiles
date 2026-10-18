@@ -33,7 +33,16 @@ which stops them at idle (zero RPM). `fan N` holds them at N%, and the rule
 and the helper both refuse anything below 45, the floor above the measured
 stall edge that `gpu-fan-curve` uses. In a desktop session `gpu-fan-curve`
 re-asserts manual control within its 60 s verify, so a fan change made there
-does not last.
+does not last. A fan hold outlives the command and nothing watches temperature
+from a TTY, so a caller that sets one restores the previous state in an EXIT
+trap. `50-gpu-ctl` also pins `env_reset` for the helper, and the helper clears
+its environment before loading NVML, which reads debug variables such as
+`__NVML_DBG_FILE`.
+
+Call the helper by its absolute path under sudo. `~/bin/gpu-ctl` is the
+user-writable source in this checkout, it comes first on `PATH`, and it does
+not match the rule: `sudo -n` refuses it, and an interactive `sudo` would ask
+for a password to run it.
 
 Re-running for the same account leaves matching files untouched; GNU
 `install -C` repairs changed content, ownership, or permissions, and installs
@@ -46,7 +55,7 @@ Check authorization from the capture account without changing the display:
 sudo -n -l /usr/bin/chvt
 sudo -n -l /usr/bin/tee /sys/class/graphics/fb0/blank
 sudo -n -l /usr/local/sbin/gpu-ctl fan auto
-gpu-ctl status          # or /usr/local/sbin/gpu-ctl status
+/usr/local/sbin/gpu-ctl status
 ```
 
 To revoke these grants, remove `/etc/sudoers.d/50-chvt`,

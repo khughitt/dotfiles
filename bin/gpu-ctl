@@ -10,10 +10,13 @@ The writes need root; install-capture-sudoers installs this as
 /usr/local/sbin/gpu-ctl with a rule granting exactly these forms. 45% is
 gpu-fan-curve's floor, clear of the measured stall edge. In a desktop session
 gpu-fan-curve re-asserts manual control within its 60 s verify, so a fan
-change there does not last.
+change there does not last. A fan hold outlives this command: a caller that
+sets one restores it in an EXIT trap. Run it by absolute path under sudo; the
+copy on ~/bin is the user-writable source.
 """
 
 import ctypes
+import os
 import sys
 
 USAGE = "usage: gpu-ctl status | persistence on|off | fan auto | fan <45-100>"
@@ -102,12 +105,33 @@ def report(nvml, fans):
     print("\n".join(lines))
 
 
-def main(argv, open_nvml=Nvml):
+def hold_fans(nvml, fans, percent):
+    """Set every fan to percent; on a failure hand every fan back to the card's curve."""
+    try:
+        for fan in fans:
+            nvml.set_fan_speed(fan, percent)
+    except NvmlError as error:
+        fallback = None
+        for fan in fans:
+            try:
+                nvml.set_fan_auto(fan)
+            except NvmlError as fan_error:
+                fallback = fallback or fan_error
+        if fallback:
+            raise NvmlError(f"{error}; handing the fans back failed: {fallback}") from error
+        raise NvmlError(f"{error}; every fan handed back to the card's curve") from error
+
+
+def main(argv, open_nvml=Nvml, environ=os.environ):
     try:
         command, value = parse(argv)
     except ValueError:
         print(USAGE, file=sys.stderr)
         return 2
+    # libnvidia-ml reads debug variables (__NVML_DBG_FILE names a log file) with
+    # getenv(); as root that would be a file write anywhere. sudo's env_reset
+    # already strips them; this does not depend on the sudoers configuration.
+    environ.clear()
     try:
         nvml = open_nvml()
     except NvmlError as error:
@@ -120,11 +144,11 @@ def main(argv, open_nvml=Nvml):
         elif command == "fan":
             if not fans:
                 raise NvmlError("GPU 0 reports no fans")
-            for fan in fans:
-                if value is None:
+            if value is None:
+                for fan in fans:
                     nvml.set_fan_auto(fan)
-                else:
-                    nvml.set_fan_speed(fan, value)
+            else:
+                hold_fans(nvml, fans, value)
         report(nvml, fans)
     except NvmlError as error:
         print(f"gpu-ctl: {error}", file=sys.stderr)

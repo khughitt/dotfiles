@@ -1,7 +1,9 @@
 """Exercise the installer without writing to /etc or requiring root."""
 
+import fnmatch
 import os
 import pwd
+import runpy
 import shutil
 import subprocess
 from pathlib import Path
@@ -15,9 +17,11 @@ USERNAME = pwd.getpwuid(os.getuid()).pw_name
 RULES = {
     "50-chvt": f"{USERNAME} ALL=(root) NOPASSWD: /usr/bin/chvt\n",
     "50-fb-blank": f"{USERNAME} ALL=(root) NOPASSWD: /usr/bin/tee /sys/class/graphics/fb0/blank\n",
-    "50-gpu-ctl": (f"{USERNAME} ALL=(root) NOPASSWD: /usr/local/sbin/gpu-ctl persistence on, "
+    "50-gpu-ctl": ("Defaults!/usr/local/sbin/gpu-ctl env_reset\n"
+                   f"{USERNAME} ALL=(root) NOPASSWD: /usr/local/sbin/gpu-ctl persistence on, "
                    "/usr/local/sbin/gpu-ctl persistence off, /usr/local/sbin/gpu-ctl fan auto, "
-                   "/usr/local/sbin/gpu-ctl fan [4-9][0-9], /usr/local/sbin/gpu-ctl fan 100\n"),
+                   "/usr/local/sbin/gpu-ctl fan 4[5-9], /usr/local/sbin/gpu-ctl fan [5-9][0-9], "
+                   "/usr/local/sbin/gpu-ctl fan 100\n"),
 }
 
 
@@ -58,6 +62,7 @@ set -euo pipefail
 [[ $# == 10 && $1 == -C && $2 == -T && $3 == -m && $5 == -o && $6 == root && $7 == -g && $8 == root ]]
 if [[ $4 == 0755 && "${{10}}" == /usr/local/sbin/gpu-ctl ]]; then
     printf 'install helper\\n' >> "$RULE_LOG"
+    [[ -z "${{FAIL_HELPER:-}}" ]] || exit 43
     exec /usr/bin/install -C -T -m 0755 -o {os.getuid()} -g {os.getgid()} "$9" "$HELPER_DEST/gpu-ctl"
 fi
 [[ $4 == 0440 ]]
@@ -112,12 +117,47 @@ def test_repairs_content_and_permissions(rig):
         path = tmp / "sudoers.d" / name
         path.write_text("outdated rule\n")
         path.chmod(0o644)
+    helper = tmp / "sbin/gpu-ctl"
+    helper.write_text("#!/bin/sh\nexec /bin/sh\n")
+    helper.chmod(0o777)
     result = run(rig, USERNAME)
     assert result.returncode == 0, result.stderr
     for name, expected in RULES.items():
         path = tmp / "sudoers.d" / name
         assert path.read_text() == expected
         assert path.stat().st_mode & 0o777 == 0o440
+    assert helper.read_bytes() == HELPER.read_bytes()
+    assert helper.stat().st_mode & 0o777 == 0o755
+
+
+def test_a_failed_helper_install_installs_no_rule(rig):
+    tmp, _ = rig
+    for name in RULES:
+        (tmp / "sudoers.d" / name).write_text("existing rule\n")
+    result = run(rig, USERNAME, FAIL_HELPER="1")
+    assert result.returncode == 43
+    assert (tmp / "calls").read_text().splitlines()[-1] == "install helper"
+    assert all((tmp / "sudoers.d" / name).read_text() == "existing rule\n" for name in RULES)
+
+
+def test_the_gpu_ctl_grant_admits_exactly_the_writes_the_helper_accepts():
+    # sudo matches the joined arguments with fnmatch; the grant must not be wider
+    # than the helper's own contract, nor narrower for any write it accepts.
+    grant = RULES["50-gpu-ctl"].split("NOPASSWD: ", 1)[1].strip()
+    patterns = [entry.strip().removeprefix("/usr/local/sbin/gpu-ctl ") for entry in grant.split(",")]
+    parse = runpy.run_path(str(HELPER))["parse"]
+
+    def writes(candidate):
+        try:
+            return parse(candidate.split(" "))[0] != "status"
+        except ValueError:
+            return False
+
+    candidates = ["status", "persistence on", "persistence off", "persistence 1", "fan auto",
+                  "fan 045", "fan 4x", "fan 4", "fan 1000", *(f"fan {n}" for n in range(121))]
+    granted = {c for c in candidates if any(fnmatch.fnmatchcase(c, p) for p in patterns)}
+    assert granted == {c for c in candidates if writes(c)}
+    assert "fan 44" not in granted and "fan 45" in granted
 
 
 @pytest.mark.parametrize("failed_rule", list(RULES))

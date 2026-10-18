@@ -26,8 +26,14 @@ trap 'rm -rf -- "$rule_dir"' EXIT
 printf '%s ALL=(root) NOPASSWD: /usr/bin/chvt\n' "$capture_user" > "$rule_dir/50-chvt"
 printf '%s ALL=(root) NOPASSWD: /usr/bin/tee /sys/class/graphics/fb0/blank\n' "$capture_user" > "$rule_dir/50-fb-blank"
 gpu_ctl=/usr/local/sbin/gpu-ctl
-printf '%s ALL=(root) NOPASSWD: %s persistence on, %s persistence off, %s fan auto, %s fan [4-9][0-9], %s fan 100\n' \
-    "$capture_user" "$gpu_ctl" "$gpu_ctl" "$gpu_ctl" "$gpu_ctl" "$gpu_ctl" > "$rule_dir/50-gpu-ctl"
+# Exactly the helper's writes (fan 45-100); env_reset pinned here because
+# libnvidia-ml reads debug variables such as __NVML_DBG_FILE.
+{
+    printf 'Defaults!%s env_reset\n' "$gpu_ctl"
+    printf '%s ALL=(root) NOPASSWD: ' "$capture_user"
+    printf '%s persistence on, %s persistence off, %s fan auto, ' "$gpu_ctl" "$gpu_ctl" "$gpu_ctl"
+    printf '%s fan 4[5-9], %s fan [5-9][0-9], %s fan 100\n' "$gpu_ctl" "$gpu_ctl" "$gpu_ctl"
+} > "$rule_dir/50-gpu-ctl"
 rules=(50-chvt 50-fb-blank 50-gpu-ctl)
 
 # Validate every rule before replacing any live one; the helper goes in before
