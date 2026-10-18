@@ -8,7 +8,7 @@ complexity: mid
 process: direct
 owner: dots-0e5d83
 created: 2026-10-18T08:41:34Z
-updated: 2026-10-18T09:17:43Z
+updated: 2026-10-18T09:23:52Z
 started: 2026-10-18T08:41:45Z
 completed: 2026-10-18T09:17:41Z
 closed: 2026-10-18T09:17:41Z
@@ -37,3 +37,4 @@ Scope: bin/gpu-ctl (Python, ctypes on libnvidia-ml.so.1, GPU 0, every fan) accep
   provenance: {"harness_session":"claude-code:5449fcbc-f1d5-4050-872d-855f55483679","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-18T09:17:41Z (dots-0e5d83): gpu-ctl (NVML via ctypes: status, persistence on|off, fan auto, fan 45-100) and install-capture-sudoers installing it root-owned at /usr/local/sbin/gpu-ctl with 50-gpu-ctl granting exactly those writes (env_reset pinned, environment cleared before NVML loads). 172 pytest + shell suites, two review rounds (accept). Live install is the owner's: sudo bin/install-capture-sudoers "$(id -un)".
   provenance: {"harness_session":"claude-code:5449fcbc-f1d5-4050-872d-855f55483679","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-18T09:23:52Z (main): Owner installed it 2026-10-18 05:21 (install-capture-sudoers keith; all three rules parsed OK). /usr/local/sbin/gpu-ctl is root 0755 and byte-identical to main a3404ea. sudo -n -l lists exactly Defaults!/usr/local/sbin/gpu-ctl env_reset and the six NOPASSWD forms. sudo -n gpu-ctl fan 44 and sudo -n gpu-ctl status both stop at 'a password is required'. No write was exercised live yet; material-04818d's root-tests.sh runs the first ones in the next quiet session.
