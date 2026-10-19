@@ -8,11 +8,12 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T13:02:50Z
+updated: 2026-10-19T13:06:05Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
 spec: docs/specs/2026-10-18-ops-dashboard-design.md
+plan: docs/plans/2026-10-19-lookout-v1.md
 ---
 
 Why: one toggle away from any workspace, the owner wants to see at a glance which agents are running and what each is doing, where tasks stand across recently active projects, and what obs says is going wrong, without opening a dozen tools. Filed 2026-09-06 as "dropdown: ops dashboard", a follow-up to dots-7b24fa. The owner widened it on 2026-10-17 after a cross-project exploration (attached).
