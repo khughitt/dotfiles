@@ -1,6 +1,7 @@
 # lookout v1: the ops dashboard, design
 
-2026-10-18. Task `dots-06eb59`. Status: draft, for the owner's review.
+2026-10-18. Task `dots-06eb59`. Status: approved by the owner 2026-10-19, after
+three review rounds (codex) and the round-3 fix.
 
 The exploration behind this design is attached to the task as
 `ops-dashboard-exploration-2026-10-17.md`. It covers what tasks, obs, ops, crew, mind6,
@@ -123,8 +124,8 @@ they prove useful, and each later module also owns a page of detail.
   The obs index itself (2–17 s a report) must never be read from a refresh loop. Neither
   must `obs index`, `dashboard build` or `ANALYZE`.
 - **Joins.** familiar and the task claims share the session id. Claims carry task ids, not
-  titles. A title comes from the task's authoritative record, read as the population rule
-  below says, and is cached per id until that claim or park changes.
+  titles. A title comes from the task's authoritative record, read and refreshed as the
+  population rule below says.
   - niri-windows.json holds niri's internal workspace id. The number to show is the
     workspace index from `niri msg -j workspaces`.
   - The relay live-agent registry is not running yet (fam-6e8321). Until it runs, the
@@ -141,8 +142,11 @@ they prove useful, and each later module also owns a page of detail.
     copy is authoritative. It is read explicitly with
     `tasks -C <worktree> show <id> --no-fetch`. `tasks show` without `-C` consults a
     worktree only when the registered record is absent, and never picks the newer copy.
-    Otherwise the registered checkout's record stands. Cache each worktree read until its
-    claim or park changes.
+    Otherwise the registered checkout's record stands. Authoritative worktree reads are
+    refreshed on the tasks module's 30-second schedule, and titles are updated from them
+    too. A claim or park change invalidates a read sooner. A read is never kept merely
+    because its claim or park is unchanged: `tasks block` and `tasks unblock` keep the
+    park while changing the status.
   - **Counts:** todo, doing and blocked are counted from each member's authoritative
     status. Only the doing members are partitioned into claimed, parked and unattended, so
     those three sum to doing. Waiting on the owner counts every member's park waiting on
