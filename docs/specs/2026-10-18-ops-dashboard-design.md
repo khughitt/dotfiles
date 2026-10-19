@@ -68,7 +68,12 @@ they prove useful, and each later module also owns a page of detail.
     too), because it measures what is owed, not what is in progress.
   - unscoped/unreviewed: the scope queue
 
-  Waiting on the owner is the column the eye should land on. *(Builder's call, from the
+  Rows are ordered by what is owed (waiting on the owner, then halts), then by recent
+  activity. Waiting on the owner is the column the eye should land on.
+
+  **Overflow.** The tasks module scrolls with the keyboard like the agents module. When
+  rows are hidden, its last visible line counts them and names hidden rows that need
+  attention, for example "+6 more · owed: wali 1, mm 2". *(Builder's call, from the
   review: the three-way doing split and the owed-parks count.)*
 - **obs module.** The tool-failure rate for yesterday against the 7-day rate, plus the top
   three failure hotspots over 7 days (project × tool, with counts).
@@ -118,25 +123,30 @@ they prove useful, and each later module also owns a page of detail.
   The obs index itself (2–17 s a report) must never be read from a refresh loop. Neither
   must `obs index`, `dashboard build` or `ANALYZE`.
 - **Joins.** familiar and the task claims share the session id. Claims carry task ids, not
-  titles. A title comes from `tasks show <id>`, which routes by prefix and finds a record
-  that exists only in the worktree its claim or park names. Cache it per id until that
-  claim or park changes.
-- **One task population.** `tasks projects` and `tasks list --all-projects` count records
-  in registered checkouts, while claims and parks also name tasks that exist only in a
-  worktree. Mixing the two counts gives wrong remainders. The doing breakdown is therefore
-  derived from one population keyed by task id:
-  - the union of the doing records from `tasks list --all-projects --status doing`, the
-    claimed ids from `tasks claims`, and the parked ids from
-    `tasks list --parked --all-projects`;
-  - each id's status taken from its record, read with `tasks show` only for ids the list
-    did not return.
-
-  Every part (claimed, parked, unattended) is counted over that population. Todo and
-  blocked come from the same list.
+  titles. A title comes from the task's authoritative record, read as the population rule
+  below says, and is cached per id until that claim or park changes.
   - niri-windows.json holds niri's internal workspace id. The number to show is the
     workspace index from `niri msg -j workspaces`.
   - The relay live-agent registry is not running yet (fam-6e8321). Until it runs, the
     harness comes from what familiar and the claims record.
+- **One task population, from authoritative records.** `tasks projects` and
+  `tasks list --all-projects` read records in registered checkouts. Claims and parks also
+  name worktrees, whose copy of a record may be newer or exist only there. A task marked
+  doing in main may be blocked and parked in its worktree. Every count in the tasks module
+  therefore comes from one population keyed by task id:
+  - **Members:** every open record with status todo, doing or blocked, from
+    `tasks list --all-projects --status todo --status doing --status blocked`, plus every
+    id named by `tasks claims` or by `tasks list --parked --all-projects`.
+  - **Record precedence:** when a live claim or a park names a worktree, that worktree's
+    copy is authoritative. It is read explicitly with
+    `tasks -C <worktree> show <id> --no-fetch`. `tasks show` without `-C` consults a
+    worktree only when the registered record is absent, and never picks the newer copy.
+    Otherwise the registered checkout's record stands. Cache each worktree read until its
+    claim or park changes.
+  - **Counts:** todo, doing and blocked are counted from each member's authoritative
+    status. Only the doing members are partitioned into claimed, parked and unattended, so
+    those three sum to doing. Waiting on the owner counts every member's park waiting on
+    the owner, whatever its status.
 - **Meaning.** "Doing" is not "running", and a live claim is not proof of running either.
   The dashboard says claimed and shows unverified liveness as such.
 - **Read-only contract.** The dashboard reads each tool's own commands and published files.
