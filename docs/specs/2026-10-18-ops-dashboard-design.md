@@ -1,0 +1,180 @@
+# Ops dashboard v1: design
+
+2026-10-18. Task `dots-06eb59`. Status: draft, for the owner's review.
+
+The exploration behind this design is attached to the task as
+`ops-dashboard-exploration-2026-10-17.md`. It covers what tasks, obs, ops, crew, mind6,
+familiar, relay and transponder expose, at what cost.
+
+## Intent
+
+The owner runs many coding agents (Claude Code, Codex and others) across about 30 personal
+projects. On coming back to the desk they want three answers at a glance, from one toggle
+on any workspace:
+
+1. Which agents are running, and what is each one doing?
+2. Where do tasks stand across the recently active projects?
+3. What does obs say is going wrong?
+
+Today those answers are spread over a dozen commands and a browser page, and the obvious
+signals mislead. On 2026-10-17, 47 of 56 `doing` tasks were parked rather than running.
+
+The dashboard is a kitty quick-access dropdown on niri, beside the existing dropdowns
+(`niri/scripts/dropdown`). It is built as modules. Three ship first; others are phased in as
+they prove useful, and each later module also owns a page of detail.
+
+## Goals
+
+- **Agents module.** One card per project with at least one live session, ordered by most
+  recent activity, newest first. Each card shows:
+  - a small pet portrait from familiar's current theme;
+  - the project's hue as accent and border;
+  - the project name;
+  - one line per live session: harness, harness state, the claimed task's id and short
+    title, and a faint niri workspace number.
+
+  The portrait shows the pose of the card's most urgent session (needs input or approval
+  outranks error, which outranks working, done and idle). A card drops off when its project
+  has no live session.
+- **Tasks module.** One row per recently active project (activity in the last 7 days),
+  showing:
+  - todo
+  - doing, split three ways so the parts add up: running (a live claim), parked, and
+    unattended (neither claimed nor parked; 7 of 56 on 2026-10-17). A task both parked and
+    live-claimed counts as running.
+  - blocked
+  - waiting on the owner, with quiet runs counted separately. This counts every park
+    waiting on the owner, whatever the task's status (todo and blocked tasks hold parks
+    too), because it measures what is owed, not what is in progress.
+  - unscoped/unreviewed: the scope queue
+
+  Waiting on the owner is the column the eye should land on. *(Builder's call, from the
+  review: the three-way doing split and the owed-parks count.)*
+- **obs module.** The tool-failure rate for yesterday against the 7-day rate, plus the top
+  three failure hotspots over 7 days (project × tool, with counts).
+  - obs records each failed call, but every row's mode and kind are still empty on
+    2026-10-17 (they wait on obs-18b8eb). A list of recent events would read "Bash failed"
+    about 250 times a day, which is clutter.
+  - When obs-18b8eb fills mode and kind, the hotspots group by failure mode instead, and the
+    last few events can join them.
+
+  *(Builder's call, from the review.)*
+- **Instant to open.** Showing the dropdown never waits on a read.
+- **Honest freshness.** Every module shows how old its data is, and an unavailable source
+  says so with its reason.
+
+## Non-goals (v1)
+
+- Any write or action: v1 is read-only. Starting, parking, answering the inbox and launching
+  a harness come later.
+- Per-project pages. Each later module owns its own page; v1 has the overview only.
+- Further modules: mind6 (captures to triage), the transponder inbox, crew attempts and
+  model pass rates, host load and test-latency breaches, stale-park detection, and
+  waiting-on-you grouped by the kind of session it needs (phone, audio rig, decision,
+  review, idle machine).
+- A web view. The data layer is kept separate so one can follow.
+- Flow stage on session lines; it follows when flows exposes it.
+- Notifications. The dashboard is looked at; it never interrupts.
+
+## Anti-goals
+
+- **High latency.** If toggling it ever feels slow, it has failed, whatever it shows.
+- **Clutter.** A screen of zeros, idle projects, raw warnings or a number on every cell has
+  failed too. A row earns its place by being active or needing attention.
+
+## Constraints
+
+- **Sources and costs** (measured 2026-10-17):
+
+  | Source | Read | Cost |
+  |---|---|---|
+  | familiar | `$XDG_STATE_HOME/familiar/{intent,agents,niri-windows}.json` | files; replaced by atomic rename, so watch the directory |
+  | tasks | `tasks claims` | 4 ms |
+  | tasks | `tasks projects` | 0.18 s |
+  | tasks | `tasks list --parked --all-projects` | 0.35 s |
+  | tasks | `tasks list --needs-review --all-projects` | 0.7 s |
+  | obs | `$XDG_STATE_HOME/obs/dashboard/snapshot.js`, rebuilt hourly by the obs timer | 10.5 MB; summing a 7-day window for 30 projects took 0.4 s |
+
+  The obs index itself (2–17 s a report) must never be read from a refresh loop. Neither
+  must `obs index`, `dashboard build` or `ANALYZE`.
+- **Joins.** familiar and the task claims share the session id. A claim's task gives the
+  title.
+  - niri-windows.json holds niri's internal workspace id. The number to show is the
+    workspace index from `niri msg -j workspaces`.
+  - The relay live-agent registry is not running yet (fam-6e8321). Until it runs, the
+    harness comes from what familiar and the claims record.
+- **Meaning.** "Doing" is not "running": only a live claim means running.
+- **Read-only contract.** The dashboard reads each tool's own commands and published files.
+  It never parses `tasks/*.md`, never takes another tool's lock, and never reads attempt
+  directories or thought bodies.
+- **Identity.** fam-053b0d (in progress) makes the tasks project colour the single source
+  and maps each pet to the nearest of familiar's 12 slot hues. Use the colour that familiar's
+  intent record carries, so the two always agree.
+- **Rendering.** kitty is the host terminal.
+  - OpenTUI and kitty's image placeholder cells have clashed before: placeholders with two
+    diacritics break, one-row cells with none survive.
+  - The dashboard owns its terminal, so it can upload each image once with a stable id and
+    place it directly.
+  - The cats theme PNGs are about 430×480 px and about 141 KB; downscale them before
+    uploading.
+- **Time.** Days are cut in the host's local zone. obs cuts days in its own configured zone
+  (`ops/obs.toml`), so label obs windows as obs's.
+- **Privacy.** Show task titles, counts and project names. Show no transcript text and no
+  thought or inbox bodies.
+- **Profiles.** v1 shows `personal` projects only. Work-profile projects are filtered out by
+  the profile `ops-profile` reports for each checkout, not by a hand-kept list. This keeps
+  employer names and titles out of a personal repository's fixtures and screenshots. It
+  also stops parks waiting on colleagues' reviews from swamping the owner's column. A
+  profile-aware work view can come later. *(Builder's call, from the review.)*
+- **Host.** v1 shows the host it runs on, named in its header. Claims, parks, familiar's
+  files and the obs snapshot are all local to a host, and the dropdown starts on every host
+  that shares the dotfiles. Work running on the other machine is not shown as running there.
+  A source a host lacks (obs on europa) reads "unavailable". Covering both hosts needs a
+  cross-host read that no source provides, and comes later if wanted. *(Builder's call,
+  from the review.)*
+
+## Decided (builder's calls, accepted by the owner as handed over)
+
+- **Stack.** A terminal UI in TypeScript on OpenTUI under Bun, the stack mindful-tui uses.
+- **Home.** Its own project, which the plan's first step creates and registers. It moves this
+  spec there.
+- **Structure.** A data layer of independent sources, each with its own refresh schedule,
+  feeding a render layer, so a web view can reuse the sources.
+- **Launch.** It runs as a `dashboard` case in `niri/scripts/dropdown`, spawned hidden at
+  login like the other dropdowns.
+- **Refresh.** Data refreshes in the background, so showing the dropdown is just showing
+  it:
+  - agents: on familiar's file changes, plus a claims read every 2 s
+  - tasks: every 30 s
+  - obs: when the snapshot file changes
+
+  A slow or failing source never blocks the others. It keeps its last good data with its
+  age, or shows "unavailable (reason)". It never shows a guessed zero.
+- **Layout.** A fixed line budget per module, with the agents module getting the most room.
+  Colour carries identity and state; numbers are kept for what the owner would act on.
+
+## Left to the builder
+
+- Line budgets, card dimensions, the portrait size in cells, and the dropdown's size and
+  key. The bind and the cheatsheet row follow the existing dropdowns.
+- How the obs module reads failure events: from the snapshot rows, or a cheap published
+  view. If neither is cheap, rates stand in.
+- Hiding the tasks columns that are zero for every row.
+- The harness label until relay runs.
+- **The first step is a spike** (throwaway, then reported back): an OpenTUI screen in a kitty
+  quick-access dropdown that places one downscaled pet image directly. It settles whether
+  OpenTUI's own drawing and direct image placement coexist before the layout is built.
+
+## Phasing after v1
+
+The 16-bit portraits (forge-9db1d5, P1) replace the theme pictures with no layout change,
+alongside the cats v3 roster pass (forge-d5c548, P1). The dashboard's card fixes the
+portrait size and states those tasks draw.
+
+Later modules, each with its own page, come in the order they prove useful. Candidates:
+- mind6's triage count, read from its event feed and never by polling its op queue;
+- the transponder inbox;
+- crew attempts;
+- host health;
+- stale parks: parks whose condition has already happened (ops-df9e86 found 22 misleading
+  `doing` tasks).
