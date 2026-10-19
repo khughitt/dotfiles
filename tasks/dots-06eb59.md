@@ -1,19 +1,20 @@
 ---
 id: dots-06eb59
 title: "Ops dashboard v1: a read-only overview of agents, tasks and obs in a niri dropdown"
-status: doing
+status: moved
 priority: 2
 size: l
 complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T14:15:43Z
+updated: 2026-10-19T14:15:51Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
 spec: docs/specs/2026-10-18-ops-dashboard-design.md
 plan: docs/plans/2026-10-19-lookout-v1.md
+moved_to: look-1f22ce
 ---
 
 Why: one toggle away from any workspace, the owner wants to see at a glance which agents are running and what each is doing, where tasks stand across recently active projects, and what obs says is going wrong, without opening a dozen tools. Filed 2026-09-06 as "dropdown: ops dashboard", a follow-up to dots-7b24fa. The owner widened it on 2026-10-17 after a cross-project exploration (attached).
@@ -91,3 +92,6 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
   provenance: {"harness_session":"claude-code:5df7dc13-fd5e-4561-a484-bf64b456971a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-19T14:15:43Z (main): parked (waiting on agent, session): Move to look with tasks move, then tasks start the new goal in lookout and continue Task 1 Step 6
   provenance: {"harness_session":"claude-code:5df7dc13-fd5e-4561-a484-bf64b456971a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T14:15:51Z (main): moved to look-1f22ce
+  provenance: {"harness_session":"claude-code:5df7dc13-fd5e-4561-a484-bf64b456971a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T14:15:51Z (main): detached: ops-dashboard-exploration-2026-10-17.md: moved to look-1f22ce
