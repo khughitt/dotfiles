@@ -143,6 +143,9 @@ run_setup() {
   shift
 
   mkdir -p "${tmp}/bin"
+  mkdir -p "${tmp}/home/d/lookout/src"
+  printf '#!/bin/sh\nexit 0\n' > "${tmp}/home/d/lookout/src/bin.ts"
+  chmod +x "${tmp}/home/d/lookout/src/bin.ts"
   if [[ "${PRISM_PLUGIN_SOURCE_PRESENT:-true}" == true ]]; then
     mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin"
     touch "${tmp}/home/d/prism/integrations/noctalia-plugin/plugin.toml"

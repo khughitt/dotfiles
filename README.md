@@ -60,7 +60,18 @@ piece of the setup after a change:
 
 Valid phases are:
 
-    preflight external-clones shell gtk graphical-config common-config systemd kitty home bin app-config noctalia-plugins mime dropbox-ignore tmux packages
+    preflight external-clones shell gtk graphical-config common-config systemd kitty home bin lookout app-config noctalia-plugins mime dropbox-ignore tmux packages
+
+The `lookout` phase requires the lookout checkout at `~/d/lookout`, Bun 1.4,
+`just`, and `attr`. It runs lookout's `just setup` on each host to install locked,
+Dropbox-ignored dependencies, links `~/.local/bin/lookout`, and verifies
+`lookout --version`. To install or refresh it independently:
+
+    ./setup.sh --only lookout
+
+`--dry-run` previews those actions; `--link-only` creates only the launcher and
+expects dependencies to be installed already. A missing checkout or failed
+dependency setup makes the phase fail and is reported in the setup summary.
 
 To install the systemd user timer that keeps high-flux Dropbox folders ignored:
 

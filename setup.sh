@@ -17,6 +17,7 @@ WALI_ROOT="${HOME}/d/wali"
 # The ops checkout, reached the same way: the obs-index systemd user units link
 # out of it.
 OPS_ROOT="${HOME}/d/ops"
+LOOKOUT_ROOT="${HOME}/d/lookout"
 
 # Parse command line arguments
 HEADLESS=false
@@ -43,6 +44,7 @@ VALID_PHASES=(
     kitty
     home
     bin
+    lookout
     app-config
     noctalia-plugins
     mime
@@ -825,6 +827,22 @@ function setup_bin_link() {
     ln_s "${DOTS_HOME}/bin" "${HOME}/bin"
 }
 
+function setup_lookout() {
+    phase "Lookout"
+    if [[ ! -x "${LOOKOUT_ROOT}/src/bin.ts" ]]; then
+        echo "Lookout checkout missing; clone it into ${LOOKOUT_ROOT}, then rerun setup.sh --only lookout"
+        return 1
+    fi
+
+    if [[ "$LINK_ONLY" != "true" ]]; then
+        run just --working-directory "$LOOKOUT_ROOT" setup
+    fi
+    ln_s "${LOOKOUT_ROOT}/src/bin.ts" "${HOME}/.local/bin/lookout"
+    if [[ "$LINK_ONLY" != "true" ]]; then
+        run "${HOME}/.local/bin/lookout" --version
+    fi
+}
+
 function setup_application_config_links() {
     phase "Application config links"
 
@@ -993,6 +1011,7 @@ run_phase systemd setup_systemd_user_units
 run_phase kitty setup_kitty_overrides
 run_phase home setup_home_dotfile_links
 run_phase bin setup_bin_link
+run_phase lookout setup_lookout
 run_phase app-config setup_application_config_links
 run_phase noctalia-plugins setup_noctalia_plugins
 run_phase mime setup_mime_links
