@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T11:53:20Z
+updated: 2026-10-19T11:57:19Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -43,3 +43,4 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-19T11:53:20Z (docs/ops-dashboard-design): parked (waiting on user, review): Owner reviews the lookout v1 design (.worktrees/ops-dashboard-design/docs/specs/2026-10-18-ops-dashboard-design.md); on approval the agent writes the implementation plan, step 1 creating the lookout project
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T11:57:19Z (docs/ops-dashboard-design): review: spec round 1 — verdict: revise; findings: Important 5, minor 1; reviewer: codex
