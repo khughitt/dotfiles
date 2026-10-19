@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T12:42:44Z
+updated: 2026-10-19T12:42:45Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -51,3 +51,4 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
 - 2026-10-19T12:37:16Z (docs/ops-dashboard-design): parked (waiting on user, review): Owner reviews the revised lookout design (round 2; .worktrees/ops-dashboard-design/docs/specs/2026-10-18-ops-dashboard-design.md); on approval the agent writes the implementation plan
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-19T12:42:44Z (docs/ops-dashboard-design): review: spec round 2 — verdict: revise; findings: Important 3; reviewer: codex
+- 2026-10-19T12:42:44Z (docs/ops-dashboard-design): Scoped re-review of 7c06328: prior findings 2 (claimed/unverified), 3 (attention survives recency), 4 (session/claim cardinality), and 6 (intent expiry) are closed. Three Important findings remain in the population/overflow revisions. 1 — lines 128-135 read only --status doing but say todo and blocked come from the same list; an unclaimed/unparked todo or blocked task never enters the population. Read the relevant open statuses, then derive each status count and partition doing. 2 — lines 120-132 do not reconcile existing records with their claimed/parked worktree: tasks show only falls back to the recorded worktree when the local record is absent (tasks src/commands/show.rs:39-46), and the spec skips show entirely for returned ids. A registered doing record changed to blocked and parked in its worktree still counts as doing. Define record-source precedence and explicitly read the recorded checkout via tasks -C <worktree> show <id> --no-fetch when it is authoritative; use its status/title before counting. 3 — lines 48-51 give overflow only to agents, while line 193 still gives every module a fixed budget. Excess task rows, including projects retained for owner attention, remain inaccessible. Apply scrolling and an attention-aware overflow indication to the tasks module too. Review only; spec unchanged. No live rendering or latency tests run.
