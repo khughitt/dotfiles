@@ -16,7 +16,12 @@
 -- machine lights up whatever it happens to have.
 --
 --   arch:   pacman -S pyright ruff typescript-language-server \
---                     bash-language-server lua-language-server gopls marksman
+--                     bash-language-server lua-language-server gopls marksman \
+--                     rust-analyzer
+--   rustup: rustup component add rust-analyzer -- rustup puts a rust-analyzer
+--           proxy on PATH even without the component, so that server fails at
+--           start instead of being skipped; a toolchain linked to the system
+--           rust (`rustup toolchain link`) takes the distro package above
 --   R:      install.packages("languageserver")
 -- ---------------------------------------------------------------------------
 
@@ -32,6 +37,7 @@ local servers = {
   'marksman',
   'pyright',
   'ruff',
+  'rust_analyzer',
   'ts_ls',
 }
 
