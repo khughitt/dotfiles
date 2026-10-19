@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T13:14:54Z
+updated: 2026-10-19T13:19:28Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -73,3 +73,4 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
 - 2026-10-19T13:14:53Z (docs/ops-dashboard-design): plan revised for review round 1 (65b2ca3, fe: allowlist moved to Task 3): shared personal allowlist filters familiar cards and obs totals too; Task 1 merges the reviewed branch into dotfiles main before the move, fills one_cmd, generates bun.lock, runs setup and just docs, names the lookout v1 worktree; Task 9 depends on Task 8's step and the goal on Task 9; failed worktree reads keep last good data, removal confirmed by path, fallback and unreadable shown; a 2 s claims source with targeted title reads; liveness checks familiar's starttime; parent-directory watching and reattach for familiar and obs; obs rates honour not-recorded rows and measure availability; Task 8 live check asks and cleans up
 - 2026-10-19T13:14:53Z (docs/ops-dashboard-design): parked (waiting on user, review): Owner re-reviews the revised lookout plan (round 2; .worktrees/ops-dashboard-design/docs/plans/2026-10-19-lookout-v1.md) and picks the execution method; then the agent runs Task 1
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T13:19:28Z (docs/ops-dashboard-design): review: plan round 2 — verdict: revise; findings: Important 5; reviewer: codex
