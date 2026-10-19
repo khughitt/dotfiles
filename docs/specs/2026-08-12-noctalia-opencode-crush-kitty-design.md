@@ -401,7 +401,7 @@ seven-slot invariant.
 No GitHub write is part of this implementation. If a later follow-up uses `gh`
 to create or modify a comment, issue, or pull request, it must first verify that
 the effective account reported by `gh api user --jq .login` is `khughitt`, not
-the default work account `keith-cainex`. If it temporarily runs
+the default work account. If it temporarily runs
 `gh auth switch --user khughitt`, it must record the previously active account
 and restore it on both success and failure. The implementation plan must repeat
 this guard beside any GitHub-writing step.

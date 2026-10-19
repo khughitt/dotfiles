@@ -67,7 +67,7 @@ OpenCode 1.18.18, Crush 0.88.0, Noctalia.
 - `crush/crushrc` gains exactly one supported rendering change:
   `option ui transparent true`. Machine/workspace state may override it.
 - No GitHub write is part of this plan. If a later follow-up writes with `gh`,
-  verify `gh api user --jq .login` is `khughitt` (not `keith-cainex`) and
+  verify `gh api user --jq .login` is `khughitt` (not the work account) and
   restore any temporarily changed active account on success and failure.
 - Every behavior change is test-first: run the focused test RED for the stated
   reason, implement the minimum change, then run it GREEN.
