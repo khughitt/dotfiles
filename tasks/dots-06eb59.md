@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T13:36:08Z
+updated: 2026-10-19T13:40:25Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -82,3 +82,5 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-19T13:36:07Z (docs/ops-dashboard-design): review: plan round 3 — verdict: accept; findings: none; reviewer: codex
 - 2026-10-19T13:36:07Z (docs/ops-dashboard-design): Scoped re-review of 14392a8 accepts the plan: all five round-2 findings are closed. Setup keeps node_modules in-tree and reapplies the Dropbox ignore attribute; integration permits a non-fast-forward merge and validates the combined task record; obs filters by canonical prefix and familiar by real checkout path; claimsSource publishes claims and titles together with an explicit card consumer and model test; rates and hotspots each preserve their relevant measure coverage, with measures present in the fixture. tasks check has no errors and only the expected eight unlinked_step warnings pending migration. No additional blocking findings in the revisions. Review only; plan unchanged; implementation tests, rendering compatibility and latency remain to be verified during execution and the spike. External publication, global instruction activation and live desktop use retain their stated approval gates.
+- 2026-10-19T13:40:25Z (docs/ops-dashboard-design): resumed
+  provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
