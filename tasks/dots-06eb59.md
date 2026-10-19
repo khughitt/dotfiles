@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T12:47:00Z
+updated: 2026-10-19T12:56:06Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -57,3 +57,4 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
 - 2026-10-19T12:46:59Z (docs/ops-dashboard-design): spec revised for round 2 (8d5234e): population members are every open todo/doing/blocked record plus every claimed or parked id; a live claim's or park's worktree copy is authoritative, read with tasks -C <worktree> show <id> --no-fetch (titles too); only doing members are partitioned; tasks rows ordered owed-first and scroll with an overflow line naming hidden owed rows. Both named commands checked live.
 - 2026-10-19T12:47:00Z (docs/ops-dashboard-design): parked (waiting on user, review): Owner reviews the revised lookout design (round 3; .worktrees/ops-dashboard-design/docs/specs/2026-10-18-ops-dashboard-design.md); on approval the agent writes the implementation plan
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T12:56:06Z (docs/ops-dashboard-design): review: spec round 3 — verdict: revise; findings: Important 1; reviewer: codex
