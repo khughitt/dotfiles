@@ -1,13 +1,15 @@
 ---
 id: dots-06eb59
 title: "Ops dashboard v1: a read-only overview of agents, tasks and obs in a niri dropdown"
-status: todo
+status: doing
 priority: 2
 size: l
 complexity: high
 process: planned
+owner: main
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T00:52:31Z
+updated: 2026-10-19T00:52:32Z
+started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
 ---
@@ -30,3 +32,5 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
 - 2026-10-17T22:25:13Z (main): answer (user, 2026-10-17): do a wider, deeper exploration and brainstorm across the projects most active with ops (tasks, obs, fam, crew, mind6). Consider what is useful to convey; interactive or read-only (e.g. the transponder inbox, a task launcher); nested or multiscale (a home view of all projects, each with a space, then a concise full-page view per project); keeping it uncluttered while conveying the most useful text and visuals; snapshot (point) vs change (rates, gradients); fam art (the video-game art style ideas in trans); other considerations.
 - 2026-10-17T22:35:16Z (main): attached: ops-dashboard-exploration-2026-10-17.md (11494 bytes): Exploration for the ops dashboard brainstorm: what tasks, obs/ops, crew, mind6, familiar, relay and transponder expose, at what cost, plus prior judgments and the 16-bit art direction
 - 2026-10-19T00:52:30Z (main): scope: scoped after the brainstorm; idea -> todo P2 l high planned; the spec is drafted in dotfiles docs/specs/ and moves to the dashboard's own project when the plan creates it
+- 2026-10-19T00:52:30Z (main): started
+  provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
