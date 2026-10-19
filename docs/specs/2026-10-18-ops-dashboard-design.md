@@ -1,4 +1,4 @@
-# Ops dashboard v1: design
+# lookout v1: the ops dashboard, design
 
 2026-10-18. Task `dots-06eb59`. Status: draft, for the owner's review.
 
@@ -136,8 +136,9 @@ they prove useful, and each later module also owns a page of detail.
 ## Decided (builder's calls, accepted by the owner as handed over)
 
 - **Stack.** A terminal UI in TypeScript on OpenTUI under Bun, the stack mindful-tui uses.
-- **Home.** Its own project, which the plan's first step creates and registers. It moves this
-  spec there.
+- **Home.** Its own project, `lookout` (owner's pick, 2026-10-19): tasks prefix `look`,
+  checkout `~/d/lookout`, `personal` profile, GitHub `khughitt/lookout`. The plan's first
+  step creates and registers it and moves this spec there.
 - **Structure.** A data layer of independent sources, each with its own refresh schedule,
   feeding a render layer, so a web view can reuse the sources.
 - **Launch.** It runs as a `dashboard` case in `niri/scripts/dropdown`, spawned hidden at
