@@ -1,14 +1,16 @@
 ---
 id: dots-84e52b
 title: "Dropdown: a dashboard case that runs lookout"
-status: doing
+status: done
 priority: 2
 complexity: mid
 process: direct
 owner: main
 created: 2026-10-19T14:17:39Z
-updated: 2026-10-19T16:27:58Z
+updated: 2026-10-19T18:01:44Z
 started: 2026-10-19T16:27:58Z
+completed: 2026-10-19T18:01:44Z
+closed: 2026-10-19T18:01:44Z
 depends: [look-56087a]
 tags: [niri, dropdown]
 source: look-1f22ce
@@ -22,4 +24,8 @@ Done when: the test passes, `just test` is green, and the owner has seen the dro
 ## Notes
 
 - 2026-10-19T16:27:58Z (main): started
+  provenance: {"harness_session":"claude-code:5df7dc13-fd5e-4561-a484-bf64b456971a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T18:01:44Z (main): done
+  provenance: {"harness_session":"claude-code:5df7dc13-fd5e-4561-a484-bf64b456971a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T18:01:44Z (main): dashboard dropdown case: d0d170c (ff to main); Alt+D; review clean; live check passed; hidden instance started after niri reload
   provenance: {"harness_session":"claude-code:5df7dc13-fd5e-4561-a484-bf64b456971a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
