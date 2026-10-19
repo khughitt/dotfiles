@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T13:21:12Z
+updated: 2026-10-19T13:21:13Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -78,3 +78,5 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
 - 2026-10-19T13:21:11Z (docs/ops-dashboard-design): resumed
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-19T13:21:11Z (docs/ops-dashboard-design): plan revised for review round 2: node_modules stays in-tree and gets the Dropbox ignore attribute after each install (work-link covers only .worktrees/.venv/target); Task 1 does a --no-ff merge with conflict resolution (8 main-only, 37 branch-only commits); obs filtered by tasks prefix and familiar by canonical root, with a prefix-differs fixture; claimsSource publishes claims and titles together and is the only source for card titles; obs partial covers tool_errors availability and null-error rows, hotspots honour failed_calls availability, measures in the fixture
+- 2026-10-19T13:21:11Z (docs/ops-dashboard-design): parked (waiting on user, review): Owner re-reviews the revised lookout plan (round 3; .worktrees/ops-dashboard-design/docs/plans/2026-10-19-lookout-v1.md) and picks the execution method; then the agent runs Task 1
+  provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
