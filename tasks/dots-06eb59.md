@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T13:49:49Z
+updated: 2026-10-19T14:15:43Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -88,4 +88,6 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
 - 2026-10-19T13:40:26Z (docs/ops-dashboard-design): parked (waiting on agent, session): Fresh session: open .worktrees/ops-dashboard-design in dotfiles, run tasks start dots-06eb59, then execute docs/plans/2026-10-19-lookout-v1.md with superpowers:subagent-driven-development from Task 1 (create lookout, merge this branch into dotfiles main, move this task, register the step tasks); the GitHub repo, push and lore assemble steps wait on the owner's approval
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-19T13:49:49Z (docs/ops-dashboard-design): resumed
+  provenance: {"harness_session":"claude-code:5df7dc13-fd5e-4561-a484-bf64b456971a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T14:15:43Z (main): parked (waiting on agent, session): Move to look with tasks move, then tasks start the new goal in lookout and continue Task 1 Step 6
   provenance: {"harness_session":"claude-code:5df7dc13-fd5e-4561-a484-bf64b456971a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
