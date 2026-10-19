@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T12:37:17Z
+updated: 2026-10-19T12:42:44Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -50,3 +50,4 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
 - 2026-10-19T12:37:16Z (docs/ops-dashboard-design): spec revised for round 1 (7c06328): doing breakdown over one id-keyed population (doing list ∪ claims ∪ parks, status from the record); bucket renamed claimed with unverified liveness kept visible; tasks rows include projects needing owner attention, not only 7-day activity; sessions listed from familiar alone, with none/one/several claims rendered and titles via tasks show; agents overflow scrolls with an overflow line naming hidden attention items; intent expiry timer recomputes state and portrait at expiresAt
 - 2026-10-19T12:37:16Z (docs/ops-dashboard-design): parked (waiting on user, review): Owner reviews the revised lookout design (round 2; .worktrees/ops-dashboard-design/docs/specs/2026-10-18-ops-dashboard-design.md); on approval the agent writes the implementation plan
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T12:42:44Z (docs/ops-dashboard-design): review: spec round 2 — verdict: revise; findings: Important 3; reviewer: codex
