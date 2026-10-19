@@ -1,15 +1,17 @@
 ---
 id: dots-a471fb
 title: The public dotfiles repository names the work gh account in two 2026-08-12 design docs
-status: doing
+status: done
 priority: 2
 size: xs
 complexity: low
 process: direct
 owner: fix/redact-work-login
 created: 2026-10-18T22:46:05Z
-updated: 2026-10-18T23:59:43Z
+updated: 2026-10-19T00:00:37Z
 started: 2026-10-18T23:59:35Z
+completed: 2026-10-19T00:00:37Z
+closed: 2026-10-19T00:00:37Z
 depends: []
 tags: [git]
 agent: claude-code/claude-opus-5-5
@@ -22,4 +24,8 @@ Found 2026-10-18 while publishing relay v0.1.0 (relay-c19c0a), which rewrote the
 - 2026-10-18T23:59:35Z (main): started
   provenance: {"harness_session":"claude-code:bf715d77-6d48-4fed-929f-69b7047cfd1f","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-18T23:59:43Z (fix/redact-work-login): resumed
+  provenance: {"harness_session":"claude-code:bf715d77-6d48-4fed-929f-69b7047cfd1f","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T00:00:37Z (fix/redact-work-login): done
+  provenance: {"harness_session":"claude-code:bf715d77-6d48-4fed-929f-69b7047cfd1f","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T00:00:37Z (fix/redact-work-login): Redacted the work gh login at HEAD in the 2026-08-12 noctalia plan and spec (option b); history untouched
   provenance: {"harness_session":"claude-code:bf715d77-6d48-4fed-929f-69b7047cfd1f","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
