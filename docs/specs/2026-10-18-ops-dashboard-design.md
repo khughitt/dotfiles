@@ -26,22 +26,42 @@ they prove useful, and each later module also owns a page of detail.
 ## Goals
 
 - **Agents module.** One card per project with at least one live session, ordered by most
-  recent activity, newest first. Each card shows:
+  recent activity, newest first. A card's activity is the newest `updatedAt` among its
+  sessions. Each card shows:
   - a small pet portrait from familiar's current theme;
   - the project's hue as accent and border;
   - the project name;
-  - one line per live session: harness, harness state, the claimed task's id and short
-    title, and a faint niri workspace number.
+  - one line per live session: harness, harness state, its task, and a faint niri workspace
+    number.
+
+  Sessions come from familiar alone: a session is listed whether or not any claim joins
+  it. On 2026-10-19 the live read had 14 familiar sessions, only 2 with claims, and one
+  session holding two claims. The task part of the line follows the session's claims:
+  - **none:** the line shows no task;
+  - **one:** the task id and its short title;
+  - **several:** the most recently started claim's id and title, then "+N".
 
   The portrait shows the pose of the card's most urgent session (needs input or approval
   outranks error, which outranks working, done and idle). A card drops off when its project
   has no live session.
-- **Tasks module.** One row per recently active project (activity in the last 7 days),
-  showing:
+
+  **Overflow.** When the cards exceed the module's budget, the module scrolls with the
+  keyboard. Its last visible line is always an overflow line naming what is hidden, with
+  any hidden attention items first, for example "+3 more · needs input: mind6". Newest-first
+  ordering never hides a session that needs the owner without saying so.
+- **Tasks module.** One row per project that was active in the last 7 days **or** needs
+  the owner's attention: a park waiting on the owner, or an open halt. A review owed for a
+  month stays on the screen however quiet the project has been. Each row shows:
   - todo
-  - doing, split three ways so the parts add up: running (a live claim), parked, and
-    unattended (neither claimed nor parked; 7 of 56 on 2026-10-17). A task both parked and
-    live-claimed counts as running.
+  - doing, split three ways over one reconciled population so the parts add up:
+    - **claimed**, with uncertain liveness kept visible: "3 claimed (1 unverified)";
+    - **parked**;
+    - **unattended**: neither claimed nor parked (7 of 56 on 2026-10-17).
+
+    A task both parked and claimed counts as claimed. The bucket is called claimed, not
+    running, because a claim does not prove a process. `tasks claims` reports
+    `live: true` with an `unverified` reason when it cannot judge a pid. A claim without a
+    pid (Codex) lives on its four-hour TTL.
   - blocked
   - waiting on the owner, with quiet runs counted separately. This counts every park
     waiting on the owner, whatever the task's status (todo and blocked tasks hold parks
@@ -97,13 +117,28 @@ they prove useful, and each later module also owns a page of detail.
 
   The obs index itself (2–17 s a report) must never be read from a refresh loop. Neither
   must `obs index`, `dashboard build` or `ANALYZE`.
-- **Joins.** familiar and the task claims share the session id. A claim's task gives the
-  title.
+- **Joins.** familiar and the task claims share the session id. Claims carry task ids, not
+  titles. A title comes from `tasks show <id>`, which routes by prefix and finds a record
+  that exists only in the worktree its claim or park names. Cache it per id until that
+  claim or park changes.
+- **One task population.** `tasks projects` and `tasks list --all-projects` count records
+  in registered checkouts, while claims and parks also name tasks that exist only in a
+  worktree. Mixing the two counts gives wrong remainders. The doing breakdown is therefore
+  derived from one population keyed by task id:
+  - the union of the doing records from `tasks list --all-projects --status doing`, the
+    claimed ids from `tasks claims`, and the parked ids from
+    `tasks list --parked --all-projects`;
+  - each id's status taken from its record, read with `tasks show` only for ids the list
+    did not return.
+
+  Every part (claimed, parked, unattended) is counted over that population. Todo and
+  blocked come from the same list.
   - niri-windows.json holds niri's internal workspace id. The number to show is the
     workspace index from `niri msg -j workspaces`.
   - The relay live-agent registry is not running yet (fam-6e8321). Until it runs, the
     harness comes from what familiar and the claims record.
-- **Meaning.** "Doing" is not "running": only a live claim means running.
+- **Meaning.** "Doing" is not "running", and a live claim is not proof of running either.
+  The dashboard says claimed and shows unverified liveness as such.
 - **Read-only contract.** The dashboard reads each tool's own commands and published files.
   It never parses `tasks/*.md`, never takes another tool's lock, and never reads attempt
   directories or thought bodies.
@@ -145,7 +180,11 @@ they prove useful, and each later module also owns a page of detail.
   login like the other dropdowns.
 - **Refresh.** Data refreshes in the background, so showing the dropdown is just showing
   it:
-  - agents: on familiar's file changes, plus a claims read every 2 s
+  - agents: on familiar's file changes, plus a claims read every 2 s, plus a timer at each
+    intent record's `expiresAt`. An intent record carries `current`, `expiresAt` and
+    `after`: past `expiresAt` the state is `after`'s (done decays to idle after 8 s, error
+    after 30 s) with no file change. The state and the portrait are recomputed at that
+    moment.
   - tasks: every 30 s
   - obs: when the snapshot file changes
 
