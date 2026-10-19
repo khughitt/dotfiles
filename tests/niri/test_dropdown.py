@@ -89,6 +89,19 @@ def test_mindful_runs_the_scratch_loop_beside_the_script(run):
     assert "kitty_override=transparent_background_colors=#000001@1.0" in argv
 
 
+def test_dashboard_runs_lookout_in_its_own_group(run):
+    proc, argv = run("dashboard")
+
+    assert proc.returncode == 0, proc.stderr
+    assert argv[1] == "--instance-group=dropdown-dashboard"
+    assert "app_id=dropdown-dashboard" in argv
+    assert argv[-1] == "lookout"
+    assert "lines=40" in argv
+    assert "focus_policy=exclusive" in argv
+    # Fully opaque: at the glass opacity the window underneath shows through the text.
+    assert "background_opacity=1.0" in argv
+
+
 def test_terminals_keep_exclusive_focus(run):
     for name in ("term", "ipython", "ghci"):
         _, argv = run(name)

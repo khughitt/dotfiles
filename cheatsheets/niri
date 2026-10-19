@@ -9,6 +9,7 @@ alt+return           // toggle dropdown terminal
 alt+p                // toggle dropdown ipython
 alt+g                // toggle dropdown ghci
 alt+m                // toggle mindful scratchpad (:wq captures, :q! discards)
+alt+d                // toggle lookout dashboard (q quits it; the next toggle relaunches)
 ctrl+space           // launcher
 super+s              // control center
 super+alt+comma      // settings

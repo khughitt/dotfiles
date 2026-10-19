@@ -14,7 +14,7 @@ set -euo pipefail
 WIDTH_FRACTION=0.80
 
 usage() {
-    echo "usage: ${0##*/} [--hidden] <term|ipython|ghci|mindful>" >&2
+    echo "usage: ${0##*/} [--hidden] <term|ipython|ghci|mindful|dashboard>" >&2
     exit 2
 }
 
@@ -42,6 +42,9 @@ case "$name" in
     ghci)    lines=40; cmd=(ghci-color) ;;  # the interactive-shell alias for ghci
     mindful) lines=30; focus=on-demand; opacity=0.98; glass=(-o "kitty_override=transparent_background_colors=#000001@1.0")
              cmd=("$(dirname "$(readlink -f "$0")")/mindful-scratch") ;;
+    # lookout, the read-only ops dashboard: fully opaque, since it sits over other
+    # windows' text and at the glass opacity that text shows through its own.
+    dashboard) lines=40; opacity=1.0; cmd=(lookout) ;;
     *) echo "${0##*/}: unknown dropdown '$name'" >&2; usage ;;
 esac
 
