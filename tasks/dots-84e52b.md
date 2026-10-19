@@ -6,8 +6,8 @@ priority: 2
 complexity: mid
 process: direct
 created: 2026-10-19T14:17:39Z
-updated: 2026-10-19T14:17:39Z
-depends: []
+updated: 2026-10-19T14:17:45Z
+depends: [look-56087a]
 tags: [niri, dropdown]
 source: look-1f22ce
 agent: claude-code
