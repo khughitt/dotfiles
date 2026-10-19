@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T13:02:49Z
+updated: 2026-10-19T13:02:50Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -61,3 +61,4 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
 - 2026-10-19T12:56:06Z (docs/ops-dashboard-design): Scoped re-review of 8d5234e: all three round-2 findings are closed (full open-status population, explicit worktree record precedence, and tasks overflow). One Important issue introduced by extending the cache to entire worktree reads at lines 144-145: claim/park changes are not a record-version signal. A cached parked todo task can be blocked or unblocked in its worktree while its park remains unchanged, leaving authoritative status and counts stale indefinitely despite the 30-second task refresh. Confirmed in tasks src/commands/mod.rs:565-569 (nonclosing transitions preserve parks) and existing tests/cli.rs:1388 block_unblock_note_and_dep_leave_a_park_entry_alone. Smallest fix: expire/re-read authoritative worktree records on the existing 30-second tasks refresh and use those refreshed records for titles too; claim/park changes may invalidate sooner. Full open-status CLI query returned todo/doing/blocked successfully. Review only; spec unchanged. No implementation tests or live rendering/latency checks run.
 - 2026-10-19T13:02:49Z (docs/ops-dashboard-design): resumed
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T13:02:49Z (docs/ops-dashboard-design): spec round-3 fix (cache refreshes on the 30 s tasks schedule; block/unblock keep the park) and owner approval recorded in the spec; next: implementation plan
