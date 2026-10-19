@@ -8,7 +8,7 @@ complexity: high
 process: planned
 owner: docs/ops-dashboard-design
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-19T13:06:16Z
+updated: 2026-10-19T13:12:31Z
 started: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
@@ -66,3 +66,4 @@ Done when: the written design is reviewed by the owner, the plan is reviewed, an
 - 2026-10-19T13:06:15Z (docs/ops-dashboard-design): plan written and self-reviewed (aa67e82, docs/plans/2026-10-19-lookout-v1.md): 9 tasks; step children are registered in Task 1 after the goal moves into lookout, since tasks move needs a childless task, so tasks check warns unlinked_step until then
 - 2026-10-19T13:06:15Z (docs/ops-dashboard-design): parked (waiting on user, review): Owner reviews the lookout v1 plan (.worktrees/ops-dashboard-design/docs/plans/2026-10-19-lookout-v1.md) and picks the execution method; then the agent runs Task 1 (create lookout, move this task, register the steps)
   provenance: {"harness_session":"claude-code:c13e4910-a2ef-4255-98f3-a1b169eaf5a3","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-19T13:12:31Z (docs/ops-dashboard-design): review: plan round 1 — verdict: revise; findings: Important 9, minor 1; reviewer: codex
