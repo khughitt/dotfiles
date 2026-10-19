@@ -1,24 +1,28 @@
 ---
 id: dots-06eb59
-title: "dropdown: ops dashboard"
-status: idea
+title: "Ops dashboard v1: a read-only overview of agents, tasks and obs in a niri dropdown"
+status: todo
 priority: 2
+size: l
+complexity: high
+process: planned
 created: 2026-09-06T17:27:07Z
-updated: 2026-10-17T22:35:16Z
+updated: 2026-10-19T00:52:30Z
 depends: []
 tags: [niri, dropdown]
 ---
 
-Follow-up to dots-7b24fa: another quick-access-terminal instance group running this tool.
+Why: one toggle away from any workspace, the owner wants to see at a glance which agents are running and what each is doing, where tasks stand across recently active projects, and what obs says is going wrong, without opening a dozen tools. Filed 2026-09-06 as "dropdown: ops dashboard", a follow-up to dots-7b24fa. The owner widened it on 2026-10-17 after a cross-project exploration (attached).
 
-## Evidence (scope 2026-10-17)
+Settled in the brainstorm (2026-10-17/18, owner's answers):
+- v1 is a read-only overview of three modules: agents, tasks, obs. Further modules and per-project pages, each owned by the module behind it, are phased in later.
+- Agents: one card per project with at least one live session, ordered by most recent activity. Each card has a small pet portrait, the project's hue as accent and border, the project name, and one line per session with its harness and harness state. Flow stage comes later.
+- Tasks: per recently active project, counts of todo, doing, blocked, waiting on the owner (quiet runs separately) and unscoped/unreviewed.
+- obs: the last few failure events if obs records them, otherwise recent rates per failure mode.
+- Anti-goals: high latency, a cluttered UI.
+- Builder's calls: a TypeScript terminal UI on OpenTUI under Bun (the mindful-tui stack), with a data layer kept separate so a web view can follow. It gets its own project, created by the plan's first step, and reads only each tool's commands and JSON.
 
-- No terminal "ops dashboard" exists to run. ops's bin/ holds host-load (machine load and orphans), host-budget, tt-latency, tt-report and ops-projects, and none of them is a live view. obs's dashboard is a static browser page written by `obs dashboard build` (obs-48acc0, obs-84dd35); its terminal counterparts are `obs dashboard summary` and `obs findings`, run as `python3 obs.py …` with nothing on PATH. `tasks prime --all-projects`, `tasks lanes` and `tasks claims` print once and exit. The tasks view has its own dropdown task, dots-a6f6de (tasks-tui).
-- Adding the dropdown case itself follows the xs pattern dots-a6f6de uses (a case in niri/scripts/dropdown, a bind, a hidden pre-spawn, a test). What it shows is the open part.
-
-## Open questions
-
-1. What should the ops dashboard show, and from which tool? (a) A periodically refreshed text view composed from existing commands (host-load, `tasks claims`, `tasks lanes`): a small dotfiles script. (b) obs's live view (`obs dashboard summary` or `obs findings`) on a refresh, which needs an obs launcher on PATH. (c) Something else you had in mind when this was filed on 2026-09-06. Lean: (a), unless you meant obs's numbers.
+Done when: the written design is reviewed by the owner, the plan is reviewed, and the plan runs.
 
 ## Notes
 
