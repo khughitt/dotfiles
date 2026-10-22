@@ -16,9 +16,6 @@ alias gls='glslviewer -w 1720 -h 1413'
 # htop
 alias htop=btop
 
-# kitty
-alias icat='kitty +kitten icat'
-
 # journalctl
 alias journalctl='journalctl -e -n 10000'
 alias errors='journalctl -b -p err|less'

@@ -92,6 +92,7 @@ zinit cdreplay -q
 #     zsh-users/zsh-autosuggestions
 
 compdef _gnu_generic snakemake
+compdef _icat icat  # defined with icat in shell/functions.d/media.zsh
 
 # tasks: dynamic completion for subcommands, flags, and task ids. The stub calls the
 # binary back on each TAB, so it must come after compinit, and it is regenerated at every
