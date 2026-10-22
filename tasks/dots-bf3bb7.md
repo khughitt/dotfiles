@@ -6,9 +6,9 @@ priority: 3
 size: xs
 complexity: low
 process: direct
-owner: main
+owner: feat/kitty-image-open
 created: 2026-10-22T00:00:12Z
-updated: 2026-10-22T00:00:17Z
+updated: 2026-10-22T00:00:18Z
 started: 2026-10-22T00:00:17Z
 depends: []
 tags: [kitty]
@@ -20,4 +20,6 @@ Kitty bindings: a hints chord that labels image paths on screen and opens the pi
 ## Notes
 
 - 2026-10-22T00:00:17Z (main): started
+  provenance: {"harness_session":"claude-code:248c1efe-744b-4ff1-b230-32979cb65f4a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-22T00:00:17Z (feat/kitty-image-open): resumed
   provenance: {"harness_session":"claude-code:248c1efe-744b-4ff1-b230-32979cb65f4a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
