@@ -6,9 +6,9 @@ priority: 3
 size: xs
 complexity: low
 process: direct
-owner: main
+owner: fix/icat-completion
 created: 2026-10-22T23:17:46Z
-updated: 2026-10-22T23:17:51Z
+updated: 2026-10-22T23:18:01Z
 started: 2026-10-22T23:17:51Z
 depends: []
 tags: [kitty]
@@ -20,4 +20,6 @@ The icat alias expands to 'kitty +kitten icat' during completion, so it uses kit
 ## Notes
 
 - 2026-10-22T23:17:51Z (main): started
+  provenance: {"harness_session":"claude-code:10c2a812-d5b6-415a-a14c-4528f00be05b","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-22T23:18:01Z (fix/icat-completion): resumed
   provenance: {"harness_session":"claude-code:10c2a812-d5b6-415a-a14c-4528f00be05b","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
