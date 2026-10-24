@@ -2,12 +2,12 @@
 id: dots-8bcb9f
 title: "Adopt the project-guide contract: identity.toml, generated regions, ops-docs check in the gate"
 status: todo
-priority: 3
+priority: 1
 size: s
 complexity: mid
 process: direct
 created: 2026-10-23T20:14:30Z
-updated: 2026-10-24T13:48:52Z
+updated: 2026-10-24T18:57:43Z
 depends: []
 tags: []
 source: ops-2c5fbc
