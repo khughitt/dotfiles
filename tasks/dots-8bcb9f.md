@@ -7,7 +7,7 @@ size: s
 complexity: mid
 process: direct
 created: 2026-10-23T20:14:30Z
-updated: 2026-10-24T13:48:51Z
+updated: 2026-10-24T13:48:52Z
 depends: []
 tags: []
 source: ops-2c5fbc
@@ -29,3 +29,4 @@ Profile: personal; integrate under this repository's own rules.
 ## Notes
 
 - 2026-10-24T13:48:51Z (main): curate-docs: dots-245e25 at f68131c confirms: One mechanical adoption gap: tools/ops-docs, tools/ops-check and root identity.toml are absent; both required mechanical commands exit 2 without checking guide shape/budgets/paths. Complete the existing tooling/identity/gate adoption.
+- 2026-10-24T13:48:52Z (main): curate-docs: dots-245e25 at f68131c confirms: AGENTS.md:3-4 repeats the personal profile committed docs/specs and docs/plans convention. Remove that location/commitment restatement but retain the repository-specific restriction that docs/superpowers holds earlier documents and takes no new docs (one source line saved).
