@@ -2,12 +2,12 @@
 id: dots-c33e2b
 title: Correct the README configuration-directory variable
 status: todo
-priority: 3
+priority: 1
 size: xs
 complexity: low
 process: direct
 created: 2026-10-24T13:48:52Z
-updated: 2026-10-24T13:48:52Z
+updated: 2026-10-24T18:57:44Z
 depends: []
 tags: [docs]
 source: dots-245e25
