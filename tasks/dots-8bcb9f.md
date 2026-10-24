@@ -7,7 +7,7 @@ size: s
 complexity: mid
 process: direct
 created: 2026-10-23T20:14:30Z
-updated: 2026-10-23T20:14:30Z
+updated: 2026-10-24T13:48:51Z
 depends: []
 tags: []
 source: ops-2c5fbc
@@ -25,3 +25,7 @@ At 2026-10-23: README.md 212 lines; AGENTS.md 4 lines (only the design-docs loca
 Done when: `tools/ops-docs check` exits 0 here with identity.toml present; the project's check route runs it (and so its pre-commit hook, where it has one); and `bin/ops-projects check` in ops no longer lists dots and still exits 0.
 
 Profile: personal; integrate under this repository's own rules.
+
+## Notes
+
+- 2026-10-24T13:48:51Z (main): curate-docs: dots-245e25 at f68131c confirms: One mechanical adoption gap: tools/ops-docs, tools/ops-check and root identity.toml are absent; both required mechanical commands exit 2 without checking guide shape/budgets/paths. Complete the existing tooling/identity/gate adoption.
