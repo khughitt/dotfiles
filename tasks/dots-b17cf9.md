@@ -2,12 +2,12 @@
 id: dots-b17cf9
 title: Document the supported memory-alert installation and activation route
 status: todo
-priority: 3
+priority: 1
 size: s
 complexity: mid
 process: direct
 created: 2026-10-24T13:48:53Z
-updated: 2026-10-24T13:48:53Z
+updated: 2026-10-24T18:57:44Z
 depends: []
 tags: [docs]
 source: dots-245e25
