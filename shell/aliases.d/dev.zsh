@@ -73,7 +73,16 @@ alias s='uv run science --color=always'
 alias snek="snakemake"
 
 # tasks
-alias ta='TASKS_FORMAT=pretty tasks --color=always'
+# tasks colors dates and priorities from the terminal's theme, which it queries only when
+# stdout is a terminal; piped, ask on its behalf first. Into a pager, use tas instead: the
+# pager starts alongside ta and would race the query.
+ta() {
+  if [[ ! -t 1 && -z $TASKS_PALETTE ]]; then
+    local palette
+    palette=$(_tasks_palette) && local -x TASKS_PALETTE=$palette
+  fi
+  TASKS_FORMAT=pretty tasks --color=always "$@"
+}
 alias tag='TASKS_FORMAT=pretty tasks list | grep -i'
 taj() {
   (( $# )) || { print -u2 'usage: taj PATTERN [tasks list options]'; return 2; }
@@ -87,6 +96,7 @@ alias tan='ta next'
 alias tap='ta projects'
 alias tals='ta list --sort updated'
 alias taps='ta projects --sort activity'
+alias talu='ta list | grep "\*"'
 
 # The terminal's colors as a TASKS_PALETTE value. tasks queries the terminal itself only
 # when stdout is a terminal, so a pipeline into a pager has to ask first, before the
