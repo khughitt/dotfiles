@@ -35,7 +35,7 @@ name=$1
 # glass, and over other windows that makes the input line unreadable. kitty ignores an
 # empty override of that list, so the scratchpad replaces it with one colour nothing
 # paints, at full opacity.
-focus=exclusive; opacity=0.85; glass=()
+focus=exclusive; opacity=0.95; glass=()
 case "$name" in
     term)    lines=30; cmd=() ;;
     ipython) lines=40; cmd=(ipython) ;;
