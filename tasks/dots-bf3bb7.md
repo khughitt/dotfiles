@@ -1,15 +1,17 @@
 ---
 id: dots-bf3bb7
 title: Open on-screen image paths in imv or a kitty overlay from the keyboard
-status: doing
+status: done
 priority: 3
 size: xs
 complexity: low
 process: direct
 owner: feat/kitty-image-open
 created: 2026-10-22T00:00:12Z
-updated: 2026-10-25T16:56:10Z
+updated: 2026-10-25T16:56:11Z
 started: 2026-10-22T00:00:17Z
+completed: 2026-10-25T16:56:09Z
+closed: 2026-10-25T16:56:09Z
 depends: []
 tags: [kitty]
 agent: claude-code/claude-opus-5-5
@@ -33,3 +35,7 @@ Kitty bindings: a hints chord that labels image paths on screen and opens the pi
 - 2026-10-25T16:56:09Z (feat/kitty-image-open): resumed
   provenance: {"harness_session":"claude-code:248c1efe-744b-4ff1-b230-32979cb65f4a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
 - 2026-10-25T16:56:09Z (feat/kitty-image-open): review: impl round 1 — verdict: accept; findings: none; reviewer: human
+- 2026-10-25T16:56:09Z (feat/kitty-image-open): done
+  provenance: {"harness_session":"claude-code:248c1efe-744b-4ff1-b230-32979cb65f4a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
+- 2026-10-25T16:56:09Z (feat/kitty-image-open): Four kitty bindings: ctrl+shift+p>i / >shift+i hint image paths (absolute, relative, bare) into imv or an icat overlay; ctrl+shift+i / ctrl+shift+alt+i do the same for a selection. User-tested live.
+  provenance: {"harness_session":"claude-code:248c1efe-744b-4ff1-b230-32979cb65f4a","harness_session_source":"CLAUDE_CODE_SESSION_ID"}
