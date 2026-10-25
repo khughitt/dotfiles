@@ -1,0 +1,103 @@
+compositor.gaps: 29
+debug.backdrop: false
+glass.enabled: true
+glass.paneLip: 6
+glass.bevelProfile: 2
+glass.inactive.bevelProfile: 2
+glass.paneShiftX: 0
+glass.paneShiftY: 0
+glass.jellyFlex: 0.004
+glass.jellyRipple: 0.035
+glass.focusSplit: true
+glass.backdropBlur: true
+glass.inactive.backdropBlur: false
+glass.roughness: 0
+glass.inactive.roughness: 0
+glass.attenuationColor: "#dfe8ff"
+glass.inactive.attenuationColor: "#dfe8ff"
+glass.tintSource: noctalia
+glass.tintAccentMix: 0.4
+glass.accentTint: 1
+glass.inactive.accentTint: 1
+glass.attenuationDistance: 24
+glass.inactive.attenuationDistance: 122
+glass.ior: 1.7
+glass.inactive.ior: 1.22
+glass.thickness: 34.3
+glass.inactive.thickness: 54.5
+glass.chromaticAberration: 0.5
+glass.inactive.chromaticAberration: 0.4
+glass.distortion: 0
+glass.inactive.distortion: 0
+glass.distortionScale: 0.5
+glass.inactive.distortionScale: 0.5
+glass.anisotropicBlur: 0
+glass.inactive.anisotropicBlur: 0
+glass.noise: 0.04
+glass.inactive.noise: 0.03
+glass.noiseType: white
+glass.saturation: 1
+glass.inactive.saturation: 1
+glass.iridescence: 0.8
+glass.inactive.iridescence: 0.28
+glass.aurora: 0
+glass.inactive.aurora: 0
+glass.auroraDriftHz: 4
+glass.inactive.auroraDriftHz: 4
+glass.auroraColorA: "#3dffb0"
+glass.inactive.auroraColorA: "#3dffb0"
+glass.auroraColorB: "#7a5cff"
+glass.inactive.auroraColorB: "#7a5cff"
+glass.reflection: 0.6
+glass.inactive.reflection: 0.6
+glass.edgeHighlight: 0
+glass.inactive.edgeHighlight: 0
+glass.bypass.backdrop: false
+glass.bypass.distortion: false
+glass.bypass.refraction: false
+glass.bypass.fringing: false
+glass.bypass.directionalBlur: true
+glass.bypass.tint: false
+glass.bypass.saturation: true
+glass.bypass.noise: false
+glass.bypass.iridescence: false
+glass.bypass.aurora: true
+glass.bypass.reflection: true
+glass.bypass.edgeHighlight: true
+glass.ring.focus: true
+glass.ring.colorSource: familiar
+glass.ring.color: "#ccccff"
+glass.ring.gap: 6
+glass.ring.width: 1.1
+glass.lightIor: 4
+glass.ring.accent: 1
+glass.ring.edgeTint: true
+glass.ring.beamSpeed: 4350
+glass.ring.beamNoise: 0.55
+glass.ring.beamNoiseHz: 12
+glass.ring.decay: 4150
+glass.ring.glow: 0.5
+glass.ring.rest: 1
+terminal.background.opacity.active: 0
+terminal.background.opacity.inactive: 0
+terminal.apps:
+  - kitty
+  - com.mitchellh.ghostty
+_wallpapers:
+  6954fa3e:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20240521_103749433.jpg
+    glass.inactive.roughness: 0.14
+    glass.tintSource: familiar
+    glass.tintAccentMix: 0.16
+    glass.inactive.accentTint: 0.22
+    glass.attenuationDistance: 10
+    glass.inactive.attenuationDistance: 1
+    glass.ior: 1.34
+    glass.inactive.ior: 1.12
+    glass.thickness: 62.1
+    glass.inactive.thickness: 97.5
+    glass.iridescence: 0.05
+    glass.inactive.iridescence: 0.07
+    glass.inactive.aurora: 0.28
+    glass.inactive.auroraDriftHz: 12
+    glass.bypass.iridescence: true

@@ -83,3 +83,26 @@ terminal.background.opacity.inactive: 0
 terminal.apps:
   - kitty
   - com.mitchellh.ghostty
+_wallpapers:
+  af95d1d7:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20220602_160805599.jpg
+    compositor.gaps: 34
+    glass.paneLip: 2
+    glass.inactive.bevelProfile: 4.7
+    glass.paneShiftX: 0
+    glass.paneShiftY: 0
+    glass.jellyFlex: 0.002
+    glass.inactive.roughness: 0.04
+    glass.inactive.ior: 1.16
+    glass.inactive.thickness: 40.7
+    glass.inactive.chromaticAberration: 0.46
+    glass.ring.gap: 1
+    glass.ring.width: 0.9
+    glass.ring.accent: 0.4
+    glass.ring.rest: 1
+    glass.inactive.accentTint: 0.7
+    glass.inactive.attenuationDistance: 30
+    glass.bypass.reflection: true
+    glass.inactive.saturation: 0.9
+    glass.jellyRipple: 0.195
+    glass.ring.glow: 0.5
