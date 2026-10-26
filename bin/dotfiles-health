@@ -481,6 +481,11 @@ if [[ "$(uname)" != "Darwin" ]]; then
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer" \
         "${HOME}/d/wali/systemd/wali-rotate.timer"
+    retention_failures="$failures"
+    for unit in git-index-retention.service git-index-retention.timer; do
+        check_link "${XDG_CONFIG_HOME}/systemd/user/${unit}" "${HOME}/d/ops/systemd/user/${unit}"
+    done
+    retention_link_failures=$((failures - retention_failures))
 
     for unit in mindful-web.service mindful-backup.service mindful-backup.timer; do
         check_link "${XDG_CONFIG_HOME}/systemd/user/${unit}" "${DOTS_HOME}/systemd/user/${unit}"
@@ -530,6 +535,34 @@ if [[ "$(uname)" != "Darwin" ]]; then
             check_link \
                 "${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/wali-rotate.timer" \
                 "${HOME}/d/wali/systemd/wali-rotate.timer"
+
+            # Only an approved host packet enables retention. This checks the local
+            # timer and its last run, never peer coverage or what was removed.
+            retention_wants="${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/git-index-retention.timer"
+            if [[ -e "$retention_wants" || -L "$retention_wants" ]]; then
+                check_link "$retention_wants" "${HOME}/d/ops/systemd/user/git-index-retention.timer"
+                if systemctl --user is-enabled git-index-retention.timer >/dev/null 2>&1; then
+                    pass "systemd user timer is enabled: git-index-retention.timer"
+                else
+                    fail "systemd user timer is not enabled: git-index-retention.timer"
+                fi
+                if systemctl --user list-timers git-index-retention.timer --no-pager >/dev/null 2>&1; then
+                    pass "systemd user timer is queryable: git-index-retention.timer"
+                else
+                    fail "systemd user timer could not be queried: git-index-retention.timer"
+                fi
+                if ! systemctl --user is-active --quiet git-index-retention.timer; then
+                    fail "git-index-retention.timer is not active; see systemctl --user status git-index-retention.timer"
+                fi
+                if systemctl --user is-failed --quiet git-index-retention.service; then
+                    fail "git-index-retention.service failed; see journalctl --user -u git-index-retention.service"
+                fi
+            elif systemctl --user is-enabled git-index-retention.timer >/dev/null 2>&1; then
+                fail "git-index-retention.timer is enabled without its timers.target.wants link"
+            elif [[ "$retention_link_failures" -eq 0 ]]; then
+                pass "prepared, awaiting host approval: git-index-retention.timer"
+            fi
+            unset retention_wants retention_failures retention_link_failures
         else
             warn "systemctl is not available"
         fi
