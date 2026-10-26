@@ -63,3 +63,6 @@
 	event = pre-commit
 	event = pre-merge-commit
 	command = "if command -v git-index-health >/dev/null 2>&1; then exec git-index-health --guard; elif test -x \"$HOME/.local/bin/git-index-health\"; then exec \"$HOME/.local/bin/git-index-health\" --guard; else echo 'git-index-health: not installed; no index check ran' >&2; fi"
+# Host-local root condition; setup generates it, health verifies it.
+[include]
+    path = ~/.gitconfig-synced
