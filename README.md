@@ -81,6 +81,11 @@ The timer runs `dropbox_ignore_flux` periodically. It sets Dropbox's
 `com.dropbox.ignored` attribute on common high-churn directories such as
 `node_modules`, `.venv`, `.worktrees`, `.snakemake`, and `__pycache__`.
 
+The same phase links ops's `git-index-retention` service and timer but never
+enables them, with or without `--enable-user-timers`: that timer deletes old Git
+index recovery data and is enabled only by its approved host rollout.
+`bin/dotfiles-health` reports it as prepared until then.
+
 Capture hosts need two explicit sudoers grants; follow
 [the capture-host setup instructions](docs/capture-host-setup.md) to install them.
 
