@@ -148,12 +148,14 @@ child_env() {
     XDG_CACHE_HOME="${tmp}/cache" XDG_CONFIG_HOME="${tmp}/config"
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/home/.local/state"
   )
-  for name in SYSTEMCTL_LOG NIRI_SOCKET NOCTALIA_ENABLE_STATUS NOCTALIA_LOG \
+  for name in SYSTEMCTL_LOG NOCTALIA_ENABLE_STATUS NOCTALIA_LOG \
       NOCTALIA_PLUGIN_LIST NOCTALIA_PLUGIN_LIST_STATUS NOCTALIA_TEST_LOG \
       NOCTALIA_TEST_THEME_MODE NOCTALIA_TEST_THEME_MODE_STATUS \
       NOCTALIA_TEST_TEMPLATES_APPLY_STATUS NOCTALIA_WALLPAPER_PATH \
       PRISM_DOCTOR_LOG PRISM_DOCTOR_STATUS PRISM_REQUIREMENTS_STATUS PRISM_TEST_HOSTNAME; do
-    (( ${+parameters[$name]} )) && reply+=("${name}=${(P)name}")
+    if (( ${+parameters[$name]} )); then
+      reply+=("${name}=${(P)name}")
+    fi
   done
 }
 
@@ -186,9 +188,11 @@ run_setup() {
     # ops checkout, which a test HOME does not have
     mkdir -p "${tmp}/home/d/ops/systemd/user"
     touch "${tmp}/home/d/ops/systemd/user/obs-index.service" \
-      "${tmp}/home/d/ops/systemd/user/obs-index.timer" \
-      "${tmp}/home/d/ops/systemd/user/git-index-retention.service" \
-      "${tmp}/home/d/ops/systemd/user/git-index-retention.timer"
+      "${tmp}/home/d/ops/systemd/user/obs-index.timer"
+    if [[ "${OPS_RETENTION_UNITS_PRESENT:-true}" == true ]]; then
+      touch "${tmp}/home/d/ops/systemd/user/git-index-retention.service" \
+        "${tmp}/home/d/ops/systemd/user/git-index-retention.timer"
+    fi
   fi
   install_test_stubs "$tmp"
   cat > "${tmp}/bin/hostname" <<'EOF'
@@ -1471,6 +1475,9 @@ case "\$*" in
   "--user is-failed --quiet git-index-retention.service")
     [[ "${state}" == enabled-failed ]] && exit 0
     exit 1 ;;
+  "--user is-active --quiet git-index-retention.timer")
+    [[ "${state}" == enabled-inactive ]] && exit 3
+    exit 0 ;;
   "--user list-timers git-index-retention.timer --no-pager")
     [[ "${state}" == enabled-unqueryable ]] && exit 1
     printf 'NEXT LEFT LAST PASSED UNIT ACTIVATES\n'; exit 0 ;;
@@ -1520,8 +1527,29 @@ test_setup_links_retention_units_without_enabling_them() {
     fail "setup must not enable the retention timer"
 
   output=$(run_setup "$tmp" --dry-run --link-only --headless --only systemd --enable-user-timers)
+  [[ "$output" == *"enable --now obs-index.timer"* ]] || \
+    fail "expected dry-run to plan the other timers: ${output}"
   [[ "$output" != *"enable --now git-index-retention"* ]] || \
     fail "dry-run must not plan retention activation"
+}
+
+test_setup_enables_other_timers_before_missing_retention_units_fail() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/bin"
+  install_retention_systemctl "$tmp" disabled
+
+  set +e
+  output=$(OPS_RETENTION_UNITS_PRESENT=false SYSTEMCTL_LOG="${tmp}/systemctl.log" \
+    run_setup "$tmp" --link-only --headless --only systemd --enable-user-timers 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "setup accepted an ops checkout without the retention units"
+  [[ "$output" == *"Link source does not exist"*"git-index-retention.service"* ]] || \
+    fail "setup did not name the missing retention unit: ${output}"
+  rg -q -- 'enable --now obs-index.timer' "${tmp}/systemctl.log" || \
+    fail "a missing retention unit must not stop the other timers being enabled"
 }
 
 test_dotfiles_health_reports_disabled_retention_as_prepared() {
@@ -1559,9 +1587,25 @@ test_dotfiles_health_fails_a_retention_unit_outside_the_ops_checkout() {
     fail "health did not name the wrong retention link: ${output}"
 }
 
+test_dotfiles_health_does_not_call_missing_retention_links_prepared() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  prepare_retention_health_fixture "$tmp" disabled
+  rm "${tmp}/config/systemd/user/git-index-retention.timer"
+
+  set +e
+  output=$(run_health "$tmp" 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted a missing retention timer link"
+  [[ "$output" != *"prepared, awaiting host approval"* ]] || \
+    fail "health called retention prepared without its links: ${output}"
+}
+
 test_dotfiles_health_checks_an_enabled_retention_timer() {
   local tmp state output exit_status
-  for state in enabled enabled-failed enabled-unqueryable disabled-with-wants; do
+  for state in enabled enabled-failed enabled-unqueryable enabled-inactive disabled-with-wants; do
     tmp=$(make_tmpdir)
     register_tmp_cleanup "$tmp"
     if [[ "$state" == disabled-with-wants ]]; then
@@ -1588,6 +1632,10 @@ test_dotfiles_health_checks_an_enabled_retention_timer() {
         (( exit_status != 0 )) || fail "health accepted a failed retention run"
         [[ "$output" == *"journalctl --user -u git-index-retention.service"* ]] || \
           fail "health did not name the retention journal: ${output}" ;;
+      enabled-inactive)
+        (( exit_status != 0 )) || fail "health accepted an enabled retention timer that is not active"
+        [[ "$output" == *"git-index-retention.timer is not active"* ]] || \
+          fail "health did not report the inactive retention timer: ${output}" ;;
       enabled-unqueryable)
         (( exit_status != 0 )) || fail "health accepted an unqueryable retention timer"
         [[ "$output" == *"could not be queried: git-index-retention.timer"* ]] || \
@@ -2422,8 +2470,10 @@ test_dotfiles_health_rejects_legacy_yazi_directory_link
 test_dotfiles_health_checks_enabled_user_timer
 test_dotfiles_health_fails_stale_wali_timer_wants_link
 test_setup_links_retention_units_without_enabling_them
+test_setup_enables_other_timers_before_missing_retention_units_fail
 test_dotfiles_health_reports_disabled_retention_as_prepared
 test_dotfiles_health_fails_a_retention_unit_outside_the_ops_checkout
+test_dotfiles_health_does_not_call_missing_retention_links_prepared
 test_dotfiles_health_checks_an_enabled_retention_timer
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_hands_material_ownership_to_prism

@@ -780,9 +780,6 @@ function setup_systemd_user_units() {
     ln_s "${WALI_ROOT}/systemd/wali-phone-sync.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-phone-sync.timer"
     ln_s "${OPS_ROOT}/systemd/user/obs-index.service" "${XDG_CONFIG_HOME}/systemd/user/obs-index.service"
     ln_s "${OPS_ROOT}/systemd/user/obs-index.timer" "${XDG_CONFIG_HOME}/systemd/user/obs-index.timer"
-    # Linked disabled: only an approved host packet enables cleanup of recovery data.
-    ln_s "${OPS_ROOT}/systemd/user/git-index-retention.service" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.service"
-    ln_s "${OPS_ROOT}/systemd/user/git-index-retention.timer" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.timer"
 
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload
@@ -792,6 +789,11 @@ function setup_systemd_user_units() {
         run systemctl --user enable --now wali-rotate.timer
         run systemctl --user enable --now obs-index.timer
     fi
+
+    # Linked disabled: only an approved host packet enables cleanup of recovery
+    # data. Last, so an ops checkout without these units cannot stop the timers above.
+    ln_s "${OPS_ROOT}/systemd/user/git-index-retention.service" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.service"
+    ln_s "${OPS_ROOT}/systemd/user/git-index-retention.timer" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.timer"
 }
 
 # The OS overrides themselves are selected by each host's kitty/<hostname>.conf,

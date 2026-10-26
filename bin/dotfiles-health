@@ -462,6 +462,7 @@ else
     fail "shell functions do not source cleanly"
 fi
 
+retention_failures=0
 if [[ "$(uname)" != "Darwin" ]]; then
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service" \
@@ -481,6 +482,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer" \
         "${HOME}/d/wali/systemd/wali-rotate.timer"
+    retention_failures="$failures"
     for unit in git-index-retention.service git-index-retention.timer; do
         check_link "${XDG_CONFIG_HOME}/systemd/user/${unit}" "${HOME}/d/ops/systemd/user/${unit}"
     done
@@ -549,12 +551,15 @@ if [[ "$(uname)" != "Darwin" ]]; then
                 else
                     fail "systemd user timer could not be queried: git-index-retention.timer"
                 fi
+                if ! systemctl --user is-active --quiet git-index-retention.timer; then
+                    fail "git-index-retention.timer is not active; see systemctl --user status git-index-retention.timer"
+                fi
                 if systemctl --user is-failed --quiet git-index-retention.service; then
                     fail "git-index-retention.service failed; see journalctl --user -u git-index-retention.service"
                 fi
             elif systemctl --user is-enabled git-index-retention.timer >/dev/null 2>&1; then
                 fail "git-index-retention.timer is enabled without its timers.target.wants link"
-            else
+            elif [[ "$failures" -eq "$retention_failures" ]]; then
                 pass "prepared, awaiting host approval: git-index-retention.timer"
             fi
             unset retention_wants
