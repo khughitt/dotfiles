@@ -893,6 +893,7 @@ function setup_application_config_links() {
 
     ln_s "${DOTS_HOME}/git/ignore" "${HOME}/.gitignore_global"
     ln_s "${DOTS_HOME}/git/config" "${HOME}/.gitconfig"
+    run python3 "${DOTS_HOME}/lib/git-packing-policy.py" write "$HOME" "$DOTS_HOME"
 
     ensure_dir "${HOME}/.julia/config"
     ln_s "${DOTS_HOME}/julia/startup.jl" "${HOME}/.julia/config/startup.jl"

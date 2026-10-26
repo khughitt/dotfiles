@@ -303,6 +303,11 @@ check_link "${HOME}/.zshrc" "${DOTS_HOME}/zshrc"
 check_link "${HOME}/.zshenv" "${DOTS_HOME}/zshenv"
 check_link "${HOME}/.shell" "${DOTS_HOME}/shell"
 check_link "${HOME}/.gitconfig" "${DOTS_HOME}/git/config"
+if packing_status=$(python3 "${DOTS_HOME}/lib/git-packing-policy.py" check "$HOME" "$DOTS_HOME" 2>&1); then
+    pass "Git packing policy"
+else
+    fail "Git packing policy: ${packing_status}"
+fi
 check_link "${HOME}/.gitignore_global" "${DOTS_HOME}/git/ignore"
 # The whole bin directory is linked, so every script in it runs from inside the
 # tree; a real ~/bin holding a copy is how dotfiles-health ends up resolving

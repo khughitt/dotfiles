@@ -147,6 +147,7 @@ child_env() {
     PATH="${tmp}/bin:$PATH" TMPDIR="${TMPDIR:-/tmp}"
     XDG_CACHE_HOME="${tmp}/cache" XDG_CONFIG_HOME="${tmp}/config"
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/home/.local/state"
+    GIT_CONFIG_GLOBAL="${tmp}/home/.gitconfig" GIT_CONFIG_NOSYSTEM=1
   )
   for name in SYSTEMCTL_LOG NOCTALIA_ENABLE_STATUS NOCTALIA_LOG \
       NOCTALIA_PLUGIN_LIST NOCTALIA_PLUGIN_LIST_STATUS NOCTALIA_TEST_LOG \
@@ -2435,6 +2436,50 @@ test_mindful_health_rejects_v3_revival_after_activation() {
 }
 
 test_tmp_cleanup_runs_only_at_process_exit
+test_git_packing_setup_is_scoped_idempotent_and_dry_run_safe() {
+  local tmp generated
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  generated="${tmp}/home/.gitconfig-synced"
+  run_setup "$tmp" --dry-run --link-only --headless --only app-config >/dev/null
+  [[ ! -e "$generated" ]] || fail "packing dry-run wrote an include"
+  run_setup "$tmp" --link-only --headless --only bin >/dev/null
+  [[ ! -e "$generated" ]] || fail "unrelated phase wrote a packing include"
+  run_setup "$tmp" --link-only --headless --only app-config >/dev/null
+  [[ -f "$generated" ]] || fail "app-config did not create packing include"
+  cp "$generated" "${tmp}/original"
+  run_setup "$tmp" --link-only --headless --only app-config >/dev/null
+  cmp "$generated" "${tmp}/original" || fail "packing setup is not idempotent"
+  print -- 'user-owned config' > "$generated"
+  if run_setup "$tmp" --link-only --headless --only app-config >/dev/null 2>&1; then
+    fail "setup ignored packing helper failure"
+  fi
+  [[ "$(<"$generated")" == 'user-owned config' ]] || fail "setup replaced user config"
+}
+
+test_git_packing_health_reports_missing_and_stale_without_repair() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  prepare_health_fixture "$tmp"
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1) || fail "$output"
+  [[ "$output" == *"[OK] Git packing policy"* ]] || fail "health omitted packing check"
+  print -- '# stale bytes' >> "${tmp}/home/.gitconfig-synced"
+  if output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1); then
+    fail "health accepted stale packing include"
+  fi
+  [[ "$output" == *"[FAIL] Git packing policy"* ]] || fail "health omitted packing failure"
+  [[ "$(tail -1 "${tmp}/home/.gitconfig-synced")" == '# stale bytes' ]] || fail "health repaired stale bytes"
+  rm "${tmp}/home/.gitconfig-synced"
+  if run_health "$tmp" --skip-systemd --skip-noctalia-ipc >/dev/null 2>&1; then
+    fail "health accepted missing packing include"
+  fi
+  [[ ! -e "${tmp}/home/.gitconfig-synced" ]] || fail "health recreated missing include"
+}
+
+test_git_packing_setup_is_scoped_idempotent_and_dry_run_safe
+test_git_packing_health_reports_missing_and_stale_without_repair
+
 test_tmp_cleanup_is_centralized
 test_setup_and_health_install_safe_noctalia_stubs
 test_bash_config_is_native_and_minimal
