@@ -462,7 +462,6 @@ else
     fail "shell functions do not source cleanly"
 fi
 
-retention_failures=0
 if [[ "$(uname)" != "Darwin" ]]; then
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service" \
@@ -486,6 +485,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
     for unit in git-index-retention.service git-index-retention.timer; do
         check_link "${XDG_CONFIG_HOME}/systemd/user/${unit}" "${HOME}/d/ops/systemd/user/${unit}"
     done
+    retention_link_failures=$((failures - retention_failures))
 
     for unit in mindful-web.service mindful-backup.service mindful-backup.timer; do
         check_link "${XDG_CONFIG_HOME}/systemd/user/${unit}" "${DOTS_HOME}/systemd/user/${unit}"
@@ -559,10 +559,10 @@ if [[ "$(uname)" != "Darwin" ]]; then
                 fi
             elif systemctl --user is-enabled git-index-retention.timer >/dev/null 2>&1; then
                 fail "git-index-retention.timer is enabled without its timers.target.wants link"
-            elif [[ "$failures" -eq "$retention_failures" ]]; then
+            elif [[ "$retention_link_failures" -eq 0 ]]; then
                 pass "prepared, awaiting host approval: git-index-retention.timer"
             fi
-            unset retention_wants
+            unset retention_wants retention_failures retention_link_failures
         else
             warn "systemctl is not available"
         fi

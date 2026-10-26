@@ -1599,8 +1599,26 @@ test_dotfiles_health_does_not_call_missing_retention_links_prepared() {
   exit_status=$?
   set -e
   (( exit_status != 0 )) || fail "health accepted a missing retention timer link"
+  [[ "$output" == *"not a symlink"*"git-index-retention.timer"* ]] || \
+    fail "health did not name the missing retention link: ${output}"
   [[ "$output" != *"prepared, awaiting host approval"* ]] || \
     fail "health called retention prepared without its links: ${output}"
+}
+
+test_dotfiles_health_reports_retention_prepared_beside_unrelated_failures() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  prepare_retention_health_fixture "$tmp" disabled
+  rm "${tmp}/config/systemd/user/mindful-web.service"
+
+  set +e
+  output=$(run_health "$tmp" 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted a missing mindful-web link"
+  [[ "$output" == *"prepared, awaiting host approval: git-index-retention.timer"* ]] || \
+    fail "an unrelated failure hid the retention state: ${output}"
 }
 
 test_dotfiles_health_checks_an_enabled_retention_timer() {
@@ -2474,6 +2492,7 @@ test_setup_enables_other_timers_before_missing_retention_units_fail
 test_dotfiles_health_reports_disabled_retention_as_prepared
 test_dotfiles_health_fails_a_retention_unit_outside_the_ops_checkout
 test_dotfiles_health_does_not_call_missing_retention_links_prepared
+test_dotfiles_health_reports_retention_prepared_beside_unrelated_failures
 test_dotfiles_health_checks_an_enabled_retention_timer
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_hands_material_ownership_to_prism
