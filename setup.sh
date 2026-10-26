@@ -14,8 +14,8 @@ PRISM_ROOT="${HOME}/d/prism"
 # The wali checkout, reached the same way: bin/walictl execs into it and the
 # systemd and Noctalia-plugin phases link out of it.
 WALI_ROOT="${HOME}/d/wali"
-# The ops checkout, reached the same way: the obs-index systemd user units link
-# out of it.
+# The ops checkout, reached the same way: the obs-index and git-index-retention
+# systemd user units link out of it.
 OPS_ROOT="${HOME}/d/ops"
 LOOKOUT_ROOT="${HOME}/d/lookout"
 
@@ -780,6 +780,9 @@ function setup_systemd_user_units() {
     ln_s "${WALI_ROOT}/systemd/wali-phone-sync.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-phone-sync.timer"
     ln_s "${OPS_ROOT}/systemd/user/obs-index.service" "${XDG_CONFIG_HOME}/systemd/user/obs-index.service"
     ln_s "${OPS_ROOT}/systemd/user/obs-index.timer" "${XDG_CONFIG_HOME}/systemd/user/obs-index.timer"
+    # Linked disabled: only an approved host packet enables cleanup of recovery data.
+    ln_s "${OPS_ROOT}/systemd/user/git-index-retention.service" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.service"
+    ln_s "${OPS_ROOT}/systemd/user/git-index-retention.timer" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.timer"
 
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload
