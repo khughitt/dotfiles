@@ -27,24 +27,22 @@ fi
 [[ $# -eq 1 ]] || usage
 name=$1
 
-# The terminals take the keyboard exclusively while shown and keep kitty's quick-access
-# glass; the scratchpad yields the keyboard on demand, so a window it is written beside
-# stays usable and a click hands focus back, and is near-opaque because it sits over
-# other windows' text rather than the wallpaper. The same goes for the cells nvim paints
-# itself: kitty.conf lists its cursorline and chrome colours as translucent for the
-# glass, and over other windows that makes the input line unreadable. kitty ignores an
-# empty override of that list, so the scratchpad replaces it with one colour nothing
-# paints, at full opacity.
-focus=exclusive; opacity=0.95; glass=()
+# The dropdowns sit over other windows' text rather than the wallpaper, so they are
+# opaque: at kitty's glass opacity that text shows through their own. The same goes for
+# the cells nvim and diffs paint themselves: kitty.conf lists those colours as
+# translucent for the glass, and kitty ignores an empty override of that list, so every
+# dropdown replaces it with one colour nothing paints, at full opacity. The terminals
+# take the keyboard exclusively while shown; the scratchpad yields it on demand, so a
+# window it is written beside stays usable and a click hands focus back, and is
+# near-opaque.
+focus=exclusive; opacity=1.0
 case "$name" in
     term)    lines=30; cmd=() ;;
     ipython) lines=40; cmd=(ipython) ;;
     ghci)    lines=40; cmd=(ghci-color) ;;  # the interactive-shell alias for ghci
-    mindful) lines=30; focus=on-demand; opacity=0.98; glass=(-o "kitty_override=transparent_background_colors=#000001@1.0")
+    mindful) lines=30; focus=on-demand; opacity=0.98
              cmd=("$(dirname "$(readlink -f "$0")")/mindful-scratch") ;;
-    # lookout, the read-only ops dashboard: fully opaque, since it sits over other
-    # windows' text and at the glass opacity that text shows through its own.
-    dashboard) lines=40; opacity=1.0; cmd=(lookout) ;;
+    dashboard) lines=40; cmd=(lookout) ;;  # lookout, the read-only ops dashboard
     *) echo "${0##*/}: unknown dropdown '$name'" >&2; usage ;;
 esac
 
@@ -53,6 +51,9 @@ esac
 width=$(niri msg -j focused-output | jq '.logical.width')
 margin=$(jq -n "(($width * (1 - $WIDTH_FRACTION)) / 2) | round")
 
+# Prism pushes its glass opacity to every kitty listening on @dotfiles-kitty-<pid>
+# (kitty.conf's listen_on); a socket of their own keeps the dropdowns out of that push.
+# Shells inside still reach theirs through $KITTY_LISTEN_ON.
 exec kitten quick-access-terminal "--instance-group=dropdown-$name" --detach \
     -o "app_id=dropdown-$name" \
     -o "lines=$lines" \
@@ -62,6 +63,7 @@ exec kitten quick-access-terminal "--instance-group=dropdown-$name" --detach \
     -o hide_on_focus_loss=no \
     -o "focus_policy=$focus" \
     -o "background_opacity=$opacity" \
-    "${glass[@]}" \
+    -o "kitty_override=transparent_background_colors=#000001@1.0" \
+    -o "kitty_override=listen_on=unix:@dotfiles-dropdown" \
     "${hidden[@]}" \
     "${cmd[@]}"

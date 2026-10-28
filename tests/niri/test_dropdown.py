@@ -102,12 +102,21 @@ def test_dashboard_runs_lookout_in_its_own_group(run):
     assert "background_opacity=1.0" in argv
 
 
-def test_terminals_keep_exclusive_focus(run):
+def test_terminals_are_fully_opaque_with_exclusive_focus(run):
     for name in ("term", "ipython", "ghci"):
         _, argv = run(name)
         assert "focus_policy=exclusive" in argv, name
-        assert "background_opacity=0.85" in argv, name
-        assert not any(a.startswith("kitty_override=") for a in argv), name
+        assert "background_opacity=1.0" in argv, name
+        # The cells nvim and diffs paint are opaque too, not kitty.conf's glass tones.
+        assert "kitty_override=transparent_background_colors=#000001@1.0" in argv, name
+
+
+def test_every_dropdown_listens_outside_prisms_kitty_sockets(run):
+    # Prism pushes its glass opacity to every @dotfiles-kitty-<pid> socket; a distinct
+    # name keeps that push from undoing the dropdowns' own opacity.
+    for name in ("term", "ipython", "ghci", "mindful", "dashboard"):
+        _, argv = run(name)
+        assert "kitty_override=listen_on=unix:@dotfiles-dropdown" in argv, name
 
 
 def test_width_is_80_percent_of_the_focused_output(run):
