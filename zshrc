@@ -93,6 +93,7 @@ zinit cdreplay -q
 
 compdef _gnu_generic snakemake
 compdef _icat icat  # defined with icat in shell/functions.d/media.zsh
+compdef _glow_markdown glow  # defined in shell/functions.d/media.zsh; wraps glow's _glow
 
 # tasks: dynamic completion for subcommands, flags, and task ids. The stub calls the
 # binary back on each TAB, so it must come after compinit, and it is regenerated at every

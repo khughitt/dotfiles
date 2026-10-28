@@ -21,6 +21,26 @@ function _icat {
   _files -g '*.(#i)(png|apng|jpg|jpeg|gif|webp|avif|heic|heif|jxl|bmp|ico|tif|tiff|tga|psd|ppm|pgm|pbm|pnm|svg)(-.)'
 }
 
+# glow's cobra completer offers its subcommands for the first argument and falls back
+# to files only when none match, so `glow <TAB>` never listed the documents beside it.
+# Until a subcommand is typed, offer markdown files next to the subcommands (asked of
+# glow, so new ones appear); flags and subcommand arguments stay with glow's own
+# _glow. zshrc registers _glow_markdown after compinit.
+function _glow_markdown {
+  local -a subcommands
+  subcommands=(${${(M)${(f)"$(glow __complete '' 2>/dev/null)"}:#*$'\t'*}/$'\t'/:})
+
+  if [[ $PREFIX == -* ]] || (( ${${words[2,CURRENT-1]}[(I)(${(j:|:)${subcommands%%:*}})]} )); then
+    _glow
+    return
+  fi
+
+  local ret=1
+  _describe -t commands 'glow command' subcommands && ret=0
+  _files -g '*.(#i)(md|markdown|mdx|mkd)(-.)' && ret=0
+  return ret
+}
+
 # pandoc + mermaid
 function merp {
   pandoc -t html --mathjax -F mermaid-filter -o "${1/.md/.html}" "$1"
