@@ -307,13 +307,25 @@ test_bash_config_is_native_and_minimal() {
   rm -rf "$tmp"
 }
 
+# The Noctalia CLI migrates the settings.toml under XDG_STATE_HOME as a side
+# effect, so every run outside a fixture gets a session tree of its own.
+noctalia_in() {
+  local root=$1
+  shift
+  mkdir -p "${root}/home" "${root}/config" "${root}/cache" "${root}/state"
+  HOME="${root}/home" XDG_CONFIG_HOME="${root}/config" \
+    XDG_CACHE_HOME="${root}/cache" XDG_STATE_HOME="${root}/state" \
+    noctalia "$@"
+}
+
 test_glow_theme_renders_color() {
   local tmp theme output
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   theme="${tmp}/glow.json"
 
-  noctalia theme --theme-json "${repo_root}/noctalia/palettes/Glow.json" --dark \
+  noctalia_in "${tmp}/session" theme \
+    --theme-json "${repo_root}/noctalia/palettes/Glow.json" --dark \
     -r "${repo_root}/noctalia/templates/glow.json:${theme}" >/dev/null 2>&1 || \
     fail "Noctalia should render the Glow stylesheet"
   output=$(print -- '# Heading' | env -u NO_COLOR CLICOLOR_FORCE=1 \
@@ -330,7 +342,8 @@ test_noctalia_lsd_theme_is_consumed() {
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/config/lsd"
 
-  noctalia theme --theme-json "${repo_root}/noctalia/palettes/Glow.json" --dark \
+  noctalia_in "${tmp}/session" theme \
+    --theme-json "${repo_root}/noctalia/palettes/Glow.json" --dark \
     -r "${repo_root}/noctalia/templates/lsd.yaml:${tmp}/config/lsd/colors.yaml" \
     >/dev/null 2>&1 || fail "Noctalia should render the LSD theme"
 
@@ -344,6 +357,32 @@ test_noctalia_lsd_theme_is_consumed() {
     fail "LSD did not use the rendered primary color"
 
   rm -rf "$tmp"
+}
+
+test_noctalia_theme_tests_leave_the_live_state_alone() {
+  local tmp live settings before
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  live="${tmp}/live"
+  settings="${live}/state/noctalia/settings.toml"
+  mkdir -p "${live}/home" "${live}/config" "${live}/cache" "${settings:h}"
+  # an older schema than the installed CLI writes: any run against this
+  # state migrates it, as one did to the live shell's state on 2026-10-28
+  print -r -- 'config_version = 12' > "$settings"
+  before=$(sha256sum < "$settings")
+
+  # the subshell sees the sentinel tree as the live session would; reset the
+  # inherited cleanup list so its EXIT trap removes only what it registers
+  (
+    _tmp_cleanup_paths=()
+    export HOME="${live}/home" XDG_CONFIG_HOME="${live}/config" \
+      XDG_CACHE_HOME="${live}/cache" XDG_STATE_HOME="${live}/state"
+    test_glow_theme_renders_color
+    test_noctalia_lsd_theme_is_consumed
+  )
+
+  [[ "$(sha256sum < "$settings")" == "$before" ]] || \
+    fail "a Noctalia theme test rewrote the session's settings.toml: $(<"$settings")"
 }
 
 test_noctalia_v5_config_contract() {
@@ -2485,6 +2524,7 @@ test_setup_and_health_install_safe_noctalia_stubs
 test_bash_config_is_native_and_minimal
 test_glow_theme_renders_color
 test_noctalia_lsd_theme_is_consumed
+test_noctalia_theme_tests_leave_the_live_state_alone
 test_noctalia_v5_config_contract
 test_noctalia_template_hook_markers_are_reproducible
 test_compositors_use_noctalia_v5

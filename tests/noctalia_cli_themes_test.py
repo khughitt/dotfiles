@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -10,21 +11,55 @@ PALETTE = ROOT / "noctalia/palettes/Glow.json"
 
 
 def render(template: Path, output: Path) -> None:
-    subprocess.run(
-        [
-            "noctalia",
-            "theme",
-            "--theme-json",
-            str(PALETTE),
-            "--dark",
-            "-r",
-            f"{template}:{output}",
-        ],
-        check=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
+    # The Noctalia CLI migrates the settings.toml under XDG_STATE_HOME as a side
+    # effect, so it runs in a session tree of its own, never the caller's.
+    with tempfile.TemporaryDirectory() as session:
+        root = Path(session)
+        env = {
+            "PATH": os.environ["PATH"],
+            "HOME": str(root / "home"),
+            "XDG_CONFIG_HOME": str(root / "config"),
+            "XDG_CACHE_HOME": str(root / "cache"),
+            "XDG_STATE_HOME": str(root / "state"),
+        }
+        subprocess.run(
+            [
+                "noctalia",
+                "theme",
+                "--theme-json",
+                str(PALETTE),
+                "--dark",
+                "-r",
+                f"{template}:{output}",
+            ],
+            check=True,
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+
+def test_render_leaves_the_session_noctalia_state_alone(
+    tmp_path: Path, monkeypatch
+) -> None:
+    live = tmp_path / "live"
+    settings = live / "state/noctalia/settings.toml"
+    settings.parent.mkdir(parents=True)
+    # an older schema than the installed CLI writes: a run against this state
+    # migrates it, as one did to the live shell's state on 2026-10-28
+    settings.write_text("config_version = 12\n")
+    for name, sub in (
+        ("HOME", "home"),
+        ("XDG_CONFIG_HOME", "config"),
+        ("XDG_CACHE_HOME", "cache"),
+        ("XDG_STATE_HOME", "state"),
+    ):
+        monkeypatch.setenv(name, str(live / sub))
+
+    render(ROOT / "noctalia/templates/fzf.conf", tmp_path / "fzf.conf")
+
+    assert settings.read_text() == "config_version = 12\n"
 
 
 def test_fzf_reads_wallpaper_palette_from_generated_options(tmp_path: Path) -> None:
