@@ -194,6 +194,10 @@ run_setup() {
       touch "${tmp}/home/d/ops/systemd/user/git-index-retention.service" \
         "${tmp}/home/d/ops/systemd/user/git-index-retention.timer"
     fi
+    if [[ "${OPS_CONVERGENCE_UNITS_PRESENT:-true}" == true ]]; then
+      touch "${tmp}/home/d/ops/systemd/user/git-index-health.service" \
+        "${tmp}/home/d/ops/systemd/user/git-index-health.timer"
+    fi
   fi
   install_test_stubs "$tmp"
   cat > "${tmp}/bin/hostname" <<'EOF'
@@ -1504,22 +1508,34 @@ EOF
 # Retention's timer belongs to its approved host packet: setup links it, never
 # enables it, and health reports a linked, disabled timer as prepared.
 install_retention_systemctl() {
-  local tmp="$1" state="$2"
+  install_gated_systemctl "$1" "$2" disabled
+}
+
+# Both ops timers that only an approved host packet enables: retention (git-index-retention)
+# and convergence (git-index-health), each with its own state.
+install_gated_systemctl() {
+  local tmp="$1" retention="$2" convergence="$3"
   cat > "${tmp}/bin/systemctl" <<EOF
 #!/usr/bin/env bash
 printf '%s\n' "\$*" >> "\${SYSTEMCTL_LOG:-/dev/null}"
+state_of() {
+  case "\$1" in
+    git-index-retention.*) printf '%s' "${retention}" ;;
+    git-index-health.*) printf '%s' "${convergence}" ;;
+  esac
+}
 case "\$*" in
-  "--user is-enabled git-index-retention.timer")
-    [[ "${state}" == enabled* ]] && { printf 'enabled\n'; exit 0; }
+  "--user is-enabled git-index-retention.timer" | "--user is-enabled git-index-health.timer")
+    [[ "\$(state_of "\$3")" == enabled* ]] && { printf 'enabled\n'; exit 0; }
     printf 'disabled\n'; exit 1 ;;
-  "--user is-failed --quiet git-index-retention.service")
-    [[ "${state}" == enabled-failed ]] && exit 0
+  "--user is-failed --quiet git-index-retention.service" | "--user is-failed --quiet git-index-health.service")
+    [[ "\$(state_of "\$4")" == enabled-failed ]] && exit 0
     exit 1 ;;
-  "--user is-active --quiet git-index-retention.timer")
-    [[ "${state}" == enabled-inactive ]] && exit 3
+  "--user is-active --quiet git-index-retention.timer" | "--user is-active --quiet git-index-health.timer")
+    [[ "\$(state_of "\$4")" == enabled-inactive ]] && exit 3
     exit 0 ;;
-  "--user list-timers git-index-retention.timer --no-pager")
-    [[ "${state}" == enabled-unqueryable ]] && exit 1
+  "--user list-timers git-index-retention.timer --no-pager" | "--user list-timers git-index-health.timer --no-pager")
+    [[ "\$(state_of "\$3")" == enabled-unqueryable ]] && exit 1
     printf 'NEXT LEFT LAST PASSED UNIT ACTIVATES\n'; exit 0 ;;
   "--user is-enabled "*) printf 'enabled\n'; exit 0 ;;
   "--user list-timers "*) printf 'NEXT LEFT LAST PASSED UNIT ACTIVATES\n'; exit 0 ;;
@@ -1641,7 +1657,7 @@ test_dotfiles_health_does_not_call_missing_retention_links_prepared() {
   (( exit_status != 0 )) || fail "health accepted a missing retention timer link"
   [[ "$output" == *"not a symlink"*"git-index-retention.timer"* ]] || \
     fail "health did not name the missing retention link: ${output}"
-  [[ "$output" != *"prepared, awaiting host approval"* ]] || \
+  [[ "$output" != *"prepared, awaiting host approval: git-index-retention.timer"* ]] || \
     fail "health called retention prepared without its links: ${output}"
 }
 
@@ -1677,7 +1693,7 @@ test_dotfiles_health_checks_an_enabled_retention_timer() {
     output=$(run_health "$tmp" 2>&1)
     exit_status=$?
     set -e
-    [[ "$output" != *"prepared, awaiting host approval"* ]] || \
+    [[ "$output" != *"prepared, awaiting host approval: git-index-retention.timer"* ]] || \
       fail "${state}: an enabled retention timer is not merely prepared: ${output}"
     [[ "$output" != *"coverage"* && "$output" != *"pruned"* ]] || \
       fail "${state}: health must not claim peer coverage or cleanup: ${output}"
@@ -1702,6 +1718,156 @@ test_dotfiles_health_checks_an_enabled_retention_timer() {
         (( exit_status != 0 )) || fail "health accepted a wants link the manager does not enable"
         [[ "$output" == *"not enabled: git-index-retention.timer"* ]] || \
           fail "health did not report the unenabled retention wants link: ${output}" ;;
+    esac
+  done
+}
+
+# Convergence's timer, like retention's, belongs to its approved host packet, and
+# once enabled it is ready only beside an enabled, healthy retention timer.
+prepare_convergence_health_fixture() {
+  local tmp="$1" convergence="$2" retention="$3"
+  prepare_retention_health_fixture "$tmp" "$retention"
+  install_gated_systemctl "$tmp" "$retention" "$convergence"
+  if [[ "$convergence" == enabled* ]]; then
+    ln -s "${tmp}/home/d/ops/systemd/user/git-index-health.timer" \
+      "${tmp}/config/systemd/user/timers.target.wants/git-index-health.timer"
+  fi
+}
+
+test_setup_links_convergence_units_without_enabling_them() {
+  local tmp unit output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/bin"
+  install_gated_systemctl "$tmp" disabled disabled
+
+  SYSTEMCTL_LOG="${tmp}/systemctl.log" \
+    run_setup "$tmp" --link-only --headless --only systemd --enable-user-timers >/dev/null
+
+  for unit in git-index-health.service git-index-health.timer; do
+    [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
+        "${tmp}/home/d/ops/systemd/user/${unit}" ]] || \
+      fail "expected ${unit} to point into the ops checkout"
+  done
+  rg -q -- 'enable --now obs-index.timer' "${tmp}/systemctl.log" || \
+    fail "expected setup to enable the other user timers"
+  ! rg -q -- 'git-index-health' "${tmp}/systemctl.log" || \
+    fail "setup must leave convergence activation to its approved host packet"
+  [[ ! -e "${tmp}/config/systemd/user/timers.target.wants/git-index-health.timer" ]] || \
+    fail "setup must not enable the convergence timer"
+
+  output=$(run_setup "$tmp" --dry-run --link-only --headless --only systemd --enable-user-timers)
+  [[ "$output" != *"enable --now git-index-health"* ]] || \
+    fail "dry-run must not plan convergence activation"
+}
+
+test_setup_names_missing_convergence_units() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/bin"
+  install_gated_systemctl "$tmp" disabled disabled
+
+  set +e
+  output=$(OPS_CONVERGENCE_UNITS_PRESENT=false SYSTEMCTL_LOG="${tmp}/systemctl.log" \
+    run_setup "$tmp" --link-only --headless --only systemd --enable-user-timers 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "setup accepted an ops checkout without the convergence units"
+  [[ "$output" == *"Link source does not exist"*"git-index-health.service"* ]] || \
+    fail "setup did not name the missing convergence unit: ${output}"
+  rg -q -- 'enable --now obs-index.timer' "${tmp}/systemctl.log" || \
+    fail "a missing convergence unit must not stop the other timers being enabled"
+  [[ "$(readlink "${tmp}/config/systemd/user/git-index-retention.timer")" == \
+      "${tmp}/home/d/ops/systemd/user/git-index-retention.timer" ]] || \
+    fail "a missing convergence unit must not stop retention being linked"
+}
+
+test_dotfiles_health_reports_disabled_convergence_as_prepared() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  prepare_convergence_health_fixture "$tmp" disabled disabled
+
+  output=$(SYSTEMCTL_LOG="${tmp}/systemctl.log" run_health "$tmp" 2>&1) || \
+    fail "health should accept linked, disabled convergence: ${output}"
+  [[ "$output" == *"prepared, awaiting host approval: git-index-health.timer"* ]] || \
+    fail "health did not report convergence as prepared: ${output}"
+  [[ "$output" == *"link: ${tmp}/config/systemd/user/git-index-health.service"* ]] || \
+    fail "health did not check the convergence service link: ${output}"
+  ! rg -q -- 'is-failed --quiet git-index-health' "${tmp}/systemctl.log" || \
+    fail "health should not judge runs of a convergence timer that is not enabled"
+}
+
+test_dotfiles_health_does_not_call_missing_convergence_links_prepared() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  prepare_convergence_health_fixture "$tmp" disabled disabled
+  rm "${tmp}/config/systemd/user/git-index-health.timer"
+
+  set +e
+  output=$(run_health "$tmp" 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted a missing convergence timer link"
+  [[ "$output" == *"not a symlink"*"git-index-health.timer"* ]] || \
+    fail "health did not name the missing convergence link: ${output}"
+  [[ "$output" != *"prepared, awaiting host approval: git-index-health.timer"* ]] || \
+    fail "health called convergence prepared without its links: ${output}"
+  [[ "$output" == *"prepared, awaiting host approval: git-index-retention.timer"* ]] || \
+    fail "a missing convergence link hid the retention state: ${output}"
+}
+
+test_dotfiles_health_checks_an_enabled_convergence_timer() {
+  local tmp pair convergence retention output exit_status
+  for pair in enabled:enabled enabled:disabled enabled:enabled-failed enabled:enabled-inactive \
+      enabled-failed:enabled enabled-inactive:enabled enabled-unqueryable:enabled \
+      disabled-with-wants:enabled; do
+    convergence="${pair%%:*}"
+    retention="${pair#*:}"
+    tmp=$(make_tmpdir)
+    register_tmp_cleanup "$tmp"
+    if [[ "$convergence" == disabled-with-wants ]]; then
+      prepare_convergence_health_fixture "$tmp" enabled "$retention"
+      install_gated_systemctl "$tmp" "$retention" disabled
+    else
+      prepare_convergence_health_fixture "$tmp" "$convergence" "$retention"
+    fi
+
+    set +e
+    output=$(run_health "$tmp" 2>&1)
+    exit_status=$?
+    set -e
+    [[ "$output" != *"prepared, awaiting host approval: git-index-health.timer"* ]] || \
+      fail "${pair}: an enabled convergence timer is not merely prepared: ${output}"
+    [[ "$output" != *"coverage"* && "$output" != *"converged"* ]] || \
+      fail "${pair}: health must not claim convergence coverage: ${output}"
+    case "$pair" in
+      enabled:enabled)
+        (( exit_status == 0 )) || fail "health rejected healthy enabled convergence and retention: ${output}"
+        [[ "$output" == *"systemd user timer is enabled: git-index-health.timer"* ]] || \
+          fail "health did not report the enabled convergence timer: ${output}" ;;
+      enabled:disabled | enabled:enabled-failed | enabled:enabled-inactive)
+        (( exit_status != 0 )) || fail "${pair}: health accepted convergence without ready retention"
+        [[ "$output" == *"git-index-health.timer is enabled without ready retention"* ]] || \
+          fail "${pair}: health did not report the missing retention readiness: ${output}" ;;
+      enabled-failed:enabled)
+        (( exit_status != 0 )) || fail "health accepted a failed convergence run"
+        [[ "$output" == *"journalctl --user -u git-index-health.service"* ]] || \
+          fail "health did not name the convergence journal: ${output}" ;;
+      enabled-inactive:enabled)
+        (( exit_status != 0 )) || fail "health accepted an enabled convergence timer that is not active"
+        [[ "$output" == *"git-index-health.timer is not active"* ]] || \
+          fail "health did not report the inactive convergence timer: ${output}" ;;
+      enabled-unqueryable:enabled)
+        (( exit_status != 0 )) || fail "health accepted an unqueryable convergence timer"
+        [[ "$output" == *"could not be queried: git-index-health.timer"* ]] || \
+          fail "health did not report the unqueryable convergence timer: ${output}" ;;
+      disabled-with-wants:enabled)
+        (( exit_status != 0 )) || fail "health accepted a convergence wants link the manager does not enable"
+        [[ "$output" == *"not enabled: git-index-health.timer"* ]] || \
+          fail "health did not report the unenabled convergence wants link: ${output}" ;;
     esac
   done
 }
@@ -2579,6 +2745,11 @@ test_dotfiles_health_fails_a_retention_unit_outside_the_ops_checkout
 test_dotfiles_health_does_not_call_missing_retention_links_prepared
 test_dotfiles_health_reports_retention_prepared_beside_unrelated_failures
 test_dotfiles_health_checks_an_enabled_retention_timer
+test_setup_links_convergence_units_without_enabling_them
+test_setup_names_missing_convergence_units
+test_dotfiles_health_reports_disabled_convergence_as_prepared
+test_dotfiles_health_does_not_call_missing_convergence_links_prepared
+test_dotfiles_health_checks_an_enabled_convergence_timer
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_hands_material_ownership_to_prism
 test_setup_renders_the_theme_when_the_output_is_empty
