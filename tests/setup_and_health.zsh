@@ -1757,6 +1757,8 @@ test_setup_links_convergence_units_without_enabling_them() {
     fail "setup must not enable the convergence timer"
 
   output=$(run_setup "$tmp" --dry-run --link-only --headless --only systemd --enable-user-timers)
+  [[ "$output" == *"enable --now obs-index.timer"* ]] || \
+    fail "expected dry-run to plan the other timers: ${output}"
   [[ "$output" != *"enable --now git-index-health"* ]] || \
     fail "dry-run must not plan convergence activation"
 }
@@ -1822,8 +1824,8 @@ test_dotfiles_health_does_not_call_missing_convergence_links_prepared() {
 test_dotfiles_health_checks_an_enabled_convergence_timer() {
   local tmp pair convergence retention output exit_status
   for pair in enabled:enabled enabled:disabled enabled:enabled-failed enabled:enabled-inactive \
-      enabled-failed:enabled enabled-inactive:enabled enabled-unqueryable:enabled \
-      disabled-with-wants:enabled; do
+      enabled:disabled-with-wants enabled-failed:enabled enabled-inactive:enabled \
+      enabled-unqueryable:enabled disabled-with-wants:enabled; do
     convergence="${pair%%:*}"
     retention="${pair#*:}"
     tmp=$(make_tmpdir)
@@ -1831,6 +1833,9 @@ test_dotfiles_health_checks_an_enabled_convergence_timer() {
     if [[ "$convergence" == disabled-with-wants ]]; then
       prepare_convergence_health_fixture "$tmp" enabled "$retention"
       install_gated_systemctl "$tmp" "$retention" disabled
+    elif [[ "$retention" == disabled-with-wants ]]; then
+      prepare_convergence_health_fixture "$tmp" "$convergence" enabled
+      install_gated_systemctl "$tmp" disabled "$convergence"
     else
       prepare_convergence_health_fixture "$tmp" "$convergence" "$retention"
     fi
@@ -1847,8 +1852,10 @@ test_dotfiles_health_checks_an_enabled_convergence_timer() {
       enabled:enabled)
         (( exit_status == 0 )) || fail "health rejected healthy enabled convergence and retention: ${output}"
         [[ "$output" == *"systemd user timer is enabled: git-index-health.timer"* ]] || \
-          fail "health did not report the enabled convergence timer: ${output}" ;;
-      enabled:disabled | enabled:enabled-failed | enabled:enabled-inactive)
+          fail "health did not report the enabled convergence timer: ${output}"
+        [[ "$output" == *"link: ${tmp}/config/systemd/user/timers.target.wants/git-index-health.timer"* ]] || \
+          fail "health did not check the convergence wants link: ${output}" ;;
+      enabled:disabled | enabled:disabled-with-wants | enabled:enabled-failed | enabled:enabled-inactive)
         (( exit_status != 0 )) || fail "${pair}: health accepted convergence without ready retention"
         [[ "$output" == *"git-index-health.timer is enabled without ready retention"* ]] || \
           fail "${pair}: health did not report the missing retention readiness: ${output}" ;;
@@ -1869,6 +1876,59 @@ test_dotfiles_health_checks_an_enabled_convergence_timer() {
         [[ "$output" == *"not enabled: git-index-health.timer"* ]] || \
           fail "health did not report the unenabled convergence wants link: ${output}" ;;
     esac
+  done
+}
+
+test_dotfiles_health_validates_the_convergence_wants_link() {
+  local tmp kind output exit_status wants
+  for kind in outside dangling; do
+    tmp=$(make_tmpdir)
+    register_tmp_cleanup "$tmp"
+    prepare_convergence_health_fixture "$tmp" enabled enabled
+    wants="${tmp}/config/systemd/user/timers.target.wants/git-index-health.timer"
+    mkdir -p "${tmp}/elsewhere"
+    [[ "$kind" == outside ]] && touch "${tmp}/elsewhere/git-index-health.timer"
+    ln -sfn "${tmp}/elsewhere/git-index-health.timer" "$wants"
+
+    set +e
+    output=$(run_health "$tmp" 2>&1)
+    exit_status=$?
+    set -e
+    (( exit_status != 0 )) || fail "${kind}: health accepted a bad convergence wants link"
+    case "$kind" in
+      outside)
+        [[ "$output" == *"wrong link target: ${wants}"* ]] || \
+          fail "health did not name the convergence wants link outside ops: ${output}" ;;
+      dangling)
+        [[ "$output" == *"broken link: ${wants}"* ]] || \
+          fail "health did not name the dangling convergence wants link: ${output}" ;;
+    esac
+    [[ "$output" != *"prepared, awaiting host approval: git-index-health.timer"* ]] || \
+      fail "${kind}: a wanted convergence timer is not merely prepared: ${output}"
+    [[ "$output" == *"systemd user timer is enabled: git-index-health.timer"* ]] || \
+      fail "${kind}: health stopped checking the wanted convergence timer: ${output}"
+  done
+}
+
+test_dotfiles_health_fails_a_convergence_unit_outside_the_ops_checkout() {
+  local tmp unit output exit_status
+  for unit in git-index-health.service git-index-health.timer; do
+    tmp=$(make_tmpdir)
+    register_tmp_cleanup "$tmp"
+    prepare_convergence_health_fixture "$tmp" disabled disabled
+    mkdir -p "${tmp}/elsewhere"
+    touch "${tmp}/elsewhere/${unit}"
+    ln -sfn "${tmp}/elsewhere/${unit}" "${tmp}/config/systemd/user/${unit}"
+
+    set +e
+    output=$(run_health "$tmp" 2>&1)
+    exit_status=$?
+    set -e
+    (( exit_status != 0 )) || fail "health accepted ${unit} outside the ops checkout"
+    [[ "$output" == *"wrong link target: ${tmp}/config/systemd/user/${unit}"* ]] || \
+      fail "health did not name the wrong ${unit} link: ${output}"
+    [[ "$output" != *"prepared, awaiting host approval: git-index-health.timer"* ]] || \
+      fail "health called convergence prepared with ${unit} outside ops: ${output}"
   done
 }
 
@@ -2750,6 +2810,8 @@ test_setup_names_missing_convergence_units
 test_dotfiles_health_reports_disabled_convergence_as_prepared
 test_dotfiles_health_does_not_call_missing_convergence_links_prepared
 test_dotfiles_health_checks_an_enabled_convergence_timer
+test_dotfiles_health_validates_the_convergence_wants_link
+test_dotfiles_health_fails_a_convergence_unit_outside_the_ops_checkout
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_hands_material_ownership_to_prism
 test_setup_renders_the_theme_when_the_output_is_empty
