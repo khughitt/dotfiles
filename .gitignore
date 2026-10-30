@@ -69,7 +69,8 @@ docs/
 wsprofiles/node_modules/
 
 # noctalia plugins
-noctalia/plugins/
+noctalia/plugins/*
+!noctalia/plugins/resource-pressure-alert/
 
 # noctalia colorscheme updates
 kitty/themes/noctalia.conf

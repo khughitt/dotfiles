@@ -248,3 +248,7 @@ Screenshot
 ----------
 
 ![desktop screenshot](misc/2020-03-05_screenshot.png)
+
+Resource-alert development tests require `lua` (the Lua/Luau shared subset;
+Lua 5.5.1 verified). Run `just test-resource-alert` for the focused policy
+harness; `just test` includes it. No separate Luau CLI is required.

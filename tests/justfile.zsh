@@ -26,7 +26,7 @@ assert_equals() {
 
 list_output=$(just --justfile "${repo_root}/justfile" --list)
 
-for recipe in check health health-live health-systemd secrets setup-dry-run setup-only test; do
+for recipe in check health health-live health-systemd secrets setup-dry-run setup-only test test-resource-alert; do
   assert_contains "$list_output" "$recipe" "expected just recipe: $recipe"
 done
 
@@ -72,5 +72,7 @@ assert_contains "$test_dry_run" "zsh tests/dotfiles_check.zsh" \
   "expected test recipe to include dotfiles check tests"
 assert_contains "$test_dry_run" "uv run --frozen pytest -q" \
   "expected test recipe to include Python tests"
+
+assert_contains "$test_dry_run" "just test-resource-alert" "expected resource alert tests in full suite"
 
 print -- "justfile tests passed"
