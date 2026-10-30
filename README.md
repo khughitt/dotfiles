@@ -41,7 +41,7 @@ To install, clone this repo and run `setup.sh`:
     git clone https://github.com/khughitt/dotfiles
     cd dotfiles && ./setup.sh
 
-Symbolic links will be created in `$HOME` / `$XDG_CONFIG_DIR` to all of the major
+Symbolic links will be created in `$HOME` / `$XDG_CONFIG_HOME` to all of the major
 configuration files.
 
 For a safe preview of the headless link setup:
@@ -86,8 +86,11 @@ enables them, with or without `--enable-user-timers`: that timer deletes old Git
 index recovery data and is enabled only by its approved host rollout.
 `bin/dotfiles-health` reports it as prepared until then.
 
-Capture hosts need two explicit sudoers grants; follow
+Capture hosts need explicit sudoers grants; follow
 [the capture-host setup instructions](docs/capture-host-setup.md) to install them.
+
+Memory Pressure Alert still targets Noctalia v4 and has no supported activation
+route on the current v5 setup. See its [installation status and settings guide](noctalia/plugins/memory-pressure-alert/README.md#installation-and-activation).
 
 A new machine
 -------------
@@ -236,7 +239,7 @@ rgl     # rg -l
 rgu     # rg -uuu
 fda     # fd -Luu
 
-v       # nvim recent
+v       # nvim file picker
 vl      # nvim last
 vr      # rg -> nvim
 ```
