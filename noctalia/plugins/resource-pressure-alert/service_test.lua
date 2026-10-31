@@ -244,4 +244,38 @@ test('explicit root exclusion suppresses fallback probes and diagnostics',functi
   f.mounts={};f.disks['/']=nil;f.load();f.tick(40000)
   assert(#f.model().diagnostics==0 and #f.model().rows==0)
 end)
+test('excluding an existing fallback root clears its row and diagnostic during empty discovery',function()
+  local f=fixture();f.mounts={};f.snap.ram.usagePercent=85
+  local disk={usagePercent=96,totalBytes=100*2^30,availableBytes=10*2^30}
+  f.disks['/']=disk;f.load();local old=token(f,row(f,'disk:/'))
+  f.disks['/']=nil;f.tick(2000);f.tick(32000)
+  local diagnostic=f.model().diagnostics[1];assert(diagnostic and diagnostic.id=='source:disk:/')
+  local oldDiagnostic=token(f,diagnostic)
+  f.plugin.excludedMounts={'/'};f.config()
+  assert(not row(f,'disk:/') and #f.model().diagnostics==0,'explicit exclusion must retire existing root immediately')
+  assert(row(f,'memory') and f.nativeVisible,'another family must remain visible')
+  f.plugin.excludedMounts={};f.disks['/']=disk;f.config();f.tick(42000)
+  f.send('disk:/',old);f.flush();assert(row(f,'disk:/'),'re-inclusion must reject the old resource token')
+  f.disks['/']=nil;f.tick(44000);f.tick(74000)
+  f.send('source:disk:/',oldDiagnostic);f.flush()
+  assert(#f.model().diagnostics==1,'re-inclusion must reject the old diagnostic token')
+end)
+test('data exclusion during empty discovery preserves another disk acknowledgement',function()
+  local f=fixture();local root=f.mounts[1]
+  local mounts={root,{path='/one',source='/dev/one'},{path='/two',source='/dev/two'}}
+  f.mounts=mounts
+  local disk={usagePercent=96,totalBytes=100*2^30,availableBytes=10*2^30}
+  f.disks['/one']=disk;f.disks['/two']=clone(disk);f.load()
+  local old=token(f,row(f,'disk:/dev/one'))
+  f.send('disk:/dev/two',token(f,row(f,'disk:/dev/two')));f.flush()
+  f.mounts={};f.tick(2000);f.tick(32000)
+  f.plugin.excludedMounts={'/one'};f.config()
+  assert(not row(f,'disk:/dev/one'),'explicit exclusion must retire known data despite empty discovery')
+  assert(not row(f,'disk:/dev/two'),'another disk must retain its acknowledgement')
+  assert(#f.model().diagnostics==1 and f.model().diagnostics[1].id=='source:disk:/dev/two')
+  f.plugin.excludedMounts={};f.mounts=mounts;f.config();f.tick(42000)
+  f.send('disk:/dev/one',old);f.flush()
+  assert(row(f,'disk:/dev/one') and not row(f,'disk:/dev/two'))
+  assert(#f.model().diagnostics==0)
+end)
 print(string.format('%d resource service tests passed',count))

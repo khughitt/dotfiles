@@ -209,7 +209,7 @@ function update()
       for id,r in pairs(records)do
         if r.kind=='disk' and r.present and not seen[id] then
           -- Native empty discovery also means read failure; it cannot confirm removal.
-          if discoveryKnown then r.present=false;resetRecord(r) else unknown(r,now)end
+          if discoveryKnown or excluded[r.label] then r.present=false;resetRecord(r) else unknown(r,now)end
         end
       end
     end
