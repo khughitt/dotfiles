@@ -69,3 +69,14 @@ default = ["ghostty", "-e", "btop"]
 [[service]]
 id = "monitor"
 entry = "service.luau"
+
+[[layer]]
+id = "banner"
+entry = "layer.luau"
+output = "all"
+layer = "overlay"
+anchors = ["top"]
+keyboard = "none"
+exclusive_zone = 0
+width = 0
+height = 0
