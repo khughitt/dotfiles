@@ -89,8 +89,8 @@ index recovery data and is enabled only by its approved host rollout.
 Capture hosts need explicit sudoers grants; follow
 [the capture-host setup instructions](docs/capture-host-setup.md) to install them.
 
-Memory Pressure Alert still targets Noctalia v4 and has no supported activation
-route on the current v5 setup. See its [installation status and settings guide](noctalia/plugins/memory-pressure-alert/README.md#installation-and-activation).
+Resource Pressure Alert is a native Noctalia v5 plugin for memory, sustained CPU
+use and scarce disk space. See its [policy and activation guide](noctalia/plugins/resource-pressure-alert/README.md). Live enablement is a separate host action.
 
 A new machine
 -------------
@@ -250,5 +250,5 @@ Screenshot
 ![desktop screenshot](misc/2020-03-05_screenshot.png)
 
 Resource-alert development tests require `lua` (the Lua/Luau shared subset;
-Lua 5.5.1 verified). Run `just test-resource-alert` for the focused policy
-harness; `just test` includes it. No separate Luau CLI is required.
+Lua 5.5.1 verified). Run `just test-resource-alert` for the focused policy, service and layer
+harnesses; `just test` includes it. No separate Luau CLI is required.

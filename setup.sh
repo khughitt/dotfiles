@@ -915,18 +915,21 @@ function setup_noctalia_plugins() {
     ensure_dir "$plugin_dir"
     ln_s "${WALI_ROOT}/integrations/noctalia-plugin" "${plugin_dir}/wali-panel"
     ln_s "${HOME}/d/prism/integrations/noctalia-plugin" "${plugin_dir}/prism"
+    ln_s "${DOTS_HOME}/noctalia/plugins/resource-pressure-alert" "${plugin_dir}/resource-pressure-alert"
 
     # The links are what dotfiles-health requires and they need nothing running, so
     # every pass makes them. Only enabling talks to Noctalia; when it is not up, name
-    # the two commands rather than leaving a phase that never ran in a full pass.
+    # the commands rather than leaving a phase that never ran in a full pass.
     if ! noctalia msg theme-mode-get >/dev/null 2>&1; then
         echo "Noctalia is not running; its plugins are linked but not enabled." \
             "Run 'noctalia msg plugins enable khughitt/wali-panel' and" \
-            "'noctalia msg plugins enable khughitt/prism' once it is up."
+            "'noctalia msg plugins enable khughitt/prism' and" \
+            "'noctalia msg plugins enable khughitt/resource-pressure-alert' once it is up."
         return 0
     fi
     run noctalia msg plugins enable khughitt/wali-panel
     run noctalia msg plugins enable khughitt/prism
+    run noctalia msg plugins enable khughitt/resource-pressure-alert
 }
 
 function setup_mime_links() {

@@ -98,7 +98,8 @@ if [[ $# -eq 2 && "$1" == msg && "$2" == templates-apply ]]; then
 fi
 if [[ $# -eq 3 && "$1" == msg && "$2" == plugins && "$3" == list ]]; then
   printf '%s\n' "${NOCTALIA_PLUGIN_LIST:-khughitt/wali-panel [local] 1.0.0 enabled requires walictl
-khughitt/prism [local] 1.0.0 enabled requires prism, qs}"
+khughitt/prism [local] 1.0.0 enabled requires prism, qs
+khughitt/resource-pressure-alert [local] 1.0.0 enabled}"
   exit "${NOCTALIA_PLUGIN_LIST_STATUS:-0}"
 fi
 if [[ $# -ge 2 && "$1" == config && "$2" == validate ]]; then
@@ -884,12 +885,14 @@ test_noctalia_plugin_phase_links_and_enables_exact_ids() {
 
   [[ -L "${tmp}/data/noctalia/plugins/wali-panel" ]]
   [[ -L "${tmp}/data/noctalia/plugins/prism" ]]
+  [[ -L "${tmp}/data/noctalia/plugins/resource-pressure-alert" ]] || fail "resource alert source link is missing"
+  [[ "$(readlink -f "${tmp}/data/noctalia/plugins/resource-pressure-alert")" == "${repo_root}/noctalia/plugins/resource-pressure-alert" ]] || fail "resource alert link must resolve to DOTS_HOME source"
   [[ -f "${tmp}/data/noctalia/plugins/wali-panel/plugin.toml" ]]
   [[ -f "${tmp}/data/noctalia/plugins/prism/plugin.toml" ]]
   [[ ! -e "${tmp}/data/noctalia/plugins/wali-panel/manifest.json" ]]
   [[ ! -e "${tmp}/data/noctalia/plugins/prism/manifest.json" ]]
-  [[ "$(<"$log")" == $'msg plugins enable khughitt/wali-panel\nmsg plugins enable khughitt/prism' ]] || \
-    fail "plugin phase did not issue the two exact enable calls"
+  [[ "$(<"$log")" == $'msg plugins enable khughitt/wali-panel\nmsg plugins enable khughitt/prism\nmsg plugins enable khughitt/resource-pressure-alert' ]] || \
+    fail "plugin phase did not issue the three exact enable calls"
 }
 
 test_default_setup_does_not_require_live_noctalia() {
@@ -926,6 +929,8 @@ EOF
     fail "default setup did not link the Noctalia plugins with Noctalia down"
   [[ "$output" == *"linked but not enabled"* ]] || \
     fail "default setup did not say the plugins are linked but not enabled: ${output}"
+  [[ -L "${tmp}/data/noctalia/plugins/resource-pressure-alert" && "$output" == *"noctalia msg plugins enable khughitt/resource-pressure-alert"* ]] || \
+    fail "offline setup must link resource alerts and name pending activation"
 }
 
 test_noctalia_plugin_phase_fails_when_ipc_is_unavailable() {
@@ -969,6 +974,55 @@ test_noctalia_plugin_phase_requires_wali_source() {
   (( exit_status != 0 )) || fail "plugin setup accepted a missing wali plugin source"
   [[ "$output" == *"Link source does not exist"* && "$output" == *"d/wali/integrations"* ]] || \
     fail "plugin setup did not explain the missing wali plugin source: ${output}"
+}
+
+test_noctalia_plugin_phase_requires_resource_source() {
+  local tmp output exit_status fixture
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "${fixture}/lib"
+  cp "${repo_root}/setup.sh" "$fixture/"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "${fixture}/lib/"
+  set +e
+  output=$(SETUP_ROOT="$fixture" run_setup "$tmp" --link-only --only noctalia-plugins 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "plugin setup accepted missing resource alert source"
+  [[ "$output" == *"Link source does not exist"* && "$output" == *"resource-pressure-alert"* ]] || \
+    fail "plugin setup did not name the missing resource source: ${output}"
+}
+
+test_resource_alert_health_failures() {
+  local tmp output exit_status defect plugin
+  for defect in wrong-link missing-manifest stale-manifest disabled; do
+    tmp=$(make_tmpdir)
+    register_tmp_cleanup "$tmp"
+    mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+    prepare_health_fixture "$tmp"
+    plugin="${tmp}/data/noctalia/plugins/resource-pressure-alert"
+    case "$defect" in
+      wrong-link|missing-manifest|stale-manifest)
+        rm "$plugin"
+        mkdir -p "$plugin"
+        if [[ "$defect" == wrong-link ]]; then touch "$plugin/plugin.toml"; fi
+        if [[ "$defect" == stale-manifest ]]; then touch "$plugin/manifest.json"; fi ;;
+    esac
+    set +e
+    if [[ "$defect" == disabled ]]; then
+      output=$(NOCTALIA_PLUGIN_LIST=$'khughitt/wali-panel [local] 1 enabled\nkhughitt/prism [local] 1 enabled\nkhughitt/resource-pressure-alert-other [local] 1 enabled' run_health "$tmp" --skip-systemd 2>&1)
+    else
+      output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+    fi
+    exit_status=$?
+    set -e
+    (( exit_status != 0 )) || fail "health accepted resource alert ${defect}"
+    case "$defect" in
+      wrong-link) [[ "$output" == *"not a symlink"* || "$output" == *"wrong link target"* ]] || fail "$output" ;;
+      missing-manifest|stale-manifest) [[ "$output" == *"missing or stale Noctalia plugin manifest: resource-pressure-alert"* ]] || fail "$output" ;;
+      disabled) [[ "$output" == *"Noctalia plugin not enabled: khughitt/resource-pressure-alert"* ]] || fail "$output" ;;
+    esac
+  done
 }
 
 test_setup_and_health_share_managed_link_metadata() {
@@ -2550,6 +2604,8 @@ test_default_setup_does_not_require_live_noctalia
 test_noctalia_plugin_phase_fails_when_ipc_is_unavailable
 test_noctalia_plugin_phase_requires_prism_source
 test_noctalia_plugin_phase_requires_wali_source
+test_noctalia_plugin_phase_requires_resource_source
+test_resource_alert_health_failures
 test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_skips_prism_when_unconfigured
 test_dotfiles_health_fails_missing_noctalia_config
