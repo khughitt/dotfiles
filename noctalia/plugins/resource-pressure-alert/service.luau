@@ -11,7 +11,8 @@ local lastChange=nil
 local lastObservation=nil
 local revision=0
 local modelSignature=nil
-local shown=false
+local rootId=nil
+local rootSource=nil
 local publish
 local function finite(v)return type(v)=='number' and v==v and v~=math.huge and v~=-math.huge end
 local function percentage(v)return finite(v) and v>=0 and v<=100 end
@@ -131,10 +132,8 @@ publish=function()
     noctalia.state.set('model',model)
   end
   local visible=#rows>0 or #diagnostics>0
-  if visible~=shown then
-    shown=visible
-    if visible then noctalia.layer.show('banner') else noctalia.layer.hide('banner') end
-  end
+  -- Native settings reload can replace a layer without restarting this service.
+  if visible then noctalia.layer.show('banner') else noctalia.layer.hide('banner') end
 end
 function update()
   local now=os.clock()*1000
@@ -173,6 +172,7 @@ function update()
     if type(mounts)~='table' then
       for _,r in pairs(records)do if r.kind=='disk' and r.present then unknown(r,now)end end
     else
+      local discoveryKnown=#mounts>0
       local seen,paths,sources={},{},{}
       local excluded={['/boot']=true,['/boot/efi']=true,['/efi']=true}
       for _,path in ipairs(config.excludedMounts)do excluded[path]=true end
@@ -185,11 +185,18 @@ function update()
       end
       local hasRoot=false
       for _,m in ipairs(paths)do if m.path=='/' then hasRoot=true end end
-      if not hasRoot and not excluded['/'] and noctalia.diskStats('/') then
+      if not hasRoot and not excluded['/'] then
         paths[#paths+1]={path='/',source='/'}
       end
       for _,m in ipairs(paths)do
-        local id='disk:'..m.source;seen[id]=true
+        local id='disk:'..m.source
+        if m.path=='/' then
+          -- Keep a warming root's identity when native discovery later names its device.
+          if not rootId or (rootSource and m.source~='/' and rootSource~=m.source) then rootId=id end
+          if m.source~='/' then rootSource=m.source end
+          id=rootId
+        end
+        seen[id]=true
         local r=ensure(id,'disk',m.path,p,now)
         local data=noctalia.diskStats(m.path)
         if not live or not data or not percentage(data.usagePercent) or not finite(data.totalBytes)
@@ -200,7 +207,10 @@ function update()
         end
       end
       for id,r in pairs(records)do
-        if r.kind=='disk' and r.present and not seen[id] then r.present=false;resetRecord(r)end
+        if r.kind=='disk' and r.present and not seen[id] then
+          -- Native empty discovery also means read failure; it cannot confirm removal.
+          if discoveryKnown then r.present=false;resetRecord(r) else unknown(r,now)end
+        end
       end
     end
   else

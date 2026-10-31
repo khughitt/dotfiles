@@ -33,7 +33,7 @@ local function fixture()
     log=function(msg)f.logs[#f.logs+1]=msg end,json={encode=encode},
     state={get=function(k)return clone(f.shared[k])end,set=set,watch=function(k,fn)
       f.watchers[k]=f.watchers[k] or {};table.insert(f.watchers[k],fn)
-    end},layer={show=function()f.shows=f.shows+1 end,hide=function()f.hides=f.hides+1 end}}
+    end},layer={show=function()f.shows=f.shows+1;f.nativeVisible=true end,hide=function()f.hides=f.hides+1;f.nativeVisible=false end}}
   function f.flush()
     while #f.queue>0 do local q=table.remove(f.queue,1);q.fn(q.value) end
   end
@@ -136,12 +136,15 @@ test('CPU suspend or rollback resets pending duration',function()
   assert(not row(f,'cpu'))
 end)
 test('confirmed removal and remount reject old disk tokens',function()
-  local f=fixture();f.disks['/'].usagePercent=96;f.disks['/'].availableBytes=10*2^30;f.load()
-  local old=token(f,row(f,'disk:/dev/root'));f.mounts={};f.disks['/']=nil;f.tick(2000)
-  assert(not row(f,'disk:/dev/root'))
-  f.mounts={{path='/',source='/dev/root',filesystem='ext4'}}
-  f.disks['/']={usagePercent=96,totalBytes=100*2^30,availableBytes=10*2^30};f.tick(4000)
-  f.send('disk:/dev/root',old);f.flush();assert(row(f,'disk:/dev/root'))
+  local f=fixture();local root=f.mounts[1]
+  f.mounts={root,{path='/data',source='/dev/data'}}
+  local disk={usagePercent=96,totalBytes=100*2^30,availableBytes=10*2^30}
+  f.disks['/data']=disk;f.load()
+  local old=token(f,row(f,'disk:/dev/data'))
+  f.mounts={root};f.disks['/data']=nil;f.tick(2000)
+  assert(not row(f,'disk:/dev/data'))
+  f.mounts={root,{path='/data',source='/dev/data'}};f.disks['/data']=disk;f.tick(4000)
+  f.send('disk:/dev/data',old);f.flush();assert(row(f,'disk:/dev/data'))
 end)
 test('discovery failure preserves existing disk episodes as stale',function()
   local f=fixture();f.disks['/'].usagePercent=96;f.disks['/'].availableBytes=10*2^30;f.load()
@@ -186,5 +189,59 @@ test('disabling every family avoids opting into native probes',function()
   local f=fixture();f.plugin.memoryEnabled=false;f.plugin.cpuEnabled=false;f.plugin.diskEnabled=false
   f.load();f.tick(2000)
   assert((f.snapshotReads or 0)==0 and #f.model().rows==0 and #f.model().diagnostics==0)
+end)
+test('settings-only layer replacement is repaired without changing the alert episode',function()
+  local f=fixture();f.snap.ram.usagePercent=85;f.load()
+  local before=token(f,row(f,'memory'));assert(f.nativeVisible)
+  f.nativeVisible=false;f.plugin.monitorCommand={'btop'};f.config()
+  assert(f.nativeVisible,'settings callback must restore an active native layer')
+  f.nativeVisible=false;f.tick(2000)
+  assert(f.nativeVisible,'a late native replacement must be repaired on the next update')
+  local after=token(f,row(f,'memory'))
+  assert(after.epoch==before.epoch and after.episode==before.episode and after.generation==before.generation)
+end)
+test('native empty discovery preserves scarce data episodes and acknowledgements',function()
+  for _,acknowledged in ipairs({false,true})do
+    local f=fixture();local root=f.mounts[1]
+    f.mounts={root,{path='/data',source='/dev/data'}}
+    f.disks['/data']={usagePercent=96,totalBytes=100*2^30,availableBytes=10*2^30};f.load()
+    local before=token(f,row(f,'disk:/dev/data'))
+    if acknowledged then f.send('disk:/dev/data',before);f.flush()end
+    f.mounts={};f.tick(2000)
+    if acknowledged then assert(not row(f,'disk:/dev/data'))
+    else assert(row(f,'disk:/dev/data') and row(f,'disk:/dev/data').stale,'empty discovery must not retire data')end
+    f.tick(32000)
+    local found=false
+    for _,d in ipairs(f.model().diagnostics)do if d.id=='source:disk:/dev/data' then found=true end end
+    assert(found,'unknown data source needs a diagnostic after grace')
+    f.mounts={root,{path='/data',source='/dev/data'}};f.tick(34000)
+    if acknowledged then assert(not row(f,'disk:/dev/data'),'discovery recovery must not erase critical acknowledgement')
+    else
+      local after=token(f,row(f,'disk:/dev/data'))
+      assert(after.episode==before.episode and after.generation==before.generation and not row(f,'disk:/dev/data').stale)
+    end
+  end
+end)
+test('initial fallback root has grace and stable identity before native discovery',function()
+  local f=fixture();f.plugin.memoryEnabled=false;f.plugin.cpuEnabled=false
+  f.mounts={};f.disks['/']=nil;f.load();f.tick(29000);assert(#f.model().diagnostics==0)
+  f.tick(30000);local diagnostic=f.model().diagnostics[1]
+  assert(diagnostic and diagnostic.id=='source:disk:/','never-ready fallback root must be diagnosed')
+  local dismissed=token(f,diagnostic);f.send(diagnostic.id,dismissed);f.flush();assert(#f.model().diagnostics==0)
+  f.disks['/']={usagePercent=96,totalBytes=100*2^30,availableBytes=10*2^30};f.tick(32000)
+  local before=token(f,row(f,'disk:/'));assert(#f.model().diagnostics==0)
+  f.mounts={{path='/',source='/dev/root'}};f.tick(42000)
+  assert(row(f,'disk:/') and row(f,'disk:/').episode==before.episode and row(f,'disk:/').generation==before.generation)
+  f.disks['/']=nil;f.tick(44000);f.tick(74000)
+  diagnostic=f.model().diagnostics[1];assert(diagnostic and diagnostic.episode>dismissed.episode)
+  f.send(diagnostic.id,dismissed);f.flush();assert(#f.model().diagnostics==1)
+  f.mounts={{path='/',source='/dev/replaced'}}
+  f.disks['/']={usagePercent=96,totalBytes=100*2^30,availableBytes=10*2^30};f.tick(76000)
+  f.send('disk:/',before);f.flush();assert(row(f,'disk:/dev/replaced'),'a different root device must reject the old identity')
+end)
+test('explicit root exclusion suppresses fallback probes and diagnostics',function()
+  local f=fixture();f.plugin.memoryEnabled=false;f.plugin.cpuEnabled=false;f.plugin.excludedMounts={'/'}
+  f.mounts={};f.disks['/']=nil;f.load();f.tick(40000)
+  assert(#f.model().diagnostics==0 and #f.model().rows==0)
 end)
 print(string.format('%d resource service tests passed',count))

@@ -91,6 +91,13 @@ timestamp can advance while an individual `/proc` read fails and retains a cache
 value. Disks have no individual timestamp either. Such per-metric cached failures
 cannot be detected with these APIs; a false or late alert remains possible.
 
+An empty native mount list can mean either no physical mounts or discovery
+failure. It does not confirm removal: known unseen volumes stay last known,
+with their episodes/dismissals intact, until a nonempty discovery confirms
+their absence. This can retain stale rows on a genuinely empty physical-mount
+list. Root is probed independently from startup, including its readiness grace;
+later discovery naming its device does not reset the warming root's identity.
+
 Open monitor validates its argv and executable and uses detached native launch.
 Validation and native queue rejection errors remain in the banner. Native launch
 only confirms queue acceptance, so later exec/program startup errors cannot be
