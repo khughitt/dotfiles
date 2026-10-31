@@ -30,6 +30,7 @@ secrets:
 
 test-resource-alert:
     lua noctalia/plugins/resource-pressure-alert/plugin_test.lua
+    lua noctalia/plugins/resource-pressure-alert/service_test.lua
 
 test:
     just test-resource-alert
