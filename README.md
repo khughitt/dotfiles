@@ -86,6 +86,12 @@ enables them, with or without `--enable-user-timers`: that timer deletes old Git
 index recovery data and is enabled only by its approved host rollout.
 `bin/dotfiles-health` reports it as prepared until then.
 
+ops's `git-index-health` convergence service and timer are linked the same way and
+never enabled by setup: that timer repairs stale Git indexes in synced checkouts and
+is enabled only by its own approved host packet, after retention runs. Health reports
+it as prepared until then; once enabled, it also fails while `git-index-retention.timer`
+is not enabled, active and passing, and never claims that indexes converged.
+
 Capture hosts need explicit sudoers grants; follow
 [the capture-host setup instructions](docs/capture-host-setup.md) to install them.
 

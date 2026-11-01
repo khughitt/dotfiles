@@ -14,8 +14,8 @@ PRISM_ROOT="${HOME}/d/prism"
 # The wali checkout, reached the same way: bin/walictl execs into it and the
 # systemd and Noctalia-plugin phases link out of it.
 WALI_ROOT="${HOME}/d/wali"
-# The ops checkout, reached the same way: the obs-index and git-index-retention
-# systemd user units link out of it.
+# The ops checkout, reached the same way: the obs-index, git-index-retention and
+# git-index-health systemd user units link out of it.
 OPS_ROOT="${HOME}/d/ops"
 LOOKOUT_ROOT="${HOME}/d/lookout"
 
@@ -794,6 +794,10 @@ function setup_systemd_user_units() {
     # data. Last, so an ops checkout without these units cannot stop the timers above.
     ln_s "${OPS_ROOT}/systemd/user/git-index-retention.service" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.service"
     ln_s "${OPS_ROOT}/systemd/user/git-index-retention.timer" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.timer"
+    # Linked disabled for the same reason: index convergence repairs synced checkouts
+    # and is enabled only by its approved host packet, after retention runs.
+    ln_s "${OPS_ROOT}/systemd/user/git-index-health.service" "${XDG_CONFIG_HOME}/systemd/user/git-index-health.service"
+    ln_s "${OPS_ROOT}/systemd/user/git-index-health.timer" "${XDG_CONFIG_HOME}/systemd/user/git-index-health.timer"
 }
 
 # The OS overrides themselves are selected by each host's kitty/<hostname>.conf,
