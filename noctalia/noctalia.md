@@ -137,8 +137,10 @@ changes, and Glow reads that generated file on each invocation.
 
 ## Local v5 plugins
 
-Wali Panel and Prism are local Noctalia v5 plugins. Memory Pressure Alert
-remains deferred.
+Wali Panel, Prism and Resource Pressure Alert are local Noctalia v5 plugins.
+Resource Pressure Alert replaces the v4 plugin with native sampling and layers;
+its [policy and activation guide](plugins/resource-pressure-alert/README.md)
+describes thresholds, diagnostics, single-output niri verification and limits.
 
 Bootstrap them in two stages:
 
@@ -150,11 +152,14 @@ Bootstrap them in two stages:
 
 Ordinary setup remains usable before the shell starts. The explicit plugin
 phase links Wali from `~/d/wali` and Prism from `~/d/prism`. When Noctalia is
-running, it enables both through IPC; otherwise setup defers enablement until
-Noctalia is available. It requires both checkouts.
+running, it enables all three through IPC; otherwise setup names the pending
+enable commands. Resource Pressure Alert links from `${DOTS_HOME}/noctalia/plugins/resource-pressure-alert`; on the host this is the main checkout, never a
+worktree. Its exact enable id is `khughitt/resource-pressure-alert`. Live setup
+and enablement require separate approval. The phase requires Wali and Prism
+checkouts as before.
 
 Dotfiles owns the Noctalia configuration and installation; Wali and Prism each
-own their plugin source. Wali depends on `walictl` (a shim into `~/d/wali`) and
+own their plugin source; dotfiles owns Resource Pressure Alert. Wali depends on `walictl` (a shim into `~/d/wali`) and
 its config link; Prism depends on `prism` alone.
 
 Prism's panel drives niri's native glass material through its `niri` sink,

@@ -28,7 +28,13 @@ setup-only phases:
 secrets:
     bin/dotfiles-secrets-check
 
+test-resource-alert:
+    lua noctalia/plugins/resource-pressure-alert/plugin_test.lua
+    lua noctalia/plugins/resource-pressure-alert/service_test.lua
+    lua noctalia/plugins/resource-pressure-alert/layer_test.lua
+
 test:
+    just test-resource-alert
     uv run --frozen pytest -q
     zsh tests/task_json_search.zsh
     zsh tests/dropbox_ignore_flux.zsh

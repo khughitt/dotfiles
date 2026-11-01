@@ -415,8 +415,10 @@ if [[ "$(uname)" != "Darwin" ]]; then
         "${HOME}/d/wali/integrations/noctalia-plugin"
     check_link "${noctalia_plugin_dir}/prism" \
         "${HOME}/d/prism/integrations/noctalia-plugin"
+    check_link "${noctalia_plugin_dir}/resource-pressure-alert" \
+        "${DOTS_HOME}/noctalia/plugins/resource-pressure-alert"
 
-    for plugin_name in wali-panel prism; do
+    for plugin_name in wali-panel prism resource-pressure-alert; do
         if [[ -f "${noctalia_plugin_dir}/${plugin_name}/plugin.toml" && \
               ! -e "${noctalia_plugin_dir}/${plugin_name}/manifest.json" ]]; then
             pass "Noctalia v5 plugin manifest: ${plugin_name}"
@@ -428,16 +430,13 @@ if [[ "$(uname)" != "Darwin" ]]; then
     if [[ "$SKIP_NOCTALIA_IPC" == "true" ]]; then
         pass "live Noctalia plugin check explicitly skipped"
     elif plugins=$(noctalia msg plugins list 2>&1); then
-        if printf '%s\n' "$plugins" | rg -q '^khughitt/wali-panel .* enabled( |$)'; then
-            pass "Noctalia plugin enabled: khughitt/wali-panel"
-        else
-            fail "Noctalia plugin not enabled: khughitt/wali-panel"
-        fi
-        if printf '%s\n' "$plugins" | rg -q '^khughitt/prism .* enabled( |$)'; then
-            pass "Noctalia plugin enabled: khughitt/prism"
-        else
-            fail "Noctalia plugin not enabled: khughitt/prism"
-        fi
+        for plugin_name in wali-panel prism resource-pressure-alert; do
+            if printf '%s\n' "$plugins" | rg -q "^khughitt/${plugin_name} .* enabled( |$)"; then
+                pass "Noctalia plugin enabled: khughitt/${plugin_name}"
+            else
+                fail "Noctalia plugin not enabled: khughitt/${plugin_name}"
+            fi
+        done
     else
         fail "Noctalia plugin listing failed: $plugins"
     fi

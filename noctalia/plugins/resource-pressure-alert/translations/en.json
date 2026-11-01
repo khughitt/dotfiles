@@ -1,0 +1,12 @@
+{
+  "settings.memoryEnabled": "Memory alerts",
+  "settings.cpuEnabled": "Sustained CPU alerts",
+  "settings.diskEnabled": "Disk space alerts",
+  "settings.memoryWarningPercent": "Memory warning (%)",
+  "settings.diskWarningPercent": "Disk warning (%)",
+  "settings.diskWarningFreeGiB": "Disk warning below available GiB",
+  "settings.diskCriticalFreeGiB": "Disk critical below available GiB",
+  "settings.cpuCriticalSeconds": "CPU critical duration (seconds)",
+  "settings.excludedMounts": "Excluded mount paths",
+  "settings.monitorCommand": "Monitor command (argument list)"
+}

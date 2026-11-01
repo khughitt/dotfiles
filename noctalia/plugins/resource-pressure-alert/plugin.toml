@@ -1,0 +1,82 @@
+id = "khughitt/resource-pressure-alert"
+name = "Resource Pressure Alert"
+version = "1.0.0"
+author = "Keith Hughitt"
+license = "MIT"
+plugin_api = 36
+description = "Persistent memory, sustained CPU and scarce disk-space alerts"
+
+[[setting]]
+key = "memoryEnabled"
+type = "bool"
+label_key = "settings.memoryEnabled"
+default = true
+
+[[setting]]
+key = "cpuEnabled"
+type = "bool"
+label_key = "settings.cpuEnabled"
+default = true
+
+[[setting]]
+key = "diskEnabled"
+type = "bool"
+label_key = "settings.diskEnabled"
+default = true
+
+[[setting]]
+key = "memoryWarningPercent"
+type = "double"
+label_key = "settings.memoryWarningPercent"
+default = 80
+
+[[setting]]
+key = "diskWarningPercent"
+type = "double"
+label_key = "settings.diskWarningPercent"
+default = 90
+
+[[setting]]
+key = "diskWarningFreeGiB"
+type = "double"
+label_key = "settings.diskWarningFreeGiB"
+default = 50
+
+[[setting]]
+key = "diskCriticalFreeGiB"
+type = "double"
+label_key = "settings.diskCriticalFreeGiB"
+default = 20
+
+[[setting]]
+key = "cpuCriticalSeconds"
+type = "int"
+label_key = "settings.cpuCriticalSeconds"
+default = 300
+
+[[setting]]
+key = "excludedMounts"
+type = "string_list"
+label_key = "settings.excludedMounts"
+default = []
+
+[[setting]]
+key = "monitorCommand"
+type = "string_list"
+label_key = "settings.monitorCommand"
+default = ["ghostty", "-e", "btop"]
+
+[[service]]
+id = "monitor"
+entry = "service.luau"
+
+[[layer]]
+id = "banner"
+entry = "layer.luau"
+output = "all"
+layer = "overlay"
+anchors = ["top"]
+keyboard = "none"
+exclusive_zone = 0
+width = 0
+height = 0

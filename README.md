@@ -41,7 +41,7 @@ To install, clone this repo and run `setup.sh`:
     git clone https://github.com/khughitt/dotfiles
     cd dotfiles && ./setup.sh
 
-Symbolic links will be created in `$HOME` / `$XDG_CONFIG_DIR` to all of the major
+Symbolic links will be created in `$HOME` / `$XDG_CONFIG_HOME` to all of the major
 configuration files.
 
 For a safe preview of the headless link setup:
@@ -92,8 +92,11 @@ is enabled only by its own approved host packet, after retention runs. Health re
 it as prepared until then; once enabled, it also fails while `git-index-retention.timer`
 is not enabled, active and passing, and never claims that indexes converged.
 
-Capture hosts need two explicit sudoers grants; follow
+Capture hosts need explicit sudoers grants; follow
 [the capture-host setup instructions](docs/capture-host-setup.md) to install them.
+
+Resource Pressure Alert is a native Noctalia v5 plugin for memory, sustained CPU
+use and scarce disk space. See its [policy and activation guide](noctalia/plugins/resource-pressure-alert/README.md). Live enablement is a separate host action.
 
 A new machine
 -------------
@@ -242,7 +245,7 @@ rgl     # rg -l
 rgu     # rg -uuu
 fda     # fd -Luu
 
-v       # nvim recent
+v       # nvim file picker
 vl      # nvim last
 vr      # rg -> nvim
 ```
@@ -251,3 +254,7 @@ Screenshot
 ----------
 
 ![desktop screenshot](misc/2020-03-05_screenshot.png)
+
+Resource-alert development tests require `lua` (the Lua/Luau shared subset;
+Lua 5.5.1 verified). Run `just test-resource-alert` for the focused policy, service and layer
+harnesses; `just test` includes it. No separate Luau CLI is required.
