@@ -112,6 +112,7 @@ cmd_status() {
             printf 'Certified:  %s -- STALE, running kernel is %s\n' "$certified" "$running"
             if pending_recert_branch; then
                 printf '            chore/recertify-%s is pushed, awaiting review\n' "$running"
+                printf '            Run just test-full on that branch in the atoms checkout on this newly certified host; merge only if it passes.\n'
             else
                 printf '            atoms-recertify.timer will pick this up (every 6h)\n'
             fi
@@ -167,6 +168,7 @@ cmd_unlock() {
         printf 'Would run:\n  %s\n  %s\n' "${sync[*]}" "${take[*]}"
         printf '\nThen reboot. atoms-recertify.timer runs the sweep 5 min after\n'
         printf 'boot and pushes chore/recertify-<new kernel> for review.\n'
+        printf 'On that branch in the atoms checkout on this newly certified host, run just test-full; merge only if it passes.\n'
         return 0
     fi
 
@@ -178,7 +180,8 @@ cmd_unlock() {
     printf '\nKernel released. Next:\n'
     printf '  1. reboot\n'
     printf '  2. atoms-recertify.timer runs the sweep 5 min after boot\n'
-    printf '  3. review and merge the chore/recertify-<kernel> branch it pushes\n'
+    printf '  3. review chore/recertify-<kernel> in the atoms checkout on this newly certified host\n'
+    printf '  4. run just test-full on that branch; merge only if it passes\n'
 }
 
 # PostTransaction hook: linux and linux-headers must never diverge, or every
