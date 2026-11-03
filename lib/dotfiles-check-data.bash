@@ -55,4 +55,3 @@ zsh_files=(
 while IFS= read -r file; do
     zsh_files+=("$file")
 done < <(find shell -path 'shell/private' -prune -o -path 'shell/local' -prune -o -type f -name '*.zsh' -print | sort)
-
