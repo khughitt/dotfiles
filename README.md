@@ -164,14 +164,43 @@ Commands
 Common maintenance commands are wrapped in `just`:
 
 ```
-just check          # run shell syntax, shellcheck, and modeline checks
-just test           # run Python and Zsh/shell tests
+just check          # mandatory source/record hygiene, then broad code checks
+just test           # complete Lua, Python and Zsh suite, subject to .tt.toml
+just test-full      # deliberately force the full suite
+just test-one pytest tests/test_git_index_hook.py -k event
+just test-one zsh tests/justfile.zsh
+just test-one lua noctalia/plugins/resource-pressure-alert/plugin_test.lua
 just health         # check links and local setup without querying systemd state
 just health-systemd # include systemd user timer state
 just setup-dry-run  # preview headless link-only setup
 just setup-only ... # preview selected setup phases, e.g. shell,systemd
 just verify         # run check, test, and health
 ```
+
+Verification runs through the vendored `tools/tt`. Policy comes from `.tt.toml`
+at the invoking Git root; detached task records do not supply it. Missing policy
+keeps broad execution enabled, and invalid policy is an error. A policy skip
+launches no child and is not a passing suite. `TT_FORCE=1 just check` deliberately
+runs broad code checks; `just test-full` forces the complete test route with one
+inner timing record. `test-one` forwards arguments intact to `pytest`, `zsh`,
+`lua` or `nvim` and requires a runner plus arguments. Use the existing Neovim
+headless initialization arguments when selecting a Neovim test.
+
+`check-hygiene` always runs formatting, source syntax, tracked-link/modeline and
+promoted-glass consistency checks, plus local task-record validation.
+`check-code` runs ShellCheck and the three existing configuration regression
+scripts. `bin/dotfiles-check` remains a source check front door and delegates its
+broad child through the same policy. `test-resource-alert` is a deliberate focused
+component run; the full suite reuses its three harnesses without running them twice.
+The separate `nvim/tests/noctalia/run.sh` and science-md.nvim test routes are not
+part of `just test` and are not claimed as full-suite coverage here.
+
+The committed project hooks are prepared source; configuring them in the registered
+checkout is a separate activation action. They retain mandatory work and time broad
+children separately. No test-suite push coverage is declared yet, so either push
+route requests the complete local suite and uncovered pushes warn when policy skips
+it. Existing Gitleaks scanning does not establish test coverage. Hosted broad work
+must set `TT_FORCE=1`; missing force is a failure, including nested requests.
 
 `bin/dotfiles-health` verifies required tools, important managed symlinks,
 shell sourceability, Dropbox ignore timer links, and stale config links that

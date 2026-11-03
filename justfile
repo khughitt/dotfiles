@@ -1,11 +1,29 @@
 set dotenv-load := false
+set positional-arguments
+set quiet
+
+tt := "python3 tools/tt"
+test_cmd := "python3 tools/test-suite.py full"
+resource_alert_cmd := "python3 tools/test-suite.py resource-alert"
+check_hygiene_cmd := "just --fmt --check --justfile justfile && tools/check-hygiene && tasks check"
+check_code_cmd := "tools/check-code"
+ci_remote := "origin"
+ci_suite_refs := ""
+# Tests read configuration and documentation: retain normal hygiene for every commit.
+docs_paths := ""
 
 default:
     @just --list
 
+check-hygiene:
+    {{ tt }} check-hygiene -- sh -c '{{ check_hygiene_cmd }}'
+
+check-code:
+    {{ tt }} check-code -- sh -c '{{ check_code_cmd }}'
+
 check:
-    just --fmt --check --justfile justfile
-    bin/dotfiles-check
+    just check-hygiene
+    just check-code
 
 health:
     bin/dotfiles-health --skip-systemd --skip-noctalia-ipc
@@ -23,30 +41,44 @@ setup-dry-run:
     bash setup.sh --dry-run --link-only --headless
 
 setup-only phases:
-    bash setup.sh --dry-run --link-only --headless --only {{ phases }}
+    bash setup.sh --dry-run --link-only --headless --only "$1"
 
 secrets:
     bin/dotfiles-secrets-check
 
+test-one +args:
+    {{ tt }} test-one -- tools/test-one "$@" 2>&1
+
+# Deliberate component check; this is not a whole-project request.
 test-resource-alert:
-    lua noctalia/plugins/resource-pressure-alert/plugin_test.lua
-    lua noctalia/plugins/resource-pressure-alert/service_test.lua
-    lua noctalia/plugins/resource-pressure-alert/layer_test.lua
+    {{ tt }} test-resource-alert -- sh -c '{{ resource_alert_cmd }}'
 
 test:
-    just test-resource-alert
-    uv run --frozen pytest -q
-    zsh tests/task_json_search.zsh
-    zsh tests/dropbox_ignore_flux.zsh
-    zsh tests/work_link.zsh
-    zsh tests/history.zsh
-    zsh tests/icat_completion.zsh
-    zsh tests/glow_completion.zsh
-    zsh tests/secrets_check.zsh
-    zsh tests/setup_and_health.zsh
-    zsh tests/dotfiles_check.zsh
-    zsh tests/layout_check.zsh
-    zsh tests/justfile.zsh
-    zsh tests/console_keymap.zsh
+    {{ tt }} test -- sh -c '{{ test_cmd }}'
+
+test-full:
+    TT_FORCE=1 just test
+
+gate:
+    just check
+    just test
 
 verify: check test health
+
+hook-pre-commit:
+    {{ tt }} hook-pre-commit -- sh -c '{{ check_hygiene_cmd }}'
+    just check-code
+
+hook-pre-commit-docs:
+    {{ tt }} hook-pre-commit-docs -- sh -c '{{ check_hygiene_cmd }}'
+
+hook-pre-push:
+    {{ tt }} hook-pre-push -- sh -c '{{ check_hygiene_cmd }}'
+    just check-code
+    just test
+
+# There is no affected selector: both push routes request the same full suite.
+hook-pre-push-fast:
+    {{ tt }} hook-pre-push-fast -- sh -c '{{ check_hygiene_cmd }}'
+    just check-code
+    just test

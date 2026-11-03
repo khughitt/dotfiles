@@ -20,6 +20,25 @@ assert_not_ignored() {
   fi
 }
 
+nvim_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-nvim.XXXXXX")
+register_tmp_cleanup "$nvim_home"
+mkdir -p "$nvim_home/config" "$nvim_home/cache" "$nvim_home/state" "$nvim_home/runtime"
+ln -s "${repo_root}/nvim" "$nvim_home/config/nvim"
+nvim_env=(
+  "PATH=$PATH" "HOME=$nvim_home" "USER=nvim-fixture" "TERM=dumb" "LANG=C.UTF-8"
+  "XDG_CONFIG_HOME=$nvim_home/config" "XDG_CACHE_HOME=$nvim_home/cache"
+  "XDG_STATE_HOME=$nvim_home/state" "XDG_RUNTIME_DIR=$nvim_home/runtime"
+  "XDG_DATA_HOME=${XDG_DATA_HOME:-${HOME}/.local/share}"
+  "GIT_CONFIG_GLOBAL=/dev/null" "GIT_CONFIG_NOSYSTEM=1" "PYTHONDONTWRITEBYTECODE=1"
+)
+if [[ -n "${EVIDENCE_DIR:-}" ]]; then
+  nvim_env+=("EVIDENCE_DIR=$EVIDENCE_DIR")
+fi
+
+nvim_case() {
+  env -i "${nvim_env[@]}" python3 "${repo_root}/tools/test-suite.py" phase "$@"
+}
+
 "${repo_root}/bin/dotfiles-check"
 
 mindful_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-mindful-home.XXXXXX")
@@ -69,7 +88,7 @@ modeline_files=(
 
 for file in "${modeline_files[@]}"; do
   output=$(
-    nvim --headless -i NONE -u NONE \
+    nvim_case "modeline:${file}" nvim --headless -i NONE -u NONE \
       --cmd 'set noswapfile' \
       --cmd 'filetype on' \
       --cmd 'syntax on' \
@@ -82,10 +101,10 @@ for file in "${modeline_files[@]}"; do
     fail "Neovim did not load ${file} cleanly as zsh: ${output}"
 done
 
-nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
+nvim_case nvim-clipboard nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
   "+lua dofile('${repo_root}/nvim/tests/clipboard_test.lua')" '+qa!'
 
-nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
+nvim_case nvim-theme nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
   -l "${repo_root}/nvim/tests/theme_test.lua"
 
 zsh -fc '
