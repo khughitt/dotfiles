@@ -623,3 +623,71 @@ def test_portable_ci_retains_subset_evidence(door):
     assert len(phases) == 8
     assert all(row["exit"] == 0 for row in phases if row["event"] == "end")
     assert json.loads((evidence / "outer.json").read_text())["exit"] == 0
+
+
+@pytest.mark.parametrize("signum", [signal.SIGTERM, signal.SIGINT])
+def test_ci_interruption_is_bounded_and_reaps_ignoring_children(door, signum):
+    state = door.root.parent / "interrupted-ci"
+    pidfile = door.root.parent / "ready.json"
+    bindir = Path(door.env["PATH"].split(":")[0])
+    door.env.update(CI_STATE_DIR=str(state), UV_PYTHON=sys.executable)
+    (bindir / "uv").write_text(f"#!{sys.executable}\n")
+    # The real shell inherits ignored TERM, so the supervisor must escalate.
+    bash = bindir / "bash"
+    bash.write_text(f"#!{sys.executable}\n" + '''import os,signal,sys
+signal.signal(signal.SIGTERM, signal.SIG_IGN)
+env = {key:os.environ[key] for key in ['PATH','HOME','EVIDENCE_DIR']}
+os.execve('/usr/bin/bash',['bash',*sys.argv[1:]],env)
+''')
+    bash.chmod(0o755)
+    just = bindir / "just"
+    just.write_text(f"#!{sys.executable}\n" + f'''import json,os,signal,subprocess
+from pathlib import Path
+signal.signal(signal.SIGTERM,signal.SIG_IGN)
+child = subprocess.Popen(['/usr/bin/sleep','300'],
+    env={{'PATH':'/usr/bin:/bin','HOME':{door.env['HOME']!r}}},
+    stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+ready = Path({str(pidfile)!r})
+pending = ready.with_suffix('.pending')
+pending.write_text(json.dumps({{'pid':child.pid,'group':os.getpgrp()}}))
+pending.replace(ready)
+signal.pause()
+''')
+    process = subprocess.Popen([sys.executable, "tools/test-suite.py", "ci"],
+                               cwd=door.root, env=door.env, stdin=subprocess.DEVNULL,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    group = None
+    try:
+        deadline = time.monotonic() + 5
+        while not pidfile.exists() and process.poll() is None and time.monotonic() < deadline:
+            time.sleep(.01)
+        assert pidfile.exists(), "long-lived CI leaf did not become ready"
+        owned = json.loads(pidfile.read_text())
+        group = owned["group"]
+        assert group != os.getpgrp()
+        started = time.monotonic()
+        process.send_signal(signum)
+        stdout, stderr = process.communicate(timeout=5)
+        assert time.monotonic() - started < 5
+        assert process.returncode == 128 + signum, stdout + stderr
+        evidence = state / "evidence"
+        assert json.loads((evidence / "outer.json").read_text()) == {
+            "exit": 128 + signum, "interrupted": signum,
+        }
+        assert not (evidence / "verdict.json").exists()
+        status = Path(f"/proc/{owned['pid']}/stat")
+        deadline = time.monotonic() + 1
+        while status.exists() and status.read_text().rsplit(")", 1)[1].split()[0] != "Z" and time.monotonic() < deadline:
+            time.sleep(.01)
+        assert not status.exists() or status.read_text().rsplit(")", 1)[1].split()[0] == "Z"
+    finally:
+        if group is None and pidfile.exists():
+            group = json.loads(pidfile.read_text())["group"]
+        if group is not None and group != os.getpgrp():
+            try:
+                os.killpg(group, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        if process.poll() is None:
+            process.kill()
+        process.communicate(timeout=5)
