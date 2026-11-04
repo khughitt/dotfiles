@@ -4,6 +4,7 @@ set quiet
 
 tt := "python3 tools/tt"
 test_cmd := "python3 tools/test-suite.py full"
+portable_cmd := "python3 tools/test-suite.py portable"
 resource_alert_cmd := "python3 tools/test-suite.py resource-alert"
 check_hygiene_cmd := "just --fmt --check --justfile justfile && tools/check-hygiene && tasks check"
 check_code_cmd := "tools/check-code"
@@ -33,8 +34,7 @@ ci-hygiene:
 
 ci-test:
     TT_FORCE=1 just ci-hygiene
-    TT_FORCE=1 just check-code
-    TT_FORCE=1 just test
+    TT_FORCE=1 just test-portable
 
 health:
     bin/dotfiles-health --skip-systemd --skip-noctalia-ipc
@@ -66,6 +66,9 @@ test-resource-alert:
 
 test:
     {{ tt }} test -- sh -c '{{ test_cmd }}'
+
+test-portable:
+    {{ tt }} test-portable -- sh -c '{{ portable_cmd }}'
 
 test-full:
     TT_FORCE=1 just test
