@@ -440,6 +440,9 @@ def test_workflow_branch_refs_and_isolation(door):
     assert job["runs-on"] == "ubuntu-26.04"
     assert 1 <= job["timeout-minutes"] <= 15
     assert job["env"]["TT_FORCE"] == "1"
+    assert "CI_STATE_DIR" not in job["env"]
+    run = next(step for step in job["steps"] if step.get("run") == "python3 tools/test-suite.py ci")
+    assert run["env"]["CI_STATE_DIR"] == "${{ runner.temp }}/dotfiles-ci"
     for step in job["steps"]:
         if "uses" in step:
             assert re.fullmatch(r"[a-f0-9]{40}", step["uses"].rsplit("@", 1)[1])

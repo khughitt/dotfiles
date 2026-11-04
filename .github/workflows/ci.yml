@@ -20,8 +20,7 @@
       "runs-on": "ubuntu-26.04",
       "timeout-minutes": 15,
       "env": {
-        "TT_FORCE": "1",
-        "CI_STATE_DIR": "${{ runner.temp }}/dotfiles-ci"
+        "TT_FORCE": "1"
       },
       "steps": [
         {
@@ -39,13 +38,19 @@
         {
           "name": "Run isolated portable checks",
           "shell": "bash",
-          "run": "python3 tools/test-suite.py ci"
+          "run": "python3 tools/test-suite.py ci",
+          "env": {
+            "CI_STATE_DIR": "${{ runner.temp }}/dotfiles-ci"
+          }
         },
         {
           "name": "Retain tool versions",
           "if": "always()",
           "shell": "bash",
-          "run": "mkdir -p \"$CI_STATE_DIR/evidence\"\nif [ -f \"$RUNNER_TEMP/dotfiles-tools/versions.txt\" ]; then cp \"$RUNNER_TEMP/dotfiles-tools/versions.txt\" \"$CI_STATE_DIR/evidence/tool-versions.txt\"; fi"
+          "run": "mkdir -p \"$CI_STATE_DIR/evidence\"\nif [ -f \"$RUNNER_TEMP/dotfiles-tools/versions.txt\" ]; then cp \"$RUNNER_TEMP/dotfiles-tools/versions.txt\" \"$CI_STATE_DIR/evidence/tool-versions.txt\"; fi",
+          "env": {
+            "CI_STATE_DIR": "${{ runner.temp }}/dotfiles-ci"
+          }
         },
         {
           "name": "Retain verification evidence",
