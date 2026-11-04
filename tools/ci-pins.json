@@ -65,7 +65,8 @@
     "wayland-protocols": "1.47-1",
     "xz-utils": "5.8.3-1ubuntu0.1",
     "zoxide": "0.9.8-1",
-    "zsh": "5.9-8ubuntu3"
+    "zsh": "5.9-8ubuntu3",
+    "kbd": "2.7.1-2ubuntu2"
   },
   "downloads": [
     {
@@ -571,5 +572,11 @@
     "file": "git-2.56.0.tar.xz",
     "sha256": "26c56c296b38c0695b26fa95f475f1d01704d2d38e73465ca30b0b2f5dc789d3"
   },
-  "glow_completion_sha256": "ee6bbf6b83f417676bbf8b21972b78cfa50ae8598d4f84c66fb6447dc6df21fc"
+  "glow_completion_sha256": "ee6bbf6b83f417676bbf8b21972b78cfa50ae8598d4f84c66fb6447dc6df21fc",
+  "kbd_keymaps": {
+    "version": "2.9.0",
+    "url": "https://mirrors.edge.kernel.org/pub/linux/utils/kbd/kbd-2.9.0.tar.xz",
+    "file": "kbd-2.9.0.tar.xz",
+    "sha256": "fb3197f17a99eb44d22a3a1a71f755f9622dd963e66acfdea1a45120951b02ed"
+  }
 }
