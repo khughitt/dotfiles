@@ -1,0 +1,24 @@
+#!/bin/sh
+# Installed by `git config core.hooksPath .githooks`. Seconds only; the suite runs at
+# push. The recipes are the gates `just check` runs, recorded under their own targets.
+#
+# A commit whose every staged path matches the justfile's docs_paths cannot change the
+# code checks' verdict, so it pays only the docs checks. Paths are read NUL-delimited,
+# decoded strictly (an undecodable name cannot be matched, so it takes the full check),
+# a rename counts on both sides, and any failure to classify pays the full check. The
+# skipped checks still run at the next code commit, at push, and in CI.
+# Design: ops docs/specs/2026-09-28-test-ci-act-design.md §3.2.
+if globs=$(just --evaluate docs_paths 2>/dev/null) && python3 -c '
+import fnmatch, subprocess, sys
+globs = sys.argv[1].split()
+# git runs in here, not upstream of a pipe, so its failure is ours: check=True raises,
+# the exit is nonzero, and partial output never counts as a verdict.
+out = subprocess.run(["git", "diff", "--cached", "--name-only", "--no-renames", "-z"],
+                     check=True, stdout=subprocess.PIPE).stdout
+paths = [n.decode("utf-8") for n in out.split(b"\0") if n]
+docs = bool(globs) and bool(paths) and all(any(fnmatch.fnmatchcase(p, g) for g in globs) for p in paths)
+sys.exit(0 if docs else 1)
+' "$globs"; then
+    exec just hook-pre-commit-docs
+fi
+exec just hook-pre-commit

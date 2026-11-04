@@ -164,14 +164,66 @@ Commands
 Common maintenance commands are wrapped in `just`:
 
 ```
-just check          # run shell syntax, shellcheck, and modeline checks
-just test           # run Python and Zsh/shell tests
+just check          # mandatory source/record hygiene, then broad code checks
+just test           # complete Lua, Python and Zsh suite, subject to .tt.toml
+just test-full      # deliberately force the full suite
+TT_FORCE=1 just test-portable  # deliberate portable subset
+just test-one pytest tests/test_git_index_hook.py -k event
+just test-one zsh tests/justfile.zsh
+just test-one lua noctalia/plugins/resource-pressure-alert/plugin_test.lua
 just health         # check links and local setup without querying systemd state
 just health-systemd # include systemd user timer state
 just setup-dry-run  # preview headless link-only setup
 just setup-only ... # preview selected setup phases, e.g. shell,systemd
 just verify         # run check, test, and health
 ```
+
+Verification runs through the unchanged vendored `tools/tt`. This personal
+configuration accepts incomplete automatic integration coverage and delayed
+regression discovery. The checkout's `.tt.toml` skips automatic `test`,
+`check-code` and `test-portable` requests; focused tests and mandatory source/
+record hygiene still execute. Skips launch no child and record null outcomes,
+never a passing suite. Missing policy enables broad work; invalid policy fails.
+
+Use `just test-one` for changed behavior, `just test-full` for a deliberate full
+suite, `TT_FORCE=1 just test-portable` for the portable subset, and
+`TT_FORCE=1 just check` for complete code checks. `test-one` supports pytest,
+zsh, lua and existing headless nvim invocations with literal arguments.
+`test-resource-alert` remains a deliberate component check. The full route keeps
+three Lua harnesses, unchanged Python discovery, twelve Zsh scripts and nested
+Neovim checks; supplementary Noctalia/science-md.nvim suites remain outside it.
+
+`check-hygiene` always checks formatting, source syntax, tracked links/modelines,
+local promoted-glass consistency and task records. `check-code` contains broad
+ShellCheck and three configuration regression scripts. `bin/dotfiles-check`
+composes source hygiene with the policy-controlled broad child. `gate` and `verify`
+keep their existing compositions; verify also checks host health, which no suite
+skip establishes. Choose relevant local integration checks after shell/editor,
+setup, hook, Noctalia or host-interaction changes and before live application when
+useful. Unrelated edits, commits and reviews create no full-suite obligation.
+
+The portable CI subset consists of the three resource-pressure-alert Lua harnesses,
+`tests/front_door_test.py`, `tests/kernel_gate_test.py` and the five current
+`tests/niri/` modules. `just ci-test` forces source hygiene and this subset only.
+Other Python modules, full Zsh/Neovim integration and installed Noctalia/GPU/systemd/
+console/desktop behavior are not automatic coverage. Excluded modules and actual
+skipped cases are reported separately; a portable green is not a full-suite pass.
+
+The Ubuntu 26.04 workflow installs ordinary command-line prerequisites and three
+hash-verified uv/Python/Just archives, with frozen Python dependencies. It does not
+build Noctalia/Git or hydrate shell/editor plugins/parsers. The existing suite helper's
+ci mode uses a fresh external CI_STATE_DIR, explicit UV_PYTHON and isolated HOME,
+XDG, Git, cache and timing state. It retains output, source SHA, selected/excluded
+modules, nonzero Python execution, Lua phase exits and actual outer status.
+Evidence-only artifacts have fourteen-day retention; the job ceiling is fifteen
+minutes. A local container pilot does not establish actual GitHub-hosted success.
+
+`ci_suite_refs` remains empty because this subset cannot satisfy the shared hook's
+full-suite declaration. Project hooks remain prepared source until separately
+authorized repository-local installation; uncovered pushes warn honestly when local
+policy skips tests. SSH/ref/stdin protections remain. Workflow publication and
+hosted attempts require separate approval. Existing Gitleaks scanning is distinct.
+Hosted broad requests require explicit TT_FORCE=1; missing force fails loudly.
 
 `bin/dotfiles-health` verifies required tools, important managed symlinks,
 shell sourceability, Dropbox ignore timer links, and stale config links that

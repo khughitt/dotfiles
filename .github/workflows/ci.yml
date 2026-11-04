@@ -1,0 +1,70 @@
+{
+  "name": "Tests",
+  "on": {
+    "push": {
+      "branches": [
+        "**"
+      ]
+    },
+    "workflow_dispatch": {}
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "concurrency": {
+    "group": "${{ github.workflow }}-${{ github.ref }}",
+    "cancel-in-progress": true
+  },
+  "jobs": {
+    "test": {
+      "runs-on": "ubuntu-26.04",
+      "timeout-minutes": 15,
+      "env": {
+        "TT_FORCE": "1"
+      },
+      "steps": [
+        {
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "fetch-depth": 0,
+            "persist-credentials": false
+          }
+        },
+        {
+          "name": "Install portable prerequisites",
+          "shell": "bash",
+          "run": "set -euo pipefail\nsudo apt-get update\nsudo apt-get install --no-install-recommends -y bash zsh lua5.4 jq ripgrep nodejs python3 git ca-certificates curl tar gzip\ntools_dir=\"$RUNNER_TEMP/dotfiles-tools\"\nmkdir -p \"$tools_dir/bin\"\ncd \"$tools_dir\"\ncurl --fail --location 'https://github.com/astral-sh/uv/releases/download/0.13.7/uv-x86_64-unknown-linux-gnu.tar.gz' --output 'uv-x86_64-unknown-linux-gnu.tar.gz'\nprintf '%s  %s\\n' 'c5221ff41b7892bfc223543883600125f6a47fe845093e0f5bdff4f359196d83' 'uv-x86_64-unknown-linux-gnu.tar.gz' | sha256sum --check\ntar -xzf 'uv-x86_64-unknown-linux-gnu.tar.gz'\ncurl --fail --location 'https://github.com/astral-sh/python-build-standalone/releases/download/20260325/cpython-3.13.12%2B20260325-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz' --output 'cpython-3.13.12+20260325-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz'\nprintf '%s  %s\\n' 'ad178e36a84de3f845885d0ace5ca6f87fa9502d1f0cf53ba3dd42194277d42e' 'cpython-3.13.12+20260325-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz' | sha256sum --check\ntar -xzf 'cpython-3.13.12+20260325-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz'\ncurl --fail --location 'https://github.com/casey/just/releases/download/1.59.0/just-1.59.0-x86_64-unknown-linux-musl.tar.gz' --output 'just-1.59.0-x86_64-unknown-linux-musl.tar.gz'\nprintf '%s  %s\\n' '409044617b6f06517c1035e55ca38c8c856ff8b650e41bc2aa1ef82d5903a23e' 'just-1.59.0-x86_64-unknown-linux-musl.tar.gz' | sha256sum --check\ntar -xzf 'just-1.59.0-x86_64-unknown-linux-musl.tar.gz'\nln -s \"$tools_dir/just\" \"$tools_dir/bin/just\"\nln -s \"$tools_dir/uv-x86_64-unknown-linux-gnu/uv\" \"$tools_dir/bin/uv\"\nprintf '%s\\n' \"$tools_dir/bin\" \"$tools_dir/python/bin\" >> \"$GITHUB_PATH\"\nprintf 'UV_PYTHON=%s\\n' \"$tools_dir/python/bin/python3.13\" >> \"$GITHUB_ENV\"\n{ dpkg-query -W bash zsh lua5.4 jq ripgrep nodejs python3 git; \"$tools_dir/bin/just\" --version; \"$tools_dir/bin/uv\" --version; \"$tools_dir/python/bin/python3.13\" --version; } > \"$tools_dir/versions.txt\""
+        },
+        {
+          "name": "Run isolated portable checks",
+          "shell": "bash",
+          "run": "python3 tools/test-suite.py ci",
+          "env": {
+            "CI_STATE_DIR": "${{ runner.temp }}/dotfiles-ci"
+          }
+        },
+        {
+          "name": "Retain tool versions",
+          "if": "always()",
+          "shell": "bash",
+          "run": "mkdir -p \"$CI_STATE_DIR/evidence\"\nif [ -f \"$RUNNER_TEMP/dotfiles-tools/versions.txt\" ]; then cp \"$RUNNER_TEMP/dotfiles-tools/versions.txt\" \"$CI_STATE_DIR/evidence/tool-versions.txt\"; fi",
+          "env": {
+            "CI_STATE_DIR": "${{ runner.temp }}/dotfiles-ci"
+          }
+        },
+        {
+          "name": "Retain verification evidence",
+          "if": "always()",
+          "uses": "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f",
+          "with": {
+            "name": "portable-evidence-${{ github.sha }}",
+            "path": "${{ runner.temp }}/dotfiles-ci/evidence",
+            "retention-days": 14,
+            "if-no-files-found": "error"
+          }
+        }
+      ],
+      "name": "Portable checks"
+    }
+  }
+}

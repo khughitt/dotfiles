@@ -1,0 +1,2 @@
+automatic_broad = false
+broad_targets = ["test", "check-code", "test-portable"]

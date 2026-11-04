@@ -91,3 +91,6 @@ familiar/themes/
 
 # crush keeps its session db and logs beside its config
 crush/.crush/
+
+# local verification fallback and evidence
+.tt/

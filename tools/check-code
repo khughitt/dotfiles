@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+source lib/dotfiles-check-data.bash
+
+echo "shellcheck"
+shellcheck -x "${bash_files[@]}"
+python3 tests/opencode_config_migrate_test.py
+python3 tests/opencode_theme_fallback_test.py
+python3 tests/noctalia_agent_themes_test.py

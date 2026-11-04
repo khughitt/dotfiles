@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+source lib/dotfiles-check-data.bash
+
+echo "bash -n"
+for file in "${bash_files[@]}"; do
+    bash -n "$file"
+done
+
+echo "zsh -n"
+for file in "${zsh_files[@]}"; do
+    zsh -n "$file"
+done
+
+echo "tracked symlink targets"
+bin/dotfiles-layout-check
+
+echo "zsh modelines"
+if rg -n 'vi:syntax=(bash|zsh)' shell --glob '!private/**' --glob '!local/**'; then
+    echo "shell files are zsh-sourced; use vi:filetype=zsh modelines" >&2
+    exit 1
+fi
+
+# noctalia glass invariant: kitty's generated seven-slot transparent list must
+# match the promoted nvim palette. Fails on partial/desynced state; passes on
+# fresh machines. See bin/noctalia-glass-check.
+bin/noctalia-glass-check
+
+node --check bin/mindful-backup.mjs
+python3 -c 'import ast, pathlib; [ast.parse(pathlib.Path(p).read_text()) for p in ["bin/mindful-release", "tools/test-suite.py", "tests/front_door_test.py"]]'
+
+echo "dotfiles source checks passed"

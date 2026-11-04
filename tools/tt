@@ -1,0 +1,728 @@
+#!/usr/bin/env python3
+# tt version 10
+"""Timing wrapper: `tt <target> -- <command> [args...]`.
+
+Runs the command with stdin, stdout, and stderr passed through, and appends one JSON line
+describing the run to the log. Projects carry a byte-identical copy at tools/tt.
+Vendored from https://github.com/khughitt/ops (bin/tt); never edit the copy, see tools/README.md.
+Standard library only. Design: ops docs/specs/2026-09-04-test-ci-audit-design.md.
+"""
+import contextlib
+import datetime
+import fcntl
+import hashlib
+import json
+import math
+import os
+import pathlib
+import re
+import signal
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+import tomllib
+from xml.etree import ElementTree
+
+VERSION = 6
+FIELDS = ["at", "project", "target", "command", "seconds", "exit", "tests", "rev", "dirty", "by", "agent", "session", "source", "selection", "content", "slowest"]
+EXECUTION_FIELDS = ["execution", "execution_reason"]
+FIELDS += EXECUTION_FIELDS
+
+PYTEST_WORD = r"(?:passed|failed|errors?|skipped|xfailed|xpassed|deselected|warnings?|rerun)"
+# One summary segment. pytest 9 reports passed subtests as "N subtests passed"; the
+# segment is recognised so the line still counts, but subtests are not tests and never
+# reach the sum. Failed subtests arrive in pytest's ordinary "failed" count.
+PYTEST_SEGMENT = r"\d+ (?:subtests )?" + PYTEST_WORD
+
+# Runners colour their summaries whenever they think they have a terminal (a pty in CI,
+# CARGO_TERM_COLOR=always, FORCE_COLOR); the escapes land in the middle of the numbers.
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+# Runner summary lines. `seen` says a runner printed its summary; `count` extracts the
+# number of tests from such a line. A `seen` line whose count cannot be read makes the
+# whole result null rather than a low sum. Empty messages count as zero.
+RUNNERS = [
+    {   # cargo test: one line per test binary and one for doctests; sum passed + failed
+        "seen": re.compile(r"^test result: "),
+        "count": re.compile(r"^test result: \w+\. (\d+) passed; (\d+) failed;"),
+    },
+    {   # nextest
+        "seen": re.compile(r"^\s*Summary \["),
+        "count": re.compile(r"^\s*Summary \[[^\]]*\] (\d+) tests? run:"),
+    },
+    {   # vitest: the parenthesised total, one line per package
+        "seen": re.compile(r"^\s*Tests\s+\d"),
+        "count": re.compile(r"^\s*Tests\s+.*\((\d+)\)\s*$"),
+        "empty": re.compile(r"^No test files found, exiting with code 0"),
+    },
+    {   # python unittest
+        "seen": re.compile(r"^Ran \d+ tests? in "),
+        "count": re.compile(r"^Ran (\d+) tests? in "),
+    },
+    {   # node --test, spec (ℹ) and tap (#) reporters
+        "seen": re.compile(r"^(?:ℹ|#) tests\b"),
+        "count": re.compile(r"^(?:ℹ|#) tests (\d+)\s*$"),
+    },
+    {   # pytest: the final summary, quiet or with bars; passed + failed + errors. The
+        # words are pytest's own so "5 items in 3.2s" from some other tool never counts.
+        "seen": re.compile(r"(?:^|=+ )(?:" + PYTEST_SEGMENT + r", )*" + PYTEST_SEGMENT + r" in [\d.]+s"),
+        "count": re.compile(r"(?:^|=+ )((?:" + PYTEST_SEGMENT + r", )*" + PYTEST_SEGMENT + r") in [\d.]+s"),
+        "sum_words": ("passed", "failed", "error", "errors"),
+        "empty": re.compile(r"^no tests ran in |^collected 0 items"),
+    },
+]
+
+
+def parse_tests(lines):
+    """Sum of tests run over every runner summary line; None when no runner printed a
+    summary or one printed a summary whose count could not be read."""
+    total = 0
+    matched = False
+    for raw in lines:
+        line = ANSI.sub("", raw)
+        for runner in RUNNERS:
+            empty = runner.get("empty")
+            if empty and empty.search(line):
+                matched = True
+                break
+            if not runner["seen"].search(line):
+                continue
+            found = runner["count"].search(line)
+            if not found:
+                return None
+            if "sum_words" in runner:
+                parts = found.group(1).split(", ")
+                segments = (p.partition(" ") for p in parts)
+                total += sum(int(n) for n, _, word in segments if word in runner["sum_words"])
+            else:
+                total += sum(int(g) for g in found.groups())
+            matched = True
+            break
+    return total if matched else None
+
+
+# What a runner's selector said it ran, narrowest first: a command that runs several
+# sessions records the widest. Design: ops docs/specs/2026-10-03-widened-selection-design.md.
+SELECTIONS = ("affected", "packages", "new-db")
+
+# pytest-testmon's report-header line is "testmon: ", any deactivation reasons, then its
+# state. Matched by containment, so a reason before the state does not hide it. A header
+# whose selection is deactivated states nothing: pytest's own arguments chose the tests.
+TESTMON_HEADER = "testmon: "
+TESTMON_STATES = (
+    ("new DB,", "new-db"),
+    ("All tests have to be re-executed", "packages"),
+    ("changed files: ", "affected"),
+)
+
+
+def parse_selection(lines):
+    """The widest selection any testmon header in the output states, else None."""
+    widest = None
+    for raw in lines:
+        line = ANSI.sub("", raw)
+        if not line.startswith(TESTMON_HEADER):
+            continue
+        for marker, value in TESTMON_STATES:
+            if marker in line:
+                if widest is None or SELECTIONS.index(value) > SELECTIONS.index(widest):
+                    widest = value
+                break
+    return widest
+
+
+# Per-test durations (spec 2026-10-08 §4). JUnit files come from TT_JUNIT_DIR; unittest,
+# which writes none, prints exact per-test totals under --durations.
+SLOWEST_KEEP = 5
+JUNIT_RUNNERS = ("pytest", "vitest", "node", "playwright")
+JUNIT_MAX_BYTES = 64 * 1024 * 1024
+IDENTITY_MAX = 300
+UNITTEST_DURATIONS_HEADER = "Slowest test durations"
+UNITTEST_DURATION = re.compile(r"^(\d+(?:\.\d+)?)s\s+.*\(([^()]+)\)\s*$")
+
+
+def _duration(text):
+    """A finite, non-negative number of seconds, else None: the only durations a line may
+    carry (§6.2)."""
+    try:
+        value = float(text)
+    except (TypeError, ValueError):
+        return None
+    return value if math.isfinite(value) and value >= 0 else None
+
+
+def capped_identity(identity):
+    """At most IDENTITY_MAX characters; a cut one keeps a hash of the whole, so two long
+    identities never collide (§4.2)."""
+    if len(identity) <= IDENTITY_MAX:
+        return identity
+    return identity[:283] + "…#" + hashlib.sha256(identity.encode()).hexdigest()[:8]
+
+
+def parse_unittest_durations(lines, warn):
+    """[(dotted id, seconds)] from unittest's --durations block; [] for a block with no
+    entries; None when no block was printed. A duration that is not a finite number is
+    skipped with one line."""
+    found = None
+    for raw in lines:
+        line = ANSI.sub("", raw)
+        if line.strip() == UNITTEST_DURATIONS_HEADER:
+            found = found if found is not None else []
+            continue
+        if found is not None and (match := UNITTEST_DURATION.match(line)):
+            seconds = _duration(match[1])
+            if seconds is None:
+                warn(f"tt: skipped unittest duration for {match[2]}: not a finite number")
+                continue
+            found.append((capped_identity(match[2]), seconds))
+    return found
+
+
+class JunitSkipped(Exception):
+    """A JUnit file not read, with the reason for its stderr line."""
+
+
+def junit_identity(runner, case, suites, root):
+    """The identity of one <testcase> (§4.2). `suites` holds the attributes of its
+    enclosing <testsuite> elements, outermost first."""
+    name, classname = case.get("name", ""), case.get("classname", "")
+    if runner in ("pytest", "vitest"):
+        parts = [classname, name]
+    elif runner == "node":
+        file = case.get("file", "")
+        if file and root is not None:
+            with contextlib.suppress(ValueError):
+                file = str(pathlib.Path(file).resolve().relative_to(root.resolve()))
+        parts = [file, *(suite.get("name", "") for suite in suites), name]
+    else:  # playwright writes the project in its <testsuite>'s hostname
+        parts = [classname, suites[-1].get("hostname", "") if suites else "", name]
+    return capped_identity(" › ".join(parts))
+
+
+def read_junit(path, runner, root):
+    """{identity: seconds} for one file. Cases with one identity are one test and are
+    summed: pytest splits a test whose call and teardown both fail (§4.1). Anything that
+    stops the file being read whole raises JunitSkipped, so the run is still recorded.
+    The one stat is inside the try: Path.is_file() raises PermissionError on 3.12/3.13."""
+    totals, suites = {}, []
+    try:
+        info = path.stat()
+        if not stat.S_ISREG(info.st_mode):
+            raise JunitSkipped("not a regular file")
+        if info.st_size > JUNIT_MAX_BYTES:
+            raise JunitSkipped(f"larger than {JUNIT_MAX_BYTES // (1024 * 1024)} MB")
+        for event, element in ElementTree.iterparse(path, events=("start", "end")):
+            if element.tag == "testsuite":
+                if event == "start":
+                    suites.append(dict(element.attrib))
+                else:
+                    suites.pop()
+                    element.clear()
+            elif element.tag == "testcase" and event == "end":
+                if element.get("time") is not None and element.find("skipped") is None:
+                    seconds = _duration(element.get("time"))
+                    if seconds is None:
+                        raise JunitSkipped(f"invalid time {element.get('time')!r}")
+                    identity = junit_identity(runner, element.attrib, suites, root)
+                    totals[identity] = totals.get(identity, 0.0) + seconds
+                element.clear()
+    except (ElementTree.ParseError, LookupError, ValueError) as error:  # LookupError/ValueError: the encoding declaration
+        raise JunitSkipped(f"does not parse ({error})") from None
+    except OSError as error:
+        raise JunitSkipped(f"cannot be read ({error.strerror or error})") from None
+    if not all(math.isfinite(total) for total in totals.values()):
+        raise JunitSkipped("time total is not finite")
+    return totals
+
+
+def read_junit_dir(directory, root, warn):
+    """[(identity, seconds)] from every JUnit file in directory, or None when none was
+    read. Each file's cases stay separate from another file's (§4.1)."""
+    found = None
+    for path in sorted(pathlib.Path(directory).glob("*.xml")):
+        runner = path.stem.split("-", 1)[0]
+        try:
+            if runner not in JUNIT_RUNNERS:
+                raise JunitSkipped(f"unknown runner {runner!r}; expected one of {', '.join(JUNIT_RUNNERS)}")
+            totals = read_junit(path, runner, root)
+        except JunitSkipped as error:
+            warn(f"tt: skipped JUnit file {path.name}: {error}")
+            continue
+        found = (found or []) + list(totals.items())
+    return found
+
+
+def slowest_of(*sources):
+    """The SLOWEST_KEEP longest candidates, slowest first; None when no source was read."""
+    present = [source for source in sources if source is not None]
+    if not present:
+        return None
+    pooled = sorted((item for source in present for item in source), key=lambda item: (-item[1], item[0]))
+    return [{"test": identity, "seconds": round(seconds, 3)} for identity, seconds in pooled[:SLOWEST_KEEP]]
+
+
+def fail(message):
+    sys.stderr.write(f"tt: {message}\n")
+    sys.exit(1)
+
+
+def project_of(cwd, env=os.environ):
+    """(root, prefix, linked): walk for a config first, then ask tasks where.
+    A malformed config or resolver answer is fatal; an absent or unexecutable CLI
+    means no registry is available (CI and fresh clones)."""
+    for directory in [cwd, *cwd.parents]:
+        config = directory / "tasks" / ".config.toml"
+        if config.is_file():
+            try:
+                prefix = tomllib.loads(config.read_text())["prefix"]
+            except (tomllib.TOMLDecodeError, KeyError) as error:
+                fail(f"cannot read {config}: {error}")
+            return directory, prefix, False
+    binary = shutil.which("tasks", path=env.get("PATH") or "")
+    if binary is None:
+        return None, None, False
+    try:
+        result = subprocess.run([binary, "where", str(cwd), "--json"], capture_output=True,
+                                text=True, env=dict(env), timeout=10)
+    except OSError:
+        return None, None, False
+    except subprocess.SubprocessError as error:
+        fail(f"cannot tell which project {cwd} is in: {error}")
+    try:
+        answer = json.loads(result.stdout if result.returncode == 0 else result.stderr)
+        if not isinstance(answer, dict):
+            raise ValueError("expected a JSON object")
+        if result.returncode != 0 or "error" in answer:
+            envelope = answer.get("error")
+            detail = (f"{envelope.get('kind', 'unknown')}: {envelope.get('detail', '')}"
+                      if isinstance(envelope, dict) else f"exit {result.returncode}")
+            fail(f"cannot tell which project {cwd} is in: {detail}")
+        project = answer["project"]
+        if project is None:
+            return None, None, False
+        root, prefix, linked = project["root"], project["prefix"], project["linked"]
+        if not isinstance(root, str) or not root or not isinstance(prefix, str) or not prefix or not isinstance(linked, bool):
+            raise ValueError("invalid project fields")
+        return pathlib.Path(root), prefix, linked
+    except (ValueError, KeyError, TypeError) as error:
+        fail(f"cannot tell which project {cwd} is in: {error}")
+
+
+def _git_env():
+    """The environment of every git call tt makes. Optional locks off, so `status` never
+    refreshes and rewrites the index: several checkouts keep .git in a synced folder."""
+    return {**os.environ, "GIT_OPTIONAL_LOCKS": "0"}
+
+
+def _git(cwd, *args):
+    try:
+        result = subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, env=_git_env())
+    except FileNotFoundError:
+        return None
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def git_info(cwd):
+    rev = _git(cwd, "rev-parse", "--short", "HEAD")
+    if rev is None:
+        return None, None
+    status = _git(cwd, "status", "--porcelain")
+    return rev, bool(status) if status is not None else None
+
+
+# The content identity's limits (spec 2026-10-08 §3.3). Read at call time, so a test can
+# lower them.
+CONTENT_MAX_PATHS = 5000
+CONTENT_MAX_SECONDS = 5.0
+
+
+class ContentSkipped(Exception):
+    """The identity was not computed, for a reason worth one stderr line."""
+
+
+class _Budget:
+    """The time and path limits one identity computation shares with its submodules."""
+
+    def __init__(self, clock, seconds, max_paths):
+        self.clock, self.seconds, self.max_paths = clock, seconds, max_paths
+        self.deadline = clock() + seconds
+        self.paths = 0
+        self.local_env_names = None  # asked of git once, when the first submodule needs it
+
+    def remaining(self):
+        left = self.deadline - self.clock()
+        if left <= 0:
+            raise ContentSkipped(f"took more than {self.seconds:g} s")
+        return left
+
+    def count(self, paths):
+        self.paths += paths
+        if self.paths > self.max_paths:
+            raise ContentSkipped(f"more than {self.max_paths} changed paths")
+
+
+def _git_bytes(cwd, args, budget, env, stdin=None):
+    """Raw stdout of one git call, or None when git fails."""
+    try:
+        result = subprocess.run(["git", "-C", str(cwd), *args], input=stdin, capture_output=True,
+                                env=env, timeout=budget.remaining())
+    except FileNotFoundError:
+        return None
+    except subprocess.TimeoutExpired:
+        raise ContentSkipped(f"took more than {budget.seconds:g} s") from None
+    return result.stdout if result.returncode == 0 else None
+
+
+def content_identity(cwd, clock=time.monotonic, seconds=None, max_paths=None):
+    """The identity of the working tree containing cwd: 16 hex digits, or None outside git
+    or when a git call fails. Raises ContentSkipped past a limit. Spec 2026-10-08 §3."""
+    budget = _Budget(clock, CONTENT_MAX_SECONDS if seconds is None else seconds,
+                     CONTENT_MAX_PATHS if max_paths is None else max_paths)
+    env = _git_env()
+    top = _git_bytes(cwd, ["rev-parse", "--show-toplevel"], budget, env)
+    if top is None:
+        return None
+    return _tree_identity(pathlib.Path(os.fsdecode(top.rstrip(b"\n"))), budget, env)
+
+
+_C_ESCAPES = {7: b"\\a", 8: b"\\b", 9: b"\\t", 10: b"\\n", 11: b"\\v", 12: b"\\f", 13: b"\\r", 34: b'\\"', 92: b"\\\\"}
+
+
+def _stdin_path(path):
+    """A path as one line of `git hash-object --stdin-paths`, which unquotes any line that
+    starts with a double quote: C-quoted when the path starts with one, or holds a
+    backslash or a control character (a newline would end the line), else as it is."""
+    if not (path.startswith(b'"') or any(b < 32 or b == 127 or b == 92 for b in path)):
+        return path
+    return b'"' + b"".join(_C_ESCAPES.get(b) or (b"\\%03o" % b if b < 32 or b == 127 else bytes([b])) for b in path) + b'"'
+
+
+def _tree_identity(top, budget, env):
+    entries = {}  # path bytes -> (mode, object id or nested identity)
+    if _git_bytes(top, ["rev-parse", "--verify", "-q", "HEAD"], budget, env) is not None:
+        listing = _git_bytes(top, ["ls-tree", "-r", "-z", "--full-tree", "HEAD"], budget, env)
+        if listing is None:
+            return None
+        for record in filter(None, listing.split(b"\0")):
+            meta, path = record.split(b"\t", 1)
+            mode, _kind, oid = meta.split(b" ")
+            entries[path] = (mode.decode(), oid.decode())
+    status = _git_bytes(top, ["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames",
+                              "--ignore-submodules=none"], budget, env)
+    if status is None:
+        return None
+    listed = [record[3:].rstrip(b"/") for record in filter(None, status.split(b"\0"))]
+    budget.count(len(listed))
+    files = []
+    for path in listed:
+        full = top / os.fsdecode(path)
+        if not os.path.lexists(full):
+            entries.pop(path, None)
+        elif full.is_symlink():
+            oid = _git_bytes(top, ["hash-object", "--stdin", "--no-filters"], budget, env, stdin=os.fsencode(os.readlink(full)))
+            if oid is None:
+                return None
+            entries[path] = ("120000", oid.decode().strip())
+        elif full.is_dir():
+            if entries.get(path, ("",))[0] == "160000" or (full / ".git").exists():
+                entries[path] = ("160000", "")  # a submodule or nested repository, resolved below
+            else:
+                # A tracked file replaced by a directory: status lists the deleted file,
+                # and the directory's files are listed on their own.
+                entries.pop(path, None)
+        else:
+            files.append(path)
+    if files:
+        hashed = _git_bytes(top, ["hash-object", "--stdin-paths"], budget, env,
+                            stdin=b"".join(_stdin_path(p) + b"\n" for p in files))
+        if hashed is None:
+            return None
+        for path, oid in zip(files, hashed.decode().split()):
+            executable = os.stat(top / os.fsdecode(path)).st_mode & stat.S_IXUSR
+            entries[path] = ("100755" if executable else "100644", oid)
+    # Every submodule by its files, listed or not, so committing the pointer in the parent
+    # never changes the identity (§3.2 step 4).
+    for path, (mode, _oid) in list(entries.items()):
+        if mode != "160000":
+            continue
+        sub = top / os.fsdecode(path)
+        if not (sub / ".git").exists():
+            entries[path] = (mode, "absent")
+            continue
+        if budget.local_env_names is None:
+            names = _git_bytes(top, ["rev-parse", "--local-env-vars"], budget, env)
+            if names is None:
+                return None
+            budget.local_env_names = set(names.decode().split())
+        # As git does when it recurses into a submodule: the parent's repository-local
+        # variables (GIT_INDEX_FILE, GIT_DIR, ...) must not reach the submodule's git calls.
+        nested = _tree_identity(sub, budget, {k: v for k, v in env.items() if k not in budget.local_env_names})
+        if nested is None:
+            return None
+        entries[path] = (mode, nested)
+    digest = hashlib.sha256()
+    for path in sorted(entries):
+        mode, value = entries[path]
+        digest.update(f"{mode} {value} ".encode() + path + b"\0")
+    return digest.hexdigest()[:16]
+
+
+def main_checkout(cwd):
+    """The main working tree of the repository containing cwd, from the common git dir."""
+    common = _git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if common is None:
+        return None
+    return pathlib.Path(common).parent.resolve()
+
+
+def repo_root(cwd):
+    """The top of the working tree containing cwd, or None outside git."""
+    top = _git(cwd, "rev-parse", "--show-toplevel")
+    return pathlib.Path(top) if top else None
+
+
+def read_policy(cwd):
+    """Read only the invoking Git top level, never project records or siblings."""
+    root = repo_root(cwd)
+    if root is None:
+        sys.stderr.write("tt: execution policy unavailable outside Git; running by default\n")
+        return None
+    path = root / ".tt.toml"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        if path.is_symlink():
+            raise ValueError(f"{path}: policy symlink has no readable target") from None
+        return None
+    except (OSError, UnicodeError) as error:
+        raise ValueError(f"{path}: {error}") from error
+    try:
+        doc = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as error:
+        raise ValueError(f"{path}: {error}") from error
+    if set(doc) != {"automatic_broad", "broad_targets"} or type(doc["automatic_broad"]) is not bool:
+        raise ValueError(f"{path}: expected only boolean automatic_broad and broad_targets")
+    targets = doc["broad_targets"]
+    if (not isinstance(targets, list) or not targets
+            or any(not isinstance(t, str) or not t.strip() for t in targets)
+            or len(set(targets)) != len(targets)):
+        raise ValueError(f"{path}: broad_targets must be a nonempty list of unique target names")
+    protected = {"test-one", "test-full", "setup", "docs", "check-hygiene"}
+    if any(t in protected or t.startswith("hook-") for t in targets):
+        raise ValueError(f"{path}: broad_targets contains a protected focused or mandatory target")
+    return {"path": path, **doc}
+
+
+def execution_decision(target, policy, env):
+    """Decide using a validated read_policy result; force never comes from CI."""
+    if "TT_FORCE" in env and env["TT_FORCE"] != "1":
+        raise ValueError("TT_FORCE must be absent or exactly 1")
+    if env.get("TT_FORCE") == "1":
+        return "ran", "forced"
+    if policy is None or target not in policy["broad_targets"]:
+        return "ran", "default"
+    if policy["automatic_broad"]:
+        return "ran", "policy-enabled"
+    if env.get("GITHUB_ACTIONS") == "true":
+        raise ValueError(f"{target}: hosted verification would be skipped by {policy['path']}; add TT_FORCE=1 to the job")
+    return "skipped", "policy-disabled"
+
+
+def agent_of(env):
+    if env.get("CLAUDECODE"):
+        return "claude", env.get("CLAUDE_CODE_SESSION_ID") or None
+    if env.get("CODEX_CI") == "1":
+        # The tasks CLI's provenance rule: the thread id when present (ops-8c83ba).
+        return "codex", env.get("CODEX_THREAD_ID") or env.get("CODEX_SESSION_ID") or None
+    if env.get("ANTIGRAVITY_CONVERSATION_ID"):
+        # Checked last so no existing attribution changes; tasks-b42efc settles precedence
+        # when several harnesses' variables coexist, and tt follows it then.
+        return "agy", env["ANTIGRAVITY_CONVERSATION_ID"]
+    return None, None
+
+
+def owner_of(env, cwd):
+    """The tasks owner rule: $TASKS_OWNER, else the git branch, else $USER, else None."""
+    if env.get("TASKS_OWNER"):
+        return env["TASKS_OWNER"]
+    # symbolic-ref works on an unborn branch and fails on a detached HEAD, which is
+    # exactly the distinction wanted: a branch name or nothing.
+    branch = _git(cwd, "symbolic-ref", "--short", "-q", "HEAD")
+    if branch:
+        return branch
+    return env.get("USER") or None
+
+
+def shared_log(env):
+    if env.get("TT_LOG"):
+        return pathlib.Path(env["TT_LOG"])
+    if env.get("XDG_DATA_HOME"):
+        return pathlib.Path(env["XDG_DATA_HOME"]) / "ops" / "runs.jsonl"
+    return pathlib.Path(env.get("HOME", "~")).expanduser() / ".local/share/ops/runs.jsonl"
+
+
+def _writable(path):
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "a", encoding="utf-8"):
+            return True
+    except OSError:
+        return False
+
+
+def choose_log(cwd, root, env, linked=False):
+    """The first writable log location and the warning to print when it is a fallback.
+    Checked before the command runs; exits 1 when nothing is writable. Linked
+    projects fall back only to the records root, never to the code checkout."""
+    shared = shared_log(env)
+    if _writable(shared):
+        return shared, None
+    candidates = []
+    main = None if linked else main_checkout(cwd)
+    if main:
+        candidates.append(main / ".tt" / "runs.jsonl")
+    if root and (main is None or root.resolve() != main):
+        candidates.append(root / ".tt" / "runs.jsonl")
+    for fallback in candidates:
+        if _writable(fallback):
+            return fallback, f"tt: cannot append to {shared}; recording in {fallback}"
+    tried = ", ".join(str(p) for p in [shared, *candidates])
+    fail(f"cannot append to any log ({tried}); refusing to run unrecorded")
+
+
+@contextlib.contextmanager
+def locked(path):
+    """An exclusive lock on <log>.lock, shared with tt-report's harvest so an append and
+    a rename never interleave."""
+    path = path.resolve()
+    lock = path.with_name(path.name + ".lock")
+    with open(lock, "a") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def record(path, line):
+    """Appends one line, opening the file under the lock so a concurrent harvest either
+    happens entirely before (the line lands in the fresh file) or entirely after."""
+    fields = FIELDS if line.get("source") == "wrapper" else [f for f in FIELDS if f not in EXECUTION_FIELDS]
+    missing = [field for field in fields if field not in line]
+    if missing:
+        raise ValueError(f"log line missing {missing}")
+    text = json.dumps({field: line[field] for field in fields}) + "\n"
+    with locked(path):
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write(text)
+            handle.flush()
+
+
+def run(command, capture, env):
+    """Runs the command with stdio passed through. When `capture`, stdout is teed so the
+    summary lines can be parsed; the caller still sees every byte. Returns (exit, lines).
+
+    Ctrl-C at a terminal reaches the command and tt alike, as one process group. While
+    the command runs tt catches SIGINT and does nothing with it, so the command's own
+    cleanup runs to the end and its status is recorded; a caught signal is reset to the
+    default when the command starts, so the command still receives it. An ignored SIGINT
+    (a shell's background job) stays ignored, and the command inherits that."""
+    previous = signal.getsignal(signal.SIGINT)
+    if previous != signal.SIG_IGN:
+        signal.signal(signal.SIGINT, lambda signum, frame: None)
+    try:
+        try:
+            process = subprocess.Popen(command, stdout=subprocess.PIPE if capture else None, env=env)
+        except FileNotFoundError:
+            sys.stderr.write(f"tt: {command[0]}: command not found\n")
+            return 127, []
+        lines = []
+        if capture:
+            assert process.stdout is not None
+            for raw in process.stdout:
+                sys.stdout.buffer.write(raw)
+                sys.stdout.buffer.flush()
+                lines.append(raw.decode("utf-8", errors="replace").rstrip("\n"))
+        return process.wait(), lines
+    finally:
+        signal.signal(signal.SIGINT, previous)
+
+
+def exit_as(status):
+    """Exits with the command's status; a command killed by SIGINT kills tt with SIGINT, so
+    a shell or `just` above sees the interrupt rather than an exit code."""
+    if status == -signal.SIGINT:
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        os.kill(os.getpid(), signal.SIGINT)
+    return status
+
+
+def main(argv, env, cwd):
+    if len(argv) < 3 or argv[1] != "--":
+        sys.stderr.write("usage: tt <target> -- <command> [args...]\n")
+        return 2
+    target, command = argv[0], argv[2:]
+    decision_at, decision_start = now(), time.monotonic()
+    try:
+        policy = read_policy(cwd)
+        execution, reason = execution_decision(target, policy, env)
+    except ValueError as error:
+        sys.stderr.write(f"tt: {error}\n")
+        return 2
+    root, prefix, linked = project_of(cwd, env)
+    log, warning = choose_log(cwd, root, env, linked=linked)
+    if warning:
+        sys.stderr.write(warning + "\n")
+    rev, dirty = git_info(cwd)
+    agent, session = agent_of(env)
+    common = {"project": prefix, "target": target, "command": " ".join(command),
+              "rev": rev, "dirty": dirty, "by": owner_of(env, cwd),
+              "agent": agent, "session": session, "source": "wrapper",
+              "execution": execution, "execution_reason": reason}
+    if execution == "skipped":
+        record(log, {**common, "at": decision_at, "seconds": round(time.monotonic() - decision_start, 3),
+                     "exit": None, "tests": None, "selection": None, "content": None, "slowest": None})
+        sys.stderr.write(f"tt: {target} skipped by policy {policy['path']}; use TT_FORCE=1 to run\n")
+        return 0
+    try:
+        content = content_identity(cwd)
+    except ContentSkipped as error:
+        sys.stderr.write(f"tt: content identity skipped: {error}\n")
+        content = None
+    junit_dir = pathlib.Path(tempfile.mkdtemp(prefix="tt-junit-"))
+    try:
+        started_at = now()
+        started = time.monotonic()
+        status, lines = run(command, capture=not sys.stdout.isatty(), env={**env, "TT_JUNIT_DIR": str(junit_dir)})
+        seconds = round(time.monotonic() - started, 3)
+        junit = read_junit_dir(junit_dir, repo_root(cwd), lambda message: sys.stderr.write(message + "\n")) \
+            if junit_dir.is_dir() else None
+    finally:
+        try:
+            shutil.rmtree(junit_dir)
+        except FileNotFoundError:
+            pass  # the command removed it; nothing was left to read
+        except OSError as error:
+            sys.stderr.write(f"tt: could not remove {junit_dir}: {error}\n")
+    record(log, {
+        **common,
+        "at": started_at,
+        "seconds": seconds,
+        "exit": status,
+        "tests": parse_tests(lines) if lines else None,
+        "selection": parse_selection(lines),
+        "content": content,
+        "slowest": slowest_of(junit, parse_unittest_durations(lines, lambda message: sys.stderr.write(message + "\n"))),
+    })
+    return status
+
+
+if __name__ == "__main__":
+    sys.exit(exit_as(main(sys.argv[1:], os.environ, pathlib.Path.cwd())))
