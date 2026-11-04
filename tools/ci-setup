@@ -123,16 +123,28 @@ for item in pins['downloads']:
 (tools / 'bin/just').symlink_to(tools / 'just')
 (tools / 'bin/uv').symlink_to(tools / 'uv-x86_64-unknown-linux-gnu/uv')
 (tools / 'bin/opencode').symlink_to(tools / 'opencode')
+(tools / 'bin/fastfetch').symlink_to(tools / 'fastfetch-linux-amd64/usr/bin/fastfetch')
 node_version = next(row['version'] for row in pins['downloads'] if row['name'] == 'node')
 env['PATH'] = f'{tools}/bin:{tools}/python/bin:{tools}/nvim-linux-x86_64/bin:{tools}/node-v{node_version}-linux-x64/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+git_source = state / 'git-source'
+with tarfile.open(download(pins['git'])) as archive:
+    archive.extractall(git_source, filter='data')
+git_source /= 'git-' + pins['git']['version']
+# Hook fixtures resolve Git through /usr/bin rather than the tool PATH.
+git_options = ['prefix=/usr', 'NO_GETTEXT=YesPlease', 'NO_TCLTK=YesPlease',
+               'NO_EXPAT=YesPlease', 'NO_OPENSSL=YesPlease', 'NO_RUST=YesPlease']
+invoke(['make', '-j', env['BUILD_JOBS'], *git_options, 'all'], cwd=git_source)
+invoke(['make', *git_options, 'install'], cwd=git_source, privileged=True)
 versions = {}
 for name, argv in [('python', ['python3', '--version']), ('uv', ['uv', '--version']), ('just', ['just', '--version']),
                    ('nvim', ['nvim', '--version']), ('node', ['node', '--version']),
                    ('tree-sitter', ['tree-sitter', '--version']), ('opencode', ['opencode', '--version']),
+                   ('git', ['git', '--version']), ('fastfetch', ['fastfetch', '--version']),
                    ('zsh', ['zsh', '--version']), ('lua', ['lua', '-v']), ('g++', ['g++', '--version'])]:
     versions[name] = invoke(argv, capture=True)
 for row in pins['downloads']:
     assert row['version'] in versions[row['name']], row['name']
+assert pins['git']['version'] in versions['git']
 source = state / 'noctalia'
 source.mkdir()
 with tarfile.open(download(pins['noctalia'])) as archive:

@@ -10,7 +10,6 @@
     "bash": "5.3-2ubuntu1",
     "ca-certificates": "20260816ubuntu0.26.04.1",
     "curl": "8.18.0-1ubuntu2.8",
-    "fastfetch": "2.57.1+dfsg-1ubuntu1",
     "fd-find": "10.3.0-2ubuntu1",
     "file": "1:5.46-5build2",
     "fzf": "0.67.0-1",
@@ -117,6 +116,13 @@
       "url": "https://github.com/casey/just/releases/download/1.59.0/just-1.59.0-x86_64-unknown-linux-musl.tar.gz",
       "file": "just-1.59.0-x86_64-unknown-linux-musl.tar.gz",
       "sha256": "409044617b6f06517c1035e55ca38c8c856ff8b650e41bc2aa1ef82d5903a23e"
+    },
+    {
+      "name": "fastfetch",
+      "version": "2.70.0",
+      "url": "https://github.com/fastfetch-cli/fastfetch/releases/download/2.70.0/fastfetch-linux-amd64.tar.gz",
+      "file": "fastfetch-linux-amd64-2.70.0.tar.gz",
+      "sha256": "945b941b2a85e8de88b4c89714ad18ee6a7a129bb3c544bb448e9e0e027c226a"
     }
   ],
   "plugins": [
@@ -558,5 +564,11 @@
       "sha256": "d295b207f8b9f750ea82cbdb62c8de346b1d89b46322bed27c700d10f3b9e643"
     }
   ],
-  "fsh_seed_sha256": "770b6f32eb91f7f71a8da8ec55674f48f3d0aaae6b1344ccfa672181ed82d3be"
+  "fsh_seed_sha256": "770b6f32eb91f7f71a8da8ec55674f48f3d0aaae6b1344ccfa672181ed82d3be",
+  "git": {
+    "version": "2.56.0",
+    "url": "https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.56.0.tar.xz",
+    "file": "git-2.56.0.tar.xz",
+    "sha256": "26c56c296b38c0695b26fa95f475f1d01704d2d38e73465ca30b0b2f5dc789d3"
+  }
 }
