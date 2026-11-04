@@ -350,6 +350,31 @@ def test_formatter_is_mandatory_even_when_policy_off(door):
     assert door.rows()[0]["target"] == "check-hygiene"
 
 
+@pytest.mark.parametrize("broken", ["setup.sh", "zshenv"])
+def test_mandatory_hygiene_checks_later_shell_files(door, broken):
+    for name in ["tools/check-hygiene", "bin/dotfiles-layout-check", "bin/noctalia-glass-check",
+                 "tests/front_door_test.py"]:
+        shutil.copy2(ROOT / name, door.root / name)
+    (Path(door.env["PATH"].split(":")[0]) / "zsh").unlink()
+    node = shutil.which("node")
+    assert node
+    (Path(door.env["PATH"].split(":")[0]) / "node").symlink_to(node)
+    (door.root / "lib").mkdir()
+    (door.root / "lib/dotfiles-check-data.bash").write_text(
+        'bash_files=(bashrc setup.sh)\nzsh_files=(zshrc zshenv)\n')
+    (door.root / "shell").mkdir()
+    for name in ["bashrc", "setup.sh", "zshrc", "zshenv", "bin/mindful-backup.mjs", "bin/mindful-release"]:
+        (door.root / name).write_text("\n")
+    valid = door.invoke("ci-hygiene", policy=OFF)
+    assert valid.returncode == 0, valid.stdout + valid.stderr
+    (door.root / broken).write_text("if then\n")
+    invalid = door.invoke("ci-hygiene", policy=OFF)
+    assert invalid.returncode != 0, invalid.stdout + invalid.stderr
+    assert broken in invalid.stderr
+    assert door.rows()[-1]["target"] == "ci-hygiene"
+    assert door.rows()[-1]["exit"] != 0
+
+
 @pytest.mark.parametrize("payload,recipe", [
     ("refs/heads/a " + "1"*40 + " refs/heads/a " + "2"*40 + "\nrefs/heads/b " + "3"*40 + " refs/tags/v1 " + "4"*40 + "\n", "hook-pre-push"),
     ("refs/heads/a " + "0"*40 + " refs/heads/a " + "2"*40 + "\n", "hook-pre-push-fast"),

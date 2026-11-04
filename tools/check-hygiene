@@ -4,10 +4,14 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 source lib/dotfiles-check-data.bash
 
 echo "bash -n"
-bash -n "${bash_files[@]}"
+for file in "${bash_files[@]}"; do
+    bash -n "$file"
+done
 
 echo "zsh -n"
-zsh -n "${zsh_files[@]}"
+for file in "${zsh_files[@]}"; do
+    zsh -n "$file"
+done
 
 echo "tracked symlink targets"
 bin/dotfiles-layout-check
