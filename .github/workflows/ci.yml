@@ -1,0 +1,64 @@
+{
+  "name": "Tests",
+  "on": {
+    "push": {
+      "branches": [
+        "**"
+      ]
+    },
+    "workflow_dispatch": {}
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "concurrency": {
+    "group": "${{ github.workflow }}-${{ github.ref }}",
+    "cancel-in-progress": true
+  },
+  "jobs": {
+    "test": {
+      "runs-on": "ubuntu-26.04",
+      "timeout-minutes": 90,
+      "env": {
+        "TT_FORCE": "1",
+        "BUILD_JOBS": "2"
+      },
+      "steps": [
+        {
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "fetch-depth": 0,
+            "persist-credentials": false
+          }
+        },
+        {
+          "name": "Prepare disposable tools and state",
+          "shell": "bash",
+          "run": "mkdir -p \"$CI_STATE_DIR/evidence\"\nset -o pipefail\ntools/ci-setup github-hosted \"$CI_STATE_DIR\" 2>&1 | tee \"$CI_STATE_DIR/evidence/setup.log\"",
+          "env": {
+            "CI_STATE_DIR": "${{ runner.temp }}/dotfiles-ci"
+          }
+        },
+        {
+          "name": "Run and reconcile the complete suite",
+          "shell": "bash",
+          "run": "python3 tools/test-suite.py ci",
+          "env": {
+            "CI_STATE_DIR": "${{ runner.temp }}/dotfiles-ci"
+          }
+        },
+        {
+          "name": "Retain verification evidence",
+          "if": "always()",
+          "uses": "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f",
+          "with": {
+            "name": "test-evidence-${{ github.sha }}",
+            "path": "${{ runner.temp }}/dotfiles-ci/evidence",
+            "retention-days": 14,
+            "if-no-files-found": "error"
+          }
+        }
+      ]
+    }
+  }
+}

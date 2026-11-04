@@ -32,6 +32,28 @@ Project hook files are prepared but no main-checkout installation or hosted-suit
 coverage is activated here. Both push routes request full tests; no CI ref coverage
 is declared yet. Gitleaks is separate security scanning. Hosted broad invocations
 require explicit TT_FORCE=1 even under policy-off; a missing override fails.
+
+## Prepared CI
+
+The Tests workflow prepares an Ubuntu 26.04 VM using the hashes and versions in
+tools/ci-pins.json. tools/ci-setup accepts only explicit matching container or
+GitHub-hosted mode; package installation and source builds belong in that disposable
+namespace. It builds real Noctalia and hydrates pinned shell/editor state. Use fresh
+state for each run; setup.sh remains a live host installer.
+
+`ci-hygiene` keeps formatting and source checks and omits detached task records.
+Its fresh HOME also has no promoted live glass state to validate; fixture tests
+still run. `ci-test` forces hygiene, code checks and the complete test route.
+`python3 tools/test-suite.py ci` consumes the setup receipt, clears caller
+credentials, retains both output streams and reconciles source/pytest collection,
+JUnit, ordered native receipts, timing rows and the actual command status.
+Missing, duplicate, failed or fully skipped module evidence fails verification.
+An outer failure or timeout cannot be accepted through a late green report.
+
+The prepared workflow covers branch pushes and manual runs when published. This
+branch still has policy enabled and no declared CI ref coverage; activation requires
+accepted hosted coverage. Ubuntu 24.04 and live desktop compatibility are unproved.
+
 Runtime health, setup.sh installation and live desktop validation are separate
 host actions. Worktree hydration uses the frozen uv lock; do not run the live
 installer to prepare a test fixture or repoint a shared launcher to a worktree.

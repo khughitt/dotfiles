@@ -10,6 +10,7 @@ bash_files=(
     tools/check-hygiene
     tools/check-code
     tools/test-one
+    tools/ci-setup
     .githooks/pre-commit
     .githooks/pre-push
     lib/dotfiles-check-data.bash

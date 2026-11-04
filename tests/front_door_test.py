@@ -1,6 +1,10 @@
 """Exercise the real front doors; replace only expensive leaf commands."""
 
 import json
+import os
+import signal
+import time
+import re
 import shlex
 from pathlib import Path
 import shutil
@@ -33,6 +37,11 @@ if name == "emit.py":
     name = args.pop(0)
 if name == "tasks":
     name = "records"
+if name == "uv" and args == ["run", "--frozen", "python", "tools/test-suite.py", "collect"]:
+    if os.environ.get("FAIL_COLLECTION"):
+        sys.exit(29)
+    pathlib.Path(os.environ["EVIDENCE_DIR"], "collection.json").write_text('{"fixture": true}')
+    sys.exit(0)
 with open(os.environ["EVENTS"], "a") as out:
     out.write(json.dumps({"name": name, "argv": args, "stdin": sys.stdin.read(),
                           "parent_secret": os.environ.get("PARENT_SECRET"), "home": os.environ.get("HOME")}) + "\\n")
@@ -76,9 +85,10 @@ class Door:
         self.run(["git", "init", "-q"]).check_returncode()
         assert Path(self.run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()) == self.root
         assert Path(self.run(["git", "rev-parse", "--absolute-git-dir"]).stdout.strip()) == self.root / ".git"
-        for name in ["justfile", "bin/dotfiles-check", "bin/mindful", "bin/prism",
+        for name in ["justfile", ".gitignore", "bin/dotfiles-check", "bin/mindful", "bin/prism",
                      "tests/dotfiles_check.zsh", "tests/justfile.zsh", "tests/tmp_cleanup.zsh", "tools/tt", "tools/test-one",
-                     "tools/test-suite.py", ".githooks/pre-commit", ".githooks/pre-push"]:
+                     "tools/test-suite.py", "tools/ci-setup", "tools/ci-pins.json",
+                     ".github/workflows/ci.yml", ".githooks/pre-commit", ".githooks/pre-push"]:
             source = ROOT / name
             if source.exists():
                 dest = self.root / name
@@ -98,6 +108,7 @@ class Door:
         assert just
         p = bindir / "just"
         p.write_text(f'''#!/bin/sh
+case "$1" in --fmt) exec {just} "$@" ;; esac
 exec {just} --set check_hygiene_cmd 'python3 tools/emit.py hygiene' \\
   --set check_code_cmd 'python3 tools/emit.py code' \\
   --set test_cmd 'python3 tools/emit.py test' \\
@@ -128,6 +139,11 @@ exec {just} --set check_hygiene_cmd 'python3 tools/emit.py hygiene' \\
     def script(self, mode="full", *args, fail_phase=None, fail_status=0):
         if fail_phase:
             self.env.update(FAIL_PHASE=fail_phase, FAIL_STATUS=str(fail_status))
+        # Leaf doubles own their controls; production's child allowlist stays real.
+        controls = {key: self.env[key] for key in ["EVENTS", "FAIL_PHASE", "FAIL_STATUS", "FAIL_COLLECTION"]
+                    if key in self.env}
+        uv = Path(self.env["PATH"].split(":")[0]) / "uv"
+        uv.write_text(f"#!{sys.executable}\nimport os\nos.environ.update({controls!r})\n" + EMIT)
         return self.run([sys.executable, "tools/test-suite.py", mode, *args])
 
 
@@ -384,3 +400,317 @@ def test_recipe_metadata_fixture_drops_caller_credentials(door):
     rows = [json.loads(line) for line in metadata.read_text().splitlines()]
     assert rows and all(row["secret"] is None for row in rows)
     assert all(row["home"] != door.env["HOME"] for row in rows)
+
+
+@pytest.mark.parametrize("mode,os_id,version,docker,runner,actions,want", [
+    ("container", "ubuntu", "26.04", "1", "", "", 0),
+    ("github-hosted", "ubuntu", "26.04", "0", "github-hosted", "true", 0),
+    ("unknown", "ubuntu", "26.04", "1", "", "", 2),
+    ("container", "ubuntu", "24.04", "1", "", "", 2),
+    ("container", "arch", "26.04", "1", "", "", 2),
+    ("container", "", "", "1", "", "", 2),
+    ("container", "ubuntu", "26.04", "0", "", "", 2),
+    ("github-hosted", "ubuntu", "26.04", "0", "self-hosted", "true", 2),
+    ("github-hosted", "ubuntu", "26.04", "0", "github-hosted", "false", 2),
+    ("github-hosted", "ubuntu", "26.04", "1", "github-hosted", "true", 2),
+])
+def test_ci_setup_namespace_guard(door, mode, os_id, version, docker, runner, actions, want):
+    assert (door.root / "tools/ci-setup").is_file(), "CI setup is missing"
+    result = door.run(["bash", "-c", 'source "$1"; shift; validate_namespace "$@"',
+                       "guard", "tools/ci-setup", mode, os_id, version, docker, runner, actions])
+    assert result.returncode == want, result.stdout + result.stderr
+    assert door.events() == []
+
+
+def test_ci_setup_refuses_host_before_package_commands(door):
+    assert (door.root / "tools/ci-setup").is_file(), "CI setup is missing"
+    for name in ["apt-get", "sudo"]:
+        target = Path(door.env["PATH"].split(":")[0]) / name
+        target.write_text(f"#!{sys.executable}\n" + EMIT)
+        target.chmod(0o755)
+    result = door.run(["bash", "tools/ci-setup", "unknown"])
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert door.events() == []
+
+
+def test_ci_hygiene_without_records(door):
+    result = door.invoke("ci-hygiene", policy=OFF)
+    assert result.returncode == 0, result.stderr
+    assert [event["name"] for event in door.events()] == ["source"]
+    assert [row["target"] for row in door.rows()] == ["ci-hygiene"]
+
+
+def test_ci_force_reaches_nested_check(door):
+    shim = Path(door.env["PATH"].split(":")[0]) / "just"
+    shim.write_text(shim.read_text().replace("--set test_cmd 'python3 tools/emit.py test'",
+                                            "--set test_cmd 'bash bin/dotfiles-check'"))
+    emitter = door.root / "tools/emit.py"
+    emitter.write_text(emitter.read_text() + '''
+if name == "code":
+    events = [json.loads(line) for line in pathlib.Path(os.environ["EVENTS"]).read_text().splitlines()]
+    if sum(event["name"] == "code" for event in events) == 2:
+        sys.exit(23)
+''')
+    door.env["GITHUB_ACTIONS"] = "true"
+    result = door.invoke("ci-test", policy=OFF)
+    assert result.returncode == 23, result.stderr
+    assert [event["name"] for event in door.events()] == ["source", "code", "source", "code"]
+    assert all(row["execution"] == "ran" and row["execution_reason"] == "forced" for row in door.rows())
+
+
+def test_workflow_branch_refs_and_isolation(door):
+    workflow_path = ROOT / ".github/workflows/ci.yml"
+    assert workflow_path.is_file(), "Hosted workflow is missing"
+    workflow = json.loads(workflow_path.read_text())
+    assert workflow["on"] == {"push": {"branches": ["**"]}, "workflow_dispatch": {}}
+    assert workflow["permissions"] == {"contents": "read"}
+    assert workflow["concurrency"] == {"group": "${{ github.workflow }}-${{ github.ref }}",
+                                       "cancel-in-progress": True}
+    assert len(workflow["jobs"]) == 1
+    job = next(iter(workflow["jobs"].values()))
+    assert job["runs-on"] == "ubuntu-26.04"
+    assert 1 <= job["timeout-minutes"] <= 90
+    assert job["env"]["TT_FORCE"] == "1"
+    for step in job["steps"]:
+        if "uses" in step:
+            assert re.fullmatch(r"[a-f0-9]{40}", step["uses"].rsplit("@", 1)[1])
+    checkout = next(step for step in job["steps"] if step.get("uses", "").startswith("actions/checkout@"))
+    assert checkout["with"]["persist-credentials"] is False
+    upload = next(step for step in job["steps"] if step.get("uses", "").startswith("actions/upload-artifact@"))
+    assert upload["if"] == "always()"
+    assert upload["with"]["if-no-files-found"] == "error"
+    assert 1 <= upload["with"]["retention-days"] <= 30
+    assert 'ci_suite_refs := ""' in (ROOT / "justfile").read_text()
+
+
+def test_ci_pipeline_contains_stderr_failure_and_no_caller_credentials(door):
+    state = door.root.parent / "ci-state"
+    state.mkdir()
+    keys = ["PATH", "HOME", "USER", "TERM", "XDG_CONFIG_HOME", "XDG_DATA_HOME",
+            "XDG_CACHE_HOME", "XDG_STATE_HOME", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM",
+            "TT_LOG", "EVIDENCE_DIR"]
+    (state / "setup.json").write_text(json.dumps({"namespace": "container",
+                                                 "environment": {**{key: door.env[key] for key in keys},
+                                                                 "PARENT_SECRET": "fake-setup-credential",
+                                                                 "GIT_DIR": "/forbidden-setup-git"}}))
+    door.env.update(CI_STATE_DIR=str(state), PARENT_SECRET="fake-caller-credential",
+                    GIT_DIR=str(door.root.parent / "forbidden-git"))
+    just = Path(door.env["PATH"].split(":")[0]) / "just"
+    just.write_text(f"#!{sys.executable}\n" + '''import json,os,sys
+print(json.dumps({"force":os.getenv("TT_FORCE"),"actions":os.getenv("GITHUB_ACTIONS"),
+                  "secret":os.getenv("PARENT_SECRET"),"git_dir":os.getenv("GIT_DIR")}))
+print("stderr-must-be-retained",file=sys.stderr)
+sys.exit(17)
+''')
+    result = door.script("ci")
+    assert result.returncode == 17, result.stdout + result.stderr
+    evidence = Path(door.env["EVIDENCE_DIR"])
+    output = (evidence / "ci-test.log").read_text()
+    assert "stderr-must-be-retained" in output
+    assert '"force": "1"' in output and '"actions": "true"' in output
+    assert '"secret": null' in output and '"git_dir": null' in output
+    assert "fake-caller-credential" not in output
+    assert "fake-setup-credential" not in output
+    assert json.loads((evidence / "outer.json").read_text())["exit"] == 17
+
+
+@pytest.fixture
+def complete_evidence(door):
+    module = door.root / "tests/unit_test.py"
+    module.write_text("def test_one():\n    assert 1 == 1\n")
+    paths = [f"noctalia/plugins/resource-pressure-alert/{name}" for name in LUA]
+    paths += [f"tests/{name}.zsh" for name in ZSH]
+    for path in paths:
+        target = door.root / path
+        if not target.exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("fixture\n")
+    door.run(["git", "add", "."]).check_returncode()
+    door.run(["git", "commit", "-qm", "test: seed evidence fixture"]).check_returncode()
+    sha = door.run(["git", "rev-parse", "HEAD"]).stdout.strip()
+    evidence = Path(door.env["EVIDENCE_DIR"])
+    collection = {"exit": 0, "source_sha": sha, "source_root": str(door.root),
+                  "source_modules": ["tests/unit_test.py"],
+                  "modules": [{"path": "tests/unit_test.py", "outcome": "passed"}],
+                  "cases": [{"nodeid": "tests/unit_test.py::test_one", "classname": "tests.unit_test",
+                             "name": "test_one", "module": "tests/unit_test.py"}]}
+    (evidence / "collection.json").write_text(json.dumps(collection))
+    (evidence / "execution-collection.json").write_text(json.dumps(collection))
+    (evidence / "pytest.xml").write_text('<testsuites><testsuite tests="1"><testcase classname="tests.unit_test" name="test_one"/></testsuite></testsuites>')
+    (evidence / "outer.json").write_text(json.dumps({"exit": 0, "timed_out": False, "interrupted": 0}))
+    rows = []
+
+    def start(name, argv):
+        rows.append({"event": "start", "name": name, "argv": argv, "at": "2026-11-03T00:00:00Z"})
+
+    def end(name):
+        rows.append({"event": "end", "name": name, "exit": 0, "seconds": .1, "at": "2026-11-03T00:00:01Z"})
+
+    for path in paths[:3]:
+        start(path, ["lua", path]); end(path)
+    start("pytest", ["uv", "run", "--frozen", "pytest", "-q", "--junitxml=/fixture/pytest.xml"])
+    end("pytest")
+    for name in ZSH:
+        path = f"tests/{name}.zsh"
+        start(path, ["zsh", path])
+        if name == "dotfiles_check":
+            for file in ["zshrc", "shell/aliases", "shell/audio", "shell/functions", "shell/history",
+                         "shell/macos", "shell/tmux", "shell/ubuntu", "shell/vconsole", "shell/zoxide"]:
+                phase = "modeline:" + file
+                start(phase, ["nvim", "--headless", "-i", "NONE", "-u", "NONE", "--cmd", "set noswapfile",
+                              "--cmd", "filetype on", "--cmd", "syntax on", str(door.root / file),
+                              '+lua print("DOTFILES_FT:" .. vim.bo.filetype .. ":" .. vim.bo.syntax)', "+qa!"])
+                end(phase)
+            for phase, args in [("nvim-clipboard", [f"+lua dofile('{door.root}/nvim/tests/clipboard_test.lua')", "+qa!"]),
+                                ("nvim-theme", ["-l", str(door.root / "nvim/tests/theme_test.lua")])]:
+                start(phase, ["nvim", "--headless", "-i", "NONE", "-u", str(door.root / "nvim/init.lua"),
+                              "--cmd", "set noswapfile", *args]); end(phase)
+        end(path)
+    (evidence / "phases.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    timing = [{"target": target, "execution": "ran", "execution_reason": "forced", "exit": 0,
+               "tests": 1 if target == "test" else None}
+              for target in ["ci-hygiene", "check-code", "check-code", "test"]]
+    Path(door.env["TT_LOG"]).write_text("".join(json.dumps(row) + "\n" for row in timing))
+    (evidence / "runs.jsonl").write_text(Path(door.env["TT_LOG"]).read_text())
+    return evidence
+
+
+def test_collection_records_tracked_modules_and_real_nodeids(door):
+    (door.root / "tests/unit_test.py").write_text("def test_one():\n    assert 1 == 1\n")
+    (door.root / "tests/assertions_test.py").write_text("assert 2 == 2\n")
+    door.run(["git", "add", "."]).check_returncode()
+    door.run(["git", "commit", "-qm", "test: seed collection fixture"]).check_returncode()
+    result = door.script("collect")
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = json.loads((Path(door.env["EVIDENCE_DIR"]) / "collection.json").read_text())
+    assert report["source_modules"] == ["tests/assertions_test.py", "tests/unit_test.py"]
+    assert {row["path"] for row in report["modules"]} == set(report["source_modules"])
+    assert [case["nodeid"] for case in report["cases"]] == ["tests/unit_test.py::test_one"]
+
+
+def test_full_collection_failure_stops_before_pytest(door):
+    door.env["FAIL_COLLECTION"] = "1"
+    result = door.script()
+    assert result.returncode == 29, result.stdout + result.stderr
+    assert [event["name"] for event in door.events()] == ["lua", "lua", "lua"]
+
+
+@pytest.mark.parametrize("damage", [None, "missing_collection", "missing_case", "duplicate_case", "all_skipped",
+                                    "partial_skipped", "timing_count", "source_dirty", "duplicate_module", "missing_execution", "missing_module", "failed_collection", "missing_phase", "out_of_order", "bad_argv", "late_failure",
+                                    "late_timeout", "missing_outer", "policy_skip", "unforced", "malformed_xml"])
+def test_complete_evidence_rejects_partial_success(door, complete_evidence, damage):
+    evidence = complete_evidence
+    if damage == "source_dirty":
+        (door.root / "tests/unit_test.py").write_text("assert False\n")
+    elif damage == "partial_skipped":
+        (door.root / "tests/unit_test.py").write_text("import pytest\ndef test_one():\n    assert 1 == 1\ndef test_two():\n    pytest.skip('fixture omission')\n")
+        door.run(["git", "add", "."]).check_returncode()
+        door.run(["git", "commit", "-qm", "test: seed partially skipped module"]).check_returncode()
+        for name in ["collection.json", "execution-collection.json"]:
+            p = evidence / name; data = json.loads(p.read_text())
+            data["source_sha"] = door.run(["git", "rev-parse", "HEAD"]).stdout.strip()
+            data["cases"].append({"nodeid":"tests/unit_test.py::test_two", "classname":"tests.unit_test", "name":"test_two", "module":"tests/unit_test.py"})
+            p.write_text(json.dumps(data))
+        (evidence / "pytest.xml").write_text('<testsuites><testsuite tests="2"><testcase classname="tests.unit_test" name="test_one"/><testcase classname="tests.unit_test" name="test_two"><skipped message="fixture omission"/></testcase></testsuite></testsuites>')
+    elif damage == "timing_count":
+        p = evidence / "runs.jsonl"; rows = [json.loads(line) for line in p.read_text().splitlines()]
+        rows[-1]["tests"] = 999
+        p.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    elif damage == "missing_collection":
+        (evidence / "collection.json").unlink()
+    elif damage in ["missing_case", "duplicate_case", "all_skipped", "malformed_xml"]:
+        xml = {"missing_case": '<testsuites><testsuite tests="0"/></testsuites>',
+               "duplicate_case": '<testsuites><testsuite tests="2"><testcase classname="tests.unit_test" name="test_one"/><testcase classname="tests.unit_test" name="test_one"/></testsuite></testsuites>',
+               "all_skipped": '<testsuites><testsuite tests="1"><testcase classname="tests.unit_test" name="test_one"><skipped message="not a passing module"/></testcase></testsuite></testsuites>',
+               "malformed_xml": '<testsuites>'}[damage]
+        (evidence / "pytest.xml").write_text(xml)
+    elif damage == "missing_execution":
+        (evidence / "execution-collection.json").unlink()
+    elif damage in ["missing_module", "failed_collection"]:
+        p = evidence / "collection.json"; data = json.loads(p.read_text())
+        if damage == "missing_module":
+            data["modules"] = []
+        else:
+            data["exit"] = 2
+        p.write_text(json.dumps(data))
+    elif damage == "duplicate_module":
+        p = evidence / "collection.json"; data = json.loads(p.read_text())
+        data["modules"] *= 2; p.write_text(json.dumps(data))
+    elif damage in ["missing_phase", "out_of_order", "bad_argv"]:
+        p = evidence / "phases.jsonl"; data = [json.loads(line) for line in p.read_text().splitlines()]
+        if damage == "missing_phase":
+            data = [row for row in data if row["name"] != "nvim-theme"]
+        elif damage == "out_of_order":
+            data[0], data[2] = data[2], data[0]
+        else:
+            data[0]["argv"] = ["true"]
+        p.write_text("".join(json.dumps(row) + "\n" for row in data))
+    elif damage in ["late_failure", "late_timeout", "missing_outer"]:
+        p = evidence / "outer.json"
+        if damage == "missing_outer":
+            p.unlink()
+        else:
+            p.write_text(json.dumps({"exit": 23 if damage == "late_failure" else 124,
+                                     "timed_out": damage == "late_timeout", "interrupted": 0}))
+    elif damage in ["policy_skip", "unforced"]:
+        p = evidence / "runs.jsonl"; data = [json.loads(line) for line in p.read_text().splitlines()]
+        data[-1]["execution" if damage == "policy_skip" else "execution_reason"] = "skipped" if damage == "policy_skip" else "default"
+        p.write_text("".join(json.dumps(row) + "\n" for row in data))
+    result = door.script("verify", str(evidence))
+    if damage in [None, "partial_skipped"]:
+        assert result.returncode == 0, result.stdout + result.stderr
+        report = json.loads((evidence / "verdict.json").read_text())
+        assert report["pytest"] == {"total": 2 if damage == "partial_skipped" else 1, "passed": 1, "failed": 0, "skipped": 1 if damage == "partial_skipped" else 0}
+        assert report["phases"] == 28
+    else:
+        assert result.returncode != 0
+        assert "evidence:" in result.stdout + result.stderr
+
+
+def test_execution_collection_observes_real_pytest(door):
+    (door.root / "tests/unit_test.py").write_text("def test_one():\n    assert 1 == 1\n")
+    door.run(["git", "add", "."]).check_returncode()
+    door.run(["git", "commit", "-qm", "test: seed execution fixture"]).check_returncode()
+    door.env.update(PYTHONPATH=str(door.root), PYTEST_PLUGINS="tools.test-suite")
+    result = door.run([sys.executable, "-m", "pytest", "tests/unit_test.py", "-q"])
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = json.loads((Path(door.env["EVIDENCE_DIR"]) / "execution-collection.json").read_text())
+    assert report["source_modules"] == ["tests/unit_test.py"]
+    assert [case["nodeid"] for case in report["cases"]] == ["tests/unit_test.py::test_one"]
+
+
+def test_ci_pipeline_stops_its_surviving_child(door):
+    state = door.root.parent / "ci-state"
+    state.mkdir()
+    keys = ["PATH", "HOME", "USER", "TERM", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM", "TT_LOG", "EVIDENCE_DIR"]
+    (state / "setup.json").write_text(json.dumps({"namespace": "container", "environment": {key: door.env[key] for key in keys}}))
+    door.env["CI_STATE_DIR"] = str(state)
+    pidfile = state / "child.json"
+    just = Path(door.env["PATH"].split(":")[0]) / "just"
+    just.write_text(f"#!{sys.executable}\n" + f'''import json,os,subprocess,sys
+from pathlib import Path
+child = subprocess.Popen(["/usr/bin/sleep", "300"], env={{"PATH":"/usr/bin:/bin","HOME":{door.env['HOME']!r}}},
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+Path({str(pidfile)!r}).write_text(json.dumps({{"pid":child.pid,"group":os.getpgrp()}}))
+sys.exit(17)
+''')
+    pid = None
+    try:
+        result = door.script("ci")
+        assert result.returncode == 17, result.stdout + result.stderr
+        pid = json.loads(pidfile.read_text())["pid"]
+        status = Path(f"/proc/{pid}/stat")
+        for _ in range(50):
+            if not status.exists() or status.read_text().rsplit(")", 1)[1].split()[0] == "Z":
+                break
+            time.sleep(.01)
+        else:
+            pytest.fail("CI command left its fixture child running")
+    finally:
+        if pid is None and pidfile.exists():
+            pid = json.loads(pidfile.read_text())["pid"]
+        if pid is not None:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass

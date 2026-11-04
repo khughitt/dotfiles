@@ -202,6 +202,22 @@ route requests the complete local suite and uncovered pushes warn when policy sk
 it. Existing Gitleaks scanning does not establish test coverage. Hosted broad work
 must set `TT_FORCE=1`; missing force is a failure, including nested requests.
 
+The prepared Tests workflow uses the explicit Ubuntu 26.04 runner and the pinned
+source builds, tools and plugin state in `tools/ci-pins.json`. Its shared setup
+accepts only a disposable Ubuntu container or GitHub-hosted VM, builds the real
+Noctalia CLI and prepares isolated HOME/XDG state and executable temporary fixtures.
+It uses no host binaries, credentials or private task registry. Run it with a fresh
+state directory; it does not use the live `setup.sh` installer.
+
+`just ci-hygiene` runs formatting/source checks without detached task records; a
+fresh HOME also omits live promoted-glass validation. `just ci-test` forces those
+checks, broad code checks and the complete suite. The CI evidence wrapper retains
+stdout/stderr and rejects outer failures, missing/duplicate/all-skipped modules,
+changed collection, missing native phases or unforced timing evidence. Evidence is
+uploaded even on failure, with fourteen-day retention. Publication and accepted
+hosted coverage remain separate activation gates; policy and CI ref coverage are
+unchanged here. This setup proves neither Ubuntu 24.04 nor live desktop behavior.
+
 `bin/dotfiles-health` verifies required tools, important managed symlinks,
 shell sourceability, Dropbox ignore timer links, and stale config links that
 were intentionally removed from setup management.

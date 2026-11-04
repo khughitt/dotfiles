@@ -9,7 +9,9 @@ check_hygiene_cmd := "just --fmt --check --justfile justfile && tools/check-hygi
 check_code_cmd := "tools/check-code"
 ci_remote := "origin"
 ci_suite_refs := ""
+
 # Tests read configuration and documentation: retain normal hygiene for every commit.
+
 docs_paths := ""
 
 default:
@@ -24,6 +26,15 @@ check-code:
 check:
     just check-hygiene
     just check-code
+
+# Detached task records are unavailable in the disposable runner.
+ci-hygiene:
+    {{ tt }} ci-hygiene -- sh -c 'just --fmt --check --justfile justfile && tools/check-hygiene'
+
+ci-test:
+    TT_FORCE=1 just ci-hygiene
+    TT_FORCE=1 just check-code
+    TT_FORCE=1 just test
 
 health:
     bin/dotfiles-health --skip-systemd --skip-noctalia-ipc
