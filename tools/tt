@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# tt version 10
+# tt version 11
 """Timing wrapper: `tt <target> -- <command> [args...]`.
 
 Runs the command with stdin, stdout, and stderr passed through, and appends one JSON line
 describing the run to the log. Projects carry a byte-identical copy at tools/tt.
 Vendored from https://github.com/khughitt/ops (bin/tt); never edit the copy, see tools/README.md.
-Standard library only. Design: ops docs/specs/2026-09-04-test-ci-audit-design.md.
+Standard library only. Reference: ops docs/tooling.md.
 """
 import contextlib
 import datetime
@@ -105,7 +105,7 @@ def parse_tests(lines):
 
 
 # What a runner's selector said it ran, narrowest first: a command that runs several
-# sessions records the widest. Design: ops docs/specs/2026-10-03-widened-selection-design.md.
+# sessions records the widest. Reference: ops docs/test-execution-policy.md.
 SELECTIONS = ("affected", "packages", "new-db")
 
 # pytest-testmon's report-header line is "testmon: ", any deactivation reasons, then its
@@ -134,7 +134,7 @@ def parse_selection(lines):
     return widest
 
 
-# Per-test durations (spec 2026-10-08 §4). JUnit files come from TT_JUNIT_DIR; unittest,
+# Per-test durations (docs/test-execution-policy.md). JUnit files come from TT_JUNIT_DIR; unittest,
 # which writes none, prints exact per-test totals under --durations.
 SLOWEST_KEEP = 5
 JUNIT_RUNNERS = ("pytest", "vitest", "node", "playwright")
@@ -146,7 +146,7 @@ UNITTEST_DURATION = re.compile(r"^(\d+(?:\.\d+)?)s\s+.*\(([^()]+)\)\s*$")
 
 def _duration(text):
     """A finite, non-negative number of seconds, else None: the only durations a line may
-    carry (§6.2)."""
+    carry."""
     try:
         value = float(text)
     except (TypeError, ValueError):
@@ -156,7 +156,7 @@ def _duration(text):
 
 def capped_identity(identity):
     """At most IDENTITY_MAX characters; a cut one keeps a hash of the whole, so two long
-    identities never collide (§4.2)."""
+    identities never collide."""
     if len(identity) <= IDENTITY_MAX:
         return identity
     return identity[:283] + "…#" + hashlib.sha256(identity.encode()).hexdigest()[:8]
@@ -186,7 +186,7 @@ class JunitSkipped(Exception):
 
 
 def junit_identity(runner, case, suites, root):
-    """The identity of one <testcase> (§4.2). `suites` holds the attributes of its
+    """The identity of one <testcase>. `suites` holds the attributes of its
     enclosing <testsuite> elements, outermost first."""
     name, classname = case.get("name", ""), case.get("classname", "")
     if runner in ("pytest", "vitest"):
@@ -204,7 +204,7 @@ def junit_identity(runner, case, suites, root):
 
 def read_junit(path, runner, root):
     """{identity: seconds} for one file. Cases with one identity are one test and are
-    summed: pytest splits a test whose call and teardown both fail (§4.1). Anything that
+    summed: pytest splits a test whose call and teardown both fail. Anything that
     stops the file being read whole raises JunitSkipped, so the run is still recorded.
     The one stat is inside the try: Path.is_file() raises PermissionError on 3.12/3.13."""
     totals, suites = {}, []
@@ -240,7 +240,7 @@ def read_junit(path, runner, root):
 
 def read_junit_dir(directory, root, warn):
     """[(identity, seconds)] from every JUnit file in directory, or None when none was
-    read. Each file's cases stay separate from another file's (§4.1)."""
+    read. Each file's cases stay separate from another file's."""
     found = None
     for path in sorted(pathlib.Path(directory).glob("*.xml")):
         runner = path.stem.split("-", 1)[0]
@@ -333,7 +333,7 @@ def git_info(cwd):
     return rev, bool(status) if status is not None else None
 
 
-# The content identity's limits (spec 2026-10-08 §3.3). Read at call time, so a test can
+# The content identity's limits (docs/test-execution-policy.md). Read at call time, so a test can
 # lower them.
 CONTENT_MAX_PATHS = 5000
 CONTENT_MAX_SECONDS = 5.0
@@ -378,7 +378,7 @@ def _git_bytes(cwd, args, budget, env, stdin=None):
 
 def content_identity(cwd, clock=time.monotonic, seconds=None, max_paths=None):
     """The identity of the working tree containing cwd: 16 hex digits, or None outside git
-    or when a git call fails. Raises ContentSkipped past a limit. Spec 2026-10-08 §3."""
+    or when a git call fails. Raises ContentSkipped past a limit. See docs/test-execution-policy.md."""
     budget = _Budget(clock, CONTENT_MAX_SECONDS if seconds is None else seconds,
                      CONTENT_MAX_PATHS if max_paths is None else max_paths)
     env = _git_env()
@@ -444,7 +444,7 @@ def _tree_identity(top, budget, env):
             executable = os.stat(top / os.fsdecode(path)).st_mode & stat.S_IXUSR
             entries[path] = ("100755" if executable else "100644", oid)
     # Every submodule by its files, listed or not, so committing the pointer in the parent
-    # never changes the identity (§3.2 step 4).
+    # never changes the identity.
     for path, (mode, _oid) in list(entries.items()):
         if mode != "160000":
             continue
