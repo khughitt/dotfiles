@@ -311,8 +311,8 @@ Configured command-line and desktop tools:
 - `setup.sh`, `lib/` — host installer, phase runner, setup manifest data, and Git packing policy helper
 - `bin/` — standalone commands and wrappers (`dotfiles-health`, `dotfiles-check`, `dotfiles-layout-check`, `dotfiles-secrets-check`, `noctalia-glass-sync`, `noctalia-glass-check`, `work-link`, `gpu-ctl`, `mindful`, `prism`, and Niri helpers)
 - `bashrc`, `zshrc`, `zshenv`, `shell/` — Bash and Zsh startup, aliases, functions, completions, and OS helpers
-- `nvim/`, `kitty/`, `tmux.conf`, `radian/`, `visidata/`, `yazi/`, `zathura/`, `btop/`, `bat/`, `fastfetch/`, `lsd/` — editor, terminal, and CLI tool configurations
-- `niri/`, `noctalia/`, `gtk-3.0/`, `fcitx5/`, `prism/`, `wali/` — Wayland compositor, desktop shell, theme templates, and per-host graphical configuration
+- `nvim/`, `kitty/`, `ghostty/`, `tmux.conf`, `visidatarc`, `yazi/`, `zathura/`, `lsd/`, `glow/`, `git/`, `ripgreprc` — editor, terminal, and CLI tool configurations
+- `niri/`, `noctalia/`, `gtk-3.0/`, `gtk-4.0/`, `fcitx/`, `prism/`, `wali/` — Wayland compositor, desktop shell, theme templates, and per-host graphical configuration
 - `systemd/user/` — user services and timers (`dropbox-ignore-flux`, `git-index-retention`, `git-index-health`, `mindful`, `wali`, `gpu-fan-curve`)
 - `docs/` — operator runbooks and retained Noctalia theme design specs cited by `bin/noctalia-glass-sync`
 - `tests/`, `tools/` — Python and Zsh verification suites, test runner (`tools/test-suite.py`, `tools/test-one`), hygiene scripts, and tools vendored from `ops` (`tools/tt`, `tools/ops-docs`)
@@ -320,4 +320,4 @@ Configured command-line and desktop tools:
 ## Consumers
 
 - Host workstations and headless machines link `$HOME` and `$XDG_CONFIG_HOME` paths into this checkout via `setup.sh` and check live state with `bin/dotfiles-health`.
-- Sibling checkouts under `~/d/` integrate with surfaces managed here: `lookout`, `prism`, `familiar`, `wali`, and `noctalia-resource-alert` are wired by `setup.sh` phases and user units, and `ops` supplies the shared `git-index-retention` and `git-index-health` units and vendored `tools/`.
+- Sibling checkouts integrate with surfaces managed here: `lookout`, `prism`, `familiar`, `wali`, and `noctalia-resource-alert` are wired by `setup.sh` phases and user units, and `ops` supplies the shared `git-index-retention` and `git-index-health` units and vendored `tools/`.
