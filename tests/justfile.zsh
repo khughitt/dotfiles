@@ -38,9 +38,10 @@ assert_equals() {
 
 list_output=$(run_just --list)
 
-for recipe in check check-hygiene check-code gate test-one test-full health health-live health-systemd secrets setup-dry-run setup-only test test-resource-alert; do
+for recipe in check check-hygiene check-code gate test-one test-full health health-live health-systemd secrets setup-dry-run setup-only test; do
   assert_contains "$list_output" "$recipe" "expected just recipe: $recipe"
 done
+[[ "$list_output" != *"resource-alert"* ]] || fail "unexpected resource-alert recipe in just --list"
 
 assert_contains "$(run_just --dry-run check 2>&1)" \
   "just check-hygiene" \

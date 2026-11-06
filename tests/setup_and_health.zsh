@@ -185,6 +185,10 @@ run_setup() {
     printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/home/d/wali/bin/walictl"
     chmod +x "${tmp}/home/d/wali/bin/walictl"
   fi
+  if [[ "${RESOURCE_ALERT_SOURCE_PRESENT:-true}" == true ]]; then
+    mkdir -p "${tmp}/home/d/noctalia-resource-alert"
+    touch "${tmp}/home/d/noctalia-resource-alert/plugin.toml"
+  fi
   if [[ "${OPS_SOURCE_PRESENT:-true}" == true ]]; then
     # the systemd phase links obs-index.service and obs-index.timer out of the
     # ops checkout, which a test HOME does not have
@@ -890,11 +894,13 @@ test_noctalia_plugin_phase_links_and_enables_exact_ids() {
   [[ -L "${tmp}/data/noctalia/plugins/wali-panel" ]]
   [[ -L "${tmp}/data/noctalia/plugins/prism" ]]
   [[ -L "${tmp}/data/noctalia/plugins/resource-pressure-alert" ]] || fail "resource alert source link is missing"
-  [[ "$(readlink -f "${tmp}/data/noctalia/plugins/resource-pressure-alert")" == "${repo_root}/noctalia/plugins/resource-pressure-alert" ]] || fail "resource alert link must resolve to DOTS_HOME source"
+  [[ "$(readlink -f "${tmp}/data/noctalia/plugins/resource-pressure-alert")" == "${tmp}/home/d/noctalia-resource-alert" ]] || fail "resource alert link must resolve to ~/d/noctalia-resource-alert"
   [[ -f "${tmp}/data/noctalia/plugins/wali-panel/plugin.toml" ]]
   [[ -f "${tmp}/data/noctalia/plugins/prism/plugin.toml" ]]
+  [[ -f "${tmp}/data/noctalia/plugins/resource-pressure-alert/plugin.toml" ]]
   [[ ! -e "${tmp}/data/noctalia/plugins/wali-panel/manifest.json" ]]
   [[ ! -e "${tmp}/data/noctalia/plugins/prism/manifest.json" ]]
+  [[ ! -e "${tmp}/data/noctalia/plugins/resource-pressure-alert/manifest.json" ]]
   [[ "$(<"$log")" == $'msg plugins enable khughitt/wali-panel\nmsg plugins enable khughitt/prism\nmsg plugins enable khughitt/resource-pressure-alert' ]] || \
     fail "plugin phase did not issue the three exact enable calls"
 }
@@ -981,25 +987,23 @@ test_noctalia_plugin_phase_requires_wali_source() {
 }
 
 test_noctalia_plugin_phase_requires_resource_source() {
-  local tmp output exit_status fixture
+  local tmp output exit_status
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  fixture="${tmp}/repo"
-  mkdir -p "${fixture}/lib"
-  cp "${repo_root}/setup.sh" "$fixture/"
-  cp "${repo_root}/lib/dotfiles-setup-data.bash" "${fixture}/lib/"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
   set +e
-  output=$(SETUP_ROOT="$fixture" run_setup "$tmp" --link-only --only noctalia-plugins 2>&1)
+  output=$(RESOURCE_ALERT_SOURCE_PRESENT=false run_setup "$tmp" --link-only \
+    --only noctalia-plugins 2>&1)
   exit_status=$?
   set -e
   (( exit_status != 0 )) || fail "plugin setup accepted missing resource alert source"
-  [[ "$output" == *"Link source does not exist"* && "$output" == *"resource-pressure-alert"* ]] || \
+  [[ "$output" == *"Link source does not exist"* && "$output" == *"d/noctalia-resource-alert"* ]] || \
     fail "plugin setup did not name the missing resource source: ${output}"
 }
 
 test_resource_alert_health_failures() {
   local tmp output exit_status defect plugin
-  for defect in wrong-link missing-manifest stale-manifest disabled; do
+  for defect in wrong-link stale-in-tree-link missing-manifest stale-manifest disabled; do
     tmp=$(make_tmpdir)
     register_tmp_cleanup "$tmp"
     mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
@@ -1011,6 +1015,10 @@ test_resource_alert_health_failures() {
         mkdir -p "$plugin"
         if [[ "$defect" == wrong-link ]]; then touch "$plugin/plugin.toml"; fi
         if [[ "$defect" == stale-manifest ]]; then touch "$plugin/manifest.json"; fi ;;
+      stale-in-tree-link)
+        mkdir -p "${tmp}/in-tree-resource-alert"
+        touch "${tmp}/in-tree-resource-alert/plugin.toml"
+        ln -sfn "${tmp}/in-tree-resource-alert" "$plugin" ;;
     esac
     set +e
     if [[ "$defect" == disabled ]]; then
@@ -1022,7 +1030,7 @@ test_resource_alert_health_failures() {
     set -e
     (( exit_status != 0 )) || fail "health accepted resource alert ${defect}"
     case "$defect" in
-      wrong-link) [[ "$output" == *"not a symlink"* || "$output" == *"wrong link target"* ]] || fail "$output" ;;
+      wrong-link|stale-in-tree-link) [[ "$output" == *"not a symlink"* || "$output" == *"wrong link target"* ]] || fail "$output" ;;
       missing-manifest|stale-manifest) [[ "$output" == *"missing or stale Noctalia plugin manifest: resource-pressure-alert"* ]] || fail "$output" ;;
       disabled) [[ "$output" == *"Noctalia plugin not enabled: khughitt/resource-pressure-alert"* ]] || fail "$output" ;;
     esac

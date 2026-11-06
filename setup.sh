@@ -14,6 +14,7 @@ PRISM_ROOT="${HOME}/d/prism"
 # The wali checkout, reached the same way: bin/walictl execs into it and the
 # systemd and Noctalia-plugin phases link out of it.
 WALI_ROOT="${HOME}/d/wali"
+RESOURCE_ALERT_ROOT="${HOME}/d/noctalia-resource-alert"
 # The ops checkout, reached the same way: the obs-index, git-index-retention and
 # git-index-health systemd user units link out of it.
 OPS_ROOT="${HOME}/d/ops"
@@ -919,7 +920,7 @@ function setup_noctalia_plugins() {
     ensure_dir "$plugin_dir"
     ln_s "${WALI_ROOT}/integrations/noctalia-plugin" "${plugin_dir}/wali-panel"
     ln_s "${HOME}/d/prism/integrations/noctalia-plugin" "${plugin_dir}/prism"
-    ln_s "${DOTS_HOME}/noctalia/plugins/resource-pressure-alert" "${plugin_dir}/resource-pressure-alert"
+    ln_s "${RESOURCE_ALERT_ROOT}" "${plugin_dir}/resource-pressure-alert"
 
     # The links are what dotfiles-health requires and they need nothing running, so
     # every pass makes them. Only enabling talks to Noctalia; when it is not up, name

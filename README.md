@@ -95,8 +95,10 @@ is not enabled, active and passing, and never claims that indexes converged.
 Capture hosts need explicit sudoers grants; follow
 [the capture-host setup instructions](docs/capture-host-setup.md) to install them.
 
-Resource Pressure Alert is a native Noctalia v5 plugin for memory, sustained CPU
-use and scarce disk space. See its [policy and activation guide](noctalia/plugins/resource-pressure-alert/README.md). Live enablement is a separate host action.
+Resource Pressure Alert (`khughitt/resource-pressure-alert`) is a native Noctalia v5
+plugin for memory, sustained CPU use and scarce disk space, maintained in its sibling
+checkout `~/d/noctalia-resource-alert` and linked by `./setup.sh --only noctalia-plugins`.
+Live enablement is a separate host action.
 
 A new machine
 -------------
@@ -165,12 +167,11 @@ Common maintenance commands are wrapped in `just`:
 
 ```
 just check          # mandatory source/record hygiene, then broad code checks
-just test           # complete Lua, Python and Zsh suite, subject to .tt.toml
+just test           # complete Python and Zsh suite, subject to .tt.toml
 just test-full      # deliberately force the full suite
 TT_FORCE=1 just test-portable  # deliberate portable subset
 just test-one pytest tests/test_git_index_hook.py -k event
 just test-one zsh tests/justfile.zsh
-just test-one lua noctalia/plugins/resource-pressure-alert/plugin_test.lua
 just health         # check links and local setup without querying systemd state
 just health-systemd # include systemd user timer state
 just setup-dry-run  # preview headless link-only setup
@@ -188,9 +189,8 @@ never a passing suite. Missing policy enables broad work; invalid policy fails.
 Use `just test-one` for changed behavior, `just test-full` for a deliberate full
 suite, `TT_FORCE=1 just test-portable` for the portable subset, and
 `TT_FORCE=1 just check` for complete code checks. `test-one` supports pytest,
-zsh, lua and existing headless nvim invocations with literal arguments.
-`test-resource-alert` remains a deliberate component check. The full route keeps
-three Lua harnesses, unchanged Python discovery, twelve Zsh scripts and nested
+zsh and existing headless nvim invocations with literal arguments.
+The full route keeps unchanged Python discovery, twelve Zsh scripts and nested
 Neovim checks; supplementary Noctalia/science-md.nvim suites remain outside it.
 
 `check-hygiene` always checks formatting, source syntax, tracked links/modelines,
@@ -202,9 +202,9 @@ skip establishes. Choose relevant local integration checks after shell/editor,
 setup, hook, Noctalia or host-interaction changes and before live application when
 useful. Unrelated edits, commits and reviews create no full-suite obligation.
 
-The portable CI subset consists of the three resource-pressure-alert Lua harnesses,
-`tests/front_door_test.py`, `tests/kernel_gate_test.py` and the five current
-`tests/niri/` modules. `just ci-test` forces source hygiene and this subset only.
+The portable CI subset consists of `tests/front_door_test.py`,
+`tests/kernel_gate_test.py` and the five current `tests/niri/` modules.
+`just ci-test` forces source hygiene and this subset only.
 Other Python modules, full Zsh/Neovim integration and installed Noctalia/GPU/systemd/
 console/desktop behavior are not automatic coverage. Excluded modules and actual
 skipped cases are reported separately; a portable green is not a full-suite pass.
@@ -214,7 +214,7 @@ hash-verified uv/Python/Just archives, with frozen Python dependencies. It does 
 build Noctalia/Git or hydrate shell/editor plugins/parsers. The existing suite helper's
 ci mode uses a fresh external CI_STATE_DIR, explicit UV_PYTHON and isolated HOME,
 XDG, Git, cache and timing state. It retains output, source SHA, selected/excluded
-modules, nonzero Python execution, Lua phase exits and actual outer status.
+modules, nonzero Python execution and actual outer status.
 Evidence-only artifacts have fourteen-day retention; the job ceiling is fifteen
 minutes. A local container pilot does not establish actual GitHub-hosted success.
 
@@ -306,7 +306,3 @@ Screenshot
 ----------
 
 ![desktop screenshot](misc/2020-03-05_screenshot.png)
-
-Resource-alert development tests require `lua` (the Lua/Luau shared subset;
-Lua 5.5.1 verified). Run `just test-resource-alert` for the focused policy, service and layer
-harnesses; `just test` includes it. No separate Luau CLI is required.

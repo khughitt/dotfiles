@@ -16,11 +16,6 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
-LUA = [
-    "noctalia/plugins/resource-pressure-alert/plugin_test.lua",
-    "noctalia/plugins/resource-pressure-alert/service_test.lua",
-    "noctalia/plugins/resource-pressure-alert/layer_test.lua"
-]
 ZSH = [
     "task_json_search",
     "dropbox_ignore_flux",
@@ -157,7 +152,7 @@ def ci():
         if outer:
             return outer
     phases = [json.loads(line) for line in (evidence / "phases.jsonl").read_text().splitlines()]
-    expected = [(event, name) for name in [*LUA, "pytest"] for event in ["start", "end"]]
+    expected = [("start", "pytest"), ("end", "pytest")]
     require([(r["event"], r["name"]) for r in phases] == expected and
             all(r["exit"] == 0 for r in phases if r["event"] == "end"), "portable phases did not complete")
     verdict = {"source_sha": git("rev-parse", "HEAD"), "selected_modules": PORTABLE_PYTHON,
@@ -190,23 +185,15 @@ def main(argv):
         return ci()
     if len(argv) >= 3 and argv[0] == "phase":
         return run_phase(argv[1], argv[2:], evidence)
-    if argv not in [["full"], ["resource-alert"], ["portable"]]:
-        print("usage: test-suite.py {full|portable|resource-alert|ci|phase NAME COMMAND...}", file=sys.stderr)
+    if argv not in [["full"], ["portable"]]:
+        print("usage: test-suite.py {full|portable|ci|phase NAME COMMAND...}", file=sys.stderr)
         return 2
     mode = argv[0]
-    junit = None
-    if mode != "resource-alert":
-        junit_dir = os.environ.get("TT_JUNIT_DIR")
-        if not junit_dir:
-            print("test-suite: run the suite through tt", file=sys.stderr)
-            return 2
-        junit = Path(junit_dir) / "pytest.xml"
-    for script in LUA:
-        status = run_phase(script, ["lua", script], evidence)
-        if status:
-            return status
-    if mode == "resource-alert":
-        return 0
+    junit_dir = os.environ.get("TT_JUNIT_DIR")
+    if not junit_dir:
+        print("test-suite: run the suite through tt", file=sys.stderr)
+        return 2
+    junit = Path(junit_dir) / "pytest.xml"
     env = {key: os.environ[key] for key in ENVIRONMENT if key in os.environ} if evidence is not None else None
     selected = PORTABLE_PYTHON if mode == "portable" else []
     status = run_phase("pytest", ["uv", "run", "--frozen", "pytest", "-q", *selected, f"--junitxml={junit}"], evidence, env)

@@ -17,7 +17,6 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 OFF = 'automatic_broad = false\nbroad_targets = ["test", "check-code", "test-portable"]\n'
 ON = OFF.replace("false", "true")
-LUA = ["plugin_test.lua", "service_test.lua", "layer_test.lua"]
 ZSH = [
     "task_json_search", "dropbox_ignore_flux", "work_link", "history",
     "icat_completion", "glow_completion", "secrets_check", "setup_and_health",
@@ -91,7 +90,7 @@ class Door:
                 shutil.copy2(source, dest)
         (self.root / "tools").mkdir(exist_ok=True)
         (self.root / "tools/emit.py").write_text(EMIT)
-        for name in ["uv", "zsh", "lua", "nvim", "tasks", "ssh"]:
+        for name in ["uv", "zsh", "nvim", "tasks", "ssh"]:
             p = bindir / name
             p.write_text(f"#!{sys.executable}\n" + EMIT)
             p.chmod(0o755)
@@ -108,7 +107,6 @@ exec {just} --set check_hygiene_cmd 'python3 tools/emit.py hygiene' \\
   --set check_code_cmd 'python3 tools/emit.py code' \\
   --set test_cmd 'python3 tools/emit.py test' \\
   --set portable_cmd 'python3 tools/emit.py portable' \\
-  --set resource_alert_cmd 'python3 tools/emit.py resource' \\
   --set ci_suite_refs "${{COVERAGE:-}}" "$@"
 ''')
         p.chmod(0o755)
@@ -152,7 +150,7 @@ def door(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("runner,prefix", [("pytest", ["run", "--frozen", "pytest"]),
-                                         ("zsh", []), ("lua", []), ("nvim", [])])
+                                         ("zsh", []), ("nvim", [])])
 def test_focused_argv_and_exit(door, runner, prefix):
     args = ["two words", "'quoted'", "$(literal)", "*"]
     leaf = "uv" if runner == "pytest" else runner
@@ -210,18 +208,11 @@ def test_invalid_policy_never_launches_child(door, policy):
     assert door.events() == []
 
 
-@pytest.mark.parametrize("args", [[], ["zsh"], ["unknown", "file"]])
+@pytest.mark.parametrize("args", [[], ["zsh"], ["lua", "plugin_test.lua"], ["unknown", "file"]])
 def test_focused_requires_known_runner_and_arguments(door, args):
     p = door.invoke("test-one", args)
     assert p.returncode != 0
     assert door.events() == []
-
-
-def test_component_is_focused_when_broad_is_off(door):
-    p = door.invoke("test-resource-alert", policy=OFF)
-    assert p.returncode == 0, p.stderr
-    assert [e["name"] for e in door.events()] == ["resource"]
-    assert len(door.rows()) == 1
 
 
 @pytest.mark.parametrize("policy,force,want", [(OFF, None, ["source"]),
@@ -276,19 +267,18 @@ def test_full_inventory_and_retained_junit(door):
     p = door.script()
     assert p.returncode == 0, p.stderr
     events = door.events()
-    assert [e["argv"][0] for e in events[:3]] == [f"noctalia/plugins/resource-pressure-alert/{n}" for n in LUA]
-    assert events[3]["argv"][:4] == ["run", "--frozen", "pytest", "-q"]
-    assert [e["argv"] for e in events[4:]] == [[f"tests/{n}.zsh"] for n in ZSH]
+    assert events[0]["argv"][:4] == ["run", "--frozen", "pytest", "-q"]
+    assert [e["argv"] for e in events[1:]] == [[f"tests/{n}.zsh"] for n in ZSH]
     evidence = Path(door.env["EVIDENCE_DIR"])
     assert (evidence / "pytest.xml").read_text().count("testcase") == 2
     rows = [json.loads(s) for s in (evidence / "phases.jsonl").read_text().splitlines()]
-    assert len(rows) == 32
-    assert [r["event"] for r in rows] == ["start", "end"] * 16
+    assert len(rows) == 26
+    assert [r["event"] for r in rows] == ["start", "end"] * 13
     assert all(r["exit"] == 0 for r in rows if r["event"] == "end")
 
 
 def test_full_phase_failure_stops_inventory(door):
-    p = door.script(fail_phase="lua", fail_status=19)
+    p = door.script(fail_phase="uv", fail_status=19)
     assert p.returncode == 19, p.stderr
     assert len(door.events()) == 1
 
@@ -298,7 +288,7 @@ def test_evidence_failure_preserves_test_failure(door, test_status, want):
     (Path(door.env["EVIDENCE_DIR"]) / "pytest.xml").mkdir()
     p = door.script(fail_phase="uv", fail_status=test_status)
     assert p.returncode == want, p.stderr
-    assert [e["name"] for e in door.events()] == ["lua", "lua", "lua", "uv"]
+    assert [e["name"] for e in door.events()] == ["uv"]
 
 
 def test_receipt_write_failure_prevents_child(door):
@@ -315,13 +305,6 @@ def test_malformed_or_empty_push_keeps_full_route(door, payload):
     assert p.returncode == 0, p.stderr
     assert door.rows()[0]["target"] == "hook-pre-push"
     assert door.events()[0]["stdin"] == payload
-
-
-def test_component_helper_does_not_run_pytest_or_zsh(door):
-    door.env.pop("TT_JUNIT_DIR")
-    p = door.script("resource-alert")
-    assert p.returncode == 0, p.stderr
-    assert [e["name"] for e in door.events()] == ["lua", "lua", "lua"]
 
 
 def test_nested_phase_preserves_argv_exit_and_output(door):
@@ -443,6 +426,8 @@ def test_workflow_branch_refs_and_isolation(door):
     assert "CI_STATE_DIR" not in job["env"]
     run = next(step for step in job["steps"] if step.get("run") == "python3 tools/test-suite.py ci")
     assert run["env"]["CI_STATE_DIR"] == "${{ runner.temp }}/dotfiles-ci"
+    install = next(step for step in job["steps"] if step.get("name") == "Install portable prerequisites")
+    assert "lua5.4" not in install["run"]
     for step in job["steps"]:
         if "uses" in step:
             assert re.fullmatch(r"[a-f0-9]{40}", step["uses"].rsplit("@", 1)[1])
@@ -523,16 +508,15 @@ def test_portable_inventory(door):
     result = door.script("portable")
     assert result.returncode == 0, result.stdout + result.stderr
     events = door.events()
-    assert [e["name"] for e in events] == ["lua", "lua", "lua", "uv"]
-    assert [e["argv"] for e in events[:3]] == [[f"noctalia/plugins/resource-pressure-alert/{n}"] for n in LUA]
+    assert [e["name"] for e in events] == ["uv"]
     args = events[-1]["argv"]
     assert args[:4] == ["run", "--frozen", "pytest", "-q"]
     assert [a for a in args[4:] if not a.startswith("--junitxml=")] == PORTABLE
     phases = [json.loads(s) for s in Path(door.env["EVIDENCE_DIR"], "phases.jsonl").read_text().splitlines()]
-    assert [r["event"] for r in phases] == ["start", "end"] * 4
+    assert [r["event"] for r in phases] == ["start", "end"]
 
 
-@pytest.mark.parametrize("leaf,status,count", [("lua", 19, 1), ("uv", 23, 4)])
+@pytest.mark.parametrize("leaf,status,count", [("uv", 23, 1)])
 def test_portable_failure_stops_later_phases(door, leaf, status, count):
     result = door.script("portable", fail_phase=leaf, fail_status=status)
     assert result.returncode == status, result.stdout + result.stderr
@@ -550,7 +534,7 @@ def test_portable_rejects_no_successful_execution(door, xml):
                   EMIT.replace("'<testsuites><testsuite tests=\"2\"><testcase name=\"a\"/>'\n                '<testcase name=\"b\"/></testsuite></testsuites>'", repr(xml)))
     result = door.run([sys.executable, "tools/test-suite.py", "portable"])
     assert result.returncode != 0, result.stdout + result.stderr
-    assert [e["name"] for e in door.events()] == ["lua", "lua", "lua", "uv"]
+    assert [e["name"] for e in door.events()] == ["uv"]
 
 
 @pytest.mark.parametrize("force,hosted,want", [(None, False, 0), (None, True, 2), ("1", True, 17)])
@@ -620,7 +604,7 @@ def test_portable_ci_retains_subset_evidence(door):
     assert report["pytest"] == {"total": 2, "passed": 2, "failed": 0, "skipped": 0}
     assert report["source_sha"] == door.run(["git", "rev-parse", "HEAD"]).stdout.strip()
     phases = [json.loads(line) for line in (evidence / "phases.jsonl").read_text().splitlines()]
-    assert len(phases) == 8
+    assert len(phases) == 2
     assert all(row["exit"] == 0 for row in phases if row["event"] == "end")
     assert json.loads((evidence / "outer.json").read_text())["exit"] == 0
 

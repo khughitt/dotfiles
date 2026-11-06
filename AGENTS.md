@@ -7,8 +7,7 @@
 ## Verification
 
 Use `just test-one <runner> <args...>` for changed behavior. Runners are `pytest`,
-`zsh`, `lua`, and `nvim`; arguments reach the selected runner intact. The existing
-`just test-resource-alert` is a deliberate three-harness component check.
+`zsh`, and `nvim`; arguments reach the selected runner intact.
 
 This is personal Linux configuration. Incomplete automatic integration coverage
 and delayed discovery are accepted. `.tt.toml` disables automatic broad requests
@@ -17,13 +16,13 @@ outcomes; they are never passes. Missing policy enables broad work; invalid poli
 fails. Focused tests and `just check-hygiene` always run, including formatting,
 source syntax, link/modeline checks, local promoted-glass consistency and records.
 
-Use `just test-full` for deliberate complete Lua/Python/Zsh/Neovim verification,
+Use `just test-full` for deliberate complete Python/Zsh/Neovim verification,
 `TT_FORCE=1 just test-portable` for the portable subset, and `TT_FORCE=1 just check`
 for complete checks. `gate` composes check/test and `verify` also inspects actual
 host health; a policy skip does not prove either tests or host health. The full
-route retains three Lua harnesses, unchanged pytest discovery and twelve Zsh
-scripts including nested Neovim. Supplementary Noctalia/science-md.nvim routes
-remain outside it. No affected selector or test-fast route is claimed.
+route retains unchanged pytest discovery and twelve Zsh scripts including nested
+Neovim. Supplementary Noctalia/science-md.nvim routes remain outside it. No
+affected selector or test-fast route is claimed.
 
 Run affected focused tests while implementing. After changes to shell/editor
 bootstrap, setup, installed hooks, Noctalia templates/plugins or host interactions,
@@ -36,10 +35,10 @@ broad reruns. Known failures still require a fix or explicit disposition.
 ## Portable CI
 
 `just ci-test` forces source hygiene and the portable subset only. The subset is
-three resource-pressure-alert Lua harnesses and seven Python modules:
-`tests/front_door_test.py`, `tests/kernel_gate_test.py`, and the five existing
-`tests/niri/` modules for column paging, backdrop startup, dropdowns, scratch UI and
-scratch parsing. These use fake host APIs/commands; no desktop is started.
+seven Python modules: `tests/front_door_test.py`, `tests/kernel_gate_test.py`, and
+the five existing `tests/niri/` modules for column paging, backdrop startup,
+dropdowns, scratch UI and scratch parsing. These use fake host APIs/commands; no
+desktop is started.
 
 The Ubuntu 26.04 workflow uses ordinary command-line packages and three hash-pinned
 uv/Python/Just downloads, frozen uv.lock, isolated HOME/XDG/Git/cache/TT state and

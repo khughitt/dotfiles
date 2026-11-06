@@ -5,7 +5,6 @@ set quiet
 tt := "python3 tools/tt"
 test_cmd := "python3 tools/test-suite.py full"
 portable_cmd := "python3 tools/test-suite.py portable"
-resource_alert_cmd := "python3 tools/test-suite.py resource-alert"
 check_hygiene_cmd := "just --fmt --check --justfile justfile && tools/check-hygiene && tasks check"
 check_code_cmd := "tools/check-code"
 ci_remote := "origin"
@@ -59,10 +58,6 @@ secrets:
 
 test-one +args:
     {{ tt }} test-one -- tools/test-one "$@" 2>&1
-
-# Deliberate component check; this is not a whole-project request.
-test-resource-alert:
-    {{ tt }} test-resource-alert -- sh -c '{{ resource_alert_cmd }}'
 
 test:
     {{ tt }} test -- sh -c '{{ test_cmd }}'

@@ -416,7 +416,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
     check_link "${noctalia_plugin_dir}/prism" \
         "${HOME}/d/prism/integrations/noctalia-plugin"
     check_link "${noctalia_plugin_dir}/resource-pressure-alert" \
-        "${DOTS_HOME}/noctalia/plugins/resource-pressure-alert"
+        "${HOME}/d/noctalia-resource-alert"
 
     for plugin_name in wali-panel prism resource-pressure-alert; do
         if [[ -f "${noctalia_plugin_dir}/${plugin_name}/plugin.toml" && \
