@@ -1,0 +1,18 @@
+# What this project is. `tools/ops-docs write` renders it into the identity region of
+# README.md and AGENTS.md; `tools/ops-docs check` refuses a commit while they differ.
+# Reference: ops docs/project-guides.md
+name = "dotfiles"
+aliases = []
+# At most 80 characters: this line sits in every agent session in every project.
+purpose = "The dotfiles: shell, editor, desktop, and terminal configuration"
+# One to three sentences, at most 400 characters: what it does and for whom.
+abstract = """
+Personal Arch Linux configuration for the owner's workstations and headless hosts, \
+managed in place from a synced checkout by setup.sh and verified by bin/dotfiles-health. \
+It links shell, Neovim, kitty, tmux, Niri, Noctalia, systemd user units, and per-host \
+state while keeping high-churn and machine-local files out of sync.
+"""
+# Documents that are the authority for what is built or decided; each must be tracked.
+authority = []
+# Directories with their own identity.toml, README.md, and AGENTS.md.
+subsystems = []

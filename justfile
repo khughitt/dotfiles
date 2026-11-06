@@ -5,7 +5,7 @@ set quiet
 tt := "python3 tools/tt"
 test_cmd := "python3 tools/test-suite.py full"
 portable_cmd := "python3 tools/test-suite.py portable"
-check_hygiene_cmd := "just --fmt --check --justfile justfile && tools/check-hygiene && tasks check"
+check_hygiene_cmd := "just --fmt --check --justfile justfile && tools/check-hygiene && python3 tools/ops-docs check && tasks check"
 check_code_cmd := "tools/check-code"
 ci_remote := "origin"
 ci_suite_refs := ""
@@ -27,9 +27,12 @@ check:
     just check-hygiene
     just check-code
 
+docs:
+    {{ tt }} docs -- python3 tools/ops-docs write
+
 # Detached task records are unavailable in the disposable runner.
 ci-hygiene:
-    {{ tt }} ci-hygiene -- sh -c 'just --fmt --check --justfile justfile && tools/check-hygiene'
+    {{ tt }} ci-hygiene -- sh -c 'just --fmt --check --justfile justfile && tools/check-hygiene && python3 tools/ops-docs check'
 
 ci-test:
     TT_FORCE=1 just ci-hygiene

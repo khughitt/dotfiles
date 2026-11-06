@@ -38,10 +38,20 @@ assert_equals() {
 
 list_output=$(run_just --list)
 
-for recipe in check check-hygiene check-code gate test-one test-full health health-live health-systemd secrets setup-dry-run setup-only test; do
+for recipe in check check-hygiene check-code docs gate test-one test-full health health-live health-systemd secrets setup-dry-run setup-only test; do
   assert_contains "$list_output" "$recipe" "expected just recipe: $recipe"
 done
 [[ "$list_output" != *"resource-alert"* ]] || fail "unexpected resource-alert recipe in just --list"
+
+assert_contains "$(run_just --dry-run docs 2>&1)" \
+  "python3 tools/ops-docs write" \
+  "expected docs recipe to render guide regions with ops-docs"
+assert_contains "$(run_just --dry-run check-hygiene 2>&1)" \
+  "python3 tools/ops-docs check" \
+  "expected check-hygiene recipe to verify guide regions with ops-docs"
+assert_contains "$(run_just --dry-run ci-hygiene 2>&1)" \
+  "python3 tools/ops-docs check" \
+  "expected ci-hygiene recipe to verify guide regions with ops-docs"
 
 assert_contains "$(run_just --dry-run check 2>&1)" \
   "just check-hygiene" \

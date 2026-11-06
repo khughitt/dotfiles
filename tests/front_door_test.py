@@ -79,9 +79,10 @@ class Door:
         self.run(["git", "init", "-q"]).check_returncode()
         assert Path(self.run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()) == self.root
         assert Path(self.run(["git", "rev-parse", "--absolute-git-dir"]).stdout.strip()) == self.root / ".git"
-        for name in ["justfile", ".gitignore", "bin/dotfiles-check", "bin/mindful", "bin/prism",
-                     "tests/dotfiles_check.zsh", "tests/justfile.zsh", "tests/tmp_cleanup.zsh", "tools/tt", "tools/test-one",
-                     "tools/test-suite.py",
+        for name in ["justfile", ".gitignore", "identity.toml", "README.md", "AGENTS.md",
+                     "bin/dotfiles-check", "bin/mindful", "bin/prism",
+                     "tests/dotfiles_check.zsh", "tests/justfile.zsh", "tests/tmp_cleanup.zsh", "tools/tt",
+                     "tools/ops-docs", "tools/test-one", "tools/test-suite.py",
                      ".github/workflows/ci.yml", ".githooks/pre-commit", ".githooks/pre-push"]:
             source = ROOT / name
             if source.exists():
@@ -328,6 +329,27 @@ def test_formatter_is_mandatory_even_when_policy_off(door):
     assert door.rows()[0]["target"] == "check-hygiene"
 
 
+def test_guide_hygiene_and_docs_recipe(door):
+    shim = Path(door.env["PATH"].split(":")[0]) / "just"
+    shim.write_text(shim.read_text().replace("--set check_hygiene_cmd 'python3 tools/emit.py hygiene'", ""))
+    readme = door.root / "README.md"
+    readme.write_text(readme.read_text().replace("managed in place", "drifted in place"))
+    gate = door.invoke("gate", policy=OFF)
+    assert gate.returncode != 0
+    assert door.rows()[-1]["target"] == "check-hygiene"
+    assert door.rows()[-1]["exit"] != 0
+    ci = door.invoke("ci-hygiene", policy=OFF)
+    assert ci.returncode != 0
+    assert door.rows()[-1]["target"] == "ci-hygiene"
+    assert door.rows()[-1]["exit"] != 0
+    docs = door.invoke("docs", policy=OFF)
+    assert docs.returncode == 0, docs.stderr
+    assert door.rows()[-1]["target"] == "docs"
+    assert door.rows()[-1]["exit"] == 0
+    rechecked = door.invoke("ci-hygiene", policy=OFF)
+    assert rechecked.returncode == 0, rechecked.stderr
+
+
 @pytest.mark.parametrize("broken", ["setup.sh", "zshenv"])
 def test_mandatory_hygiene_checks_later_shell_files(door, broken):
     for name in ["tools/check-hygiene", "bin/dotfiles-layout-check", "bin/noctalia-glass-check",
@@ -394,7 +416,9 @@ def test_recipe_metadata_fixture_drops_caller_credentials(door):
             "p.open('a').write(json.dumps({'secret':os.environ.get('PARENT_SECRET'),"
             "'home':os.environ['HOME']})+chr(10))")
     shim = Path(door.env["PATH"].split(":")[0]) / "just"
-    contents = shim.read_text().replace("--set test_cmd 'python3 tools/emit.py test'", "")
+    contents = (shim.read_text()
+                .replace("--set check_hygiene_cmd 'python3 tools/emit.py hygiene'", "")
+                .replace("--set test_cmd 'python3 tools/emit.py test'", ""))
     shim.write_text(contents.replace("#!/bin/sh\n", "#!/bin/sh\npython3 -c " + shlex.quote(code) + "\n"))
     result = door.run(["/usr/bin/zsh", "tests/justfile.zsh"])
     assert result.returncode == 0, result.stdout + result.stderr
