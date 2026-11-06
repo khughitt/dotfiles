@@ -159,3 +159,7 @@ fi
 # zprof
 
 # vi:filetype=zsh
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/keith/.local/bin:$PATH"

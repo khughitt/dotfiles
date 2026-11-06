@@ -1,5 +1,8 @@
 # Development aliases.
 
+# antigravity
+alias ay='agy --dangerously-skip-permissions'
+
 # claude code
 alias cl='claude --dangerously-skip-permissions'
 alias clr='claude --dangerously-skip-permissions --resume'
@@ -97,6 +100,8 @@ alias tap='ta projects'
 alias tals='ta list --sort updated'
 alias taps='ta projects --sort activity'
 alias talu='ta list | grep "\*"'
+
+alias recent_tasks="tal --status done --sort created | head -n10"
 
 # The terminal's colors as a TASKS_PALETTE value. tasks queries the terminal itself only
 # when stdout is a terminal, so a pipeline into a pager has to ask first, before the

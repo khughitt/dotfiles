@@ -23,3 +23,7 @@ bind '"\C-g": edit-and-execute-command'
 [[ -t 0 ]] && stty -ixon
 
 PS1='\[\e[36m\]\w\[\e[33m\]\$\[\e[0m\] '
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/keith/.local/bin:$PATH"
