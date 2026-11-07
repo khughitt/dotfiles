@@ -33,7 +33,6 @@ bin/*
 !bin/mindful
 !bin/mindful-release
 !bin/mindful-tui
-!bin/work-link
 !bin/mindful-backup.mjs
 !bin/prism
 bookmarks

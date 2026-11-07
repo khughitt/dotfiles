@@ -19,6 +19,8 @@ RESOURCE_ALERT_ROOT="${HOME}/d/noctalia-resource-alert"
 # git-index-health systemd user units link out of it.
 OPS_ROOT="${HOME}/d/ops"
 LOOKOUT_ROOT="${HOME}/d/lookout"
+# The hostkit checkout, reached the same way: hostkit-links converges hostkit's links and units.
+HOSTKIT_ROOT="${HOME}/d/hostkit"
 
 # Parse command line arguments
 HEADLESS=false
@@ -485,6 +487,9 @@ function setup_preflight() {
     preflight_check "ops checkout" "git clone git@github.com:khughitt/ops.git ${OPS_ROOT}" \
         test -x "${OPS_ROOT}/bin/obs-index" || missing=1
 
+    preflight_check "hostkit checkout" "ensure ${HOSTKIT_ROOT} is synced or cloned (see ops/docs/tooling.md)" \
+        test -x "${HOSTKIT_ROOT}/bin/hostkit-links" || missing=1
+
     # Familiar's hooks run on every agent tool call and die on a missing
     # node_modules. Name the missing local install before hooks crash.
     # Guarded on the checkout the same way prism's dependencies are.
@@ -718,6 +723,12 @@ function setup_common_config_links() {
         ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
     done
 
+    ensure_dir "${XDG_CONFIG_HOME}/hostkit"
+    ln_s "${DOTS_HOME}/hostkit/config.toml" "${XDG_CONFIG_HOME}/hostkit/config.toml"
+    if [[ -f "${DOTS_HOME}/hosts/$(hostname)/budget.toml" ]]; then
+        ln_s "${DOTS_HOME}/hosts/$(hostname)/budget.toml" "${XDG_CONFIG_HOME}/hostkit/budget.toml"
+    fi
+
     lsd_config_dir="${XDG_CONFIG_HOME}/lsd"
     if [[ -L "$lsd_config_dir" ]]; then
         run rm "$lsd_config_dir"
@@ -758,8 +769,8 @@ function setup_systemd_user_units() {
     ensure_dir "${XDG_CONFIG_HOME}/systemd/user"
     ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service"
     ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer"
-    ln_s "${DOTS_HOME}/systemd/user/work-link.service" "${XDG_CONFIG_HOME}/systemd/user/work-link.service"
-    ln_s "${DOTS_HOME}/systemd/user/work-link.timer" "${XDG_CONFIG_HOME}/systemd/user/work-link.timer"
+    ensure_dir "${HOME}/.local/bin"
+    run python3 "${HOSTKIT_ROOT}/bin/hostkit-links" --apply --manifest "${HOSTKIT_ROOT}/install.toml" --root "${HOSTKIT_ROOT}" --home "${HOME}"
     ln_s "${DOTS_HOME}/systemd/user/niri.service.d/stop-timeout.conf" "${XDG_CONFIG_HOME}/systemd/user/niri.service.d/stop-timeout.conf"
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.service" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.service"
     ln_s "${DOTS_HOME}/systemd/user/familiar-reap.timer" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.timer"

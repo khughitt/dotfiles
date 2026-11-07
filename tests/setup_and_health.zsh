@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 set -euo pipefail
+unset WORKTREE_SCAN_ROOT
 
 repo_root=${0:A:h:h}
 source "${0:A:h}/tmp_cleanup.zsh"
@@ -136,6 +137,75 @@ printf '%s\n' "doctor: ok"
 EOF
     chmod +x "${tmp}/bin/prism"
   fi
+
+  if [[ ! -e "${tmp}/bin/host-budget" ]]; then
+    cat > "${tmp}/bin/host-budget" <<'EOF'
+#!/usr/bin/env python3
+import argparse
+import importlib.machinery
+import os
+import pathlib
+import sys
+
+parser = argparse.ArgumentParser(prog="host-budget")
+sub = parser.add_subparsers(dest="subcmd")
+show = sub.add_parser("show")
+show.add_argument("--interval", type=float, default=1.0)
+show.add_argument("--policy", type=pathlib.Path)
+show.add_argument("--json", action="store_true")
+
+args, _ = parser.parse_known_args()
+if args.subcmd == "show":
+    if args.policy is not None:
+        policy_path = args.policy
+    else:
+        config_home = os.environ.get("XDG_CONFIG_HOME")
+        if not config_home:
+            home = os.environ.get("HOME", "")
+            config_home = os.path.join(home, ".config")
+        policy_path = pathlib.Path(config_home) / "hostkit" / "budget.toml"
+
+    mod = None
+    for cand in [
+        "/home/keith/d/hostkit/bin/host-budget",
+        os.path.expanduser("~/d/hostkit/bin/host-budget"),
+    ]:
+        if os.path.isfile(cand):
+            try:
+                test_loader = importlib.machinery.SourceFileLoader("host_budget_real", cand)
+                test_mod = test_loader.load_module()
+                if hasattr(test_mod, "load_policy"):
+                    mod = test_mod
+                    break
+            except Exception:
+                continue
+    if mod is not None:
+        try:
+            mod.load_policy(policy_path)
+        except Exception as err:
+            print(f"host-budget: {err}", file=sys.stderr)
+            sys.exit(2)
+    else:
+        try:
+            import tomllib
+            data = tomllib.loads(policy_path.read_text())
+            if not all(k in data for k in ("profiles", "audio", "scope")):
+                raise ValueError("missing top-level tables")
+        except Exception as err:
+            print(f"host-budget: {err}", file=sys.stderr)
+            sys.exit(2)
+    print("budget 16 (fan-out), profile default, host test")
+    sys.exit(0)
+
+sys.exit(0)
+EOF
+    chmod +x "${tmp}/bin/host-budget"
+  fi
+
+  if [[ -d "${tmp}/home/d/hostkit/bin" ]]; then
+    cp "${tmp}/bin/host-budget" "${tmp}/home/d/hostkit/bin/host-budget"
+    chmod +x "${tmp}/home/d/hostkit/bin/host-budget"
+  fi
 }
 
 # Setup and health run in an environment built key by key, so a failing case
@@ -145,7 +215,7 @@ child_env() {
   local tmp="$1" name
   reply=(
     HOME="${tmp}/home" USER=dotfiles-test LOGNAME=dotfiles-test
-    PATH="${tmp}/bin:$PATH" TMPDIR="${TMPDIR:-/tmp}"
+    PATH="${TEST_PATH:-${tmp}/home/.local/bin:${tmp}/bin:$PATH}" TMPDIR="${TMPDIR:-/tmp}"
     XDG_CACHE_HOME="${tmp}/cache" XDG_CONFIG_HOME="${tmp}/config"
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/home/.local/state"
     GIT_CONFIG_GLOBAL="${tmp}/home/.gitconfig" GIT_CONFIG_NOSYSTEM=1
@@ -154,7 +224,8 @@ child_env() {
       NOCTALIA_PLUGIN_LIST NOCTALIA_PLUGIN_LIST_STATUS NOCTALIA_TEST_LOG \
       NOCTALIA_TEST_THEME_MODE NOCTALIA_TEST_THEME_MODE_STATUS \
       NOCTALIA_TEST_TEMPLATES_APPLY_STATUS NOCTALIA_WALLPAPER_PATH \
-      PRISM_DOCTOR_LOG PRISM_DOCTOR_STATUS PRISM_REQUIREMENTS_STATUS PRISM_TEST_HOSTNAME; do
+      PRISM_DOCTOR_LOG PRISM_DOCTOR_STATUS PRISM_REQUIREMENTS_STATUS PRISM_TEST_HOSTNAME \
+      WORKTREE_SCAN_ROOT; do
     if (( ${+parameters[$name]} )); then
       reply+=("${name}=${(P)name}")
     fi
@@ -203,6 +274,26 @@ run_setup() {
       touch "${tmp}/home/d/ops/systemd/user/git-index-health.service" \
         "${tmp}/home/d/ops/systemd/user/git-index-health.timer"
     fi
+  fi
+  if [[ "${HOSTKIT_SOURCE_PRESENT:-true}" == true ]]; then
+    mkdir -p "${tmp}/home/d/hostkit/bin" "${tmp}/home/d/hostkit/systemd/user"
+    local hostkit_src="${HOSTKIT_SRC:-/home/keith/d/hostkit}"
+    if [[ -d "$hostkit_src" ]]; then
+      cp "${hostkit_src}/install.toml" "${tmp}/home/d/hostkit/install.toml"
+      for b in hostkit_config.py hostkit-links work-link host-load host-drift; do
+        if [[ -f "${hostkit_src}/bin/${b}" ]]; then
+          cp "${hostkit_src}/bin/${b}" "${tmp}/home/d/hostkit/bin/${b}"
+          chmod +x "${tmp}/home/d/hostkit/bin/${b}"
+        fi
+      done
+      cp "${hostkit_src}/systemd/user/work-link.service" "${tmp}/home/d/hostkit/systemd/user/work-link.service"
+      cp "${hostkit_src}/systemd/user/work-link.timer" "${tmp}/home/d/hostkit/systemd/user/work-link.timer"
+    fi
+    (
+      unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+      GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 \
+        git -C "${tmp}/home/d/hostkit" -c init.defaultBranch=main init -q
+    )
   fi
   install_test_stubs "$tmp"
   cat > "${tmp}/bin/hostname" <<'EOF'
@@ -283,7 +374,7 @@ test_bash_config_is_native_and_minimal() {
       bash --noprofile --rcfile "${repo_root}/bashrc" -i -c '
         set -euo pipefail
 
-        [[ "$PATH" == "$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:/usr/bin:/bin" ]]
+        [[ "$PATH" == *"$HOME/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:/usr/bin:/bin"* ]]
         [[ "$EDITOR" == nvim ]]
         [[ "$PAGER" == "less -R" ]]
         [[ "$HISTCONTROL" == ignoreboth:erasedups ]]
@@ -747,6 +838,17 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ -L "${tmp}/config/systemd/user/dropbox-ignore-flux.timer" ]] || \
     fail "expected linked Dropbox ignore timer"
   [[ -L "${tmp}/config/systemd/user/work-link.timer" ]] || fail "expected linked work-link timer"
+  [[ "$(readlink "${tmp}/config/systemd/user/work-link.timer")" == \
+      "${tmp}/home/d/hostkit/systemd/user/work-link.timer" ]] || \
+    fail "expected work-link timer to point into hostkit checkout"
+  [[ -L "${tmp}/config/systemd/user/work-link.service" ]] || fail "expected linked work-link service"
+  [[ "$(readlink "${tmp}/config/systemd/user/work-link.service")" == \
+      "${tmp}/home/d/hostkit/systemd/user/work-link.service" ]] || \
+    fail "expected work-link service to point into hostkit checkout"
+  [[ -L "${tmp}/config/hostkit/config.toml" ]] || fail "expected linked hostkit config"
+  [[ "$(readlink "${tmp}/config/hostkit/config.toml")" == \
+      "${repo_root}/hostkit/config.toml" ]] || \
+    fail "expected hostkit config to point into repository"
   [[ -L "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
     fail "expected linked niri stop-timeout override"
   [[ "$(readlink "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf")" == \
@@ -1258,6 +1360,8 @@ test_dotfiles_health_fails_wrong_prism_link_without_running_doctor() {
   prepare_health_fixture "$tmp"
   mkdir -p "${tmp}/config/wali"
   ln -s "${repo_root}/wali/titan/config.toml" "${tmp}/config/wali/config.toml"
+  mkdir -p "${tmp}/config/hostkit"
+  ln -s "${repo_root}/hosts/titan/budget.toml" "${tmp}/config/hostkit/budget.toml"
   ln -s "${repo_root}/prism/europa" "${tmp}/config/prism"
 
   set +e
@@ -1475,6 +1579,8 @@ test_dotfiles_health_checks_enabled_user_timer() {
   mkdir -p "${tmp}/config/systemd/user/timers.target.wants"
   ln -s "${tmp}/home/d/wali/systemd/wali-rotate.timer" \
     "${tmp}/config/systemd/user/timers.target.wants/wali-rotate.timer"
+  ln -s "${tmp}/home/d/hostkit/systemd/user/work-link.timer" \
+    "${tmp}/config/systemd/user/timers.target.wants/work-link.timer"
 
   cat > "${mockbin}/systemctl" <<'EOF'
 #!/usr/bin/env bash
@@ -1557,6 +1663,8 @@ EOF
   mkdir -p "${tmp}/config/systemd/user/timers.target.wants"
   ln -s "${tmp}/stale/wali-rotate.timer" \
     "${tmp}/config/systemd/user/timers.target.wants/wali-rotate.timer"
+  ln -s "${tmp}/home/d/hostkit/systemd/user/work-link.timer" \
+    "${tmp}/config/systemd/user/timers.target.wants/work-link.timer"
 
   set +e
   output=$(PATH="${mockbin}:$PATH" run_health "$tmp" 2>&1)
@@ -1616,6 +1724,8 @@ prepare_retention_health_fixture() {
   mkdir -p "${tmp}/config/systemd/user/timers.target.wants"
   ln -s "${tmp}/home/d/wali/systemd/wali-rotate.timer" \
     "${tmp}/config/systemd/user/timers.target.wants/wali-rotate.timer"
+  ln -s "${tmp}/home/d/hostkit/systemd/user/work-link.timer" \
+    "${tmp}/config/systemd/user/timers.target.wants/work-link.timer"
   if [[ "$state" == enabled* ]]; then
     ln -s "${tmp}/home/d/ops/systemd/user/git-index-retention.timer" \
       "${tmp}/config/systemd/user/timers.target.wants/git-index-retention.timer"
@@ -2344,16 +2454,19 @@ configure_prism_runtime() {
   ln -s "${repo_root}/prism/titan" "${tmp}/config/prism"
   mkdir -p "${tmp}/config/wali"
   ln -s "${repo_root}/wali/titan/config.toml" "${tmp}/config/wali/config.toml"
+  mkdir -p "${tmp}/config/hostkit"
+  ln -s "${repo_root}/hosts/titan/budget.toml" "${tmp}/config/hostkit/budget.toml"
 }
 
 test_dotfiles_health_checks_wali_config_link() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/config/wali"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/config/wali" "${tmp}/config/hostkit"
   prepare_health_fixture "$tmp"
   ln -s "${repo_root}/prism/titan" "${tmp}/config/prism"
   ln -s "${repo_root}/wali/europa/config.toml" "${tmp}/config/wali/config.toml"
+  ln -s "${repo_root}/hosts/titan/budget.toml" "${tmp}/config/hostkit/budget.toml"
 
   set +e
   output=$(PRISM_TEST_HOSTNAME=titan run_health "$tmp" --skip-systemd 2>&1)
@@ -2804,6 +2917,79 @@ test_git_packing_health_reports_missing_and_stale_without_repair() {
   [[ ! -e "${tmp}/home/.gitconfig-synced" ]] || fail "health recreated missing include"
 }
 
+test_setup_links_hostkit_budget_for_known_host() {
+  local tmp
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  PRISM_TEST_HOSTNAME=titan run_setup "$tmp" --link-only --headless >/dev/null
+  [[ -L "${tmp}/config/hostkit/budget.toml" ]] || \
+    fail "expected linked hostkit budget for titan"
+  [[ "$(readlink "${tmp}/config/hostkit/budget.toml")" == \
+      "${repo_root}/hosts/titan/budget.toml" ]] || \
+    fail "expected hostkit budget to point into repository"
+}
+
+test_health_fails_when_hostkit_config_missing_or_scan_root_diverges() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  prepare_health_fixture "$tmp"
+
+  rm -f "${tmp}/config/hostkit/config.toml"
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted missing hostkit config"
+  [[ "$output" == *"hostkit/config.toml"* ]] || \
+    fail "health did not name missing hostkit config: ${output}"
+
+  ln -s "${repo_root}/hostkit/config.toml" "${tmp}/config/hostkit/config.toml"
+
+  set +e
+  output=$(WORKTREE_SCAN_ROOT="${tmp}/other" run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted diverging WORKTREE_SCAN_ROOT"
+  [[ "$output" == *"diverges"* || "$output" == *"WORKTREE_SCAN_ROOT"* ]] || \
+    fail "health did not report diverging WORKTREE_SCAN_ROOT: ${output}"
+}
+
+test_health_fails_when_host_budget_missing_or_policy_invalid() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  prepare_health_fixture "$tmp"
+
+  mkdir -p "${tmp}/nobudget/bin"
+  for cmd in "${tmp}"/bin/*; do
+    [[ -e "$cmd" ]] || continue
+    [[ "${cmd:t}" == "host-budget" ]] && continue
+    ln -s "$cmd" "${tmp}/nobudget/bin/${cmd:t}"
+  done
+  rm -f "${tmp}/home/.local/bin/host-budget"
+
+  set +e
+  output=$(TEST_PATH="${tmp}/nobudget/bin:/usr/bin:/bin" run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted missing host-budget on PATH"
+  [[ "$output" == *"host-budget is not on PATH"* ]] || \
+    fail "health did not report host-budget missing on PATH: ${output}"
+
+  mkdir -p "${repo_root}/hosts/_test_corrupt"
+  printf 'invalid = toml [[[\n' > "${repo_root}/hosts/_test_corrupt/budget.toml"
+
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  rm -rf "${repo_root}/hosts/_test_corrupt"
+  set -e
+  (( exit_status != 0 )) || fail "health accepted corrupt budget policy"
+  [[ "$output" == *"host-budget policy invalid"* ]] || \
+    fail "health did not report invalid host-budget policy: ${output}"
+}
+
 test_git_packing_setup_is_scoped_idempotent_and_dry_run_safe
 test_git_packing_health_reports_missing_and_stale_without_repair
 
@@ -2901,6 +3087,10 @@ test_preflight_reports_every_unmet_prerequisite_without_mutating
 test_preflight_reads_prism_sink_requirements
 test_kitty_os_overrides_are_selected_per_host
 test_setup_kitty_phase_links_nothing_into_the_tree
+
+test_setup_links_hostkit_budget_for_known_host
+test_health_fails_when_hostkit_config_missing_or_scan_root_diverges
+test_health_fails_when_host_budget_missing_or_policy_invalid
 
 test_mindful_health_rejects_v3_revival_after_activation
 

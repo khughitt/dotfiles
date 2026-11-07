@@ -27,7 +27,7 @@ Use `just test-full` for deliberate complete Python/Zsh/Neovim verification,
 `TT_FORCE=1 just test-portable` for the portable subset, and `TT_FORCE=1 just check`
 for complete checks. `gate` composes check/test and `verify` also inspects actual
 host health; a policy skip does not prove either tests or host health. The full
-route retains unchanged pytest discovery and twelve Zsh scripts including nested
+route retains unchanged pytest discovery and eleven Zsh scripts including nested
 Neovim. Supplementary Noctalia routes remain outside it. No
 affected selector or test-fast route is claimed.
 

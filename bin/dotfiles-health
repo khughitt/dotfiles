@@ -520,10 +520,10 @@ if [[ "$(uname)" != "Darwin" ]]; then
         "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer"
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/work-link.service" \
-        "${DOTS_HOME}/systemd/user/work-link.service"
+        "${HOME}/d/hostkit/systemd/user/work-link.service"
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/work-link.timer" \
-        "${DOTS_HOME}/systemd/user/work-link.timer"
+        "${HOME}/d/hostkit/systemd/user/work-link.timer"
     check_link \
         "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service" \
         "${HOME}/d/wali/systemd/wali-rotate.service"
@@ -589,6 +589,9 @@ if [[ "$(uname)" != "Darwin" ]]; then
             check_link \
                 "${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/wali-rotate.timer" \
                 "${HOME}/d/wali/systemd/wali-rotate.timer"
+            check_link \
+                "${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/work-link.timer" \
+                "${HOME}/d/hostkit/systemd/user/work-link.timer"
 
             # Only an approved host packet enables retention or convergence. These
             # check the local timers and their last runs, never peer coverage, what
@@ -630,6 +633,49 @@ if [[ -f "$wali_config" || -L "${XDG_CONFIG_HOME}/wali/config.toml" ]]; then
     check_link "${XDG_CONFIG_HOME}/wali/config.toml" "$wali_config"
 fi
 unset wali_config
+
+check_link "${XDG_CONFIG_HOME}/hostkit/config.toml" "${DOTS_HOME}/hostkit/config.toml"
+
+hostkit_scan_root=""
+if hostkit_cfg_json=$(WORKTREE_SCAN_ROOT="" python3 "${HOME}/d/hostkit/bin/hostkit_config.py" --json 2>&1); then
+    hostkit_scan_root=$(python3 -c 'import sys, json; print(json.load(sys.stdin).get("scan_root") or "")' <<<"$hostkit_cfg_json" 2>/dev/null)
+    if [[ -z "$hostkit_scan_root" ]]; then
+        fail "hostkit storage.sync_root is empty or could not be resolved"
+    elif [[ "$hostkit_scan_root" != "${HOME}/d" ]]; then
+        fail "hostkit storage.sync_root (${hostkit_scan_root}) diverges from zshenv default WORKTREE_SCAN_ROOT (${HOME}/d)"
+    elif [[ -n "${WORKTREE_SCAN_ROOT:-}" && "${WORKTREE_SCAN_ROOT}" != "$hostkit_scan_root" ]]; then
+        fail "WORKTREE_SCAN_ROOT (${WORKTREE_SCAN_ROOT}) diverges from hostkit storage.sync_root (${hostkit_scan_root})"
+    else
+        pass "hostkit storage.sync_root matches WORKTREE_SCAN_ROOT"
+    fi
+else
+    fail "hostkit_config.py failed: ${hostkit_cfg_json}"
+fi
+unset hostkit_cfg_json hostkit_scan_root
+
+if [[ -f "${DOTS_HOME}/hosts/$(hostname)/budget.toml" || -L "${XDG_CONFIG_HOME}/hostkit/budget.toml" ]]; then
+    check_link "${XDG_CONFIG_HOME}/hostkit/budget.toml" "${DOTS_HOME}/hosts/$(hostname)/budget.toml"
+fi
+
+if ! command -v host-budget >/dev/null 2>&1; then
+    fail "host-budget is not on PATH"
+else
+    if [[ -f "${XDG_CONFIG_HOME}/hostkit/budget.toml" || -L "${XDG_CONFIG_HOME}/hostkit/budget.toml" ]]; then
+        if host-budget show --interval 0 >/dev/null 2>&1; then
+            pass "host-budget show"
+        else
+            fail "host-budget show failed"
+        fi
+    fi
+    for policy in "${DOTS_HOME}"/hosts/*/budget.toml; do
+        [[ -f "$policy" ]] || continue
+        if host-budget show --interval 0 --policy "$policy" >/dev/null 2>&1; then
+            pass "host-budget policy: ${policy}"
+        else
+            fail "host-budget policy invalid: ${policy}"
+        fi
+    done
+fi
 
 check_no_machine_specific_links
 check_noctalia_generated_is_not_in_tree

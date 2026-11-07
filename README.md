@@ -190,7 +190,7 @@ Use `just test-one` for changed behavior, `just test-full` for a deliberate full
 suite, `TT_FORCE=1 just test-portable` for the portable subset, and
 `TT_FORCE=1 just check` for complete code checks. `test-one` supports pytest,
 zsh and existing headless nvim invocations with literal arguments.
-The full route keeps unchanged Python discovery, twelve Zsh scripts and nested
+The full route keeps unchanged Python discovery, eleven Zsh scripts and nested
 Neovim checks; supplementary Noctalia suites remain outside it.
 
 `check-hygiene` always checks formatting, source syntax, tracked links/modelines,
@@ -309,7 +309,7 @@ Configured command-line and desktop tools:
 ## Layout
 
 - `setup.sh`, `lib/` — host installer, phase runner, setup manifest data, and Git packing policy helper
-- `bin/` — standalone commands and wrappers (`dotfiles-health`, `dotfiles-check`, `dotfiles-layout-check`, `dotfiles-secrets-check`, `noctalia-glass-sync`, `noctalia-glass-check`, `work-link`, `gpu-ctl`, `mindful`, `prism`, and Niri helpers)
+- `bin/` — standalone commands and wrappers (`dotfiles-health`, `dotfiles-check`, `dotfiles-layout-check`, `dotfiles-secrets-check`, `noctalia-glass-sync`, `noctalia-glass-check`, `gpu-ctl`, `mindful`, `prism`, and Niri helpers; `work-link` lives in `hostkit`)
 - `bashrc`, `zshrc`, `zshenv`, `shell/` — Bash and Zsh startup, aliases, functions, completions, and OS helpers
 - `nvim/`, `kitty/`, `ghostty/`, `tmux.conf`, `visidatarc`, `yazi/`, `zathura/`, `lsd/`, `glow/`, `git/`, `ripgreprc` — editor, terminal, and CLI tool configurations
 - `niri/`, `noctalia/`, `gtk-3.0/`, `gtk-4.0/`, `fcitx/`, `prism/`, `wali/` — Wayland compositor, desktop shell, theme templates, and per-host graphical configuration

@@ -19,7 +19,6 @@ ROOT = Path(__file__).resolve().parents[1]
 ZSH = [
     "task_json_search",
     "dropbox_ignore_flux",
-    "work_link",
     "history",
     "icat_completion",
     "glow_completion",

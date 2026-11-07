@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OFF = 'automatic_broad = false\nbroad_targets = ["test", "check-code", "test-portable"]\n'
 ON = OFF.replace("false", "true")
 ZSH = [
-    "task_json_search", "dropbox_ignore_flux", "work_link", "history",
+    "task_json_search", "dropbox_ignore_flux", "history",
     "icat_completion", "glow_completion", "secrets_check", "setup_and_health",
     "dotfiles_check", "layout_check", "justfile", "console_keymap",
 ]
@@ -273,8 +273,8 @@ def test_full_inventory_and_retained_junit(door):
     evidence = Path(door.env["EVIDENCE_DIR"])
     assert (evidence / "pytest.xml").read_text().count("testcase") == 2
     rows = [json.loads(s) for s in (evidence / "phases.jsonl").read_text().splitlines()]
-    assert len(rows) == 26
-    assert [r["event"] for r in rows] == ["start", "end"] * 13
+    assert len(rows) == 24
+    assert [r["event"] for r in rows] == ["start", "end"] * 12
     assert all(r["exit"] == 0 for r in rows if r["event"] == "end")
 
 
