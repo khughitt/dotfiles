@@ -166,19 +166,15 @@ if args.subcmd == "show":
         policy_path = pathlib.Path(config_home) / "hostkit" / "budget.toml"
 
     mod = None
-    for cand in [
-        "/home/keith/d/hostkit/bin/host-budget",
-        os.path.expanduser("~/d/hostkit/bin/host-budget"),
-    ]:
-        if os.path.isfile(cand):
-            try:
-                test_loader = importlib.machinery.SourceFileLoader("host_budget_real", cand)
-                test_mod = test_loader.load_module()
-                if hasattr(test_mod, "load_policy"):
-                    mod = test_mod
-                    break
-            except Exception:
-                continue
+    cand = os.environ.get("REPO_HOSTKIT_BUDGET", "")
+    if cand and os.path.isfile(cand):
+        try:
+            test_loader = importlib.machinery.SourceFileLoader("host_budget_real", cand)
+            test_mod = test_loader.load_module()
+            if hasattr(test_mod, "load_policy"):
+                mod = test_mod
+        except Exception:
+            pass
     if mod is not None:
         try:
             mod.load_policy(policy_path)
@@ -189,8 +185,16 @@ if args.subcmd == "show":
         try:
             import tomllib
             data = tomllib.loads(policy_path.read_text())
+            if not isinstance(data, dict):
+                raise ValueError("policy must be a table")
             if not all(k in data for k in ("profiles", "audio", "scope")):
                 raise ValueError("missing top-level tables")
+            if not isinstance(data["profiles"], dict) or "default" not in data["profiles"]:
+                raise ValueError("profiles must be a table with default")
+            if not isinstance(data["audio"], dict):
+                raise ValueError("audio must be a table")
+            if not isinstance(data["scope"], dict):
+                raise ValueError("scope must be a table")
         except Exception as err:
             print(f"host-budget: {err}", file=sys.stderr)
             sys.exit(2)
@@ -219,6 +223,7 @@ child_env() {
     XDG_CACHE_HOME="${tmp}/cache" XDG_CONFIG_HOME="${tmp}/config"
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/home/.local/state"
     GIT_CONFIG_GLOBAL="${tmp}/home/.gitconfig" GIT_CONFIG_NOSYSTEM=1
+    REPO_HOSTKIT_BUDGET="${repo_root:h}/hostkit/bin/host-budget"
   )
   for name in SYSTEMCTL_LOG NOCTALIA_ENABLE_STATUS NOCTALIA_LOG \
       NOCTALIA_PLUGIN_LIST NOCTALIA_PLUGIN_LIST_STATUS NOCTALIA_TEST_LOG \
@@ -277,7 +282,7 @@ run_setup() {
   fi
   if [[ "${HOSTKIT_SOURCE_PRESENT:-true}" == true ]]; then
     mkdir -p "${tmp}/home/d/hostkit/bin" "${tmp}/home/d/hostkit/systemd/user"
-    local hostkit_src="${HOSTKIT_SRC:-/home/keith/d/hostkit}"
+    local hostkit_src="${HOSTKIT_SRC:-${repo_root:h}/hostkit}"
     if [[ -d "$hostkit_src" ]]; then
       cp "${hostkit_src}/install.toml" "${tmp}/home/d/hostkit/install.toml"
       for b in hostkit_config.py hostkit-links work-link host-load host-drift; do
@@ -288,6 +293,95 @@ run_setup() {
       done
       cp "${hostkit_src}/systemd/user/work-link.service" "${tmp}/home/d/hostkit/systemd/user/work-link.service"
       cp "${hostkit_src}/systemd/user/work-link.timer" "${tmp}/home/d/hostkit/systemd/user/work-link.timer"
+    else
+      cat > "${tmp}/home/d/hostkit/install.toml" <<'EOF'
+[links]
+"~/.local/bin/work-link" = "bin/work-link"
+"~/.local/bin/host-budget" = "bin/host-budget"
+"~/.local/bin/host-load" = "bin/host-load"
+"~/.local/bin/host-drift" = "bin/host-drift"
+"~/.local/bin/hostkit-links" = "bin/hostkit-links"
+"$XDG_CONFIG_HOME/systemd/user/work-link.service" = "systemd/user/work-link.service"
+"$XDG_CONFIG_HOME/systemd/user/work-link.timer" = "systemd/user/work-link.timer"
+EOF
+      cat > "${tmp}/home/d/hostkit/bin/hostkit-links" <<'EOF'
+#!/usr/bin/env python3
+import argparse
+import os
+import pathlib
+import tomllib
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--apply", action="store_true")
+parser.add_argument("--manifest", type=pathlib.Path, required=True)
+parser.add_argument("--root", type=pathlib.Path, required=True)
+parser.add_argument("--home", type=pathlib.Path, required=True)
+args = parser.parse_args()
+
+manifest = tomllib.loads(args.manifest.read_text())
+xdg_config = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", str(args.home / ".config")))
+
+for dst_str, src_rel in manifest.get("links", {}).items():
+    if dst_str.startswith("~/"):
+        dst = args.home / dst_str[2:]
+    elif dst_str.startswith("$XDG_CONFIG_HOME/"):
+        dst = xdg_config / dst_str[len("$XDG_CONFIG_HOME/"):]
+    else:
+        dst = pathlib.Path(dst_str)
+    src = (args.root / src_rel).resolve()
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.is_symlink() or dst.exists():
+        dst.unlink()
+    dst.symlink_to(src)
+EOF
+      chmod +x "${tmp}/home/d/hostkit/bin/hostkit-links"
+      cat > "${tmp}/home/d/hostkit/bin/hostkit_config.py" <<'EOF'
+#!/usr/bin/env python3
+import argparse
+import json
+import os
+import pathlib
+import tomllib
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--json", action="store_true")
+args = parser.parse_args()
+
+home = pathlib.Path(os.environ.get("HOME", "/tmp"))
+config_home = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", str(home / ".config")))
+config_file = config_home / "hostkit" / "config.toml"
+
+scan_root = None
+if config_file.is_file():
+    data = tomllib.loads(config_file.read_text())
+    storage = data.get("storage", {})
+    sync_root = storage.get("sync_root")
+    if sync_root:
+        if sync_root.startswith("~/"):
+            scan_root = str(home / sync_root[2:])
+        else:
+            scan_root = sync_root
+
+env_scan_root = os.environ.get("WORKTREE_SCAN_ROOT")
+if env_scan_root:
+    scan_root = env_scan_root
+
+if args.json:
+    print(json.dumps({"scan_root": scan_root}))
+else:
+    print(scan_root or "")
+EOF
+      chmod +x "${tmp}/home/d/hostkit/bin/hostkit_config.py"
+      touch "${tmp}/home/d/hostkit/bin/work-link" \
+            "${tmp}/home/d/hostkit/bin/host-budget" \
+            "${tmp}/home/d/hostkit/bin/host-load" \
+            "${tmp}/home/d/hostkit/bin/host-drift" \
+            "${tmp}/home/d/hostkit/systemd/user/work-link.service" \
+            "${tmp}/home/d/hostkit/systemd/user/work-link.timer"
+      chmod +x "${tmp}/home/d/hostkit/bin/work-link" \
+               "${tmp}/home/d/hostkit/bin/host-budget" \
+               "${tmp}/home/d/hostkit/bin/host-load" \
+               "${tmp}/home/d/hostkit/bin/host-drift"
     fi
     (
       unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
@@ -2977,6 +3071,7 @@ test_health_fails_when_host_budget_missing_or_policy_invalid() {
   [[ "$output" == *"host-budget is not on PATH"* ]] || \
     fail "health did not report host-budget missing on PATH: ${output}"
 
+  register_tmp_cleanup "${repo_root}/hosts/_test_corrupt"
   mkdir -p "${repo_root}/hosts/_test_corrupt"
   printf 'invalid = toml [[[\n' > "${repo_root}/hosts/_test_corrupt/budget.toml"
 
