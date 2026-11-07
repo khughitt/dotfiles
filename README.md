@@ -191,7 +191,7 @@ suite, `TT_FORCE=1 just test-portable` for the portable subset, and
 `TT_FORCE=1 just check` for complete code checks. `test-one` supports pytest,
 zsh and existing headless nvim invocations with literal arguments.
 The full route keeps unchanged Python discovery, twelve Zsh scripts and nested
-Neovim checks; supplementary Noctalia/science-md.nvim suites remain outside it.
+Neovim checks; supplementary Noctalia suites remain outside it.
 
 `check-hygiene` always checks formatting, source syntax, tracked links/modelines,
 local promoted-glass consistency, guide regions (`tools/ops-docs check`), and task

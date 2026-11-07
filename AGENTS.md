@@ -28,7 +28,7 @@ Use `just test-full` for deliberate complete Python/Zsh/Neovim verification,
 for complete checks. `gate` composes check/test and `verify` also inspects actual
 host health; a policy skip does not prove either tests or host health. The full
 route retains unchanged pytest discovery and twelve Zsh scripts including nested
-Neovim. Supplementary Noctalia/science-md.nvim routes remain outside it. No
+Neovim. Supplementary Noctalia routes remain outside it. No
 affected selector or test-fast route is claimed.
 
 Run affected focused tests while implementing. After changes to shell/editor

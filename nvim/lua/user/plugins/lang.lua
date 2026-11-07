@@ -91,10 +91,10 @@ return {
   },
 
   -- ---------------------------------------------------------------------
-  -- Local plugin: highlights Science-project markdown references
+  -- Science-project markdown references
   -- ---------------------------------------------------------------------
   {
-    dir = vim.fn.stdpath('config') .. '/plugins/science-md.nvim',
+    url = vim.fn.expand('~/d/science-md.nvim'),
     name = 'science-md.nvim',
     ft = 'markdown',
     opts = {},
