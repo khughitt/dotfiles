@@ -1,0 +1,6 @@
+[storage]
+sync_root = "~/d"
+anchor_name = ".dropbox-work"
+
+[sync]
+ignore_xattr = "com.dropbox.ignored"

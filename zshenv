@@ -9,6 +9,7 @@ typeset -U PATH path
 # :A resolves symlinks to an absolute path, :h takes its directory.
 : "${DOTFILES:=${${(%):-%x}:A:h}}"
 export DOTFILES
+export WORKTREE_SCAN_ROOT="${WORKTREE_SCAN_ROOT:-$HOME/d}"
 
 # Homebrew (Apple Silicon)
 if [[ -d /opt/homebrew ]]; then
