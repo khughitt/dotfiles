@@ -3,8 +3,9 @@
 Some files in this directory are maintained in the ops repository,
 https://github.com/khughitt/ops (private for now; planned public), and copied here
 unchanged. ops holds the shared tooling and vocabularies that a family of projects run in
-the same way. This project holds only some of the files below; apart from this README,
-any file in this directory that the table does not name belongs to this project itself.
+the same way. This project holds only some of the files below; every file the table names
+is a vendored copy, never edited here; a project's own scripts belong in `scripts/`
+(see `code-organization.md`), and any other file still here awaits its project's move.
 
 | File | What it is | How this project uses it | Source in ops |
 |---|---|---|---|
@@ -14,6 +15,7 @@ any file in this directory that the table does not name belongs to this project 
 | `cli.toml` | The shared command-line vocabulary and the inventory of every in-scope command | A conformance test builds the project's parser surface and compares it with its rows here | `cli.toml` |
 | `cli_surface.py` | The helper that builds a parser surface for that comparison | Imported by the conformance test, beside `cli.toml` | `bin/cli_surface.py` |
 | `keys.toml` | The shared key vocabulary and the inventory of every application shortcut | A test compares the project's live key bindings with its rows here | `keys.toml` |
+| `code-organization.md` | The shared guide to organizing a project's code: layout, modules, public surface, naming | Read before adding or moving code; the AGENTS.md family line cites it | `docs/code-organization.md` |
 | `family.toml` | The project family's member list and shared text | `tools/ops-docs` renders the family section of the guides from it | the family home's `family.toml`, written by `ops-docs family publish` |
 
 ## Never edit these files here
@@ -22,8 +24,8 @@ A change is made in ops and lands on its default branch first; then it arrives h
 
 - `tt`, `ops-check`, `ops-docs` and this README are written into every project that
   holds them by `vendored publish`, run in ops right after the change lands.
-- `cli.toml`, `cli_surface.py` and `keys.toml` arrive when this project runs
-  `vendored adopt` together with the change of its own that needs them.
+- `cli.toml`, `cli_surface.py`, `keys.toml` and `code-organization.md` arrive when
+  this project runs `vendored adopt` together with the change of its own that needs them.
 - `family.toml` arrives from the family home.
 
 ops's `vendored check` reports any copy edited in place.

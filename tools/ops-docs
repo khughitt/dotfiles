@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ops-docs version 10
+# ops-docs version 11
 """A project's guide files — README.md for people, AGENTS.md for agents — rendered and
 checked inside one repository.
 
@@ -13,6 +13,7 @@ Reference: ops docs/project-guides.md.
 In a family home (a repository holding family.toml), `family publish` writes the
 committed family file into each member as tools/family.toml and re-renders the member's
 guides, and `family check` judges every member's committed copy against the home's.
+When a family declares `[code]`, member AGENTS.md guides cite the code organization guide.
 Reference: ops docs/project-guides.md.
 
 A project declaring `[documents]` in identity.toml also has its public reference
@@ -48,8 +49,10 @@ DEFAULT_CONTRACT = {
 }
 FAMILY_HOME = "family.toml"
 FAMILY_COPY = "tools/family.toml"
-FAMILY_FIELDS = ("name", "summary", "overview", "members", "readme", "agents")
+FAMILY_FIELDS = ("name", "summary", "overview", "members", "readme", "agents", "code")
 MEMBER_FIELDS = ("name", "prefix", "url", "label", "title")
+CODE_FIELDS = ("note",)
+NOTE_MAX = 160
 CONTRACT_FIELDS = {"readme": ("lead", "sections", "status_before"), "agents": ("sections",)}
 LEADS = ("purpose", "abstract")
 SUMMARY_MAX = 300
@@ -413,6 +416,16 @@ def family_problems(fam):
     for kind in ("readme", "agents"):
         if kind in fam:
             found.extend(_contract_table_problems(kind, fam[kind]))
+    if "code" in fam:
+        code = fam["code"]
+        if not isinstance(code, dict):
+            found.append("code must be a table")
+        else:
+            found.extend(f"code: unknown key {key}" for key in sorted(set(code) - set(CODE_FIELDS)))
+            if "note" in code:
+                note = code["note"]
+                if not _line(note) or len(note) > NOTE_MAX or "`" in note:
+                    found.append(f"code.note must be a single line of at most {NOTE_MAX} characters without backticks")
     return found
 
 
@@ -787,13 +800,27 @@ def nav_title(member):
     return member.get("title", member.get("name"))
 
 
-def render_family(fam, ident, kind, rel):
+def code_guide(root):
+    """The path to the code organization guide: docs/ in ops (its source), tools/ elsewhere."""
+    if (pathlib.Path(root) / "docs" / "code-organization.md").exists():
+        return "docs/code-organization.md"
+    return "tools/code-organization.md"
+
+
+def render_family(fam, ident, kind, rel, guide=None):
     """The family region: in the README the family name linked to its overview, the
     summary, and a nav in listed order with this member bold and unlinked; in AGENTS.md
-    one line naming the family file this repository reads."""
+    one line naming the family file this repository reads, and the code guide when declared."""
     if kind == "agents":
         line = (f"Member of the {fam['name']} family ({fam['overview']}); "
                 f"this repository's guides follow its contract in {rel}.")
+        if "code" in fam:
+            g = guide or "tools/code-organization.md"
+            code_line = f"Code follows `{g}`."
+            note = fam["code"].get("note")
+            if note:
+                code_line += f" {note}"
+            line += f"\n{code_line}"
         return f"{FAMILY_START}\n{line}\n{FAMILY_END}"
     summary = " ".join(fam["summary"].split())
     nav = " · ".join(f"**{nav_title(m)}**" if m["name"] == ident["name"]
@@ -1009,14 +1036,14 @@ def guides(root, ident):
 
 
 def rendered(root, ident, name, text, run=subprocess.run, subsystem=False,
-             contract=DEFAULT_CONTRACT, family=None, family_rel=None):
+             contract=DEFAULT_CONTRACT, family=None, family_rel=None, guide=None):
     kind = "readme" if name == "README.md" else "agents"
     problems = marker_problems(kind, text, subsystem)
     if problems:
         raise ValueError("; ".join(problems))
     out = replace_region(text, IDENTITY_START, IDENTITY_END, render_identity(root, ident, kind, contract))
     if family is not None and find_region(out, FAMILY_START, FAMILY_END) is not None:
-        out = replace_region(out, FAMILY_START, FAMILY_END, render_family(family, ident, kind, family_rel))
+        out = replace_region(out, FAMILY_START, FAMILY_END, render_family(family, ident, kind, family_rel, guide))
     if kind == "readme" and not subsystem and find_region(out, STATUS_START, STATUS_END) is not None:
         out = replace_region(out, STATUS_START, STATUS_END, render_status(goal_rows(status_records(root, run))))
     return out
@@ -1108,6 +1135,11 @@ def main(argv, env, cwd, run=subprocess.run):
             member = fam
         elif rel == FAMILY_COPY:
             family_findings.append(f"{FAMILY_COPY}: does not list this project ({ident['name']})")
+    if member is not None and "code" in member:
+        guide = code_guide(root)
+        if not (root / guide).exists():
+            family_findings.append(f"{guide}: missing, but family {member['name']} declares [code]; "
+                                   "run `vendored adopt code-organization.md`")
     if family_findings:
         if args.command == "check":
             return _report(identity_findings + family_findings, [], brief)
@@ -1118,7 +1150,7 @@ def main(argv, env, cwd, run=subprocess.run):
 
     def scope(subsystem):
         """The contract, family and family file a guide is held to: subsystems keep the default."""
-        return (DEFAULT_CONTRACT, None, None) if subsystem else (contract, member, rel)
+        return (DEFAULT_CONTRACT, None, None, None) if subsystem else (contract, member, rel, code_guide(root))
 
     if args.command == "write":
         texts = [(base, decl, prefix, subsystem, name, (base / name).read_text())
@@ -1134,7 +1166,7 @@ def main(argv, env, cwd, run=subprocess.run):
         try:
             for base, decl, prefix, subsystem, name, text in texts:
                 kind = "readme" if name == "README.md" else "agents"
-                own_contract, own_family, own_rel = scope(subsystem)
+                own_contract, own_family, own_rel, own_guide = scope(subsystem)
                 if args.init:
                     text = insert_identity(text, _global(kind, decl))
                     if own_family is not None:
@@ -1142,7 +1174,7 @@ def main(argv, env, cwd, run=subprocess.run):
                 if args.init_status and name == "README.md" and not subsystem:
                     text = insert_status(text, own_contract)
                 outputs.append((base / name, rendered(base, decl, name, text, run, subsystem,
-                                                      own_contract, own_family, own_rel)))
+                                                      own_contract, own_family, own_rel, own_guide)))
         except (LookupError, ValueError, TrackerError) as error:
             sys.stderr.write(f"ops-docs: {error}\n")
             return 2
@@ -1153,7 +1185,7 @@ def main(argv, env, cwd, run=subprocess.run):
     if args.command == "render":
         try:
             sys.stdout.write(rendered(root, ident, args.file, (root / args.file).read_text(), run,
-                                      False, contract, member, rel))
+                                      False, contract, member, rel, code_guide(root)))
         except (LookupError, ValueError, TrackerError) as error:
             sys.stderr.write(f"ops-docs: {error}\n")
             return 2
@@ -1163,7 +1195,7 @@ def main(argv, env, cwd, run=subprocess.run):
     for base, decl, prefix, subsystem in guides(root, ident):
         if subsystem and not tracked(root, prefix.rstrip("/")):
             found.append(f"subsystem {prefix.rstrip('/')} is not tracked")
-        own_contract, own_family, own_rel = scope(subsystem)
+        own_contract, own_family, own_rel, own_guide = scope(subsystem)
         for name in GUIDES:
             label, text = prefix + name, (base / name).read_text()
             kind = "readme" if name == "README.md" else "agents"
@@ -1174,7 +1206,7 @@ def main(argv, env, cwd, run=subprocess.run):
             if marker_problems(kind, text, subsystem) or "identity region is missing" in shape:
                 continue
             try:
-                current = rendered(base, decl, name, text, run, subsystem, own_contract, own_family, own_rel)
+                current = rendered(base, decl, name, text, run, subsystem, own_contract, own_family, own_rel, own_guide)
             except LookupError as error:
                 sys.stderr.write(f"ops-docs: {error}\n")
                 return 2
