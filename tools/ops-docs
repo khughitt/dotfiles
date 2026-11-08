@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ops-docs version 9
+# ops-docs version 10
 """A project's guide files — README.md for people, AGENTS.md for agents — rendered and
 checked inside one repository.
 
@@ -789,16 +789,15 @@ def nav_title(member):
 
 def render_family(fam, ident, kind, rel):
     """The family region: in the README the family name linked to its overview, the
-    summary, and a nav sorted by shown text with this member bold and unlinked; in
-    AGENTS.md one line naming the family file this repository reads."""
+    summary, and a nav in listed order with this member bold and unlinked; in AGENTS.md
+    one line naming the family file this repository reads."""
     if kind == "agents":
         line = (f"Member of the {fam['name']} family ({fam['overview']}); "
                 f"this repository's guides follow its contract in {rel}.")
         return f"{FAMILY_START}\n{line}\n{FAMILY_END}"
     summary = " ".join(fam["summary"].split())
-    members = sorted(fam["members"], key=lambda m: nav_title(m).casefold())
     nav = " · ".join(f"**{nav_title(m)}**" if m["name"] == ident["name"]
-                     else f'[{nav_title(m)}]({m["url"]} "{m["label"]}")' for m in members)
+                     else f'[{nav_title(m)}]({m["url"]} "{m["label"]}")' for m in fam["members"])
     return (f"{FAMILY_START}\nPart of **[{fam['name']}]({fam['overview']})**: {summary}"
             f"\n\n{nav}\n{FAMILY_END}")
 
