@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ops-docs version 8
+# ops-docs version 9
 """A project's guide files — README.md for people, AGENTS.md for agents — rendered and
 checked inside one repository.
 
@@ -49,7 +49,7 @@ DEFAULT_CONTRACT = {
 FAMILY_HOME = "family.toml"
 FAMILY_COPY = "tools/family.toml"
 FAMILY_FIELDS = ("name", "summary", "overview", "members", "readme", "agents")
-MEMBER_FIELDS = ("name", "prefix", "url", "label")
+MEMBER_FIELDS = ("name", "prefix", "url", "label", "title")
 CONTRACT_FIELDS = {"readme": ("lead", "sections", "status_before"), "agents": ("sections",)}
 LEADS = ("purpose", "abstract")
 SUMMARY_MAX = 300
@@ -57,6 +57,7 @@ SUMMARY_SENTENCES = 2
 LABEL_MAX = 60
 _TAG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 _UNSAFE_URL = re.compile(r"[\s()]")
+_UNSAFE_TITLE = re.compile(r"[\[\]*_`\\]")
 FIELDS = ("name", "aliases", "purpose", "abstract", "authority", "subsystems", "agents", "documents")
 AGENTS_FIELDS = ("budget", "scope")
 SCOPES = ("project", "global")
@@ -380,7 +381,7 @@ def family_problems(fam):
     if not isinstance(members, list) or not members:
         found.append("members must be a non-empty list of tables")
         members = []
-    seen = {"name": set(), "prefix": set()}
+    seen = {"name": set(), "prefix": set(), "title": set()}
     for number, member in enumerate(members, 1):
         where = f"member {number}"
         if not isinstance(member, dict):
@@ -397,6 +398,14 @@ def family_problems(fam):
                 seen[key].add(value)
         if not _https(member.get("url")):
             found.append(f"{where}: url must be an https:// URL without whitespace or parentheses")
+        title = member.get("title")
+        if title is not None and (not _line(title) or _UNSAFE_TITLE.search(title)):
+            found.append(f"{where}: title must be a single line without [ ] * _ ` or \\")
+        elif _line(member.get("name")) or title is not None:
+            shown = nav_title(member)
+            if shown in seen["title"]:
+                found.append(f"{where}: title {shown} is listed twice")
+            seen["title"].add(shown)
         label = member.get("label")
         if not _line(label) or len(label) > LABEL_MAX or '"' in label:
             found.append(f"{where}: label must be a single line of at most {LABEL_MAX} characters, "
@@ -773,17 +782,24 @@ def record_problems(root):
     return found
 
 
+def nav_title(member):
+    """The text a member shows in the nav: its title, else its name."""
+    return member.get("title", member.get("name"))
+
+
 def render_family(fam, ident, kind, rel):
-    """The family region: in the README the summary and a nav with this member bold and
-    unlinked; in AGENTS.md one line naming the family file this repository reads."""
+    """The family region: in the README the family name linked to its overview, the
+    summary, and a nav sorted by shown text with this member bold and unlinked; in
+    AGENTS.md one line naming the family file this repository reads."""
     if kind == "agents":
         line = (f"Member of the {fam['name']} family ({fam['overview']}); "
                 f"this repository's guides follow its contract in {rel}.")
         return f"{FAMILY_START}\n{line}\n{FAMILY_END}"
     summary = " ".join(fam["summary"].split())
-    nav = " · ".join(f"**{m['name']}**" if m["name"] == ident["name"]
-                     else f'[{m["name"]}]({m["url"]} "{m["label"]}")' for m in fam["members"])
-    return (f"{FAMILY_START}\nPart of **{fam['name']}**: {summary} [Overview]({fam['overview']})"
+    members = sorted(fam["members"], key=lambda m: nav_title(m).casefold())
+    nav = " · ".join(f"**{nav_title(m)}**" if m["name"] == ident["name"]
+                     else f'[{nav_title(m)}]({m["url"]} "{m["label"]}")' for m in members)
+    return (f"{FAMILY_START}\nPart of **[{fam['name']}]({fam['overview']})**: {summary}"
             f"\n\n{nav}\n{FAMILY_END}")
 
 
