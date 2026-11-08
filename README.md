@@ -30,7 +30,7 @@ piece of the setup after a change:
 
 Valid phases are:
 
-    preflight external-clones shell gtk graphical-config common-config systemd kitty home bin lookout app-config noctalia-plugins mime dropbox-ignore tmux packages
+    preflight external-clones shell graphical-config common-config systemd kitty lookout app-config noctalia-plugins mime dropbox-ignore tmux packages
 
 The `lookout` phase requires the lookout checkout at `~/d/lookout`, Bun 1.4,
 `just`, and `attr`. It runs lookout's `just setup` on each host to install locked,
@@ -108,15 +108,17 @@ Mindful v6 runtime and backup units are staged without automatic activation. Fol
 [the runtime runbook](docs/mindful-runtime.md) for the approved cutover; retain
 `~/.config/mindful.env` only for deliberate v3 rollback.
 
-Two things worth knowing about the ~/.config surface. The entries that are
-whole-directory symlinks into this tree — `niri`, `kitty`, `zathura`, and the
-per-machine `prism` directory — hand every file an application writes there to
-the shared tree; the ones that are real directories (`btop`, `yazi`, `bat`,
-`lsd`, `gtk-3.0`, `fastfetch`) cannot. `dotfiles-health` warns about every path
-under a linked one that the tree does not own. And Noctalia writes *through* a
-symlink rather than replacing it, which is what lets its generated theme output
-be a link out to per-machine state; `noctalia msg templates-apply` renders that
-output, and `setup.sh` asks for it whenever it is still empty.
+Two things worth knowing about the `~/.config` surface (declared across
+`install.toml`, `install-linux.toml`, and `install-graphical.toml` and applied
+via `hostkit-links`). The entries that are whole-directory symlinks into this
+tree — `niri`, `kitty`, `zathura`, and the per-machine `prism` directory — hand
+every file an application writes there to the shared tree; the ones that are
+real directories (`btop`, `yazi`, `bat`, `lsd`, `gtk-3.0`, `fastfetch`, and
+`~/bin`) cannot. `dotfiles-health` warns about every path under a linked one
+that the tree does not own. And Noctalia writes *through* a symlink rather than
+replacing it, which is what lets its generated theme output be a link out to
+per-machine state; `noctalia msg templates-apply` renders that output, and
+`setup.sh` asks for it whenever it is still empty.
 
 Configuration files are included for both Bash and Z shell. If you plan to use
 Z shell, you will also want to install [zinit](https://github.com/zdharma/zinit).
@@ -308,8 +310,8 @@ Configured command-line and desktop tools:
 
 ## Layout
 
-- `setup.sh`, `lib/` — host installer, phase runner, setup manifest data, and Git packing policy helper
-- `bin/` — standalone commands and wrappers (`dotfiles-health`, `dotfiles-check`, `dotfiles-layout-check`, `dotfiles-secrets-check`, `noctalia-glass-sync`, `noctalia-glass-check`, `gpu-ctl`, `mindful`, `prism`, and Niri helpers; `work-link` lives in `hostkit`)
+- `setup.sh`, `install.toml`, `install-linux.toml`, `install-graphical.toml`, `lib/` — host installer, phase runner, `hostkit-links` manifests, setup helpers, and Git packing policy helper
+- `bin/` — standalone commands and wrappers symlinked individually into real directory `~/bin` (`dotfiles-health`, `dotfiles-check`, `dotfiles-layout-check`, `dotfiles-secrets-check`, `noctalia-glass-sync`, `noctalia-glass-check`, `gpu-ctl`, `mindful`, `prism`, and Niri helpers; `work-link` lives in `hostkit`)
 - `bashrc`, `zshrc`, `zshenv`, `shell/` — Bash and Zsh startup, aliases, functions, completions, and OS helpers
 - `nvim/`, `kitty/`, `ghostty/`, `tmux.conf`, `visidatarc`, `yazi/`, `zathura/`, `lsd/`, `glow/`, `git/`, `ripgreprc` — editor, terminal, and CLI tool configurations
 - `niri/`, `noctalia/`, `gtk-3.0/`, `gtk-4.0/`, `fcitx/`, `prism/`, `wali/` — Wayland compositor, desktop shell, theme templates, and per-host graphical configuration

@@ -26,9 +26,20 @@ def home(tmp_path):
 
 
 def setup(home, *args, **env):
+    child_env = {
+        "PATH": os.environ["PATH"],
+        "HOME": str(home),
+        "USER": os.environ.get("USER", "lookout-test"),
+        "LANG": os.environ.get("LANG", "C.UTF-8"),
+        "XDG_CONFIG_HOME": str(home / ".config"),
+        "WORKTREE_SCAN_ROOT": str(home / "d"),
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_CONFIG_NOSYSTEM": "1",
+    }
+    child_env.update(env)
     return subprocess.run(
         ["bash", str(REPO / "setup.sh"), "--only", "lookout", *args],
-        env={**os.environ, "HOME": str(home), "XDG_CONFIG_HOME": str(home / ".config"), **env},
+        env=child_env,
         capture_output=True, text=True,
     )
 

@@ -456,10 +456,10 @@ linux` — that syncs the databases and installs one package against them, which
 is the definition of a partial upgrade. `kernel-gate unlock` does the two steps
 in that order for exactly this reason.
 
-**Root runs its own copy, not the `~/bin` symlink.** `bin/` is symlinked into
-`$HOME`, and a pacman hook executing a user-writable script would hand root to
-anything that can write there. The `install` above makes a root-owned copy;
-re-run it whenever `bin/kernel-gate` changes.
+**Root runs its own copy, not the `~/bin` symlink.** Tracked scripts in `bin/`
+are symlinked into `~/bin`, and a pacman hook executing a user-writable script
+would hand root to anything that can write there. The `install` above makes a
+root-owned copy; re-run it whenever `bin/kernel-gate` changes.
 
 Verify by asking pacman what it will actually do, not by reading the config
 back:

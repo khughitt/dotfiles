@@ -25,6 +25,12 @@ SKIP_NOCTALIA_IPC=false
 # shellcheck source=lib/dotfiles-setup-data.bash
 source "${DOTS_HOME}/lib/dotfiles-setup-data.bash"
 
+HOSTKIT_ROOT="$(dotfiles_project_root hostkit)"
+WALI_ROOT="$(dotfiles_project_root wali)"
+PRISM_ROOT="$(dotfiles_project_root prism)"
+RESOURCE_ALERT_ROOT="$(dotfiles_project_root pressure)"
+OPS_ROOT="$(dotfiles_project_root ops)"
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip-systemd)
@@ -123,7 +129,7 @@ check_gated_timer() {
     local name="$1" link_failures="$2"
     if gated_timer_wanted "$name"; then
         check_link "${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/${name}.timer" \
-            "${HOME}/d/ops/systemd/user/${name}.timer"
+            "${OPS_ROOT}/systemd/user/${name}.timer"
         if systemctl --user is-enabled "${name}.timer" >/dev/null 2>&1; then
             pass "systemd user timer is enabled: ${name}.timer"
         else
@@ -179,21 +185,53 @@ check_link_target() {
     fi
 }
 
-check_config_link() {
-    local name="$1"
-    check_link "${XDG_CONFIG_HOME}/${name}" "${DOTS_HOME}/${name}"
-}
+retention_link_failures=0
+convergence_link_failures=0
 
-check_absent_stale_config_link() {
-    local name="$1"
-    local dest="${XDG_CONFIG_HOME}/${name}"
+check_manifest() {
+    local manifest_path="$1"
+    local name output line status dest detail
+    local rc=0
+    local bad=0
+    local retention_ok=0
+    local convergence_ok=0
+    name="$(basename "$manifest_path")"
 
-    if [[ -L "$dest" ]]; then
-        fail "stale managed config link: $dest"
-    elif [[ -e "$dest" ]]; then
-        warn "config path exists but is no longer managed: $dest"
-    else
-        pass "stale managed config absent: $dest"
+    output="$(python3 "${HOSTKIT_ROOT}/bin/hostkit-links" --check --manifest "$manifest_path" --root "${DOTS_HOME}" --home "${HOME}" 2>&1)" || rc=$?
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        if [[ "$line" == *$'\t'* ]]; then
+            IFS=$'\t' read -r status dest detail <<<"$line"
+            if [[ "$name" == "install-linux.toml" ]]; then
+                case "$dest" in
+                    */systemd/user/git-index-retention.service|*/systemd/user/git-index-retention.timer)
+                        [[ "$status" == "ok" ]] && retention_ok=$((retention_ok + 1))
+                        ;;
+                    */systemd/user/git-index-health.service|*/systemd/user/git-index-health.timer)
+                        [[ "$status" == "ok" ]] && convergence_ok=$((convergence_ok + 1))
+                        ;;
+                esac
+            fi
+            if [[ "$status" != "ok" ]]; then
+                fail "manifest ${name}: ${status}"$'\t'"${dest}"$'\t'"${detail}"
+                bad=$((bad + 1))
+            fi
+        elif [[ "$rc" -ne 0 ]]; then
+            fail "manifest ${name}: ${line}"
+            bad=$((bad + 1))
+        fi
+    done <<<"$output"
+
+    if [[ "$name" == "install-linux.toml" ]]; then
+        [[ "$retention_ok" -eq 2 ]] || retention_link_failures=1
+        [[ "$convergence_ok" -eq 2 ]] || convergence_link_failures=1
+    fi
+
+    if [[ "$rc" -eq 0 && "$bad" -eq 0 ]]; then
+        pass "manifest: ${name}"
+    elif [[ "$rc" -ne 0 && "$bad" -eq 0 ]]; then
+        fail "manifest ${name} failed"
     fi
 }
 
@@ -342,52 +380,17 @@ if [[ "$(uname)" != "Darwin" ]]; then
     check_command attr
 fi
 
-check_link "${HOME}/.bashrc" "${DOTS_HOME}/bashrc"
-check_link "${HOME}/.bash_profile" "${DOTS_HOME}/bash_profile"
-check_link "${HOME}/.zshrc" "${DOTS_HOME}/zshrc"
-check_link "${HOME}/.zshenv" "${DOTS_HOME}/zshenv"
-check_link "${HOME}/.shell" "${DOTS_HOME}/shell"
-check_link "${HOME}/.gitconfig" "${DOTS_HOME}/git/config"
+check_manifest "${DOTS_HOME}/install.toml"
+if [[ "$(uname)" != "Darwin" ]]; then
+    check_manifest "${DOTS_HOME}/install-linux.toml"
+    check_manifest "${DOTS_HOME}/install-graphical.toml"
+fi
+
 if packing_status=$(python3 "${DOTS_HOME}/lib/git-packing-policy.py" check "$HOME" "$DOTS_HOME" 2>&1); then
     pass "Git packing policy"
 else
     fail "Git packing policy: ${packing_status}"
 fi
-check_link "${HOME}/.gitignore_global" "${DOTS_HOME}/git/ignore"
-# The whole bin directory is linked, so every script in it runs from inside the
-# tree; a real ~/bin holding a copy is how dotfiles-health ends up resolving
-# its root to the home directory.
-check_link "${HOME}/bin" "${DOTS_HOME}/bin"
-
-if [[ "$(uname)" != "Darwin" ]]; then
-    dotfiles_select_common_configs true
-else
-    dotfiles_select_common_configs false
-fi
-managed_config_links=("${DOTFILES_SELECTED_COMMON_CONFIGS[@]}")
-
-for config_name in "${managed_config_links[@]}"; do
-    check_config_link "$config_name"
-done
-unset config_name managed_config_links
-
-lsd_config_dir="${XDG_CONFIG_HOME}/lsd"
-if [[ -d "$lsd_config_dir" && ! -L "$lsd_config_dir" ]]; then
-    pass "real directory: $lsd_config_dir"
-else
-    fail "not a real directory: $lsd_config_dir"
-fi
-check_link "$lsd_config_dir/config.yaml" "${DOTS_HOME}/lsd/config.yaml"
-unset lsd_config_dir
-
-yazi_config_dir="${XDG_CONFIG_HOME}/yazi"
-if [[ -d "$yazi_config_dir" && ! -L "$yazi_config_dir" ]]; then
-    pass "real directory: $yazi_config_dir"
-else
-    fail "not a real directory: $yazi_config_dir"
-fi
-check_link "$yazi_config_dir/yazi.toml" "${DOTS_HOME}/yazi/yazi.toml"
-unset yazi_config_dir
 
 opencode_local="${XDG_CONFIG_HOME}/opencode.local"
 if [[ -d "$opencode_local" && ! -L "$opencode_local" ]]; then
@@ -405,18 +408,14 @@ unset opencode_local
 
 if [[ "$(uname)" != "Darwin" ]]; then
     noctalia_config_dir="${XDG_CONFIG_HOME}/noctalia"
-    check_link "$noctalia_config_dir/config.toml" "${DOTS_HOME}/noctalia/config.toml"
-    check_link "$noctalia_config_dir/templates.toml" "${DOTS_HOME}/noctalia/templates.toml"
-    check_link "$noctalia_config_dir/templates" "${DOTS_HOME}/noctalia/templates"
-    check_link "$noctalia_config_dir/palettes/Glow.json" "${DOTS_HOME}/noctalia/palettes/Glow.json"
 
     noctalia_plugin_dir="${XDG_DATA_HOME}/noctalia/plugins"
     check_link "${noctalia_plugin_dir}/wali-panel" \
-        "${HOME}/d/wali/integrations/noctalia-plugin"
+        "${WALI_ROOT}/integrations/noctalia-plugin"
     check_link "${noctalia_plugin_dir}/prism" \
-        "${HOME}/d/prism/integrations/noctalia-plugin"
+        "${PRISM_ROOT}/integrations/noctalia-plugin"
     check_link "${noctalia_plugin_dir}/resource-pressure-alert" \
-        "${HOME}/d/noctalia-resource-alert"
+        "${RESOURCE_ALERT_ROOT}"
 
     for plugin_name in wali-panel prism resource-pressure-alert; do
         if [[ -f "${noctalia_plugin_dir}/${plugin_name}/plugin.toml" && \
@@ -500,11 +499,6 @@ print("noctalia" if tracked else ("conflict" if merged else "timer"))
     unset noctalia_config_dir noctalia_plugin_dir output plugins merged rotator templates template_id plugin_name
 fi
 
-# Hyprland left the tree on 2026-09-09: niri is the only compositor configured here.
-check_absent_stale_config_link "hypr"
-check_absent_stale_config_link "snakemake"
-check_absent_stale_config_link "tealdeer"
-
 if HOME="$HOME" zsh -fc 'source "$HOME/.shell/functions"' >/dev/null 2>&1; then
     pass "shell functions source cleanly"
 else
@@ -512,38 +506,6 @@ else
 fi
 
 if [[ "$(uname)" != "Darwin" ]]; then
-    check_link \
-        "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service" \
-        "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service"
-    check_link \
-        "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer" \
-        "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer"
-    check_link \
-        "${XDG_CONFIG_HOME}/systemd/user/work-link.service" \
-        "${HOME}/d/hostkit/systemd/user/work-link.service"
-    check_link \
-        "${XDG_CONFIG_HOME}/systemd/user/work-link.timer" \
-        "${HOME}/d/hostkit/systemd/user/work-link.timer"
-    check_link \
-        "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service" \
-        "${HOME}/d/wali/systemd/wali-rotate.service"
-    check_link \
-        "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer" \
-        "${HOME}/d/wali/systemd/wali-rotate.timer"
-    retention_failures="$failures"
-    for unit in git-index-retention.service git-index-retention.timer; do
-        check_link "${XDG_CONFIG_HOME}/systemd/user/${unit}" "${HOME}/d/ops/systemd/user/${unit}"
-    done
-    retention_link_failures=$((failures - retention_failures))
-    convergence_failures="$failures"
-    for unit in git-index-health.service git-index-health.timer; do
-        check_link "${XDG_CONFIG_HOME}/systemd/user/${unit}" "${HOME}/d/ops/systemd/user/${unit}"
-    done
-    convergence_link_failures=$((failures - convergence_failures))
-
-    for unit in mindful-web.service mindful-backup.service mindful-backup.timer; do
-        check_link "${XDG_CONFIG_HOME}/systemd/user/${unit}" "${DOTS_HOME}/systemd/user/${unit}"
-    done
     if [[ -e "${HOME}/.local/share/mindful/current" ]]; then
         for wants in graphical-session.target.wants default.target.wants; do
             if [[ -e "${XDG_CONFIG_HOME}/systemd/user/${wants}/mindful-docker.service" || \
@@ -588,10 +550,10 @@ if [[ "$(uname)" != "Darwin" ]]; then
             # realpath in check_link accepts either spelling of the live path.
             check_link \
                 "${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/wali-rotate.timer" \
-                "${HOME}/d/wali/systemd/wali-rotate.timer"
+                "${WALI_ROOT}/systemd/wali-rotate.timer"
             check_link \
                 "${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/work-link.timer" \
-                "${HOME}/d/hostkit/systemd/user/work-link.timer"
+                "${HOSTKIT_ROOT}/systemd/user/work-link.timer"
 
             # Only an approved host packet enables retention or convergence. These
             # check the local timers and their last runs, never peer coverage, what
@@ -601,7 +563,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
             if gated_timer_wanted git-index-health && ! gated_timer_ready git-index-retention; then
                 fail "git-index-health.timer is enabled without ready retention; see systemctl --user status git-index-retention.timer"
             fi
-            unset retention_failures retention_link_failures convergence_failures convergence_link_failures
+            unset retention_link_failures convergence_link_failures
         else
             warn "systemctl is not available"
         fi
@@ -634,10 +596,8 @@ if [[ -f "$wali_config" || -L "${XDG_CONFIG_HOME}/wali/config.toml" ]]; then
 fi
 unset wali_config
 
-check_link "${XDG_CONFIG_HOME}/hostkit/config.toml" "${DOTS_HOME}/hostkit/config.toml"
-
 hostkit_scan_root=""
-if hostkit_cfg_json=$(WORKTREE_SCAN_ROOT="" python3 "${HOME}/d/hostkit/bin/hostkit_config.py" --json 2>/dev/null); then
+if hostkit_cfg_json=$(WORKTREE_SCAN_ROOT="" python3 "${HOSTKIT_ROOT}/bin/hostkit_config.py" --json 2>/dev/null); then
     hostkit_scan_root=$(python3 -c 'import sys, json; print(json.load(sys.stdin).get("scan_root") or "")' <<<"$hostkit_cfg_json" 2>/dev/null)
     if [[ -z "$hostkit_scan_root" ]]; then
         fail "hostkit storage.sync_root is empty or could not be resolved"
@@ -649,7 +609,7 @@ if hostkit_cfg_json=$(WORKTREE_SCAN_ROOT="" python3 "${HOME}/d/hostkit/bin/hostk
         pass "hostkit storage.sync_root matches WORKTREE_SCAN_ROOT"
     fi
 else
-    hostkit_cfg_err=$(WORKTREE_SCAN_ROOT="" python3 "${HOME}/d/hostkit/bin/hostkit_config.py" --json 2>&1 || true)
+    hostkit_cfg_err=$(WORKTREE_SCAN_ROOT="" python3 "${HOSTKIT_ROOT}/bin/hostkit_config.py" --json 2>&1 || true)
     fail "hostkit_config.py failed: ${hostkit_cfg_err}"
 fi
 unset hostkit_cfg_json hostkit_scan_root

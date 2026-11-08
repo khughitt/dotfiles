@@ -69,7 +69,7 @@ broad work requires explicit TT_FORCE=1, including nested requests.
 
 ## Layout
 
-- `setup.sh`, `lib/` — host link/package installer, setup manifest data, and Git packing policy helper
+- `setup.sh`, `install*.toml`, `lib/` — host link/package installer, `hostkit-links` manifests, setup helpers, and Git packing policy helper
 - `bin/` — health, check, layout, secrets, Noctalia glass sync, worktree linking, and desktop/host commands
 - `bashrc`, `zshrc`, `zshenv`, `shell/`, `nvim/`, `kitty/`, `niri/`, `noctalia/`, `systemd/user/` — tracked shell, editor, terminal, compositor, desktop, and service configurations
 - `docs/` — operator runbooks and retained Noctalia design specs

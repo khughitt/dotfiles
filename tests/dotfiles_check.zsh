@@ -59,6 +59,64 @@ mindful_output=$(HOME="$mindful_home" "${repo_root}/bin/mindful" --flag "two wor
 [[ "$mindful_output" == '["--flag","two words"]' ]] || \
   fail "mindful wrapper did not forward arguments: $mindful_output"
 
+# bin/prism and bin/walictl are wrappers rather than symlinks so the tree
+# carries no path to the target checkouts: registered project roots come from
+# `tasks projects --paths --json`, falling back to `${WORKTREE_SCAN_ROOT:-$HOME/d}`.
+[[ ! -L "${repo_root}/bin/prism" ]] || fail "bin/prism must be a wrapper, not a symlink"
+prism_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-prism-home.XXXXXX")
+register_tmp_cleanup "$prism_home"
+no_tasks_bin=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-no-tasks-bin.XXXXXX")
+register_tmp_cleanup "$no_tasks_bin"
+ln -s "$(command -v python3)" "${no_tasks_bin}/python3"
+mkdir -p "${prism_home}/d/prism/bin"
+print -r -- '#!/usr/bin/env bash
+printf "%s\n" "$@"' > "${prism_home}/d/prism/bin/prism"
+chmod +x "${prism_home}/d/prism/bin/prism"
+no_tasks_path="${no_tasks_bin}:/usr/bin:/bin"
+prism_output=$(env -i PATH="$no_tasks_path" HOME="$prism_home" XDG_CONFIG_HOME="${prism_home}/.config" WORKTREE_SCAN_ROOT="${prism_home}/d" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 LANG=C.UTF-8 TERM=dumb "${repo_root}/bin/prism" apply "two words")
+[[ "$prism_output" == $'apply\ntwo words' ]] || \
+  fail "prism wrapper did not forward arguments: $prism_output"
+
+modeline_files=(
+  zshrc
+  shell/aliases
+  shell/audio
+  shell/functions
+  shell/history
+  shell/macos
+  shell/tmux
+  shell/ubuntu
+  shell/vconsole
+  shell/zoxide
+)
+
+for file in "${modeline_files[@]}"; do
+  output=$(
+    nvim_case "modeline:${file}" nvim --headless -i NONE -u NONE \
+      --cmd 'set noswapfile' \
+      --cmd 'filetype on' \
+      --cmd 'syntax on' \
+      "${repo_root}/${file}" \
+      '+lua print("DOTFILES_FT:" .. vim.bo.filetype .. ":" .. vim.bo.syntax)' \
+      '+qa!' 2>&1
+  )
+
+  [[ "$output" == "DOTFILES_FT:zsh:zsh" ]] || \
+    fail "Neovim did not load ${file} cleanly as zsh: ${output}"
+done
+
+[[ ! -e "${repo_root}/nvim/plugins/science-md.nvim" ]] || \
+  fail "science-md.nvim must live in its standalone repository, not nvim/plugins"
+
+nvim_case nvim-clipboard nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
+  "+lua dofile('${repo_root}/nvim/tests/clipboard_test.lua')" '+qa!'
+
+nvim_case nvim-science-md nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
+  "+lua local p = assert(require('lazy.core.config').plugins['science-md.nvim'], 'missing science-md.nvim spec'); assert(not p._.is_local, 'science-md.nvim must be managed by lazy.nvim, not local dir'); local lock = require('lazy.manage.lock').get(p); assert(lock and lock.branch == 'main' and type(lock.commit) == 'string' and #lock.commit >= 7, 'missing science-md.nvim lock entry'); require('lazy').load({ plugins = { 'science-md.nvim' } }); assert(type(require('science-md').setup) == 'function')" '+qa!'
+
+nvim_case nvim-theme nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
+  -l "${repo_root}/nvim/tests/theme_test.lua"
+
 for manifest in install.toml install-linux.toml install-graphical.toml; do
   [[ -f "${repo_root}/${manifest}" ]] || fail "missing manifest: ${manifest}"
 done
@@ -67,28 +125,15 @@ python3 -c 'import sys, tomllib; [tomllib.load(open(f, "rb")) for f in sys.argv[
   "${repo_root}/install-linux.toml" \
   "${repo_root}/install-graphical.toml" || fail "manifests failed to parse as TOML"
 
-# bin/prism and bin/walictl are wrappers rather than symlinks so the tree
-# carries no path to the target checkouts: registered project roots come from
-# `tasks projects --paths --json`, falling back to `${WORKTREE_SCAN_ROOT:-$HOME/d}`.
-[[ ! -L "${repo_root}/bin/prism" ]] || fail "bin/prism must be a wrapper, not a symlink"
 [[ ! -L "${repo_root}/bin/walictl" ]] || fail "bin/walictl must be a wrapper, not a symlink"
-prism_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-prism-home.XXXXXX")
-register_tmp_cleanup "$prism_home"
 relocated=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-relocated.XXXXXX")
 register_tmp_cleanup "$relocated"
 ext_cfg=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-ext-cfg.XXXXXX")
 register_tmp_cleanup "$ext_cfg"
-no_tasks_bin=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-no-tasks-bin.XXXXXX")
-register_tmp_cleanup "$no_tasks_bin"
 stub_bin=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-stub-tasks.XXXXXX")
 register_tmp_cleanup "$stub_bin"
-ln -s "$(command -v python3)" "${no_tasks_bin}/python3"
 
-mkdir -p "${prism_home}/d/prism/bin" "${prism_home}/d/wali/bin" \
-  "${relocated}/prism/bin" "${relocated}/wali/bin" "${relocated}/alert"
-print -r -- '#!/usr/bin/env bash
-printf "%s\n" "$@"' > "${prism_home}/d/prism/bin/prism"
-chmod +x "${prism_home}/d/prism/bin/prism"
+mkdir -p "${prism_home}/d/wali/bin" "${relocated}/prism/bin" "${relocated}/wali/bin" "${relocated}/alert"
 print -r -- '#!/usr/bin/env bash
 printf "fallback-wali:%s\n" "$*"' > "${prism_home}/d/wali/bin/walictl"
 chmod +x "${prism_home}/d/wali/bin/walictl"
@@ -114,13 +159,9 @@ run_isolated() {
     "$@"
 }
 
-no_tasks_path="${no_tasks_bin}:/usr/bin:/bin"
 stub_tasks_path="${stub_bin}:${no_tasks_bin}:/usr/bin:/bin"
 
 # Fallback when `tasks` is absent from PATH
-prism_output=$(run_isolated "$no_tasks_path" "${prism_home}/.config" "${repo_root}/bin/prism" apply "two words")
-[[ "$prism_output" == $'apply\ntwo words' ]] || \
-  fail "prism wrapper did not forward arguments on fallback: $prism_output"
 wali_output=$(run_isolated "$no_tasks_path" "${prism_home}/.config" "${repo_root}/bin/walictl" observe)
 [[ "$wali_output" == "fallback-wali:observe" ]] || \
   fail "walictl wrapper did not fall back when tasks is absent: $wali_output"
@@ -207,46 +248,6 @@ mkdir -p "${prism_home}/bin"
 ln -s "${repo_root}/bin/dotfiles-check" "${prism_home}/bin/dotfiles-check"
 run_isolated "$PATH" "${prism_home}/.config" "${prism_home}/bin/dotfiles-check" >/dev/null || \
   fail "per-file symlink ${prism_home}/bin/dotfiles-check failed to resolve repo_root"
-
-modeline_files=(
-  zshrc
-  shell/aliases
-  shell/audio
-  shell/functions
-  shell/history
-  shell/macos
-  shell/tmux
-  shell/ubuntu
-  shell/vconsole
-  shell/zoxide
-)
-
-for file in "${modeline_files[@]}"; do
-  output=$(
-    nvim_case "modeline:${file}" nvim --headless -i NONE -u NONE \
-      --cmd 'set noswapfile' \
-      --cmd 'filetype on' \
-      --cmd 'syntax on' \
-      "${repo_root}/${file}" \
-      '+lua print("DOTFILES_FT:" .. vim.bo.filetype .. ":" .. vim.bo.syntax)' \
-      '+qa!' 2>&1
-  )
-
-  [[ "$output" == "DOTFILES_FT:zsh:zsh" ]] || \
-    fail "Neovim did not load ${file} cleanly as zsh: ${output}"
-done
-
-[[ ! -e "${repo_root}/nvim/plugins/science-md.nvim" ]] || \
-  fail "science-md.nvim must live in its standalone repository, not nvim/plugins"
-
-nvim_case nvim-clipboard nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
-  "+lua dofile('${repo_root}/nvim/tests/clipboard_test.lua')" '+qa!'
-
-nvim_case nvim-science-md nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
-  "+lua local p = assert(require('lazy.core.config').plugins['science-md.nvim'], 'missing science-md.nvim spec'); assert(not p._.is_local, 'science-md.nvim must be managed by lazy.nvim, not local dir'); local lock = require('lazy.manage.lock').get(p); assert(lock and lock.branch == 'main' and type(lock.commit) == 'string' and #lock.commit >= 7, 'missing science-md.nvim lock entry'); require('lazy').load({ plugins = { 'science-md.nvim' } }); assert(type(require('science-md').setup) == 'function')" '+qa!'
-
-nvim_case nvim-theme nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
-  -l "${repo_root}/nvim/tests/theme_test.lua"
 
 zsh -fc '
   source "$1/shell/aliases"

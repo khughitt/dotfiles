@@ -8,19 +8,20 @@ set -euo pipefail
 DOTS_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # shellcheck source=lib/dotfiles-setup-data.bash
 source "${DOTS_HOME}/lib/dotfiles-setup-data.bash"
-# The prism checkout, reached the same way bin/prism reaches it: `~/d` is the
-# one layout the tree assumes, so no path into this machine is stored in git.
-PRISM_ROOT="${HOME}/d/prism"
+# The prism checkout, reached the same way bin/prism reaches it: resolved via
+# the tasks project registry (`dotfiles_project_root`), falling back to `~/d`.
+PRISM_ROOT="$(dotfiles_project_root prism)"
 # The wali checkout, reached the same way: bin/walictl execs into it and the
 # systemd and Noctalia-plugin phases link out of it.
-WALI_ROOT="${HOME}/d/wali"
-RESOURCE_ALERT_ROOT="${HOME}/d/noctalia-resource-alert"
+WALI_ROOT="$(dotfiles_project_root wali)"
+RESOURCE_ALERT_ROOT="$(dotfiles_project_root pressure)"
 # The ops checkout, reached the same way: the obs-index, git-index-retention and
 # git-index-health systemd user units link out of it.
-OPS_ROOT="${HOME}/d/ops"
-LOOKOUT_ROOT="${HOME}/d/lookout"
-# The hostkit checkout, reached the same way: hostkit-links converges hostkit's links and units.
-HOSTKIT_ROOT="${HOME}/d/hostkit"
+OPS_ROOT="$(dotfiles_project_root ops)"
+LOOKOUT_ROOT="$(dotfiles_project_root look)"
+# The hostkit checkout, reached the same way: hostkit-links converges manifests and units.
+HOSTKIT_ROOT="$(dotfiles_project_root hostkit)"
+FAMILIAR_ROOT="$(dotfiles_project_root fam)"
 
 # Parse command line arguments
 HEADLESS=false
@@ -40,13 +41,10 @@ VALID_PHASES=(
     preflight
     external-clones
     shell
-    gtk
     graphical-config
     common-config
     systemd
     kitty
-    home
-    bin
     lookout
     app-config
     noctalia-plugins
@@ -196,16 +194,7 @@ else
     PACKAGE_UPDATE_CMD=""
 fi
 
-GRAPHICAL_CONFIGS=("${DOTFILES_GRAPHICAL_CONFIGS[@]}")
 NOCTALIA_GENERATED=("${DOTFILES_NOCTALIA_GENERATED[@]}")
-if [[ "$MACOS" != "true" ]]; then
-    dotfiles_select_common_configs true
-else
-    dotfiles_select_common_configs false
-fi
-COMMON_CONFIGS=("${DOTFILES_SELECTED_COMMON_CONFIGS[@]}")
-
-COMMON_DOTFILES=("${DOTFILES_COMMON_DOTFILES[@]}")
 
 # Check for configuration directory
 if [ -z "${XDG_CONFIG_HOME:-}" ]; then
@@ -296,6 +285,84 @@ function ln_s() {
     fi
     echo "[CREATING] \"$dest\""
     run ln -sf "$src" "$dest"
+}
+
+function migrate_legacy_directory_symlinks() {
+    local lsd_config_dir="${XDG_CONFIG_HOME}/lsd"
+    local yazi_config_dir="${XDG_CONFIG_HOME}/yazi"
+    local legacy_yazi_dir="" path
+
+    if [[ -L "$lsd_config_dir" ]]; then
+        run rm "$lsd_config_dir"
+        ensure_dir "$lsd_config_dir"
+    fi
+
+    if [[ -L "$yazi_config_dir" ]]; then
+        legacy_yazi_dir="$(cd "$yazi_config_dir" && pwd -P)"
+        run rm "$yazi_config_dir"
+        ensure_dir "$yazi_config_dir"
+        if [[ -n "$legacy_yazi_dir" ]]; then
+            for path in theme.toml flavors; do
+                if [[ -e "${legacy_yazi_dir}/${path}" ]]; then
+                    run mv "${legacy_yazi_dir}/${path}" "${yazi_config_dir}/${path}"
+                fi
+            done
+        fi
+    fi
+}
+
+function backup_manifest_conflicts() {
+    local manifest_path="$1"
+    local check_out status dest detail
+
+    if [[ "$DRY_RUN" == "true" && ! -f "${HOSTKIT_ROOT}/bin/hostkit-links" ]]; then
+        return 0
+    fi
+
+    check_out="$(python3 "${HOSTKIT_ROOT}/bin/hostkit-links" --check \
+        --manifest "$manifest_path" --root "${DOTS_HOME}" --home "${HOME}" 2>/dev/null || true)"
+
+    while IFS=$'\t' read -r status dest detail; do
+        [[ "$status" == "refuse" ]] || continue
+        case "$detail" in
+            "a real file is there"|"a real directory is there") ;;
+            *) continue ;;
+        esac
+        if [[ "$dest" == "~" ]]; then
+            dest="${HOME}"
+        elif [[ "$dest" == \~/* ]]; then
+            dest="${HOME}/${dest#\~/}"
+        fi
+        if [[ -e "${dest}.bak" || -L "${dest}.bak" ]]; then
+            echo "Refusing to overwrite existing backup: ${dest}.bak"
+            return 1
+        fi
+        echo "[BACKUP] \"$dest\" -> \"$dest.bak\""
+        run mv "$dest" "$dest.bak"
+    done <<<"$check_out"
+}
+
+function apply_manifest() {
+    local manifest_path="$1"
+
+    if [[ "$(basename "$manifest_path")" == "install.toml" ]]; then
+        migrate_legacy_directory_symlinks
+    fi
+    backup_manifest_conflicts "$manifest_path"
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+        run python3 "${HOSTKIT_ROOT}/bin/hostkit-links" --apply \
+            --manifest "$manifest_path" --root "${DOTS_HOME}" --home "${HOME}"
+        return 0
+    fi
+
+    local output rc=0
+    output="$(python3 "${HOSTKIT_ROOT}/bin/hostkit-links" --apply \
+        --manifest "$manifest_path" --root "${DOTS_HOME}" --home "${HOME}" 2>&1)" || rc=$?
+    [[ -n "$output" ]] && printf '%s\n' "$output"
+    if [[ "$rc" -ne 0 || "$output" == $'skipped\t'* || "$output" == *$'\nskipped\t'* ]]; then
+        return 1
+    fi
 }
 
 # Function to install packages
@@ -493,9 +560,9 @@ function setup_preflight() {
     # Familiar's hooks run on every agent tool call and die on a missing
     # node_modules. Name the missing local install before hooks crash.
     # Guarded on the checkout the same way prism's dependencies are.
-    if [[ -f "${HOME}/d/familiar/package.json" ]]; then
-        preflight_check "familiar node dependencies" "npm install --prefix ${HOME}/d/familiar" \
-            test -d "${HOME}/d/familiar/node_modules" || missing=1
+    if [[ -f "${FAMILIAR_ROOT}/package.json" ]]; then
+        preflight_check "familiar node dependencies" "npm install --prefix ${FAMILIAR_ROOT}" \
+            test -d "${FAMILIAR_ROOT}/node_modules" || missing=1
     fi
 
     preflight_check "tasks binary" "install tasks and run 'tasks init' in each project" \
@@ -566,30 +633,13 @@ function setup_external_clones() {
 
 function setup_shell_links() {
     phase "Shell links"
-    ln_s "${DOTS_HOME}/bashrc" "${HOME}/.bashrc"
-    ln_s "${DOTS_HOME}/bash_profile" "${HOME}/.bash_profile"
-    ln_s "${DOTS_HOME}/zshrc" "${HOME}/.zshrc"
-    ln_s "${DOTS_HOME}/zshenv" "${HOME}/.zshenv"
-    ln_s "${DOTS_HOME}/shell" "${HOME}/.shell"
+    apply_manifest "${DOTS_HOME}/install.toml"
 
     local completion_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/zsh/site-functions"
     ensure_dir "$completion_dir"
     generate_zsh_completion xan "${completion_dir}/_xan" completions zsh
     generate_zsh_completion crush "${completion_dir}/_crush" completion zsh
     generate_zsh_completion codex "${completion_dir}/_codex" completion zsh
-}
-
-function setup_gtk_links() {
-    [[ "$HEADLESS" == "false" ]] || return 0
-
-    phase "GTK links"
-    ensure_dir "${XDG_CONFIG_HOME}/gtk-3.0"
-    ln_s "${DOTS_HOME}/gtk-3.0/settings.ini" "${XDG_CONFIG_HOME}/gtk-3.0/settings.ini"
-    ln_s "${DOTS_HOME}/gtk-3.0/gtk.css" "${XDG_CONFIG_HOME}/gtk-3.0/gtk.css"
-
-    ensure_dir "${XDG_CONFIG_HOME}/gtk-4.0"
-    ln_s "${DOTS_HOME}/gtk-4.0/settings.ini" "${XDG_CONFIG_HOME}/gtk-4.0/settings.ini"
-    ln_s "${DOTS_HOME}/gtk-4.0/gtk.css" "${XDG_CONFIG_HOME}/gtk-4.0/gtk.css"
 }
 
 function link_noctalia_generated() {
@@ -648,15 +698,12 @@ function setup_graphical_config_links() {
     [[ "$HEADLESS" == "false" ]] || return 0
 
     phase "Graphical config links"
-    local path wali_config
+    local wali_config
     local prism_generated="${XDG_STATE_HOME:-${HOME}/.local/state}/prism/generated"
     local niri_generated="${prism_generated}/prism.kdl"
     local kitty_generated="${prism_generated}/kitty.conf"
     local niri_generated_before=""
-    for path in "${GRAPHICAL_CONFIGS[@]}"; do
-        [[ "$path" == "niri" ]] && continue
-        ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
-    done
+    apply_manifest "${DOTS_HOME}/install-graphical.toml"
 
     ensure_dir "${DOTS_HOME}/prism/$(hostname)/contexts"
     ln_s "${DOTS_HOME}/prism/$(hostname)" "${XDG_CONFIG_HOME}/prism"
@@ -683,7 +730,7 @@ function setup_graphical_config_links() {
         niri_generated_before="$(stat -Lc '%d:%i' "$niri_generated" 2>/dev/null || true)"
     fi
     if ! run env NIRI_CONFIG="${DOTS_HOME}/niri/config.kdl" \
-        "${DOTS_HOME}/bin/prism" apply niri
+        "${PRISM_ROOT}/bin/prism" apply niri
     then
         local niri_generated_after
         niri_generated_after="$(stat -Lc '%d:%i' "$niri_generated" 2>/dev/null || true)"
@@ -695,8 +742,8 @@ function setup_graphical_config_links() {
     fi
     # setup.sh links kitty at this sink's output, so it has to be applied too;
     # nothing else ran it, and the link sat dangling on a fresh machine.
-    run "${DOTS_HOME}/bin/prism" apply kitty
-    run "${DOTS_HOME}/bin/prism" apply debug-backdrop
+    run "${PRISM_ROOT}/bin/prism" apply kitty
+    run "${PRISM_ROOT}/bin/prism" apply debug-backdrop
 
     run niri validate -c "${DOTS_HOME}/niri/config.kdl"
 
@@ -718,37 +765,13 @@ function setup_graphical_config_links() {
 
 function setup_common_config_links() {
     phase "Common config links"
-    local path fzf_theme legacy_yazi_dir lsd_config_dir yazi_config_dir
-    for path in "${COMMON_CONFIGS[@]}"; do
-        ln_s "${DOTS_HOME}/${path}" "${XDG_CONFIG_HOME}/${path}"
-    done
+    local fzf_theme
+    apply_manifest "${DOTS_HOME}/install.toml"
 
-    ensure_dir "${XDG_CONFIG_HOME}/hostkit"
-    ln_s "${DOTS_HOME}/hostkit/config.toml" "${XDG_CONFIG_HOME}/hostkit/config.toml"
     if [[ -f "${DOTS_HOME}/hosts/$(hostname)/budget.toml" ]]; then
+        ensure_dir "${XDG_CONFIG_HOME}/hostkit"
         ln_s "${DOTS_HOME}/hosts/$(hostname)/budget.toml" "${XDG_CONFIG_HOME}/hostkit/budget.toml"
     fi
-
-    lsd_config_dir="${XDG_CONFIG_HOME}/lsd"
-    if [[ -L "$lsd_config_dir" ]]; then
-        run rm "$lsd_config_dir"
-    fi
-    ensure_dir "$lsd_config_dir"
-    ln_s "${DOTS_HOME}/lsd/config.yaml" "$lsd_config_dir/config.yaml"
-
-    yazi_config_dir="${XDG_CONFIG_HOME}/yazi"
-    if [[ -L "$yazi_config_dir" ]]; then
-        legacy_yazi_dir="$(cd "$yazi_config_dir" && pwd -P)"
-        run rm "$yazi_config_dir"
-    fi
-    ensure_dir "$yazi_config_dir"
-    if [[ -n "${legacy_yazi_dir:-}" ]]; then
-        for path in theme.toml flavors; do
-            [[ -e "${legacy_yazi_dir}/${path}" ]] && \
-                run mv "${legacy_yazi_dir}/${path}" "${yazi_config_dir}/${path}"
-        done
-    fi
-    ln_s "${DOTS_HOME}/yazi/yazi.toml" "$yazi_config_dir/yazi.toml"
 
     fzf_theme="${XDG_CACHE_HOME:-${HOME}/.cache}/noctalia/fzf.conf"
     ensure_dir "${fzf_theme%/*}"
@@ -766,32 +789,7 @@ function setup_systemd_user_units() {
     [[ "$MACOS" != "true" ]] || return 0
 
     phase "Systemd user units"
-    ensure_dir "${XDG_CONFIG_HOME}/systemd/user"
-    ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.service" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.service"
-    ln_s "${DOTS_HOME}/systemd/user/dropbox-ignore-flux.timer" "${XDG_CONFIG_HOME}/systemd/user/dropbox-ignore-flux.timer"
-    ensure_dir "${HOME}/.local/bin"
-    run python3 "${HOSTKIT_ROOT}/bin/hostkit-links" --apply --manifest "${HOSTKIT_ROOT}/install.toml" --root "${HOSTKIT_ROOT}" --home "${HOME}"
-    ln_s "${DOTS_HOME}/systemd/user/niri.service.d/stop-timeout.conf" "${XDG_CONFIG_HOME}/systemd/user/niri.service.d/stop-timeout.conf"
-    ln_s "${DOTS_HOME}/systemd/user/familiar-reap.service" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.service"
-    ln_s "${DOTS_HOME}/systemd/user/familiar-reap.timer" "${XDG_CONFIG_HOME}/systemd/user/familiar-reap.timer"
-    ensure_dir "${HOME}/.local/share/dbus-1/services"
-    ln_s "${DOTS_HOME}/local/share/dbus-1/services/org.freedesktop.secrets.service" "${HOME}/.local/share/dbus-1/services/org.freedesktop.secrets.service"
-    local unit
-    # Activation and v3 retirement belong to the reviewed cutover, never setup.
-    for unit in mindful-web.service mindful-backup.service mindful-backup.timer; do
-        ln_s "${DOTS_HOME}/systemd/user/${unit}" "${XDG_CONFIG_HOME}/systemd/user/${unit}"
-    done
-    ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.service" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.service"
-    ln_s "${DOTS_HOME}/systemd/user/kernel-gate-nudge.timer" "${XDG_CONFIG_HOME}/systemd/user/kernel-gate-nudge.timer"
-    # Needs NetworkManager; enabled by hand on the hosts that run it.
-    ln_s "${DOTS_HOME}/systemd/user/nm-wired-autoconnect.service" "${XDG_CONFIG_HOME}/systemd/user/nm-wired-autoconnect.service"
-    ln_s "${WALI_ROOT}/systemd/wali-rotate.service" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.service"
-    ln_s "${WALI_ROOT}/systemd/wali-rotate.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-rotate.timer"
-    # Only titan has a [phone] table; the timer is enabled by hand there.
-    ln_s "${WALI_ROOT}/systemd/wali-phone-sync.service" "${XDG_CONFIG_HOME}/systemd/user/wali-phone-sync.service"
-    ln_s "${WALI_ROOT}/systemd/wali-phone-sync.timer" "${XDG_CONFIG_HOME}/systemd/user/wali-phone-sync.timer"
-    ln_s "${OPS_ROOT}/systemd/user/obs-index.service" "${XDG_CONFIG_HOME}/systemd/user/obs-index.service"
-    ln_s "${OPS_ROOT}/systemd/user/obs-index.timer" "${XDG_CONFIG_HOME}/systemd/user/obs-index.timer"
+    apply_manifest "${DOTS_HOME}/install-linux.toml"
 
     if [[ "$ENABLE_USER_TIMERS" == "true" ]]; then
         run systemctl --user daemon-reload
@@ -801,15 +799,6 @@ function setup_systemd_user_units() {
         run systemctl --user enable --now wali-rotate.timer
         run systemctl --user enable --now obs-index.timer
     fi
-
-    # Linked disabled: only an approved host packet enables cleanup of recovery
-    # data. Last, so an ops checkout without these units cannot stop the timers above.
-    ln_s "${OPS_ROOT}/systemd/user/git-index-retention.service" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.service"
-    ln_s "${OPS_ROOT}/systemd/user/git-index-retention.timer" "${XDG_CONFIG_HOME}/systemd/user/git-index-retention.timer"
-    # Linked disabled for the same reason: index convergence repairs synced checkouts
-    # and is enabled only by its approved host packet, after retention runs.
-    ln_s "${OPS_ROOT}/systemd/user/git-index-health.service" "${XDG_CONFIG_HOME}/systemd/user/git-index-health.service"
-    ln_s "${OPS_ROOT}/systemd/user/git-index-health.timer" "${XDG_CONFIG_HOME}/systemd/user/git-index-health.timer"
 }
 
 # The OS overrides themselves are selected by each host's kitty/<hostname>.conf,
@@ -828,24 +817,6 @@ function setup_kitty_overrides() {
     else
         echo "kitty.app terminfo not found at ${kitty_terminfo}; install kitty, then rerun this phase"
     fi
-}
-
-function setup_home_dotfile_links() {
-    phase "Home dotfile links"
-    local path
-    for path in "${COMMON_DOTFILES[@]}"; do
-        ln_s "${DOTS_HOME}/${path}" "${HOME}/.${path}"
-    done
-}
-
-function setup_bin_link() {
-    # dotfiles-health resolves its root from its own path, so a copied
-    # ~/bin/dotfiles-health makes it look in the home directory and die. The
-    # link needs nothing running, so it is its own phase: every pass makes it,
-    # and a failure elsewhere in app-config cannot leave a copy behind. The
-    # whole directory is linked, so everything under bin ships with it.
-    phase "Bin links"
-    ln_s "${DOTS_HOME}/bin" "${HOME}/bin"
 }
 
 function setup_lookout() {
@@ -867,59 +838,11 @@ function setup_lookout() {
 function setup_application_config_links() {
     phase "Application config links"
 
-    ensure_dir "${HOME}/.ghc"
-    ln_s "${DOTS_HOME}/ghci.conf" "${HOME}/.ghc/ghci.conf"
-
     if [[ "$HEADLESS" == "false" ]]; then
-        local gimp_dir="${XDG_CONFIG_HOME}/GIMP/3.0"
-        local gimp_plugin_dir="${XDG_CONFIG_HOME}/GIMP/3.0/plug-ins"
-        local gimprc="${gimp_dir}/gimprc"
-
-        ensure_dir "$gimp_dir"
-
-        if [ -e "$gimprc" ]; then
-            run mv "$gimprc" "$gimprc.bak"
-        fi
-        if [ -e "$gimp_plugin_dir" ]; then
-            run mv "$gimp_plugin_dir" "$gimp_plugin_dir.bak"
-        fi
-
-        ln_s "${DOTS_HOME}/gimp/gimprc" "$gimprc"
-        ln_s "${DOTS_HOME}/gimp/plug-ins" "$gimp_plugin_dir"
+        apply_manifest "${DOTS_HOME}/install-graphical.toml"
     fi
-
-    if [[ "$HEADLESS" == "false" ]]; then
-        local noctalia_palette_dir="${XDG_CONFIG_HOME}/noctalia/palettes"
-        local noctalia_config="${XDG_CONFIG_HOME}/noctalia/config.toml"
-        local glow_palette="${noctalia_palette_dir}/Glow.json"
-        local noctalia_templates="${XDG_CONFIG_HOME}/noctalia/templates"
-        local noctalia_templates_config="${XDG_CONFIG_HOME}/noctalia/templates.toml"
-
-        ensure_dir "$noctalia_palette_dir"
-
-        ln_s "${DOTS_HOME}/noctalia/config.toml" "$noctalia_config"
-        ln_s "${DOTS_HOME}/noctalia/palettes/Glow.json" "$glow_palette"
-        ln_s "${DOTS_HOME}/noctalia/templates" "$noctalia_templates"
-        ln_s "${DOTS_HOME}/noctalia/templates.toml" "$noctalia_templates_config"
-
-        # Noctalia's network widget replaces nm-applet; hide its system autostart.
-        ensure_dir "${XDG_CONFIG_HOME}/autostart"
-        ln_s "${DOTS_HOME}/autostart/nm-applet.desktop" "${XDG_CONFIG_HOME}/autostart/nm-applet.desktop"
-    fi
-
-    ln_s "${DOTS_HOME}/git/ignore" "${HOME}/.gitignore_global"
-    ln_s "${DOTS_HOME}/git/config" "${HOME}/.gitconfig"
+    apply_manifest "${DOTS_HOME}/install.toml"
     run python3 "${DOTS_HOME}/lib/git-packing-policy.py" write "$HOME" "$DOTS_HOME"
-
-    ensure_dir "${HOME}/.julia/config"
-    ln_s "${DOTS_HOME}/julia/startup.jl" "${HOME}/.julia/config/startup.jl"
-
-    ensure_dir "${HOME}/.jupyter"
-    ln_s "${DOTS_HOME}/jupyter/jupyter_qtconsole_config.py" "${HOME}/.jupyter/jupyter_qtconsole_config.py"
-
-    ln_s "${DOTS_HOME}/condarc" "${HOME}/.mambarc"
-    ln_s "${DOTS_HOME}/lintr" "${HOME}/.lintr"
-    ln_s "${DOTS_HOME}/rgignore" "${HOME}/.rgignore"
 }
 
 function setup_noctalia_plugins() {
@@ -930,7 +853,7 @@ function setup_noctalia_plugins() {
 
     ensure_dir "$plugin_dir"
     ln_s "${WALI_ROOT}/integrations/noctalia-plugin" "${plugin_dir}/wali-panel"
-    ln_s "${HOME}/d/prism/integrations/noctalia-plugin" "${plugin_dir}/prism"
+    ln_s "${PRISM_ROOT}/integrations/noctalia-plugin" "${plugin_dir}/prism"
     ln_s "${RESOURCE_ALERT_ROOT}" "${plugin_dir}/resource-pressure-alert"
 
     # The links are what dotfiles-health requires and they need nothing running, so
@@ -952,13 +875,10 @@ function setup_mime_links() {
     [[ "$MACOS" != "true" ]] || return 0
 
     phase "MIME links"
-    ensure_dir "${HOME}/.local/share/mime"
-    ln_s "${DOTS_HOME}/mime" "${HOME}/.local/share/mime/packages"
+    apply_manifest "${DOTS_HOME}/install-linux.toml"
     if [[ "$LINK_ONLY" != "true" ]] && command -v update-mime-database >/dev/null; then
         run update-mime-database "${HOME}/.local/share/mime"
     fi
-
-    ln_s "${DOTS_HOME}/mimeapps.list" "${XDG_CONFIG_HOME}/mimeapps.list"
 }
 
 # The paths in DOTFILES_DROPBOX_IGNORED are per-machine state written into the
@@ -1029,13 +949,10 @@ ensure_dir "$XDG_CONFIG_HOME"
 run_phase preflight setup_preflight
 run_phase external-clones setup_external_clones
 run_phase shell setup_shell_links
-run_phase gtk setup_gtk_links
 run_phase graphical-config setup_graphical_config_links
 run_phase common-config setup_common_config_links
 run_phase systemd setup_systemd_user_units
 run_phase kitty setup_kitty_overrides
-run_phase home setup_home_dotfile_links
-run_phase bin setup_bin_link
 run_phase lookout setup_lookout
 run_phase app-config setup_application_config_links
 run_phase noctalia-plugins setup_noctalia_plugins

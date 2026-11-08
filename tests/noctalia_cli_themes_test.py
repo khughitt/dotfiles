@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import tomllib
@@ -121,12 +122,34 @@ def test_setup_keeps_yazi_generated_flavor_outside_repo(tmp_path: Path) -> None:
     (legacy_yazi / "flavors/noctalia.yazi/flavor.toml").write_text("generated\n")
     config.mkdir()
     (config / "yazi").symlink_to(legacy_yazi, target_is_directory=True)
-    env = os.environ | {
+    hostkit_dir = home / "d/hostkit"
+    (hostkit_dir / "bin").mkdir(parents=True)
+    (hostkit_dir / "systemd/user").mkdir(parents=True)
+    hostkit_src = Path(os.environ.get("HOME", "")) / "d/hostkit"
+    if not hostkit_src.is_dir():
+        hostkit_src = ROOT.parent / "hostkit"
+    shutil.copy2(hostkit_src / "bin/hostkit-links", hostkit_dir / "bin/hostkit-links")
+    shutil.copy2(hostkit_src / "install.toml", hostkit_dir / "install.toml")
+    for stub in ("work-link", "host-budget", "host-load", "host-drift"):
+        p = hostkit_dir / "bin" / stub
+        p.write_text("#!/bin/sh\n")
+        p.chmod(0o755)
+    for unit in ("work-link.service", "work-link.timer"):
+        (hostkit_dir / "systemd/user" / unit).write_text("")
+    (config / "tasks").mkdir(parents=True)
+    (config / "tasks/projects.toml").write_text(f'[projects]\nhostkit = "{hostkit_dir}"\n')
+    env = {
+        "PATH": os.environ["PATH"],
         "HOME": str(home),
+        "USER": os.environ.get("USER", "yazi-test"),
+        "LANG": os.environ.get("LANG", "C.UTF-8"),
         "XDG_CACHE_HOME": str(tmp_path / "cache"),
         "XDG_CONFIG_HOME": str(config),
         "XDG_DATA_HOME": str(tmp_path / "data"),
         "XDG_STATE_HOME": str(tmp_path / "state"),
+        "WORKTREE_SCAN_ROOT": str(home / "d"),
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_CONFIG_NOSYSTEM": "1",
         "DOTFILES_OPENCODE_RUNTIME_SOURCE": str(tmp_path / "opencode-runtime"),
     }
     subprocess.run(

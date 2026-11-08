@@ -16,14 +16,25 @@ def setup_home(tmp_path):
     repo = tmp_path / "repo"
     (repo / "lib").mkdir(parents=True)
     shutil.copy2(ROOT / "setup.sh", repo)
+    shutil.copy2(ROOT / "install.toml", repo)
     shutil.copy2(ROOT / "lib/dotfiles-setup-data.bash", repo / "lib")
     home = tmp_path / "home"
     (home / "d").mkdir(parents=True)
 
     def run(*args):
+        child_env = {
+            "PATH": os.environ["PATH"],
+            "HOME": str(home),
+            "USER": os.environ.get("USER", "dropbox-test"),
+            "LANG": os.environ.get("LANG", "C.UTF-8"),
+            "XDG_CONFIG_HOME": str(home / ".config"),
+            "WORKTREE_SCAN_ROOT": str(home / "d"),
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_CONFIG_NOSYSTEM": "1",
+        }
         return subprocess.run(
             ["bash", str(repo / "setup.sh"), "--headless", "--link-only", "--only", "dropbox-ignore", *args],
-            env={**os.environ, "HOME": str(home), "XDG_CONFIG_HOME": str(home / ".config")},
+            env=child_env,
             capture_output=True,
             text=True,
         )

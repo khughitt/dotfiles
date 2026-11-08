@@ -8,6 +8,15 @@ source "${0:A:h}/tmp_cleanup.zsh"
 # dotfiles-health verifies; the tests assert against the same data
 source "${repo_root}/lib/dotfiles-setup-data.bash"
 
+real_hostkit_src="${HOSTKIT_SRC:-}"
+if [[ -z "$real_hostkit_src" || ! -d "$real_hostkit_src" ]]; then
+  if [[ -d "${HOME}/d/hostkit" ]]; then
+    real_hostkit_src="${HOME}/d/hostkit"
+  elif [[ -d "${repo_root:h}/hostkit" ]]; then
+    real_hostkit_src="${repo_root:h}/hostkit"
+  fi
+fi
+
 fail() {
   print -u2 -- "FAIL: $*"
   exit 1
@@ -210,6 +219,47 @@ EOF
     cp "${tmp}/bin/host-budget" "${tmp}/home/d/hostkit/bin/host-budget"
     chmod +x "${tmp}/home/d/hostkit/bin/host-budget"
   fi
+
+  if [[ ! -e "${tmp}/bin/tasks" ]]; then
+    cat > "${tmp}/bin/tasks" <<'EOF'
+#!/usr/bin/env python3
+import json
+import os
+import pathlib
+import sys
+import tomllib
+
+if sys.argv[1:] == ["projects", "--paths", "--json"]:
+    mode = os.environ.get("TASKS_STUB_MODE", "")
+    if mode == "nonzero":
+        sys.stderr.write("tasks: simulated registry error\n")
+        sys.exit(1)
+    if mode == "bad_json":
+        sys.stdout.write("{invalid json\n")
+        sys.exit(0)
+    if mode == "bare_list":
+        sys.stdout.write("[]\n")
+        sys.exit(0)
+    xdg = os.environ.get("XDG_CONFIG_HOME") or os.path.join(os.environ.get("HOME", ""), ".config")
+    reg = pathlib.Path(xdg) / "tasks" / "projects.toml"
+    projects = []
+    if reg.is_file():
+        data = tomllib.loads(reg.read_text())
+        table = data.get("projects", data)
+        if isinstance(table, dict):
+            for prefix, entry in table.items():
+                if isinstance(entry, str) and entry:
+                    projects.append({"prefix": prefix, "root": entry})
+                elif isinstance(entry, dict):
+                    root = entry.get("root") or entry.get("path")
+                    if isinstance(root, str) and root:
+                        projects.append({"prefix": prefix, "root": root})
+    print(json.dumps({"projects": projects, "warnings": []}))
+    sys.exit(0)
+sys.exit(0)
+EOF
+    chmod +x "${tmp}/bin/tasks"
+  fi
 }
 
 # Setup and health run in an environment built key by key, so a failing case
@@ -220,35 +270,41 @@ child_env() {
   reply=(
     HOME="${tmp}/home" USER=dotfiles-test LOGNAME=dotfiles-test
     PATH="${TEST_PATH:-${tmp}/home/.local/bin:${tmp}/bin:$PATH}" TMPDIR="${TMPDIR:-/tmp}"
-    XDG_CACHE_HOME="${tmp}/cache" XDG_CONFIG_HOME="${tmp}/config"
+    XDG_CACHE_HOME="${tmp}/cache" XDG_CONFIG_HOME="${XDG_CONFIG_HOME_OVERRIDE:-${tmp}/config}"
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/home/.local/state"
+    WORKTREE_SCAN_ROOT="${WORKTREE_SCAN_ROOT:-${tmp}/home/d}"
     GIT_CONFIG_GLOBAL="${tmp}/home/.gitconfig" GIT_CONFIG_NOSYSTEM=1
-    REPO_HOSTKIT_BUDGET="${repo_root:h}/hostkit/bin/host-budget"
+    REPO_HOSTKIT_BUDGET="${real_hostkit_src}/bin/host-budget"
   )
   for name in SYSTEMCTL_LOG NOCTALIA_ENABLE_STATUS NOCTALIA_LOG \
       NOCTALIA_PLUGIN_LIST NOCTALIA_PLUGIN_LIST_STATUS NOCTALIA_TEST_LOG \
       NOCTALIA_TEST_THEME_MODE NOCTALIA_TEST_THEME_MODE_STATUS \
       NOCTALIA_TEST_TEMPLATES_APPLY_STATUS NOCTALIA_WALLPAPER_PATH \
       PRISM_DOCTOR_LOG PRISM_DOCTOR_STATUS PRISM_REQUIREMENTS_STATUS PRISM_TEST_HOSTNAME \
-      WORKTREE_SCAN_ROOT; do
+      TASKS_STUB_MODE; do
     if (( ${+parameters[$name]} )); then
       reply+=("${name}=${(P)name}")
     fi
   done
 }
 
-run_setup() {
+seed_external_checkouts() {
   local tmp="$1"
-  local setup_root="${SETUP_ROOT:-$repo_root}"
-  shift
+  local tasks_reg="${XDG_CONFIG_HOME_OVERRIDE:-${tmp}/config}/tasks/projects.toml"
 
   mkdir -p "${tmp}/bin"
-  mkdir -p "${tmp}/home/d/lookout/src"
-  printf '#!/bin/sh\nexit 0\n' > "${tmp}/home/d/lookout/src/bin.ts"
-  chmod +x "${tmp}/home/d/lookout/src/bin.ts"
+  if [[ "${LOOKOUT_SOURCE_PRESENT:-true}" == true ]]; then
+    mkdir -p "${tmp}/home/d/lookout/src"
+    printf '#!/bin/sh\nexit 0\n' > "${tmp}/home/d/lookout/src/bin.ts"
+    chmod +x "${tmp}/home/d/lookout/src/bin.ts"
+  fi
   if [[ "${PRISM_PLUGIN_SOURCE_PRESENT:-true}" == true ]]; then
-    mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin"
+    mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin" "${tmp}/home/d/prism/bin"
     touch "${tmp}/home/d/prism/integrations/noctalia-plugin/plugin.toml"
+    if [[ ! -e "${tmp}/home/d/prism/bin/prism" ]]; then
+      printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/home/d/prism/bin/prism"
+      chmod +x "${tmp}/home/d/prism/bin/prism"
+    fi
   fi
   if [[ "${WALI_SOURCE_PRESENT:-true}" == true ]]; then
     mkdir -p "${tmp}/home/d/wali/integrations/noctalia-plugin" \
@@ -282,8 +338,8 @@ run_setup() {
   fi
   if [[ "${HOSTKIT_SOURCE_PRESENT:-true}" == true ]]; then
     mkdir -p "${tmp}/home/d/hostkit/bin" "${tmp}/home/d/hostkit/systemd/user"
-    local hostkit_src="${HOSTKIT_SRC:-${repo_root:h}/hostkit}"
-    if [[ -d "$hostkit_src" ]]; then
+    local hostkit_src="${HOSTKIT_SRC:-$real_hostkit_src}"
+    if [[ -n "$hostkit_src" && -d "$hostkit_src" ]]; then
       cp "${hostkit_src}/install.toml" "${tmp}/home/d/hostkit/install.toml"
       for b in hostkit_config.py hostkit-links work-link host-load host-drift; do
         if [[ -f "${hostkit_src}/bin/${b}" ]]; then
@@ -307,32 +363,169 @@ EOF
       cat > "${tmp}/home/d/hostkit/bin/hostkit-links" <<'EOF'
 #!/usr/bin/env python3
 import argparse
+import json
 import os
 import pathlib
+import subprocess
+import sys
 import tomllib
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--check", action="store_true")
 parser.add_argument("--apply", action="store_true")
 parser.add_argument("--manifest", type=pathlib.Path, required=True)
 parser.add_argument("--root", type=pathlib.Path, required=True)
 parser.add_argument("--home", type=pathlib.Path, required=True)
 args = parser.parse_args()
 
-manifest = tomllib.loads(args.manifest.read_text())
-xdg_config = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", str(args.home / ".config")))
+home = args.home.resolve()
+xdg_config = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", str(home / ".config")))
+projects = None
 
-for dst_str, src_rel in manifest.get("links", {}).items():
-    if dst_str.startswith("~/"):
-        dst = args.home / dst_str[2:]
-    elif dst_str.startswith("$XDG_CONFIG_HOME/"):
-        dst = xdg_config / dst_str[len("$XDG_CONFIG_HOME/"):]
+def get_projects():
+    global projects
+    if projects is None:
+        res = subprocess.run(["tasks", "projects", "--paths", "--json"], text=True, capture_output=True)
+        if res.returncode != 0:
+            raise RuntimeError(res.stderr.strip())
+        projects = {p["prefix"]: pathlib.Path(p["root"]).resolve() for p in json.loads(res.stdout)["projects"]}
+    return projects
+
+def show(p):
+    if p == home:
+        return "~"
+    try:
+        return f"~/{p.relative_to(home)}"
+    except ValueError:
+        return str(p)
+
+def expand_dest(dest):
+    if dest == "~":
+        return home
+    if dest.startswith("~/"):
+        return home / dest[2:]
+    if dest == "$XDG_CONFIG_HOME":
+        return xdg_config
+    if dest.startswith("$XDG_CONFIG_HOME/"):
+        return xdg_config / dest[len("$XDG_CONFIG_HOME/"):]
+    return pathlib.Path(dest)
+
+def resolve_target(val, root):
+    if ":" in val:
+        prefix, rel = val.split(":", 1)
+        projs = get_projects()
+        if prefix not in projs:
+            return pathlib.Path(val), "not registered on this machine"
+        c = projs[prefix]
+        if not (c.is_dir() and not c.is_symlink()):
+            return c / rel, f"checkout not present at {c}"
+        return c / rel, None
+    return root / val, None
+
+def load_all(manifest_path, root):
+    data = tomllib.loads(manifest_path.read_text())
+    entries = []
+    for inc in data.get("include", []):
+        if ":" in inc:
+            prefix, rel = inc.split(":", 1)
+            projs = get_projects()
+            if prefix not in projs:
+                entries.append(("include", pathlib.Path(prefix), pathlib.Path(inc), "not registered on this machine"))
+                continue
+            c = projs[prefix]
+            if not (c.is_dir() and not c.is_symlink()):
+                entries.append(("include", c, pathlib.Path(inc), f"checkout not present at {c}"))
+                continue
+            entries.extend(load_all((c / rel).resolve(), c))
+        else:
+            inc_p = (manifest_path.parent / inc).resolve()
+            entries.extend(load_all(inc_p, inc_p.parent))
+    for d_str, t_str in data.get("directories", {}).items():
+        t, sr = resolve_target(t_str, root)
+        entries.append(("directory", expand_dest(d_str), t, sr))
+    for d_str, t_str in data.get("links", {}).items():
+        t, sr = resolve_target(t_str, root)
+        entries.append(("link", expand_dest(d_str), t, sr))
+    for d_str, t_str in data.get("retired", {}).items():
+        t_list = [t_str] if isinstance(t_str, str) else t_str
+        entries.append(("retired", expand_dest(d_str), tuple(resolve_target(x, root)[0] for x in t_list), None))
+    return entries
+
+try:
+    entries = load_all(args.manifest.resolve(), args.root.resolve())
+    for kind, link, target, sr in entries:
+        if kind not in ("retired", "include") and sr is None and not target.exists():
+            print(f"hostkit-links: {args.manifest.name}: {link}: target {target} does not exist", file=sys.stderr)
+            sys.exit(2)
+except Exception as exc:
+    print(f"hostkit-links: {args.manifest.name}: {exc}", file=sys.stderr)
+    sys.exit(2)
+
+def owns(link, target):
+    try:
+        raw = os.readlink(link)
+    except OSError:
+        return False
+    actual = (link.parent / raw).parent.resolve() / (link.parent / raw).name
+    targets = target if isinstance(target, tuple) else (target,)
+    return any(actual == t.parent.resolve() / t.name for t in targets)
+
+rows = []
+converting = set()
+for kind, link, target, sr in sorted(entries, key=lambda e: (e[0] != "directory", len(e[1].parts))):
+    if sr is not None:
+        rows.append(("skipped", link, sr, kind, target))
+        continue
+    if any(p in converting for p in link.parents):
+        name, detail = ("ok" if kind == "retired" else "create"), ""
+    elif kind == "retired":
+        if link.is_symlink():
+            name, detail = ("remove", "") if owns(link, target) else ("refuse", f"a foreign link is there: {os.readlink(link)}")
+        elif not link.exists():
+            name, detail = "ok", ""
+        else:
+            name, detail = "refuse", "a real file or directory is there"
+    elif kind == "directory":
+        if link.is_symlink():
+            name, detail = ("convert", f"was {os.readlink(link)}") if owns(link, target) else ("refuse", f"a foreign link is there: {os.readlink(link)}")
+        elif link.is_dir() and not link.is_symlink():
+            name, detail = "ok", ""
+        elif link.exists():
+            name, detail = "refuse", "a real file is there"
+        else:
+            name, detail = "create", ""
     else:
-        dst = pathlib.Path(dst_str)
-    src = (args.root / src_rel).resolve()
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    if dst.is_symlink() or dst.exists():
-        dst.unlink()
-    dst.symlink_to(src)
+        if link.is_symlink():
+            name, detail = ("ok", "") if (link.exists() and owns(link, target)) else ("repoint", f"was {os.readlink(link)}")
+        elif link.exists():
+            name, detail = "refuse", f"a real {'directory' if link.is_dir() else 'file'} is there"
+        else:
+            name, detail = "create", ""
+    if name == "convert":
+        converting.add(link)
+    rows.append((name, link, detail, kind, target))
+
+for name, link, detail, _, _ in rows:
+    print(f"{name}\t{show(link)}\t{detail}".rstrip("\t"))
+
+if args.check:
+    sys.exit(1 if any(r[0] in ("create", "repoint", "convert", "remove", "refuse") for r in rows) else 0)
+if args.apply:
+    if any(r[0] == "refuse" for r in rows):
+        sys.exit(1)
+    for name, link, _, kind, target in rows:
+        if kind == "directory":
+            if name == "convert":
+                link.unlink()
+            link.mkdir(parents=True, exist_ok=True)
+        elif kind == "retired" and name == "remove":
+            link.unlink()
+        elif kind == "link" and name in ("create", "repoint"):
+            link.parent.mkdir(parents=True, exist_ok=True)
+            if link.is_symlink():
+                link.unlink()
+            link.symlink_to(target)
+sys.exit(0)
 EOF
       chmod +x "${tmp}/home/d/hostkit/bin/hostkit-links"
       cat > "${tmp}/home/d/hostkit/bin/hostkit_config.py" <<'EOF'
@@ -390,6 +583,49 @@ EOF
     )
   fi
   install_test_stubs "$tmp"
+  if [[ ! -f "$tasks_reg" ]]; then
+    mkdir -p "${tasks_reg:h}"
+    cat > "$tasks_reg" <<EOF
+[projects]
+hostkit = "${tmp}/home/d/hostkit"
+wali = "${tmp}/home/d/wali"
+prism = "${tmp}/home/d/prism"
+pressure = "${tmp}/home/d/noctalia-resource-alert"
+ops = "${tmp}/home/d/ops"
+look = "${tmp}/home/d/lookout"
+EOF
+  fi
+}
+
+prepare_manifest_fixture() {
+  local tmp="$1" fixture="$2"
+  seed_external_checkouts "$tmp"
+  cp "${repo_root}/install.toml" "$fixture/install.toml"
+  cp "${repo_root}/install-linux.toml" "$fixture/install-linux.toml"
+  cp "${repo_root}/install-graphical.toml" "$fixture/install-graphical.toml"
+  python3 - "$fixture" <<'PY'
+import pathlib, sys, tomllib
+root = pathlib.Path(sys.argv[1])
+for name in ("install.toml", "install-linux.toml", "install-graphical.toml"):
+    data = tomllib.loads((root / name).read_text())
+    for rel in data.get("directories", {}).values():
+        if ":" not in rel:
+            (root / rel).mkdir(parents=True, exist_ok=True)
+    for rel in data.get("links", {}).values():
+        if ":" not in rel:
+            target = root / rel
+            if not target.exists():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text("")
+PY
+}
+
+run_setup() {
+  local tmp="$1"
+  local setup_root="${SETUP_ROOT:-$repo_root}"
+  shift
+
+  seed_external_checkouts "$tmp"
   cat > "${tmp}/bin/hostname" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "${PRISM_TEST_HOSTNAME:-dotfiles-test-unconfigured}"
@@ -695,62 +931,27 @@ test_active_noctalia_code_has_no_v4_ipc() {
   esac
 }
 
-test_setup_bin_phase_links_the_bin_directory_and_replaces_a_copy() {
-  local tmp output
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home/bin"
-  cp "${repo_root}/bin/dotfiles-health" "${tmp}/home/bin/dotfiles-health"
-
-  output=$(run_setup "$tmp" --link-only --headless --only bin 2>&1) || \
-    fail "bin phase failed: ${output}"
-
-  [[ "$output" == *"==> Bin links"* ]] || fail "expected the Bin links phase: ${output}"
-  [[ -L "${tmp}/home/bin" ]] || fail "setup left ~/bin a real directory"
-  [[ "$(readlink -f "${tmp}/home/bin")" == "${repo_root}/bin" ]] || \
-    fail "~/bin does not link into the tree: $(readlink "${tmp}/home/bin")"
-  [[ -f "${tmp}/home/bin.bak/dotfiles-health" ]] || \
-    fail "the copied install was not preserved in the backup"
-
-  rm -rf "$tmp"
-}
-
 test_dotfiles_health_flags_a_copied_install() {
-  local tmp output exit_status
+  local tmp output exit_status copy_path
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/copy/bin" "${tmp}/home"
+  mkdir -p "${tmp}/copy/bin" "${tmp}/home/bin"
   cp "${repo_root}/bin/dotfiles-health" "${tmp}/copy/bin/"
-
-  set +e
-  output=$(HOME="${tmp}/home" "${tmp}/copy/bin/dotfiles-health" 2>&1)
-  exit_status=$?
-  set -e
-
-  [[ "$exit_status" -ne 0 ]] || fail "health accepted a copied install"
-  [[ "$output" == *"copied install"* ]] || \
-    fail "health did not explain the copied install: ${output}"
-  [[ "$output" != *"dotfiles-setup-data.bash: No such file"* ]] || \
-    fail "health still died on the missing setup data instead of its own check: ${output}"
-}
-
-test_dotfiles_health_flags_a_real_bin_directory() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  prepare_health_fixture "$tmp"
-  rm "${tmp}/home/bin"
-  mkdir -p "${tmp}/home/bin"
   cp "${repo_root}/bin/dotfiles-health" "${tmp}/home/bin/dotfiles-health"
 
-  set +e
-  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
-  exit_status=$?
-  set -e
+  for copy_path in "${tmp}/copy/bin/dotfiles-health" "${tmp}/home/bin/dotfiles-health"; do
+    set +e
+    output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+      WORKTREE_SCAN_ROOT="${tmp}/home/d" "$copy_path" 2>&1)
+    exit_status=$?
+    set -e
 
-  [[ "$exit_status" -ne 0 ]] || fail "health accepted a real ~/bin over a copy"
-  [[ "$output" == *"not a symlink: ${tmp}/home/bin"* ]] || \
-    fail "health did not flag the unlinked ~/bin: ${output}"
+    [[ "$exit_status" -ne 0 ]] || fail "health accepted a copied install: ${copy_path}"
+    [[ "$output" == *"copied install"* ]] || \
+      fail "health did not explain the copied install (${copy_path}): ${output}"
+    [[ "$output" != *"dotfiles-setup-data.bash: No such file"* ]] || \
+      fail "health still died on the missing setup data instead of its own check: ${output}"
+  done
 }
 
 test_active_noctalia_code_has_no_v4_ipc_fails_on_scan_error() {
@@ -971,23 +1172,6 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   rm -rf "$tmp"
 }
 
-test_setup_migrates_legacy_lsd_directory_link() {
-  local tmp
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-  ln -s "${repo_root}/lsd" "${tmp}/config/lsd"
-
-  run_setup "$tmp" --link-only --headless --only common-config >/dev/null
-
-  [[ -d "${tmp}/config/lsd" && ! -L "${tmp}/config/lsd" ]] || \
-    fail "setup should replace the legacy LSD directory link"
-  [[ "${tmp}/config/lsd/config.yaml" -ef "${repo_root}/lsd/config.yaml" ]] || \
-    fail "setup should preserve the tracked LSD config"
-
-  rm -rf "$tmp"
-}
-
 test_setup_shell_generates_static_zsh_completions() {
   local tmp command completion_dir
   tmp=$(make_tmpdir)
@@ -1105,18 +1289,17 @@ test_default_setup_does_not_require_live_noctalia() {
   local tmp fixture output exit_status
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  mkdir -p "${tmp}/home/d/prism/bin" "${tmp}/config" "${tmp}/data"
   fixture="${tmp}/repo"
   cp -a "$repo_root" "$fixture"
-  rm "${fixture}/bin/prism"
-  cat > "${fixture}/bin/prism" <<'EOF'
+  cat > "${tmp}/home/d/prism/bin/prism" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
 [[ "$*" == "apply niri" || "$*" == "apply kitty" || "$*" == "apply debug-backdrop" ]] || exit 64
 exit 0
 EOF
-  chmod +x "${fixture}/bin/prism"
+  chmod +x "${tmp}/home/d/prism/bin/prism"
   mkdir -p "${tmp}/bin"
   cat > "${tmp}/bin/niri" <<'EOF'
 #!/usr/bin/env bash
@@ -1231,36 +1414,6 @@ test_resource_alert_health_failures() {
       disabled) [[ "$output" == *"Noctalia plugin not enabled: khughitt/resource-pressure-alert"* ]] || fail "$output" ;;
     esac
   done
-}
-
-test_setup_and_health_share_managed_link_metadata() {
-  local metadata="${repo_root}/lib/dotfiles-setup-data.bash"
-
-  [[ -f "$metadata" ]] || fail "expected shared setup metadata file"
-  bash -n "$metadata"
-
-  bash -c '
-    set -euo pipefail
-    source "$1"
-    [[ "${DOTFILES_COMMON_CONFIGS[*]}" == *"kitty"* ]]
-    [[ "${DOTFILES_COMMON_CONFIGS[*]}" == *"nvim"* ]]
-    [[ "${DOTFILES_COMMON_CONFIGS[*]}" == *"fcitx"* ]]
-    [[ "${DOTFILES_MACOS_EXCLUDED_COMMON_CONFIGS[*]}" == *"mimeapps.list"* ]]
-    [[ "${DOTFILES_COMMON_DOTFILES[*]}" == *"tmux.conf"* ]]
-  ' bash "$metadata"
-
-  rg -q 'dotfiles-setup-data.bash' "${repo_root}/setup.sh" || \
-    fail "setup.sh should source shared setup metadata"
-  rg -q 'dotfiles-setup-data.bash' "${repo_root}/bin/dotfiles-health" || \
-    fail "dotfiles-health should source shared setup metadata"
-  ! rg -q -F 'COMMON_CONFIGS=("fcitx"' "${repo_root}/setup.sh" || \
-    fail "setup.sh should not hardcode common config links"
-  ! rg -q -F 'COMMON_CONFIGS=("git"' "${repo_root}/setup.sh" || \
-    fail "setup.sh should not hardcode common config links"
-  ! rg -q -F 'managed_config_links=(git' "${repo_root}/bin/dotfiles-health" || \
-    fail "dotfiles-health should not hardcode managed config links"
-  ! rg -q -F 'managed_config_links=("git"' "${repo_root}/bin/dotfiles-health" || \
-    fail "dotfiles-health should not hardcode managed config links"
 }
 
 test_dotfiles_health_skips_prism_when_unconfigured() {
@@ -1428,7 +1581,7 @@ test_dotfiles_health_skips_noctalia_on_macos() {
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
 
   run_setup "$tmp" --link-only --macos \
-    --only shell,common-config,home,bin,app-config >/dev/null
+    --only shell,common-config,app-config >/dev/null
   printf '#!/usr/bin/env bash\nprintf "called\\n" >> "$NOCTALIA_LOG"\nexit 99\n' \
     > "${tmp}/bin/noctalia"
   printf '#!/usr/bin/env bash\nprintf "Darwin\\n"\n' > "${tmp}/bin/uname"
@@ -1527,31 +1680,12 @@ test_prism_launcher_survives_relocated_dotfiles_checkout() {
 echo "prism ran: $*"' > "${tmp}/home/d/prism/bin/prism"
   chmod +x "${tmp}/home/d/prism/bin/prism"
 
-  output=$(HOME="${tmp}/home" "${tmp}/worktrees/dotfiles/bin/prism" doctor) || \
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
+    "${tmp}/worktrees/dotfiles/bin/prism" doctor) || \
     fail "Prism launcher failed from a relocated dotfiles checkout"
   [[ "$output" == "prism ran: doctor" ]] || \
     fail "Prism launcher did not reach ~/d/prism: $output"
-
-  rm -rf "$tmp"
-}
-
-test_dotfiles_health_fails_stale_removed_config_links() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-
-  prepare_health_fixture "$tmp"
-  ln -s "${repo_root}/snakemake" "${tmp}/config/snakemake"
-
-  set +e
-  output=$(run_health "$tmp" --skip-systemd 2>&1)
-  exit_status=$?
-  set -e
-
-  [[ "$exit_status" -ne 0 ]] || fail "health should fail for stale managed config links"
-  [[ "$output" == *"stale managed config link"* ]] || \
-    fail "expected stale managed config link failure"
 
   rm -rf "$tmp"
 }
@@ -1588,72 +1722,6 @@ test_dotfiles_health_ignores_unmanaged_config_symlinks() {
 
   [[ "$output" != *"unmanaged-app"* ]] || fail "health should ignore unmanaged config symlinks"
   [[ "$output" != *"[WARN] broken symlinks under"* ]] || fail "health should not scan all config symlinks"
-
-  rm -rf "$tmp"
-}
-
-test_dotfiles_health_fails_broken_managed_config_link() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-
-  prepare_health_fixture "$tmp"
-  rm "${tmp}/config/kitty"
-  ln -s "${tmp}/missing-kitty" "${tmp}/config/kitty"
-
-  set +e
-  output=$(run_health "$tmp" --skip-systemd 2>&1)
-  exit_status=$?
-  set -e
-
-  [[ "$exit_status" -ne 0 ]] || fail "health should fail for broken managed config links"
-  [[ "$output" == *"wrong link target"* || "$output" == *"broken link"* ]] || \
-    fail "expected broken managed config link failure"
-
-  rm -rf "$tmp"
-}
-
-test_dotfiles_health_rejects_legacy_lsd_directory_link() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-
-  prepare_health_fixture "$tmp"
-  rm -rf "${tmp}/config/lsd"
-  ln -s "${repo_root}/lsd" "${tmp}/config/lsd"
-
-  set +e
-  output=$(run_health "$tmp" --skip-systemd 2>&1)
-  exit_status=$?
-  set -e
-
-  (( exit_status != 0 )) || fail "health accepted the legacy LSD directory link"
-  [[ "$output" == *"not a real directory"* ]] || \
-    fail "health did not explain the legacy LSD layout: ${output}"
-
-  rm -rf "$tmp"
-}
-
-test_dotfiles_health_rejects_legacy_yazi_directory_link() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
-
-  prepare_health_fixture "$tmp"
-  rm -rf "${tmp}/config/yazi"
-  ln -s "${repo_root}/yazi" "${tmp}/config/yazi"
-
-  set +e
-  output=$(run_health "$tmp" --skip-systemd 2>&1)
-  exit_status=$?
-  set -e
-
-  (( exit_status != 0 )) || fail "health accepted the legacy Yazi directory link"
-  [[ "$output" == *"not a real directory"* ]] || \
-    fail "health did not explain the legacy Yazi layout: ${output}"
 
   rm -rf "$tmp"
 }
@@ -1855,25 +1923,6 @@ test_setup_links_retention_units_without_enabling_them() {
     fail "dry-run must not plan retention activation"
 }
 
-test_setup_enables_other_timers_before_missing_retention_units_fail() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/bin"
-  install_retention_systemctl "$tmp" disabled
-
-  set +e
-  output=$(OPS_RETENTION_UNITS_PRESENT=false SYSTEMCTL_LOG="${tmp}/systemctl.log" \
-    run_setup "$tmp" --link-only --headless --only systemd --enable-user-timers 2>&1)
-  exit_status=$?
-  set -e
-  (( exit_status != 0 )) || fail "setup accepted an ops checkout without the retention units"
-  [[ "$output" == *"Link source does not exist"*"git-index-retention.service"* ]] || \
-    fail "setup did not name the missing retention unit: ${output}"
-  rg -q -- 'enable --now obs-index.timer' "${tmp}/systemctl.log" || \
-    fail "a missing retention unit must not stop the other timers being enabled"
-}
-
 test_dotfiles_health_reports_disabled_retention_as_prepared() {
   local tmp output
   tmp=$(make_tmpdir)
@@ -1884,8 +1933,8 @@ test_dotfiles_health_reports_disabled_retention_as_prepared() {
     fail "health should accept linked, disabled retention: ${output}"
   [[ "$output" == *"prepared, awaiting host approval: git-index-retention.timer"* ]] || \
     fail "health did not report retention as prepared: ${output}"
-  [[ "$output" == *"link: ${tmp}/config/systemd/user/git-index-retention.service"* ]] || \
-    fail "health did not check the retention service link: ${output}"
+  [[ "$output" == *"manifest: install-linux.toml"* ]] || \
+    fail "health did not check the install-linux.toml manifest: ${output}"
   ! rg -q -- 'is-failed' "${tmp}/systemctl.log" || \
     fail "health should not judge runs of a timer that is not enabled"
 }
@@ -1905,7 +1954,7 @@ test_dotfiles_health_fails_a_retention_unit_outside_the_ops_checkout() {
   exit_status=$?
   set -e
   (( exit_status != 0 )) || fail "health accepted a retention timer outside the ops checkout"
-  [[ "$output" == *"wrong link target"*"git-index-retention.timer"* ]] || \
+  [[ "$output" == *"repoint"$'\t'"${tmp}/config/systemd/user/git-index-retention.timer"* ]] || \
     fail "health did not name the wrong retention link: ${output}"
 }
 
@@ -1921,7 +1970,7 @@ test_dotfiles_health_does_not_call_missing_retention_links_prepared() {
   exit_status=$?
   set -e
   (( exit_status != 0 )) || fail "health accepted a missing retention timer link"
-  [[ "$output" == *"not a symlink"*"git-index-retention.timer"* ]] || \
+  [[ "$output" == *"create"$'\t'"${tmp}/config/systemd/user/git-index-retention.timer"* ]] || \
     fail "health did not name the missing retention link: ${output}"
   [[ "$output" != *"prepared, awaiting host approval: git-index-retention.timer"* ]] || \
     fail "health called retention prepared without its links: ${output}"
@@ -2029,28 +2078,6 @@ test_setup_links_convergence_units_without_enabling_them() {
     fail "dry-run must not plan convergence activation"
 }
 
-test_setup_names_missing_convergence_units() {
-  local tmp output exit_status
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/bin"
-  install_gated_systemctl "$tmp" disabled disabled
-
-  set +e
-  output=$(OPS_CONVERGENCE_UNITS_PRESENT=false SYSTEMCTL_LOG="${tmp}/systemctl.log" \
-    run_setup "$tmp" --link-only --headless --only systemd --enable-user-timers 2>&1)
-  exit_status=$?
-  set -e
-  (( exit_status != 0 )) || fail "setup accepted an ops checkout without the convergence units"
-  [[ "$output" == *"Link source does not exist"*"git-index-health.service"* ]] || \
-    fail "setup did not name the missing convergence unit: ${output}"
-  rg -q -- 'enable --now obs-index.timer' "${tmp}/systemctl.log" || \
-    fail "a missing convergence unit must not stop the other timers being enabled"
-  [[ "$(readlink "${tmp}/config/systemd/user/git-index-retention.timer")" == \
-      "${tmp}/home/d/ops/systemd/user/git-index-retention.timer" ]] || \
-    fail "a missing convergence unit must not stop retention being linked"
-}
-
 test_dotfiles_health_reports_disabled_convergence_as_prepared() {
   local tmp output
   tmp=$(make_tmpdir)
@@ -2061,8 +2088,8 @@ test_dotfiles_health_reports_disabled_convergence_as_prepared() {
     fail "health should accept linked, disabled convergence: ${output}"
   [[ "$output" == *"prepared, awaiting host approval: git-index-health.timer"* ]] || \
     fail "health did not report convergence as prepared: ${output}"
-  [[ "$output" == *"link: ${tmp}/config/systemd/user/git-index-health.service"* ]] || \
-    fail "health did not check the convergence service link: ${output}"
+  [[ "$output" == *"manifest: install-linux.toml"* ]] || \
+    fail "health did not check the install-linux.toml manifest: ${output}"
   ! rg -q -- 'is-failed --quiet git-index-health' "${tmp}/systemctl.log" || \
     fail "health should not judge runs of a convergence timer that is not enabled"
 }
@@ -2079,7 +2106,7 @@ test_dotfiles_health_does_not_call_missing_convergence_links_prepared() {
   exit_status=$?
   set -e
   (( exit_status != 0 )) || fail "health accepted a missing convergence timer link"
-  [[ "$output" == *"not a symlink"*"git-index-health.timer"* ]] || \
+  [[ "$output" == *"create"$'\t'"${tmp}/config/systemd/user/git-index-health.timer"* ]] || \
     fail "health did not name the missing convergence link: ${output}"
   [[ "$output" != *"prepared, awaiting host approval: git-index-health.timer"* ]] || \
     fail "health called convergence prepared without its links: ${output}"
@@ -2191,7 +2218,7 @@ test_dotfiles_health_fails_a_convergence_unit_outside_the_ops_checkout() {
     exit_status=$?
     set -e
     (( exit_status != 0 )) || fail "health accepted ${unit} outside the ops checkout"
-    [[ "$output" == *"wrong link target: ${tmp}/config/systemd/user/${unit}"* ]] || \
+    [[ "$output" == *"repoint"$'\t'"${tmp}/config/systemd/user/${unit}"* ]] || \
       fail "health did not name the wrong ${unit} link: ${output}"
     [[ "$output" != *"prepared, awaiting host approval: git-index-health.timer"* ]] || \
       fail "health called convergence prepared with ${unit} outside ops: ${output}"
@@ -2344,19 +2371,21 @@ test_clean_graphical_setup_creates_the_generated_theme_stubs() {
   fixture="${tmp}/repo"
   mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/feh" "$fixture/niri" \
     "$fixture/zathura" "$fixture/prism/titan" "$fixture/kitty" \
-    "${tmp}/config" "${tmp}/bin"
+    "${tmp}/config" "${tmp}/bin" "${tmp}/home/d/prism/bin"
   cp "${repo_root}/setup.sh" "$fixture/setup.sh"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
   cp "${repo_root}/niri/host_specific.sh" "$fixture/niri/"
   printf '// titan\n' > "$fixture/niri/host-titan.kdl"
-  printf '#!/usr/bin/env bash\nexit 0\n' > "$fixture/bin/prism"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/home/d/prism/bin/prism"
   printf '#!/usr/bin/env bash\nprintf "titan\\n"\n' > "${tmp}/bin/hostname"
   printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/bin/niri"
-  chmod +x "$fixture/setup.sh" "$fixture/bin/prism" \
+  chmod +x "$fixture/setup.sh" "${tmp}/home/d/prism/bin/prism" \
     "$fixture/niri/host_specific.sh" "${tmp}/bin/hostname" "${tmp}/bin/niri"
+  prepare_manifest_fixture "$tmp" "$fixture"
 
   HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
-    XDG_STATE_HOME="${tmp}/state" PATH="${tmp}/bin:$PATH" \
+    XDG_STATE_HOME="${tmp}/state" WORKTREE_SCAN_ROOT="${tmp}/home/d" \
+    PATH="${tmp}/bin:$PATH" \
     bash "$fixture/setup.sh" --link-only --only graphical-config >/dev/null
 
   [[ -d "$fixture/prism/titan/contexts" ]] || \
@@ -2391,23 +2420,25 @@ test_setup_continues_past_a_failing_phase() {
   register_tmp_cleanup "$tmp"
   fixture="${tmp}/repo"
   mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/niri" \
-    "$fixture/prism/titan" "$fixture/mime" "${tmp}/config" "${tmp}/bin"
+    "$fixture/prism/titan" "$fixture/mime" "${tmp}/config" "${tmp}/bin" \
+    "${tmp}/home/d/prism/bin"
   cp "${repo_root}/setup.sh" "$fixture/setup.sh"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
   cp "${repo_root}/niri/host_specific.sh" "$fixture/niri/"
   printf '// titan\n' > "$fixture/niri/host-titan.kdl"
   printf '[Default Applications]\n' > "$fixture/mimeapps.list"
   # graphical-config fails here, and only here
-  printf '#!/usr/bin/env bash\nexit 1\n' > "$fixture/bin/prism"
+  printf '#!/usr/bin/env bash\nexit 1\n' > "${tmp}/home/d/prism/bin/prism"
   printf '#!/usr/bin/env bash\nprintf "titan\\n"\n' > "${tmp}/bin/hostname"
   printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/bin/niri"
-  chmod +x "$fixture/setup.sh" "$fixture/bin/prism" \
+  chmod +x "$fixture/setup.sh" "${tmp}/home/d/prism/bin/prism" \
     "$fixture/niri/host_specific.sh" "${tmp}/bin/hostname" "${tmp}/bin/niri"
+  prepare_manifest_fixture "$tmp" "$fixture"
 
   rc=0
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
-    PATH="${tmp}/bin:$PATH" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" PATH="${tmp}/bin:$PATH" \
     bash "$fixture/setup.sh" --link-only --only graphical-config,mime 2>&1) || rc=$?
 
   [[ "$rc" -ne 0 ]] || \
@@ -2452,6 +2483,7 @@ EOF
   rc=0
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
     PATH="${tmp}/bin:$PATH" PRISM_REQUIREMENTS_STATUS=1 \
     bash "$fixture/setup.sh" --link-only --only preflight 2>&1) || rc=$?
   [[ "$output" == *"MISSING  prism sink requirements"* ]] || \
@@ -2466,6 +2498,7 @@ EOF
   rc=0
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
     PATH="${tmp}/bin:$PATH" \
     bash "$fixture/setup.sh" --link-only --check 2>&1) || rc=$?
   [[ "$output" == *"ok       prism sink requirements"* ]] || \
@@ -2476,6 +2509,7 @@ EOF
   rc=0
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
     PATH="${tmp}/bin:$PATH" PRISM_REQUIREMENTS_STATUS=1 \
     bash "$fixture/setup.sh" --link-only --only preflight 2>&1) || rc=$?
   [[ "$output" == *"MISSING  prism node dependencies"* ]] || \
@@ -2505,6 +2539,7 @@ test_preflight_reports_every_unmet_prerequisite_without_mutating() {
   rc=0
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
     PATH="${tmp}/bin:$PATH" \
     bash "$fixture/setup.sh" --headless --link-only --check 2>&1) || rc=$?
 
@@ -2534,6 +2569,7 @@ test_preflight_reports_every_unmet_prerequisite_without_mutating() {
   rc=0
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
     PATH="${tmp}/bin:$PATH" \
     bash "$fixture/setup.sh" --headless --link-only --only preflight 2>&1) || rc=$?
   [[ "$rc" -eq 0 ]] || \
@@ -2764,7 +2800,8 @@ test_dotfiles_health_resolves_its_root_through_a_symlinked_path() {
 
   output=$(HOME="${tmp}/home" XDG_CACHE_HOME="${tmp}/cache" \
     XDG_CONFIG_HOME="${tmp}/config" XDG_DATA_HOME="${tmp}/data" \
-    XDG_STATE_HOME="${tmp}/home/.local/state" PATH="${tmp}/bin:$PATH" \
+    XDG_STATE_HOME="${tmp}/home/.local/state" WORKTREE_SCAN_ROOT="${tmp}/home/d" \
+    PATH="${tmp}/bin:$PATH" \
     "${tmp}/tree-alias/bin/dotfiles-health" --skip-systemd --skip-noctalia-ipc 2>&1) || \
     fail "health failed when invoked through a symlinked root: ${output}"
   [[ "$output" == *"Dotfiles root: ${repo_root}"* ]] || \
@@ -2787,6 +2824,7 @@ test_setup_dropbox_ignore_phase_marks_declared_paths() {
 
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
     bash "$fixture/setup.sh" --headless --link-only --only dropbox-ignore 2>&1) || \
     fail "dropbox-ignore phase failed: ${output}"
 
@@ -2803,6 +2841,7 @@ test_setup_dropbox_ignore_phase_marks_declared_paths() {
   # idempotent: a second run marks nothing again
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
     bash "$fixture/setup.sh" --headless --link-only --only dropbox-ignore 2>&1) || \
     fail "second dropbox-ignore run failed: ${output}"
   [[ "$output" == *"[SKIPPING] already ignored: crush/.crush/"* ]] || \
@@ -2814,6 +2853,7 @@ test_setup_dropbox_ignore_phase_marks_declared_paths() {
   rm "$fixture/familiar/identities.yaml"
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
     bash "$fixture/setup.sh" --headless --link-only --only dropbox-ignore 2>&1) || \
     fail "dropbox-ignore run with a missing file failed: ${output}"
   [[ ! -e "$fixture/familiar/identities.yaml" ]] || \
@@ -2833,6 +2873,7 @@ test_setup_dropbox_ignore_phase_dry_run_writes_nothing() {
 
   output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
     XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
     bash "$fixture/setup.sh" --headless --dry-run --link-only --only dropbox-ignore 2>&1) || \
     fail "dry-run dropbox-ignore phase failed: ${output}"
   [[ "$output" == *"[DRY-RUN] attr -s com.dropbox.ignored -V 1 ${fixture}/fcitx/dbus"* ]] || \
@@ -2853,12 +2894,14 @@ test_dotfiles_health_fails_unmarked_declared_dropbox_ignore() {
     "${tmp}/home" "${tmp}/config" "${tmp}/data"
   cp "${repo_root}/bin/dotfiles-health" "$fixture/bin/"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+  seed_external_checkouts "$tmp"
   install_test_stubs "$tmp"
 
   set +e
   output=$(HOME="${tmp}/home" XDG_CACHE_HOME="${tmp}/cache" \
     XDG_CONFIG_HOME="${tmp}/config" XDG_DATA_HOME="${tmp}/data" \
-    XDG_STATE_HOME="${tmp}/home/.local/state" PATH="${tmp}/bin:$PATH" \
+    XDG_STATE_HOME="${tmp}/home/.local/state" WORKTREE_SCAN_ROOT="${tmp}/home/d" \
+    PATH="${tmp}/bin:$PATH" \
     "$fixture/bin/dotfiles-health" --skip-systemd --skip-noctalia-ipc 2>&1)
   exit_status=$?
   set -e
@@ -2870,7 +2913,8 @@ test_dotfiles_health_fails_unmarked_declared_dropbox_ignore() {
   set +e
   output=$(HOME="${tmp}/home" XDG_CACHE_HOME="${tmp}/cache" \
     XDG_CONFIG_HOME="${tmp}/config" XDG_DATA_HOME="${tmp}/data" \
-    XDG_STATE_HOME="${tmp}/home/.local/state" PATH="${tmp}/bin:$PATH" \
+    XDG_STATE_HOME="${tmp}/home/.local/state" WORKTREE_SCAN_ROOT="${tmp}/home/d" \
+    PATH="${tmp}/bin:$PATH" \
     "$fixture/bin/dotfiles-health" --skip-systemd --skip-noctalia-ipc 2>&1)
   set -e
   [[ "$output" != *"declared per-machine but syncing"* ]] || \
@@ -2977,7 +3021,7 @@ test_git_packing_setup_is_scoped_idempotent_and_dry_run_safe() {
   generated="${tmp}/home/.gitconfig-synced"
   run_setup "$tmp" --dry-run --link-only --headless --only app-config >/dev/null
   [[ ! -e "$generated" ]] || fail "packing dry-run wrote an include"
-  run_setup "$tmp" --link-only --headless --only bin >/dev/null
+  run_setup "$tmp" --link-only --headless --only shell >/dev/null
   [[ ! -e "$generated" ]] || fail "unrelated phase wrote a packing include"
   run_setup "$tmp" --link-only --headless --only app-config >/dev/null
   [[ -f "$generated" ]] || fail "app-config did not create packing include"
@@ -3085,6 +3129,328 @@ test_health_fails_when_host_budget_missing_or_policy_invalid() {
     fail "health did not report invalid host-budget policy: ${output}"
 }
 
+test_setup_converts_bin_directory_and_links_tracked_scripts() {
+  local tmp output exit_status
+  local -a reply
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  ln -s "${repo_root}/bin" "${tmp}/home/bin"
+
+  run_setup "$tmp" --link-only --headless --only shell >/dev/null
+
+  [[ -d "${tmp}/home/bin" && ! -L "${tmp}/home/bin" ]] || \
+    fail "setup did not convert ~/bin from a directory symlink to a real directory"
+  [[ -L "${tmp}/home/bin/dotfiles-health" && "$(readlink "${tmp}/home/bin/dotfiles-health")" == "${repo_root}/bin/dotfiles-health" ]] || \
+    fail "setup did not link ~/bin/dotfiles-health to the tracked script"
+  [[ -L "${tmp}/home/bin/prism" && "$(readlink "${tmp}/home/bin/prism")" == "${repo_root}/bin/prism" ]] || \
+    fail "setup did not link ~/bin/prism to the tracked script"
+
+  printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/home/bin/unmanaged-tool"
+  chmod +x "${tmp}/home/bin/unmanaged-tool"
+  run_setup "$tmp" --link-only --headless --only shell >/dev/null
+  [[ -f "${tmp}/home/bin/unmanaged-tool" && ! -L "${tmp}/home/bin/unmanaged-tool" ]] || \
+    fail "setup removed an unmanaged file in ~/bin"
+
+  prepare_health_fixture "$tmp"
+  child_env "$tmp"
+  output=$(env -i "${reply[@]}" "${tmp}/home/bin/dotfiles-health" --skip-systemd --skip-noctalia-ipc 2>&1) || \
+    fail "dotfiles-health failed when invoked via ~/bin/dotfiles-health symlink: ${output}"
+
+  rm "${tmp}/home/bin/prism"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "${tmp}/home/bin/prism"
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted a regular file replacing ~/bin/prism"
+  [[ "$output" == *"refuse"$'\t'"~/bin/prism"* ]] || \
+    fail "health did not flag the regular file at ~/bin/prism: ${output}"
+
+  ln -sf "${tmp}/missing-prism" "${tmp}/home/bin/prism"
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted a broken link at ~/bin/prism"
+  [[ "$output" == *"repoint"$'\t'"~/bin/prism"* ]] || \
+    fail "health did not flag the wrong link at ~/bin/prism: ${output}"
+}
+
+test_setup_and_health_enforce_manifests_and_retired_configs() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  prepare_health_fixture "$tmp"
+
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1) || \
+    fail "healthy fixture failed manifest checks: ${output}"
+  [[ "$output" == *"[OK] manifest: install.toml"* ]] || \
+    fail "health did not report install.toml ok: ${output}"
+  [[ "$output" == *"[OK] manifest: install-linux.toml"* ]] || \
+    fail "health did not report install-linux.toml ok: ${output}"
+  [[ "$output" == *"[OK] manifest: install-graphical.toml"* ]] || \
+    fail "health did not report install-graphical.toml ok: ${output}"
+
+  ln -s "${repo_root}/snakemake" "${tmp}/config/snakemake"
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted retired snakemake symlink"
+  [[ "$output" == *"remove"$'\t'"${tmp}/config/snakemake"* ]] || \
+    fail "health did not report retired snakemake symlink: ${output}"
+
+  run_setup "$tmp" --link-only --headless --only common-config >/dev/null
+  [[ ! -e "${tmp}/config/snakemake" && ! -L "${tmp}/config/snakemake" ]] || \
+    fail "setup did not remove retired snakemake symlink"
+
+  rm -rf "${tmp}/config/lsd"
+  ln -s "${repo_root}/lsd" "${tmp}/config/lsd"
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted legacy lsd directory symlink"
+  [[ "$output" == *"convert"$'\t'"${tmp}/config/lsd"* ]] || \
+    fail "health did not report legacy lsd directory symlink: ${output}"
+  run_setup "$tmp" --link-only --headless --only common-config >/dev/null
+
+  rm -rf "${tmp}/config/yazi"
+  ln -s "${repo_root}/yazi" "${tmp}/config/yazi"
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted legacy yazi directory symlink"
+  [[ "$output" == *"convert"$'\t'"${tmp}/config/yazi"* ]] || \
+    fail "health did not report legacy yazi directory symlink: ${output}"
+  run_setup "$tmp" --link-only --headless --only common-config >/dev/null
+
+  rm -rf "${tmp}/config/kitty"
+  ln -s "${tmp}/missing-kitty" "${tmp}/config/kitty"
+  set +e
+  output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "health accepted broken kitty symlink"
+  [[ "$output" == *"repoint"$'\t'"${tmp}/config/kitty"* ]] || \
+    fail "health did not report broken kitty symlink: ${output}"
+}
+
+test_setup_migrates_legacy_yazi_symlink_across_full_phase_order() {
+  local tmp
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/legacy-yazi/flavors/noctalia.yazi"
+  printf 'theme = "dark"\n' > "${tmp}/legacy-yazi/theme.toml"
+  printf 'flavor = "noctalia"\n' > "${tmp}/legacy-yazi/flavors/noctalia.yazi/flavor.toml"
+  ln -s "${tmp}/legacy-yazi" "${tmp}/config/yazi"
+  ln -s "${repo_root}/lsd" "${tmp}/config/lsd"
+
+  run_setup "$tmp" --link-only --headless >/dev/null
+
+  [[ -d "${tmp}/config/yazi" && ! -L "${tmp}/config/yazi" ]] || \
+    fail "full setup did not convert legacy yazi directory symlink into a real directory"
+  [[ "${tmp}/config/yazi/yazi.toml" -ef "${repo_root}/yazi/yazi.toml" ]] || \
+    fail "full setup did not link tracked yazi.toml"
+  [[ -f "${tmp}/config/yazi/theme.toml" && "$(<"${tmp}/config/yazi/theme.toml")" == 'theme = "dark"' ]] || \
+    fail "full setup did not preserve legacy yazi theme.toml"
+  [[ -f "${tmp}/config/yazi/flavors/noctalia.yazi/flavor.toml" && "$(<"${tmp}/config/yazi/flavors/noctalia.yazi/flavor.toml")" == 'flavor = "noctalia"' ]] || \
+    fail "full setup did not preserve legacy yazi flavors directory"
+  [[ -d "${tmp}/config/lsd" && ! -L "${tmp}/config/lsd" ]] || \
+    fail "full setup did not convert legacy lsd directory symlink into a real directory"
+  [[ "${tmp}/config/lsd/config.yaml" -ef "${repo_root}/lsd/config.yaml" ]] || \
+    fail "full setup did not link tracked lsd/config.yaml"
+}
+
+test_setup_backs_up_existing_regular_configs_and_refuses_existing_bak() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  printf '# custom bashrc\n' > "${tmp}/home/.bashrc"
+
+  output=$(run_setup "$tmp" --link-only --headless --only shell 2>&1) || \
+    fail "setup failed to back up preexisting ~/.bashrc: ${output}"
+  [[ -f "${tmp}/home/.bashrc.bak" && "$(<"${tmp}/home/.bashrc.bak")" == '# custom bashrc' ]] || \
+    fail "setup did not back up preexisting ~/.bashrc to ~/.bashrc.bak"
+  [[ -L "${tmp}/home/.bashrc" && "$(readlink "${tmp}/home/.bashrc")" == "${repo_root}/bashrc" ]] || \
+    fail "setup did not replace backed-up ~/.bashrc with the tracked symlink"
+
+  rm "${tmp}/home/.bashrc"
+  printf '# second bashrc\n' > "${tmp}/home/.bashrc"
+  set +e
+  output=$(run_setup "$tmp" --link-only --headless --only shell 2>&1)
+  exit_status=$?
+  set -e
+  (( exit_status != 0 )) || fail "setup overwrote an existing .bak file"
+  [[ "$output" == *"Refusing to overwrite existing backup: ${tmp}/home/.bashrc.bak"* ]] || \
+    fail "setup did not report the existing backup refusal: ${output}"
+  [[ "$(<"${tmp}/home/.bashrc.bak")" == '# custom bashrc' ]] || \
+    fail "setup modified the existing .bak file"
+}
+
+test_setup_and_launchers_resolve_registered_checkouts_outside_home_d() {
+  local tmp relocated_tmp ext_xdg output exit_status
+  tmp=$(make_tmpdir)
+  relocated_tmp=$(make_tmpdir)
+  ext_xdg=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  register_tmp_cleanup "$relocated_tmp"
+  register_tmp_cleanup "$ext_xdg"
+
+  mkdir -p "${tmp}/home" "${tmp}/data" "${tmp}/bin"
+  install_test_stubs "$tmp"
+
+  # Seed relocated checkouts outside $HOME/d (in $relocated_tmp) and tasks registry in $ext_xdg
+  mkdir -p "${relocated_tmp}/prism/bin" "${relocated_tmp}/prism/integrations/noctalia-plugin" \
+    "${relocated_tmp}/wali/bin" "${relocated_tmp}/wali/integrations/noctalia-plugin" "${relocated_tmp}/wali/systemd" \
+    "${relocated_tmp}/ops/systemd/user" \
+    "${relocated_tmp}/noctalia-resource-alert" \
+    "${relocated_tmp}/lookout/src" \
+    "${relocated_tmp}/hostkit/bin" "${relocated_tmp}/hostkit/systemd/user" \
+    "${ext_xdg}/tasks"
+
+  cat > "${relocated_tmp}/prism/bin/prism" <<'EOF'
+#!/usr/bin/env bash
+if [[ "${1:-}" == "check" && "${2:-}" == "--json" ]]; then
+  printf '{"checks": []}\n'
+  exit 0
+fi
+printf 'relocated-prism:%s\n' "$*"
+EOF
+  cat > "${relocated_tmp}/wali/bin/walictl" <<'EOF'
+#!/usr/bin/env bash
+printf 'relocated-walictl:%s\n' "$*"
+EOF
+  chmod +x "${relocated_tmp}/prism/bin/prism" "${relocated_tmp}/wali/bin/walictl"
+  touch "${relocated_tmp}/prism/integrations/noctalia-plugin/plugin.toml" \
+    "${relocated_tmp}/wali/integrations/noctalia-plugin/plugin.toml" \
+    "${relocated_tmp}/wali/systemd/wali-rotate.service" \
+    "${relocated_tmp}/wali/systemd/wali-rotate.timer" \
+    "${relocated_tmp}/wali/systemd/wali-phone-sync.service" \
+    "${relocated_tmp}/wali/systemd/wali-phone-sync.timer" \
+    "${relocated_tmp}/ops/systemd/user/obs-index.service" \
+    "${relocated_tmp}/ops/systemd/user/obs-index.timer" \
+    "${relocated_tmp}/ops/systemd/user/git-index-retention.service" \
+    "${relocated_tmp}/ops/systemd/user/git-index-retention.timer" \
+    "${relocated_tmp}/ops/systemd/user/git-index-health.service" \
+    "${relocated_tmp}/ops/systemd/user/git-index-health.timer" \
+    "${relocated_tmp}/noctalia-resource-alert/plugin.toml"
+  printf '#!/bin/sh\nexit 0\n' > "${relocated_tmp}/lookout/src/bin.ts"
+  chmod +x "${relocated_tmp}/lookout/src/bin.ts"
+
+  # Populate hostkit in relocated_tmp by seeding into tmp first then moving;
+  # leave ~/d as an empty directory (no checkouts inside ~/d) for git-packing-policy.
+  seed_external_checkouts "$tmp"
+  cp -a "${tmp}/home/d/hostkit/." "${relocated_tmp}/hostkit/"
+  rm -rf "${tmp}/home/d" "${tmp}/config"
+  mkdir -p "${tmp}/home/d"
+
+  cat > "${ext_xdg}/tasks/projects.toml" <<EOF
+[projects]
+hostkit = "${relocated_tmp}/hostkit"
+wali = "${relocated_tmp}/wali"
+prism = "${relocated_tmp}/prism"
+pressure = "${relocated_tmp}/noctalia-resource-alert"
+ops = "${relocated_tmp}/ops"
+look = "${relocated_tmp}/lookout"
+EOF
+
+  # 1. Verify bin/prism and bin/walictl honor external XDG_CONFIG_HOME outside $HOME
+  output=$(env -i HOME="${tmp}/home" XDG_CONFIG_HOME="$ext_xdg" \
+    WORKTREE_SCAN_ROOT="${tmp}/missing-scan-root" PATH="${tmp}/bin:/usr/bin:/bin" \
+    "${repo_root}/bin/prism" doctor 2>&1) || \
+    fail "bin/prism failed with relocated checkout: ${output}"
+  [[ "$output" == "relocated-prism:doctor" ]] || \
+    fail "bin/prism did not execute relocated prism: ${output}"
+
+  output=$(env -i HOME="${tmp}/home" XDG_CONFIG_HOME="$ext_xdg" \
+    WORKTREE_SCAN_ROOT="${tmp}/missing-scan-root" PATH="${tmp}/bin:/usr/bin:/bin" \
+    "${repo_root}/bin/walictl" status 2>&1) || \
+    fail "bin/walictl failed with relocated checkout: ${output}"
+  [[ "$output" == "relocated-walictl:status" ]] || \
+    fail "bin/walictl did not execute relocated walictl: ${output}"
+
+  # 2. Verify setup.sh phases (preflight, graphical-config, systemd, noctalia-plugins) and bin/dotfiles-health resolve relocated checkouts via XDG_CONFIG_HOME
+  output=$(env -i HOME="${tmp}/home" USER=dotfiles-test LOGNAME=dotfiles-test \
+    XDG_CONFIG_HOME="$ext_xdg" XDG_CACHE_HOME="${tmp}/cache" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/home/.local/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/missing-scan-root" \
+    GIT_CONFIG_GLOBAL="${tmp}/home/.gitconfig" GIT_CONFIG_NOSYSTEM=1 \
+    PATH="${tmp}/bin:/usr/bin:/bin" \
+    bash "${repo_root}/setup.sh" --link-only \
+    --only preflight,shell,common-config,app-config,graphical-config,systemd,noctalia-plugins,dropbox-ignore 2>&1) || \
+    fail "setup.sh failed with relocated checkouts: ${output}"
+
+  [[ "$output" == *"relocated-prism:apply niri"* ]] || \
+    fail "graphical-config phase did not execute relocated prism: ${output}"
+  [[ "$(readlink "${ext_xdg}/systemd/user/wali-rotate.service")" == "${relocated_tmp}/wali/systemd/wali-rotate.service" ]] || \
+    fail "systemd phase did not link wali-rotate.service from relocated wali checkout"
+  [[ "$(readlink "${ext_xdg}/systemd/user/git-index-retention.service")" == "${relocated_tmp}/ops/systemd/user/git-index-retention.service" ]] || \
+    fail "systemd phase did not link git-index-retention.service from relocated ops checkout"
+  [[ "$(readlink "${tmp}/data/noctalia/plugins/prism")" == "${relocated_tmp}/prism/integrations/noctalia-plugin" ]] || \
+    fail "noctalia-plugins phase did not link prism from relocated prism checkout"
+  [[ "$(readlink "${tmp}/data/noctalia/plugins/resource-pressure-alert")" == "${relocated_tmp}/noctalia-resource-alert" ]] || \
+    fail "noctalia-plugins phase did not link resource-pressure-alert from relocated checkout"
+
+  output=$(env -i HOME="${tmp}/home" USER=dotfiles-test LOGNAME=dotfiles-test \
+    XDG_CONFIG_HOME="$ext_xdg" XDG_CACHE_HOME="${tmp}/cache" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/home/.local/state" \
+    GIT_CONFIG_GLOBAL="${tmp}/home/.gitconfig" GIT_CONFIG_NOSYSTEM=1 \
+    PATH="${tmp}/bin:${tmp}/home/bin:${tmp}/home/.local/bin:/usr/bin:/bin" \
+    "${repo_root}/bin/dotfiles-health" --skip-systemd --skip-noctalia-ipc 2>&1) || \
+    fail "dotfiles-health failed with relocated checkouts: ${output}"
+
+  # 3. Verify fallback when a prefix (fam) is omitted from projects.toml or tasks is absent
+  output=$(env -i HOME="${tmp}/home" XDG_CONFIG_HOME="$ext_xdg" \
+    WORKTREE_SCAN_ROOT="${tmp}/scan-fallback" PATH="${tmp}/bin:/usr/bin:/bin" \
+    bash -c 'source "$1"; dotfiles_project_root fam' bash "${repo_root}/lib/dotfiles-setup-data.bash") || \
+    fail "dotfiles_project_root failed to fall back for unregistered prefix fam"
+  [[ "$output" == "${tmp}/scan-fallback/familiar" ]] || \
+    fail "expected fallback path ${tmp}/scan-fallback/familiar, got: ${output}"
+
+  output=$(env -i HOME="${tmp}/home" XDG_CONFIG_HOME="$ext_xdg" \
+    WORKTREE_SCAN_ROOT="${tmp}/scan-fallback" PATH="/usr/bin:/bin" \
+    bash -c 'source "$1"; dotfiles_project_root prism' bash "${repo_root}/lib/dotfiles-setup-data.bash") || \
+    fail "dotfiles_project_root failed to fall back when tasks is absent from PATH"
+  [[ "$output" == "${tmp}/scan-fallback/prism" ]] || \
+    fail "expected fallback path ${tmp}/scan-fallback/prism when tasks is absent, got: ${output}"
+
+  # 4. Verify failure without silent fallback when tasks projects --paths --json fails or emits invalid/non-object JSON
+  local mode
+  for mode in nonzero bad_json bare_list; do
+    set +e
+    output=$(env -i HOME="${tmp}/home" XDG_CONFIG_HOME="$ext_xdg" \
+      WORKTREE_SCAN_ROOT="${tmp}/scan-fallback" TASKS_STUB_MODE="$mode" \
+      PATH="${tmp}/bin:/usr/bin:/bin" \
+      bash -c 'source "$1"; dotfiles_project_root prism' bash "${repo_root}/lib/dotfiles-setup-data.bash" 2>&1)
+    exit_status=$?
+    set -e
+    (( exit_status != 0 )) || fail "dotfiles_project_root silently fell back on TASKS_STUB_MODE=${mode}: ${output}"
+
+    set +e
+    output=$(env -i HOME="${tmp}/home" XDG_CONFIG_HOME="$ext_xdg" \
+      WORKTREE_SCAN_ROOT="${tmp}/scan-fallback" TASKS_STUB_MODE="$mode" \
+      PATH="${tmp}/bin:/usr/bin:/bin" \
+      "${repo_root}/bin/prism" doctor 2>&1)
+    exit_status=$?
+    set -e
+    (( exit_status != 0 )) || fail "bin/prism silently fell back on TASKS_STUB_MODE=${mode}: ${output}"
+
+    set +e
+    output=$(env -i HOME="${tmp}/home" XDG_CONFIG_HOME="$ext_xdg" \
+      WORKTREE_SCAN_ROOT="${tmp}/scan-fallback" TASKS_STUB_MODE="$mode" \
+      PATH="${tmp}/bin:/usr/bin:/bin" \
+      "${repo_root}/bin/walictl" status 2>&1)
+    exit_status=$?
+    set -e
+    (( exit_status != 0 )) || fail "bin/walictl silently fell back on TASKS_STUB_MODE=${mode}: ${output}"
+  done
+}
+
 test_git_packing_setup_is_scoped_idempotent_and_dry_run_safe
 test_git_packing_health_reports_missing_and_stale_without_repair
 
@@ -3105,15 +3471,12 @@ test_zshenv_keeps_inherited_xdg_roots
 test_zshenv_defaults_unset_xdg_roots
 test_setup_dry_run_link_only_does_not_write_home
 test_setup_link_only_creates_expected_links_without_external_clones
-test_setup_migrates_legacy_lsd_directory_link
 test_setup_shell_generates_static_zsh_completions
 test_setup_dry_run_can_enable_user_timers
 test_setup_only_runs_selected_phase
 test_setup_only_accepts_multiple_phases
 test_setup_only_rejects_unknown_phase
-test_setup_bin_phase_links_the_bin_directory_and_replaces_a_copy
 test_dotfiles_health_flags_a_copied_install
-test_dotfiles_health_flags_a_real_bin_directory
 test_noctalia_plugin_phase_links_and_enables_exact_ids
 test_default_setup_does_not_require_live_noctalia
 test_noctalia_plugin_phase_fails_when_ipc_is_unavailable
@@ -3121,7 +3484,6 @@ test_noctalia_plugin_phase_requires_prism_source
 test_noctalia_plugin_phase_requires_wali_source
 test_noctalia_plugin_phase_requires_resource_source
 test_resource_alert_health_failures
-test_setup_and_health_share_managed_link_metadata
 test_dotfiles_health_skips_prism_when_unconfigured
 test_dotfiles_health_fails_missing_noctalia_config
 test_dotfiles_health_fails_wrong_noctalia_plugin_link
@@ -3135,23 +3497,17 @@ test_prism_launcher_survives_relocated_dotfiles_checkout
 test_dotfiles_health_fails_unknown_host_wrong_prism_marker_without_doctor
 test_dotfiles_health_fails_unknown_host_dangling_prism_marker_without_doctor
 test_dotfiles_health_fails_wrong_prism_link_without_running_doctor
-test_dotfiles_health_fails_stale_removed_config_links
 test_dotfiles_health_ignores_brave_runtime_symlinks
 test_dotfiles_health_ignores_unmanaged_config_symlinks
-test_dotfiles_health_fails_broken_managed_config_link
-test_dotfiles_health_rejects_legacy_lsd_directory_link
-test_dotfiles_health_rejects_legacy_yazi_directory_link
 test_dotfiles_health_checks_enabled_user_timer
 test_dotfiles_health_fails_stale_wali_timer_wants_link
 test_setup_links_retention_units_without_enabling_them
-test_setup_enables_other_timers_before_missing_retention_units_fail
 test_dotfiles_health_reports_disabled_retention_as_prepared
 test_dotfiles_health_fails_a_retention_unit_outside_the_ops_checkout
 test_dotfiles_health_does_not_call_missing_retention_links_prepared
 test_dotfiles_health_reports_retention_prepared_beside_unrelated_failures
 test_dotfiles_health_checks_an_enabled_retention_timer
 test_setup_links_convergence_units_without_enabling_them
-test_setup_names_missing_convergence_units
 test_dotfiles_health_reports_disabled_convergence_as_prepared
 test_dotfiles_health_does_not_call_missing_convergence_links_prepared
 test_dotfiles_health_checks_an_enabled_convergence_timer
@@ -3188,5 +3544,11 @@ test_health_fails_when_hostkit_config_missing_or_scan_root_diverges
 test_health_fails_when_host_budget_missing_or_policy_invalid
 
 test_mindful_health_rejects_v3_revival_after_activation
+
+test_setup_converts_bin_directory_and_links_tracked_scripts
+test_setup_and_health_enforce_manifests_and_retired_configs
+test_setup_migrates_legacy_yazi_symlink_across_full_phase_order
+test_setup_backs_up_existing_regular_configs_and_refuses_existing_bak
+test_setup_and_launchers_resolve_registered_checkouts_outside_home_d
 
 print -- "setup and health tests passed"

@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
 
-DOTFILES_GRAPHICAL_CONFIGS=(feh niri zathura)
-DOTFILES_COMMON_CONFIGS=(crush familiar fcitx git glow kitty mimeapps.list nvim termcolors)
-DOTFILES_MACOS_EXCLUDED_COMMON_CONFIGS=(fcitx mimeapps.list)
-DOTFILES_COMMON_DOTFILES=(condarc ctags npmrc plotly Rprofile Renviron tmux.conf visidatarc)
-
 # Noctalia's generated theme output, as "<path in the tree>:<path under XDG_STATE_HOME>".
 # Noctalia writes to fixed paths under ~/.config, and ~/.config/{niri,kitty,zathura}
 # are whole-directory symlinks into this tree, which both machines share through Dropbox.
@@ -35,27 +30,6 @@ DOTFILES_DROPBOX_IGNORED=(
     "fcitx/libpinyin/"
     "fcitx/log/"
 )
-
-function dotfiles_select_common_configs() {
-    local include_linux_only="${1:-true}"
-    local config excluded skip
-
-    DOTFILES_SELECTED_COMMON_CONFIGS=()
-
-    for config in "${DOTFILES_COMMON_CONFIGS[@]}"; do
-        skip=false
-        if [[ "$include_linux_only" != "true" ]]; then
-            for excluded in "${DOTFILES_MACOS_EXCLUDED_COMMON_CONFIGS[@]}"; do
-                if [[ "$config" == "$excluded" ]]; then
-                    skip=true
-                    break
-                fi
-            done
-        fi
-
-        [[ "$skip" == "true" ]] || DOTFILES_SELECTED_COMMON_CONFIGS+=("$config")
-    done
-}
 
 dotfiles_project_root() {
     local prefix="$1" repo_dir json_out root=""
