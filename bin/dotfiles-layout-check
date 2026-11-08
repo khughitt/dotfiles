@@ -6,7 +6,8 @@ set -euo pipefail
 # into git and breaks everywhere that layout does not hold. Relative targets
 # are allowed even when dangling; only the stored target string is inspected.
 
-DOTS_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
+repo_root="$(cd "$(dirname "$(readlink -f -- "${BASH_SOURCE[0]}")")/.." && pwd -P)"
+DOTS_HOME="$repo_root"
 repo="${1:-$DOTS_HOME}"
 
 status=0

@@ -56,3 +56,57 @@ function dotfiles_select_common_configs() {
         [[ "$skip" == "true" ]] || DOTFILES_SELECTED_COMMON_CONFIGS+=("$config")
     done
 }
+
+dotfiles_project_root() {
+    local prefix="$1" repo_dir json_out root=""
+    case "$prefix" in
+        hostkit) repo_dir="hostkit" ;;
+        wali) repo_dir="wali" ;;
+        prism) repo_dir="prism" ;;
+        pressure) repo_dir="noctalia-resource-alert" ;;
+        ops) repo_dir="ops" ;;
+        fam) repo_dir="familiar" ;;
+        look) repo_dir="lookout" ;;
+        *) repo_dir="$prefix" ;;
+    esac
+    if command -v tasks >/dev/null 2>&1; then
+        if ! command -v python3 >/dev/null 2>&1; then
+            echo "dotfiles_project_root: python3 is required when tasks is installed" >&2
+            return 1
+        fi
+        if ! json_out="$(tasks projects --paths --json)"; then
+            echo "dotfiles_project_root: tasks projects --paths --json failed for prefix '${prefix}'" >&2
+            return 1
+        fi
+        if ! root="$(printf '%s' "$json_out" | python3 -c '
+import json, sys
+prefix = sys.argv[1]
+try:
+    payload = json.load(sys.stdin)
+except Exception as exc:
+    sys.stderr.write(f"dotfiles_project_root: invalid JSON from tasks projects --paths --json: {exc}\n")
+    sys.exit(2)
+if not isinstance(payload, dict) or not isinstance(payload.get("projects"), list):
+    sys.stderr.write("dotfiles_project_root: expected {\"projects\": [...]} from tasks projects --paths --json\n")
+    sys.exit(2)
+for row in payload["projects"]:
+    if not isinstance(row, dict):
+        sys.stderr.write("dotfiles_project_root: invalid project entry in tasks projects --paths --json\n")
+        sys.exit(2)
+    if row.get("prefix") == prefix:
+        root = row.get("root")
+        if not isinstance(root, str) or not root:
+            sys.stderr.write(f"dotfiles_project_root: invalid root for prefix {prefix!r}\n")
+            sys.exit(2)
+        print(root)
+        break
+' "$prefix")"; then
+            return 1
+        fi
+    fi
+    if [[ -n "$root" ]]; then
+        printf '%s\n' "$root"
+    else
+        printf '%s/%s\n' "${WORKTREE_SCAN_ROOT:-${HOME}/d}" "$repo_dir"
+    fi
+}

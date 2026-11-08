@@ -1,0 +1,30 @@
+include = [
+    "hostkit:install.toml",
+]
+
+[links]
+"$XDG_CONFIG_HOME/fcitx" = "fcitx"
+"$XDG_CONFIG_HOME/mimeapps.list" = "mimeapps.list"
+"~/.local/share/mime/packages" = "mime"
+"~/.local/share/dbus-1/services/org.freedesktop.secrets.service" = "local/share/dbus-1/services/org.freedesktop.secrets.service"
+"$XDG_CONFIG_HOME/systemd/user/dropbox-ignore-flux.service" = "systemd/user/dropbox-ignore-flux.service"
+"$XDG_CONFIG_HOME/systemd/user/dropbox-ignore-flux.timer" = "systemd/user/dropbox-ignore-flux.timer"
+"$XDG_CONFIG_HOME/systemd/user/niri.service.d/stop-timeout.conf" = "systemd/user/niri.service.d/stop-timeout.conf"
+"$XDG_CONFIG_HOME/systemd/user/familiar-reap.service" = "systemd/user/familiar-reap.service"
+"$XDG_CONFIG_HOME/systemd/user/familiar-reap.timer" = "systemd/user/familiar-reap.timer"
+"$XDG_CONFIG_HOME/systemd/user/mindful-web.service" = "systemd/user/mindful-web.service"
+"$XDG_CONFIG_HOME/systemd/user/mindful-backup.service" = "systemd/user/mindful-backup.service"
+"$XDG_CONFIG_HOME/systemd/user/mindful-backup.timer" = "systemd/user/mindful-backup.timer"
+"$XDG_CONFIG_HOME/systemd/user/kernel-gate-nudge.service" = "systemd/user/kernel-gate-nudge.service"
+"$XDG_CONFIG_HOME/systemd/user/kernel-gate-nudge.timer" = "systemd/user/kernel-gate-nudge.timer"
+"$XDG_CONFIG_HOME/systemd/user/nm-wired-autoconnect.service" = "systemd/user/nm-wired-autoconnect.service"
+"$XDG_CONFIG_HOME/systemd/user/wali-rotate.service" = "wali:systemd/wali-rotate.service"
+"$XDG_CONFIG_HOME/systemd/user/wali-rotate.timer" = "wali:systemd/wali-rotate.timer"
+"$XDG_CONFIG_HOME/systemd/user/wali-phone-sync.service" = "wali:systemd/wali-phone-sync.service"
+"$XDG_CONFIG_HOME/systemd/user/wali-phone-sync.timer" = "wali:systemd/wali-phone-sync.timer"
+"$XDG_CONFIG_HOME/systemd/user/obs-index.service" = "ops:systemd/user/obs-index.service"
+"$XDG_CONFIG_HOME/systemd/user/obs-index.timer" = "ops:systemd/user/obs-index.timer"
+"$XDG_CONFIG_HOME/systemd/user/git-index-retention.service" = "ops:systemd/user/git-index-retention.service"
+"$XDG_CONFIG_HOME/systemd/user/git-index-retention.timer" = "ops:systemd/user/git-index-retention.timer"
+"$XDG_CONFIG_HOME/systemd/user/git-index-health.service" = "ops:systemd/user/git-index-health.service"
+"$XDG_CONFIG_HOME/systemd/user/git-index-health.timer" = "ops:systemd/user/git-index-health.timer"

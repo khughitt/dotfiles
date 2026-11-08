@@ -4,7 +4,7 @@ set -euo pipefail
 # Physical path on purpose: ~/d/dotfiles is a symlink spelling of this tree, and
 # the checks below compare readlink -f output against DOTS_HOME. Invoked through
 # the symlink with a logical pwd, none of those comparisons could ever match.
-DOTS_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd -P)"
+DOTS_HOME="$(cd "$(dirname "$(readlink -f -- "${BASH_SOURCE[0]}")")/.." && pwd -P)"
 
 # The root is derived from the script's own path, so a copied dotfiles-health
 # (a stale regular file under a real ~/bin, for example) resolves the root to

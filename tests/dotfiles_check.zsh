@@ -59,19 +59,154 @@ mindful_output=$(HOME="$mindful_home" "${repo_root}/bin/mindful" --flag "two wor
 [[ "$mindful_output" == '["--flag","two words"]' ]] || \
   fail "mindful wrapper did not forward arguments: $mindful_output"
 
-# bin/prism is a wrapper rather than a symlink so the tree carries no path to
-# the prism checkout: `~/d` is the only layout the repository assumes, and a
-# worktree checkout of dotfiles still resolves it.
+for manifest in install.toml install-linux.toml install-graphical.toml; do
+  [[ -f "${repo_root}/${manifest}" ]] || fail "missing manifest: ${manifest}"
+done
+python3 -c 'import sys, tomllib; [tomllib.load(open(f, "rb")) for f in sys.argv[1:]]' \
+  "${repo_root}/install.toml" \
+  "${repo_root}/install-linux.toml" \
+  "${repo_root}/install-graphical.toml" || fail "manifests failed to parse as TOML"
+
+# bin/prism and bin/walictl are wrappers rather than symlinks so the tree
+# carries no path to the target checkouts: registered project roots come from
+# `tasks projects --paths --json`, falling back to `${WORKTREE_SCAN_ROOT:-$HOME/d}`.
 [[ ! -L "${repo_root}/bin/prism" ]] || fail "bin/prism must be a wrapper, not a symlink"
+[[ ! -L "${repo_root}/bin/walictl" ]] || fail "bin/walictl must be a wrapper, not a symlink"
 prism_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-prism-home.XXXXXX")
 register_tmp_cleanup "$prism_home"
-mkdir -p "${prism_home}/d/prism/bin"
+relocated=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-relocated.XXXXXX")
+register_tmp_cleanup "$relocated"
+ext_cfg=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-ext-cfg.XXXXXX")
+register_tmp_cleanup "$ext_cfg"
+no_tasks_bin=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-no-tasks-bin.XXXXXX")
+register_tmp_cleanup "$no_tasks_bin"
+stub_bin=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-stub-tasks.XXXXXX")
+register_tmp_cleanup "$stub_bin"
+ln -s "$(command -v python3)" "${no_tasks_bin}/python3"
+
+mkdir -p "${prism_home}/d/prism/bin" "${prism_home}/d/wali/bin" \
+  "${relocated}/prism/bin" "${relocated}/wali/bin" "${relocated}/alert"
 print -r -- '#!/usr/bin/env bash
 printf "%s\n" "$@"' > "${prism_home}/d/prism/bin/prism"
 chmod +x "${prism_home}/d/prism/bin/prism"
-prism_output=$(HOME="$prism_home" "${repo_root}/bin/prism" apply "two words")
+print -r -- '#!/usr/bin/env bash
+printf "fallback-wali:%s\n" "$*"' > "${prism_home}/d/wali/bin/walictl"
+chmod +x "${prism_home}/d/wali/bin/walictl"
+print -r -- '#!/usr/bin/env bash
+printf "relocated-prism:%s\n" "$*"' > "${relocated}/prism/bin/prism"
+chmod +x "${relocated}/prism/bin/prism"
+print -r -- '#!/usr/bin/env bash
+printf "relocated-wali:%s\n" "$*"' > "${relocated}/wali/bin/walictl"
+chmod +x "${relocated}/wali/bin/walictl"
+
+run_isolated() {
+  local path_val="$1" cfg_val="$2"
+  shift 2
+  env -i \
+    "PATH=$path_val" \
+    "HOME=$prism_home" \
+    "XDG_CONFIG_HOME=$cfg_val" \
+    "WORKTREE_SCAN_ROOT=${prism_home}/d" \
+    "GIT_CONFIG_GLOBAL=/dev/null" \
+    "GIT_CONFIG_NOSYSTEM=1" \
+    "LANG=C.UTF-8" \
+    "TERM=dumb" \
+    "$@"
+}
+
+no_tasks_path="${no_tasks_bin}:/usr/bin:/bin"
+stub_tasks_path="${stub_bin}:${no_tasks_bin}:/usr/bin:/bin"
+
+# Fallback when `tasks` is absent from PATH
+prism_output=$(run_isolated "$no_tasks_path" "${prism_home}/.config" "${repo_root}/bin/prism" apply "two words")
 [[ "$prism_output" == $'apply\ntwo words' ]] || \
-  fail "prism wrapper did not forward arguments: $prism_output"
+  fail "prism wrapper did not forward arguments on fallback: $prism_output"
+wali_output=$(run_isolated "$no_tasks_path" "${prism_home}/.config" "${repo_root}/bin/walictl" observe)
+[[ "$wali_output" == "fallback-wali:observe" ]] || \
+  fail "walictl wrapper did not fall back when tasks is absent: $wali_output"
+pressure_root=$(run_isolated "$no_tasks_path" "${prism_home}/.config" bash -c 'source "$1/lib/dotfiles-setup-data.bash" && dotfiles_project_root pressure' bash "$repo_root")
+[[ "$pressure_root" == "${prism_home}/d/noctalia-resource-alert" ]] || \
+  fail "dotfiles_project_root did not fall back when tasks is absent: $pressure_root"
+
+# Resolution via `tasks projects --paths --json` with external XDG_CONFIG_HOME
+cat > "${stub_bin}/tasks" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1 \$2 \$3" != "projects --paths --json" ]]; then
+  echo "unexpected tasks args: \$*" >&2
+  exit 1
+fi
+if [[ "\${XDG_CONFIG_HOME:-}" != "${ext_cfg}" ]]; then
+  echo "expected XDG_CONFIG_HOME=${ext_cfg}, got \${XDG_CONFIG_HOME:-}" >&2
+  exit 1
+fi
+case "\${TASKS_STUB_MODE:-registered}" in
+  registered)
+    printf '%s\n' '{"projects":[{"prefix":"prism","root":"${relocated}/prism"},{"prefix":"wali","root":"${relocated}/wali"},{"prefix":"pressure","root":"${relocated}/alert"}],"warnings":[]}'
+    ;;
+  empty)
+    printf '%s\n' '{"projects":[],"warnings":[]}'
+    ;;
+  nonzero)
+    echo "tasks registry failure" >&2
+    exit 1
+    ;;
+  bad_json)
+    printf '%s\n' '{not-json'
+    ;;
+  bare_list)
+    printf '%s\n' '[{"prefix":"prism","root":"${relocated}/prism"}]'
+    ;;
+esac
+EOF
+chmod +x "${stub_bin}/tasks"
+
+prism_relocated=$(run_isolated "$stub_tasks_path" "$ext_cfg" "${repo_root}/bin/prism" apply "two words")
+[[ "$prism_relocated" == "relocated-prism:apply two words" ]] || \
+  fail "bin/prism did not resolve relocated checkout via tasks: $prism_relocated"
+wali_relocated=$(run_isolated "$stub_tasks_path" "$ext_cfg" "${repo_root}/bin/walictl" observe)
+[[ "$wali_relocated" == "relocated-wali:observe" ]] || \
+  fail "bin/walictl did not resolve relocated checkout via tasks: $wali_relocated"
+pressure_relocated=$(run_isolated "$stub_tasks_path" "$ext_cfg" bash -c 'source "$1/lib/dotfiles-setup-data.bash" && dotfiles_project_root pressure' bash "$repo_root")
+[[ "$pressure_relocated" == "${relocated}/alert" ]] || \
+  fail "dotfiles_project_root did not resolve relocated checkout via tasks: $pressure_relocated"
+
+# Fallback when valid `{"projects":[],"warnings":[]}` omits the queried prefix
+prism_empty=$(run_isolated "$stub_tasks_path" "$ext_cfg" env TASKS_STUB_MODE=empty "${repo_root}/bin/prism" apply "two words")
+[[ "$prism_empty" == $'apply\ntwo words' ]] || \
+  fail "bin/prism did not fall back on empty projects list: $prism_empty"
+wali_empty=$(run_isolated "$stub_tasks_path" "$ext_cfg" env TASKS_STUB_MODE=empty "${repo_root}/bin/walictl" observe)
+[[ "$wali_empty" == "fallback-wali:observe" ]] || \
+  fail "bin/walictl did not fall back on empty projects list: $wali_empty"
+pressure_empty=$(run_isolated "$stub_tasks_path" "$ext_cfg" env TASKS_STUB_MODE=empty bash -c 'source "$1/lib/dotfiles-setup-data.bash" && dotfiles_project_root pressure' bash "$repo_root")
+[[ "$pressure_empty" == "${prism_home}/d/noctalia-resource-alert" ]] || \
+  fail "dotfiles_project_root did not fall back on empty projects list: $pressure_empty"
+
+# Strict failure without fallback when tasks fails or outputs malformed/non-dict JSON
+for mode in nonzero bad_json bare_list; do
+  if err_out=$(run_isolated "$stub_tasks_path" "$ext_cfg" env TASKS_STUB_MODE="$mode" "${repo_root}/bin/prism" apply "two words" 2>&1); then
+    fail "bin/prism unexpectedly succeeded under TASKS_STUB_MODE=${mode}: $err_out"
+  fi
+  [[ -n "$err_out" && "$err_out" != *$'apply\ntwo words'* ]] || \
+    fail "bin/prism did not report error without fallback under ${mode}: $err_out"
+
+  if err_out=$(run_isolated "$stub_tasks_path" "$ext_cfg" env TASKS_STUB_MODE="$mode" "${repo_root}/bin/walictl" observe 2>&1); then
+    fail "bin/walictl unexpectedly succeeded under TASKS_STUB_MODE=${mode}: $err_out"
+  fi
+  [[ -n "$err_out" && "$err_out" != *"fallback-wali"* ]] || \
+    fail "bin/walictl did not report error without fallback under ${mode}: $err_out"
+
+  if err_out=$(run_isolated "$stub_tasks_path" "$ext_cfg" env TASKS_STUB_MODE="$mode" bash -c 'source "$1/lib/dotfiles-setup-data.bash" && dotfiles_project_root pressure' bash "$repo_root" 2>&1); then
+    fail "dotfiles_project_root unexpectedly succeeded under TASKS_STUB_MODE=${mode}: $err_out"
+  fi
+  [[ -n "$err_out" && "$err_out" != *"${prism_home}/d"* ]] || \
+    fail "dotfiles_project_root did not report error without fallback under ${mode}: $err_out"
+done
+
+# Per-file symlink root resolution in ~/bin
+mkdir -p "${prism_home}/bin"
+ln -s "${repo_root}/bin/dotfiles-check" "${prism_home}/bin/dotfiles-check"
+run_isolated "$PATH" "${prism_home}/.config" "${prism_home}/bin/dotfiles-check" >/dev/null || \
+  fail "per-file symlink ${prism_home}/bin/dotfiles-check failed to resolve repo_root"
 
 modeline_files=(
   zshrc

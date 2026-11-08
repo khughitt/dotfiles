@@ -1,5 +1,49 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # A wrapper rather than a symlink: a relative link assumes dotfiles and prism
 # are siblings, which a worktree checkout breaks, and an absolute link writes
-# this machine's layout into git. `~/d` is the one layout the tree assumes.
-exec "$HOME/d/prism/bin/prism" "$@"
+# this machine's layout into git. Resolve the registered prism checkout via
+# `tasks projects --paths --json` when available, falling back to
+# `${WORKTREE_SCAN_ROOT:-$HOME/d}/prism` when unregistered.
+
+root=""
+if command -v tasks >/dev/null 2>&1; then
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "prism: python3 is required when tasks is installed" >&2
+        exit 1
+    fi
+    if ! json_out="$(tasks projects --paths --json)"; then
+        echo "prism: tasks projects --paths --json failed" >&2
+        exit 1
+    fi
+    if ! root="$(printf '%s' "$json_out" | python3 -c '
+import json, sys
+try:
+    payload = json.load(sys.stdin)
+except Exception as exc:
+    sys.stderr.write(f"prism: invalid JSON from tasks projects --paths --json: {exc}\n")
+    sys.exit(2)
+if not isinstance(payload, dict) or not isinstance(payload.get("projects"), list):
+    sys.stderr.write("prism: expected {\"projects\": [...]} from tasks projects --paths --json\n")
+    sys.exit(2)
+for row in payload["projects"]:
+    if not isinstance(row, dict):
+        sys.stderr.write("prism: invalid project entry in tasks projects --paths --json\n")
+        sys.exit(2)
+    if row.get("prefix") == "prism":
+        root = row.get("root")
+        if not isinstance(root, str) or not root:
+            sys.stderr.write("prism: invalid root for prefix \x27prism\x27\n")
+            sys.exit(2)
+        print(root)
+        break
+')"; then
+        exit 1
+    fi
+fi
+
+if [[ -z "$root" ]]; then
+    root="${WORKTREE_SCAN_ROOT:-${HOME}/d}/prism"
+fi
+
+exec "${root}/bin/prism" "$@"
