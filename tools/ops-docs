@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ops-docs version 11
+# ops-docs version 12
 """A project's guide files — README.md for people, AGENTS.md for agents — rendered and
 checked inside one repository.
 
@@ -13,7 +13,9 @@ Reference: ops docs/project-guides.md.
 In a family home (a repository holding family.toml), `family publish` writes the
 committed family file into each member as tools/family.toml and re-renders the member's
 guides, and `family check` judges every member's committed copy against the home's.
-When a family declares `[code]`, member AGENTS.md guides cite the code organization guide.
+A project declaring `[code]` in identity.toml cites the code organization guide in its
+AGENTS.md identity region; a member of a family declaring `[code]` that has not declared
+it yet cites the guide from its family region instead.
 Reference: ops docs/project-guides.md.
 
 A project declaring `[documents]` in identity.toml also has its public reference
@@ -61,11 +63,14 @@ LABEL_MAX = 60
 _TAG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 _UNSAFE_URL = re.compile(r"[\s()]")
 _UNSAFE_TITLE = re.compile(r"[\[\]*_`\\]")
-FIELDS = ("name", "aliases", "purpose", "abstract", "authority", "subsystems", "agents", "documents")
+FIELDS = ("name", "aliases", "purpose", "abstract", "authority", "subsystems", "agents", "documents", "code")
 AGENTS_FIELDS = ("budget", "scope")
 SCOPES = ("project", "global")
 GUIDES = ("README.md", "AGENTS.md")
 DOCUMENTS_FIELDS = ("standard", "references")
+# The `[code]` declaration: the code organization guide versions this tool knows.
+CODE_DECLARATION_FIELDS = ("standard",)
+CODE_STANDARDS = (1,)
 TYPES = ("standard", "data model", "protocol", "guide")
 QUALIFIER_WORDS = 4
 # The rules of every document-types version this tool judges; a marker names one.
@@ -222,6 +227,19 @@ def documents_problems(root, table, top, nested=False):
     return found
 
 
+def code_declaration_problems(table, nested=False):
+    """Every violation of the identity `[code]` table, one line each, each starting `code`."""
+    if nested:
+        return ["code is not allowed in a subsystem"]
+    if not isinstance(table, dict):
+        return ["code must be a table"]
+    found = [f"code: unknown key {k}" for k in sorted(set(table) - set(CODE_DECLARATION_FIELDS))]
+    standard = table.get("standard")
+    if not isinstance(standard, int) or isinstance(standard, bool) or standard not in CODE_STANDARDS:
+        found.append(f"code.standard must be one of {', '.join(map(str, CODE_STANDARDS))}")
+    return found
+
+
 def load_identity(path):
     """Parsed identity.toml. A parse failure raises rather than returning {}: an empty
     result would report every field missing instead of the one line that is wrong."""
@@ -316,6 +334,8 @@ def identity_problems(root, ident, nested=False, top=None):
             found.extend(f"{rel}/identity.toml: {p}" for p in inner)
     if "documents" in ident:
         found.extend(documents_problems(root, ident["documents"], top, nested))
+    if "code" in ident:
+        found.extend(code_declaration_problems(ident["code"], nested))
     agents = ident.get("agents", {})
     if not isinstance(agents, dict):
         found.append("agents must be a table")
@@ -614,8 +634,16 @@ def contract_of(fam):
     return contract
 
 
-def render_identity(root, ident, kind, contract=DEFAULT_CONTRACT):
-    """Render identity.toml into the generated region for one guide."""
+def code_line(guide, family=None):
+    """The AGENTS.md line citing the code organization guide, with the family's note when it has one."""
+    line = f"Code follows `{guide}`."
+    note = ((family or {}).get("code") or {}).get("note")
+    return f"{line} {note}" if note else line
+
+
+def render_identity(root, ident, kind, contract=DEFAULT_CONTRACT, guide=None, family=None):
+    """Render identity.toml into the generated region for one guide. A project declaring
+    `[code]` cites the code organization guide in AGENTS.md, right after its Authority line."""
     if kind == "readme":
         lead = "\n\n".join(f"*{ident['purpose'].strip()}*" if part == "purpose" else ident["abstract"].strip()
                            for part in contract["readme"]["lead"])
@@ -625,6 +653,9 @@ def render_identity(root, ident, kind, contract=DEFAULT_CONTRACT):
     authority = ident.get("authority") or []
     if authority:
         lines += ["", "Authority: " + ", ".join(f"`{path}`" for path in authority)]
+    if kind == "agents" and "code" in ident:
+        line = code_line(guide or code_guide(root), family)
+        lines += [line] if authority else ["", line]
     subsystems = ident.get("subsystems") or []
     if subsystems:
         lines += ["", "Subsystems:"]
@@ -810,17 +841,14 @@ def code_guide(root):
 def render_family(fam, ident, kind, rel, guide=None):
     """The family region: in the README the family name linked to its overview, the
     summary, and a nav in listed order with this member bold and unlinked; in AGENTS.md
-    one line naming the family file this repository reads, and the code guide when declared."""
+    one line naming the family file this repository reads, and the code guide when the
+    family declares `[code]` and this member has not declared it in identity.toml (a
+    declaring member's identity region cites it instead)."""
     if kind == "agents":
         line = (f"Member of the {fam['name']} family ({fam['overview']}); "
                 f"this repository's guides follow its contract in {rel}.")
-        if "code" in fam:
-            g = guide or "tools/code-organization.md"
-            code_line = f"Code follows `{g}`."
-            note = fam["code"].get("note")
-            if note:
-                code_line += f" {note}"
-            line += f"\n{code_line}"
+        if "code" in fam and "code" not in ident:
+            line += f"\n{code_line(guide or 'tools/code-organization.md', fam)}"
         return f"{FAMILY_START}\n{line}\n{FAMILY_END}"
     summary = " ".join(fam["summary"].split())
     nav = " · ".join(f"**{nav_title(m)}**" if m["name"] == ident["name"]
@@ -1041,7 +1069,8 @@ def rendered(root, ident, name, text, run=subprocess.run, subsystem=False,
     problems = marker_problems(kind, text, subsystem)
     if problems:
         raise ValueError("; ".join(problems))
-    out = replace_region(text, IDENTITY_START, IDENTITY_END, render_identity(root, ident, kind, contract))
+    out = replace_region(text, IDENTITY_START, IDENTITY_END,
+                         render_identity(root, ident, kind, contract, guide, family))
     if family is not None and find_region(out, FAMILY_START, FAMILY_END) is not None:
         out = replace_region(out, FAMILY_START, FAMILY_END, render_family(family, ident, kind, family_rel, guide))
     if kind == "readme" and not subsystem and find_region(out, STATUS_START, STATUS_END) is not None:
@@ -1114,6 +1143,11 @@ def main(argv, env, cwd, run=subprocess.run):
         return family_main(args.action, root, ident, run)
 
     identity_findings = [f"identity.toml: {problem}" for problem in identity_problems(root, ident)]
+    if "code" in ident and not code_declaration_problems(ident["code"]):
+        guide = code_guide(root)
+        if not (root / guide).exists():
+            identity_findings.append(f"identity.toml: code: {guide} is missing; "
+                                     "run `vendored adopt code-organization.md`")
     if identity_findings:
         if args.command == "check" and all(problem.endswith("is not tracked") for problem in identity_findings):
             pass
@@ -1135,7 +1169,7 @@ def main(argv, env, cwd, run=subprocess.run):
             member = fam
         elif rel == FAMILY_COPY:
             family_findings.append(f"{FAMILY_COPY}: does not list this project ({ident['name']})")
-    if member is not None and "code" in member:
+    if member is not None and "code" in member and "code" not in ident:
         guide = code_guide(root)
         if not (root / guide).exists():
             family_findings.append(f"{guide}: missing, but family {member['name']} declares [code]; "

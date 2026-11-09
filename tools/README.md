@@ -15,7 +15,7 @@ is a vendored copy, never edited here; a project's own scripts belong in `script
 | `cli.toml` | The shared command-line vocabulary and the inventory of every in-scope command | A conformance test builds the project's parser surface and compares it with its rows here | `cli.toml` |
 | `cli_surface.py` | The helper that builds a parser surface for that comparison | Imported by the conformance test, beside `cli.toml` | `bin/cli_surface.py` |
 | `keys.toml` | The shared key vocabulary and the inventory of every application shortcut | A test compares the project's live key bindings with its rows here | `keys.toml` |
-| `code-organization.md` | The shared guide to organizing a project's code: layout, modules, public surface, naming | Read before adding or moving code; the AGENTS.md family line cites it | `docs/code-organization.md` |
+| `code-organization.md` | The shared guide to organizing a project's code: layout, modules, public surface, naming | Read before adding or moving code; the AGENTS.md identity region cites it | `docs/code-organization.md` |
 | `family.toml` | The project family's member list and shared text | `tools/ops-docs` renders the family section of the guides from it | the family home's `family.toml`, written by `ops-docs family publish` |
 
 ## Never edit these files here
