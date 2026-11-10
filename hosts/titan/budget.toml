@@ -17,8 +17,7 @@ share = 0.25       # replaces the profile's share while any match is running
 reserve = 12       # replaces the profile's reserve while any match is running
 
 [scope]
-slice = "agents.slice"
-require_quota = true
+slice = "background.slice"
 nice = 10
 io_class = "best-effort"
 io_level = 7

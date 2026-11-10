@@ -41,9 +41,6 @@ ci-test:
 health:
     bin/dotfiles-health --skip-systemd --skip-noctalia-ipc
 
-drift:
-    {{ tt }} drift -- sh -c 'exec host-drift "hosts/$(hostname)"'
-
 health-live:
     bin/dotfiles-health --skip-systemd
 
