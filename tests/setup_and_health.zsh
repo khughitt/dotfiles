@@ -294,9 +294,9 @@ seed_external_checkouts() {
 
   mkdir -p "${tmp}/bin"
   if [[ "${LOOKOUT_SOURCE_PRESENT:-true}" == true ]]; then
-    mkdir -p "${tmp}/home/d/lookout/src"
-    printf '#!/bin/sh\nexit 0\n' > "${tmp}/home/d/lookout/src/bin.ts"
-    chmod +x "${tmp}/home/d/lookout/src/bin.ts"
+    mkdir -p "${tmp}/home/d/lookout/bin"
+    printf '#!/bin/sh\nexit 0\n' > "${tmp}/home/d/lookout/bin/lookout"
+    chmod +x "${tmp}/home/d/lookout/bin/lookout"
   fi
   if [[ "${PRISM_PLUGIN_SOURCE_PRESENT:-true}" == true ]]; then
     mkdir -p "${tmp}/home/d/prism/integrations/noctalia-plugin" "${tmp}/home/d/prism/bin"
@@ -3309,7 +3309,7 @@ test_setup_and_launchers_resolve_registered_checkouts_outside_home_d() {
     "${relocated_tmp}/wali/bin" "${relocated_tmp}/wali/integrations/noctalia-plugin" "${relocated_tmp}/wali/systemd" \
     "${relocated_tmp}/ops/systemd/user" \
     "${relocated_tmp}/noctalia-resource-alert" \
-    "${relocated_tmp}/lookout/src" \
+    "${relocated_tmp}/lookout/bin" \
     "${relocated_tmp}/hostkit/bin" "${relocated_tmp}/hostkit/systemd/user" \
     "${ext_xdg}/tasks"
 
@@ -3339,8 +3339,8 @@ EOF
     "${relocated_tmp}/ops/systemd/user/git-index-health.service" \
     "${relocated_tmp}/ops/systemd/user/git-index-health.timer" \
     "${relocated_tmp}/noctalia-resource-alert/plugin.toml"
-  printf '#!/bin/sh\nexit 0\n' > "${relocated_tmp}/lookout/src/bin.ts"
-  chmod +x "${relocated_tmp}/lookout/src/bin.ts"
+  printf '#!/bin/sh\nexit 0\n' > "${relocated_tmp}/lookout/bin/lookout"
+  chmod +x "${relocated_tmp}/lookout/bin/lookout"
 
   # Populate hostkit in relocated_tmp by seeding into tmp first then moving;
   # leave ~/d as an empty directory (no checkouts inside ~/d) for git-packing-policy.

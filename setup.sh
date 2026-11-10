@@ -821,7 +821,7 @@ function setup_kitty_overrides() {
 
 function setup_lookout() {
     phase "Lookout"
-    if [[ ! -x "${LOOKOUT_ROOT}/src/bin.ts" ]]; then
+    if [[ ! -x "${LOOKOUT_ROOT}/bin/lookout" ]]; then
         echo "Lookout checkout missing; clone it into ${LOOKOUT_ROOT}, then rerun setup.sh --only lookout"
         return 1
     fi
@@ -829,7 +829,7 @@ function setup_lookout() {
     if [[ "$LINK_ONLY" != "true" ]]; then
         run just --working-directory "$LOOKOUT_ROOT" setup
     fi
-    ln_s "${LOOKOUT_ROOT}/src/bin.ts" "${HOME}/.local/bin/lookout"
+    ln_s "${LOOKOUT_ROOT}/bin/lookout" "${HOME}/.local/bin/lookout"
     if [[ "$LINK_ONLY" != "true" ]]; then
         run "${HOME}/.local/bin/lookout" --version
     fi

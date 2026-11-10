@@ -14,12 +14,12 @@ REPO = Path(__file__).resolve().parents[1]
 def home(tmp_path):
     root = tmp_path / "home"
     checkout = root / "d/lookout"
-    (checkout / "src").mkdir(parents=True)
+    (checkout / "bin").mkdir(parents=True)
     # The real just command runs a disposable dependency installer.
     (checkout / "justfile").write_text(
         'setup:\n    test "${INSTALL_STATUS:-0}" = 0\n    touch hydrated\n'
     )
-    entry = checkout / "src/bin.ts"
+    entry = checkout / "bin/lookout"
     entry.write_text('#!/bin/sh\necho "lookout fixture"\n')
     entry.chmod(0o755)
     return root
@@ -51,12 +51,12 @@ def test_setup_hydrates_and_links_idempotently(home):
         assert (home / "d/lookout/hydrated").exists()
         link = home / ".local/bin/lookout"
         assert link.is_symlink()
-        assert link.readlink() == home / "d/lookout/src/bin.ts"
+        assert link.readlink() == home / "d/lookout/bin/lookout"
         assert subprocess.check_output([str(link), "--version"], text=True) == "lookout fixture\n"
 
 
 def test_missing_checkout_fails_with_a_fix(home):
-    (home / "d/lookout/src/bin.ts").unlink()
+    (home / "d/lookout/bin/lookout").unlink()
     result = setup(home)
     assert result.returncode != 0
     assert "Phase failed" in result.stderr
