@@ -7,6 +7,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -124,7 +125,8 @@ def test_rollback_restores_only_proven_partial_steps(activation):
     assert (home / "alias").read_bytes() == b"private line\nold alias\n"
 
 
-def test_rollback_reverts_only_the_applied_commit(activation, tmp_path):
+@pytest.mark.parametrize("alternate_index", [False, True])
+def test_rollback_preserves_real_index_and_unrelated_draft(activation, tmp_path, alternate_index):
     run, home, _, data, receipt, env = activation
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -152,6 +154,20 @@ def test_rollback_reverts_only_the_applied_commit(activation, tmp_path):
     data["repositories"] = [{"key": "dots", "path": str(repo), "branch": "main",
                              "base": base, "candidate": candidate, "paths": ["policy"]}]
     receipt["repositories"] = {"dots": merge}
+    if alternate_index:
+        index = tmp_path / "alternate-index"
+        subprocess.run(["git", "-C", str(repo), "read-tree", "HEAD"],
+                       env={**env, "GIT_INDEX_FILE": str(index)}, check=True, timeout=10)
+        git("add", "draft")
+        env["GIT_INDEX_FILE"] = str(index)
+        result = run()
+        env.pop("GIT_INDEX_FILE")
+        assert result.returncode == 2, result.stderr
+        assert "GIT_INDEX_FILE" in result.stderr
+        assert git("rev-parse", "HEAD") == merge
+        assert git("diff", "--cached", "--name-only") == "draft"
+        assert (home / "alias").read_bytes() == b"private line\nnew alias\n"
+        return
     result = run()
     assert result.returncode == 0, result.stderr
     assert (repo / "policy").read_text() == "old\n"
@@ -166,6 +182,89 @@ def smoke_tool():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def test_git_timeout_cleans_up_hook_and_descendant(tmp_path):
+    home, repo = tmp_path / "home", tmp_path / "repo"
+    home.mkdir()
+    repo.mkdir()
+    env = {"PATH": "/usr/bin:/bin", "HOME": str(home), "GIT_CONFIG_GLOBAL": os.devnull,
+           "GIT_CONFIG_NOSYSTEM": "1", "GIT_AUTHOR_NAME": "Fixture",
+           "GIT_AUTHOR_EMAIL": "fixture@example.invalid", "GIT_COMMITTER_NAME": "Fixture",
+           "GIT_COMMITTER_EMAIL": "fixture@example.invalid"}
+
+    def git(*args):
+        return subprocess.run(["git", "-C", str(repo), *args], env=env, check=True,
+                              capture_output=True, text=True, timeout=10).stdout.strip()
+
+    git("init", "-q", "-b", "main")
+    assert Path(git("rev-parse", "--show-toplevel")) == repo
+    assert Path(git("rev-parse", "--absolute-git-dir")) == repo / ".git"
+    marker = tmp_path / "pids"
+    hook = repo / ".git/hooks/pre-commit"
+    hook.write_text(f'#!/bin/sh\nsleep 60 &\nprintf "%s %s\\n" "$$" "$!" > "{marker}"\nwait\n')
+    hook.chmod(0o755)
+    code = """import importlib.util, subprocess, sys
+spec = importlib.util.spec_from_file_location("rollout", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+module.COMMAND_TIMEOUT = 0.5
+run = subprocess.run
+def short_timeout(argv, **kwargs):
+    return run(argv, **dict(kwargs, timeout=0.5))
+module.subprocess.run = short_timeout
+try:
+    module.git({"path": sys.argv[2]}, "commit", "--allow-empty", "-m", "fixture")
+except (RuntimeError, subprocess.TimeoutExpired) as error:
+    print(error)
+else:
+    sys.exit("hook deadline did not fail")
+"""
+    def running(pid):
+        try:
+            return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0] != "Z"
+        except FileNotFoundError:
+            return False
+
+    pids = []
+    try:
+        result = subprocess.run([sys.executable, "-c", code, str(ROLLBACK), str(repo)],
+                                env=env, capture_output=True, text=True, timeout=8)
+        pids = list(map(int, marker.read_text().split()))
+        assert result.returncode == 0, result.stderr
+        assert "timed out" in result.stdout
+        until = time.monotonic() + 1
+        while any(map(running, pids)) and time.monotonic() < until:
+            time.sleep(0.01)
+        assert not any(map(running, pids)), "a hook process survived the timeout"
+    finally:
+        if not pids and marker.exists():
+            pids = list(map(int, marker.read_text().split()))
+        for pid in pids:
+            if running(pid):
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+
+def test_terminal_probe_requires_all_descriptors_and_controlling_terminal(tmp_path):
+    smoke = smoke_tool()
+    env = {"HOME": str(tmp_path), "PATH": "/usr/bin:/bin"}
+    code = """import json, os
+try:
+    with open("/dev/tty") as terminal:
+        foreground = os.tcgetpgrp(terminal.fileno()) == os.getpgrp()
+except OSError:
+    foreground = False
+print(json.dumps(dict(tty=[os.isatty(fd) for fd in (0,1,2)], foreground=foreground, token=input())))
+raise SystemExit(7)
+"""
+    result = smoke.terminal_round_trip([sys.executable, "-c", code], env, tmp_path)
+    assert result["tty"] == [True, True, True]
+    lose_stderr = "import os; os.dup2(os.open(os.devnull, os.O_WRONLY), 2);\n"
+    with pytest.raises(RuntimeError, match="terminal"):
+        smoke.terminal_round_trip([sys.executable, "-c", lose_stderr + code], env, tmp_path)
 
 
 @pytest.mark.parametrize(("usage", "throttles", "expected"), [

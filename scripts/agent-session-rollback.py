@@ -5,13 +5,21 @@ import argparse
 import hashlib
 import json
 import os
+import signal
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 UNIT = "agents.slice"
+COMMAND_TIMEOUT = 45
+GIT_CONTEXT = {
+    "GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_NAMESPACE",
+    "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_QUARANTINE_PATH",
+    "GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS",
+}
 
 
 def digest(data):
@@ -86,18 +94,70 @@ def write_state(path, snapshot, data):
 
 
 def command(*argv):
-    result = subprocess.run(argv, text=True, capture_output=True, timeout=45)
-    if result.returncode:
-        raise RuntimeError(f"{argv[0]} exited {result.returncode}: {result.stderr.strip()}")
-    return result.stdout.strip()
+    interrupted = False
+
+    def stop(_signal, _frame):
+        nonlocal interrupted
+        interrupted = True
+
+    previous = {sig: signal.signal(sig, stop) for sig in (signal.SIGINT, signal.SIGTERM)}
+    try:
+        process = subprocess.Popen(argv, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   start_new_session=True)
+        completed = False
+        try:
+            deadline = time.monotonic() + COMMAND_TIMEOUT
+            while not interrupted and (remaining := deadline - time.monotonic()) > 0:
+                try:
+                    stdout, stderr = process.communicate(timeout=min(0.25, remaining))
+                except subprocess.TimeoutExpired:
+                    continue
+                if interrupted:
+                    break
+                if process.returncode:
+                    raise RuntimeError(f"{argv[0]} exited {process.returncode}: {stderr.strip()}")
+                completed = True
+                return stdout.strip()
+            why = "interrupted" if interrupted else "timed out"
+            raise RuntimeError(f"{argv[0]} {why}; inspect the applied-step receipt")
+        finally:
+            if not completed:
+                # A child of a hook can hold the process group after Git exits.
+                try:
+                    os.killpg(process.pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                try:
+                    process.communicate(timeout=1)
+                except subprocess.TimeoutExpired:
+                    pass
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait(timeout=2)
+            process.stdout.close()
+            process.stderr.close()
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
+
+
+def check_git_environment():
+    overrides = sorted(GIT_CONTEXT.intersection(os.environ))
+    if overrides:
+        raise RuntimeError("unset Git context overrides: " + ", ".join(overrides))
 
 
 def git(repo, *argv):
+    check_git_environment()
     return command("git", "-C", repo["path"], *argv)
 
 
 def expect_repo(repo, head, content):
     if (git(repo, "rev-parse", "--show-toplevel") != repo["path"]
+            or Path(git(repo, "rev-parse", "--absolute-git-dir")).resolve()
+            != (Path(repo["path"]) / ".git").resolve()
             or git(repo, "branch", "--show-current") != repo["branch"]
             or git(repo, "rev-parse", "HEAD") != head
             or git(repo, "rev-parse", "HEAD^{tree}") != git(repo, "rev-parse", content + "^{tree}")
@@ -117,6 +177,7 @@ def save_receipt(path, receipt):
 
 
 def rollback(packet_path):
+    check_git_environment()
     root = packet_path.parent
     receipt_path = root / "activation-receipt.json"
     packet, receipt = read_json(packet_path), read_json(receipt_path)

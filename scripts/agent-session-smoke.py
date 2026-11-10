@@ -2,8 +2,10 @@
 """Measure the shared titan CPU ceiling with bounded synthetic worker pools."""
 
 import argparse
+import errno
 import json
 import os
+import pty
 import select
 import signal
 import subprocess
@@ -14,6 +16,7 @@ from pathlib import Path
 
 CGROUP = Path("/sys/fs/cgroup")
 SLICE = "agents.slice"
+TERMINAL_TOKEN = "agent-scope-terminal"
 
 
 def assess_sample(before, after, *, elapsed, quota, period):
@@ -42,6 +45,79 @@ def check_scope(slice_dir, scope, nice):
         raise RuntimeError(f"expected a direct scope under {slice_dir}, got {scope}")
     if nice != 10 or (scope / "cpu.weight").read_text().strip() != "100":
         raise RuntimeError(f"{scope} needs nice 10 and CPUWeight=100")
+
+
+def terminal_round_trip(argv, env, cwd, timeout=10):
+    """Run one scoped launch as a foreground job on a headless controlling PTY."""
+    stopping = False
+
+    def stop(_signal, _frame):
+        nonlocal stopping
+        stopping = True
+
+    previous = {sig: signal.signal(sig, stop) for sig in (signal.SIGINT, signal.SIGTERM)}
+    pid = None
+    master = None
+    reaped = False
+    passed = False
+    try:
+        pid, master = pty.fork()
+        if pid == 0:
+            try:
+                os.chdir(cwd)
+                os.execvpe(argv[0], argv, env)
+            except OSError as error:
+                os.write(2, f"{error}\n".encode())
+                os._exit(127)
+        output = bytearray()
+        os.write(master, (TERMINAL_TOKEN + "\n").encode())
+        deadline = time.monotonic() + timeout
+        eof = False
+        while not stopping and time.monotonic() < deadline:
+            if not eof and select.select([master], [], [], 0.1)[0]:
+                try:
+                    block = os.read(master, 4096)
+                except OSError as error:
+                    if error.errno != errno.EIO:
+                        raise
+                    block = b""
+                output.extend(block)
+                eof = not block
+                if len(output) > 8192:
+                    raise RuntimeError("terminal proof exceeded its output bound")
+            if not reaped:
+                done, status = os.waitpid(pid, os.WNOHANG)
+                reaped = bool(done)
+            if reaped and eof:
+                reports = [line for line in output.splitlines() if line.startswith(b"{")]
+                report = json.loads(reports[-1]) if reports else {}
+                if (os.waitstatus_to_exitcode(status) != 7 or report.get("tty") != [True] * 3
+                        or report.get("foreground") is not True or report.get("token") != TERMINAL_TOKEN):
+                    raise RuntimeError("terminal proof lost descriptors, foreground access, input or exit status")
+                passed = True
+                return report
+            if eof:
+                time.sleep(0.01)
+        raise RuntimeError("terminal proof interrupted or timed out")
+    finally:
+        try:
+            if pid and not passed:
+                try:
+                    os.killpg(pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    # forkpty's child may not yet have created its process group.
+                    if not reaped:
+                        try:
+                            os.kill(pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                if not reaped:
+                    os.waitpid(pid, 0)
+            if master is not None:
+                os.close(master)
+        finally:
+            for sig, handler in previous.items():
+                signal.signal(sig, handler)
 
 
 def cpu_stat(slice_dir):
