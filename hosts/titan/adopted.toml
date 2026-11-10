@@ -1,0 +1,14 @@
+hostname = "titan"
+
+[[file]]
+source = "systemd/user/agents.slice"
+installed = "~/.config/systemd/user/agents.slice"
+
+[[file]]
+source = "budget.toml"
+installed = "~/.config/hostkit/budget.toml"
+
+[[block]]
+source = "blocks/agent-sessions.env.zsh"
+installed = "~/.shell/local/titan.env.zsh"
+marker = "hostkit:agent-sessions"
