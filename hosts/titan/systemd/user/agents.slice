@@ -1,0 +1,7 @@
+[Unit]
+Description=CPU ceiling for managed agents and budgeted jobs
+
+[Slice]
+CPUAccounting=yes
+CPUQuota=2400%
+CPUWeight=30
