@@ -147,6 +147,45 @@ class State:
     def __init__(self) -> None:
         self.workspaces: dict[int, dict[str, Any]] = {}
         self.windows: dict[int, dict[str, Any]] = {}
+        self.pending_viewport: tuple[int, dict[int, float]] | None = None
+
+    def restore_fitting_viewport(self, action_socket: NiriSocket) -> None:
+        if self.pending_viewport is None:
+            return
+        window_id, old_widths = self.pending_viewport
+        window = self.windows.get(window_id)
+        if (
+            window is None
+            or not window.get("is_focused")
+            or window.get("is_floating")
+            or window.get("workspace_id") is None
+        ):
+            self.pending_viewport = None
+            return
+        # IPC acknowledges resize requests before clients commit their new sizes.
+        for changed_id, old_width in old_widths.items():
+            current = self.windows.get(changed_id)
+            if current is None:
+                self.pending_viewport = None
+                return
+            if current["layout"]["tile_size"][0] == old_width:
+                return
+
+        self.pending_viewport = None
+        workspace_id = int(window["workspace_id"])
+        columns = tiled_columns(self.windows, workspace_id)
+        if not columns or int(columns[-1]["id"]) != window_id:
+            return
+        gap = query_gap()
+        output_width = query_output_width(self.workspaces[workspace_id]["output"])
+        total_width = gap + sum(
+            float(column["layout"]["tile_size"][0]) + gap for column in columns
+        )
+        if total_width > output_width + ROUNDING_TOLERANCE:
+            return
+        # Reveal the clipped left edge, then return focus without scrolling a fitting row.
+        action_socket.request(focus_window_message(int(columns[0]["id"])))
+        action_socket.request(focus_window_message(window_id))
 
     def focused_tiled_window_id(self) -> int | None:
         for window in self.windows.values():
@@ -199,6 +238,8 @@ def resize_new_window(
     workspace_id = int(workspace_id)
     output_name = state.workspaces[workspace_id]["output"]
     columns = tiled_columns(state.windows, workspace_id)
+    output_width = query_output_width(output_name)
+    gap = query_gap()
     if len(columns) == 1:
         window_ids = [int(columns[0]["id"]), int(window["id"])]
         width = .5
@@ -206,14 +247,37 @@ def resize_new_window(
         window_ids = [int(window["id"])]
         width = target_width(
             tiled_column_widths(state.windows, workspace_id),
-            query_output_width(output_name),
-            query_gap(),
+            output_width,
+            gap,
         )
     if width is None:
         return
 
-    restore_id = None if window.get("is_focused") else state.focused_tiled_window_id()
-    resize_columns(action_socket, window_ids, width, restore_id)
+    state.pending_viewport = None
+    if window.get("is_focused") and columns:
+        new_position = window["layout"]["pos_in_scrolling_layout"]
+        last_position = columns[-1]["layout"]["pos_in_scrolling_layout"]
+        if new_position is not None and new_position[0] > last_position[0]:
+            target_pixels = (output_width - gap) * width - gap
+            resizing = [
+                state.windows[window_id] if window_id in state.windows else window
+                for window_id in window_ids
+            ]
+            old_widths = {
+                int(item["id"]): float(item["layout"]["tile_size"][0])
+                for item in resizing
+                if abs(float(item["layout"]["tile_size"][0]) - target_pixels) > ROUNDING_TOLERANCE
+            }
+            if old_widths:
+                state.pending_viewport = (int(window["id"]), old_widths)
+
+    for window_id in window_ids:
+        action_socket.request({
+            "Action": {"SetWindowWidth": {
+                "id": window_id,
+                "change": {"SetProportion": width * 100},
+            }},
+        })
 
 
 def spread_visible_columns(state: State, action_socket: NiriSocket) -> None:
@@ -259,6 +323,7 @@ def run(event_socket: NiriSocket, action_socket: NiriSocket) -> None:
             if initialized and int(window["id"]) not in state.windows:
                 resize_new_window(state, window, action_socket)
         state.apply(name, data)
+        state.restore_fitting_viewport(action_socket)
         if name == "WindowsChanged":
             initialized = True
 
