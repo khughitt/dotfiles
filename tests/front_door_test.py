@@ -80,6 +80,7 @@ class Door:
         assert Path(self.run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()) == self.root
         assert Path(self.run(["git", "rev-parse", "--absolute-git-dir"]).stdout.strip()) == self.root / ".git"
         for name in ["justfile", ".gitignore", "identity.toml", "README.md", "AGENTS.md",
+                     "docs/setup.md", "docs/development.md", "docs/desktop-themes.md",
                      "bin/dotfiles-check", "bin/mindful", "bin/prism",
                      "tests/dotfiles_check.zsh", "tests/justfile.zsh", "tests/tmp_cleanup.zsh", "tools/tt",
                      "tools/ops-docs", "tools/test-one", "tools/test-suite.py",
@@ -89,6 +90,8 @@ class Door:
                 dest = self.root / name
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, dest)
+        self.run(["git", "add", "docs/setup.md", "docs/development.md",
+                  "docs/desktop-themes.md"]).check_returncode()
         (self.root / "tools").mkdir(exist_ok=True)
         (self.root / "tools/emit.py").write_text(EMIT)
         for name in ["uv", "zsh", "nvim", "tasks", "ssh"]:

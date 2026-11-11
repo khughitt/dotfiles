@@ -4,14 +4,14 @@
 # git opens the connection and discovers refs before running us, because it needs the
 # remote shas for our stdin. A gate long enough to idle that socket out gets it closed
 # by the far end, and git takes SIGPIPE writing the pack: the push fails, silently,
-# after the gate has been paid for. An SSH keepalive on the host prevents it (design
-# §4.6). Refusing here costs nothing; discovering it after the gate costs the gate.
+# after the gate has been paid for. An SSH keepalive on the host prevents it (see
+# in ops docs/tooling.md). Refusing here avoids paying for a doomed push gate.
 # Which gate: the shortened one (check and the fast loop) only when the push goes to
 # the remote CI watches (ci_remote) and CI runs the full suite for every ref in it
 # (ci_suite_refs); otherwise the full gate. Configuration and input are validated before deletions are set aside, so an
 # empty ci_suite_refs or a malformed line always gets the full gate. The recipe gets
 # git's refs byte for byte: project hooks (Git LFS) read them after us.
-# Design: ops docs/specs/2026-09-28-test-ci-act-design.md §3.3.
+# Reference: docs/development.md and ops docs/test-execution-policy.md.
 refs=$(cat; echo x)
 refs=${refs%x}
 

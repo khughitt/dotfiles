@@ -22,8 +22,7 @@ SIGUSR2's default action would kill it and every session it runs. OpenCode 1.x
 disposed every instance on SIGUSR2, aborting in-flight sessions (dots-f26ed6);
 v2 does not (dots-91ae39).
 
-Specs: docs/specs/2026-08-09-noctalia-nvim-theme-design.md and
-docs/specs/2026-08-12-noctalia-opencode-crush-kitty-design.md
+Reference: docs/desktop-themes.md
 """
 from __future__ import annotations
 

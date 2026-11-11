@@ -13,6 +13,9 @@ It links shell, Neovim, kitty, tmux, Niri, Noctalia, systemd user units, and per
 state while keeping high-churn and machine-local files out of sync.
 """
 # Documents that are the authority for what is built or decided; each must be tracked.
-authority = []
+authority = ["docs/setup.md", "docs/development.md", "docs/desktop-themes.md"]
 # Directories with their own identity.toml, README.md, and AGENTS.md.
 subsystems = []
+
+[documents]
+standard = 1

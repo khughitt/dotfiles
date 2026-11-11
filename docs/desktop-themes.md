@@ -20,14 +20,14 @@ output out to per-host state rather than committing it.
 
 The Neovim template writes a candidate JSON palette and invokes the promoter.
 The base defaults to `~/.cache/noctalia`; `NOCTALIA_GLASS_DIR` overrides that
-base. The candidate is `nvim-palette.candidate.json` there and generations live
+base. The candidate is nvim-palette.candidate.json there and generations live
 in its `nvim-glass` subdirectory. Application readers must resolve the same
 publication location; overriding the promoter alone does not relocate readers.
 
 Prism's entire config directory links to the host's tracked directory under
 [prism](../prism/), including values and contexts. Saved profiles and wallpaper
 deltas are tracked host input; active and scratch layers are runtime state.
-Prism's niri sink renders `prism.kdl` and reloads the compositor. The open terminal
+Prism's niri sink renders prism.kdl and reloads the compositor. The open terminal
 windows show material changes; sliders commit on release.
 
 The Noctalia wallpaper hook passes `NOCTALIA_WALLPAPER_PATH` to

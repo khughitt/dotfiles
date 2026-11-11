@@ -62,7 +62,7 @@ For Noctalia plugins, run ordinary setup, start or reload Noctalia v5, then run
 `./setup.sh --only noctalia-plugins`. This links Wali, Prism and Resource Pressure
 Alert from their owning sibling repositories. If Noctalia is running, setup
 enables them through IPC; otherwise it prints the enable commands. Resource
-Pressure Alert's enable ID is `khughitt/resource-pressure-alert`. Wali also needs
+Pressure Alert's enable ID is khughitt/resource-pressure-alert. Wali also needs
 `walictl` and its config link; Prism needs `prism`. See
 [desktop themes](desktop-themes.md) for palette and context behavior.
 

@@ -7,7 +7,7 @@
 # decoded strictly (an undecodable name cannot be matched, so it takes the full check),
 # a rename counts on both sides, and any failure to classify pays the full check. The
 # skipped checks still run at the next code commit, at push, and in CI.
-# Design: ops docs/specs/2026-09-28-test-ci-act-design.md §3.2.
+# Reference: docs/development.md and ops docs/test-execution-policy.md.
 if globs=$(just --evaluate docs_paths 2>/dev/null) && python3 -c '
 import fnmatch, subprocess, sys
 globs = sys.argv[1].split()

@@ -10,7 +10,7 @@ not a statement of the currently running host.
 Build a clean, reviewed checkout into a new release ID. The builder installs and
 builds in that checkout, checks the linked nodes build, and copies dependencies
 and the selected Node executable. It refuses dirty sources, insufficient space,
-and an existing destination. Read `provenance.json` for both Git revisions,
+and an existing destination. Read provenance.json for both Git revisions,
 package-lock hash, Node version, build time, and every copied runtime hash.
 
 ```sh
@@ -21,8 +21,8 @@ package-lock hash, Node version, build time, and every copied runtime hash.
 `~/bin/mindful` is a symlink into the main
 Dots checkout, so edits to the launcher affect the active command immediately.
 `~/bin/mindful-tui` is the terminal UI from the same release: the builder ships
-`packages/tui/src` with a pinned `bin/bun` whenever the checkout has a TUI, and
-the launcher execs that Bun on `packages/tui/src/bin.ts`, so the TUI always speaks
+packages/tui/src with a pinned bin/bun whenever the checkout has a TUI, and
+the launcher execs that Bun on packages/tui/src/bin.ts, so the TUI always speaks
 the contracts of the `mindful-web` it was built with. It needs `nvim` on `PATH`
 and the service running; it has no data directory.
 Before a deployment, retain the old `current` target, prior release, launcher,
@@ -111,15 +111,15 @@ roots and explicit archive names, for example:
 ```
 
 Names are single safe path components, unique across the manifest; parent
-traversal is refused. The archive contains `store/`, `attachments/<name>/`, and
-`backup.json`, which records every included root. External symlink targets are
+traversal is refused. The archive contains store/, `attachments/<name>/`, and
+backup.json, which records every included root. External symlink targets are
 preserved as links, not dereferenced: inventory them explicitly as attachment
 roots when their bytes need backing up. Stop writers of attachment roots during
 the backup; the Mindful lock governs the store alone. Rehearsal acceptance is
 blocked until every inventoried attachment root is in this manifest or has a
 separately verified backup. Do not enable the timer until that inventory is
 recorded. To supply the private manifest to nightly backups, install a reviewed
-`mindful-backup.service.d/attachments.conf` that resets `ExecStart=` and repeats
+mindful-backup.service.d/attachments.conf that resets `ExecStart=` and repeats
 the source unit's command with `--attachments <absolute-manifest-path>` appended.
 
 ```sh
