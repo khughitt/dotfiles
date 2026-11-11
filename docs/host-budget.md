@@ -1,7 +1,8 @@
 # Host CPU budget and agent scopes
 
 Type: guide; document types 1. This guide describes the shell entry points
-and host policy for managed agent sessions.
+and host policy for managed agent sessions. See [setup](setup.md) for host
+installation and [development](development.md) for verification.
 
 With `HOSTKIT_AGENT_SESSIONS=1` in the host-local shell environment, the
 interactive Claude, Codex, agy, pi, OpenCode and Crush commands enter the

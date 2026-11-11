@@ -1,12 +1,11 @@
 # Mindful v6 runtime
 
-Status: active since 2026-09-13. The approved cutover used release
-`3d37fbf-20260912` at `http://localhost:3331`, with `~/d/thoughts` as the store.
-Web and the 03:00 backup timer are enabled; production backup/restore passed
-for all source/history/config bytes and 114 legacy image files. Images remain
-deferred in the UI. The prior store and PostgreSQL bind storage are retained.
-See `~/d/mindful/v6/docs/reports/2026-09-13-mindful-v6-local-cutover.md` and the
-private rollback record under `~/d/mindful/archive/cutover/2026-09-13/`.
+Type: guide; document types 1.
+
+This guide covers release launchers, optional phone access, backup/restore and
+rollback. [Setup](setup.md) links units; activation is a separate host operation.
+Historical cutover evidence and old production release IDs are private records,
+not a statement of the currently running host.
 
 Build a clean, reviewed checkout into a new release ID. The builder installs and
 builds in that checkout, checks the linked nodes build, and copies dependencies
@@ -19,22 +18,15 @@ package-lock hash, Node version, build time, and every copied runtime hash.
   --output "$HOME/.local/share/mindful/releases/$RELEASE_ID"
 ```
 
-The runtime branch is integrated. `~/bin/mindful` is a symlink into the main
+`~/bin/mindful` is a symlink into the main
 Dots checkout, so edits to the launcher affect the active command immediately.
 `~/bin/mindful-tui` is the terminal UI from the same release: the builder ships
 `packages/tui/src` with a pinned `bin/bun` whenever the checkout has a TUI, and
 the launcher execs that Bun on `packages/tui/src/bin.ts`, so the TUI always speaks
 the contracts of the `mindful-web` it was built with. It needs `nvim` on `PATH`
 and the service running; it has no data directory.
-The retained pre-cutover launcher was:
-
-```sh
-#!/usr/bin/env bash
-exec node "$HOME/d/mindful/v6/packages/mindful/dist/bin.js" "$@"
-```
-
-Retain that launcher in the private cutover record, along with the old `current`
-target, prior release, service enablement, and existing v3 Compose configuration.
+Before a deployment, retain the old `current` target, prior release, launcher,
+service enablement and any older Compose configuration in private recovery notes.
 No development-checkout fallback exists in the new launcher. Its default store
 is `~/d/thoughts`; explicit `MINDFUL_HOME` supports isolated tests/maintenance.
 
@@ -84,7 +76,9 @@ restarts an interrupted exit 1; verify `TimeoutStopUSec` with `systemctl --user
 show mindful-web.service` is greater than the server's 5-second drain deadline
 (the default on the production host is 90 seconds).
 
-Phone installation and interaction acceptance are tracked by `mind6-8e9161`.
+Accept phone access on the actual device: installation, capture/search/edit,
+keyboard and safe areas, and visible refresh after an external HTTP mutation.
+A successful loopback request alone does not establish phone behavior.
 
 ## Backups and isolated restore
 

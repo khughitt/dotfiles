@@ -1,11 +1,12 @@
 # Git indexes in Dropbox
 
-Decision, 2026-10-11 (dots-dbb1ae): keep Git's normal index paths and use
-Dropbox's native ignore rules to make indexes local to each host. Git replaces
-the index through a lock-file rename, so setting an xattr on the index once
-does not protect subsequent writes. A post-index-change hook runs after that
-rename and leaves a race with Dropbox. A `GIT_INDEX_FILE` wrapper misses callers
-that bypass it, and periodic conflict cleanup leaves the corruption in place.
+Type: guide; document types 1.
+
+This guide covers native index-ignore rules, migration and recovery on synced
+hosts. See [setup](setup.md) for storage/link ownership. Keep Git's normal index
+paths: Git replaces an index by lock-file rename, so marking it once is not
+enough. Post-write hooks race the sync client, wrappers miss other Git callers,
+and conflict cleanup cannot prevent corruption.
 
 The `dropbox-ignore` setup phase appends these rules to
 `~/d/rules.dropboxignore`, preserving existing rules and adding nothing on a
@@ -26,10 +27,10 @@ added during migration. Worktree admin directories remain managed by
 
 [Dropbox's rules](https://help.dropbox.com/sync/how-to-prevent-files-from-syncing)
 are per-device and apply only to newly created files. The rules file itself
-does not sync. Every host must run setup. Support was tested on titan's Linux
-client 272.4.3798: new indexes and atomic replacements reported `ignored`, a
-control working file remained eligible for sync, and staged content survived migration of an
-existing index. Verify the same behavior on any other client before rollout.
+does not sync. Every host must run setup. Verify that new indexes and atomic replacements report `ignored`, a working-file
+control still syncs, and staged content survives before accepting each host's
+migration. Earlier client-specific observations are not a guarantee of current
+client behavior.
 
 ## Existing checkouts
 

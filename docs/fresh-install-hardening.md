@@ -1,23 +1,25 @@
-# Fresh install: storage & system hardening
+# Fresh install: storage and system hardening
 
-Changes worth recreating on a clean Arch install. Derived from the 2026-08-06
-session that followed an NVMe drive dropping off the PCIe bus, the 2026-08-08
-session that added the Windows dual boot and fixed DKMS rebuild time, and the
-2026-09-01 session that gated kernel updates.
+Type: guide; document types 1.
 
-## Packages
+This guide collects optional Arch host procedures and their verification/recovery
+checks. Select what applies to the hardware; these commands change live system
+state and many require root. [Setup](setup.md) covers user links,
+[capture setup](capture-host-setup.md) covers capture grants, and
+[Mindful runtime](mindful-runtime.md) covers application activation. Historical
+measurements and incident chronology are retained privately, not current host
+health claims. Inspect installed package behavior before applying a procedure.
+
+## Packages and services
+
+Install applicable prerequisites:
 
 ```sh
 pacman -S smartmontools nvme-cli lm_sensors fwupd
 ```
 
-`smartmontools` and `nvme-cli` are the ones that matter — without them there is
-no SMART history at all, and no way to tell a dying disk from a noisy log.
-
-## Enabled system services
-
-Arch packages generally install system services disabled. This machine enables
-the following non-preset units deliberately:
+Arch packages often leave services disabled. Enable only those needed on the host,
+after installing their packages and any local unit/executable:
 
 ```sh
 systemctl enable --now NetworkManager bluetooth docker
@@ -25,15 +27,10 @@ systemctl enable --now fstrim.timer paccache.timer smartd
 systemctl enable --now linux-modules-cleanup.service gpu-fan-curve.service
 ```
 
-Install the relevant packages and the GPU unit before running the whole block.
-Enabling NetworkManager also enables its dispatcher and wait-online companions;
-do not copy or enable those separately. `getty@.service`, `remote-fs.target`,
-and `systemd-userdbd.socket` come from the stock systemd preset.
+NetworkManager enables its companion units; do not copy them separately. Inspect
+stock presets rather than capturing generated getty/remote-fs/userdbd links.
 
-## zram
-
-The 16 GiB zram device uses zstd. Install the captured generator configuration,
-then reboot so the generator can recreate the swap device cleanly:
+For the tracked 16 GiB zstd zram configuration:
 
 ```sh
 install -Dm0644 systemd/zram-generator.conf /etc/systemd/zram-generator.conf
@@ -41,288 +38,177 @@ reboot
 zramctl
 ```
 
-## User services
-
-Link the user units and enable the timers that are safe everywhere — Dropbox
-maintenance and the kernel-gate nudge:
+Link user units and selected maintenance timers using:
 
 ```sh
 ./setup.sh --link-only --headless --only systemd --enable-user-timers
 ```
 
-Apply a Noctalia color scheme once so `~/.cache/noctalia/nvim-glass/current/`
-exists; until then nvim and kitty use the committed tokyonight-moon fallbacks.
+Apply a Noctalia palette once to create the promoted theme; until then committed
+fallbacks apply. Enable host-specific units such as `familiar-reap.timer` only
+when their referenced project exists (`~/d/familiar` for Familiar). Mindful,
+Git-index retention and convergence have separate activation gates; see setup.
 
-Enable the host-specific units only after their referenced projects and tools
-exist:
+## NVMe power management and mounts
 
-```sh
-systemctl --user enable --now familiar-reap.timer
-```
+For hosts requiring the captured NVMe workaround, place these parameters in
+`GRUB_CMDLINE_LINUX_DEFAULT` in `/etc/default/grub`:
 
-The Familiar timer expects `%h/d/familiar`. Mindful v6 units are linked without
-activation; follow [the runtime runbook](mindful-runtime.md) at the separately
-approved cutover. The old Docker unit is retained only for deliberate rollback.
-
-## Kernel parameters
-
-In `/etc/default/grub`, `GRUB_CMDLINE_LINUX_DEFAULT`:
-
-```
+```text
 pcie_aspm=off nvme_core.default_ps_max_latency_us=0
 ```
 
-Then `grub-mkconfig -o /boot/grub/grub.cfg` and **verify the parameter actually
-reached the generated file** — regeneration can silently no-op:
+The latter disables APST; disabling power savings increases idle power. Investigate
+controller-drop/reset failures rather than applying it as a universal disk fix.
+Inspect drive states with `nvme id-ctrl /dev/nvmeN -H` and
+`nvme get-feature /dev/nvmeN -f 0x0c -H`. Regenerate GRUB using the guarded procedure
+below, then check the generated parameter and the next boot's `/proc/cmdline`.
 
-```sh
-grep -o 'nvme_core[^ ]*' /boot/grub/grub.cfg
-```
+In `/etc/fstab`, give nonessential mounts `nofail` and a bounded device timeout:
 
-`nvme_core.default_ps_max_latency_us=0` disables APST (Autonomous Power State
-Transition). The kernel's default budget is 100 ms, which permits some drives to
-park in their deepest sleep state — from which certain models never wake, taking
-the whole PCIe link down with them. Cost of disabling is a couple hundred
-milliwatts at idle. Symptom it prevents:
-
-```
-nvme nvmeN: controller is down; will reset: CSTS=0xffffffff
-nvme nvmeN: Disabling device after reset failure: -19
-```
-
-Check which power states a drive can actually reach with
-`nvme id-ctrl /dev/nvmeN -H | grep ^ps` and
-`nvme get-feature /dev/nvmeN -f 0x0c -H`. A drive whose deepest state has a
-round-trip latency under 100 ms is the one at risk.
-
-## fstab
-
-Two conventions:
-
-**Every non-essential mount gets `nofail`.** Without it, one dead drive fails
-`local-fs.target` and drops the machine to an emergency shell at boot.
-
-```
+```text
 UUID=...  /mnt/data  ext4  rw,noatime,nofail,x-systemd.device-timeout=5s  0 2
 ```
 
-Keep `pass 2`. With `nofail`, systemd skips fsck when the device is absent but
-still runs it when present, so periodic checking survives.
+Keep pass 2 for those ext4 mounts so present devices still get checked. Only
+boot-critical mounts should be required by local-fs.target. The captured policy
+uses `noatime`, including on root. Use stable UUIDs and drive-model comments;
+device enumeration names can change between boots.
 
-Only `/` and `/boot/efi` should be required by `local-fs.target`.
+`findmnt --verify` reports current device reachability, not absent-device boot
+safety. Inspect generator output as well:
 
-**`noatime` on everything**, including `/` — easy to miss on the root entry.
+```sh
+ls /run/systemd/generator/local-fs.target.requires/
+ls /run/systemd/generator/local-fs.target.wants/
+```
 
-**Comment with drive models, not `/dev/sdX`.** Kernel names shuffle between
-boots; a comment saying `nvme1n1p3` when the device is actually `nvme0n1p3` is
-worse than no comment.
+Required entries must be boot-critical; optional mounts belong in wants.
 
 ## SMART monitoring
 
-Enable `fstrim.timer` (weekly TRIM) and `smartd`:
+Enable `fstrim.timer` and `smartd` after configuring actual devices. For
+`/etc/smartd.conf`:
 
-```sh
-systemctl enable --now fstrim.timer smartd
+- Address devices by stable `/dev/disk/by-id/` paths. Do not combine DEVICESCAN
+  with explicit device entries.
+- NVMe uses `-d nvme -H -l error -W 0,70,80`; SATA SSD uses `-a -o on -S on`;
+  spinners add `-n standby,q` to avoid waking a sleeping disk for polling.
+- Captured temperature warning/critical thresholds are NVMe 70/80 °C, SATA SSD
+  55/70 °C and HDD 45/55 °C. Check applicability to each device.
+- Stagger long self-tests; large HDD tests can take many hours.
+- Without an MTA use `-m <nomailer> -M exec <script> -M daily`. The literal
+  `<nomailer>` token selects the script without mail delivery.
+
+Provision a root-owned alert script separately. The captured smartd-notify
+contract writes both the journal (`logger -t smartd-notify -p daemon.crit`) and
+`/var/log/smartd-alerts.log`; desktop notification is only a third, best-effort
+sink via the intended user's existing D-Bus session. Check the user bus exists
+before invoking notify-send. These host-local files are not installed by setup.
+
+The schedule is an extended regular expression matching test type, month, day,
+weekday and hour. A literal range like `01-07` never matches a timestamp. Example:
+
+```text
+L/../(0[1-7])/6/03
 ```
 
-`/etc/smartd.conf` conventions — see this machine's copy for the full file:
-
-- **Address devices by `/dev/disk/by-id/`**, not `/dev/sdX`.
-- **Do not use `DEVICESCAN`** alongside explicit device lines; it silently
-  overrides all of them.
-- Per-type directives: NVMe gets `-d nvme -H -l error -W 0,70,80`; SATA SSD gets
-  `-a -o on -S on`; spinners add `-n standby,q` so polling never spins up a
-  sleeping disk.
-- Temperature thresholds by device class — NVMe 70/80 °C, SATA SSD 55/70,
-  HDD 45/55. A single global threshold is wrong for at least one class.
-- **Stagger long self-tests one drive per weekend.** A long test on an 8 TB
-  spinner runs ~15 h; several at once will thrash the machine.
-- No MTA on a desktop, so use `-m <nomailer> -M exec <script> -M daily`. The
-  literal token `<nomailer>` suppresses mail and runs only the script.
-
-### Alert script
-
-`/usr/local/bin/smartd-notify` writes **three independent sinks** so an alert
-cannot be lost because nobody was logged in:
-
-1. `logger -t smartd-notify -p daemon.crit` → journal
-2. append to `/var/log/smartd-alerts.log`
-3. `notify-send` via `runuser -u <user> -- env DBUS_SESSION_BUS_ADDRESS=...`,
-   guarded on `/run/user/<uid>/bus` existing, best-effort
-
-Only the third can fail silently, and it is the only one that is a convenience
-rather than a record.
-
-## Verification — two traps
-
-Both of these were hit while setting this up. Both look like the opposite of
-what they are.
-
-**`findmnt --verify` reports an error on a correct `nofail` config.** Its output
-is byte-identical with and without `nofail`; it only checks whether a device is
-reachable right now and models nothing about boot behaviour. Verify boot safety
-by checking which units the generator emits instead:
-
-```sh
-ls /run/systemd/generator/local-fs.target.requires/   # only / and /boot/efi
-ls /run/systemd/generator/local-fs.target.wants/      # everything else
-```
-
-**`smartd` reports success on a self-test schedule that never runs.** The `-s`
-argument is an extended *regular expression* matched against `T/MM/DD/d/HH`, not
-a range syntax. `01-07` matches the literal text `01-07`, which no timestamp
-ever equals — so the test silently never fires, with a clean parse, a running
-daemon and nothing in the logs. Day ranges need character classes:
-
-```
-L/../(0[1-7])/6/03      first Saturday, 03:00      (correct)
-L/../01-07/6/03         never runs                 (silent no-op)
-```
-
-Day-of-week is `1`=Mon … `7`=Sun. Always confirm with:
+This selects the first Saturday at 03:00 (weekdays 1=Monday through 7=Sunday).
+Verify the daemon's interpretation, not just successful parsing:
 
 ```sh
 smartd -q showtests -c /etc/smartd.conf | grep "type L"
 ```
 
-`will do 0 tests of type L` means the expression is broken.
+Zero scheduled long tests is a failure if a long test was intended.
 
-## GPU fan floor (NVIDIA + Wayland)
+## GPU fan floor (NVIDIA and Wayland)
 
-Symptom: the card's zero-RPM mode stops the fans below a threshold, the desktop
-idles at exactly that threshold, and the fans start/stop every ~10 s without
-ever moving the temperature. Not a failing fan — a limit cycle.
-
-The executable and unit live in `bin/` and `systemd/system/` respectively:
+The tracked daemon prevents repeated zero-RPM fan cycling on the configured GPU:
 
 ```sh
-install -m 0755 bin/gpu-fan-curve                         /usr/local/bin/gpu-fan-curve
-install -m 0644 systemd/system/gpu-fan-curve.service      /etc/systemd/system/
+install -m 0755 bin/gpu-fan-curve /usr/local/bin/gpu-fan-curve
+install -m 0644 systemd/system/gpu-fan-curve.service /etc/systemd/system/
 systemctl enable --now gpu-fan-curve
 ```
 
-Four things that are non-obvious:
+It uses `nvidia-settings` with root and the live Wayland socket/runtime directory;
+`DISPLAY` alone is insufficient for this route. It discovers the socket rather
+than assuming a stable name. An XNVCtrl client reporting no coolers is not evidence
+that the GPU lacks fans. Read actual fan RPM while establishing a safe floor for
+new hardware; commanded PWM is not tachometer evidence.
 
-**`nvfancontrol` does not work on Wayland.** It drives XNVCtrl, which needs a
-real NVIDIA X screen; Xwayland does not provide one. It exits 0 and prints no
-coolers rather than erroring. Use `nvidia-settings` instead.
+The current curve uses a 45% floor, rising through 55/70% to 100% at 85 °C.
+Manual mode owns the entire curve. The daemon restores automatic mode on stop,
+signal, unreadable temperature or its 88 °C safety ceiling; ExecStopPost also
+attempts restoration. If the Wayland session disappears, driver access can fail,
+so verify fan state rather than assuming cleanup succeeded. The separate
+[capture helper](capture-host-setup.md) uses NVML and requires its own restoration
+trap for a persistent fan hold.
 
-**`nvidia-settings` needs `WAYLAND_DISPLAY` + `XDG_RUNTIME_DIR`, and root.**
-`DISPLAY` alone fails. Coolbits is an X concept with no Wayland equivalent; the
-driver just requires root instead. Discover the socket rather than hardcoding
-`wayland-1` — the name changes between sessions.
+`StartLimitIntervalSec` belongs in the systemd Unit section. Read the applied
+value with `systemctl show gpu-fan-curve -p StartLimitIntervalUSec`; ignored keys
+can leave the daemon restart behavior different from the intended policy.
 
-**Determine the floor by measurement, not by guessing.** Sweep
-`[fan:N]/GPUTargetFanSpeed` and read `[fan:N]/GPUCurrentFanSpeedRPM` — real
-tachometer data, unlike `nvidia-smi`, which reports only commanded PWM. On this
-card 30% never spins, 40% is at the stall edge, and 50%+ is linear at ~42 RPM
-per point, so 45% is the lowest sane floor.
+## Dual boot and GRUB regeneration
 
-**Manual mode is a fixed speed with no automatic ramp**, so the daemon must own
-the whole curve and fail safe: revert to automatic on stop (`ExecStopPost`), on
-signal (trap), above a temperature ceiling, and on an unreadable temperature.
-If the Wayland session disappears first, `nvidia-settings` can no longer reach
-the driver; the card returns to automatic control when the driver resets. Keep
-the curve more aggressive than stock above ~60 °C so manual mode never trades
-away cooling.
-
-Systemd gotcha met here: **`StartLimitIntervalSec` belongs in `[Unit]`, not
-`[Service]`.** In `[Service]` systemd logs `Unknown key ... ignoring` and
-silently falls back to the default rate limit. Confirm any such key with
-`systemctl show <unit> -p StartLimitIntervalUSec` — read the value back, don't
-assume the file was honoured.
-
-## Dual boot: Windows in the GRUB menu
-
-Find the ESP that holds the Windows bootloader. A disk that has hosted both
-systems can carry **more than one** ESP, and only one of them is Microsoft's:
+Find the ESP actually containing Microsoft's bootloader; a disk may have several:
 
 ```sh
 lsblk -o NAME,SIZE,FSTYPE,PARTTYPENAME,UUID
-mount -o ro /dev/nvmeXn1pN /mnt/tmp && ls /mnt/tmp/EFI/   # want Microsoft/
+mount -o ro /dev/nvmeXn1pN /mnt/tmp
+ls /mnt/tmp/EFI/
 ```
 
-Add a static entry to `/etc/grub.d/40_custom`. That file ends in
-`exec tail -n +3 $0`, so everything after line 3 is copied into `grub.cfg`
-**verbatim** — no shell expansion, which is why `$menuentry_id_option` would
-land as literal text there. Use `--id` instead:
+Use that ESP's filesystem UUID in a static entry in `/etc/grub.d/40_custom`:
 
-```
-menuentry 'Windows 10' --class windows --class os --id windows {
-	insmod part_gpt
-	insmod fat
-	insmod chain
-	search --no-floppy --fs-uuid --set=root <ESP-FS-UUID>
-	chainloader /EFI/Microsoft/Boot/bootmgfw.efi
+```text
+menuentry 'Windows' --class windows --class os --id windows {
+    insmod part_gpt
+    insmod fat
+    insmod chain
+    search --no-floppy --fs-uuid --set=root <ESP-FS-UUID>
+    chainloader /EFI/Microsoft/Boot/bootmgfw.efi
 }
 ```
 
-Match the ESP by **filesystem UUID**, never by device node — NVMe enumeration
-order changes between boots, and on this machine it already has.
+The stock 40_custom copies its menu body literally after its header; shell
+variables do not expand there. A static entry avoids os-prober scanning unrelated
+or unreliable disks. This captured boot route assumes Secure Boot disabled;
+check `bootctl status` and use the firmware's Windows entry when that assumption
+does not hold. Fully shut down Windows before writing an NTFS volume; do not
+write one left hibernated by fast startup.
 
-**Prefer this over `os-prober`.** os-prober probes every partition on every disk
-each time `grub-mkconfig` runs. With a failing drive in the machine that puts
-unreliable I/O directly in the path of an operation which must not fail, and it
-also invents entries for any other Linux install it happens to find. A static
-entry scans nothing.
+After Windows boots, check `efibootmgr -v` and restore the intended order with
+`efibootmgr -o <grub>,<rest>` if necessary. To use UTC for the RTC on both systems,
+run as Administrator in Windows:
 
-Requires **Secure Boot disabled** — GRUB chainloading `bootmgfw.efi` is not a
-signed boot path. Check with `bootctl status | grep -i 'secure boot'`. If Secure
-Boot is ever enabled, boot Windows from the firmware's own entry instead.
-
-Before trusting the NTFS volume, confirm Windows is not hibernated: a
-`hiberfil.sys` in the root of the Windows partition means fast startup left the
-filesystem dirty. Boot Windows and shut it down fully first.
-
-Two things Windows does once it has booted:
-
-- **It promotes itself in the UEFI boot order**, silently bypassing GRUB. Check
-  `efibootmgr -v` and restore with `efibootmgr -o <grub>,<rest>`.
-- **It assumes the RTC is local time** while Arch uses UTC, so the clock jumps
-  by your offset on every switch. Fix it on the Windows side rather than
-  degrading Linux — as Administrator:
-  `reg add "HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation" /v RealTimeIsUniversal /t REG_DWORD /d 1 /f`
-
-### Regenerating grub.cfg — three traps
-
-**Never run `grub-mkconfig` during a pacman transaction.** mkinitcpio's
-`60-mkinitcpio-remove.hook` deletes `/boot/vmlinuz-linux`,
-`/boot/initramfs-linux.img` and `/etc/mkinitcpio.d/*.preset` at
-*PreTransaction*; `90-mkinitcpio-install.hook` restores them at
-*PostTransaction*, which on a machine with several DKMS modules can be an hour
-later. Regenerate inside that window and `10_linux` finds no kernel, exits 0,
-and writes a perfectly valid `grub.cfg` **with no Linux entry in it**. Check
-first:
-
-```sh
-test -e /var/lib/pacman/db.lck && echo "transaction in flight -- wait"
+```text
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation" /v RealTimeIsUniversal /t REG_DWORD /d 1 /f
 ```
 
-**`grub-mkconfig` executes every executable file in `/etc/grub.d/`.** A backup
-copy such as `40_custom.bak` is therefore also a generator, and its output lands
-in `grub.cfg`. Keep backups outside that directory.
+Never regenerate GRUB during a pacman transaction: kernel/initramfs files can be
+absent between its remove and install hooks. Wait until `/var/lib/pacman/db.lck`
+is absent and the transaction has completed. Keep backups outside `/etc/grub.d`;
+every executable there is a generator, including executable backup copies.
 
-**Generate to a temp file and validate before installing**, so a bad run cannot
-leave an unbootable menu behind:
+Generate to a candidate and validate before installing it over the live menu:
 
 ```sh
 grub-mkconfig -o /tmp/grub.cfg.new
 grub-script-check /tmp/grub.cfg.new
-grep -c "menuentry 'Arch Linux" /tmp/grub.cfg.new     # must be >= 1
+grep -c "menuentry 'Arch Linux" /tmp/grub.cfg.new
 ```
 
-Also check that every `linux` and `initrd` path the menu references exists — a
-config can pass a syntax check and still point at a kernel that is not there.
+Require at least one Linux entry and existing paths for every referenced kernel
+and initrd. Inspect expected kernel parameters too. Preserve the old menu, then
+install the verified candidate into `/boot/grub/grub.cfg`. A syntactically valid
+menu alone does not prove it can boot.
 
-## Fallback initramfs (recovery boot entry)
+## Fallback initramfs
 
-A fresh install builds only `initramfs-linux.img`, using the `autodetect` hook —
-so it contains drivers for the hardware present *at build time* only. That image
-stops booting if the disk moves to another controller, a driver regresses, or the
-root device changes. The fallback image skips `autodetect` and carries every
-module instead.
-
-In `/etc/mkinitcpio.d/linux.preset`, three lines must be uncommented, not one:
+The fallback omits autodetect so it can boot hardware beyond the build-time
+selection. In `/etc/mkinitcpio.d/linux.preset`, configure all three lines:
 
 ```sh
 PRESETS=('default' 'fallback')
@@ -330,164 +216,73 @@ fallback_image="/boot/initramfs-linux-fallback.img"
 fallback_options="-S autodetect"
 ```
 
-Adding `'fallback'` to `PRESETS` alone builds **nothing**: with neither
-`fallback_image` nor `ALL_image` defined, mkinitcpio has no output target for
-that preset. Then `mkinitcpio -P`.
+Run `mkinitcpio -P`; a fallback name without an output path is insufficient.
+Verify the generated image contents and that fallback is larger than default;
+equal sizes can reveal an ineffective autodetect exclusion. NVIDIA modules can
+dominate both sizes. Missing-firmware warnings for unused hardware are distinct
+from missing firmware for the machine's actual boot path.
 
-GRUB needs no configuration for this — `10_linux` adds the entry purely on
-`/boot/initramfs-linux-fallback.img` existing (line 307). It is *independent* of
-`GRUB_DISABLE_RECOVERY`, which gates only the separate single-user "recovery
-mode" entry (line 329). Setting that to `true` does not cost you the fallback.
+GRUB discovers the fallback image separately from its single-user recovery entry;
+`GRUB_DISABLE_RECOVERY` does not replace fallback configuration. Inspect the
+resulting menu. Recheck custom presets after upgrades: package hook behavior can
+restore a customized preset through its pacsave handling, but do not infer that
+from a successful upgrade alone.
 
-**Verify the fallback is larger than the default.** If `-S autodetect` fails to
-apply, the build still succeeds and the two images come out the same size — the
-only cheap external signal that the recovery image is not actually a recovery
-image. On this machine: 220 MB default, 293 MB fallback. Both are inflated by
-`MODULES=(nvidia …)` in `mkinitcpio.conf`, which is also why the gap is
-proportionally small — the NVIDIA modules dominate both images.
+## Kernel module trees and update gate
 
-The `Possibly missing firmware for module: qla2xxx / aic94xx / bfa / wd719x`
-warnings during a fallback build are expected and harmless: it includes drivers
-for hardware you do not have, whose firmware blobs are in packages you have not
-installed.
-
-Durability, which is not obvious: the preset is owned by **no** package.
-`/usr/share/libalpm/scripts/mkinitcpio` compares it against
-`/usr/share/mkinitcpio/hook.preset` on every kernel upgrade. Identical → deleted
-and regenerated from the template; **different → moved to `.pacsave` and
-restored afterwards.** So customisations survive, but an untouched preset is
-silently reset, which is why a machine that never edited it stays at
-`('default')` forever.
-
-## Kernel module trees and DKMS rebuild time
-
-`kernel-modules-hook` preserves the **running** kernel's module tree across an
-upgrade. Without it, pacman removes `/usr/lib/modules/$(uname -r)` as ordinary
-file replacement, and `modprobe` then fails for anything not already loaded
-until you reboot — no newly attached USB storage, no unusual filesystems.
-
-The cost is that the rescued tree is **no longer owned by any package**, so
-pacman will never remove it. Deletion is delegated to a unit the package ships
-but does **not** enable:
+`kernel-modules-hook` preserves the running kernel's modules across upgrades so
+new modprobe requests still work before reboot. Enable its cleanup unit as well:
 
 ```sh
 pacman -S kernel-modules-hook
-systemctl enable --now linux-modules-cleanup.service   # easy to miss
+systemctl enable --now linux-modules-cleanup.service
 ```
 
-Skip that second line and module trees accumulate permanently, one per kernel
-upgrade. This costs more than disk space: `70-dkms-install.hook` builds every
-DKMS module against every tree that has a `build/` directory, so five stale
-trees means five NVIDIA builds at ~13 minutes each, turning a routine upgrade
-into an hour.
-
-Note that installing the hook is what *stops* the pruning people remember as
-automatic. Before it, nothing needed enabling — pacman removed the old tree
-because it owned the files.
-
-What the unit does at each boot: any `/usr/lib/modules/[0-9]*` that is neither
-the running kernel (`%v`) nor pacman-owned is moved to `/usr/lib/modules/.old/`,
-and the tmpfiles rule `R! /usr/lib/modules/.old/* - - - 4w` purges that four
-weeks later. So enabling it does **not** reclaim space immediately — but the
-DKMS saving is immediate, because the hook globs `*/` and skips the dotted
-directory. The two stages exist so a bad boot is recoverable.
-
-Audit at any time:
+Preserved trees are no longer package-owned. The cleanup unit moves nonrunning,
+unowned trees to `/usr/lib/modules/.old/`; its tmpfiles rule purges them after
+four weeks. Moving them out of DKMS's normal glob avoids redundant builds without
+immediately deleting recovery copies. Audit ownership and the running version
+before removing anything:
 
 ```sh
+uname -r
 for d in /usr/lib/modules/[0-9]*/; do
     pacman -Qo "$d" >/dev/null 2>&1 || echo "unowned: $d"
 done
 ```
 
-Anything listed that is not the running kernel is dead weight.
-
-## Gating kernel updates
-
-The section above cuts what a kernel upgrade *costs*. This one cuts how often
-one happens.
-
-`atoms` certifies a filesystem durability tuple against an exact `uname -r`, so
-any change to the running kernel — including a pkgrel-only rebuild such as
-`7.1.8-arch1-2` to `7.1.8-arch1-3` — leaves the tuple uncertified until a full
-nine-scenario QEMU sweep re-establishes it. Arch shipped fifteen `linux` bumps
-in the ten weeks to 2026-09-01. Certification was effectively continuous.
-
-So the kernel does not move on its own. `linux` and `linux-headers` are pinned,
-and released deliberately:
+The local gate deliberately pins linux and linux-headers as a pair. Install
+root-owned copies; never let a root pacman hook execute a user-writable launcher:
 
 ```sh
-install -m 0755 bin/kernel-gate                          /usr/local/bin/kernel-gate
+install -m 0755 bin/kernel-gate /usr/local/bin/kernel-gate
 install -m 0644 pacman/hooks/65-kernel-headers-sync.hook /etc/pacman.d/hooks/
-install -m 0644 pacman/kernel-gate.conf                  /etc/kernel-gate.conf
+install -m 0644 pacman/kernel-gate.conf /etc/kernel-gate.conf
 ```
 
-Then add both packages to `IgnorePkg` in `/etc/pacman.conf`, keeping whatever
-is already there:
+Add both packages to IgnorePkg in `/etc/pacman.conf`, preserving other entries:
 
-```
+```text
 IgnorePkg = linux linux-headers
 ```
 
-After that, `pacman -Syu` upgrades everything else and leaves the kernel alone;
-`kernel-gate unlock` takes it when you are ready; `kernel-gate status` reports
-what is held and whether the running kernel is still certified.
+`kernel-gate status` reports pins and certification; `kernel-gate unlock` first
+runs a full system upgrade and then releases the pair. Never substitute
+`pacman -Sy linux`, a partial upgrade. IgnorePkg blocks routine -Syu, not an
+explicit package installation. Hook 65 checks the pair before DKMS hook 70.
+Reinstall the root-owned helper whenever its tracked source changes. Verify
+pacman's effective plan with `pacman -Qu linux linux-headers`; available updates
+to both pinned packages must be marked ignored.
 
-Five things that are non-obvious:
-
-**The pair is the unit, never one of them.** DKMS builds against the headers,
-so a kernel and headers at different versions break every module build on the
-machine — here `nvidia-open-dkms` and `virtualbox-host-dkms`. Worse, the
-breakage does not surface at the transaction that caused it; it surfaces at the
-next boot, as modules that will not load. `IgnorePkg` covers both, `unlock`
-takes both in one transaction, and the hook refuses to let them diverge.
-
-**The hook is numbered 65 on purpose.** `70-dkms-install.hook` runs the builds
-that a mismatch breaks. A diagnostic numbered above it prints *after* a wall of
-build failures, explaining something the reader has already been buried in.
-
-**`IgnorePkg` is not a lock, and does not need to be.** An explicit
-`pacman -S linux` still installs, after asking. That is the release path, not a
-hole in the gate: `-Syu` is what runs unattended and by habit, and that is what
-the pin stops.
-
-**Release with a full `-Syu` first, then take the kernel.** Never `pacman -Sy
-linux` — that syncs the databases and installs one package against them, which
-is the definition of a partial upgrade. `kernel-gate unlock` does the two steps
-in that order for exactly this reason.
-
-**Root runs its own copy, not the `~/bin` symlink.** Tracked scripts in `bin/`
-are symlinked into `~/bin`, and a pacman hook executing a user-writable script
-would hand root to anything that can write there. The `install` above makes a
-root-owned copy; re-run it whenever `bin/kernel-gate` changes.
-
-Verify by asking pacman what it will actually do, not by reading the config
-back:
-
-```sh
-pacman -Qu linux linux-headers   # both must say [ignored]
-```
-
-A parsed config proves nothing here — `pacman-conf IgnorePkg` will happily echo
-a package name that a typo elsewhere has left unenforced.
-
-One deliberate gap: the unattended sweep that follows a release
-(`~/.local/bin/atoms-recertify` and its user units) is not tracked here. It
-hardcodes an atoms checkout and a repo-specific review workflow, so it is not
-general host configuration. A fresh machine gets the gate and reports
-`Certified: unknown` until that checkout exists.
+Certification applies to the exact running kernel, including package rebuilds.
+The local atoms-recertify sweep is not shipped here; a new machine can legitimately
+report certification unknown until that separate owner supplies the environment.
 
 ## Console keymap
 
-`tmux.conf` binds `M-Up`, `M-Down`, `M-Left`, `M-Right`, and `M-PPage`. They work in a
-terminal emulator and silently do nothing on a VT, because the stock `us` console
-keymap replicates a cursor keysym into every modifier column (Alt+Down sends plain
-Down), binds Alt+Left/Right to VT switching, and only synthesises `Meta_x` for ASCII
-characters. `kbd/us-tmux.map` includes `us` and binds the Alt column of the cursor
-and page keys to the xterm modifier sequences (`ESC[1;3B` and friends) that tmux
-already decodes. It also gives Shift+Enter its own sequence, `ESC CR` (Meta+Enter):
-the stock map sends the same CR for Enter and Shift+Enter, so Claude Code on a VT
-submits where it would insert a newline in kitty.
+[us-tmux.map](../kbd/us-tmux.map) includes the stock us map and supplies xterm Alt
+cursor/page sequences for tmux, plus ESC CR for Shift+Enter. This avoids plain
+cursor keys and unintended VT switching on those Alt combinations:
 
 ```sh
 install -Dm0644 kbd/us-tmux.map /usr/share/kbd/keymaps/i386/qwerty/us-tmux.map
@@ -495,71 +290,53 @@ sed -i 's/^KEYMAP=.*/KEYMAP=us-tmux/' /etc/vconsole.conf
 systemctl restart systemd-vconsole-setup
 ```
 
-It has to live under `/usr/share/kbd/keymaps/` because `loadkeys` searches only
-that tree; pacman leaves the unowned file alone. The `keymap` and `sd-vconsole`
-initramfs hooks find it by name too, so `mkinitcpio -P` is only needed for the
-early-boot keymap. Alt+Left/Right stop switching VTs; Alt+F<n> still does.
-`tests/console_keymap.zsh` compiles the map with `loadkeys -m` and checks the Alt
-and Shift+Enter entries, so a change there is caught without a console.
+If no KEYMAP line exists, add `KEYMAP=us-tmux`. The map must live under the kbd
+search tree; keymap/sd-vconsole initramfs hooks also find it by name. Run
+`mkinitcpio -P` if the early-boot keymap must change. Alt+Left/Right no longer switch
+VTs; Alt+F<n> still does. The protected console-keymap Zsh test compiles the map
+with loadkeys and checks Alt and Shift+Enter without taking the live console.
 
 ## Keyring unlock at console login
 
-With no display manager, logging in on a VT and starting niri leaves the GNOME
-keyring locked: only a display manager's PAM stack (`gdm-password`, for instance)
-ships `pam_gnome_keyring`. The first app to ask for a secret then raises an unlock
-popup, and `gh auth token`, run at shell start by `shell/private/api`, waits on an
-unlock prompt for the `login` collection for 60 s (go-keyring always unlocks
-`login`, whatever the default keyring is). Add the module to the console login stack:
+For a VT login followed by niri, add these optional GNOME keyring PAM entries to
+`/etc/pam.d/login` after the corresponding auth/session includes:
 
-```sh
-# /etc/pam.d/login: after the auth include, and after the session include
+```text
 auth       optional     pam_gnome_keyring.so
 session    optional     pam_gnome_keyring.so auto_start
 ```
 
-PAM unlocks only the keyring named `login`, and only when its password equals the
-login password; set it in seahorse if they differ. Keep a single keyring: a second
-one (an old `Default_keyring`, say) stays locked and brings the popup back.
-`~/.local/share/keyrings/default` names the default keyring and should read `login`.
-
-`setup.sh`'s `systemd` phase links a D-Bus service override for
-`org.freedesktop.secrets`. The packaged file has no `SystemdService=`, so an app
-that asks for the secret service early in the session gets a second
-gnome-keyring-daemon beside the socket-activated unit; the override routes it
-through `gnome-keyring-daemon.service`.
-
-Check after the next login:
+Unlock requires the login keyring's password to match the account password.
+Check it with seahorse; an additional locked default keyring can still trigger
+prompts. The default-keyring selector should name login. Setup's systemd phase
+links a secrets D-Bus override routing activation through the keyring service,
+avoiding a second daemon launched beside socket activation. After logging in:
 
 ```sh
-pgrep -a gnome-keyring    # exactly one daemon
+pgrep -a gnome-keyring
 busctl --user get-property org.freedesktop.secrets \
   /org/freedesktop/secrets/collection/login org.freedesktop.Secret.Collection Locked
-# b false
 ```
+
+Require one daemon and `b false`, not merely the presence of the PAM lines.
 
 ## SSH from the tailnet
 
-sshd accepts key logins for one user, from Tailscale addresses only, through the
-drop-in `ssh/sshd_config.d/10-tailnet.conf`; root login is off. Authorize the
-other machines' keys **before** enabling sshd: password login is off, so
-`ssh-copy-id` cannot bootstrap it. On each client, print its public key
-(`cat ~/.ssh/id_ed25519.pub`), then on this machine:
+The tracked [sshd drop-in](../ssh/sshd_config.d/10-tailnet.conf) permits public-key
+login for its declared user from Tailscale ranges only. Review that username for
+the target host. Install client keys before enabling passwordless-only sshd:
 
 ```sh
 install -m 0700 -d ~/.ssh
-echo '<client public key>' >> ~/.ssh/authorized_keys && chmod 0600 ~/.ssh/authorized_keys
-
+echo '<client public key>' >> ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
 install -Dm0644 ssh/sshd_config.d/10-tailnet.conf /etc/ssh/sshd_config.d/10-tailnet.conf
 ssh-keygen -A
 sshd -t && systemctl enable --now sshd
 ```
 
-`ssh-keygen -A` creates the host keys. `sshdgenkeys.service` would make them, but
-only when sshd starts, so on a machine where sshd has never run `sshd -t` fails
-first with `no hostkeys available -- exiting`.
-
-The client configuration is local and is not installed by `setup.sh`. Add a
-short alias to `~/.ssh/config` using the server's full MagicDNS name:
+Generate host keys before sshd -t on a fresh host. Client aliases are host-local
+and not installed by setup:
 
 ```sshconfig
 Host <alias>
@@ -568,48 +345,20 @@ Host <alias>
   User <remote-user>
 ```
 
-Replace the placeholders with the alias you want to type, the server's full
-`DNSName` from `tailscale status --json`, and its login user. When updating an
-existing alias, use its previously trusted name for `HostKeyAlias`; on a new
-client, omit that line and verify the server's host-key fingerprint before
-accepting it. Check the resulting settings with `ssh -G <alias>`, then connect
-with `ssh <alias>`.
+Use the full MagicDNS name from `tailscale status --json`, avoiding link-local
+name resolution rejected by AllowUsers. Retain HostKeyAlias only for an existing
+trusted identity; on a new client omit it and verify the server fingerprint.
+Inspect `ssh -G <alias>` before connecting.
 
-An unqualified name can resolve through local name discovery to a link-local
-IPv6 address. The tailnet-only `AllowUsers` rule then rejects the LAN source
-before accepting its key; the sshd journal reports `not listed in AllowUsers`
-for the `fe80::` client. Pinning the full name selects the tailnet while
-retaining both IPv4 and IPv6.
-[OpenSSH's `HostName` directive](https://man.openbsd.org/ssh_config#HostName)
-sets the destination independently of the alias.
-`HostKeyAlias` keeps verifying against an existing entry in `known_hosts`, so
-changing the destination name does not require trusting a new key.
+The early-numbered drop-in matters because sshd generally keeps the first value.
+AllowUsers restricts sources while listening broadly; binding to a Tailscale
+address would race its availability at boot. LAN clients still reach pre-auth
+code before rejection. The source restriction relies on Tailscale netfilter
+anti-spoofing; verify it is enabled. Do not enable the stock nftables forward-drop
+policy blindly on a Docker host. PasswordAuthentication alone is insufficient:
+KbdInteractiveAuthentication is off and AuthenticationMethods requires publickey.
 
-Four things that are non-obvious:
-
-**sshd keeps the first value it reads.** Arch's `sshd_config` includes
-`sshd_config.d/*.conf` at the top, in lexical order, and for most keywords the
-first occurrence wins. That is why the file is numbered 10, ahead of
-`99-archlinux.conf`. A setting appended to the end of `sshd_config` is ignored.
-
-**The tailnet restriction is `AllowUsers`, not `ListenAddress`.** Binding sshd to
-the Tailscale address races `tailscaled` at boot: the address does not exist yet,
-the bind fails, and sshd never comes up. Listening everywhere and allowing only
-`keith@100.64.0.0/10` and `keith@fd7a:115c:a1e0::/48` avoids the race. The cost is
-that a LAN client still reaches sshd's pre-auth code before it is turned away.
-
-**The source check leans on Tailscale's netfilter rules.** With `NetfilterMode`
-on (the default), Tailscale drops `100.64.0.0/10` sources that do not arrive on
-`tailscale0`, so a LAN host cannot spoof a tailnet address. Leave the stock
-`/etc/nftables.conf` disabled: its `forward` policy drops Docker's traffic.
-
-**`PasswordAuthentication no` alone does not stop passwords.** With `UsePAM yes`,
-keyboard-interactive authentication asks PAM, and PAM asks for the password.
-`KbdInteractiveAuthentication no` closes that, and `AuthenticationMethods
-publickey` refuses everything else.
-
-Verify against the daemon, not the file. `sshd -T` prints the merged result for a
-given connection:
+Verify the merged daemon configuration for an actual connection:
 
 ```sh
 sshd -T -C \
@@ -617,41 +366,26 @@ sshd -T -C \
   | grep -iE '^(allowusers|passwordauth|kbdinteractive|permitrootlogin|authenticationmethods)'
 ```
 
-Then try the paths that should fail. From a client,
-`ssh -o PubkeyAuthentication=no <host>` must say `Permission denied (publickey)`.
-A login from a LAN address must fail too, and `journalctl -u sshd` must log
-`not listed in AllowUsers` for it.
+From a client, `ssh -o PubkeyAuthentication=no <host>` must fail with publickey
+required. A LAN-source login must also fail, with not-listed-in-AllowUsers in the
+sshd journal. Retain existing access until these checks establish the new route.
 
-## Auditing systemd changes
+## Audit systemd changes
 
-No single command shows every difference from a fresh Arch install.
-`systemd-delta` finds overrides of package units, but not entirely new local
-units such as `gpu-fan-curve.service`. Use all four views:
+Use all these views; systemd-delta alone omits wholly local units:
 
 ```sh
 systemd-delta --no-pager
 find /etc/systemd/system -xdev \( -type f -o -type l \) -printf '%p -> %l\n' | sort
 systemctl list-unit-files --state=enabled,masked,linked --no-pager
 systemctl list-timers --all --no-pager
-
 find ~/.config/systemd/user -xdev \( -type f -o -type l \) -printf '%p -> %l\n' | sort
 systemctl --user list-unit-files --state=enabled,masked,linked --no-pager
 systemctl --user list-timers --all --no-pager
 ```
 
-In `list-unit-files`, compare `STATE` with `PRESET`: an enabled unit whose
-preset is disabled is a local choice. Use `pacman -Qo <unit-file>` before
-capturing anything under `/usr/lib`; package-owned unit contents and generated
-`.wants/` symlinks should be recreated by package installation and
-`systemctl enable`, not copied into dotfiles.
-
-## General principle
-
-Every trap in this document shares a shape: the command exited zero and the
-daemon came up, but the system would not have *done* the thing. `findmnt
---verify` reported an error on a correct config; smartd reported success on a
-schedule that never fires; systemd accepted a unit and discarded a key;
-`nvfancontrol` exited 0 having found nothing; `grub-mkconfig` exited 0 and wrote
-a syntactically valid boot menu that could not boot Linux. Check what the system
-will actually do — read the value back, list the generated units, ask the daemon
-what it has scheduled, measure the RPM, count the menu entries.
+Compare STATE with PRESET to identify local choices. Check `pacman -Qo <unit-file>`
+before capturing package-owned files. Recreate package units and generated wants
+links through package installation and systemctl enable, rather than copying them.
+For every procedure, verify the effective behavior or generated result; a zero
+exit status alone is not evidence that the intended host state took effect.

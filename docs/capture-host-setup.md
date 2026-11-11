@@ -1,5 +1,10 @@
 # Capture-host sudoers rules
 
+Type: guide; document types 1.
+
+This guide covers explicit Linux capture grants, validation and revocation.
+See [host setup](setup.md) for ordinary configuration installation.
+
 On the Linux capture host, run from the dotfiles checkout:
 
 ```sh

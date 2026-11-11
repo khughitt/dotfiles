@@ -50,6 +50,10 @@ docs/
 !/docs/capture-host-setup.md
 !/docs/mindful-runtime.md
 !/docs/host-budget.md
+!/docs/dropbox-git-index.md
+!/docs/setup.md
+!/docs/development.md
+!/docs/desktop-themes.md
 wsprofiles/node_modules/
 
 # noctalia plugins
