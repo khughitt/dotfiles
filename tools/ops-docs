@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ops-docs version 12
+# ops-docs version 13
 """A project's guide files — README.md for people, AGENTS.md for agents — rendered and
 checked inside one repository.
 
@@ -585,8 +585,7 @@ def family_publish(home, home_name, run=subprocess.run, out=None):
 
 
 def family_check(home, run=subprocess.run):
-    """Each member's committed tools/family.toml against the home's committed file, byte
-    for byte. A home that lists itself reads its own file and is skipped."""
+    """Check committed member names and family copies. The home needs no copy."""
     data, fam = committed_family(home, run)
     home_root = main_worktree(home, run)
     roots = resolve_roots([entry["prefix"] for entry in fam["members"]], run)
@@ -595,7 +594,19 @@ def family_check(home, run=subprocess.run):
         prefix, root = entry["prefix"], roots[entry["prefix"]]
         if root is None:
             found.append(f"{prefix}: unreachable")
-        elif main_worktree(root, run) != home_root:
+            continue
+        identity = git_show(root, "identity.toml", run)
+        if identity is None:
+            found.append(f"{prefix}: missing committed identity.toml")
+        else:
+            try:
+                name = tomllib.loads(identity.decode("utf-8")).get("name")
+            except (UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
+                found.append(f"{prefix}: invalid committed identity.toml: {error}")
+            else:
+                if name != entry["name"]:
+                    found.append(f"{prefix}: name {entry['name']!r} differs from identity name {name!r}")
+        if main_worktree(root, run) != home_root:
             copy = git_show(root, FAMILY_COPY, run)
             if copy is None:
                 found.append(f"{prefix}: missing")
