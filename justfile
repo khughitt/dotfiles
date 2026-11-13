@@ -3,10 +3,10 @@ set positional-arguments
 set quiet
 
 tt := "python3 tools/tt"
-test_cmd := "python3 tools/test-suite.py full"
-portable_cmd := "python3 tools/test-suite.py portable"
-check_hygiene_cmd := "just --fmt --check --justfile justfile && tools/check-hygiene && python3 tools/ops-docs check && tasks check"
-check_code_cmd := "tools/check-code"
+test_cmd := "python3 scripts/test-suite.py full"
+portable_cmd := "python3 scripts/test-suite.py portable"
+check_hygiene_cmd := "python3 tools/ops-check && just --fmt --check --justfile justfile && scripts/check-hygiene && python3 tools/ops-docs check && tasks check"
+check_code_cmd := "scripts/check-code"
 ci_remote := "origin"
 ci_suite_refs := ""
 
@@ -32,7 +32,7 @@ docs:
 
 # Detached task records are unavailable in the disposable runner.
 ci-hygiene:
-    {{ tt }} ci-hygiene -- sh -c 'just --fmt --check --justfile justfile && tools/check-hygiene && python3 tools/ops-docs check'
+    {{ tt }} ci-hygiene -- sh -c 'python3 tools/ops-check && just --fmt --check --justfile justfile && scripts/check-hygiene && python3 tools/ops-docs check'
 
 ci-test:
     TT_FORCE=1 just ci-hygiene
@@ -63,7 +63,7 @@ secrets:
     bin/dotfiles-secrets-check
 
 test-one +args:
-    {{ tt }} test-one -- tools/test-one "$@" 2>&1
+    {{ tt }} test-one -- scripts/test-one "$@" 2>&1
 
 test:
     {{ tt }} test -- sh -c '{{ test_cmd }}'

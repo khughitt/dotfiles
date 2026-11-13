@@ -23,7 +23,7 @@ just check-hygiene
 ```
 
 `just test-one <runner> <args...>` accepts `pytest`, `zsh` and `nvim`, forwarding
-arguments intact through [tools/test-one](../tools/test-one). Use the runner and
+arguments intact through [scripts/test-one](../scripts/test-one). Use the runner and
 case that exercise the changed behavior. Prose-only edits need no invented tests.
 For bootstrap, installed hooks, Noctalia or host interaction changes, also choose
 an explicit affected integration check before live use. Run worktree code by its
@@ -54,7 +54,7 @@ forces source hygiene plus seven Python modules: front-door, kernel-gate, and th
 five niri modules for column paging, backdrop startup, dropdowns, scratch UI and
 scratch parsing. They use fake host APIs; no desktop starts.
 
-[tools/test-suite.py](../tools/test-suite.py) requires a fresh absolute
+[scripts/test-suite.py](../scripts/test-suite.py) requires a fresh absolute
 `CI_STATE_DIR` outside the checkout and explicit installed `UV_PYTHON` for its
 `ci` mode. CI isolates HOME/XDG/Git/cache/TT state and supplies an explicit child
 environment. It retains source SHA, output, selected/excluded modules, JUnit
@@ -77,6 +77,11 @@ broad requests require `TT_FORCE=1`, including nested requests.
 The pre-commit hook classifies every staged path against `docs_paths`; a mixed
 change or classification failure takes the normal route. A docs-only commit uses
 the docs gate. These are recorded through the same test front door.
+
+The hygiene gate runs the vendored `tools/ops-check` first (guide references,
+conflicted copies, root sources, machine layout, adopted copies); its exceptions
+live in [.ops-check.toml](../.ops-check.toml). Code follows the vendored code
+organization guide with the deviations AGENTS.md Layout records.
 
 Edit [identity.toml](../identity.toml), then run `just docs` to regenerate root
 identity regions; `python3 tools/ops-docs check` detects drift. README requires

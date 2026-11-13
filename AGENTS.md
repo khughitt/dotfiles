@@ -4,6 +4,7 @@
 The dotfiles: shell, editor, desktop, and terminal configuration
 
 Authority: `docs/setup.md`, `docs/development.md`, `docs/desktop-themes.md`
+Code follows `tools/code-organization.md`.
 <!-- ops:identity end -->
 
 ## Setup
@@ -16,7 +17,7 @@ as development hydration. Follow [development](docs/development.md).
 
 Use `just test-one <runner> <args...>` for changed behavior: runners are pytest,
 zsh and nvim, with literal argument forwarding. Run `just check-hygiene` for
-mandatory format, syntax, link/modeline, promoted-glass, guide and record checks.
+mandatory ops-check, format, syntax, link/modeline, promoted-glass, guide and record checks.
 Use `just docs` after changing identity; `python3 tools/ops-docs check` checks drift.
 
 The validated `.tt.toml` disables automatic broad test, check-code and
@@ -44,7 +45,24 @@ See development for the exact CI contract, excluded work and evidence limits.
 - `setup.sh`, `install.toml`, `install-linux.toml`, `install-graphical.toml`, `lib/` — host installer and link manifests.
 - `bin/`, `shell/`, `nvim/`, `kitty/`, `niri/`, `noctalia/`, `systemd/` — commands and configuration.
 - `docs/` — eight current subject references.
-- `tests/`, `tools/` — focused/full test routes, hygiene and vendored shared tools.
+- `tests/` — focused and full test suites and their fixtures.
+- `scripts/` — the repository's own gates and maintenance scripts (hygiene, code
+  checks, test front doors, agent-session probes).
+- `tools/` — copies vendored from ops (`tt`, `ops-check`, `ops-docs`, the code
+  organization guide); never edited here.
+
+Code-organization deviations (most of the tree is per-application configuration,
+not a source tree):
+
+- `setup.sh` stays at the root: it is the documented bootstrap entry
+  (`.ops-check.toml` `root_sources_allowed`).
+- No src/ package tree: `bin/` holds self-contained commands and `shell/` holds
+  sourced shell configuration; neither is an importable package.
+- `lib/` keeps its name: it holds the data files that setup, health and hygiene source
+  and the Git packing policy they run, not a grab-bag module.
+- `tools/` remains the home of vendored ops copies, where ops's tooling writes them.
+- Machine layout is allowed in the configuration, installer, references and fixtures
+  listed in `.ops-check.toml` `layout_allowed`: the dotfiles create that layout.
 
 ## Rules
 

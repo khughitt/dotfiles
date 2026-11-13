@@ -83,7 +83,7 @@ assert_contains "$(run_just --dry-run secrets 2>&1)" \
   "expected secrets recipe to run dotfiles-secrets-check"
 
 test_dry_run=$(run_just --dry-run test 2>&1)
-assert_contains "$test_dry_run" "python3 tools/test-suite.py full" \
+assert_contains "$test_dry_run" "python3 scripts/test-suite.py full" \
   "expected test recipe to use the complete recorded inventory"
 
 print -- "justfile tests passed"

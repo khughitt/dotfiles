@@ -7,9 +7,9 @@ bash_files=(
     bash_profile
     setup.sh
     bin/dotfiles-check
-    tools/check-hygiene
-    tools/check-code
-    tools/test-one
+    scripts/check-hygiene
+    scripts/check-code
+    scripts/test-one
     .githooks/pre-commit
     .githooks/pre-push
     lib/dotfiles-check-data.bash

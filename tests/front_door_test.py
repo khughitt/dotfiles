@@ -83,7 +83,7 @@ class Door:
                      "docs/setup.md", "docs/development.md", "docs/desktop-themes.md",
                      "bin/dotfiles-check", "bin/mindful", "bin/prism",
                      "tests/dotfiles_check.zsh", "tests/justfile.zsh", "tests/tmp_cleanup.zsh", "tools/tt",
-                     "tools/ops-docs", "tools/test-one", "tools/test-suite.py",
+                     "tools/ops-docs", "tools/code-organization.md", "scripts/test-one", "scripts/test-suite.py",
                      ".github/workflows/ci.yml", ".githooks/pre-commit", ".githooks/pre-push"]:
             source = ROOT / name
             if source.exists():
@@ -94,11 +94,14 @@ class Door:
                   "docs/desktop-themes.md"]).check_returncode()
         (self.root / "tools").mkdir(exist_ok=True)
         (self.root / "tools/emit.py").write_text(EMIT)
+        # The vendored ops-check judges the whole tree; this partial fixture would fail
+        # its reference check, so the route runs a passing stand-in.
+        (self.root / "tools/ops-check").write_text("raise SystemExit(0)\n")
         for name in ["uv", "zsh", "nvim", "tasks", "ssh"]:
             p = bindir / name
             p.write_text(f"#!{sys.executable}\n" + EMIT)
             p.chmod(0o755)
-        p = self.root / "tools/check-hygiene"
+        p = self.root / "scripts/check-hygiene"
         p.write_text(f"#!{sys.executable}\n" + EMIT.replace('name = pathlib.Path(sys.argv[0]).name', 'name = "source"'))
         p.chmod(0o755)
         # Every nested Just invocation receives the same leaf overrides.
@@ -142,7 +145,7 @@ exec {just} --set check_hygiene_cmd 'python3 tools/emit.py hygiene' \\
                     if key in self.env}
         uv = Path(self.env["PATH"].split(":")[0]) / "uv"
         uv.write_text(f"#!{sys.executable}\nimport os\nos.environ.update({controls!r})\n" + EMIT)
-        return self.run([sys.executable, "tools/test-suite.py", mode, *args])
+        return self.run([sys.executable, "scripts/test-suite.py", mode, *args])
 
 
 @pytest.fixture
@@ -355,7 +358,7 @@ def test_guide_hygiene_and_docs_recipe(door):
 
 @pytest.mark.parametrize("broken", ["setup.sh", "zshenv"])
 def test_mandatory_hygiene_checks_later_shell_files(door, broken):
-    for name in ["tools/check-hygiene", "bin/dotfiles-layout-check", "bin/noctalia-glass-check",
+    for name in ["scripts/check-hygiene", "bin/dotfiles-layout-check", "bin/noctalia-glass-check",
                  "tests/front_door_test.py"]:
         shutil.copy2(ROOT / name, door.root / name)
     (Path(door.env["PATH"].split(":")[0]) / "zsh").unlink()
@@ -451,7 +454,7 @@ def test_workflow_branch_refs_and_isolation(door):
     assert 1 <= job["timeout-minutes"] <= 15
     assert job["env"]["TT_FORCE"] == "1"
     assert "CI_STATE_DIR" not in job["env"]
-    run = next(step for step in job["steps"] if step.get("run") == "python3 tools/test-suite.py ci")
+    run = next(step for step in job["steps"] if step.get("run") == "python3 scripts/test-suite.py ci")
     assert run["env"]["CI_STATE_DIR"] == "${{ runner.temp }}/dotfiles-ci"
     install = next(step for step in job["steps"] if step.get("name") == "Install portable prerequisites")
     assert "lua5.4" not in install["run"]
@@ -559,7 +562,7 @@ def test_portable_rejects_no_successful_execution(door, xml):
     controls = {"EVENTS": door.env["EVENTS"]}
     uv.write_text(f"#!{sys.executable}\nimport os\nos.environ.update({controls!r})\n" +
                   EMIT.replace("'<testsuites><testsuite tests=\"2\"><testcase name=\"a\"/>'\n                '<testcase name=\"b\"/></testsuite></testsuites>'", repr(xml)))
-    result = door.run([sys.executable, "tools/test-suite.py", "portable"])
+    result = door.run([sys.executable, "scripts/test-suite.py", "portable"])
     assert result.returncode != 0, result.stdout + result.stderr
     assert [e["name"] for e in door.events()] == ["uv"]
 
@@ -664,7 +667,7 @@ pending.write_text(json.dumps({{'pid':child.pid,'group':os.getpgrp()}}))
 pending.replace(ready)
 signal.pause()
 ''')
-    process = subprocess.Popen([sys.executable, "tools/test-suite.py", "ci"],
+    process = subprocess.Popen([sys.executable, "scripts/test-suite.py", "ci"],
                                cwd=door.root, env=door.env, stdin=subprocess.DEVNULL,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     group = None

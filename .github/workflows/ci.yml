@@ -38,7 +38,7 @@
         {
           "name": "Run isolated portable checks",
           "shell": "bash",
-          "run": "python3 tools/test-suite.py ci",
+          "run": "python3 scripts/test-suite.py ci",
           "env": {
             "CI_STATE_DIR": "${{ runner.temp }}/dotfiles-ci"
           }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$(readlink -f -- "${BASH_SOURCE[0]}")")/.."
-tools/check-hygiene
+scripts/check-hygiene
 just check-code

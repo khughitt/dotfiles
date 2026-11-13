@@ -1,0 +1,662 @@
+#!/usr/bin/env python3
+# ops-check version 22
+"""Hygiene checks shared by every project: `ops-check` from anywhere inside a repository.
+
+Vendored from ops bin/ops-check as tools/ops-check and run first in a project's check
+command, so the pre-commit hook, `just check`, and CI all run it.
+Vendored from https://github.com/khughitt/ops (bin/ops-check); never edit the copy, see tools/README.md.
+Standard library only.
+Prints one `path:line: message` per finding on stderr and exits 1 when there are any;
+exits 2 when it cannot run at all.
+
+- References: in the root README.md, AGENTS.md, and CLAUDE.md, backticks around a path
+  are a claim that it exists. A path with a slash resolves against the repository root;
+  a bare filename must be a tracked file somewhere in the tree; a registered project
+  prefix right before the backticks (ops `bin/tt`) resolves against that project, and
+  since Markdown wraps freely a reference opening a line takes the prefix from the end
+  of the line above; a `just recipe` must be a recipe in the justfile. Fenced and indented code is not
+  scanned. A destination or an example is written without backticks. A missing path git
+  ignores is still a finding, worded as unbuilt: make `just setup` produce it, or write
+  it without backticks. From a linked worktree, one that only the main checkout has
+  (its .worktrees) is named as such: setup cannot produce it there.
+- Conflicted copies: no tracked path may be a Dropbox conflicted copy.
+- Agent scratch: no tracked path may lie under a `.agents/` directory. The global ignore
+  keeps one out of `git add`; only `git add -f` gets past it, and only the index shows that.
+- Root source: tracked source files (.py, .js, .mjs, .cjs, .ts, .tsx, .rs, .go, .sh) must
+  not sit at the repository root; move them into the source tree (see code-organization.md).
+  Tool configuration a tool requires at the root is exempt by name pattern: build.rs,
+  conftest.py, *.config.js, *.config.mjs, *.config.cjs, *.config.ts. A repository declares
+  exceptions in its root `.ops-check.toml` under `root_sources_allowed`; an entry naming
+  a path not tracked at the repository root is a finding.
+- Machine layout: no tracked file may carry this machine's layout — the home directory,
+  the hostname, `WORK_ROOT`, a registered checkout or its parent directory (the sync root),
+  or a value listed under `banned` in `$XDG_CONFIG_HOME/ops/ops-check.toml` (a tracker
+  host, say). The values are read from the machine the check runs on, never written here:
+  this file is public in every project that vendors it. Home-relative paths and top-level
+  home symlinks to protected paths count too, in text files only (a short alias turns up by
+  chance in binary bytes); generic home conventions are not banned merely for starting
+  with `~/`. Matches are whole words (a tilde alias also continues through `.`, `-`, `+`,
+  `@`, `%`, `~` and `=`, so `~/x.bak` is a different name), one
+  finding per value per line, at most LAYOUT_LINES lines per file and then a count.
+  `tasks/*.md` is exempt (records are written only by tasks), and so, in any repository, is
+  `<prefix>/tasks/<prefix>-<hex>.md`, the per-project form of a records repository or work
+  overlay. A repository whose content is
+  host configuration by design lists the path prefixes that may carry the layout under
+  `layout_allowed` in a root `.ops-check.toml`; a malformed file exits 2.
+  `root_sources_allowed` in the same file exempts source files at the repository root.
+  A layout-bearing local task attachment may suppress mechanical values only after
+  `tasks attachments` verifies its live ledger and exact config/record/file bytes.
+  Explicit banned values remain checked using a separate scan. Clean and banned-only
+  attachments need no tracker query. Queries share five seconds and 1 MiB of captured
+  stdout/stderr per project; failed checks exit 2, negative rows annotate existing layout.
+- Adopted copies: a tracked `tools/` copy of an adopted contract (code-organization.md)
+  must be, as the working tree holds it, a version ops's default branch has landed: a
+  change to the contract lands in ops first and the project then runs `vendored adopt`.
+  Frozen copies (cli.toml, cli_surface.py, keys.toml) are not judged while per-project
+  surface files replace them. Ops is found through the tasks registry; where it is not
+  registered (CI, another host) the rule does not apply, and a registered ops without
+  origin/HEAD exits 2.
+"""
+import fnmatch
+import os
+import hashlib
+import json
+import selectors
+import shutil
+import signal
+import stat
+import time
+import pathlib
+import re
+import socket
+import subprocess
+import sys
+import tomllib
+
+DOCS = ("README.md", "AGENTS.md", "CLAUDE.md")
+BACKTICKED = re.compile(r"`([^`\n]+)`")
+# A token is a path when it is one shell word made of path characters and either
+# carries a slash or is a filename with one of the extensions below. Git refs, URLs,
+# home and variable paths are words with slashes that are not paths in this tree; a
+# scoped npm package (`@scope/name`) is a name, not a path; a dotted Python module
+# (`atoms.core`) is a name, which is why the extensions are a list and not a shape.
+PATH = re.compile(r"^[\w.+-]+(?:/[\w.@+-]+)*/?$")
+EXTENSIONS = ("md", "py", "toml", "json", "jsonl", "ts", "tsx", "js", "mjs", "cjs", "rs", "sh", "zsh",
+              "yml", "yaml", "txt", "kdl", "css", "html", "svg", "png", "csv", "xlsx", "lock", "cfg", "ini")
+FILENAME = re.compile(r"^[\w-][\w.-]*\.(" + "|".join(EXTENSIONS) + r")$")
+NOT_PATHS = ("origin/", "upstream/", "refs/")
+RECIPE = re.compile(r"^just ([a-z][\w-]*)$")
+JUSTFILE_RECIPE = re.compile(r"^([a-z][\w-]*)\s*(?:\+?\*?[\w ]*)?:(?!=)", re.MULTILINE)
+FENCE = re.compile(r"^\s*(```|~~~)")
+# The last word of a candidate prefix, without the punctuation that can precede it.
+WORD = re.compile(r"\w[\w-]*$")
+# A record: tasks/<any>.md in a project, or <prefix>/tasks/<prefix>-<hex6>.md in a records
+# repository or work overlay, whose directory is named for the prefix (the tasks grammar).
+TASK_RECORD = re.compile(r"^(?:tasks/[^/]+|([a-z][a-z0-9]{1,7})/tasks/\1-[0-9a-f]{6})\.md$")
+PROJECT_CONFIG = ".ops-check.toml"
+PROJECT_KEYS = ("layout_allowed", "root_sources_allowed")
+LAYOUT_LINES = 10
+SOURCE_SUFFIXES = (".py", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".rs", ".go", ".sh")
+ROOT_SOURCE_EXEMPT = ("build.rs", "conftest.py", "*.config.js", "*.config.mjs", "*.config.cjs", "*.config.ts")
+# Adopted contracts under tools/ -> their source in ops (ops bin/vendored's ADOPTED).
+ADOPTED = {
+    "code-organization.md": "docs/code-organization.md",
+}
+# A hostname that names no machine in particular is not layout.
+GENERIC_HOSTNAMES = ("localhost",)
+
+
+def fail(message):
+    sys.stderr.write(f"ops-check: {message}\n")
+    sys.exit(2)
+
+
+def git(root, *args, env=None):
+    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, env=env)
+    return result.stdout if result.returncode == 0 else None
+
+
+def foreign_git(root, *args):
+    """`git` on another repository: without the repository-local variables a hook inherits
+    (a linked worktree's hooks get GIT_DIR), which would point it back at this one."""
+    local = subprocess.run(["git", "rev-parse", "--local-env-vars"], capture_output=True,
+                           text=True, check=True).stdout.split()
+    return git(root, *args, env={k: v for k, v in os.environ.items() if k not in local})
+
+
+def repository_root(cwd):
+    top = git(cwd, "rev-parse", "--show-toplevel")
+    if top is None:
+        fail(f"{cwd} is not inside a git repository")
+    return pathlib.Path(top.strip())
+
+
+def registry(env):
+    """Registered project roots by prefix, from the tasks registry; empty when absent."""
+    config = pathlib.Path(env.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config")
+    path = config / "tasks" / "projects.toml"
+    if not path.is_file():
+        return {}
+    return {prefix: pathlib.Path(root) for prefix, root in tomllib.loads(path.read_text())["projects"].items()}
+
+
+def banned(env):
+    """Values the machine's `$XDG_CONFIG_HOME/ops/ops-check.toml` bans; empty when absent."""
+    config = pathlib.Path(env.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config")
+    path = config / "ops" / "ops-check.toml"
+    if not path.is_file():
+        return []
+    return string_list(path, "banned")
+
+
+def string_list(path, key):
+    """The list of non-empty strings under `key` in a TOML file that holds nothing else."""
+    try:
+        data = tomllib.loads(path.read_text())
+    except tomllib.TOMLDecodeError as error:
+        fail(f"{path}: {error}")
+    values = data.get(key)
+    if set(data) != {key} or not isinstance(values, list) or not all(isinstance(v, str) and v for v in values):
+        fail(f"{path}: expected exactly `{key} = [...]`, a list of non-empty strings")
+    return values
+
+
+def layout(env, projects, hostname, extra):
+    """This machine's layout as {value: what it is}: the strings no tracked file may carry.
+    A value's first description wins, so a home that is also a checkout's parent is the home."""
+    values = {}
+    values.setdefault(env.get("HOME") or str(pathlib.Path.home()), "the home directory")
+    if hostname not in GENERIC_HOSTNAMES:
+        values.setdefault(hostname, "the hostname")
+    if env.get("WORK_ROOT"):
+        values.setdefault(env["WORK_ROOT"].rstrip("/"), "WORK_ROOT")
+    for root in projects.values():
+        values.setdefault(str(root), "a registered checkout")
+    for root in projects.values():
+        values.setdefault(str(root.parent), "the parent of a registered checkout")
+    for value in extra:
+        values.setdefault(value, "banned by ops-check.toml")
+    home = pathlib.Path(env.get("HOME") or pathlib.Path.home())
+    try:
+        protected = [(pathlib.Path(value), what) for value, what in values.items()
+                     if what != "the home directory" and pathlib.Path(value).is_absolute() and value != "/"]
+        for path, what in protected:
+            if path != home and path.is_relative_to(home):
+                values.setdefault((pathlib.Path("~") / path.relative_to(home)).as_posix(), what)
+        protected = [(path.resolve(), what) for path, what in protected]
+        if protected:
+            aliases = [(pathlib.Path("~"), home.resolve())]
+            aliases += [(pathlib.Path("~") / path.name, path.resolve())
+                        for path in sorted(home.iterdir()) if path.is_symlink()]
+            for alias, target in aliases:
+                for path, what in protected:
+                    if path.is_relative_to(target):
+                        name = (alias / path.relative_to(target)).as_posix()
+                        if name != "~":
+                            values.setdefault(name, what)
+    except (OSError, RuntimeError) as error:
+        fail(f"cannot inspect home layout aliases: {error}")
+    return {value: what for value, what in values.items() if value not in ("", "/")}
+
+
+def project_config(root):
+    """Configuration in the repository's `.ops-check.toml`."""
+    path = pathlib.Path(root) / PROJECT_CONFIG
+    if not path.is_file():
+        return {key: () for key in PROJECT_KEYS}
+    try:
+        data = tomllib.loads(path.read_text())
+    except tomllib.TOMLDecodeError as error:
+        fail(f"{path}: {error}")
+    keys = set(data)
+    if not keys or not keys.issubset(PROJECT_KEYS):
+        allowed = ", ".join(f"`{k}`" for k in PROJECT_KEYS)
+        fail(f"{path}: expected one or more of {allowed}")
+    for key, values in data.items():
+        if not isinstance(values, list) or not all(isinstance(v, str) and v for v in values):
+            fail(f"{path}: expected `{key} = [...]`, a list of non-empty strings")
+    return {key: tuple(data.get(key, ())) for key in PROJECT_KEYS}
+
+
+def layout_allowed(root):
+    """Path prefixes the repository's `.ops-check.toml` allows to carry the layout."""
+    return project_config(root)["layout_allowed"]
+
+
+def scan_layout(raw, values, suppressible):
+    """The existing match/line-cap rules, plus uncapped query-selection evidence."""
+    def compile_values(selected):
+        alternation = "|".join(re.escape(v) + (r"(?![\w.+@%~=-])" if v.startswith("~/") else "")
+                               for v in sorted(selected, key=len, reverse=True))
+        return re.compile(rf"(?<!\w)(?:{alternation})(?!\w)") if alternation else None
+
+    selected = [v for v in values if not v.startswith("~/")] if b"\0" in raw[:8000] else values
+    pattern = compile_values(selected)
+    if pattern is None:
+        return [], False
+    findings, reported, mechanical = [], 0, False
+    for number, line in enumerate(raw.decode("utf-8", errors="replace").splitlines(), 1):
+        found = dict.fromkeys(m.group(0) for m in pattern.finditer(line))
+        mechanical |= bool(suppressible.intersection(found))
+        if not found:
+            continue
+        reported += 1
+        if reported <= LAYOUT_LINES:
+            findings.extend((number, f"machine layout: {value} ({values[value]})") for value in found)
+    if reported > LAYOUT_LINES:
+        findings.append((0, f"{reported - LAYOUT_LINES} more lines carry machine layout"))
+    return findings, mechanical
+
+
+ATTACHMENT_PATH = re.compile(r"^tasks/files/([a-z][a-z0-9]{1,7})-[0-9a-f]{6}/[^/]+$")
+SHA256 = re.compile(r"[0-9a-f]{64}")
+ATTACHMENT_SECONDS = 5
+ATTACHMENT_CAPTURE = 1024 * 1024
+
+
+def metadata(path):
+    """Identity, type, size and mtime; not ctime. A sync client (Dropbox) sets an xattr
+    shortly after each write, which moves ctime with no change to bytes or mtime. After the
+    eligibility query, attachment and record bytes are also bound by digest; the config and
+    directories by this tuple alone."""
+    try:
+        value = path.lstat()
+    except FileNotFoundError:
+        return None
+    return (value.st_dev, value.st_ino, value.st_mode, value.st_size, value.st_mtime_ns)
+
+
+def read_snapshot(path):
+    before = metadata(path)
+    if before is None or not stat.S_ISREG(before[2]):
+        raise ValueError(f"{path} is not a regular file")
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), "rb") as stream:
+        opened = os.fstat(stream.fileno())
+        if (opened.st_dev, opened.st_ino) != before[:2]:
+            raise ValueError(f"{path} was replaced")
+        raw = stream.read()
+    if metadata(path) != before:
+        raise ValueError(f"{path} changed during read")
+    return before, raw
+
+
+def attachment_project(root, path):
+    parts = path.split("/")
+    project, relative = root, path
+    if len(parts) == 5 and parts[0] not in (".", ".."):
+        project, relative = root / parts[0], "/".join(parts[1:])
+    match = ATTACHMENT_PATH.fullmatch(relative)
+    if match is None or (project != root and project.name != match[1]):
+        return None
+    directories = [project, project / "tasks", project / "tasks/files",
+                   project / relative.rsplit("/", 1)[0]]
+    states = [(directory, metadata(directory)) for directory in directories]
+    if any(value is None or not stat.S_ISDIR(value[2]) for _, value in states):
+        return None
+    config = metadata(project / "tasks/.config.toml")
+    if config is None or not stat.S_ISREG(config[2]):
+        return None
+    entry = metadata(project / relative)
+    if entry is None or not stat.S_ISREG(entry[2]):
+        return None
+    return project, relative, states
+
+
+def bounded_attachment_output(command, project, deadline, cap):
+    # Git hooks export routing variables that would otherwise reach a different tree.
+    local_git = {"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
+                 "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+                 "GIT_PREFIX", "GIT_GRAFT_FILE", "GIT_SHALLOW_FILE", "GIT_NAMESPACE",
+                 "GIT_IMPLICIT_WORK_TREE", "GIT_NO_REPLACE_OBJECTS",
+                 "GIT_REPLACE_REF_BASE", "GIT_INTERNAL_SUPER_PREFIX",
+                 "GIT_CONFIG", "GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT"}
+    env = {key: value for key, value in os.environ.items()
+           if key not in local_git and not key.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_"))}
+    with subprocess.Popen(command, cwd=project, env=env, stdin=subprocess.DEVNULL,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                          start_new_session=True, bufsize=0) as child:
+        selector = selectors.DefaultSelector()
+        output, captured = bytearray(), 0
+        selector.register(child.stdout, selectors.EVENT_READ)
+        selector.register(child.stderr, selectors.EVENT_READ)
+        try:
+            while selector.get_map():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise ValueError("five-second project deadline exceeded")
+                for event, _ in selector.select(remaining):
+                    chunk = os.read(event.fd, 65536)
+                    if not chunk:
+                        selector.unregister(event.fileobj)
+                        continue
+                    captured += len(chunk)
+                    if captured > cap:
+                        raise ValueError("combined 1 MiB project stdout/stderr limit exceeded")
+                    if event.fileobj is child.stdout:
+                        output.extend(chunk)
+            child.wait(timeout=max(0, deadline - time.monotonic()))
+            if child.returncode:
+                raise ValueError(f"tasks exited {child.returncode}; install a tasks build with attachments")
+            return bytes(output), captured
+        except BaseException:
+            try:
+                os.killpg(child.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            child.wait()
+            raise
+        finally:
+            selector.close()
+
+
+def query_attachments(project, paths, executable, deadline):
+    """One bounded project query, batching the exact paths under shared limits."""
+    rows, captured = {}, 0
+    try:
+        for start in range(0, len(paths), 128):
+            batch = paths[start:start + 128]
+            if time.monotonic() >= deadline:
+                raise ValueError("five-second project deadline exceeded")
+            _, config = read_snapshot(project / "tasks/.config.toml")
+            output, size = bounded_attachment_output(
+                [executable, "--json", "-C", str(project), "attachments", *batch],
+                project, deadline, ATTACHMENT_CAPTURE - captured)
+            captured += size
+            response = json.loads(output)
+            prefix = ATTACHMENT_PATH.fullmatch(batch[0])[1]
+            if any(ATTACHMENT_PATH.fullmatch(path) is None or ATTACHMENT_PATH.fullmatch(path)[1] != prefix for path in batch):
+                raise ValueError("attachment owner prefix mismatch")
+            if not isinstance(response, dict) or type(response.get("version")) is not int or response["version"] != 1:
+                raise ValueError("expected attachment protocol version 1")
+            if response.get("records") != str(project.resolve()) or response.get("prefix") != prefix:
+                raise ValueError("records directory or prefix mismatch")
+            config_hash = response.get("config_sha256")
+            if not isinstance(config_hash, str) or SHA256.fullmatch(config_hash) is None or config_hash != hashlib.sha256(config).hexdigest():
+                raise ValueError("configuration digest mismatch")
+            attachments = response.get("attachments")
+            if not isinstance(attachments, list) or [row.get("path") if isinstance(row, dict) else None for row in attachments] != batch:
+                raise ValueError("missing, extra, duplicate or reordered attachment rows")
+            for row in attachments:
+                eligible, problems = row.get("eligible"), row.get("problems")
+                if type(eligible) is not bool or not isinstance(problems, list):
+                    raise ValueError("invalid eligibility/problems types")
+                if eligible:
+                    if problems:
+                        raise ValueError("positive row has problems")
+                    if attachment_project(project, row["path"]) is None:
+                        raise ValueError("unsafe positive attachment storage")
+                    for key, path in [("file_sha256", project / row["path"]),
+                                      ("record_sha256", project / "tasks" / (row["path"].split("/")[2] + ".md"))]:
+                        digest = row.get(key)
+                        if not isinstance(digest, str) or SHA256.fullmatch(digest) is None:
+                            raise ValueError(f"invalid {key}")
+                        if hashlib.sha256(read_snapshot(path)[1]).hexdigest() != digest:
+                            raise ValueError(f"{key} mismatch")
+                else:
+                    if "file_sha256" in row or "record_sha256" in row or not problems:
+                        raise ValueError("contradictory negative row")
+                    for problem in problems:
+                        if not isinstance(problem, dict) or problem.get("severity") not in ("error", "warning") or not all(
+                            isinstance(problem.get(key), str) and problem[key] for key in ("kind", "file", "detail")):
+                            raise ValueError("invalid attachment problem")
+                rows[row["path"]] = row
+            if time.monotonic() > deadline:
+                raise ValueError("five-second project deadline exceeded")
+        return rows
+    except (OSError, ValueError, TypeError, subprocess.TimeoutExpired) as error:
+        fail(f"attachment eligibility for {project}: {error}; keep raw evidence and attach a portable derivative until the executing checker accepts it")
+
+
+def layout_findings(root, files, values, explicit_banned):
+    """Scan first; only live local attachments may suppress mechanical layout."""
+    allowed = layout_allowed(root)
+    suppressible = set(values) - set(explicit_banned)
+    banned_values = {value: values.get(value, "banned by ops-check.toml") for value in explicit_banned}
+    scans, groups = {}, {}
+    for path in files:
+        if TASK_RECORD.match(path) or path.startswith(allowed) or not (root / path).is_file():
+            continue
+        before = metadata(root / path)
+        raw = (root / path).read_bytes()
+        found, mechanical = scan_layout(raw, values, suppressible)
+        scans[path] = found
+        candidate = attachment_project(root, path) if mechanical else None
+        if candidate is not None:
+            project, relative, directories = candidate
+            config = project / "tasks/.config.toml"
+            record = project / "tasks" / (relative.split("/")[2] + ".md")
+            groups.setdefault(project, []).append((path, relative, raw, before, directories,
+                                                   metadata(config), metadata(record)))
+    executable = shutil.which("tasks") if groups else None
+    if groups and executable is None:
+        fail("attachment eligibility requires tasks with the attachments command on PATH; retain raw evidence and use a portable derivative")
+    hint = ("if a concurrent tasks write or check was running in the checkout, "
+            "let it settle and rerun tasks commit or the check; otherwise retain "
+            "raw evidence and attach a portable derivative")
+    for project, candidates in groups.items():
+        rows = query_attachments(project, [entry[1] for entry in candidates], executable,
+                                 time.monotonic() + ATTACHMENT_SECONDS)
+        for path, relative, raw, before, directories, config_before, record_before in candidates:
+            row = rows[relative]
+            if row["eligible"]:
+                subject = project
+                try:
+                    config = project / "tasks/.config.toml"
+                    if metadata(config) != config_before:
+                        raise ValueError("configuration changed during eligibility query")
+                    subject = path
+                    entry = metadata(root / path)
+                    if entry is None or not stat.S_ISREG(entry[2]):
+                        raise ValueError("attachment storage became unsafe")
+                    record = project / "tasks" / (relative.split("/")[2] + ".md")
+                    if metadata(record) != record_before:
+                        raise ValueError("owner record changed during eligibility query")
+                    current, contents = read_snapshot(root / path)
+                    if current != before or contents != raw or row["file_sha256"] != hashlib.sha256(raw).hexdigest():
+                        raise ValueError("attachment differs from scanned buffer")
+                    if row["record_sha256"] != hashlib.sha256(read_snapshot(record)[1]).hexdigest():
+                        raise ValueError("owner record digest mismatch")
+                    subject = project
+                    for directory, state in directories:
+                        if metadata(directory) != state:
+                            raise ValueError(f"{directory} changed during eligibility query")
+                    if attachment_project(root, path) is None:
+                        raise ValueError("attachment storage became unsafe")
+                except (OSError, ValueError) as error:
+                    fail(f"attachment eligibility for {subject}: {error}; {hint}")
+                scans[path] = scan_layout(raw, banned_values, set())[0]
+            else:
+                mechanical_messages = {f"machine layout: {value} ({values[value]})" for value in suppressible}
+                first = next((n for n, (_, message) in enumerate(scans[path]) if message in mechanical_messages), len(scans[path]) - 1)
+                line, message = scans[path][first]
+                details = "; ".join(f"{p['kind']} ({p['severity']}): {p['detail']}" for p in row["problems"])
+                scans[path][first] = line, f"{message}; attachment eligibility: {details}; retain raw evidence and attach a portable derivative"
+    for path, found in scans.items():
+        for line, message in found:
+            yield path, line, message
+
+
+def root_source_findings(root, files):
+    """(path, 0, message) for tracked source files sitting at the repository root
+    and stale or invalid root_sources_allowed entries in .ops-check.toml."""
+    allowed = project_config(root)["root_sources_allowed"]
+    root_files = {path for path in files if "/" not in path}
+    for name in allowed:
+        if "/" in name or name not in root_files:
+            yield PROJECT_CONFIG, 0, f"root_sources_allowed lists {name}, which is not a tracked file at the repository root"
+    allowed_set = set(allowed)
+    for path in files:
+        if "/" in path:
+            continue
+        suffix = pathlib.Path(path).suffix
+        if suffix in SOURCE_SUFFIXES and not any(fnmatch.fnmatchcase(path, pat) for pat in ROOT_SOURCE_EXEMPT) and path not in allowed_set:
+            yield path, 0, "source file at the repository root; move it into the source tree (see code-organization.md)"
+
+
+def landed_blobs(ops, source):
+    """Every blob of `source` that ops's default branch has carried: each commit's change to
+    it (a merge's against its first parent) and the tip's."""
+    head = foreign_git(ops, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
+    if head is None:
+        fail(f"{ops}: origin/HEAD is not set, so ops's default branch is unknown;"
+             " run `git remote set-head origin --auto` there")
+    default = head.strip().removeprefix("origin/")
+    log = foreign_git(ops, "log", "--full-history", "--no-renames", "--raw", "--no-abbrev",
+              "--diff-merges=first-parent", "--format=", f"refs/heads/{default}", "--", source)
+    tip = foreign_git(ops, "ls-tree", f"refs/heads/{default}", "--", source)
+    if log is None or tip is None:
+        fail(f"{ops}: cannot read the history of {source} on {default}")
+    blobs = {line.split()[3] for line in log.splitlines() if line.startswith(":")}
+    blobs.update(line.split()[2] for line in tip.splitlines())
+    return default, blobs
+
+
+def adopted_findings(root, files, projects):
+    """(path, 0, message) for each tracked adopted copy no landed version of its source matches."""
+    ops = projects.get("ops")
+    if ops is None or ops.resolve() == root.resolve():
+        return
+    for name, source in ADOPTED.items():
+        path = f"tools/{name}"
+        if path not in files:
+            continue
+        default, blobs = landed_blobs(ops, source)
+        blob = git(root, "hash-object", "--", path)
+        if blob is None:
+            fail(f"cannot hash {path}")
+        if blob.strip() not in blobs:
+            yield path, 0, (f"matches no version of ops {source} landed on {default} (edited in place?);"
+                            f" land the change in ops first, then run `vendored adopt {name}` here")
+
+
+def tracked(root, query=git):
+    return (query(root, "ls-files", "-z") or "").split("\0")[:-1]
+
+
+def recipes(root):
+    """Recipe names in the justfile, or None when there is no justfile to claim against."""
+    for name in ("justfile", "Justfile"):
+        if (root / name).is_file():
+            return name, set(JUSTFILE_RECIPE.findall((root / name).read_text()))
+    return None, None
+
+
+def prose_lines(text):
+    """(line number, line) for every line outside fenced and indented code."""
+    fence = None
+    for number, line in enumerate(text.splitlines(), 1):
+        opened = FENCE.match(line)
+        if fence is None and opened:
+            fence = opened.group(1)
+        elif fence is not None and opened and opened.group(1) == fence:
+            fence = None
+        elif fence is None and not line.startswith(("    ", "\t")):
+            yield number, line
+
+
+def classify(token):
+    """'recipe', 'path', 'filename', or None for a backticked token."""
+    if RECIPE.match(token):
+        return "recipe"
+    if PATH.match(token) and "/" in token and not token.startswith(NOT_PATHS):
+        return "path"
+    if FILENAME.match(token):
+        return "filename"
+    return None
+
+
+def project_prefix(before, previous):
+    """The registered project a reference is qualified by, or None. Markdown wraps
+    freely, so a reference opening a line takes the previous prose line's last word;
+    a list item or heading is a new block and has text of its own before the backticks."""
+    candidate = previous if not before.strip() else before
+    found = WORD.search(candidate.rstrip())
+    return found.group(0) if found else None
+
+
+def main_checkout(root, query=git):
+    """The main worktree of the repository at root, resolved; None outside git."""
+    listing = query(root, "worktree", "list", "--porcelain")
+    return pathlib.Path(listing.splitlines()[0].removeprefix("worktree ")).resolve() if listing else None
+
+
+def basenames_of(root, query=git):
+    return {pathlib.PurePosixPath(f).name for f in tracked(root, query)}
+
+
+def references(root, projects, basenames, doc):
+    """Findings for one document: (path, line, message). A reference qualified by a
+    registered project is checked against that project's files and justfile only."""
+    owners = {root: (basenames, recipes(root))}
+    text = (root / doc).read_text()
+    previous = ""
+    for number, line in prose_lines(text):
+        for found in BACKTICKED.finditer(line):
+            token = found.group(1)
+            kind = classify(token)
+            if kind is None:
+                continue
+            before = line[:found.start()]
+            separated = not before.strip() or before[-1] == " "
+            prefix = project_prefix(before, previous) if separated else None
+            base, where = (projects[prefix], f" in {prefix}") if prefix in projects else (root, "")
+            query = foreign_git if base.resolve() != root.resolve() else git
+            if base not in owners:
+                owners[base] = (basenames_of(base, query), recipes(base))
+            names_here, (justfile, names) = owners[base]
+            if kind == "recipe":
+                if names is not None and RECIPE.match(token).group(1) not in names:
+                    yield doc, number, f"`{token}` is not a recipe in {justfile}{where}"
+                continue
+            if kind == "filename":
+                if token not in names_here:
+                    yield doc, number, f"`{token}` is not a tracked file{where}"
+                continue
+            if (base / token).exists():
+                continue
+            if query(base, "check-ignore", "-q", token) is None:
+                yield doc, number, f"`{token}` does not exist{where}"
+                continue
+            main = main_checkout(base, query)
+            if main is not None and main != base.resolve() and (main / token).exists():
+                yield doc, number, (f"`{token}` is git-ignored{where} and exists only in the main checkout,"
+                                    " not this worktree: write it without backticks")
+            else:
+                yield doc, number, (f"`{token}` is git-ignored{where} and was not produced: "
+                                    "make `just setup` produce it, or write it without backticks")
+        previous = line
+
+
+def findings(root, projects, values, explicit_banned):
+    """Every finding in the repository at root, as (path, line, message); line 0 when
+    the finding is about a path rather than a place in a document."""
+    files = tracked(root)
+    basenames = {pathlib.PurePosixPath(f).name for f in files}
+    for doc in DOCS:
+        if (root / doc).is_file():
+            yield from references(root, projects, basenames, doc)
+    for path in files:
+        if "conflicted copy" in path:
+            yield path, 0, "Dropbox conflicted copy is tracked"
+        if path.startswith(".agents/") or "/.agents/" in path:
+            yield path, 0, "agent scratch under .agents/ is tracked"
+    yield from layout_findings(root, files, values, explicit_banned)
+    yield from root_source_findings(root, files)
+    yield from adopted_findings(root, set(files), projects)
+
+
+def main():
+    root = repository_root(pathlib.Path(os.getcwd()))
+    projects = registry(os.environ)
+    explicit_banned = banned(os.environ)
+    values = layout(os.environ, projects, socket.gethostname(), explicit_banned)
+    count = 0
+    for path, line, message in findings(root, projects, values, explicit_banned):
+        where = f"{path}:{line}" if line else path
+        sys.stderr.write(f"{where}: {message}\n")
+        count += 1
+    return 1 if count else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -17,5 +17,8 @@ authority = ["docs/setup.md", "docs/development.md", "docs/desktop-themes.md"]
 # Directories with their own identity.toml, README.md, and AGENTS.md.
 subsystems = []
 
+[code]
+standard = 1
+
 [documents]
 standard = 1

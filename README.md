@@ -46,7 +46,7 @@ full verification, portable CI and its limits.
 - `shell/`, `nvim/`, `kitty/`, `ghostty/`, `git/`, `tmux.conf` — shell, editor, terminal and Git configuration; shell sources hold the alias/function catalogue.
 - `niri/`, `noctalia/`, `prism/`, `wali/`, `systemd/` — desktop configuration, per-host theme inputs and service sources.
 - `cheatsheets/` — functional command references, opened through shell helpers.
-- `docs/` — current subject references; `tests/` and `tools/` hold verification and vendored shared tooling.
+- `docs/` — current subject references; `tests/` holds verification, `scripts/` the repository's gates and maintenance scripts, and `tools/` vendored shared tooling.
 
 Neovim's science-project Markdown integration loads `~/d/science-md.nvim` as an
 external plugin checkout. Its implementation and development history belong there;

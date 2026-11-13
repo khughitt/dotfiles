@@ -1,0 +1,46 @@
+# ops-check exceptions for the dotfiles (see tools/ops-check and tools/code-organization.md).
+
+# The documented bootstrap entry: a fresh host runs `bash setup.sh` from the checkout root
+# (docs/setup.md), so it stays at the root rather than moving into scripts/.
+root_sources_allowed = ["setup.sh"]
+
+# The dotfiles are host configuration by design: they create the checkout layout,
+# name the hosts they configure, and link per-host state. New top-level paths and files
+# not listed here still receive the machine-layout check.
+layout_allowed = [
+  # Per-application and per-host configuration read literally by the applications.
+  "bash_profile",
+  "bashrc",
+  "zshenv",
+  "zshrc",
+  "ripgreprc",
+  "git/",
+  "glow/",
+  "hostkit/",
+  "hosts/",
+  "lit-walk/",
+  "niri/",
+  "noctalia/",
+  "nvim/",
+  "opencode/",
+  "papis/",
+  "prism/",
+  "shell/",
+  "systemd/",
+  "wali/",
+  # Installer, health and packing policy: they set up and verify the layout above.
+  "setup.sh",
+  "bin/dotfiles-health",
+  "lib/git-packing-policy.py",
+  "scripts/agent-session-smoke.py",
+  # Operator references that describe the layout the dotfiles create.
+  "README.md",
+  "docs/dropbox-git-index.md",
+  "docs/fresh-install-hardening.md",
+  "docs/mindful-runtime.md",
+  "docs/setup.md",
+  # Fixtures that model the configured hosts and checkout layout.
+  "tests/agent_sessions_test.py",
+  "tests/bar1_guard_test.py",
+  "tests/setup_and_health.zsh",
+]

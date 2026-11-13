@@ -36,7 +36,7 @@ if [[ -n "${EVIDENCE_DIR:-}" ]]; then
 fi
 
 nvim_case() {
-  env -i "${nvim_env[@]}" python3 "${repo_root}/tools/test-suite.py" phase "$@"
+  env -i "${nvim_env[@]}" python3 "${repo_root}/scripts/test-suite.py" phase "$@"
 }
 
 "${repo_root}/bin/dotfiles-check"
