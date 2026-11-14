@@ -597,7 +597,7 @@ fi
 unset wali_config
 
 hostkit_scan_root=""
-if hostkit_cfg_json=$(WORKTREE_SCAN_ROOT="" python3 "${HOSTKIT_ROOT}/bin/hostkit_config.py" --json 2>/dev/null); then
+if hostkit_cfg_json=$(WORKTREE_SCAN_ROOT="" python3 "${HOSTKIT_ROOT}/bin/hostkit-config" --json 2>/dev/null); then
     hostkit_scan_root=$(python3 -c 'import sys, json; print(json.load(sys.stdin).get("scan_root") or "")' <<<"$hostkit_cfg_json" 2>/dev/null)
     if [[ -z "$hostkit_scan_root" ]]; then
         fail "hostkit storage.sync_root is empty or could not be resolved"
@@ -609,8 +609,8 @@ if hostkit_cfg_json=$(WORKTREE_SCAN_ROOT="" python3 "${HOSTKIT_ROOT}/bin/hostkit
         pass "hostkit storage.sync_root matches WORKTREE_SCAN_ROOT"
     fi
 else
-    hostkit_cfg_err=$(WORKTREE_SCAN_ROOT="" python3 "${HOSTKIT_ROOT}/bin/hostkit_config.py" --json 2>&1 || true)
-    fail "hostkit_config.py failed: ${hostkit_cfg_err}"
+    hostkit_cfg_err=$(WORKTREE_SCAN_ROOT="" python3 "${HOSTKIT_ROOT}/bin/hostkit-config" --json 2>&1 || true)
+    fail "hostkit-config failed: ${hostkit_cfg_err}"
 fi
 unset hostkit_cfg_json hostkit_scan_root
 

@@ -178,8 +178,13 @@ if args.subcmd == "show":
     cand = os.environ.get("REPO_HOSTKIT_BUDGET", "")
     if cand and os.path.isfile(cand):
         try:
-            test_loader = importlib.machinery.SourceFileLoader("host_budget_real", cand)
-            test_mod = test_loader.load_module()
+            src_dir = pathlib.Path(cand).resolve().parents[1] / "src"
+            if (src_dir / "hostkit" / "budget.py").is_file():
+                sys.path.insert(0, str(src_dir))
+                from hostkit import budget as test_mod
+            else:
+                test_loader = importlib.machinery.SourceFileLoader("host_budget_real", cand)
+                test_mod = test_loader.load_module()
             if hasattr(test_mod, "load_policy"):
                 mod = test_mod
         except Exception:
@@ -341,7 +346,10 @@ seed_external_checkouts() {
     local hostkit_src="${HOSTKIT_SRC:-$real_hostkit_src}"
     if [[ -n "$hostkit_src" && -d "$hostkit_src" ]]; then
       cp "${hostkit_src}/install.toml" "${tmp}/home/d/hostkit/install.toml"
-      for b in hostkit_config.py hostkit-links work-link host-load host-drift; do
+      if [[ -d "${hostkit_src}/src" ]]; then
+        cp -R "${hostkit_src}/src" "${tmp}/home/d/hostkit/src"
+      fi
+      for b in hostkit-config worktree hostkit-links work-link host-load host-drift; do
         if [[ -f "${hostkit_src}/bin/${b}" ]]; then
           cp "${hostkit_src}/bin/${b}" "${tmp}/home/d/hostkit/bin/${b}"
           chmod +x "${tmp}/home/d/hostkit/bin/${b}"
@@ -353,6 +361,7 @@ seed_external_checkouts() {
       cat > "${tmp}/home/d/hostkit/install.toml" <<'EOF'
 [links]
 "~/.local/bin/work-link" = "bin/work-link"
+"~/.local/bin/worktree" = "bin/worktree"
 "~/.local/bin/host-budget" = "bin/host-budget"
 "~/.local/bin/host-load" = "bin/host-load"
 "~/.local/bin/host-drift" = "bin/host-drift"
@@ -528,7 +537,7 @@ if args.apply:
 sys.exit(0)
 EOF
       chmod +x "${tmp}/home/d/hostkit/bin/hostkit-links"
-      cat > "${tmp}/home/d/hostkit/bin/hostkit_config.py" <<'EOF'
+      cat > "${tmp}/home/d/hostkit/bin/hostkit-config" <<'EOF'
 #!/usr/bin/env python3
 import argparse
 import json
@@ -564,14 +573,16 @@ if args.json:
 else:
     print(scan_root or "")
 EOF
-      chmod +x "${tmp}/home/d/hostkit/bin/hostkit_config.py"
+      chmod +x "${tmp}/home/d/hostkit/bin/hostkit-config"
       touch "${tmp}/home/d/hostkit/bin/work-link" \
+            "${tmp}/home/d/hostkit/bin/worktree" \
             "${tmp}/home/d/hostkit/bin/host-budget" \
             "${tmp}/home/d/hostkit/bin/host-load" \
             "${tmp}/home/d/hostkit/bin/host-drift" \
             "${tmp}/home/d/hostkit/systemd/user/work-link.service" \
             "${tmp}/home/d/hostkit/systemd/user/work-link.timer"
       chmod +x "${tmp}/home/d/hostkit/bin/work-link" \
+               "${tmp}/home/d/hostkit/bin/worktree" \
                "${tmp}/home/d/hostkit/bin/host-budget" \
                "${tmp}/home/d/hostkit/bin/host-load" \
                "${tmp}/home/d/hostkit/bin/host-drift"
