@@ -129,12 +129,11 @@ def test_setup_keeps_yazi_generated_flavor_outside_repo(tmp_path: Path) -> None:
     hostkit_src = Path(hostkit_env) if hostkit_env else Path(os.environ.get("HOME", "")) / "d/hostkit"
     if not hostkit_src.is_dir():
         hostkit_src = ROOT.parent / "hostkit"
-    if (hostkit_src / "src").is_dir():
-        shutil.copytree(
-            hostkit_src / "src",
-            hostkit_dir / "src",
-            ignore=shutil.ignore_patterns("__pycache__"),
-        )
+    shutil.copytree(
+        hostkit_src / "src",
+        hostkit_dir / "src",
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
     shutil.copy2(hostkit_src / "bin/hostkit-links", hostkit_dir / "bin/hostkit-links")
     shutil.copy2(hostkit_src / "install.toml", hostkit_dir / "install.toml")
     for stub in ("work-link", "worktree", "host-budget", "host-load", "host-drift"):

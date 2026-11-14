@@ -151,7 +151,6 @@ EOF
     cat > "${tmp}/bin/host-budget" <<'EOF'
 #!/usr/bin/env python3
 import argparse
-import importlib.machinery
 import os
 import pathlib
 import sys
@@ -179,12 +178,8 @@ if args.subcmd == "show":
     if cand and os.path.isfile(cand):
         try:
             src_dir = pathlib.Path(cand).resolve().parents[1] / "src"
-            if (src_dir / "hostkit" / "budget.py").is_file():
-                sys.path.insert(0, str(src_dir))
-                from hostkit import budget as test_mod
-            else:
-                test_loader = importlib.machinery.SourceFileLoader("host_budget_real", cand)
-                test_mod = test_loader.load_module()
+            sys.path.insert(0, str(src_dir))
+            from hostkit import budget as test_mod
             if hasattr(test_mod, "load_policy"):
                 mod = test_mod
         except Exception:
@@ -346,9 +341,7 @@ seed_external_checkouts() {
     local hostkit_src="${HOSTKIT_SRC:-$real_hostkit_src}"
     if [[ -n "$hostkit_src" && -d "$hostkit_src" ]]; then
       cp "${hostkit_src}/install.toml" "${tmp}/home/d/hostkit/install.toml"
-      if [[ -d "${hostkit_src}/src" ]]; then
-        cp -R "${hostkit_src}/src" "${tmp}/home/d/hostkit/src"
-      fi
+      cp -R "${hostkit_src}/src" "${tmp}/home/d/hostkit/src"
       for b in hostkit-config worktree hostkit-links work-link host-load host-drift; do
         if [[ -f "${hostkit_src}/bin/${b}" ]]; then
           cp "${hostkit_src}/bin/${b}" "${tmp}/home/d/hostkit/bin/${b}"
