@@ -281,7 +281,7 @@ child_env() {
       NOCTALIA_TEST_THEME_MODE NOCTALIA_TEST_THEME_MODE_STATUS \
       NOCTALIA_TEST_TEMPLATES_APPLY_STATUS NOCTALIA_WALLPAPER_PATH \
       PRISM_DOCTOR_LOG PRISM_DOCTOR_STATUS PRISM_REQUIREMENTS_STATUS PRISM_TEST_HOSTNAME \
-      TASKS_STUB_MODE; do
+      TASKS_STUB_MODE MINDFUL_OWNER_LOG MINDFUL_OWNER_STATUS; do
     if (( ${+parameters[$name]} )); then
       reply+=("${name}=${(P)name}")
     fi
@@ -342,7 +342,7 @@ seed_external_checkouts() {
     if [[ -n "$hostkit_src" && -d "$hostkit_src" ]]; then
       cp "${hostkit_src}/install.toml" "${tmp}/home/d/hostkit/install.toml"
       cp -R "${hostkit_src}/src" "${tmp}/home/d/hostkit/src"
-      for b in hostkit-config worktree hostkit-links work-link host-load host-drift; do
+      for b in hostkit-config worktree hostkit-links work-link host-load host-drift git-index-retention git-index-health; do
         if [[ -f "${hostkit_src}/bin/${b}" ]]; then
           cp "${hostkit_src}/bin/${b}" "${tmp}/home/d/hostkit/bin/${b}"
           chmod +x "${tmp}/home/d/hostkit/bin/${b}"
@@ -666,11 +666,11 @@ run_health() {
 }
 
 prepare_health_fixture() {
-  local tmp="$1"
+  local tmp="$1" output
 
-  run_setup "$tmp" --link-only --headless >/dev/null
-  run_setup "$tmp" --link-only --only app-config >/dev/null
-  run_setup "$tmp" --link-only --only noctalia-plugins >/dev/null
+  output=$(run_setup "$tmp" --link-only --headless 2>&1) || fail "health fixture setup failed: $output"
+  output=$(run_setup "$tmp" --link-only --only app-config 2>&1) || fail "health fixture app-config failed: $output"
+  output=$(run_setup "$tmp" --link-only --only noctalia-plugins 2>&1) || fail "health fixture plugins failed: $output"
 }
 
 test_setup_and_health_install_safe_noctalia_stubs() {
@@ -1162,8 +1162,7 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "$(readlink "${tmp}/config/systemd/user/niri.service.d/stop-timeout.conf")" == \
       "${repo_root}/systemd/user/niri.service.d/stop-timeout.conf" ]] || \
     fail "expected niri stop-timeout override to point into the repository"
-  for unit in familiar-reap.service familiar-reap.timer mindful-web.service mindful-backup.service mindful-backup.timer \
-      nm-wired-autoconnect.service; do
+  for unit in familiar-reap.service familiar-reap.timer nm-wired-autoconnect.service; do
     [[ -L "${tmp}/config/systemd/user/${unit}" ]] || \
       fail "expected linked ${unit}"
     [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
@@ -1994,13 +1993,13 @@ test_dotfiles_health_reports_retention_prepared_beside_unrelated_failures() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   prepare_retention_health_fixture "$tmp" disabled
-  rm "${tmp}/config/systemd/user/mindful-web.service"
+  rm "${tmp}/config/systemd/user/familiar-reap.service"
 
   set +e
   output=$(run_health "$tmp" 2>&1)
   exit_status=$?
   set -e
-  (( exit_status != 0 )) || fail "health accepted a missing mindful-web link"
+  (( exit_status != 0 )) || fail "health accepted a missing familiar-reap link"
   [[ "$output" == *"prepared, awaiting host approval: git-index-retention.timer"* ]] || \
     fail "an unrelated failure hid the retention state: ${output}"
 }
@@ -3010,23 +3009,8 @@ test_dotfiles_health_rejects_symlinked_opencode_local() {
     fail "health did not explain symlinked opencode.local"
 }
 
-test_mindful_health_rejects_v3_revival_after_activation() {
-  local tmp output rc
-  tmp=$(make_tmpdir)
-  register_tmp_cleanup "$tmp"
-  prepare_health_fixture "$tmp"
-  mkdir -p "${tmp}/home/.local/share/mindful/releases/test"
-  ln -s releases/test "${tmp}/home/.local/share/mindful/current"
-  mkdir -p "${tmp}/config/systemd/user/graphical-session.target.wants"
-  ln -s "${repo_root}/systemd/user/mindful-docker.service" \
-    "${tmp}/config/systemd/user/graphical-session.target.wants/mindful-docker.service"
-  rc=0
-  output=$(run_health "$tmp" --skip-systemd 2>&1) || rc=$?
-  (( rc != 0 )) || fail "health accepted enabled v3 after v6 activation"
-  [[ "$output" == *"mindful-docker.service"* ]] || fail "health did not name v3 revival"
-}
 
-test_tmp_cleanup_runs_only_at_process_exit
+
 test_git_packing_setup_is_scoped_idempotent_and_dry_run_safe() {
   local tmp generated
   tmp=$(make_tmpdir)
@@ -3464,6 +3448,137 @@ EOF
   done
 }
 
+
+prepare_mindful_owner_fixture() {
+  local tmp="$1" command
+  prepare_health_fixture "$tmp"
+  [[ -d "${tmp}/home/bin" && ! -L "${tmp}/home/bin" ]] || fail "fixture bin must be a private real directory"
+  for command in mindful mindful-tui mindful-release mindful-backup.mjs; do
+    rm -f "${tmp}/home/bin/$command"
+  done
+  mkdir -p "${tmp}/config/systemd/user/timers.target.wants"
+  ln -s "${tmp}/home/d/wali/systemd/wali-rotate.timer" "${tmp}/config/systemd/user/timers.target.wants/wali-rotate.timer"
+  ln -s "${tmp}/home/d/hostkit/systemd/user/work-link.timer" "${tmp}/config/systemd/user/timers.target.wants/work-link.timer"
+  cat > "${tmp}/bin/systemctl" <<'EOF'
+#!/usr/bin/env bash
+[[ "${1:-}" == --user ]] || exit 64
+shift
+if [[ -n "${SYSTEMCTL_LOG:-}" ]]; then printf '%s\n' "$*" >> "$SYSTEMCTL_LOG"; fi
+case "${1:-}" in
+  is-enabled)
+    [[ "$*" != *git-index-* && "$*" != *mindful-docker* ]] || exit 1
+    printf 'enabled\n' ;;
+  is-active) exit 1 ;;
+  list-timers) exit 0 ;;
+  *) printf 'unexpected fake systemctl query: %s\n' "$*" >&2; exit 64 ;;
+esac
+EOF
+  chmod +x "${tmp}/bin/systemctl"
+  mkdir -p "${tmp}/owner/bin"
+  cat > "${tmp}/owner/bin/mindful" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$MINDFUL_OWNER_LOG"
+[[ "$*" == "runtime check --json" ]] || exit 64
+if [[ "${MINDFUL_OWNER_STATUS:-0}" == 0 ]]; then
+  printf '{"ok":true,"status":"inactive","problems":[]}\n'
+else
+  printf '{"ok":false,"status":"failed","problems":["fixture mismatch"]}\n'
+fi
+exit "${MINDFUL_OWNER_STATUS:-0}"
+EOF
+  chmod +x "${tmp}/owner/bin/mindful"
+  ln -s "${tmp}/owner/bin/mindful" "${tmp}/home/bin/mindful"
+}
+
+test_mindful_owner_delegates_to_exact_home_launcher() {
+  local tmp output
+  tmp=$(make_tmpdir); register_tmp_cleanup "$tmp"
+  prepare_mindful_owner_fixture "$tmp"
+  printf '#!/bin/sh\nexit 99\n' > "${tmp}/bin/mindful"
+  chmod +x "${tmp}/bin/mindful"
+  output=$(MINDFUL_OWNER_LOG="${tmp}/owner.log" run_health "$tmp" --skip-noctalia-ipc 2>&1) || fail "healthy owner delegation failed: $output"
+  [[ -f "${tmp}/owner.log" && "$(<"${tmp}/owner.log")" == 'runtime check --json' ]] || fail "health did not delegate exactly once to HOME/bin/mindful"
+}
+
+test_mindful_owner_failure_is_a_health_failure() {
+  local tmp output rc=0
+  tmp=$(make_tmpdir); register_tmp_cleanup "$tmp"
+  prepare_mindful_owner_fixture "$tmp"
+  output=$(MINDFUL_OWNER_LOG="${tmp}/owner.log" MINDFUL_OWNER_STATUS=1 run_health "$tmp" --skip-noctalia-ipc 2>&1) || rc=$?
+  (( rc != 0 )) || fail "health ignored the owner runtime failure"
+  [[ -f "${tmp}/owner.log" ]] || fail "health did not invoke the owner inspector"
+  [[ "$output" == *'Mindful runtime check failed'* ]] || fail "health lost the owner failure: $output"
+}
+
+test_mindful_owner_skip_systemd_keeps_launcher_probe() {
+  local tmp output rc=0
+  tmp=$(make_tmpdir); register_tmp_cleanup "$tmp"
+  prepare_mindful_owner_fixture "$tmp"
+  output=$(MINDFUL_OWNER_LOG="${tmp}/owner.log" SYSTEMCTL_LOG="${tmp}/systemctl.log" run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1) || fail "valid owner launcher failed under skip: $output"
+  [[ ! -e "${tmp}/owner.log" && ! -e "${tmp}/systemctl.log" ]] || fail "skip route invoked a bus-dependent check"
+  rm "${tmp}/owner/bin/mindful"
+  output=$(MINDFUL_OWNER_LOG="${tmp}/owner.log" SYSTEMCTL_LOG="${tmp}/systemctl.log" run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1) || rc=$?
+  (( rc != 0 )) || fail "skip route accepted a dangling Mindful launcher"
+  [[ "$output" == *'Mindful launcher'* ]] || fail "skip route did not identify the broken launcher: $output"
+  [[ ! -e "${tmp}/owner.log" && ! -e "${tmp}/systemctl.log" ]] || fail "broken skip route called an inspector"
+}
+
+test_mindful_partial_markers_cannot_hide_a_missing_launcher() {
+  local tmp marker output rc
+  tmp=$(make_tmpdir); register_tmp_cleanup "$tmp"
+  prepare_mindful_owner_fixture "$tmp"
+  rm "${tmp}/home/bin/mindful"
+  # Fresh setup no longer creates any donor v6 runtime artifact.
+  for marker in mindful-web.service mindful-backup.service mindful-backup.timer; do
+    rm -f "${tmp}/config/systemd/user/$marker"
+  done
+  for marker in \
+    "${tmp}/home/bin/mindful" "${tmp}/home/bin/mindful-tui" \
+    "${tmp}/home/bin/mindful-release" "${tmp}/home/bin/mindful-backup.mjs" \
+    "${tmp}/home/bin/mindful-scratch" "${tmp}/home/bin/mindful-scratch-op" \
+    "${tmp}/data/mindful-runtime/current" "${tmp}/home/.local/share/mindful/current" \
+    "${tmp}/config/systemd/user/mindful-web.service" \
+    "${tmp}/config/systemd/user/mindful-backup.service" \
+    "${tmp}/config/systemd/user/mindful-backup.timer" \
+    "${tmp}/config/systemd/user/default.target.wants/mindful-web.service" \
+    "${tmp}/config/systemd/user/timers.target.wants/mindful-backup.timer"; do
+    mkdir -p "${marker:h}"
+    ln -s "${tmp}/missing" "$marker"
+    rc=0
+    output=$(run_health "$tmp" --skip-systemd --skip-noctalia-ipc 2>&1) || rc=$?
+    (( rc != 0 )) && [[ "$output" == *'Mindful launcher'* ]] || fail "partial marker was skipped: $marker: $output"
+    rm "$marker"
+  done
+}
+
+test_setup_keeps_owner_links_and_never_recreates_donor_runtime() {
+  local tmp name before
+  tmp=$(make_tmpdir); register_tmp_cleanup "$tmp"
+  prepare_mindful_owner_fixture "$tmp"
+  before=$(readlink "${tmp}/home/bin/mindful")
+  run_setup "$tmp" --link-only --headless --only shell,systemd >/dev/null
+  [[ "$(readlink "${tmp}/home/bin/mindful")" == "$before" ]] || fail "setup replaced an owner launcher"
+  for name in mindful-tui mindful-release mindful-backup.mjs; do
+    [[ ! -e "${tmp}/home/bin/$name" && ! -L "${tmp}/home/bin/$name" ]] || fail "setup recreated donor $name"
+  done
+  for name in mindful-web.service mindful-backup.service mindful-backup.timer; do
+    [[ ! -e "${tmp}/config/systemd/user/$name" && ! -L "${tmp}/config/systemd/user/$name" ]] || fail "setup recreated donor $name"
+  done
+}
+
+# Keep the default integration set; explicit names exercise one receiver without
+# unrelated shell/desktop prerequisites. Arguments name functions, never shell text.
+if (( $# )); then
+  for test_case in "$@"; do
+    [[ "$test_case" == test_* ]] && (( ${+functions[$test_case]} )) || fail "unknown test case: $test_case"
+    "$test_case"
+  done
+  print -- "setup and health tests passed ($# selected cases)"
+  exit 0
+fi
+
+test_tmp_cleanup_runs_only_at_process_exit
+
 test_git_packing_setup_is_scoped_idempotent_and_dry_run_safe
 test_git_packing_health_reports_missing_and_stale_without_repair
 
@@ -3556,7 +3671,11 @@ test_setup_links_hostkit_budget_for_known_host
 test_health_fails_when_hostkit_config_missing_or_scan_root_diverges
 test_health_fails_when_host_budget_missing_or_policy_invalid
 
-test_mindful_health_rejects_v3_revival_after_activation
+test_mindful_owner_delegates_to_exact_home_launcher
+test_mindful_owner_failure_is_a_health_failure
+test_mindful_owner_skip_systemd_keeps_launcher_probe
+test_mindful_partial_markers_cannot_hide_a_missing_launcher
+test_setup_keeps_owner_links_and_never_recreates_donor_runtime
 
 test_setup_converts_bin_directory_and_links_tracked_scripts
 test_setup_and_health_enforce_manifests_and_retired_configs

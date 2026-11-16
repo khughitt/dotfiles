@@ -6,7 +6,7 @@ This guide collects optional Arch host procedures and their verification/recover
 checks. Select what applies to the hardware; these commands change live system
 state and many require root. [Setup](setup.md) covers user links,
 [capture setup](capture-host-setup.md) covers capture grants, and
-[Mindful runtime](mindful-runtime.md) covers application activation. Historical
+[Mindful runtime](https://github.com/mindful-dev/v6/blob/main/docs/guide/local-deployment.md) covers application activation. Historical
 measurements and incident chronology are retained privately, not current host
 health claims. Inspect installed package behavior before applying a procedure.
 

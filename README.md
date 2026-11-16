@@ -37,7 +37,7 @@ full verification, portable CI and its limits.
 | [Git indexes in Dropbox](docs/dropbox-git-index.md) | Native rules, migration and recovery |
 | [Fresh-install hardening](docs/fresh-install-hardening.md) | Storage, boot, keymap, fan and SSH procedures |
 | [Host CPU budget](docs/host-budget.md) | Opt-in agent scopes and declared host policy |
-| [Mindful runtime](docs/mindful-runtime.md) | Release launchers, phone access, backups and rollback |
+| [Mindful runtime](https://github.com/mindful-dev/v6/blob/main/docs/guide/local-deployment.md) (owner guide) | Owner installer, launchers, units, backups and rollback |
 
 ## Layout
 

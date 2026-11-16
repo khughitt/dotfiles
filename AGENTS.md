@@ -33,7 +33,7 @@ bootstrap, setup, hooks, Noctalia or host interaction changes, select an affecte
 explicit integration check before live use. A policy skip proves neither suite
 correctness nor host health. `verify` includes actual host inspection.
 
-Portable CI covers seven fake-host Python modules, not the full suite, desktop,
+Portable CI covers five fake-host Python modules, not the full suite, desktop,
 GPU, systemd or installed console behavior. `just ci-hygiene` omits private records
 and live promoted state. `ci_suite_refs` remains empty. Local hook installation,
 workflow publication and host activation require their own authority; merging
@@ -44,7 +44,7 @@ See development for the exact CI contract, excluded work and evidence limits.
 
 - `setup.sh`, `install.toml`, `install-linux.toml`, `install-graphical.toml`, `lib/` — host installer and link manifests.
 - `bin/`, `shell/`, `nvim/`, `kitty/`, `niri/`, `noctalia/`, `systemd/` — commands and configuration.
-- `docs/` — eight current subject references.
+- `docs/` — seven current subject references.
 - `tests/` — focused and full test suites and their fixtures.
 - `scripts/` — the repository's own gates and maintenance scripts (hygiene, code
   checks, test front doors, agent-session probes).

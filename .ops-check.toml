@@ -38,7 +38,6 @@ layout_allowed = [
   "README.md",
   "docs/dropbox-git-index.md",
   "docs/fresh-install-hardening.md",
-  "docs/mindful-runtime.md",
   "docs/setup.md",
   # Fixtures that model the configured hosts and checkout layout.
   "tests/agent_sessions_test.py",

@@ -27,7 +27,6 @@ fi
 # fresh machines. See bin/noctalia-glass-check.
 bin/noctalia-glass-check
 
-node --check bin/mindful-backup.mjs
-python3 -c 'import ast, pathlib; [ast.parse(pathlib.Path(p).read_text()) for p in ["bin/mindful-release", "scripts/test-suite.py", "tests/front_door_test.py"]]'
+python3 -c 'import ast, pathlib; [ast.parse(pathlib.Path(p).read_text()) for p in ["scripts/test-suite.py", "tests/front_door_test.py"]]'
 
 echo "dotfiles source checks passed"

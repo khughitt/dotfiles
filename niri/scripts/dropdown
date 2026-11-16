@@ -41,7 +41,7 @@ case "$name" in
     ipython) lines=40; cmd=(ipython) ;;
     ghci)    lines=40; cmd=(ghci-color) ;;  # the interactive-shell alias for ghci
     mindful) lines=30; focus=on-demand; opacity=0.98
-             cmd=("$(dirname "$(readlink -f "$0")")/mindful-scratch") ;;
+             cmd=(mindful-scratch -- "$(readlink -f "$0")" mindful) ;;
     dashboard) lines=40; cmd=(lookout) ;;  # lookout, the read-only ops dashboard
     *) echo "${0##*/}: unknown dropdown '$name'" >&2; usage ;;
 esac

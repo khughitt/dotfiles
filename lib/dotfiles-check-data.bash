@@ -18,8 +18,6 @@ bash_files=(
     bin/dotfiles-secrets-check
     bin/kernel-gate
     bin/install-capture-sudoers
-    bin/mindful
-    bin/mindful-tui
     lib/dotfiles-setup-data.bash
     niri/host_specific.sh
     niri/scripts/monitor-handler.sh

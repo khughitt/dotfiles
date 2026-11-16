@@ -1,4 +1,4 @@
-import os
+import shutil
 from pathlib import Path
 import subprocess
 
@@ -30,15 +30,18 @@ def run(tmp_path):
     niri.chmod(0o755)
     log = tmp_path / "kitten.log"
 
-    def _run(*args):
+    home = tmp_path / "home"
+    home.mkdir()
+
+    def _run(*args, script=SCRIPT):
         if not SCRIPT.exists():
             pytest.fail(f"dropdown script is missing: {SCRIPT}")
         env = {
-            **os.environ,
-            "PATH": f"{bin_dir}:{os.environ['PATH']}",
+            "HOME": str(home), "USER": "dropdown-fixture",
+            "PATH": f"{bin_dir}:/usr/bin:/bin",
             "KITTEN_FAKE_LOG": str(log),
         }
-        proc = subprocess.run([str(SCRIPT), *args], env=env, capture_output=True, text=True)
+        proc = subprocess.run([str(script), *args], env=env, capture_output=True, text=True)
         argv = log.read_text().splitlines() if log.exists() else None
         return proc, argv
 
@@ -75,14 +78,13 @@ def test_ghci_runs_the_colour_wrapper_not_the_shell_alias(run):
     assert argv[-1] == "ghci-color"
 
 
-def test_mindful_runs_the_scratch_loop_beside_the_script(run):
+def test_mindful_uses_the_owner_loop_and_literal_hide_arguments(run):
     proc, argv = run("mindful")
 
     assert proc.returncode == 0, proc.stderr
     assert argv[1] == "--instance-group=dropdown-mindful"
     assert "app_id=dropdown-mindful" in argv
-    # The loop script is resolved next to this one, so a relocated config still finds it.
-    assert argv[-1] == str(SCRIPT.parent / "mindful-scratch")
+    assert argv[-4:] == ["mindful-scratch", "--", str(SCRIPT.resolve()), "mindful"]
     assert "focus_policy=on-demand" in argv
     assert "background_opacity=0.98" in argv
     # nvim's own cell backgrounds are opaque here too, not kitty.conf's glass tones.
@@ -151,3 +153,12 @@ def test_missing_name_prints_usage(run):
     assert proc.returncode == 2
     assert "usage" in proc.stderr
     assert argv is None
+
+
+def test_mindful_hide_program_with_spaces_is_one_argument(run, tmp_path):
+    script = tmp_path / "desktop scripts" / "dropdown with spaces"
+    script.parent.mkdir()
+    shutil.copy2(SCRIPT, script)
+    proc, argv = run("mindful", script=script)
+    assert proc.returncode == 0, proc.stderr
+    assert argv[-4:] == ["mindful-scratch", "--", str(script.resolve()), "mindful"]

@@ -93,8 +93,11 @@ copied into tracked docs.
 
 `./setup.sh --link-only --headless --only systemd --enable-user-timers` enables
 the selected maintenance timers, including Dropbox flux marking and the kernel
-gate nudge. It does **not** enable every linked unit. Mindful web/backup units
-remain inactive until an explicit [runtime rollout](mindful-runtime.md).
+gate nudge. It does **not** enable every linked unit. Mindful owns its runtime
+installer, six launcher links and rendered web/backup units; dotfiles setup does
+not recreate donor links. Use its [runtime rollout guide](https://github.com/mindful-dev/v6/blob/main/docs/guide/local-deployment.md)
+and preview the reviewed candidate's installer before applying it. Installing
+files, starting web and enabling backup are separate operations.
 Git-index retention and convergence timers are also linked but never enabled by
 setup. Convergence requires its separately approved rollout after retention;
 health reports prepared state and rejects enabled convergence without working
@@ -125,8 +128,11 @@ Agent session routing is separate: see [host CPU budget](host-budget.md).
 ## Verification and recovery
 
 Run `bin/dotfiles-layout-check` and `bin/dotfiles-health` after the authorized
-installation. `--skip-systemd` on health omits that portion and is not full host
-verification. Resolve each reported prerequisite or phase failure before claiming
+installation. `--skip-systemd` on health keeps the Mindful installation/launcher probe but
+omits its runtime inspector and other systemd queries; it is not full host
+verification. Installed Mindful state delegates to the exact home launcher using
+`mindful runtime check --json` when service checks are enabled. Resolve each
+reported prerequisite or phase failure before claiming
 setup complete. Inspect an existing file before replacing it with a link; retain
 needed local contents outside the tracked tree. Restore the prior link/config
 and service state if the selected refresh fails. Do not run this installer from

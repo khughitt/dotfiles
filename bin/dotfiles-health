@@ -504,31 +504,37 @@ else
     fail "shell functions do not source cleanly"
 fi
 
-if [[ "$(uname)" != "Darwin" ]]; then
-    if [[ -e "${HOME}/.local/share/mindful/current" ]]; then
-        for wants in graphical-session.target.wants default.target.wants; do
-            if [[ -e "${XDG_CONFIG_HOME}/systemd/user/${wants}/mindful-docker.service" || \
-                  -L "${XDG_CONFIG_HOME}/systemd/user/${wants}/mindful-docker.service" ]]; then
-                fail "mindful-docker.service is still enabled after v6 activation"
-            fi
-        done
-        if [[ "$SKIP_SYSTEMD" != "true" ]] && command -v systemctl >/dev/null 2>&1; then
-            if systemctl --user is-active --quiet mindful-docker.service || \
-               systemctl --user is-enabled --quiet mindful-docker.service; then
-                fail "mindful-docker.service can revive v3 after v6 activation"
-            fi
-            if runtime_env=$(systemctl --user show mindful-web.service --property=Environment --value); then
-                for setting in HOST=localhost PORT=3331 "MINDFUL_HOME=${HOME}/d/thoughts"; do
-                    if [[ " $runtime_env " != *" $setting "* ]]; then
-                        fail "mindful-web.service lacks canonical setting: $setting"
-                    fi
-                done
-            else
-                fail "mindful-web.service environment could not be queried"
-            fi
-        fi
+# Dotfiles detects installation artifacts; Mindful owns all runtime policy.
+# Probe dangling links as well as existing paths, including the fixed old HOME
+# layout when this shell selects a different XDG data/config home.
+mindful_markers=()
+for mindful_name in mindful mindful-tui mindful-release mindful-backup.mjs mindful-scratch mindful-scratch-op; do
+    mindful_markers+=("${HOME}/bin/${mindful_name}")
+done
+mindful_markers+=("${XDG_DATA_HOME}/mindful-runtime/current" "${HOME}/.local/share/mindful/current")
+for mindful_units in "${XDG_CONFIG_HOME}/systemd/user" "${HOME}/.config/systemd/user"; do
+    for mindful_unit in mindful-web.service mindful-backup.service mindful-backup.timer; do
+        mindful_markers+=("${mindful_units}/${mindful_unit}" "${mindful_units}"/*.wants/"${mindful_unit}")
+    done
+done
+mindful_present=false
+for mindful_marker in "${mindful_markers[@]}"; do
+    if [[ -e "$mindful_marker" || -L "$mindful_marker" ]]; then mindful_present=true; break; fi
+done
+if [[ "$mindful_present" == true ]]; then
+    if [[ ! -f "${HOME}/bin/mindful" || ! -x "${HOME}/bin/mindful" ]]; then
+        fail "Mindful launcher must resolve to an executable regular file: ${HOME}/bin/mindful"
+    elif [[ "$SKIP_SYSTEMD" == true ]]; then
+        pass "Mindful launcher resolves; service checks explicitly skipped"
+    elif mindful_result=$("${HOME}/bin/mindful" runtime check --json 2>&1); then
+        pass "Mindful runtime check"
+    else
+        fail "Mindful runtime check failed: $mindful_result"
     fi
+fi
+unset mindful_markers mindful_name mindful_units mindful_unit mindful_present mindful_marker mindful_result
 
+if [[ "$(uname)" != "Darwin" ]]; then
     if [[ "$SKIP_SYSTEMD" != "true" ]]; then
         if command -v systemctl >/dev/null 2>&1; then
             for timer in dropbox-ignore-flux.timer work-link.timer wali-rotate.timer; do

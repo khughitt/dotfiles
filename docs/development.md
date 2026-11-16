@@ -19,12 +19,14 @@ as worktree hydration. The lockfile determines dependencies.
 ```sh
 just test-one pytest tests/front_door_test.py -k guide_hygiene_and_docs_recipe
 just test-one zsh tests/console_keymap.zsh
+just test-one zsh tests/setup_and_health.zsh test_mindful_owner_skip_systemd_keeps_launcher_probe
 just check-hygiene
 ```
 
 `just test-one <runner> <args...>` accepts `pytest`, `zsh` and `nvim`, forwarding
 arguments intact through [scripts/test-one](../scripts/test-one). Use the runner and
-case that exercise the changed behavior. Prose-only edits need no invented tests.
+case that exercise the changed behavior. The setup/health integration script also
+accepts explicit test function names; no names retains its complete case set. Prose-only edits need no invented tests.
 For bootstrap, installed hooks, Noctalia or host interaction changes, also choose
 an explicit affected integration check before live use. Run worktree code by its
 own path; never repoint a shared launcher to test it.
@@ -50,9 +52,9 @@ establish installed links, active services, GPU behavior or host health.
 
 The Ubuntu 26.04 workflow installs ordinary command-line packages and three
 hash-pinned uv/Python/Just downloads, then uses the frozen lockfile. `just ci-test`
-forces source hygiene plus seven Python modules: front-door, kernel-gate, and the
-five niri modules for column paging, backdrop startup, dropdowns, scratch UI and
-scratch parsing. They use fake host APIs; no desktop starts.
+forces source hygiene plus five Python modules: front-door, kernel-gate, and the
+three niri modules for column paging, backdrop startup and dropdowns. They use
+fake host APIs; no desktop starts.
 
 [scripts/test-suite.py](../scripts/test-suite.py) requires a fresh absolute
 `CI_STATE_DIR` outside the checkout and explicit installed `UV_PYTHON` for its

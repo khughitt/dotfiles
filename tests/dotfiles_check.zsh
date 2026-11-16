@@ -41,24 +41,6 @@ nvim_case() {
 
 "${repo_root}/bin/dotfiles-check"
 
-mindful_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-mindful-home.XXXXXX")
-register_tmp_cleanup "$mindful_home"
-mindful_release="${mindful_home}/.local/share/mindful/current"
-mkdir -p "${mindful_release}/bin" "${mindful_release}/packages/mindful/dist"
-print -r -- '#!/usr/bin/env bash
-exec bash "$1" "${@:2}"' > "${mindful_release}/bin/node"
-chmod +x "${mindful_release}/bin/node"
-print -r -- '#!/usr/bin/env bash
-quoted=()
-for arg in "$@"; do quoted+=("\"$arg\""); done
-IFS=,
-printf "[%s]" "${quoted[*]}"' > \
-  "${mindful_release}/packages/mindful/dist/bin.js"
-mindful_output=$(HOME="$mindful_home" "${repo_root}/bin/mindful" --flag "two words" 2>&1) || \
-  fail "mindful wrapper failed against the stubbed release: $mindful_output"
-[[ "$mindful_output" == '["--flag","two words"]' ]] || \
-  fail "mindful wrapper did not forward arguments: $mindful_output"
-
 # bin/prism and bin/walictl are wrappers rather than symlinks so the tree
 # carries no path to the target checkouts: registered project roots come from
 # `tasks projects --paths --json`, falling back to `${WORKTREE_SCAN_ROOT:-$HOME/d}`.

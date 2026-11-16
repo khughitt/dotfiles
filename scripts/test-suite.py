@@ -66,8 +66,7 @@ ENVIRONMENT = [
 PORTABLE_PYTHON = [
     "tests/front_door_test.py", "tests/kernel_gate_test.py",
     "tests/niri/test_column_pager.py", "tests/niri/test_debug_backdrop_startup.py",
-    "tests/niri/test_dropdown.py", "tests/niri/test_mindful_scratch.py",
-    "tests/niri/test_mindful_scratch_op.py",
+    "tests/niri/test_dropdown.py",
 ]
 
 

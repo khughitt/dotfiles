@@ -81,7 +81,7 @@ class Door:
         assert Path(self.run(["git", "rev-parse", "--absolute-git-dir"]).stdout.strip()) == self.root / ".git"
         for name in ["justfile", ".gitignore", "identity.toml", "README.md", "AGENTS.md",
                      "docs/setup.md", "docs/development.md", "docs/desktop-themes.md",
-                     "bin/dotfiles-check", "bin/mindful", "bin/prism",
+                     "bin/dotfiles-check", "bin/prism",
                      "tests/dotfiles_check.zsh", "tests/justfile.zsh", "tests/tmp_cleanup.zsh", "tools/tt",
                      "tools/ops-docs", "tools/code-organization.md", "scripts/test-one", "scripts/test-suite.py",
                      ".github/workflows/ci.yml", ".githooks/pre-commit", ".githooks/pre-push"]:
@@ -369,7 +369,7 @@ def test_mandatory_hygiene_checks_later_shell_files(door, broken):
     (door.root / "lib/dotfiles-check-data.bash").write_text(
         'bash_files=(bashrc setup.sh)\nzsh_files=(zshrc zshenv)\n')
     (door.root / "shell").mkdir()
-    for name in ["bashrc", "setup.sh", "zshrc", "zshenv", "bin/mindful-backup.mjs", "bin/mindful-release"]:
+    for name in ["bashrc", "setup.sh", "zshrc", "zshenv"]:
         (door.root / name).write_text("\n")
     valid = door.invoke("ci-hygiene", policy=OFF)
     assert valid.returncode == 0, valid.stdout + valid.stderr
@@ -529,8 +529,7 @@ sys.exit(17)
 PORTABLE = [
     "tests/front_door_test.py", "tests/kernel_gate_test.py",
     "tests/niri/test_column_pager.py", "tests/niri/test_debug_backdrop_startup.py",
-    "tests/niri/test_dropdown.py", "tests/niri/test_mindful_scratch.py",
-    "tests/niri/test_mindful_scratch_op.py",
+    "tests/niri/test_dropdown.py",
 ]
 
 
