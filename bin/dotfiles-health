@@ -29,7 +29,6 @@ HOSTKIT_ROOT="$(dotfiles_project_root hostkit)"
 WALI_ROOT="$(dotfiles_project_root wali)"
 PRISM_ROOT="$(dotfiles_project_root prism)"
 RESOURCE_ALERT_ROOT="$(dotfiles_project_root pressure)"
-OPS_ROOT="$(dotfiles_project_root ops)"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -123,13 +122,13 @@ gated_timer_wanted() {
     [[ -e "$wants" || -L "$wants" ]]
 }
 
-# An ops timer that only an approved host packet enables. Linked and disabled it
+# A hostkit timer that only an approved host packet enables. Linked and disabled it
 # is prepared; enabled, its wants link, manager state and last run are checked.
 check_gated_timer() {
     local name="$1" link_failures="$2"
     if gated_timer_wanted "$name"; then
         check_link "${XDG_CONFIG_HOME}/systemd/user/timers.target.wants/${name}.timer" \
-            "${OPS_ROOT}/systemd/user/${name}.timer"
+            "${HOSTKIT_ROOT}/systemd/user/${name}.timer"
         if systemctl --user is-enabled "${name}.timer" >/dev/null 2>&1; then
             pass "systemd user timer is enabled: ${name}.timer"
         else

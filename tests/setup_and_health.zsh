@@ -327,17 +327,17 @@ seed_external_checkouts() {
     mkdir -p "${tmp}/home/d/ops/systemd/user"
     touch "${tmp}/home/d/ops/systemd/user/obs-index.service" \
       "${tmp}/home/d/ops/systemd/user/obs-index.timer"
-    if [[ "${OPS_RETENTION_UNITS_PRESENT:-true}" == true ]]; then
-      touch "${tmp}/home/d/ops/systemd/user/git-index-retention.service" \
-        "${tmp}/home/d/ops/systemd/user/git-index-retention.timer"
-    fi
-    if [[ "${OPS_CONVERGENCE_UNITS_PRESENT:-true}" == true ]]; then
-      touch "${tmp}/home/d/ops/systemd/user/git-index-health.service" \
-        "${tmp}/home/d/ops/systemd/user/git-index-health.timer"
-    fi
   fi
   if [[ "${HOSTKIT_SOURCE_PRESENT:-true}" == true ]]; then
     mkdir -p "${tmp}/home/d/hostkit/bin" "${tmp}/home/d/hostkit/systemd/user"
+    if [[ "${HOSTKIT_RETENTION_UNITS_PRESENT:-true}" == true ]]; then
+      touch "${tmp}/home/d/hostkit/systemd/user/git-index-retention.service" \
+        "${tmp}/home/d/hostkit/systemd/user/git-index-retention.timer"
+    fi
+    if [[ "${HOSTKIT_CONVERGENCE_UNITS_PRESENT:-true}" == true ]]; then
+      touch "${tmp}/home/d/hostkit/systemd/user/git-index-health.service" \
+        "${tmp}/home/d/hostkit/systemd/user/git-index-health.timer"
+    fi
     local hostkit_src="${HOSTKIT_SRC:-$real_hostkit_src}"
     if [[ -n "$hostkit_src" && -d "$hostkit_src" ]]; then
       cp "${hostkit_src}/install.toml" "${tmp}/home/d/hostkit/install.toml"
@@ -580,11 +580,16 @@ EOF
                "${tmp}/home/d/hostkit/bin/host-load" \
                "${tmp}/home/d/hostkit/bin/host-drift"
     fi
-    (
-      unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
-      GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 \
-        git -C "${tmp}/home/d/hostkit" -c init.defaultBranch=main init -q
-    )
+    local -a git_env
+    git_env=(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config"
+      PATH=/usr/bin:/bin GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1)
+    mkdir -p "${tmp}/home/d/hostkit/.git/objects" "${tmp}/home/d/hostkit/.git/refs"
+    printf 'ref: refs/heads/main\n' > "${tmp}/home/d/hostkit/.git/HEAD"
+    [[ "$(env -i "${git_env[@]}" git -C "${tmp}/home/d/hostkit" rev-parse --show-toplevel)" == \
+        "${tmp}/home/d/hostkit" ]] || fail "hostkit fixture git top-level escaped"
+    [[ "$(env -i "${git_env[@]}" git -C "${tmp}/home/d/hostkit" rev-parse --absolute-git-dir)" == \
+        "${tmp}/home/d/hostkit/.git" ]] || fail "hostkit fixture git directory escaped"
+    env -i "${git_env[@]}" git -C "${tmp}/home/d/hostkit" -c init.defaultBranch=main init -q
   fi
   install_test_stubs "$tmp"
   if [[ ! -f "$tasks_reg" ]]; then
@@ -1144,6 +1149,10 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "$(readlink "${tmp}/config/systemd/user/work-link.service")" == \
       "${tmp}/home/d/hostkit/systemd/user/work-link.service" ]] || \
     fail "expected work-link service to point into hostkit checkout"
+  [[ -L "${tmp}/config/hostkit/git-index-retention.json" ]] || fail "expected linked git index retention roster"
+  [[ "$(readlink "${tmp}/config/hostkit/git-index-retention.json")" == \
+      "${repo_root}/config/hostkit/git-index-retention.json" ]] || \
+    fail "expected retention roster to point into repository"
   [[ -L "${tmp}/config/hostkit/config.toml" ]] || fail "expected linked hostkit config"
   [[ "$(readlink "${tmp}/config/hostkit/config.toml")" == \
       "${repo_root}/hostkit/config.toml" ]] || \
@@ -1847,7 +1856,7 @@ install_retention_systemctl() {
   install_gated_systemctl "$1" "$2" disabled
 }
 
-# Both ops timers that only an approved host packet enables: retention (git-index-retention)
+# Both hostkit timers that only an approved host packet enables: retention (git-index-retention)
 # and convergence (git-index-health), each with its own state.
 install_gated_systemctl() {
   local tmp="$1" retention="$2" convergence="$3"
@@ -1893,7 +1902,7 @@ prepare_retention_health_fixture() {
   ln -s "${tmp}/home/d/hostkit/systemd/user/work-link.timer" \
     "${tmp}/config/systemd/user/timers.target.wants/work-link.timer"
   if [[ "$state" == enabled* ]]; then
-    ln -s "${tmp}/home/d/ops/systemd/user/git-index-retention.timer" \
+    ln -s "${tmp}/home/d/hostkit/systemd/user/git-index-retention.timer" \
       "${tmp}/config/systemd/user/timers.target.wants/git-index-retention.timer"
   fi
 }
@@ -1910,8 +1919,8 @@ test_setup_links_retention_units_without_enabling_them() {
 
   for unit in git-index-retention.service git-index-retention.timer; do
     [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
-        "${tmp}/home/d/ops/systemd/user/${unit}" ]] || \
-      fail "expected ${unit} to point into the ops checkout"
+        "${tmp}/home/d/hostkit/systemd/user/${unit}" ]] || \
+      fail "expected ${unit} to point into the hostkit checkout"
   done
   rg -q -- 'enable --now obs-index.timer' "${tmp}/systemctl.log" || \
     fail "expected setup to enable the other user timers"
@@ -1943,7 +1952,7 @@ test_dotfiles_health_reports_disabled_retention_as_prepared() {
     fail "health should not judge runs of a timer that is not enabled"
 }
 
-test_dotfiles_health_fails_a_retention_unit_outside_the_ops_checkout() {
+test_dotfiles_health_fails_a_retention_unit_outside_the_hostkit_checkout() {
   local tmp output exit_status
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
@@ -1957,7 +1966,7 @@ test_dotfiles_health_fails_a_retention_unit_outside_the_ops_checkout() {
   output=$(run_health "$tmp" --skip-systemd 2>&1)
   exit_status=$?
   set -e
-  (( exit_status != 0 )) || fail "health accepted a retention timer outside the ops checkout"
+  (( exit_status != 0 )) || fail "health accepted a retention timer outside the hostkit checkout"
   [[ "$output" == *"repoint"$'\t'"${tmp}/config/systemd/user/git-index-retention.timer"* ]] || \
     fail "health did not name the wrong retention link: ${output}"
 }
@@ -2048,7 +2057,7 @@ prepare_convergence_health_fixture() {
   prepare_retention_health_fixture "$tmp" "$retention"
   install_gated_systemctl "$tmp" "$retention" "$convergence"
   if [[ "$convergence" == enabled* ]]; then
-    ln -s "${tmp}/home/d/ops/systemd/user/git-index-health.timer" \
+    ln -s "${tmp}/home/d/hostkit/systemd/user/git-index-health.timer" \
       "${tmp}/config/systemd/user/timers.target.wants/git-index-health.timer"
   fi
 }
@@ -2065,8 +2074,8 @@ test_setup_links_convergence_units_without_enabling_them() {
 
   for unit in git-index-health.service git-index-health.timer; do
     [[ "$(readlink "${tmp}/config/systemd/user/${unit}")" == \
-        "${tmp}/home/d/ops/systemd/user/${unit}" ]] || \
-      fail "expected ${unit} to point into the ops checkout"
+        "${tmp}/home/d/hostkit/systemd/user/${unit}" ]] || \
+      fail "expected ${unit} to point into the hostkit checkout"
   done
   rg -q -- 'enable --now obs-index.timer' "${tmp}/systemctl.log" || \
     fail "expected setup to enable the other user timers"
@@ -2195,7 +2204,7 @@ test_dotfiles_health_validates_the_convergence_wants_link() {
     case "$kind" in
       outside)
         [[ "$output" == *"wrong link target: ${wants}"* ]] || \
-          fail "health did not name the convergence wants link outside ops: ${output}" ;;
+          fail "health did not name the convergence wants link outside hostkit: ${output}" ;;
       dangling)
         [[ "$output" == *"broken link: ${wants}"* ]] || \
           fail "health did not name the dangling convergence wants link: ${output}" ;;
@@ -2207,7 +2216,7 @@ test_dotfiles_health_validates_the_convergence_wants_link() {
   done
 }
 
-test_dotfiles_health_fails_a_convergence_unit_outside_the_ops_checkout() {
+test_dotfiles_health_fails_a_convergence_unit_outside_the_hostkit_checkout() {
   local tmp unit output exit_status
   for unit in git-index-health.service git-index-health.timer; do
     tmp=$(make_tmpdir)
@@ -2221,11 +2230,11 @@ test_dotfiles_health_fails_a_convergence_unit_outside_the_ops_checkout() {
     output=$(run_health "$tmp" 2>&1)
     exit_status=$?
     set -e
-    (( exit_status != 0 )) || fail "health accepted ${unit} outside the ops checkout"
+    (( exit_status != 0 )) || fail "health accepted ${unit} outside the hostkit checkout"
     [[ "$output" == *"repoint"$'\t'"${tmp}/config/systemd/user/${unit}"* ]] || \
       fail "health did not name the wrong ${unit} link: ${output}"
     [[ "$output" != *"prepared, awaiting host approval: git-index-health.timer"* ]] || \
-      fail "health called convergence prepared with ${unit} outside ops: ${output}"
+      fail "health called convergence prepared with ${unit} outside hostkit: ${output}"
   done
 }
 
@@ -3338,10 +3347,10 @@ EOF
     "${relocated_tmp}/wali/systemd/wali-phone-sync.timer" \
     "${relocated_tmp}/ops/systemd/user/obs-index.service" \
     "${relocated_tmp}/ops/systemd/user/obs-index.timer" \
-    "${relocated_tmp}/ops/systemd/user/git-index-retention.service" \
-    "${relocated_tmp}/ops/systemd/user/git-index-retention.timer" \
-    "${relocated_tmp}/ops/systemd/user/git-index-health.service" \
-    "${relocated_tmp}/ops/systemd/user/git-index-health.timer" \
+    "${relocated_tmp}/hostkit/systemd/user/git-index-retention.service" \
+    "${relocated_tmp}/hostkit/systemd/user/git-index-retention.timer" \
+    "${relocated_tmp}/hostkit/systemd/user/git-index-health.service" \
+    "${relocated_tmp}/hostkit/systemd/user/git-index-health.timer" \
     "${relocated_tmp}/noctalia-resource-alert/plugin.toml"
   printf '#!/bin/sh\nexit 0\n' > "${relocated_tmp}/lookout/bin/lookout"
   chmod +x "${relocated_tmp}/lookout/bin/lookout"
@@ -3393,8 +3402,8 @@ EOF
     fail "graphical-config phase did not execute relocated prism: ${output}"
   [[ "$(readlink "${ext_xdg}/systemd/user/wali-rotate.service")" == "${relocated_tmp}/wali/systemd/wali-rotate.service" ]] || \
     fail "systemd phase did not link wali-rotate.service from relocated wali checkout"
-  [[ "$(readlink "${ext_xdg}/systemd/user/git-index-retention.service")" == "${relocated_tmp}/ops/systemd/user/git-index-retention.service" ]] || \
-    fail "systemd phase did not link git-index-retention.service from relocated ops checkout"
+  [[ "$(readlink "${ext_xdg}/systemd/user/git-index-retention.service")" == "${relocated_tmp}/hostkit/systemd/user/git-index-retention.service" ]] || \
+    fail "systemd phase did not link git-index-retention.service from relocated hostkit checkout"
   [[ "$(readlink "${tmp}/data/noctalia/plugins/prism")" == "${relocated_tmp}/prism/integrations/noctalia-plugin" ]] || \
     fail "noctalia-plugins phase did not link prism from relocated prism checkout"
   [[ "$(readlink "${tmp}/data/noctalia/plugins/resource-pressure-alert")" == "${relocated_tmp}/noctalia-resource-alert" ]] || \
@@ -3507,7 +3516,7 @@ test_dotfiles_health_checks_enabled_user_timer
 test_dotfiles_health_fails_stale_wali_timer_wants_link
 test_setup_links_retention_units_without_enabling_them
 test_dotfiles_health_reports_disabled_retention_as_prepared
-test_dotfiles_health_fails_a_retention_unit_outside_the_ops_checkout
+test_dotfiles_health_fails_a_retention_unit_outside_the_hostkit_checkout
 test_dotfiles_health_does_not_call_missing_retention_links_prepared
 test_dotfiles_health_reports_retention_prepared_beside_unrelated_failures
 test_dotfiles_health_checks_an_enabled_retention_timer
@@ -3516,7 +3525,7 @@ test_dotfiles_health_reports_disabled_convergence_as_prepared
 test_dotfiles_health_does_not_call_missing_convergence_links_prepared
 test_dotfiles_health_checks_an_enabled_convergence_timer
 test_dotfiles_health_validates_the_convergence_wants_link
-test_dotfiles_health_fails_a_convergence_unit_outside_the_ops_checkout
+test_dotfiles_health_fails_a_convergence_unit_outside_the_hostkit_checkout
 test_noctalia_v5_config_is_installed_and_validated
 test_setup_graphical_config_hands_material_ownership_to_prism
 test_setup_renders_the_theme_when_the_output_is_empty
