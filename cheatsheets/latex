@@ -18,6 +18,9 @@
 \overrightarrow{\text{foo}}
 \underrightarrow{\text{foo}}
 
+# turnstile symbol ⊢
+\vdash
+
 # bracket with two conditions on separate lines
 a_{ij} = \begin{cases} 1 & (i,j) \in E \\
                        0 & \text {otherwise}
