@@ -17,6 +17,12 @@ ready before switching policy or enabling shell routing. A launch failure
 reports the missing prerequisite. The unset and zero settings use the
 native launch route. Ordinary terminals remain in their existing scopes.
 
+Each host policy defines three budget profiles. `default` gives short bursts
+such as test gates half the host's CPUs. `long` gives a quarter share to runs
+expected to take more than about an hour, since other agents keep working
+beside them; request it with `host-budget run --profile long`. `quiet` hands
+nearly the whole host to a run it was left idle for.
+
 Work aliases live in the private shell configuration. Route the Claude work
 alias through the interactive `claude` command while retaining its home
 selection. The Codex work aliases already use the interactive command.
