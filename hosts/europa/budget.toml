@@ -1,9 +1,14 @@
 # europa: the CPU budget host-budget hands heavy jobs; fractions, so correct before measuring.
 # Responsiveness first. Reference: docs/runbooks/host-configuration.md (ops-eb9f2d).
 
-[profiles.default]
+[profiles.default] # short bursts such as test gates
 share = 0.5        # at most this fraction of the host's CPUs to one job
 reserve = 4        # CPUs never handed out: desktop, terminals, the agents themselves
+min = 1
+
+[profiles.long]    # a long run: expected to take more than about an hour; others share the host
+share = 0.25
+reserve = 4
 min = 1
 
 [profiles.quiet]   # a quiet run: the host was left idle for it
