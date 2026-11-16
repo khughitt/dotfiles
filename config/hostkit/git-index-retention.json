@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "ref_writer": "titan",
+  "participants": [
+    {"host": "europa", "ssh": "europa", "state_home": ".local/state"},
+    {"host": "titan", "ssh": "titan", "state_home": ".local/state"}
+  ]
+}
