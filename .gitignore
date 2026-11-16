@@ -48,7 +48,6 @@ docs/
 /docs/*
 !/docs/fresh-install-hardening.md
 !/docs/capture-host-setup.md
-!/docs/mindful-runtime.md
 !/docs/host-budget.md
 !/docs/dropbox-git-index.md
 !/docs/setup.md
