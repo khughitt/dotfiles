@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# tt version 11
+# tt version 12
 """Timing wrapper: `tt <target> -- <command> [args...]`.
 
 Runs the command with stdin, stdout, and stderr passed through, and appends one JSON line
@@ -281,16 +281,31 @@ def project_of(cwd, env=os.environ):
             except (tomllib.TOMLDecodeError, KeyError) as error:
                 fail(f"cannot read {config}: {error}")
             return directory, prefix, False
+    try:
+        project = where_project(cwd, env)
+    except ValueError as error:
+        fail(str(error))
+    if project is None:
+        return None, None, False
+    return pathlib.Path(project["root"]), project["prefix"], project["linked"]
+
+
+def where_project(cwd, env, *, stage_policy=False):
+    """The invoking checkout's project projection, or no registry/project in scope."""
     binary = shutil.which("tasks", path=env.get("PATH") or "")
     if binary is None:
-        return None, None, False
+        if stage_policy and registry_present(env):
+            raise ValueError("cannot resolve stage with a local registry: tasks is not on PATH")
+        return None
     try:
         result = subprocess.run([binary, "where", str(cwd), "--json"], capture_output=True,
                                 text=True, env=dict(env), timeout=10)
-    except OSError:
-        return None, None, False
+    except OSError as error:
+        if stage_policy and registry_present(env):
+            raise ValueError(f"cannot resolve stage with a local registry: {error}") from error
+        return None
     except subprocess.SubprocessError as error:
-        fail(f"cannot tell which project {cwd} is in: {error}")
+        raise ValueError(f"cannot tell which project {cwd} is in: {error}") from error
     try:
         answer = json.loads(result.stdout if result.returncode == 0 else result.stderr)
         if not isinstance(answer, dict):
@@ -299,16 +314,16 @@ def project_of(cwd, env=os.environ):
             envelope = answer.get("error")
             detail = (f"{envelope.get('kind', 'unknown')}: {envelope.get('detail', '')}"
                       if isinstance(envelope, dict) else f"exit {result.returncode}")
-            fail(f"cannot tell which project {cwd} is in: {detail}")
+            raise ValueError(detail)
         project = answer["project"]
         if project is None:
-            return None, None, False
+            return None
         root, prefix, linked = project["root"], project["prefix"], project["linked"]
         if not isinstance(root, str) or not root or not isinstance(prefix, str) or not prefix or not isinstance(linked, bool):
             raise ValueError("invalid project fields")
-        return pathlib.Path(root), prefix, linked
+        return project
     except (ValueError, KeyError, TypeError) as error:
-        fail(f"cannot tell which project {cwd} is in: {error}")
+        raise ValueError(f"cannot tell which project {cwd} is in: {error}") from error
 
 
 def _git_env():
@@ -516,6 +531,52 @@ def read_policy(cwd):
     return {"path": path, **doc}
 
 
+BROAD_TARGETS = ("test", "test-fast", "check-code")
+
+
+def registry_present(env):
+    config = env.get("XDG_CONFIG_HOME")
+    if config is None:
+        home = env.get("HOME")
+        if home is None:
+            return False
+        config = pathlib.Path(home) / ".config"
+    path = pathlib.Path(config) / "tasks/projects.toml"
+    try:
+        path.lstat()
+    except FileNotFoundError:
+        return False
+    except OSError as error:
+        raise ValueError(f"cannot resolve stage: {path}: {error}") from error
+    return True
+
+
+def effective_policy(cwd, env) -> tuple[dict | None, str]:
+    """Resolve the checkout override first, then the registered records declaration."""
+    policy = read_policy(cwd)
+    if policy is not None:
+        return policy, str(policy["path"])
+    project = where_project(cwd, env, stage_policy=True) if repo_root(cwd) is not None else None
+    if project is None:
+        return None, "stage policy unavailable outside a registered project"
+    if (type(project.get("registered")) is not bool or type(project.get("retired")) is not bool
+            or "stage" not in project):
+        raise ValueError("tasks where lacks stage policy fields; update the tasks binary")
+    if not project["registered"]:
+        return None, "stage policy unavailable outside a registered project"
+    prefix = project["prefix"]
+    if project["retired"]:
+        return None, f"stage policy unavailable for retired project {prefix}"
+    stage = project["stage"]
+    if project.get("stage_error") or stage not in ("experimental", "pre-release", "supported"):
+        detail = project.get("stage_error") or "declare a valid stage in tasks/.config.toml"
+        raise ValueError(f"{prefix}: stage policy unavailable: {detail}")
+    source = f"project stage {stage} ({prefix})"
+    if stage == "supported":
+        return None, source
+    return {"path": source, "automatic_broad": False, "broad_targets": list(BROAD_TARGETS)}, source
+
+
 def execution_decision(target, policy, env):
     """Decide using a validated read_policy result; force never comes from CI."""
     if "TT_FORCE" in env and env["TT_FORCE"] != "1":
@@ -671,7 +732,18 @@ def main(argv, env, cwd):
     target, command = argv[0], argv[2:]
     decision_at, decision_start = now(), time.monotonic()
     try:
-        policy = read_policy(cwd)
+        source = None
+        if target in BROAD_TARGETS and "TT_FORCE" not in env:
+            policy, source = effective_policy(cwd, env)
+        else:
+            policy = read_policy(cwd)
+            if env.get("TT_FORCE") == "1" and (target in BROAD_TARGETS
+                    or policy is not None and target in policy["broad_targets"]):
+                source = "TT_FORCE=1"
+            elif policy is not None and target in policy["broad_targets"]:
+                source = str(policy["path"])
+            elif target == "test-one":
+                source = "protected focused target" if "TT_FORCE" not in env else "TT_FORCE=1"
         execution, reason = execution_decision(target, policy, env)
     except ValueError as error:
         sys.stderr.write(f"tt: {error}\n")
@@ -691,6 +763,8 @@ def main(argv, env, cwd):
                      "exit": None, "tests": None, "selection": None, "content": None, "slowest": None})
         sys.stderr.write(f"tt: {target} skipped by policy {policy['path']}; use TT_FORCE=1 to run\n")
         return 0
+    if source is not None:
+        sys.stderr.write(f"tt: {target} running ({source})\n")
     try:
         content = content_identity(cwd)
     except ContentSkipped as error:
