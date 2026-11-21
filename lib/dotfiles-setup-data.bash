@@ -31,6 +31,14 @@ DOTFILES_DROPBOX_IGNORED=(
     "fcitx/log/"
 )
 
+# The Dropbox client creates ~/.dropbox on its first configuration. A host
+# without it is not syncing this tree, so the com.dropbox.ignored marks would
+# protect nothing and setup and health both skip them. The test is the client's
+# own state, not --headless: a headless host can still run Dropbox.
+dotfiles_dropbox_present() {
+    [[ -d "${HOME}/.dropbox" ]]
+}
+
 dotfiles_project_root() {
     local prefix="$1" repo_dir json_out root=""
     case "$prefix" in

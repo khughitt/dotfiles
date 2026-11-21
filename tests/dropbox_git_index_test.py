@@ -20,6 +20,7 @@ def setup_home(tmp_path):
     shutil.copy2(ROOT / "lib/dotfiles-setup-data.bash", repo / "lib")
     home = tmp_path / "home"
     (home / "d").mkdir(parents=True)
+    (home / ".dropbox").mkdir()
 
     def run(*args):
         child_env = {

@@ -10,7 +10,8 @@ and conflict cleanup cannot prevent corruption.
 
 The `dropbox-ignore` setup phase appends these rules to
 `~/d/rules.dropboxignore`, preserving existing rules and adding nothing on a
-repeat run when its block is already last:
+repeat run when its block is already last. A host without a configured Dropbox
+client (`~/.dropbox`) skips the phase:
 
 ```text
 **/.git/index*

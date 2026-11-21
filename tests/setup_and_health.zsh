@@ -2732,7 +2732,7 @@ test_dotfiles_health_flags_files_the_tree_does_not_own() {
   local tmp fixture output
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
-  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/state"
+  mkdir -p "${tmp}/home/.dropbox" "${tmp}/config" "${tmp}/data" "${tmp}/state"
   prepare_health_fixture "$tmp"
 
   fixture="${tmp}/repo"
@@ -2880,7 +2880,7 @@ test_setup_dropbox_ignore_phase_marks_declared_paths() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   fixture="${tmp}/repo"
-  mkdir -p "$fixture/lib" "$fixture/familiar" "${tmp}/home" "${tmp}/config"
+  mkdir -p "$fixture/lib" "$fixture/familiar" "${tmp}/home/.dropbox" "${tmp}/config"
   cp "${repo_root}/setup.sh" "$fixture/setup.sh"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
   # the one declared file that exists on this machine; crush/.crush is a
@@ -2932,7 +2932,7 @@ test_setup_dropbox_ignore_phase_dry_run_writes_nothing() {
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   fixture="${tmp}/repo"
-  mkdir -p "$fixture/lib" "$fixture/fcitx/dbus" "${tmp}/home" "${tmp}/config"
+  mkdir -p "$fixture/lib" "$fixture/fcitx/dbus" "${tmp}/home/.dropbox" "${tmp}/config"
   cp "${repo_root}/setup.sh" "$fixture/setup.sh"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
 
@@ -2956,7 +2956,7 @@ test_dotfiles_health_fails_unmarked_declared_dropbox_ignore() {
   # a tree with one declared path present and unmarked: what a fresh Dropbox
   # sync of the other machine's write looks like before setup.sh has run here
   mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/fcitx/dbus" \
-    "${tmp}/home" "${tmp}/config" "${tmp}/data"
+    "${tmp}/home/.dropbox" "${tmp}/config" "${tmp}/data"
   cp "${repo_root}/bin/dotfiles-health" "$fixture/bin/"
   cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
   seed_external_checkouts "$tmp"
@@ -2988,6 +2988,59 @@ test_dotfiles_health_fails_unmarked_declared_dropbox_ignore() {
     fail "health did not report the marked declarations: ${output}"
   [[ "$output" == *"declared per-machine directory is absent: crush/.crush/ (run setup.sh)"* ]] || \
     fail "health did not warn about the absent declared directory: ${output}"
+}
+
+test_setup_dropbox_ignore_phase_skips_without_dropbox() {
+  local tmp fixture output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "$fixture/lib" "$fixture/fcitx/dbus" "${tmp}/home/d" "${tmp}/config"
+  cp "${repo_root}/setup.sh" "$fixture/setup.sh"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    XDG_DATA_HOME="${tmp}/data" XDG_STATE_HOME="${tmp}/state" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
+    bash "$fixture/setup.sh" --headless --link-only --only dropbox-ignore 2>&1) || \
+    fail "dropbox-ignore phase failed without Dropbox: ${output}"
+  [[ "$output" == *"[SKIPPING] Dropbox is not configured on this host"* ]] || \
+    fail "phase did not say it skipped for a missing Dropbox client: ${output}"
+  [[ "$(attr -q -g com.dropbox.ignored "$fixture/fcitx/dbus" 2>/dev/null)" != "1" ]] || \
+    fail "phase marked a path without Dropbox"
+  [[ ! -d "$fixture/crush/.crush" && ! -e "${tmp}/home/d/rules.dropboxignore" ]] || \
+    fail "phase wrote Dropbox state without Dropbox"
+
+  output=$(HOME="${tmp}/home" XDG_CONFIG_HOME="${tmp}/config" \
+    WORKTREE_SCAN_ROOT="${tmp}/home/d" \
+    bash "$fixture/setup.sh" --headless --link-only --check 2>&1 || true)
+  [[ "$output" != *"attr"* ]] || \
+    fail "preflight checked attr without Dropbox: ${output}"
+}
+
+test_dotfiles_health_skips_dropbox_checks_without_dropbox() {
+  local tmp fixture output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  fixture="${tmp}/repo"
+  mkdir -p "$fixture/bin" "$fixture/lib" "$fixture/fcitx/dbus" \
+    "${tmp}/home" "${tmp}/config" "${tmp}/data"
+  cp "${repo_root}/bin/dotfiles-health" "$fixture/bin/"
+  cp "${repo_root}/lib/dotfiles-setup-data.bash" "$fixture/lib/"
+  seed_external_checkouts "$tmp"
+  install_test_stubs "$tmp"
+
+  set +e
+  output=$(HOME="${tmp}/home" XDG_CACHE_HOME="${tmp}/cache" \
+    XDG_CONFIG_HOME="${tmp}/config" XDG_DATA_HOME="${tmp}/data" \
+    XDG_STATE_HOME="${tmp}/home/.local/state" WORKTREE_SCAN_ROOT="${tmp}/home/d" \
+    PATH="${tmp}/bin:$PATH" \
+    "$fixture/bin/dotfiles-health" --skip-systemd --skip-noctalia-ipc 2>&1)
+  set -e
+  [[ "$output" != *"declared per-machine but syncing"* ]] || \
+    fail "health flagged an unmarked path without Dropbox: ${output}"
+  [[ "$output" == *"Dropbox is not configured on this host"* ]] || \
+    fail "health did not report skipping the Dropbox checks: ${output}"
 }
 
 test_dotfiles_health_rejects_competing_wallpaper_rotators() {
@@ -3715,6 +3768,8 @@ test_dotfiles_health_resolves_its_root_through_a_symlinked_path
 test_setup_dropbox_ignore_phase_marks_declared_paths
 test_setup_dropbox_ignore_phase_dry_run_writes_nothing
 test_dotfiles_health_fails_unmarked_declared_dropbox_ignore
+test_setup_dropbox_ignore_phase_skips_without_dropbox
+test_dotfiles_health_skips_dropbox_checks_without_dropbox
 test_dotfiles_health_fails_wrong_opencode_theme_link
 test_dotfiles_health_rejects_symlinked_opencode_local
 test_setup_continues_past_a_failing_phase

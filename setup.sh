@@ -588,8 +588,8 @@ function setup_preflight() {
     preflight_check "python3 with tomllib (3.11+)" "install python3 3.11 or newer as python3" \
         python3 -c 'import tomllib' || missing=1
 
-    if [[ "$MACOS" != "true" ]]; then
-        preflight_check "attr" "install the attr package" \
+    if [[ "$MACOS" != "true" ]] && dotfiles_dropbox_present; then
+        preflight_check "attr (Dropbox ignore marks)" "install the attr package" \
             command -v attr || missing=1
     fi
 
@@ -930,6 +930,10 @@ function setup_dropbox_ignores() {
     [[ "$MACOS" != "true" ]] || return 0
 
     phase "Dropbox ignores"
+    if ! dotfiles_dropbox_present; then
+        echo "[SKIPPING] Dropbox is not configured on this host (${HOME}/.dropbox absent)"
+        return 0
+    fi
     if ! command -v attr >/dev/null; then
         echo "attr is required to mark per-machine paths com.dropbox.ignored"
         return 1

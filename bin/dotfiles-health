@@ -645,10 +645,16 @@ fi
 
 check_no_machine_specific_links
 check_noctalia_generated_is_not_in_tree
-if [[ "$(uname)" != "Darwin" ]]; then
-    check_declared_dropbox_ignores_applied
+# Both checks guard what Dropbox would carry to the other machine; without a
+# Dropbox client the tree is not syncing and setup.sh skips the marks.
+if dotfiles_dropbox_present; then
+    if [[ "$(uname)" != "Darwin" ]]; then
+        check_declared_dropbox_ignores_applied
+    fi
+    check_config_dirs_do_not_leak
+else
+    pass "Dropbox is not configured on this host (~/.dropbox absent); skipping per-machine sync checks"
 fi
-check_config_dirs_do_not_leak
 
 if [[ "$failures" -gt 0 ]]; then
     echo "Health check failed: $failures failure(s), $warnings warning(s)" >&2

@@ -18,8 +18,10 @@ The installation expects sibling checkouts (hostkit, ops, wali, prism, lookout a
 others). Each resolves through the tasks registry, falling back to
 `$WORKTREE_SCAN_ROOT/<name>`, which defaults to `~/d`; set it on a host with a
 different layout. Shared commands come from ops, hostkit and tasks; the task
-registry must exist. Manifest phases need `python3` 3.11 or newer for `tomllib`,
-and Linux setup needs `attr`. Headless Linux setup installs no font packages,
+registry must exist. Manifest phases need `python3` 3.11 or newer for `tomllib`.
+Dropbox ignore marks need `attr`; on a host without `~/.dropbox` the
+`dropbox-ignore` phase and the matching health checks are skipped, because no
+Dropbox client is syncing the tree. Headless Linux setup installs no font packages,
 and the Ubuntu list has none because the archive packages neither font set.
 Graphical setup also needs the installed niri-material build, Noctalia v5 and
 Prism's dependencies and sink requirements. `prism requirements` names missing
