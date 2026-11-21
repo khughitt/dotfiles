@@ -1273,6 +1273,59 @@ test_setup_only_rejects_unknown_phase() {
   rm -rf "$tmp"
 }
 
+test_setup_names_missing_hostkit_checkout() {
+  local tmp output exit_status
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  set +e
+  output=$(HOSTKIT_SOURCE_PRESENT=false run_setup "$tmp" --link-only --headless --only shell 2>&1)
+  exit_status=$?
+  set -e
+
+  (( exit_status != 0 )) || fail "setup accepted a missing hostkit checkout"
+  [[ "$output" == *"hostkit checkout missing: ${tmp}/home/d/hostkit/bin/hostkit-links"* ]] || \
+    fail "setup did not name the missing hostkit checkout: ${output}"
+  [[ "$output" == *"WORKTREE_SCAN_ROOT"* ]] || \
+    fail "setup did not name the checkout root setting: ${output}"
+  [[ "$output" != *"can't open file"* ]] || \
+    fail "setup still ran hostkit-links without a checkout: ${output}"
+
+  rm -rf "$tmp"
+}
+
+test_setup_headless_installs_no_font_packages() {
+  local tmp output distro_flag
+  for distro_flag in --ubuntu ""; do
+    tmp=$(make_tmpdir)
+    register_tmp_cleanup "$tmp"
+    mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+    output=$(print y | run_setup "$tmp" --dry-run --headless ${distro_flag:+$distro_flag} --only packages 2>&1)
+
+    [[ "$output" == *"[DRY-RUN] "*"bat "* ]] || \
+      fail "headless ${distro_flag:-arch} setup did not plan its packages: ${output}"
+    [[ "$output" != *"fonts-"* && "$output" != *"ttf-"* ]] || \
+      fail "headless ${distro_flag:-arch} setup planned font packages: ${output}"
+    rm -rf "$tmp"
+  done
+}
+
+test_setup_graphical_arch_keeps_font_packages() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  output=$(print y | run_setup "$tmp" --dry-run --only packages 2>&1)
+
+  [[ "$output" == *"[DRY-RUN] yay -S ttf-nerd-fonts-symbols"* ]] || \
+    fail "graphical Arch setup dropped its font packages: ${output}"
+
+  rm -rf "$tmp"
+}
+
 test_noctalia_plugin_phase_links_and_enables_exact_ids() {
   local tmp log
   tmp=$(make_tmpdir)
@@ -3604,6 +3657,9 @@ test_setup_dry_run_can_enable_user_timers
 test_setup_only_runs_selected_phase
 test_setup_only_accepts_multiple_phases
 test_setup_only_rejects_unknown_phase
+test_setup_names_missing_hostkit_checkout
+test_setup_headless_installs_no_font_packages
+test_setup_graphical_arch_keeps_font_packages
 test_dotfiles_health_flags_a_copied_install
 test_noctalia_plugin_phase_links_and_enables_exact_ids
 test_default_setup_does_not_require_live_noctalia

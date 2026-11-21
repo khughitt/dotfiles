@@ -182,7 +182,9 @@ if [[ "$MACOS" == "true" ]]; then
     PACKAGE_UPDATE_CMD="brew update"
 elif [[ "$UBUNTU" == "true" ]]; then
     PACKAGES=("bat" "btop" "fd-find" "fzf" "lsd" "ripgrep" "thefuck" "tldr" "visidata" "zoxide")
-    FONT_PACKAGES=("fonts-nerd-fonts" "fonts-weather-icons")
+    # Ubuntu's archive packages neither Nerd Fonts nor Weather Icons; install
+    # them by hand on a graphical Ubuntu host.
+    FONT_PACKAGES=()
     PACKAGE_INSTALL_CMD="sudo apt install -y"
     PACKAGE_UPDATE_CMD="sudo apt update"
 else
@@ -192,6 +194,13 @@ else
     FONT_PACKAGES=("ttf-nerd-fonts-symbols" "ttf-hack-nerd" "ttf-weather-icons")
     PACKAGE_INSTALL_CMD="yay -S"
     PACKAGE_UPDATE_CMD=""
+fi
+
+# Fonts render in a local terminal or desktop. A headless Linux host has
+# neither; macOS is headless only because it has no Wayland config, and its
+# kitty still needs them.
+if [[ "$HEADLESS" == "true" && "$MACOS" != "true" ]]; then
+    FONT_PACKAGES=()
 fi
 
 NOCTALIA_GENERATED=("${DOTFILES_NOCTALIA_GENERATED[@]}")
@@ -345,6 +354,15 @@ function backup_manifest_conflicts() {
 function apply_manifest() {
     local manifest_path="$1"
 
+    # Without this, every manifest phase dies on python3's bare "can't open
+    # file", which names neither the checkout nor how setup looks for it.
+    if [[ "$DRY_RUN" != "true" && ! -f "${HOSTKIT_ROOT}/bin/hostkit-links" ]]; then
+        echo "hostkit checkout missing: ${HOSTKIT_ROOT}/bin/hostkit-links not found." \
+            "Register its checkout with 'tasks init', or set WORKTREE_SCAN_ROOT to the" \
+            "directory holding the sibling checkouts (default ~/d)." >&2
+        return 1
+    fi
+
     if [[ "$(basename "$manifest_path")" == "install.toml" ]]; then
         migrate_legacy_directory_symlinks
     fi
@@ -385,8 +403,10 @@ function install_packages() {
     echo "$distro_name packages:"
     printf '%s ' "${packages[@]}"
     echo ""
-    printf '%s ' "${FONT_PACKAGES[@]}"
-    echo ""
+    if [[ "${#FONT_PACKAGES[@]}" -gt 0 ]]; then
+        printf '%s ' "${FONT_PACKAGES[@]}"
+        echo ""
+    fi
 
     while true; do
         read -r -p "Install $distro_name packages? [Y/n] " input
@@ -396,7 +416,9 @@ function install_packages() {
                     echo "Installing macOS packages via Homebrew..."
                     run brew update
                     run brew install "${packages[@]}"
-                    run brew install --cask "${FONT_PACKAGES[@]}"
+                    if [[ "${#FONT_PACKAGES[@]}" -gt 0 ]]; then
+                        run brew install --cask "${FONT_PACKAGES[@]}"
+                    fi
                 elif [[ "$UBUNTU" == "true" ]]; then
                     echo "Installing Ubuntu packages..."
                     if [[ -n "$PACKAGE_UPDATE_CMD" ]]; then
@@ -405,8 +427,10 @@ function install_packages() {
                     fi
                     # shellcheck disable=SC2086
                     run $PACKAGE_INSTALL_CMD "${packages[@]}"
-                    # shellcheck disable=SC2086
-                    run $PACKAGE_INSTALL_CMD "${FONT_PACKAGES[@]}"
+                    if [[ "${#FONT_PACKAGES[@]}" -gt 0 ]]; then
+                        # shellcheck disable=SC2086
+                        run $PACKAGE_INSTALL_CMD "${FONT_PACKAGES[@]}"
+                    fi
                 else
                     if [[ ! -x "/usr/bin/yay" && ! -x "$HOME/.local/bin/yay" ]]; then
                         echo "Installing yay AUR helper..."
@@ -423,8 +447,10 @@ function install_packages() {
                     echo "Installing Arch packages..."
                     # shellcheck disable=SC2086
                     run $PACKAGE_INSTALL_CMD "${packages[@]}"
-                    # shellcheck disable=SC2086
-                    run $PACKAGE_INSTALL_CMD "${FONT_PACKAGES[@]}"
+                    if [[ "${#FONT_PACKAGES[@]}" -gt 0 ]]; then
+                        # shellcheck disable=SC2086
+                        run $PACKAGE_INSTALL_CMD "${FONT_PACKAGES[@]}"
+                    fi
                 fi
                 break
                 ;;
@@ -557,6 +583,16 @@ function setup_preflight() {
     preflight_check "hostkit checkout" "ensure ${HOSTKIT_ROOT} is synced or cloned (see ops/docs/tooling.md)" \
         test -x "${HOSTKIT_ROOT}/bin/hostkit-links" || missing=1
 
+    # Every manifest phase runs hostkit-links, which reads its TOML manifests
+    # with tomllib; older releases such as Ubuntu 22.04 ship python3 3.10.
+    preflight_check "python3 with tomllib (3.11+)" "install python3 3.11 or newer as python3" \
+        python3 -c 'import tomllib' || missing=1
+
+    if [[ "$MACOS" != "true" ]]; then
+        preflight_check "attr" "install the attr package" \
+            command -v attr || missing=1
+    fi
+
     # Familiar's hooks run on every agent tool call and die on a missing
     # node_modules. Name the missing local install before hooks crash.
     # Guarded on the checkout the same way prism's dependencies are.
@@ -601,6 +637,11 @@ function setup_preflight() {
                 noctalia msg plugins list || missing=1
         fi
     fi
+
+    # Checkout paths resolve through the tasks registry, then fall back under
+    # WORKTREE_SCAN_ROOT; say which root was used so a different host layout
+    # is one setting away rather than a hunt through the script.
+    echo "  sibling checkouts resolve via the tasks registry, else under ${WORKTREE_SCAN_ROOT:-${HOME}/d} (WORKTREE_SCAN_ROOT)"
 
     if [[ "$missing" -gt 0 ]]; then
         # A finding is a report, not a gate: the phase that actually needs the
