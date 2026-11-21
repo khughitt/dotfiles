@@ -23,6 +23,9 @@ Dropbox ignore marks need `attr`; on a host without `~/.dropbox` the
 `dropbox-ignore` phase and the matching health checks are skipped, because no
 Dropbox client is syncing the tree. Headless Linux setup installs no font packages,
 and the Ubuntu list has none because the archive packages neither font set.
+The Ubuntu list also omits fzf and zoxide, whose archive builds are too old for
+the shell configuration; install them upstream. The Ubuntu shell phase links
+`~/.local/bin/fd` to `fdfind` when no `fd` is on PATH.
 Graphical setup also needs the installed niri-material build, Noctalia v5 and
 Prism's dependencies and sink requirements. `prism requirements` names missing
 sink capabilities. Familiar and Prism dependencies are checked when their package

@@ -1312,6 +1312,65 @@ test_setup_headless_installs_no_font_packages() {
   done
 }
 
+test_setup_ubuntu_omits_archive_fzf_and_zoxide() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
+
+  output=$(print y | run_setup "$tmp" --dry-run --headless --ubuntu --only packages 2>&1)
+
+  [[ "$output" == *"[DRY-RUN] sudo apt install -y bat "* ]] || \
+    fail "Ubuntu setup did not plan its packages: ${output}"
+  [[ "$output" != *" fzf"* && "$output" != *"zoxide"* ]] || \
+    fail "Ubuntu setup planned the archive's fzf or zoxide: ${output}"
+
+  rm -rf "$tmp"
+}
+
+test_setup_ubuntu_links_fd_to_fdfind() {
+  local tmp output
+  tmp=$(make_tmpdir)
+  register_tmp_cleanup "$tmp"
+  mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data" "${tmp}/bin"
+  printf '#!/bin/sh\nexit 0\n' > "${tmp}/bin/fdfind"
+  chmod +x "${tmp}/bin/fdfind"
+
+  # Hide a host fd where that leaves the shell phase its tools; on a host whose
+  # fd shares /usr/bin with everything else, check the keep-existing-fd case.
+  local dir fd_free_path=""
+  for dir in ${(s.:.)PATH}; do
+    [[ -x "${dir}/fd" ]] || fd_free_path+="${fd_free_path:+:}${dir}"
+  done
+  local test_path="${tmp}/home/.local/bin:${tmp}/bin"
+  if PATH="$fd_free_path" command -v bash python3 >/dev/null 2>&1; then
+    test_path+=":${fd_free_path}"
+  else
+    test_path+=":${PATH}"
+  fi
+
+  local host_fd=false
+  PATH="$test_path" command -v fd >/dev/null 2>&1 && host_fd=true
+
+  output=$(TEST_PATH="$test_path" run_setup "$tmp" --link-only --headless --ubuntu --only shell 2>&1) || \
+    fail "Ubuntu shell setup failed: ${output}"
+  if [[ "$host_fd" == true ]]; then
+    [[ ! -e "${tmp}/home/.local/bin/fd" ]] || \
+      fail "Ubuntu shell setup replaced an fd already on PATH"
+  else
+    [[ "$(readlink "${tmp}/home/.local/bin/fd")" == "${tmp}/bin/fdfind" ]] || \
+      fail "Ubuntu shell setup did not link fd to fdfind: ${output}"
+  fi
+
+  rm -f "${tmp}/home/.local/bin/fd"
+  output=$(TEST_PATH="$test_path" run_setup "$tmp" --link-only --headless --only shell 2>&1) || \
+    fail "non-Ubuntu shell setup failed: ${output}"
+  [[ ! -e "${tmp}/home/.local/bin/fd" ]] || \
+    fail "non-Ubuntu shell setup linked fd to fdfind"
+
+  rm -rf "$tmp"
+}
+
 test_setup_graphical_arch_keeps_font_packages() {
   local tmp output
   tmp=$(make_tmpdir)
@@ -3713,6 +3772,8 @@ test_setup_only_rejects_unknown_phase
 test_setup_names_missing_hostkit_checkout
 test_setup_headless_installs_no_font_packages
 test_setup_graphical_arch_keeps_font_packages
+test_setup_ubuntu_omits_archive_fzf_and_zoxide
+test_setup_ubuntu_links_fd_to_fdfind
 test_dotfiles_health_flags_a_copied_install
 test_noctalia_plugin_phase_links_and_enables_exact_ids
 test_default_setup_does_not_require_live_noctalia

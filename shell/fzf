@@ -22,7 +22,13 @@ _fzf_compgen_dir() {
   fd --type d --hidden --follow --exclude ".git" . "$1"
 }
 
+# `fzf --zsh` exists from 0.48; an older fzf (a distro package ahead of the
+# upstream install on PATH) would print an error at every shell start, so its
+# key bindings are skipped instead.
 if [[ -o interactive && -t 0 && -t 1 ]] && (( $+commands[fzf] )); then
-  source <(fzf --zsh)
-  bindkey '^I' expand-or-complete
+  if fzf_init="$(fzf --zsh 2>/dev/null)"; then
+    eval "$fzf_init"
+    bindkey '^I' expand-or-complete
+  fi
+  unset fzf_init
 fi

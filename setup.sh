@@ -181,7 +181,10 @@ if [[ "$MACOS" == "true" ]]; then
     PACKAGE_INSTALL_CMD="brew install"
     PACKAGE_UPDATE_CMD="brew update"
 elif [[ "$UBUNTU" == "true" ]]; then
-    PACKAGES=("bat" "btop" "fd-find" "fzf" "lsd" "ripgrep" "thefuck" "tldr" "visidata" "zoxide")
+    # No fzf or zoxide: the archive's builds are too old for shell/. fzf needs
+    # 0.48+ for `fzf --zsh` (22.04 ships 0.29, 24.04 0.44), and zoxide 0.4's
+    # init declares zi() over zinit's zi alias. Install both upstream.
+    PACKAGES=("bat" "btop" "fd-find" "lsd" "ripgrep" "thefuck" "tldr" "visidata")
     # Ubuntu's archive packages neither Nerd Fonts nor Weather Icons; install
     # them by hand on a graphical Ubuntu host.
     FONT_PACKAGES=()
@@ -681,6 +684,14 @@ function setup_shell_links() {
     generate_zsh_completion xan "${completion_dir}/_xan" completions zsh
     generate_zsh_completion crush "${completion_dir}/_crush" completion zsh
     generate_zsh_completion codex "${completion_dir}/_codex" completion zsh
+
+    # Debian's fd-find installs its binary as fdfind; shell/fzf and the fzf
+    # completion helpers call fd.
+    local fdfind_path
+    if [[ "$UBUNTU" == "true" ]] && ! command -v fd >/dev/null \
+        && fdfind_path="$(command -v fdfind)"; then
+        ln_s "$fdfind_path" "${HOME}/.local/bin/fd"
+    fi
 }
 
 function link_noctalia_generated() {
