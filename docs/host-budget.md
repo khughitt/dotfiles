@@ -11,6 +11,12 @@ use the same commands. Start a fresh shell after changing the host setting.
 The enabled Codex route supplies `--no-daemon` so its local workers inherit
 the scope. Existing sessions keep their current placement until relaunched.
 
+Claude, Codex and agy started from a terminal also run behind `tint`, inside the
+scope when routing is enabled, so task ids show in their project's colour. This
+applies only where `tint` is on `PATH` and both standard input and output are a
+terminal. A piped or redirected run, or a host without `tint`, starts the
+harness directly.
+
 Titan's source policy puts managed sessions and budgeted jobs in
 `agents.slice` with a combined 24-CPU quota. The unit must be installed and
 ready before switching policy or enabling shell routing. A launch failure

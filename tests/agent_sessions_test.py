@@ -34,7 +34,7 @@ def shell(tmp_path):
 import json, os, sys
 print(json.dumps(dict(tool={tool!r}, argv=sys.argv[1:], scoped=os.getenv("TEST_SCOPE"),
                       home=os.getenv("CLAUDE_CONFIG_DIR") or os.getenv("CODEX_HOME"),
-                      tty=os.isatty(0))))
+                      tty=os.isatty(0), tinted=os.getenv("TEST_TINT"))))
 sys.exit(7)
 """)
         stub.chmod(0o755)
@@ -42,8 +42,11 @@ sys.exit(7)
     budget.write_text('#!/bin/sh\n[ "$1" = session ] && [ "$2" = -- ] || exit 9\n'
                       'shift 2\nexport TEST_SCOPE=1\nexec "$@"\n')
     budget.chmod(0o755)
+    tint = bin_dir / "tint"
+    tint.write_text('#!/bin/sh\n[ "$1" = -- ] || exit 9\nshift\nexport TEST_TINT=1\nexec "$@"\n')
+    tint.chmod(0o755)
 
-    def run(command, *args, setting="1", stdin=None):
+    def run(command, *args, setting="1", stdin=None, stdout=None):
         env = {"HOME": str(home), "PATH": f"{bin_dir}:/usr/bin:/bin",
                "XDG_CONFIG_HOME": str(home / ".config"), "ZDOTDIR": str(home),
                "HOSTKIT_AGENT_SESSIONS": setting}
@@ -52,7 +55,9 @@ sys.exit(7)
              '[[ ! -e "$1" ]] || source "$1"; source "$2"; source "$3"; eval "$4"',
              "zsh", str(ROOT / "shell/functions.d/agents.zsh"),
              str(ROOT / "shell/aliases.d/dev.zsh"), str(aliases), shlex.join((command, *args))],
-            env=env, cwd=home, stdin=stdin, capture_output=True, text=True, timeout=15)
+            env=env, cwd=home, stdin=stdin, text=True, timeout=15,
+            **(dict(stdout=stdout, stderr=subprocess.PIPE) if stdout is not None
+               else dict(capture_output=True)))
 
     return run, home, budget
 
@@ -70,6 +75,7 @@ def test_agent_routes_preserve_arguments_and_homes(shell, name, tool):
     data = json.loads(result.stdout)
     assert data["tool"] == tool
     assert data["scoped"] == "1"
+    assert data["tinted"] is None
     assert data["argv"][-2:] == ["${HOME}", "a b"]
     if tool == "codex":
         assert data["argv"].count("--no-daemon") == 1
@@ -149,3 +155,48 @@ def test_titan_drift_compares_the_unit_policy_and_opt_in(tmp_path):
     check = subprocess.run(argv, env=env, capture_output=True, text=True, timeout=15)
     assert check.returncode == 1
     assert "drift" in check.stdout and "agents.slice" in check.stdout
+
+
+def run_on_terminal(shell, name, **kwargs):
+    """Run with stdin and stdout on one pseudo-terminal; the stub's JSON line."""
+    master, slave = pty.openpty()
+    try:
+        result = shell[0](name, "a b", stdin=slave, stdout=slave, **kwargs)
+        os.close(slave)
+        slave = None
+        out = b""
+        while True:
+            try:
+                chunk = os.read(master, 4096)
+            except OSError:
+                break
+            if not chunk:
+                break
+            out += chunk
+    finally:
+        if slave is not None:
+            os.close(slave)
+        os.close(master)
+    assert result.returncode == 7, result.stderr
+    return json.loads(out.decode().strip().splitlines()[-1])
+
+
+@pytest.mark.parametrize("setting", ["0", "1"])
+@pytest.mark.parametrize(("name", "tinted"), [
+    ("claude", True), ("codex", True), ("agy", True), ("cl", True), ("co", True),
+    ("ay", True), ("clw", True), ("cowor", True),
+    ("pi", False), ("opencode", False), ("crush", False),
+])
+def test_terminal_sessions_run_behind_tint(shell, name, tinted, setting):
+    data = run_on_terminal(shell, name, setting=setting)
+    assert data["tty"]
+    assert (data["tinted"] == "1") is tinted
+    assert data["scoped"] == ("1" if setting == "1" else None)
+    assert data["argv"][-1] == "a b"
+
+
+def test_terminal_session_without_tint_runs_plain(shell):
+    run, home, _ = shell
+    (home.parent / "bin" / "tint").unlink()
+    data = run_on_terminal(shell, "claude")
+    assert data["tool"] == "claude" and data["tinted"] is None and data["scoped"] == "1"
