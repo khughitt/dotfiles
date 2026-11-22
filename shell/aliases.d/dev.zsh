@@ -94,7 +94,28 @@ taj() {
   shift
   tasks list --json "$@" | jq --arg pattern "$pattern" '.tasks |= map(select(any(.. | strings; test($pattern; "i"))))'
 }
-alias tal='ta list'
+# tasks lists only open tasks unless asked; -c/--closed adds the closed statuses (done,
+# dropped, moved) so a search over the output (tal -c | grep ...) can find finished work.
+tal() {
+  local -a args
+  local closed=0 arg
+  for arg in "$@"; do
+    if [[ $arg == (-c|--closed) ]]; then
+      closed=1
+    else
+      args+=("$arg")
+    fi
+  done
+  if (( closed )); then
+    if (( ${args[(I)--status|--status=*]} )); then
+      print -u2 'tal: --closed cannot be combined with --status'
+      return 2
+    fi
+    args+=(--status idea --status todo --status doing --status blocked --status shelved
+      --status done --status dropped --status moved)
+  fi
+  ta list "${args[@]}"
+}
 alias tan='ta next'
 alias tap='ta projects'
 alias tals='ta list --sort updated'
