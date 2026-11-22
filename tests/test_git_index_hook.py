@@ -42,9 +42,10 @@ def hook(tmp_path):
     assert Path(git("rev-parse", "--show-toplevel").stdout.strip()).resolve() == repo.resolve()
     assert Path(git("rev-parse", "--absolute-git-dir").stdout.strip()).resolve().is_relative_to(repo.resolve())
     shutil.copyfile(ROOT / "git/config", config)
-    identity = commands / "git-identity-check"
-    identity.write_text("#!/bin/sh\nexit 0\n")
-    identity.chmod(0o755)
+    for sibling in ("git-identity-check", "ops-policy"):
+        stub = commands / sibling
+        stub.write_text("#!/bin/sh\nexit 0\n")
+        stub.chmod(0o755)
 
     def executable(location, label):
         path = location / "git-index-health"

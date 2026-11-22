@@ -34,7 +34,10 @@ def case(tmp_path):
 
     def git(repo, *args, environment=None):
         return subprocess.run(['git', '-C', str(repo), '-c', 'core.hooksPath=/dev/null',
-                               '-c', 'hook.identity-check.enabled=false', '-c', 'hook.index-health.enabled=false', *args],
+                               '-c', 'hook.identity-check.enabled=false', '-c', 'hook.index-health.enabled=false',
+                               '-c', 'hook.ops-policy-pre-commit.enabled=false',
+                               '-c', 'hook.ops-policy-commit-msg.enabled=false',
+                               '-c', 'hook.ops-policy-pre-push.enabled=false', *args],
                               env=env if environment is None else environment, capture_output=True, timeout=5)
 
     def init(path):
