@@ -324,9 +324,10 @@ seed_external_checkouts() {
   if [[ "${OPS_SOURCE_PRESENT:-true}" == true ]]; then
     # the systemd phase links obs-index.service and obs-index.timer out of the
     # ops checkout, which a test HOME does not have
-    mkdir -p "${tmp}/home/d/ops/systemd/user"
+    mkdir -p "${tmp}/home/d/ops/systemd/user" "${tmp}/home/d/ops/bin"
     touch "${tmp}/home/d/ops/systemd/user/obs-index.service" \
       "${tmp}/home/d/ops/systemd/user/obs-index.timer"
+    touch "${tmp}/home/d/ops/bin/ops-policy" "${tmp}/home/d/ops/bin/gh"
   fi
   if [[ "${HOSTKIT_SOURCE_PRESENT:-true}" == true ]]; then
     mkdir -p "${tmp}/home/d/hostkit/bin" "${tmp}/home/d/hostkit/systemd/user"
@@ -1102,7 +1103,7 @@ test_setup_dry_run_link_only_does_not_write_home() {
 }
 
 test_setup_link_only_creates_expected_links_without_external_clones() {
-  local tmp unit
+  local tmp unit command event
   tmp=$(make_tmpdir)
   register_tmp_cleanup "$tmp"
   mkdir -p "${tmp}/home" "${tmp}/config" "${tmp}/data"
@@ -1131,6 +1132,15 @@ test_setup_link_only_creates_expected_links_without_external_clones() {
   [[ "$(readlink "${tmp}/home/.zshrc")" == "${repo_root}/zshrc" ]] || \
     fail "expected ~/.zshrc to point at repo zshrc"
   [[ -L "${tmp}/home/.shell" ]] || fail "expected ~/.shell symlink"
+  for command in ops-policy gh; do
+    [[ "${tmp}/home/.local/bin/${command}" -ef "${tmp}/home/d/ops/bin/${command}" ]] || \
+      fail "expected ${command} on PATH from the ops checkout"
+  done
+  child_env "$tmp"
+  for event in pre-commit commit-msg pre-push; do
+    [[ "$(env -i "${reply[@]}" git config --global --get "hook.ops-policy-${event}.event")" == "$event" ]] || \
+      fail "expected a global ops-policy hook for ${event}"
+  done
   [[ -d "${tmp}/config/lsd" && ! -L "${tmp}/config/lsd" ]] || \
     fail "expected a writable LSD config directory"
   [[ "${tmp}/config/lsd/config.yaml" -ef "${repo_root}/lsd/config.yaml" ]] || \
@@ -3339,10 +3349,10 @@ EOF
   printf '#!/bin/sh\nexit 0\n' > "${relocated_tmp}/lookout/bin/lookout"
   chmod +x "${relocated_tmp}/lookout/bin/lookout"
 
-  # Populate hostkit in relocated_tmp by seeding into tmp first then moving;
-  # leave ~/d as an empty directory (no checkouts inside ~/d) for git-packing-policy.
+  # Copy the hostkit and ops launchers, then leave ~/d empty for git-packing-policy.
   seed_external_checkouts "$tmp"
   cp -a "${tmp}/home/d/hostkit/." "${relocated_tmp}/hostkit/"
+  cp -a "${tmp}/home/d/ops/bin" "${relocated_tmp}/ops/"
   rm -rf "${tmp}/home/d" "${tmp}/config"
   mkdir -p "${tmp}/home/d"
 
@@ -3384,6 +3394,8 @@ EOF
 
   [[ "$output" == *"relocated-prism:apply niri"* ]] || \
     fail "graphical-config phase did not execute relocated prism: ${output}"
+  [[ "${tmp}/home/.local/bin/gh" -ef "${relocated_tmp}/ops/bin/gh" ]] || \
+    fail "shell phase did not link gh from relocated ops checkout"
   [[ "$(readlink "${ext_xdg}/systemd/user/wali-rotate.service")" == "${relocated_tmp}/wali/systemd/wali-rotate.service" ]] || \
     fail "systemd phase did not link wali-rotate.service from relocated wali checkout"
   [[ "$(readlink "${ext_xdg}/systemd/user/git-index-retention.service")" == "${relocated_tmp}/hostkit/systemd/user/git-index-retention.service" ]] || \

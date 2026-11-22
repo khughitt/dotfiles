@@ -103,6 +103,16 @@ setup. Convergence requires its separately approved rollout after retention;
 health reports prepared state and rejects enabled convergence without working
 retention. Health does not claim that indexes converged.
 
+The base link manifest installs the registered ops checkout's `ops-policy` and
+`gh` wrapper in `~/.local/bin`. Keep that directory ahead of the real `gh` on
+PATH. The wrapper needs the real CLI's `gh auth token --no-refresh` for agent
+writes. The shared Git config uses Git 2.56 config-declared `pre-commit`,
+`commit-msg` and `pre-push` hooks alongside each repository's own hooks. The kit
+uses Relay to identify agent sessions and Tasks and Lore to resolve their policy.
+Install the kit launchers and dependencies on each host before activating the
+shared Git config. In a fresh clone, use `git hook list` with each event to check
+the registrations and `command -v gh` to check which CLI is first on PATH.
+
 The app-config phase generates the host-local `~/.gitconfig-synced` include.
 It matches the physical synced root and registered linked worktrees, disabling
 implicit ref packing with `gc.packRefs=false` and

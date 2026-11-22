@@ -4,6 +4,8 @@
 "$XDG_CONFIG_HOME/yazi" = "yazi"
 
 [links]
+"~/.local/bin/gh" = "ops:bin/gh"
+"~/.local/bin/ops-policy" = "ops:bin/ops-policy"
 "~/bin/24bitcolors" = "bin/24bitcolors"
 "~/bin/256colors" = "bin/256colors"
 "~/bin/bar1-guard" = "bin/bar1-guard"
