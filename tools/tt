@@ -1,12 +1,24 @@
 #!/usr/bin/env python3
-# tt version 12
-"""Timing wrapper: `tt <target> -- <command> [args...]`.
+# tt version 13
+"""Timing wrapper and its reports.
 
-Runs the command with stdin, stdout, and stderr passed through, and appends one JSON line
-describing the run to the log. Projects carry a byte-identical copy at tools/tt.
+    tt <target> -- <command> [args...]
+    tt harvest [--json]
+    tt report [--since WHEN] [--until WHEN] [--project PREFIX] [--all] [--json]
+    tt latency check    [--project PREFIX] [--json]
+    tt latency escalate [--project PREFIX] [--dry-run] [--json]
+    tt latency verify   TASK --after TIMESTAMP [--dry-run] [--json]
+
+The wrapper runs the command with stdin, stdout, and stderr passed through, and appends
+one JSON line describing the run to the log. `harvest` moves checkouts' fallback logs
+into the shared log; `report` harvests, then summarises test timings per project;
+`latency` judges the log against latency.toml beside this script's parent and files
+stop-work incidents in tasks. Projects carry a byte-identical copy at tools/tt.
 Vendored from https://github.com/khughitt/ops (bin/tt); never edit the copy, see tools/README.md.
-Standard library only. Reference: ops docs/tooling.md.
+Standard library only. Reference: ops docs/tooling.md, docs/test-execution-policy.md.
 """
+import argparse
+import bisect
 import contextlib
 import datetime
 import fcntl
@@ -16,9 +28,10 @@ import math
 import os
 import pathlib
 import re
-import signal
 import shutil
+import signal
 import stat
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -656,7 +669,7 @@ def choose_log(cwd, root, env, linked=False):
 
 @contextlib.contextmanager
 def locked(path):
-    """An exclusive lock on <log>.lock, shared with tt-report's harvest so an append and
+    """An exclusive lock on <log>.lock, shared with harvest so an append and
     a rename never interleave."""
     path = path.resolve()
     lock = path.with_name(path.name + ".lock")
@@ -797,6 +810,1294 @@ def main(argv, env, cwd):
     })
     return status
 
+# ---- tt harvest and tt report: the log's contents per project --------------------------
+
+AGENTS = ("claude", "codex", "agy", None)
+SOURCES = ("wrapper", "hook")
+# Fields a line may lack because they were added after lines were already written
+# (selection: tt version 4; content and slowest: tt version 6). A line without one reads
+# as null.
+OPTIONAL_FIELDS = ("selection", "content", "slowest")
+CONTENT_FORM = re.compile(r"[0-9a-f]{16}")
+
+
+def _valid_content(value):
+    return value is None or (isinstance(value, str) and CONTENT_FORM.fullmatch(value) is not None)
+
+
+def _valid_seconds(value):
+    """A finite, non-negative int or float that a float can hold."""
+    if type(value) not in (int, float):
+        return False
+    try:
+        return math.isfinite(value) and value >= 0
+    except OverflowError:  # an integer beyond float range, which tt never writes
+        return False
+
+
+def _valid_slowest(value):
+    """None, or at most SLOWEST_KEEP {"test", "seconds"} objects (spec 2026-10-08 §6.2)."""
+    if value is None:
+        return True
+    if not isinstance(value, list) or len(value) > SLOWEST_KEEP:
+        return False
+    return all(isinstance(entry, dict) and set(entry) == {"test", "seconds"} and isinstance(entry["test"], str)
+               and _valid_seconds(entry["seconds"]) for entry in value)
+
+
+def normalize_execution(row):
+    """Validate the wrapper outcome pair; historical rows mean ran/default.
+
+    Hook rows describe observed bypasses, not decisions made by the wrapper.
+    """
+    if row["source"] == "hook":
+        return not any(key in row for key in EXECUTION_FIELDS)
+    present = [key in row for key in EXECUTION_FIELDS]
+    if not any(present):
+        row.update(execution="ran", execution_reason="default")
+    elif not all(present):
+        return False
+    if not _valid_seconds(row["seconds"]):
+        return False
+    if row["execution"] == "ran":
+        return type(row["exit"]) is int and row["execution_reason"] in ("default", "policy-enabled", "forced")
+    return (row["execution"] == "skipped" and row["execution_reason"] == "policy-disabled"
+            and all(row.get(key) is None for key in ("exit", "tests", "selection", "slowest")))
+
+# The recipes every project's justfile shares, and the lanes it may add beside them
+# (test-api, hook-pre-push-fast, ci-python). Anything else is a step timing an agent
+# took through tt; the text view folds those into one row. Design: act design §5.
+FRONT_DOOR = {"test", "test-fast", "test-one", "check", "gate", "setup", "docs"}
+FRONT_DOOR_PREFIXES = ("test-", "hook-", "ci-")
+# Tests whose median over the runs that reported them is at least this many seconds are
+# listed (design 2026-10-08 §6.4). A report threshold, never a limit.
+SLOW_TEST_SECONDS = 10.0
+SLOW_TESTS_SHOWN = 20
+
+
+def is_front_door(name):
+    return name in FRONT_DOOR or name.startswith(FRONT_DOOR_PREFIXES)
+
+
+def registry(env):
+    """{prefix: root} from tasks' projects.toml, or {} without one. A missing HOME is a
+    sandbox, not an error: there is simply nothing registered."""
+    if env.get("XDG_CONFIG_HOME"):
+        config = pathlib.Path(env["XDG_CONFIG_HOME"])
+    elif env.get("HOME"):
+        config = pathlib.Path(env["HOME"]) / ".config"
+    else:
+        return {}
+    path = config / "tasks" / "projects.toml"
+    if not path.is_file():
+        return {}
+    projects = tomllib.loads(path.read_text()).get("projects", {})
+    return {prefix: pathlib.Path(root).expanduser() for prefix, root in projects.items()}
+
+
+def registry_roots(env):
+    """Every registered project root, or none when there is no registry to read."""
+    return list(registry(env).values())
+
+
+def worktrees_of(root):
+    """The main checkout and every linked worktree of the repository at root, or just
+    root when it is not a git repository."""
+    result = subprocess.run(["git", "-C", str(root), "worktree", "list", "--porcelain"], capture_output=True, text=True)
+    if result.returncode != 0:
+        return [root]
+    return [pathlib.Path(line.split(" ", 1)[1]).resolve() for line in result.stdout.splitlines() if line.startswith("worktree ")]
+
+
+def harvest_checkout(checkout: pathlib.Path, shared: pathlib.Path, require_empty: bool = False) -> int:
+    """Move one checkout's fallback log into the resolved shared log.
+
+    Everything for one checkout happens under that checkout's log lock: the rename, the
+    copy, and the delete. The wrapper takes the same lock to append, so an append lands
+    either wholly in the file before it is renamed or wholly in the fresh file after, and
+    two reports running at once take turns rather than copying the same batch.
+
+    The shared log is atomically replaced with its existing contents plus the batch and
+    a marker. A failed write leaves the previous log intact; a batch surviving after
+    replacement is recognised by its marker and deleted without being copied again."""
+    directory = checkout / ".tt"
+    fallback = directory / "runs.jsonl"
+    if not directory.is_dir() or fallback.resolve() == shared:
+        return 0
+    shared.parent.mkdir(parents=True, exist_ok=True)
+    count = 0
+    with locked(fallback):
+        if fallback.is_file():
+            fallback.rename(directory / f"runs.jsonl.harvest-{os.getpid()}-{now()}-{os.urandom(4).hex()}")
+        for batch in sorted(directory.glob("runs.jsonl.harvest-*")):
+            batch_id = batch.name.removeprefix("runs.jsonl.harvest-")
+            lines = batch.read_text(encoding="utf-8").splitlines()
+            # The wrapper's writability probe leaves an empty file behind; that
+            # is nothing to publish, not a batch worth a marker and a copy.
+            if lines:
+                with locked(shared):
+                    if not _already_harvested(shared, batch_id):
+                        payload = "".join(text + "\n" for text in lines) + json.dumps({"harvest": batch_id}) + "\n"
+                        _publish_batch(shared, payload)
+                        count += len(lines)
+            batch.unlink()
+        if require_empty:
+            remaining = sorted(batch.name for batch in directory.glob("runs.jsonl.harvest-*"))
+            if remaining:
+                raise RuntimeError("batches remain: " + ", ".join(remaining))
+    return count
+
+
+def harvest(roots, shared):
+    """Move every checkout's fallback log under the given roots into the shared log."""
+    harvested = {}
+    shared = shared.resolve()
+    shared.parent.mkdir(parents=True, exist_ok=True)
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for checkout in worktrees_of(root):
+            count = harvest_checkout(checkout, shared)
+            if count:
+                harvested[str(checkout)] = count
+    return harvested
+
+
+def _publish_batch(shared, payload):
+    """Called with the shared-log lock held; publish complete batches only."""
+    # Copies the log per batch; use SQLite transactions if logs outgrow memory.
+    existing = shared.read_bytes() if shared.is_file() else b""
+    with tempfile.TemporaryDirectory(dir=shared.parent, prefix=".tt-harvest-") as staging:
+        pending = pathlib.Path(staging) / "runs.jsonl"
+        with open(pending, "wb") as out:
+            out.write(existing)
+            out.write(payload.encode("utf-8"))
+            out.flush()
+            os.fsync(out.fileno())
+        os.replace(pending, shared)
+        directory_fd = os.open(shared.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+
+
+def _already_harvested(shared, batch_id):
+    if not shared.is_file():
+        return False
+    marker = json.dumps({"harvest": batch_id})
+    return any(text == marker for text in shared.read_text(encoding="utf-8").splitlines())
+
+
+def read_log(shared):
+    lines, skipped = [], 0
+    if not shared.is_file():
+        return lines, skipped
+    for text in shared.read_text(encoding="utf-8").splitlines():
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            skipped += 1
+            continue
+        if isinstance(parsed, dict) and list(parsed) == ["harvest"]:
+            continue  # a batch marker left by harvest, not a run
+        if not isinstance(parsed, dict) or any(field not in parsed for field in FIELDS if field not in (*OPTIONAL_FIELDS, *EXECUTION_FIELDS)):
+            skipped += 1
+            continue
+        for field in OPTIONAL_FIELDS:
+            parsed.setdefault(field, None)
+        # aggregate branches on these values, so a line outside the vocabulary is counted
+        # as malformed rather than crashing the report or landing in a bucket.
+        if (parsed["agent"] not in AGENTS or parsed["source"] not in SOURCES
+                or parsed["selection"] not in (None, *SELECTIONS)
+                or not _valid_content(parsed["content"]) or not _valid_slowest(parsed["slowest"])
+                or not normalize_execution(parsed)):
+            skipped += 1
+            continue
+        lines.append(parsed)
+    return lines, skipped
+
+
+def parse_when(value, today):
+    """A calendar date from `YYYY-MM-DD`, or `<n>d` / `<n>w` counted back from today (cli.toml `when`)."""
+    if value[-1:] in ("d", "w") and value[:-1].isdigit():
+        days = int(value[:-1]) * (7 if value[-1] == "w" else 1)
+        return datetime.datetime.strptime(today, "%Y-%m-%dT%H:%M:%SZ").date() - datetime.timedelta(days=days)
+    return datetime.date.fromisoformat(value)
+
+
+def select(lines, since, until, project, today):
+    low = parse_when(since, today).isoformat() if since is not None else None
+    high = parse_when(until, today).isoformat() if until is not None else None
+    return [l for l in lines
+            if (low is None or l["at"][:10] >= low) and (high is None or l["at"][:10] <= high)
+            and (project is None or l["project"] == project)]
+
+
+def _percentile(values, fraction):
+    ordered = sorted(values)
+    index = max(0, min(len(ordered) - 1, round(fraction * (len(ordered) - 1))))
+    return ordered[index]
+
+
+def _new_entry():
+    return {"targets": {}, "fast_to_full": None, "bypasses": 0, "bypass_seconds": 0.0,
+            "bypass_unknown": 0, "_agent_runs": {}}
+
+
+def _count(entry, l):
+    if l["source"] == "hook":
+        # The whole tool call's duration, which may include front-door work beside the
+        # bypass: reported as its own figure and never added to a target (act design §4).
+        entry["bypasses"] += 1
+        if l["seconds"] is None:
+            entry["bypass_unknown"] += 1
+        else:
+            entry["bypass_seconds"] += l["seconds"]
+        return
+    target = entry["targets"].setdefault(l["target"], {
+        "_seconds": [], "_exits": [], "empty": 0, "skipped_runs": 0,
+        "decision_seconds": 0.0, "execution_reasons": {},
+        "by_agent": {"claude": 0, "codex": 0, "agy": 0, "human": 0}})
+    reason = l.get("execution_reason", "default")
+    target["execution_reasons"][reason] = target["execution_reasons"].get(reason, 0) + 1
+    if l.get("execution") == "skipped":
+        target["skipped_runs"] += 1
+        target["decision_seconds"] += l["seconds"]
+        return
+    target["_seconds"].append(l["seconds"])
+    target["_exits"].append(l["exit"])
+    if l["tests"] == 0 and l["exit"] == 0:
+        target["empty"] += 1
+    who = l["agent"] or "human"
+    target["by_agent"][who] += 1
+    if l["agent"]:
+        entry["_agent_runs"][l["target"]] = entry["_agent_runs"].get(l["target"], 0) + 1
+
+
+def _summarise(entry):
+    for name, target in entry["targets"].items():
+        seconds = target.pop("_seconds")
+        exits = target.pop("_exits")
+        # Every recipe runs an `&&` chain, so a run that failed timed only the prefix that
+        # got to run, not the target. Pricing a target on those makes a gate that dies on
+        # its first command look like a fast gate: beliefs recorded check at 0.044s while
+        # ruff failed before pyright's 16.8s ever started. Price on the successful runs;
+        # a target with none is unpriced, and `priced` says how many the median covers.
+        priced = [s for s, e in zip(seconds, exits) if s is not None and e == 0]
+        target["front_door"] = is_front_door(name)
+        target["executed_runs"] = len(exits)
+        target["runs"] = len(exits) + target["skipped_runs"]
+        target["decision_seconds"] = round(target["decision_seconds"], 3)
+        target["priced_runs"] = len(priced)
+        target["median"] = round(statistics.median(priced), 3) if priced else None
+        target["p90"] = round(_percentile(priced, 0.9), 3) if priced else None
+        target["failure_rate"] = round(sum(1 for e in exits if e not in (0, None)) / len(exits), 3) if exits else None
+        # Time spent, failed runs included: what the folded `other` row reports.
+        target["total_seconds"] = round(sum(s for s in seconds if s is not None), 3)
+    entry["bypass_seconds"] = round(entry["bypass_seconds"], 3)
+    agent_runs = entry.pop("_agent_runs")
+    full = agent_runs.get("test", 0)
+    entry["fast_to_full"] = round(agent_runs.get("test-fast", 0) / full, 3) if full else None
+    return entry
+
+
+def slow_tests(lines):
+    """One row per (project, test identity) whose median is at least SLOW_TEST_SECONDS,
+    slowest first. `runs` counts reports, not distinct runs: each time a run listed the
+    test among its five slowest, so a run whose JUnit files held the test twice (two
+    invocations) counts twice, and the median is over those reports."""
+    seen = {}
+    for l in lines:
+        if l["source"] != "wrapper" or l.get("execution") == "skipped" or not l.get("slowest"):
+            continue
+        project = l["project"] if l["project"] is not None else "none"
+        for entry in l["slowest"]:
+            row = seen.setdefault((project, entry["test"]), {"seconds": [], "targets": set()})
+            row["seconds"].append(entry["seconds"])
+            row["targets"].add(l["target"])
+    rows = []
+    for (project, test), row in seen.items():
+        median = statistics.median(row["seconds"])
+        if median >= SLOW_TEST_SECONDS:
+            rows.append({"project": project, "test": test, "runs": len(row["seconds"]),
+                         "median": round(median, 3), "max": round(max(row["seconds"]), 3),
+                         "targets": sorted(row["targets"])})
+    return sorted(rows, key=lambda row: (-row["median"], row["project"], row["test"]))
+
+
+def aggregate(lines):
+    """One entry per project, plus `all`: the same shape computed over every line, which
+    is where the cost of an agent's day across projects becomes one number."""
+    projects = {}
+    everything = _new_entry()
+    for l in lines:
+        key = l["project"] if l["project"] is not None else "none"
+        _count(projects.setdefault(key, _new_entry()), l)
+        _count(everything, l)
+    for entry in projects.values():
+        _summarise(entry)
+    return {"projects": dict(sorted(projects.items())), "all": _summarise(everything),
+            "slow_tests": slow_tests(lines), "harvested": {}, "skipped_lines": 0}
+
+
+def _cell(value):
+    if value is None:
+        return "-"
+    return f"{value:.1f}" if isinstance(value, float) else str(value)
+
+
+def _table(heading, entry, all_targets):
+    rows = []
+    other = {}
+    for name, target in sorted(entry["targets"].items()):
+        if not all_targets and not target["front_door"]:
+            other[name] = target
+            continue
+        rows.append((name, target))
+    other_row = None
+    if other:
+        # Runs and time only: a median pooled over unrelated commands would mislead.
+        runs = sum(t["runs"] for t in other.values())
+        executed = sum(t["executed_runs"] for t in other.values())
+        skipped = sum(t["skipped_runs"] for t in other.values())
+        minutes = sum(t["total_seconds"] for t in other.values()) / 60
+        noun = "target" if len(other) == 1 else "targets"
+        other_row = (f"other ({len(other)} {noun})",
+                     f"{runs:>6}{'-':>8}{'-':>9}{'-':>9}{'-':>7}{'-':>7}  {minutes:.1f} min; {executed} executed, {skipped} skipped")
+    # The column widens to the longest row so the numeric columns stay aligned; the
+    # floor keeps short tables looking like they always have.
+    width = max([18] + [len(name) for name, _ in rows] + ([len(other_row[0])] if other_row else []))
+    out = [heading, f"  {'target':<{width}}{'runs':>6}{'priced':>8}{'median':>9}{'p90':>9}{'fail':>7}{'empty':>7}  claude/codex/agy/human; executed, skipped"]
+    for name, target in rows:
+        by = target["by_agent"]
+        out.append(f"  {name:<{width}}{target['runs']:>6}{target['priced_runs']:>8}{_cell(target['median']):>9}{_cell(target['p90']):>9}{_cell(target['failure_rate']):>7}{target['empty']:>7}  {by['claude']}/{by['codex']}/{by['agy']}/{by['human']}; {target['executed_runs']} executed, {target['skipped_runs']} skipped")
+    if other_row:
+        out.append(f"  {other_row[0]:<{width}}{other_row[1]}")
+    ratio = "-" if entry["fast_to_full"] is None else f"{entry['fast_to_full']:.2f}"
+    minutes = entry["bypass_seconds"] / 60
+    out.append(f"  fast/full by agents: {ratio}   bypasses: {entry['bypasses']}; tool-call minutes containing bypasses: {minutes:.1f} ({entry['bypass_unknown']} unknown)")
+    out.append("")
+    return out
+
+
+def render(report, all_targets=False):
+    out = []
+    for prefix, entry in report["projects"].items():
+        out.extend(_table(prefix, entry, all_targets))
+    out.extend(_table("all projects", report["all"], all_targets))
+    if report["slow_tests"]:
+        out.append(f"slow tests: median {SLOW_TEST_SECONDS:g} s or more "
+                   "(runs counts reports, a lower bound: each time a run listed the test among its five slowest, twice if it ran twice)")
+        out.append(f"  {'project':<10}{'median':>9}{'max':>9}{'runs':>6}  test [targets]")
+        for row in report["slow_tests"][:SLOW_TESTS_SHOWN]:
+            out.append(f"  {row['project']:<10}{row['median']:>9.1f}{row['max']:>9.1f}{row['runs']:>6}  "
+                       f"{row['test']} [{', '.join(row['targets'])}]")
+        hidden = len(report["slow_tests"]) - SLOW_TESTS_SHOWN
+        if hidden > 0:
+            out.append(f"  … {hidden} more in --json")
+        out.append("")
+    if report["harvested"]:
+        out.append("harvested from fallback logs:")
+        for checkout, n in report["harvested"].items():
+            out.append(f"  {n:>5}  {checkout}")
+    if report["skipped_lines"]:
+        out.append(f"skipped {report['skipped_lines']} malformed line(s)")
+    out.append("bypasses are Claude Code tool calls only: Codex has no bypass hook")
+    return "\n".join(out) + "\n"
+
+
+def report_main(argv, env):
+    parser = argparse.ArgumentParser(prog="tt report")
+    parser.add_argument("--since", metavar="WHEN", help="YYYY-MM-DD or <n>d/<n>w back; inclusive")
+    parser.add_argument("--until", metavar="WHEN", help="YYYY-MM-DD or <n>d/<n>w back; inclusive")
+    parser.add_argument("--project", metavar="PREFIX")
+    parser.add_argument("--all", action="store_true", help="list every target instead of folding the ad-hoc ones")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+    today = now()
+    for flag, value in (("--since", args.since), ("--until", args.until)):
+        if value is not None:
+            try:
+                parse_when(value, today)
+            except ValueError:
+                parser.error(f"{flag} takes YYYY-MM-DD, <n>d or <n>w, not {value!r}")
+    shared = shared_log(env)
+    harvested = harvest(registry_roots(env), shared)
+    lines, skipped = read_log(shared)
+    report = aggregate(select(lines, args.since, args.until, args.project, today))
+    report["harvested"] = harvested
+    report["skipped_lines"] = skipped
+    sys.stdout.write(json.dumps(report, indent=2) + "\n" if args.json else render(report, all_targets=args.all))
+    return 0
+
+
+def harvest_main(argv, env):
+    """Harvest alone: what a worktree removal needs, without reading the whole log."""
+    parser = argparse.ArgumentParser(prog="tt harvest")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+    harvested = harvest(registry_roots(env), shared_log(env))
+    if args.json:
+        sys.stdout.write(json.dumps({"harvested": harvested}, indent=2) + "\n")
+    else:
+        for checkout, count in harvested.items():
+            sys.stdout.write(f"harvested {count} line(s) from {checkout}\n")
+        if not harvested:
+            sys.stdout.write("nothing to harvest\n")
+    return 0
+
+
+# ---- tt latency: test latency as a stop-work incident ----------------------------------
+
+HERE = pathlib.Path(__file__).resolve().parent
+CONFIG_PATH = HERE.parent / "latency.toml"
+UTC = datetime.timezone.utc
+TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+EXCEPTION_FIELDS = ("project", "target", "seconds", "reason", "until")
+# Selections that reran the whole suite instead of the affected tests (SELECTIONS):
+# they measure something other than what a fast target's limit prices.
+WIDENED = ("new-db", "packages")
+
+
+class ConfigError(Exception):
+    """latency.toml cannot be used; the message names the row or key."""
+
+
+def _positive(doc, section, key, kind):
+    value = doc.get(section, {}).get(key)
+    if (not isinstance(value, kind) or isinstance(value, bool) or value <= 0
+            or (isinstance(value, float) and not math.isfinite(value))):
+        what = "whole number" if kind is int else "number"
+        raise ConfigError(f"{section}.{key}: a positive {what} is required, not {value!r}")
+    return value
+
+
+def load_config(text, today, prefixes):
+    """The parsed file, validated. `prefixes` is the registry's set, or None to skip the
+    project check (tests, and a host without a registry)."""
+    try:
+        doc = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as error:
+        raise ConfigError(f"latency.toml does not parse: {error}") from None
+    for section in ("window", "contention", "verify"):
+        if not isinstance(doc.get(section), dict):
+            raise ConfigError(f"{section}: a table is required")
+    exceptions = doc.get("exceptions", [])
+    if not isinstance(exceptions, list):
+        raise ConfigError("exceptions: an array of tables is required")
+    config = {
+        "window": {key: _positive(doc, "window", key, int) for key in ("days", "min_runs", "min_days")},
+        "contention": {
+            "long_seconds": _positive(doc, "contention", "long_seconds", (int, float)),
+            "overlap": _positive(doc, "contention", "overlap", (int, float)),
+            "min_overlap_seconds": _positive(doc, "contention", "min_overlap_seconds", (int, float)),
+        },
+        "verify": {"min_runs": _positive(doc, "verify", "min_runs", int)},
+        "limits": {},
+        "exceptions": [],
+        "expired": [],
+    }
+    limits = doc.get("limits")
+    if not isinstance(limits, dict) or not limits:
+        raise ConfigError("limits: at least one target is required")
+    for target, seconds in limits.items():
+        if (isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or seconds <= 0
+                or (isinstance(seconds, float) and not math.isfinite(seconds))):
+            raise ConfigError(f"limits.{target}: a positive number of seconds is required, not {seconds!r}")
+        config["limits"][target] = seconds
+    for index, row in enumerate(exceptions, 1):
+        where = f"exceptions[{index}]"
+        if not isinstance(row, dict):
+            raise ConfigError(f"{where}: a table is required")
+        for field in EXCEPTION_FIELDS:
+            if field not in row:
+                raise ConfigError(f"{where}: {field} is required")
+        if prefixes is not None and row["project"] not in prefixes:
+            raise ConfigError(f"{where}: project {row['project']!r} is not registered")
+        seconds = row["seconds"]
+        if (isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or seconds <= 0
+                or (isinstance(seconds, float) and not math.isfinite(seconds))):
+            raise ConfigError(f"{where}: seconds must be a positive number, not {seconds!r}")
+        until = row["until"]
+        if not isinstance(until, datetime.date) or isinstance(until, datetime.datetime):
+            # tomllib parses a bare date; a quoted or partial one arrives as a string.
+            try:
+                until = datetime.date.fromisoformat(str(until))
+            except ValueError:
+                raise ConfigError(f"{where}: until must be a date (YYYY-MM-DD), not {row['until']!r}") from None
+        entry = {"project": row["project"], "target": row["target"], "seconds": seconds,
+                 "reason": str(row["reason"]), "until": until.isoformat()}
+        (config["expired"] if until < today else config["exceptions"]).append(entry)
+    return config
+
+
+def limit_for(config, project, target):
+    """(seconds, "exception"|"default") for a judged pair, else None."""
+    for row in config["exceptions"]:
+        if row["project"] == project and row["target"] == target:
+            return row["seconds"], "exception"
+    if target in config["limits"]:
+        return config["limits"][target], "default"
+    return None
+
+
+def parse_at(text):
+    """A UTC datetime from the log's `at`, or None when it is not that exact form."""
+    if not isinstance(text, str) or not TIMESTAMP.match(text):
+        return None
+    try:
+        return datetime.datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
+    except ValueError:
+        return None  # the shape of a timestamp, but not a date the calendar has
+
+
+def format_at(when):
+    return when.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def prepare(lines, config):
+    """Wrapper lines with a duration and a parseable `at`, sorted by start, each given
+    `start`, `end` and `contended`; plus the count of lines whose `at` could not be read.
+
+    Contention is decided once per line here, against every long line, because the
+    verdict asks it for every run in every window: the replay over a month of log
+    evaluates 600 windows, and a scan per question took minutes."""
+    kept, skipped = [], 0
+    for line in lines:
+        if line.get("execution") == "skipped":
+            continue
+        if line["source"] != "wrapper" or not isinstance(line["seconds"], (int, float)) or isinstance(line["seconds"], bool):
+            continue
+        start = parse_at(line["at"])
+        if start is None:
+            skipped += 1
+            continue
+        kept.append({**line, "start": start, "end": start + datetime.timedelta(seconds=line["seconds"])})
+    kept.sort(key=lambda l: l["start"])
+    _mark_contended(kept, config["contention"])
+    return kept, skipped
+
+
+def _mark_contended(lines, rules):
+    """Sets `contended` on every line: another long line overlaps it for at least
+    `overlap` of its duration and `min_overlap_seconds`. Long lines are scanned from the
+    last one that started before this line ends, backwards while any earlier long line
+    is still running (a running maximum of their ends), so a line's cost is the number
+    of long lines actually overlapping it, not the log's length."""
+    long = [l for l in lines if l["seconds"] >= rules["long_seconds"]]
+    starts = [l["start"] for l in long]
+    latest_end = []
+    for l in long:
+        latest_end.append(l["end"] if not latest_end else max(latest_end[-1], l["end"]))
+    for line in lines:
+        needed = max(rules["overlap"] * line["seconds"], rules["min_overlap_seconds"])
+        line["contended"] = False
+        index = bisect.bisect_left(starts, line["end"]) - 1
+        while index >= 0 and latest_end[index] > line["start"]:
+            other = long[index]
+            if other is not line:
+                overlap = (min(line["end"], other["end"]) - max(line["start"], other["start"])).total_seconds()
+                if overlap >= needed:
+                    line["contended"] = True
+                    break
+            index -= 1
+
+
+def wrapper_lines(shared, config, env):
+    """The shared log's wrapper lines after a harvest, so a run recorded in a checkout's
+    fallback log (a sandbox that cannot write the shared one) is judged like any other."""
+    harvest(registry_roots(env), shared)
+    lines, _ = read_log(shared)
+    return prepare(lines, config)
+
+
+def floor_for(floors, project, target):
+    candidates = [floors.get((project, None)), floors.get((project, target))]
+    candidates = [c for c in candidates if c is not None]
+    return max(candidates) if candidates else None
+
+
+def runs_for(lines, project, target, after):
+    """Successful runs of one pair started strictly after `after`: the judged ones, then
+    the counts set aside as widened and as contended. A run both widened and contended
+    counts once, as widened: what it ran is decided before what it ran beside."""
+    kept, widened, contended = [], 0, 0
+    for line in lines:
+        if line["project"] != project or line["target"] != target or line["exit"] != 0:
+            continue
+        if after is not None and line["start"] <= after:
+            continue
+        if line["selection"] in WIDENED:
+            widened += 1
+        elif line["contended"]:
+            contended += 1
+        else:
+            kept.append(line)
+    return kept, widened, contended
+
+
+def evaluate(lines, config, floors, now, project=None):
+    """One verdict per judged (project, target) with a successful run in the window,
+    `insufficient` included. `project` narrows the verdicts, never the lines: contention
+    was marked against every project's runs in `prepare`."""
+    window_start = now - datetime.timedelta(days=config["window"]["days"])
+    in_window = [l for l in lines if l["project"] is not None and l["exit"] == 0
+                 and window_start < l["start"] <= now and (project is None or l["project"] == project)]
+    verdicts = []
+    for prefix, target in sorted({(l["project"], l["target"]) for l in in_window}):
+        limit = limit_for(config, prefix, target)
+        if limit is None:
+            continue
+        floor = floor_for(floors, prefix, target)
+        runs, widened, aside = runs_for(in_window, prefix, target, floor)
+        days = {r["start"].date() for r in runs}
+        verdict = {"project": prefix, "target": target, "limit": limit[0], "limit_source": limit[1],
+                   "runs": len(runs), "days": len(days), "contended": aside, "widened": widened, "median": None,
+                   "window_start": format_at(window_start), "window_end": format_at(now),
+                   "floor": format_at(floor) if floor else None}
+        if len(runs) < config["window"]["min_runs"] or len(days) < config["window"]["min_days"]:
+            verdict["verdict"] = "insufficient"
+        else:
+            verdict["median"] = round(statistics.median(r["seconds"] for r in runs), 3)
+            verdict["verdict"] = "breach" if verdict["median"] > limit[0] else "ok"
+        verdicts.append(verdict)
+    return verdicts
+
+
+class NoteError(Exception):
+    """A note in one of the tool's forms that does not parse; the message names it."""
+
+
+BREACH_HEAD = re.compile(r"^breach: (?P<host>\S+) window (?P<start>\S+)\.\.(?P<end>\S+): (?P<pairs>.+)$")
+BREACH_PAIR = re.compile(r"^(?P<target>\S+) median (?P<median>\d+(?:\.\d+)?) s, limit (?P<limit>\d+(?:\.\d+)?) s, "
+                         r"(?P<runs>\d+) runs on (?P<days>\d+) days$")
+VERIFIED_HEAD = re.compile(r"^verified: (?P<host>\S+) after (?P<after>\S+): (?P<pairs>.+)$")
+VERIFIED_PAIR = re.compile(r"^(?P<target>\S+) median (?P<median>\d+(?:\.\d+)?) s, limit (?P<limit>\d+(?:\.\d+)?) s, "
+                           r"(?P<runs>\d+) runs$")
+
+
+def _number(value):
+    """Limits are written as they are configured: `300`, not `300.0`."""
+    return str(int(value)) if float(value).is_integer() else str(value)
+
+
+def format_breach(host, window_start, window_end, pairs):
+    body = "; ".join(f"{p['target']} median {_number(p['median'])} s, limit {_number(p['limit'])} s, "
+                     f"{p['runs']} runs on {p['days']} days" for p in pairs)
+    return f"breach: {host} window {window_start}..{window_end}: {body}"
+
+
+def format_verified(host, after, pairs):
+    body = "; ".join(f"{p['target']} median {_number(p['median'])} s, limit {_number(p['limit'])} s, "
+                     f"{p['runs']} runs" for p in pairs)
+    return f"verified: {host} after {after}: {body}"
+
+
+def _numeric(text):
+    return int(text) if text.isdigit() else float(text)
+
+
+def parse_note(text):
+    """A parsed obligation note, None for prose, NoteError for a broken form."""
+    # tasks done stores the human verdict and closeout details as another note.
+    if re.match(r"^verified: every obligation is met(?:$|[\s;.,(:])", text):
+        return None
+    if text.startswith("breach:"):
+        head = BREACH_HEAD.match(text)
+        if not head or parse_at(head["start"]) is None or parse_at(head["end"]) is None:
+            raise NoteError(f"breach note does not parse: {text}")
+        pairs = []
+        for piece in head["pairs"].split("; "):
+            found = BREACH_PAIR.match(piece)
+            if not found:
+                raise NoteError(f"breach note has an unreadable pair {piece!r}: {text}")
+            pairs.append({"target": found["target"], "median": _numeric(found["median"]),
+                          "limit": _numeric(found["limit"]), "runs": int(found["runs"]), "days": int(found["days"])})
+        return {"kind": "breach", "host": head["host"], "window_start": head["start"],
+                "window_end": head["end"], "pairs": pairs}
+    if text.startswith("verified:"):
+        head = VERIFIED_HEAD.match(text)
+        if not head or parse_at(head["after"]) is None:
+            raise NoteError(f"verified note does not parse: {text}")
+        pairs = []
+        for piece in head["pairs"].split("; "):
+            found = VERIFIED_PAIR.match(piece)
+            if not found:
+                raise NoteError(f"verified note has an unreadable pair {piece!r}: {text}")
+            pairs.append({"target": found["target"], "median": _numeric(found["median"]),
+                          "limit": _numeric(found["limit"]), "runs": int(found["runs"])})
+        return {"kind": "verified", "host": head["host"], "after": head["after"], "pairs": pairs}
+    return None
+
+
+def parsed_notes(task):
+    """A task's obligation notes, parsed, in record order. The CLI omits an empty notes
+    list. A broken note is an error that names the task, never a pair silently dropped."""
+    parsed = []
+    for note in task.get("notes", []):
+        try:
+            found = parse_note(note["text"])
+        except NoteError as error:
+            raise NoteError(f"{task['id']}: {error}") from None
+        if found is not None:
+            parsed.append(found)
+    return parsed
+
+
+def obligations(task):
+    """The state of every (host, target) pair an incident's notes name."""
+    pairs = {}
+    established = False
+    for parsed in parsed_notes(task):
+        for pair in parsed["pairs"]:
+            key = (parsed["host"], pair["target"])
+            if parsed["kind"] == "breach":
+                established = True
+                pairs[key] = {"state": "outstanding", "after": None}
+            else:
+                pairs[key] = {"state": "met", "after": parsed["after"]}
+    return {"established": established, "pairs": pairs}
+
+
+OPEN_STATUSES = ("idea", "todo", "doing", "blocked", "shelved")
+INCIDENT_TAGS = ("halt", "test-latency")
+
+
+class TasksFailed(Exception):
+    """A `tasks` call did not answer; the message is its stderr or the reason."""
+
+
+class Reused(TasksFailed):
+    """`tasks add` answered with a task that already carried the source and title."""
+
+
+class TaskStore:
+    """The tasks CLI, always run against a project's registered checkout. Record files
+    are read under each project's records directory, which is the checkout only in-tree
+    (tasks docs/specs/2026-10-22-records-home-design.md §3.1)."""
+
+    def __init__(self, roots, env=None, run=subprocess.run):
+        self.roots = roots
+        self.env = env if env is not None else os.environ
+        self.run = run
+        self._records = None
+        self._checkouts = {}
+        self._policies = {}
+        self._policy_floors = {}
+
+    def registered(self, prefix):
+        return prefix in self.roots
+
+    def retired(self, prefix):
+        """Whether the project declares itself retired. It refuses every write, so
+        escalate files nothing there (ops lifecycle spec §5). A config that cannot be read
+        raises: unknown is never active."""
+        path = self.records(prefix) / "tasks" / ".config.toml"
+        try:
+            # Any top-level `retired` key counts, even a malformed table: filing nothing
+            # is the safe side. `ops-projects check` validates the table (retired_problem).
+            return "retired" in tomllib.loads(path.read_text())
+        except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError) as error:
+            raise TasksFailed(f"{path}: {error}") from None
+
+    def _root(self, prefix):
+        if prefix not in self.roots:
+            raise TasksFailed(f"{prefix}: not a registered project")
+        return self.roots[prefix]
+
+    def records(self, prefix):
+        """The project's records directory, from `tasks projects` (asked once per store)."""
+        self._root(prefix)
+        if self._records is None:
+            command = ["tasks", "projects", "--json"]
+            result = self.run(command, capture_output=True, text=True, env=self.env)
+            if result.returncode != 0:
+                raise TasksFailed(f"{' '.join(command)}: {result.stderr.strip() or result.stdout.strip()}")
+            try:
+                rows = json.loads(result.stdout)["projects"]
+                self._checkouts = {row["prefix"]: pathlib.Path(row["checkout"]) if "checkout" in row else None for row in rows}
+                self._records = {row["prefix"]: pathlib.Path(row["records"]) if "records" in row else None
+                                 for row in rows}
+            except (json.JSONDecodeError, KeyError, TypeError):
+                raise TasksFailed(f"{' '.join(command)}: answer is not JSON with projects") from None
+        if prefix not in self._records:
+            raise TasksFailed(f"tasks projects lists no {prefix}, which the registry names")
+        if self._records[prefix] is None:
+            raise TasksFailed(f"tasks projects gives no records for {prefix}: update the tasks binary")
+        return self._records[prefix]
+
+    def policy(self, prefix):
+        """Policy at the registered code checkout, never a records overlay/worktree."""
+        if prefix not in self._policies:
+            self.records(prefix)  # resolve both locations once from tasks projects
+            root = self._checkouts.get(prefix)
+            if root is None or not root.is_dir() or repo_root(root) is None:
+                raise TasksFailed(f"{prefix}: execution policy unavailable at registered code checkout {root}")
+            try:
+                self._policies[prefix], _ = effective_policy(root, self.env)
+            except ValueError as error:
+                raise TasksFailed(f"{prefix}: execution policy: {error}") from None
+        return self._policies[prefix]
+
+    def policy_floor(self, prefix):
+        """Latest explicitly recorded enabled regime, including closed adoption tasks."""
+        if prefix not in self._policy_floors:
+            statuses = ("idea", "todo", "doing", "blocked", "shelved", "done", "dropped", "moved")
+            flags = [flag for status in statuses for flag in ("--status", status)]
+            listing = self._tasks(prefix, "list", "--source", f"tt-policy:{prefix}", *flags)["tasks"]
+            times = []
+            for entry in listing:
+                for note in self.show(entry["id"]).get("notes", []):
+                    text = note["text"]
+                    if not text.startswith("policy:"):
+                        continue
+                    match = re.fullmatch(r"policy: (enabled|disabled) at (\S+) revision [0-9a-f]{40}", text)
+                    stamp = parse_at(match[2]) if match else None
+                    if stamp is None:
+                        raise NoteError(f"{entry['id']}: malformed policy note: {text!r}")
+                    if match[1] == "enabled":
+                        times.append(stamp)
+            self._policy_floors[prefix] = max(times) if times else None
+        return self._policy_floors[prefix]
+
+    def _tasks(self, prefix, *args):
+        command = ["tasks", "-C", str(self._root(prefix)), *args, "--json"]
+        result = self.run(command, capture_output=True, text=True, env=self.env)
+        if result.returncode != 0:
+            raise TasksFailed(f"{' '.join(command)}: {result.stderr.strip() or result.stdout.strip()}")
+        try:
+            return json.loads(result.stdout)
+        except json.JSONDecodeError:
+            raise TasksFailed(f"{' '.join(command)}: answer is not JSON") from None
+
+    def show(self, task_id, recording=False):
+        prefix = task_id.split("-", 1)[0]
+        answer = self._tasks(prefix, "show", task_id)
+        task = answer["task"]
+        if recording:
+            records = self.records(prefix).resolve()
+            remedy = (f"{task_id}: keep using --dry-run in the worktree; record from the "
+                      "registered checkout after the remedy branch merges, with --after at the merge")
+            try:
+                config = tomllib.loads((records / "tasks" / ".config.toml").read_text())
+                workspace = (records / config.get("checkout", {}).get("path", records)).resolve()
+                claim = answer.get("claim")
+                if claim and claim["live"] and pathlib.Path(claim["worktree"]).resolve() != workspace:
+                    raise TasksFailed(f"{remedy} (live claim in {claim['worktree']})")
+                record = pathlib.Path("tasks") / f"{task_id}.md"
+                raw = (records / record).read_bytes()
+                listing = self.run(["git", "-C", str(records), "worktree", "list", "--porcelain", "-z"],
+                                   capture_output=True, text=True, env=self.env)
+                if listing.returncode != 0:
+                    if any(os.path.lexists(parent / ".git") for parent in (records, *records.parents)):
+                        raise TasksFailed(f"{task_id}: cannot check sibling worktrees: {listing.stderr.strip()}")
+                    checkouts = [records]  # A record project outside git has no sibling copies.
+                else:
+                    checkouts = [pathlib.Path(field[9:]).resolve() for field in listing.stdout.split("\0")
+                                 if field.startswith("worktree ")]
+                offset = records.relative_to(next(c for c in checkouts if records.is_relative_to(c)))
+                updated = datetime.datetime.fromisoformat(task["updated"])
+                for checkout in checkouts:
+                    sibling = checkout / offset
+                    if sibling == records or not (sibling / record).exists():
+                        continue
+                    other = TaskStore({prefix: sibling}, env=self.env, run=self.run).show(task_id)
+                    stamp = datetime.datetime.fromisoformat(other["updated"])
+                    if stamp > updated or (stamp == updated and (sibling / record).read_bytes() != raw):
+                        raise TasksFailed(f"{remedy} (newer or divergent record in {sibling})")
+            except (OSError, ValueError, StopIteration) as error:
+                raise TasksFailed(f"{task_id}: cannot check whether recording is ready: {error}") from None
+        return task
+
+    def incidents(self, prefix):
+        """(open, done) latency incidents, each with its notes."""
+        result = []
+        for statuses in (OPEN_STATUSES, ("done",)):
+            flags = [flag for status in statuses for flag in ("--status", status)]
+            listing = self._tasks(prefix, "list", "--tag", "test-latency", *flags)["tasks"]
+            found = [t for t in listing if "test-latency" in t.get("tags", [])]
+            result.append([self.show(t["id"]) for t in found])
+        return result[0], result[1]
+
+    def add(self, prefix, title, body, source):
+        answer = self._tasks(prefix, "add", title, "-p", "0", "--size", "m", "--complexity", "high",
+                             "--process", "planned", "--tag", "halt", "--tag", "test-latency",
+                             "--tag", "testing", "--source", source, "-b", body)
+        if answer.get("action") == "reused":
+            raise Reused(f"tasks add reused {answer.get('id')} for source {source}; every incident must be new")
+        return answer["id"]
+
+    def note(self, task_id, text):
+        self._tasks(task_id.split("-", 1)[0], "note", task_id, text)
+
+
+def floors_for(prefix, open_incidents, done_incidents, host):
+    """This host's floors for one project: the completion term under (prefix, None) and
+    a verification term per target."""
+    floors = {}
+    completed = [parse_at(t.get("completed")) for t in done_incidents if t.get("status") == "done"]
+    completed = [c for c in completed if c is not None]
+    if completed:
+        floors[(prefix, None)] = max(completed)
+    for task in [*open_incidents, *done_incidents]:
+        for parsed in parsed_notes(task):
+            if parsed["kind"] != "verified" or parsed["host"] != host:
+                continue
+            after = parse_at(parsed["after"])
+            for pair in parsed["pairs"]:
+                key = (prefix, pair["target"])
+                if key not in floors or floors[key] < after:
+                    floors[key] = after
+    return floors
+
+
+@contextlib.contextmanager
+def latency_lock(shared):
+    """Blocking exclusive lock beside the shared log; escalate and verify hold it from
+    their first read of incident state to their verdict."""
+    lock = shared.resolve().with_name(shared.name + ".latency.lock")
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    with open(lock, "a") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+
+def body_for(prefix, host):
+    return (f"Filed by tt-latency on {host}: the median of successful, uncontended, unwidened runs over the "
+            f"trailing window is over the limit in latency.toml (ops). The {prefix} project is halted "
+            "while this task is open: tasks start refuses new lower-priority work there. Each pair in a "
+            "`breach:` note below is an obligation on the host it names. Fix the suite; preview in the "
+            "worktree with `verify --dry-run` (the remedy commit's time may serve as `--after` there); "
+            "runs made before the merge do not count; after the remedy merges, make the post-remedy runs "
+            "and run `tt-latency verify <this id> --after <merge timestamp>` from the registered checkout "
+            "on each host named, saving each host's verify output and preserving its exit status "
+            "(`out=$(mktemp); tt-latency verify <this id> --after <merge timestamp> >\"$out\" 2>&1; rc=$?`), "
+            "attaching the output under a host-specific name "
+            "(`tasks attach <this id> \"$out\" --name verify-<host>.txt --caption \"<verdict line>\"`), "
+            "then judging the saved exit status `rc` (a successful attach is not a successful verify); "
+            "close only when verify exits 0 with `verified: every obligation is met`, with a one-line "
+            "`tasks done` message naming that verdict, the merge cutoff and the attachment names, never "
+            "the output itself.\n\n"
+            "Process: planned")
+
+
+def _breaches_by_project(lines, config, store, now, host, project):
+    """(verdicts, {prefix: open incidents or None}, warnings, prefixes whose incidents could
+    not be read) after reading every project's floors."""
+    window_start = now - datetime.timedelta(days=config["window"]["days"])
+    prefixes = sorted({l["project"] for l in lines if l["project"] is not None and l["exit"] == 0
+                       and window_start < l["start"] <= now
+                       and limit_for(config, l["project"], l["target"]) is not None})
+    if project is not None:
+        prefixes = [p for p in prefixes if p == project]
+    # Policy-off projects stay visible even when routine samples have stopped.
+    policies = {p: store.policy(p) for p in sorted(set(prefixes) | set(store.roots))
+                if store.registered(p) and (project is None or p == project)}
+    disabled = {p: set(policy["broad_targets"]) for p, policy in policies.items()
+                if policy is not None and not policy["automatic_broad"]}
+    prefixes = sorted(set(prefixes) | set(disabled))
+    floors, incidents = {}, {}
+    warnings, failed = [], []
+    for prefix in prefixes:
+        if not store.registered(prefix):
+            # A line from a project this registry does not know (unregistered since, or
+            # a sandbox): judged without floors, and nothing can be filed for it.
+            warnings.append(f"{prefix}: not registered; no incident is read or filed for it")
+            incidents[prefix] = None
+            continue
+        try:
+            open_, done = store.incidents(prefix)
+            policy_floor = store.policy_floor(prefix)
+        except TasksFailed as error:
+            # One project's broken tracker must not cost the rest of the batch: judged
+            # without floors, like an unregistered one, and nothing is filed for it.
+            warnings.append(f"{prefix}: cannot read its incidents ({error}); judged without floors, nothing filed")
+            incidents[prefix] = None
+            failed.append(prefix)
+            continue
+        incidents[prefix] = open_
+        floors.update(floors_for(prefix, open_, done, host))
+        if policy_floor is not None:
+            floors[(prefix, None)] = max(policy_floor, floors.get((prefix, None), policy_floor))
+    verdicts = evaluate(lines, config, floors, now, project=project)
+    verdicts = [v for v in verdicts if v["target"] not in disabled.get(v["project"], ())]
+    for verdict in verdicts:
+        if verdict["project"] in disabled and verdict["verdict"] == "breach":
+            verdict["verdict"] = "advisory"
+    for prefix, targets in sorted(disabled.items()):
+        for target in sorted(targets):
+            limit = limit_for(config, prefix, target)
+            verdicts.append({"project": prefix, "target": target, "verdict": "disabled",
+                             "limit": limit[0] if limit else None, "limit_source": limit[1] if limit else None,
+                             "runs": 0, "days": 0, "contended": 0, "widened": 0, "median": None,
+                             "window_start": format_at(window_start), "window_end": format_at(now),
+                             "floor": None})
+    return verdicts, incidents, warnings, failed
+
+
+def check(lines, config, store, now, host, project=None):
+    """(every verdict, breaches first and insufficient last; warnings). The text view
+    hides unfloored insufficient ones; JSON keeps them."""
+    verdicts, _, warnings, _ = _breaches_by_project(lines, config, store, now, host, project)
+    order = {"breach": 0, "advisory": 1, "disabled": 2, "ok": 3, "insufficient": 4}
+    return sorted(verdicts, key=lambda v: (order[v["verdict"]], v["project"], v["target"])), warnings
+
+
+def escalate(lines, config, store, now, host, project=None, dry_run=False):
+    result = {"filed": [], "noted": [], "warnings": [], "verdicts": [], "would_file": [], "would_note": [], "failed": []}
+    verdicts, incidents, warnings, failed = _breaches_by_project(lines, config, store, now, host, project)
+    result["verdicts"] = verdicts
+    result["failed"] = failed
+    result["warnings"].extend(warnings)
+    by_project = {}
+    for verdict in verdicts:
+        if verdict["verdict"] == "breach":
+            by_project.setdefault(verdict["project"], []).append(verdict)
+    for prefix, breaches in sorted(by_project.items()):
+        pairs = [{"target": b["target"], "median": b["median"], "limit": b["limit"], "runs": b["runs"], "days": b["days"]}
+                 for b in breaches]
+        window_start, window_end = breaches[0]["window_start"], breaches[0]["window_end"]
+        if incidents[prefix] is None:
+            continue
+        try:
+            retired = store.retired(prefix)
+        except TasksFailed as error:
+            result["warnings"].append(f"cannot tell whether {prefix} is retired ({error}); its breaches are not filed")
+            result["failed"].append(prefix)
+            continue
+        if retired:
+            result["warnings"].append(f"{prefix} is retired; its breaches are not filed")
+            continue
+        # Non-halt records retain diagnosis, not an active stop-work episode. A
+        # fresh breach after re-enable must establish a new halted incident.
+        open_ = sorted((t for t in incidents[prefix] if "halt" in t.get("tags", [])),
+                       key=lambda t: t["created"])
+        if open_:
+            task = open_[0]
+            for other in open_[1:]:
+                result["warnings"].append(f"{prefix}: {other['id']} is also an open incident; notes go to {task['id']}")
+            state = obligations(task)["pairs"]
+            fresh = [p for p in pairs if state.get((host, p["target"]), {}).get("state") != "outstanding"]
+            if not fresh:
+                continue
+            text = format_breach(host, window_start, window_end, fresh)
+            if dry_run:
+                result["would_note"].append((task["id"], text))
+                continue
+            store.note(task["id"], text)
+            result["noted"].extend((task["id"], p["target"]) for p in fresh)
+            continue
+        worst = max(breaches, key=lambda b: b["median"] / b["limit"])
+        title = f"Test latency over limit: {worst['target']} {_number(worst['median'])} s against {_number(worst['limit'])} s"
+        source = f"tt-latency:{host}:{format_at(now)}"
+        text = format_breach(host, window_start, window_end, pairs)
+        if dry_run:
+            result["would_file"].append((prefix, title, text))
+            continue
+        task_id = store.add(prefix, title, body_for(prefix, host), source)
+        result["filed"].append(task_id)
+        store.note(task_id, text)
+        result["noted"].extend((task_id, p["target"]) for p in pairs)
+    return result
+
+
+def parse_after(text):
+    when = parse_at(text)
+    if when is None:
+        raise ValueError(f"--after takes an RFC 3339 UTC timestamp such as 2026-09-26T18:35:55Z, not {text!r}")
+    return when
+
+
+def verify(lines, config, store, task_id, after, host, dry_run=False):
+    # No retired check: verify refuses a closed incident before its one write, and a
+    # retired project holds only closed ones (ops lifecycle spec §5).
+    task = store.show(task_id, recording=not dry_run)
+    if "test-latency" not in task.get("tags", []):
+        raise TasksFailed(f"{task_id} is not a latency incident (needs the tag test-latency)")
+    if task.get("status") not in OPEN_STATUSES:
+        raise TasksFailed(f"{task_id} is {task.get('status')}; verify judges open incidents")
+    prefix = task_id.split("-", 1)[0]
+    policy = store.policy(prefix)
+    disabled = set(policy["broad_targets"]) if policy and not policy["automatic_broad"] else set()
+    policy_floor = store.policy_floor(prefix)
+    if policy_floor is not None:
+        after = max(after, policy_floor)
+    state = obligations(task)
+    if not state["established"]:
+        return {"exit": 1, "noted": None, "rows": [{"host": host, "target": None, "state": "not established",
+                "median": None, "runs": 0, "message": f"no obligations recorded on {task_id}; run "
+                f"`tt-latency escalate --project {prefix}` on the detecting host first"}]}
+    rows, passing = [], []
+    for (pair_host, target), pair in sorted(state["pairs"].items()):
+        if target in disabled:
+            rows.append({"host": pair_host, "target": target, "state": "not applicable", "median": None, "runs": 0})
+            continue
+        if pair["state"] == "met" and (pair_host != host or parse_at(pair["after"]) >= after) and (
+                policy_floor is None or parse_at(pair["after"]) >= policy_floor):
+            rows.append({"host": pair_host, "target": target, "state": "met", "median": None, "runs": None})
+            continue
+        if pair_host != host:
+            rows.append({"host": pair_host, "target": target, "state": "outstanding elsewhere", "median": None, "runs": None})
+            continue
+        limit = limit_for(config, prefix, target)
+        runs, widened, _ = runs_for(lines, prefix, target, after)
+        median = round(statistics.median(r["seconds"] for r in runs), 3) if runs else None
+        met = limit is not None and len(runs) >= config["verify"]["min_runs"] and median <= limit[0]
+        rows.append({"host": host, "target": target, "state": "met" if met else "outstanding here",
+                     "median": median, "runs": len(runs), "widened": widened, "limit": limit[0] if limit else None})
+        if met:
+            passing.append({"target": target, "median": median, "limit": limit[0], "runs": len(runs)})
+    noted = None
+    if passing and not dry_run:
+        noted = format_verified(host, format_at(after), passing)
+        store.note(task_id, noted)
+    outstanding = [r for r in rows if r["state"] != "met"]
+    return {"exit": 0 if rows and not outstanding else 1, "rows": rows, "noted": noted}
+
+
+def _render_verdicts(verdicts):
+    pw = max([len("project")] + [len(v["project"]) for v in verdicts]) + 2
+    tw = max([len("target")] + [len(v["target"]) for v in verdicts]) + 2
+    out = [f"  {'project':<{pw}}{'target':<{tw}}{'verdict':<14}{'median':>9}{'limit':>8}{'runs':>6}{'days':>6}{'aside':>7}{'widened':>9}  floor"]
+    for v in verdicts:
+        median = "-" if v["median"] is None else f"{v['median']:.1f}"
+        out.append(f"  {v['project']:<{pw}}{v['target']:<{tw}}{v['verdict']:<14}{median:>9}{_number(v['limit']) if v['limit'] is not None else '-':>8}"
+                   f"{v['runs']:>6}{v['days']:>6}{v['contended']:>7}{v['widened']:>9}  {v['floor'] or '-'}")
+    return "\n".join(out) + "\n"
+
+
+def _render_verify(result):
+    out = []
+    for row in result["rows"]:
+        if row["state"] == "not established":
+            out.append(row["message"])
+            continue
+        detail = ""
+        if row["state"] == "outstanding here" or row["median"] is not None:
+            widened = f", {row['widened']} widened" if row["widened"] else ""
+            limit = "no current limit" if row["limit"] is None else f"limit {_number(row['limit'])} s"
+            if row["median"] is not None:
+                detail = f" (median {row['median']:.1f} s, {row['runs']} runs{widened}, {limit})"
+            elif row["limit"] is None:
+                detail = f" (no current limit, {row['runs']} runs{widened})"
+            elif widened:
+                detail = f" ({row['runs']} runs{widened}, {limit})"
+            else:
+                detail = f" ({row['runs']} runs, median unavailable, {limit})"
+        out.append(f"  {row['host']:<10}{row['target']:<20}{row['state']}{detail}")
+    if any(row["state"] == "not applicable" for row in result["rows"]):
+        out.append("manual disposition required: retire each disabled host/target with the landed policy revision; not performance-verified")
+    if result["noted"]:
+        out.append(f"noted: {result['noted']}")
+    out.append("verified: every obligation is met" if result["exit"] == 0 else "not verified: obligations outstanding")
+    return "\n".join(out) + "\n"
+
+
+def latency_main(argv, env, out=sys.stdout, err=sys.stderr, now=None, host=None, config_path=CONFIG_PATH):
+    parser = argparse.ArgumentParser(prog="tt latency")
+    commands = parser.add_subparsers(dest="command", required=True)
+    for name in ("check", "escalate"):
+        sub = commands.add_parser(name)
+        sub.add_argument("--project", metavar="PREFIX")
+        sub.add_argument("--json", action="store_true")
+        if name == "escalate":
+            sub.add_argument("--dry-run", action="store_true")
+    sub = commands.add_parser("verify")
+    sub.add_argument("task")
+    sub.add_argument("--after", metavar="TIMESTAMP", required=True)
+    sub.add_argument("--dry-run", action="store_true")
+    sub.add_argument("--json", action="store_true")
+    try:
+        # argparse writes usage and errors to sys.stderr and sys.stdout; send them where
+        # the caller asked.
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(out):
+            args = parser.parse_args(argv)
+    except SystemExit as stop:
+        return 2 if stop.code else 0
+    now = now or datetime.datetime.now(UTC).replace(microsecond=0)
+    host = host or os.uname().nodename
+    roots = registry(env)
+    try:
+        config = load_config(pathlib.Path(config_path).read_text(), now.date(), set(roots) or None)
+    except (OSError, ConfigError) as error:
+        err.write(f"tt latency: {error}\n")
+        return 2
+    for row in config["expired"]:
+        err.write(f"tt latency: expired exception ignored: {row['project']} {row['target']} until {row['until']}\n")
+    shared = shared_log(env)
+    store = TaskStore(roots, env=env)
+    try:
+        if args.command == "verify":
+            try:
+                after = parse_after(args.after)
+            except ValueError as error:
+                err.write(f"tt latency: {error}\n")
+                return 2
+            with latency_lock(shared):
+                lines, skipped = wrapper_lines(shared, config, env)
+                result = verify(lines, config, store, args.task, after, host, dry_run=args.dry_run)
+            out.write(json.dumps(result, indent=2) + "\n" if args.json else _render_verify(result))
+            return result["exit"]
+        if args.command == "escalate":
+            with latency_lock(shared):
+                lines, skipped = wrapper_lines(shared, config, env)
+                result = escalate(lines, config, store, now, host, project=args.project, dry_run=args.dry_run)
+            for warning in result["warnings"]:
+                err.write(f"tt latency: {warning}\n")
+            if args.json:
+                out.write(json.dumps(result, indent=2) + "\n")
+            else:
+                out.write(_render_verdicts([v for v in result["verdicts"] if v["verdict"] in ("disabled", "advisory")]))
+                for task_id in result["filed"]:
+                    out.write(f"filed {task_id}\n")
+                for task_id, target in result["noted"]:
+                    out.write(f"noted {task_id}: {target}\n")
+                for prefix, title, text in result["would_file"]:
+                    out.write(f"would file in {prefix}: {title}\n  {text}\n")
+                for task_id, text in result["would_note"]:
+                    out.write(f"would note {task_id}: {text}\n")
+            return 1 if result["failed"] else 0
+        lines, skipped = wrapper_lines(shared, config, env)
+        verdicts, warnings = check(lines, config, store, now, host, project=args.project)
+        for warning in warnings:
+            err.write(f"tt latency: {warning}\n")
+        if skipped:
+            err.write(f"tt latency: skipped {skipped} line(s) with an unreadable timestamp\n")
+        shown = [v for v in verdicts if v["verdict"] != "insufficient" or v["floor"] is not None]
+        out.write(json.dumps(verdicts, indent=2) + "\n" if args.json else _render_verdicts(shown))
+        return 1 if any(v["verdict"] == "breach" for v in verdicts) else 0
+    except TasksFailed as error:
+        err.write(f"tt latency: {error}\n")
+        return 1
+    except NoteError as error:
+        err.write(f"tt latency: {error}\n")
+        return 2
+
+# The commands beside the wrapper. A word here is a command only when "--" does not
+# follow it, so `tt report -- <command>` still times a target named report.
+COMMANDS = {"harvest": harvest_main, "report": report_main, "latency": latency_main}
+USAGE = """usage: tt <target> -- <command> [args...]
+       tt harvest [--json]
+       tt report [--since WHEN] [--until WHEN] [--project PREFIX] [--all] [--json]
+       tt latency {check,escalate,verify} ...
+"""
+
+
+def cli(argv, env, cwd):
+    if argv in (["-h"], ["--help"], ["help"]):
+        sys.stdout.write(USAGE)
+        return 0
+    if argv and argv[0] in COMMANDS and argv[1:2] != ["--"]:
+        return COMMANDS[argv[0]](argv[1:], env)
+    if len(argv) < 3 or argv[1] != "--":
+        sys.stderr.write(USAGE)
+        return 2
+    return main(argv, env, cwd)
+
 
 if __name__ == "__main__":
-    sys.exit(exit_as(main(sys.argv[1:], os.environ, pathlib.Path.cwd())))
+    sys.exit(exit_as(cli(sys.argv[1:], os.environ, pathlib.Path.cwd())))
