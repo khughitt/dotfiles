@@ -52,7 +52,8 @@
 # recipe links into ~/.local/bin). Config-declared hooks
 # run in every repository beside its own core.hooksPath hooks. The command on PATH,
 # else the one under $HOME: a test that sandboxes HOME (still reading this file
-# through XDG_CONFIG_HOME) or rewrites PATH reaches it either way.
+# through XDG_CONFIG_HOME) or rewrites PATH reaches it either way. The command's
+# #!/usr/bin/python3 shebang keeps an older python3 first on PATH from deciding.
 [hook "identity-check"]
 	event = pre-commit
 	event = pre-merge-commit
