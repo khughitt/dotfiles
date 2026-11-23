@@ -48,11 +48,11 @@
 [includeIf "gitdir:**/cainex/"]
 	path = ~/.gitconfig-cainex
 # Refuse a commit or merge whose author or committer is not the identity the
-# checkout's profile declares (ops bin/git-identity-check; reference:
-# ops docs/operations.md). Config-declared hooks
-# run in every repository beside its own core.hooksPath hooks. The script on PATH,
+# checkout's profile declares (lore's git-identity-check, which lore's install
+# recipe links into ~/.local/bin). Config-declared hooks
+# run in every repository beside its own core.hooksPath hooks. The command on PATH,
 # else the one under $HOME: a test that sandboxes HOME (still reading this file
-# through XDG_CONFIG_HOME) or rewrites PATH reaches it either way. The script's
+# through XDG_CONFIG_HOME) or rewrites PATH reaches it either way. The command's
 # #!/usr/bin/python3 shebang keeps an older python3 first on PATH from deciding.
 [hook "identity-check"]
 	event = pre-commit
