@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+"""Save and restore one monitor's DDC/CI brightness for quiet runs.
+
+Exit 2: invalid input, ambiguous display or unusable state. Exit 3: DDC unavailable;
+callers may continue undimmed. Failed/uncertain writes retain recovery state unless
+a readback proves the brightness did not change. No automatic host setup.
+"""
+import argparse
+import datetime
+import fcntl
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+
+
+class DDCError(Exception):
+    pass
+
+
+def ddc(*args):
+    try:
+        result = subprocess.run(["ddcutil", "--noconfig", *args],
+                                env={**os.environ, "LC_ALL": "C"},
+                                capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise DDCError(f"ddcutil unavailable: {error}") from error
+    if result.returncode:
+        detail = result.stderr.strip() or result.stdout.strip()
+        raise DDCError(f"ddcutil failed ({result.returncode}): {detail}")
+    return result.stdout
+
+
+def display_edid():
+    output = ddc("detect", "--verbose")
+    displays = re.findall(r"^Display \d+[^\S\n]*\n(.*?)(?=^(?:Display \d+|Invalid display)|\Z)",
+                          output, re.MULTILINE | re.DOTALL)
+    if not displays:
+        raise DDCError("no DDC-capable display; check ddcutil and i2c access")
+    if len(displays) != 1:
+        raise ValueError("set needs exactly one DDC-capable display")
+    # ddcutil --edid selects the base 128 bytes, independent of display/bus number.
+    block = displays[0]
+    rows = re.findall(r"^\s*\+([0-9a-fA-F]{4})\s+((?:[0-9a-fA-F]{2}\s+){16})",
+                      block, re.MULTILINE)
+    base = [(offset.lower(), "".join(data.split()).lower()) for offset, data in rows
+            if int(offset, 16) < 128]
+    if [offset for offset, _ in base] != [f"{i:04x}" for i in range(0, 128, 16)]:
+        raise ValueError("ddcutil detect did not report a complete EDID")
+    return "".join(data for _, data in base)
+
+
+def brightness(edid):
+    output = ddc("--edid", edid, "getvcp", "10", "--terse")
+    match = re.fullmatch(r"\s*VCP 10 C (\d+) (\d+)\s*", output)
+    if not match:
+        raise DDCError("display did not report continuous VCP 0x10 brightness")
+    current, maximum = map(int, match.groups())
+    if not 0 <= current <= maximum or maximum <= 0:
+        raise DDCError("display reported an invalid brightness range")
+    return current, maximum
+
+
+def record_path(root, edid):
+    return root / (hashlib.sha256(bytes.fromhex(edid)).hexdigest() + ".json")
+
+
+def read_record(path):
+    record = json.loads(path.read_text())
+    if not isinstance(record, dict):
+        raise ValueError(f"invalid recovery record: {path}")
+    edid, original, maximum = (record.get(key) for key in ("edid", "original", "max"))
+    if (not isinstance(edid, str) or not re.fullmatch(r"[0-9a-f]{256}", edid)
+            or type(original) is not int or type(maximum) is not int
+            or not 0 <= original <= maximum or maximum <= 0
+            or not isinstance(record.get("saved_at"), str)
+            or record_path(path.parent, edid) != path):
+        raise ValueError(f"invalid recovery record: {path}")
+    return record
+
+
+def save_record(path, record, directory_fd):
+    # Publish a complete, durable record before changing hardware. The directory lock
+    # covers check + save + DDC write, preserving the first original across processes.
+    fd, temporary = tempfile.mkstemp(prefix=".record-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as stream:
+            json.dump(record, stream)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        os.fsync(directory_fd)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+
+
+def fraction(value):
+    try:
+        number = float(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("fraction must be a number in [0, 1]") from error
+    if not math.isfinite(number) or not 0 <= number <= 1:
+        raise argparse.ArgumentTypeError("fraction must be a number in [0, 1]")
+    return number
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    setter = commands.add_parser("set", help="save original brightness and dim")
+    setter.add_argument("fraction", type=fraction, nargs="?", default=0.25,
+                        help="fraction of maximum, default 0.25; quiet runs use 0.15–0.35")
+    commands.add_parser("restore", help="restore saved brightness")
+    commands.add_parser("status", help="report saved records needing restoration")
+    args = parser.parse_args(argv)
+    root = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state") / "display-dim"
+    try:
+        root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        directory_fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            fcntl.flock(directory_fd, fcntl.LOCK_EX)
+            records = [(path, read_record(path)) for path in sorted(root.glob("*.json"))]
+            if args.command == "set":
+                edid = display_edid()
+                current, maximum = brightness(edid)
+                path = record_path(root, edid)
+                new = not path.exists()
+                if new:
+                    save_record(path, {"edid": edid, "original": current, "max": maximum,
+                                      "saved_at": datetime.datetime.now(datetime.timezone.utc).isoformat()},
+                                directory_fd)
+                target = round(args.fraction * maximum)
+                try:
+                    ddc("--edid", edid, "setvcp", "10", str(target), "--verify")
+                except DDCError:
+                    if new:
+                        try:
+                            unchanged = brightness(edid)[0] == current
+                        except DDCError:
+                            unchanged = False
+                        if unchanged:
+                            path.unlink()
+                            os.fsync(directory_fd)
+                        else:
+                            print("brightness may have changed; recovery record retained; run restore",
+                                  file=sys.stderr)
+                    raise
+                print(f"brightness: {target}/{maximum}; original saved in {path}")
+            elif args.command == "restore":
+                failures = []
+                for path, record in records:
+                    try:
+                        ddc("--edid", record["edid"], "setvcp", "10",
+                            str(record["original"]), "--verify")
+                    except DDCError as error:
+                        failures.append(f"{path.name}: {error}; record retained")
+                        continue
+                    path.unlink()
+                    os.fsync(directory_fd)
+                    print(f"restored brightness: {record['original']}/{record['max']}")
+                if failures:
+                    raise DDCError("\n".join(failures))
+                if not records:
+                    print("no saved brightness; nothing to restore")
+            else:
+                for path, record in records:
+                    print(f"restore-needed: {path.name}; original {record['original']}/{record['max']}; "
+                          f"saved {record['saved_at']}; run display-dim restore")
+                if not records:
+                    print("no saved brightness")
+        finally:
+            os.close(directory_fd)
+    except DDCError as error:
+        print(f"display-dim: {error}", file=sys.stderr)
+        return 3
+    except (OSError, ValueError) as error:
+        print(f"display-dim: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

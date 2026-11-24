@@ -9,6 +9,8 @@
 "~/bin/24bitcolors" = "bin/24bitcolors"
 "~/bin/256colors" = "bin/256colors"
 "~/bin/bar1-guard" = "bin/bar1-guard"
+"~/bin/disk-report" = "bin/disk-report"
+"~/bin/display-dim" = "bin/display-dim"
 "~/bin/dotfiles-check" = "bin/dotfiles-check"
 "~/bin/dotfiles-health" = "bin/dotfiles-health"
 "~/bin/dotfiles-layout-check" = "bin/dotfiles-layout-check"

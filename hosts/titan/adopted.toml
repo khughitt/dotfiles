@@ -1,12 +1,49 @@
+# Files and blocks whose source of truth is this directory. `just drift` compares each
+# against its installed copy; docs/host-configuration.md says how a change is installed.
+# zram-generator.conf is not here: it lives in the repository's top-level
+# systemd/zram-generator.conf and is installed by the hardening doc.
 hostname = "titan"
+
+[[file]]
+source = "etc/sysctl.d/90-generic-tuning.conf"
+installed = "/etc/sysctl.d/90-generic-tuning.conf"
+
+[[file]]
+source = "etc/sysctl.d/95-titan-tuning.conf"
+installed = "/etc/sysctl.d/95-titan-tuning.conf"
+
+[[file]]
+source = "etc/sysctl.d/96-titan-inotify.conf"
+installed = "/etc/sysctl.d/96-titan-inotify.conf"
+
+[[file]]
+source = "etc/udev/rules.d/90-audio-usb-nosuspend.rules"
+installed = "/etc/udev/rules.d/90-audio-usb-nosuspend.rules"
 
 [[file]]
 source = "systemd/user/agents.slice"
 installed = "~/.config/systemd/user/agents.slice"
 
 [[file]]
+source = "systemd/user/atoms-recertify.service"
+installed = "~/.config/systemd/user/atoms-recertify.service"
+
+[[file]]
+source = "systemd/user/atoms-recertify.timer"
+installed = "~/.config/systemd/user/atoms-recertify.timer"
+
+[[file]]
+source = "bin/atoms-recertify"
+installed = "~/.local/bin/atoms-recertify"
+
+[[file]]
 source = "budget.toml"
 installed = "~/.config/hostkit/budget.toml"
+
+[[block]]
+source = "blocks/environment-blas-threads.conf"
+installed = "/etc/environment"
+marker = "system-tuning:blas-threads"
 
 [[block]]
 source = "blocks/agent-sessions.env.zsh"

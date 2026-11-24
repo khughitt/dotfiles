@@ -44,7 +44,7 @@ See development for the exact CI contract, excluded work and evidence limits.
 
 - `setup.sh`, `install.toml`, `install-linux.toml`, `install-graphical.toml`, `lib/` — host installer and link manifests.
 - `bin/`, `shell/`, `nvim/`, `kitty/`, `niri/`, `noctalia/`, `systemd/` — commands and configuration.
-- `docs/` — seven current subject references.
+- `docs/` — eight current subject references.
 - `tests/` — focused and full test suites and their fixtures.
 - `scripts/` — the repository's own gates and maintenance scripts (hygiene, code
   checks, test front doors, agent-session probes).

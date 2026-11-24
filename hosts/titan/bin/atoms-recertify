@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# Recertify the atoms A8 durability tuple after a kernel upgrade, in the
+# background, leaving a review-ready branch in ~/d/atoms. Machine config, not
+# repo content. Installed 2026-08-30; the companion unit is
+# ~/.config/systemd/user/atoms-recertify.{service,timer}.
+#
+# Behavior: exit 0 quietly when there is nothing to do (tuple already
+# certified, reboot pending, or a certification run already in flight).
+# Everything else fails loudly into the journal and a desktop notification.
+set -euo pipefail
+
+REPO="$HOME/d/atoms"
+SCRATCH="$HOME/.cache/atoms-recert"
+LOCK="$HOME/.cache/atoms-recert.lock"
+TARGET="/mnt/ssd"
+VOLUME_PY_REL="python/src/atoms/fs/volume.py"
+
+log() { printf '%s %s\n' "$(date -Is)" "$*"; }
+notify() { command -v notify-send >/dev/null && notify-send "atoms recertify" "$*" || true; }
+
+exec 9>"$LOCK"
+flock -n 9 || { log "another atoms-recertify holds the lock; exiting"; exit 0; }
+
+current="$(uname -r)"
+certified="$(grep -oP 'kernel_identifier="\K[^"]+' "$REPO/$VOLUME_PY_REL" | head -1)"
+[ -n "$certified" ] || { log "could not read certified kernel from $VOLUME_PY_REL"; exit 1; }
+
+if [ "$current" = "$certified" ]; then
+    log "tuple already certified for $current; nothing to do"
+    exit 0
+fi
+
+# A kernel newer than the running one in /boot means a reboot is pending; the
+# harness requires guest == host, so wait for the reboot rather than fail.
+boot_kernel="$(file -b /boot/vmlinuz-linux | grep -oP 'version \K[^ ]+')"
+if [ "$boot_kernel" != "$current" ]; then
+    log "reboot pending (/boot has $boot_kernel, running $current); exiting"
+    exit 0
+fi
+
+# Do not race a manual run (the harness also refuses on a dirty checkout, but
+# two QEMU sweeps at once would only slow each other down).
+if pgrep -f 'tools\.certify (run|build-replay)' >/dev/null; then
+    log "a certification run is already in flight; exiting"
+    exit 0
+fi
+
+# A branch for this kernel already waiting for review means we are done.
+if git -C "$REPO" rev-parse --verify -q "chore/recertify-$current" >/dev/null; then
+    log "branch chore/recertify-$current already exists in $REPO; review that branch and run just test-full in the atoms checkout on this newly certified host; merge only if it passes"
+    exit 0
+fi
+
+RECORDS_DIR="$(cd "$REPO" && tasks where | jq -er '.project.records // empty' || true)"
+[ -n "$RECORDS_DIR" ] && [ -d "$RECORDS_DIR/docs/certification" ] \
+    || { log "could not resolve certification records directory for $REPO"; exit 1; }
+
+log "recertifying: $certified -> $current"
+notify "starting recertification for $current (this runs in the background)"
+
+# Fresh scratch clone of the local main; the harness requires a clean checkout.
+if [ -d "$SCRATCH/.git" ]; then
+    git -C "$SCRATCH" fetch -q origin
+    git -C "$SCRATCH" checkout -q --detach origin/main
+    git -C "$SCRATCH" reset -q --hard origin/main
+    git -C "$SCRATCH" clean -qfdx --exclude=python/.certify --exclude=python/.venv
+else
+    git clone -q "$REPO" "$SCRATCH"
+fi
+cd "$SCRATCH/python"
+
+uv run python -m tools.certify build-replay >/dev/null
+missing="$(uv run python -m tools.certify check | grep '^MISSING' || true)"
+[ -z "$missing" ] || { log "prerequisites missing: $missing"; notify "recert blocked: $missing"; exit 1; }
+
+uv run python -m tools.certify run --all --trials 1 --accel kvm --target "$TARGET" --record "$RECORDS_DIR/docs/certification"
+
+record="$(ls -t "$RECORDS_DIR/docs/certification"/*-ext4-linux-"$current".json | head -1)"
+record_rel="docs/certification/$(basename "$record")"
+old_ref="$(grep -oP '"docs/certification/[^"]+"' "src/atoms/fs/volume.py" | head -1 | tr -d '"')"
+
+sed -i "s/kernel_identifier=\"$certified\"/kernel_identifier=\"$current\"/" src/atoms/fs/volume.py
+sed -i "s#$old_ref#$record_rel#" src/atoms/fs/volume.py
+[ "$(git -C .. diff --numstat -- "$VOLUME_PY_REL" | awk '{print $1"/"$2}')" = "2/2" ] \
+    || { log "allowlist edit did not produce the expected two-line change"; exit 1; }
+
+ATOMS_CERTIFICATION_DIR="$RECORDS_DIR/docs/certification" \
+    uv run pytest -q tests/test_certification_record.py tests/test_fs_volume.py tests/test_fs_binding.py
+
+cd "$SCRATCH"
+git checkout -q -b "chore/recertify-$current"
+git add -- "$VOLUME_PY_REL"
+git commit -q --only -m "chore(certify): recertify ext4 on Linux ${current%%-*}
+
+Automated post-boot recertification; review and merge from
+chore/recertify-$current. Run just test-full on that branch in the atoms
+checkout on this newly certified host; merge only if it passes." -- "$VOLUME_PY_REL"
+git push -q origin "chore/recertify-$current"
+
+git -C "$RECORDS_DIR" add -- "$record"
+git -C "$RECORDS_DIR" commit -q --only -m "chore(atoms): record ext4 certification for Linux ${current%%-*}" -- "$record"
+
+log "done: branch chore/recertify-$current pushed to $REPO; run just test-full on that branch in the atoms checkout on this newly certified host; merge only if it passes"
+notify "recertification for $current complete — review branch chore/recertify-$current in ~/d/atoms; run just test-full on that branch on this newly certified host; merge only if it passes"

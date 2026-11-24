@@ -1,5 +1,5 @@
 # titan: 32 logical CPUs (Threadripper 1950X). The CPU budget `host-budget` hands heavy jobs.
-# Responsiveness first. Reference: docs/runbooks/host-configuration.md (ops-eb9f2d).
+# Responsiveness first. Reference: docs/host-budget.md.
 
 [profiles.default] # short bursts such as test gates
 share = 0.5        # at most this fraction of the host's CPUs to one job

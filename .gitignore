@@ -49,6 +49,7 @@ docs/
 !/docs/fresh-install-hardening.md
 !/docs/capture-host-setup.md
 !/docs/host-budget.md
+!/docs/host-configuration.md
 !/docs/dropbox-git-index.md
 !/docs/setup.md
 !/docs/development.md

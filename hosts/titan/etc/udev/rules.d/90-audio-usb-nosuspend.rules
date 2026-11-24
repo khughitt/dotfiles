@@ -1,0 +1,2 @@
+# PreSonus Studio 24c — never USB-autosuspend the audio interface
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="194f", ATTR{idProduct}=="0109", TEST=="power/control", ATTR{power/control}="on"
