@@ -1,7 +1,7 @@
 # Files and blocks whose source of truth is this directory. `just drift` compares each
 # against its installed copy; docs/host-configuration.md says how a change is installed.
-# zram-generator.conf is not here: it lives in systemd/zram-generator.conf and is
-# installed by the hardening doc.
+# zram-generator.conf is not here: it lives in the repository's top-level
+# systemd/zram-generator.conf and is installed by the hardening doc.
 hostname = "titan"
 
 [[file]]

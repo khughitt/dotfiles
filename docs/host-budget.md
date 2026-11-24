@@ -46,12 +46,18 @@ registers no grant, so prefer `run`, and inspect `run --dry-run -- ...` before a
 new heavy workload. Read CPU capacity with `nproc --all`: ordinary `nproc` honours
 `OMP_NUM_THREADS` and can report one on a multicore machine.
 
+The policy file sets per-profile share, reserve and minimum, audio application name
+prefixes with their share and reserve override, and the scope's slice, nice and I/O
+settings. Required keys and unknown keys are validated; the host file and
+`host-budget --help` give values and options. No-scope execution is explicit and
+only valid inside the accounting slice.
+
 Grants account host-wide busy CPUs and other jobs, then apply the caller's affinity
 ceiling. The audio override applies even to quiet jobs. Thread variables plus CPU
 weight prioritize responsiveness; only the slice quota is a hard limit. Missing
 policy, accounting, storage or user-manager prerequisites fail with diagnostics;
 there is no silent environment-only fallback, and a grant is not an idle-machine
-promise.
+promise. Nothing here authorizes a desktop, audio-engine or host modification.
 
 To verify the managed scopes, read the user manager's effective weight and
 quota and the slice cgroup's `cpu.max` and `cpu.stat`. The activation packet kept

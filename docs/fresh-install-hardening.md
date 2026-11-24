@@ -275,8 +275,10 @@ pacman's effective plan with `pacman -Qu linux linux-headers`; available updates
 to both pinned packages must be marked ignored.
 
 Certification applies to the exact running kernel, including package rebuilds.
-The local atoms-recertify sweep is not shipped here; a new machine can legitimately
-report certification unknown until that separate owner supplies the environment.
+Titan's atoms-recertify sweep ships under `hosts/titan/` (script, user service and
+timer, installed by copy and checked by `just drift`); see
+[host configuration](host-configuration.md). Another machine can legitimately report
+certification unknown until it installs an equivalent sweep.
 
 ## Console keymap
 

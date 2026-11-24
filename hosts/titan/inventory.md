@@ -511,7 +511,7 @@ validate kernel, boot, device or other classes.
 - **Persistence:** login-scoped — limits apply at the next session for members of the group
 - **Previous value:** not a member of `realtime`; date unknown; not a capture
 - **Vendor default:** the package installs the limits file but adds nobody to the group
-- **Restore:** (1) `sudo gpasswd -d keith realtime`; (2) log out and in; (3) readback `ulimit -r` → `0`, `id -nG` without `realtime`. Removing the package instead: `sudo pacman -R realtime-privileges`
+- **Restore:** (1) `sudo gpasswd -d "$USER" realtime`; (2) log out and in; (3) readback `ulimit -r` → `0`, `id -nG` without `realtime`. Removing the package instead: `sudo pacman -R realtime-privileges`
 - **Validation:** not validated — procedure written, not run
 
 ### Virtual memory map count
