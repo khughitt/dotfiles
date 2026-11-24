@@ -552,7 +552,7 @@ function setup_preflight() {
         test -x "${WALI_ROOT}/bin/walictl" || missing=1
 
     preflight_check "ops checkout" "git clone git@github.com:khughitt/ops.git ${OPS_ROOT}" \
-        test -x "${OPS_ROOT}/bin/obs-index" || missing=1
+        test -f "${OPS_ROOT}/systemd/user/obs-index.service" || missing=1
 
     preflight_check "hostkit checkout" "ensure ${HOSTKIT_ROOT} is synced or cloned (see ops/docs/tooling.md)" \
         test -x "${HOSTKIT_ROOT}/bin/hostkit-links" || missing=1
