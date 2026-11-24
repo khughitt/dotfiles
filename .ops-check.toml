@@ -31,6 +31,7 @@ layout_allowed = [
   "wali/",
   # Installer, health and packing policy: they set up and verify the layout above.
   "setup.sh",
+  "bin/disk-report",
   "bin/dotfiles-health",
   "lib/git-packing-policy.py",
   "scripts/agent-session-smoke.py",
@@ -38,9 +39,11 @@ layout_allowed = [
   "README.md",
   "docs/dropbox-git-index.md",
   "docs/fresh-install-hardening.md",
+  "docs/host-configuration.md",
   "docs/setup.md",
   # Fixtures that model the configured hosts and checkout layout.
   "tests/agent_sessions_test.py",
   "tests/bar1_guard_test.py",
+  "tests/test_disk_report.py",
   "tests/setup_and_health.zsh",
 ]

@@ -1,0 +1,326 @@
+#!/usr/bin/env python3
+# disk-report version 1
+"""Where the space and the inotify watches went, in one call.
+
+`disk-report` answers "why is the machine complaining about space" for a person at a
+terminal and, with `--json`, for the Noctalia alert. It measures and prints; the
+thresholds are the caller's, so it exits 0 whenever it ran and 2 when it could not.
+Five sections, all by default, `--section NAME` (repeatable) for a subset:
+
+    volumes    every /dev-backed mount: size, used, free, percent, most-used first
+    hotspots   the top-N children of ~/.cache, $CACHE_DIR, ~/.codex and ~/.claude, and
+               the intermediates still inside ~/d (.venv, .worktrees, node_modules,
+               target): real directories with their size; symlinks counted once, not
+               here but under work-root, where they point
+    work-root  $WORK_ROOT by repository: each external .worktrees, .venv or target with
+               its size, and `orphan` when no directory under ~/d stands behind it
+    inotify    watches and instances held by this user's processes against
+               fs.inotify.max_user_watches and max_user_instances, top holders first;
+               the case where df shows free space and user units fail with ENOSPC
+    services   work-link.service and work-link.timer: the failed service is the drift
+               signal for the checkout-local storage design
+
+Sizes are `du -s -B1` over the listed paths in one invocation, so hardlinks shared
+between two entries are charged to the first; the hotspot and work-root sections take
+several seconds on a cold cache, which is why the sections are selectable. The scan
+under ~/d never follows symlinks and never descends into a match: a worktree's own .venv
+is part of the worktree.
+
+`--home DIR`, `--proc DIR` and `--mounts FILE` relocate the trees the tests fake;
+`WORK_ROOT` and `CACHE_DIR` come from the environment as work-link and the host file
+define them. Reference: docs/host-configuration.md.
+"""
+import argparse
+import datetime
+import json
+import os
+import pathlib
+import shutil
+import socket
+import subprocess
+import sys
+
+SECTIONS = ("volumes", "hotspots", "work-root", "inotify", "services")
+INTERMEDIATES = (".venv", ".worktrees", "node_modules", "target")
+WORK_ROOT_NAMES = (".worktrees", ".venv", "target")
+PRUNE = {".git", ".dropbox.cache"}
+UNITS = ("work-link.service", "work-link.timer")
+
+
+def human(n):
+    if n is None:
+        return "-"
+    for unit in ("B", "K", "M", "G", "T"):
+        if abs(n) < 1024 or unit == "T":
+            return f"{n:.0f}{unit}" if unit == "B" or n >= 100 else f"{n:.1f}{unit}"
+        n /= 1024
+    raise AssertionError("unreachable")
+
+
+def du(paths):
+    """{path: bytes} for each path, one du call. Exit 1 is a partial read (permission
+    denied under a subtree) and keeps what was measured, with du's stderr passed
+    through; any other failure is ours to raise."""
+    paths = [str(p) for p in paths]
+    if not paths:
+        return {}
+    proc = subprocess.run(["du", "-s", "-B1", "--", *paths], capture_output=True, text=True)
+    if proc.returncode not in (0, 1):
+        raise RuntimeError(f"du failed ({proc.returncode}): {proc.stderr.strip()}")
+    if proc.stderr:
+        sys.stderr.write(proc.stderr)
+    sizes = {}
+    for line in proc.stdout.splitlines():
+        size, _, path = line.partition("\t")
+        sizes[path] = int(size)
+    return sizes
+
+
+def volumes(mounts_file):
+    """One row per /dev-backed mount, most used first."""
+    rows = []
+    for line in pathlib.Path(mounts_file).read_text().splitlines():
+        fields = line.split()
+        if len(fields) < 3 or not fields[0].startswith("/dev/"):
+            continue
+        device, mount, fstype = fields[0], fields[1].encode().decode("unicode_escape"), fields[2]
+        st = os.statvfs(mount)
+        size = st.f_blocks * st.f_frsize
+        free = st.f_bavail * st.f_frsize
+        used = size - st.f_bfree * st.f_frsize
+        rows.append({
+            "mount": mount, "device": device, "fstype": fstype, "size": size, "used": used,
+            "free": free, "percent": round(100 * used / size, 1) if size else 0.0,
+        })
+    rows.sort(key=lambda r: -r["percent"])
+    return rows
+
+
+def top_children(root, n):
+    """The n largest immediate children of root by disk usage."""
+    root = pathlib.Path(root)
+    children = [p for p in root.iterdir() if not p.is_symlink()]
+    sizes = du(children)
+    ranked = sorted(sizes.items(), key=lambda kv: -kv[1])
+    return sum(sizes.values()), [{"path": p, "bytes": b} for p, b in ranked[:n]]
+
+
+def scan(root, names):
+    """(path, is_link) for every entry named in `names` under root, pruned: never
+    following symlinks, never descending into a match or into .git."""
+    hits = []
+    for dirpath, dirnames, _ in os.walk(root):
+        keep = []
+        for name in dirnames:
+            path = os.path.join(dirpath, name)
+            if name in names:
+                hits.append((path, os.path.islink(path)))
+            elif name not in PRUNE and not os.path.islink(path):
+                keep.append(name)
+        dirnames[:] = keep
+    return hits
+
+
+def hotspots(home, cache_dir, n):
+    """The session-store and cache roots with their top-N children, then the
+    intermediates still inside ~/d."""
+    roots = [("~/.cache", home / ".cache")]
+    if cache_dir is None:
+        roots.append(("CACHE_DIR", None))
+    elif pathlib.Path(cache_dir) != home / ".cache":
+        roots.append(("CACHE_DIR", pathlib.Path(cache_dir)))
+    roots += [("~/.codex", home / ".codex"), ("~/.claude", home / ".claude")]
+    out = []
+    for label, root in roots:
+        if root is None:
+            out.append({"label": label, "root": None, "state": "unset", "bytes": None, "entries": []})
+        elif not root.is_dir():
+            out.append({"label": label, "root": str(root), "state": "absent", "bytes": None, "entries": []})
+        else:
+            total, entries = top_children(root, n)
+            out.append({"label": label, "root": str(root), "state": "ok", "bytes": total, "entries": entries})
+    scan_root = home / "d"
+    if scan_root.is_dir():
+        hits = scan(scan_root, set(INTERMEDIATES))
+        real = [p for p, link in hits if not link]
+        sizes = du(real)
+        entries = sorted(({"path": p, "bytes": b} for p, b in sizes.items()), key=lambda e: -e["bytes"])
+        links = [{"path": p, "target": os.readlink(p)} for p, link in hits if link]
+        out.append({
+            "label": "~/d intermediates", "root": str(scan_root), "state": "ok",
+            "bytes": sum(sizes.values()), "entries": entries, "links": links,
+        })
+    else:
+        out.append({"label": "~/d intermediates", "root": str(scan_root), "state": "absent",
+                    "bytes": None, "entries": [], "links": []})
+    return out
+
+
+def work_root(root, scan_root):
+    """$WORK_ROOT by repository. `state` follows work-link: unconfigured, available,
+    unavailable. An entry is `orphan` when nothing under ~/d stands at its relative path."""
+    if root is None:
+        return {"root": None, "state": "unconfigured", "entries": []}
+    root = pathlib.Path(root)
+    if not root.is_dir():
+        return {"root": str(root), "state": "unavailable", "entries": []}
+    hits = [p for p, link in scan(root, set(WORK_ROOT_NAMES)) if not link]
+    sizes = du(hits)
+    entries = []
+    for path, size in sizes.items():
+        rel = pathlib.Path(path).relative_to(root)
+        repo = str(rel.parent)
+        entries.append({
+            "repo": repo, "name": rel.name, "path": path, "bytes": size,
+            "orphan": not (scan_root / repo).is_dir(),
+        })
+    entries.sort(key=lambda e: -e["bytes"])
+    return {"root": str(root), "state": "available", "entries": entries}
+
+
+def inotify(proc):
+    """Watches and instances held by this user's processes, against the sysctl limits."""
+    proc = pathlib.Path(proc)
+    limits = proc / "sys" / "fs" / "inotify"
+    max_watches = int((limits / "max_user_watches").read_text())
+    max_instances = int((limits / "max_user_instances").read_text())
+    uid = os.getuid()
+    holders = []
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            if entry.stat().st_uid != uid:
+                continue
+            fds = list((entry / "fd").iterdir())
+        except (FileNotFoundError, PermissionError, ProcessLookupError):
+            continue
+        watches = instances = 0
+        for fd in fds:
+            try:
+                if os.readlink(fd) != "anon_inode:inotify":
+                    continue
+                info = (entry / "fdinfo" / fd.name).read_text()
+            except (FileNotFoundError, PermissionError, ProcessLookupError):
+                continue
+            instances += 1
+            watches += sum(1 for line in info.splitlines() if line.startswith("inotify wd:"))
+        if instances:
+            try:
+                comm = (entry / "comm").read_text().strip()
+            except (FileNotFoundError, PermissionError, ProcessLookupError):
+                comm = "?"
+            holders.append({"pid": int(entry.name), "comm": comm, "watches": watches, "instances": instances})
+    holders.sort(key=lambda h: (-h["watches"], -h["instances"]))
+    return {
+        "max_user_watches": max_watches, "watches": sum(h["watches"] for h in holders),
+        "max_user_instances": max_instances, "instances": sum(h["instances"] for h in holders),
+        "holders": holders,
+    }
+
+
+def services(units):
+    """LoadState/ActiveState/Result per user unit; `unavailable` without systemctl."""
+    if shutil.which("systemctl") is None:
+        return [{"unit": u, "load": "unavailable", "active": None, "result": None} for u in units]
+    out = []
+    for unit in units:
+        proc = subprocess.run(
+            ["systemctl", "--user", "show", unit, "-p", "LoadState", "-p", "ActiveState", "-p", "Result"],
+            capture_output=True, text=True)
+        if proc.returncode != 0:
+            raise RuntimeError(f"systemctl show {unit} failed ({proc.returncode}): {proc.stderr.strip()}")
+        props = dict(line.split("=", 1) for line in proc.stdout.splitlines() if "=" in line)
+        out.append({"unit": unit, "load": props.get("LoadState"), "active": props.get("ActiveState"),
+                    "result": props.get("Result")})
+    return out
+
+
+def render(report, n):
+    lines = []
+    if "volumes" in report:
+        lines.append("volumes")
+        lines.append(f"  {'mount':<22} {'fstype':<7} {'size':>7} {'used':>7} {'free':>7}  use")
+        for v in report["volumes"]:
+            lines.append(f"  {v['mount']:<22} {v['fstype']:<7} {human(v['size']):>7} {human(v['used']):>7} "
+                         f"{human(v['free']):>7} {v['percent']:>4.0f}%")
+    if "hotspots" in report:
+        lines.append("hot spots")
+        for spot in report["hotspots"]:
+            if spot["state"] != "ok":
+                lines.append(f"  {spot['label']:<22} {spot['state']}")
+                continue
+            lines.append(f"  {spot['label']:<22} {human(spot['bytes']):>7}  {spot['root']}")
+            for e in spot["entries"][:n]:
+                lines.append(f"    {human(e['bytes']):>7}  {e['path']}")
+            more = len(spot["entries"]) - n
+            if more > 0:
+                lines.append(f"    {'':>7}  +{more} more")
+            if spot.get("links"):
+                lines.append(f"    {'':>7}  {len(spot['links'])} linked out (counted under work-root)")
+    if "work-root" in report:
+        wr = report["work-root"]
+        lines.append(f"work-root {wr['root'] or '-'} ({wr['state']})")
+        for e in wr["entries"][:n]:
+            flag = "  orphan" if e["orphan"] else ""
+            lines.append(f"  {human(e['bytes']):>7}  {e['repo']}/{e['name']}{flag}")
+        more = len(wr["entries"]) - n
+        if more > 0:
+            lines.append(f"  {'':>7}  +{more} more")
+        orphans = sum(1 for e in wr["entries"][n:] if e["orphan"])
+        if orphans:
+            lines.append(f"  {'':>7}  {orphans} orphan(s) beyond the top {n}")
+    if "inotify" in report:
+        i = report["inotify"]
+        pct = 100 * i["watches"] / i["max_user_watches"] if i["max_user_watches"] else 0
+        lines.append("inotify")
+        lines.append(f"  watches   {i['watches']} / {i['max_user_watches']} ({pct:.0f}%)")
+        lines.append(f"  instances {i['instances']} / {i['max_user_instances']}")
+        for h in i["holders"][:n]:
+            lines.append(f"  {h['watches']:>9}  {h['comm']} (pid {h['pid']}, {h['instances']} instance(s))")
+    if "services" in report:
+        lines.append("services")
+        for s in report["services"]:
+            state = s["load"] if s["load"] != "loaded" else f"{s['active']} ({s['result']})"
+            lines.append(f"  {s['unit']:<20} {state}")
+    return "\n".join(lines) + "\n"
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--json", action="store_true", help="machine-readable report")
+    parser.add_argument("-n", type=int, default=10, help="entries per list (default 10)")
+    parser.add_argument("--section", action="append", choices=SECTIONS, help="only these sections")
+    parser.add_argument("--home", type=pathlib.Path, default=pathlib.Path.home())
+    parser.add_argument("--proc", default="/proc")
+    parser.add_argument("--mounts", default="/proc/mounts")
+    args = parser.parse_args(argv)
+    if args.n < 1:
+        parser.error("-n must be at least 1")
+    wanted = args.section or list(SECTIONS)
+    report = {"host": socket.gethostname(),
+              "at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")}
+    if "volumes" in wanted:
+        report["volumes"] = volumes(args.mounts)
+    if "hotspots" in wanted:
+        report["hotspots"] = hotspots(args.home, os.environ.get("CACHE_DIR"), args.n)
+    if "work-root" in wanted:
+        report["work-root"] = work_root(os.environ.get("WORK_ROOT"), args.home / "d")
+    if "inotify" in wanted:
+        report["inotify"] = inotify(args.proc)
+    if "services" in wanted:
+        report["services"] = services(UNITS)
+    if args.json:
+        json.dump(report, sys.stdout, indent=1)
+        sys.stdout.write("\n")
+    else:
+        sys.stdout.write(render(report, args.n))
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (OSError, RuntimeError) as exc:
+        print(f"disk-report: {exc}", file=sys.stderr)
+        sys.exit(2)

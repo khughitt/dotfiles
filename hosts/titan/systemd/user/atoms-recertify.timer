@@ -1,0 +1,9 @@
+[Unit]
+Description=Check for an uncertified kernel after user-manager startup and periodically
+
+[Timer]
+OnActiveSec=5min
+OnUnitInactiveSec=6h
+
+[Install]
+WantedBy=timers.target

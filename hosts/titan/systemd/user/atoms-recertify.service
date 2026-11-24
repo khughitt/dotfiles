@@ -1,0 +1,10 @@
+[Unit]
+Description=Recertify the atoms A8 durability tuple after a kernel upgrade
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/atoms-recertify
+# A full nine-scenario sweep can take a long while; never time it out.
+TimeoutStartSec=infinity
+Nice=10
+IOSchedulingClass=idle
