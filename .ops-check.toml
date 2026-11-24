@@ -15,6 +15,7 @@ layout_allowed = [
   "zshenv",
   "zshrc",
   "ripgreprc",
+  "familiar/theme-receipts/",
   "git/",
   "glow/",
   "hostkit/",
