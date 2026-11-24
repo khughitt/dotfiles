@@ -82,3 +82,10 @@ _wallpapers:
     glass.inactive.roughness: 0.15
     glass.roughness: 0.14
     glass.inactive.noise: 0.02
+  019ae6b9:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20221124_181254155.jpg
+    glass.thickness: 20.1
+    glass.jellyRipple: 0.115
+    glass.jellyFlex: 0.0046
+    glass.inactive.bevelProfile: 6.3
+    glass.bevelProfile: 2.8

@@ -71,3 +71,17 @@ terminal.apps:
 _wallpapers:
   8452cef2:
     _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230503_184017492.jpg
+  5a239291:
+    _source: /mnt/ssd/Dropbox/linux/backgrounds/3440/PXL_20230228_182736991.jpg
+    glass.tintSource: familiar
+    glass.inactive.accentTint: 0.75
+    glass.attenuationDistance: 4
+    glass.inactive.attenuationDistance: 33
+    glass.inactive.thickness: 71
+    glass.ring.gap: 2
+    glass.lightIor: 2
+    glass.ring.accent: 0.3
+    glass.ring.beamNoise: 0.5
+    glass.ring.rest: 0.3
+    compositor.gaps: 28
+    glass.jellyFlex: 0.0062
