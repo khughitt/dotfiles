@@ -1,0 +1,41 @@
+-- evaluation
+#eval 1 + 2
+
+-- assignment
+def x : String := "..."
+def fn (x: Nat) : Nat := x + x
+
+-- equality
+=
+
+-- built-in types
+Bool
+Nat
+Int
+Float
+Char
+String
+
+-- structures
+structure Point where
+  x : Float
+  y : Float
+
+-- type defs
+def Str : Type := String
+
+-- strings
+String.append
+
+-- conditionals
+if .. then .. else
+
+-- functions
+
+-- vi:syntax=lean
+
+--------------------------------------------------------------------------------
+-- sources:
+--
+-- 1. https://lean-lang.org/functional_programming_in_lean/Getting-to-Know-Lean/
+--------------------------------------------------------------------------------

@@ -1,0 +1,7 @@
+#
+# sidebar
+#
+ctl-c c   # focus left ("composer")
+ctl-c s   # focus right ("sidebar")
+ctl-x t   # open sidebar file list
+p         # show filepath

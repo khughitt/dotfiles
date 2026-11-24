@@ -1,0 +1,11 @@
+-- general
+,i        -- toggle infoview
+,r        -- restart lean server
+
+-- infoview
+
+
+
+--
+-- see: https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual#key-mappings
+--
