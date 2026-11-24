@@ -94,8 +94,7 @@ return {
   -- Science-project markdown references
   -- ---------------------------------------------------------------------
   {
-    url = vim.fn.expand('~/d/science-md.nvim'),
-    name = 'science-md.nvim',
+    'khughitt/science-md.nvim',
     ft = 'markdown',
     opts = {},
   },

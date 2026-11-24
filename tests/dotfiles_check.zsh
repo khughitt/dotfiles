@@ -94,7 +94,7 @@ nvim_case nvim-clipboard nvim --headless -i NONE -u "${repo_root}/nvim/init.lua"
   "+lua dofile('${repo_root}/nvim/tests/clipboard_test.lua')" '+qa!'
 
 nvim_case nvim-science-md nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
-  "+lua local p = assert(require('lazy.core.config').plugins['science-md.nvim'], 'missing science-md.nvim spec'); assert(not p._.is_local, 'science-md.nvim must be managed by lazy.nvim, not local dir'); local lock = require('lazy.manage.lock').get(p); assert(lock and lock.branch == 'main' and type(lock.commit) == 'string' and #lock.commit >= 7, 'missing science-md.nvim lock entry'); require('lazy').load({ plugins = { 'science-md.nvim' } }); assert(type(require('science-md').setup) == 'function')" '+qa!'
+  -l "${repo_root}/nvim/tests/science_md_test.lua"
 
 nvim_case nvim-theme nvim --headless -i NONE -u "${repo_root}/nvim/init.lua" --cmd 'set noswapfile' \
   -l "${repo_root}/nvim/tests/theme_test.lua"

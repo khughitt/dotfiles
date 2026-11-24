@@ -49,8 +49,8 @@ full verification, portable CI and its limits.
 - `cheatsheets/` — functional command references, opened through shell helpers.
 - `docs/` — current subject references; `tests/` holds verification, `scripts/` the repository's gates and maintenance scripts, and `tools/` vendored shared tooling.
 
-Neovim's science-project Markdown integration loads `~/d/science-md.nvim` as an
-external plugin checkout. Its implementation and development history belong there;
+Neovim's science-project Markdown integration installs
+[science-md.nvim](https://github.com/khughitt/science-md.nvim) through lazy.nvim. Its implementation and development history belong there;
 the local plugin declaration is in `nvim/lua/user/plugins/lang.lua`.
 
 ## Consumers
