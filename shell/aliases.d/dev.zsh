@@ -121,6 +121,7 @@ alias tap='ta projects'
 alias tals='ta list --sort updated'
 alias taps='ta projects --sort activity'
 alias talu='ta list | grep "\*"'
+alias Talu='Tal | grep "\*" | sort'
 
 alias recent_tasks="tal --status done --sort created | head -n10"
 

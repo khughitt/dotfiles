@@ -100,6 +100,20 @@ return {
   },
 
   -- ---------------------------------------------------------------------
+  -- lean.nvim
+  -- ---------------------------------------------------------------------
+  {
+    "Julian/lean.nvim",
+    event = { 'BufReadPre *.lean', 'BufNewFile *.lean' },
+    init = function()
+      ---@type lean.Config
+      vim.g.lean_config = { -- see the manual for full configuration options
+        mappings = true,
+      }
+    end,
+  },
+
+  -- ---------------------------------------------------------------------
   -- Filetype support
   --
   -- These all need a real trigger (ft/cmd). `lazy = true` on its own means
