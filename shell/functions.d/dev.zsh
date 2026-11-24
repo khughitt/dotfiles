@@ -6,9 +6,9 @@ function dty {
 }
 
 function up {
-  # detect Ubuntu and set compose file args
+  # use the deploy compose file when the project has one
   local compose_args=()
-  if [ -f /etc/lsb-release ] && grep -q Ubuntu /etc/lsb-release; then
+  if [ -f compose.deploy.yml ]; then
     compose_args=(-f compose.deploy.yml)
   fi
 
@@ -22,9 +22,9 @@ function up {
 }
 
 function down {
-  # detect Ubuntu and set compose file args
+  # use the deploy compose file when the project has one
   local compose_args=()
-  if [ -f /etc/lsb-release ] && grep -q Ubuntu /etc/lsb-release; then
+  if [ -f compose.deploy.yml ]; then
     compose_args=(-f compose.deploy.yml)
   fi
 
